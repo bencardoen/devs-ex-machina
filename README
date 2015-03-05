@@ -1,0 +1,54 @@
+## README ##
+
+**# GTEST : read this first #**
+GTest is usually provided as source only, requiring you to build it. This project uses threadsanitizer, which requires the -fpie compile option, that means gtest needs to be built with that option as well. Here is how to do this:
+
+* In the gtest source directory (default /usr/src/gtest), navigate to cmake/
+
+* In file internal_utils.cmake change line 65 (if using G++) from :
+
+set(cxx_base_flags "-Wall -Wshadow ")
+
+to
+
+set(cxx_base_flags "-Wall -Wshadow -fpie")
+
+* Recompile gtest (cmake CMakeLists.txt && make && cp *.a /usr/lib or your equivalent).
+
+
+## Requirements: ##
+
+* g++ >=4.8.2 , clang >= 3.4 (older may work)
+
+* CMake (cmake plugins included)
+
+## Dependencies: ##
+* gtest 
+(if you have built gtest yourself (i.s.o. distribution packages), modify CMakeLists.txt in section "Dependencies" (line 26) and set the correct path to gtest) (thx Stijn)
+* boost (system, heap) (non default location : set in CMakeLists.txt : set(BOOST_ROOT "your/path/here")
+
+## Installation & configuration ##
+
+* clone from git:
+git clone https://bcardoen@bitbucket.org/bcardoen/prototypes.git
+
+* In the current directory (not in main):    **$main/generate_build.sh**
+* This creates a directory build, with a preconfigured eclipse project (all sources , linker settings , flags etc...)
+* Then all code is built (Eclipse is not needed btw).
+
+* In Eclipse : 
+File->Import->General->Existing Projects into WSpace
+    -> select project directory.
+
+## Running: ##
+
+## Changing compiler  &| flags ##
+See CMakeLists.txt
+Switching compilers is done by changing the generate_build.sh shell script.
+
+## Issues: ##
+- fsanitizer=thread, fpie options allow the compiler and thread sanitizer to check threading errors, if your compiler
+does not support these, disable them.  This also needs library support (gtest et al need to be compiled with those flags) (thx Stijn)
+
+- I use precompiled headers, this means that if you change from one IDE to another, update your system (headers) or
+do other evil stuff , a make clean is required to fix those errors. See CMakeLists.txt
