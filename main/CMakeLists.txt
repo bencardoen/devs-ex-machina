@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 2.8)
 #   @author Ben Cardoen                                                       #
 ###############################################################################
 
-### Cotire ####################################################################
+### Register Cotire ###########################################################
 #This speeds up recompilation if STL or other large (template impl) headers
 #are used (Boost, ...)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
@@ -19,18 +19,17 @@ SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
 
 
 ### PROJECT NAME ##############################################################
-SET(PROJECT_NAME "dxmachina")
+SET(PROJECT_NAME "dxexmachina")
 project(${PROJECT_NAME})
 ###############################################################################
 
 ### DEPENDENCIES ##############################################################
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
-find_package(Boost COMPONENTS  system)      # Do not set required, we need the headers only
-
+# find_package(GSL REQUIRED)
+find_package(Boost COMPONENTS  system)
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
-
 ## If gtest is not system-wide installed, uncomment the follwing line (thanks Stijn)
 #SET(GTEST_ROOT "/path/to/custom/gtest/")
 find_package(GTest REQUIRED)
@@ -40,40 +39,24 @@ find_package(GTest REQUIRED)
 ### COMPILER ##################################################################
 # NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
 
-# DEBUG
+### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
+### and iterator past the end mistakes.
+## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
 
-# Clang (clang++)   #
-## DO NOT use -std=c++1y -> this crashes on compile erros about std::gets; !!!
-# Allow the compiler to help catch errors (threads , iterators etc)
-# SET(CMAKE_CXX_FLAGS "-march=native -g -O0 -std=c++11 -fsanitize=thread -fPIE -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG  ")
-# Default debug build
-SET(CMAKE_CXX_FLAGS "-ggdb -std=c++11 -Wextra -pedantic")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=thread" )
+endif()
 
-# G++               #
-#SET(CMAKE_CXX_FLAGS "-march=native -ggdb -fsanitize=thread -fPIE -O0 -std=c++1y -Wall -Wextra -pedantic -fstack-protector-strong -D_GLIBCXX_DEBUG")
-#SET(CMAKE_CXX_FLAGS "-ggdb -std=c++11 -Wextra -pedantic")
-
-# Mingw             #
-# SET(CMAKE_CXX_FLAGS "-g -std=gnu++11 -Wextra -pedantic")
 
 ### Profiling -- Clang and G++ ###############################################
-#SET(CMAKE_CXX_FLAGS "-march=native -g -O0 -std=c++11 -pg")
+SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 -std=c++11 -pg")
 
 ### Release build - All compilers#############################################
 # Only use this for production code
 # Fast code, if it crashes you can still debug without overhead.
-#SET(CMAKE_CXX_FLAGS "-march=native -g -std=c++11 ")
-#G++
-#SET(CMAKE_CXX_FLAGS "-march=native -Og -std=c++11 ")
-
-# Experimental - only if your code cannot crash ever.
-#SET(CMAKE_CXX_FLAGS "-march=native -std=c++11 -O3 -std=c++11")
-
-# Throw all standard compliance and math(IEEE754, assoc...)  out of the window for that extra us.
-# SET(CMAKE_CXX_FLAGS "-march=native -Ofast -std=c++11")
-
-### Tell compiler to use OpenMP (G++, icc)
-# SET(CMAKE_CXX_FLAGS "-fopenmp")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g -std=c++11 ")
 
 ###############################################################################
 
@@ -90,6 +73,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
+    src/test.cpp
     src/main.cpp
     )
 ###############################################################################
@@ -100,13 +84,19 @@ include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(src)   # Project headers are in same folder as source
-#include_directories(${GSL_INCLUDE_DIRS} ${GSLCBLAS_INCLUDE_DIRS})   # GSL
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS}  ${CMAKE_THREAD_LIBS_INIT} ${GTEST_BOTH_LIBRARIES})
+#set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
+set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+## Clang dies with a segfault of all things if the following linker flags are set
+## G++ does not even link if they are NOT set.
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    MESSAGE( STATUS"Linking with GNU, Debug build, adapting linker flags")
+    SET(CMAKE_EXE_LINKER_FLAGS "-pie" )
+endif()
 
-# Execute linker (if necessary add link flags here)
+# Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS})
 ###############################################################################
 
