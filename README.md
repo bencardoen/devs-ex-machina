@@ -25,3 +25,11 @@ Optionally, you can open the project in Eclipse (provided you have the CDT plugi
 * File > Import > General > Existing Projects into Workspace
 * Select the clone directory (containing main, build)
 * CMake has preconfigured all compile/link settings for you.
+
+### ThreadSanitizer ###
+* If you have clang and wish to run threadsanitizer (default if build type is Debug and compiler = clang++), you'll need to (re)compile Gtest:
+
+* In the gtest sources :
+In file internal_utils.cmake change line 65 to append the compile flag -fpie :
+
+set(cxx_base_flags "-Wall -Wshadow** -fpie**")
