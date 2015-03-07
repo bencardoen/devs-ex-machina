@@ -55,7 +55,8 @@ SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 -std=c++11 -pg")
 
 ### Release build - All compilers#############################################
 # Only use this for production code
-# Fast code, if it crashes you can still debug without overhead.
+#
+# Note : fPIC flag is needed if you built GTest with fPIE/fPIC
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g -std=c++11 ")
 
 ###############################################################################
@@ -73,7 +74,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
-    src/test.cpp
+    src/test/test.cpp
     src/main.cpp
     )
 ###############################################################################
@@ -83,7 +84,7 @@ include_directories(${Boost_INCLUDE_DIRS})             # Boost
 include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
-include_directories(src)   # Project headers are in same folder as source
+include_directories(src src/test src/tools)   # Project headers are in same folder as source
 
 ### LINKER ####################################################################
 # Register libraries needed.
