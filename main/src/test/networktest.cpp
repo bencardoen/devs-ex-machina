@@ -24,7 +24,7 @@ TEST(Time, FactoryFunctions){
 }
 
 TEST(Time, HashingOperators){
-	const size_t TESTSIZE = 1000;
+	const size_t TESTSIZE = 10000000;
 	for(size_t i = 0; i<TESTSIZE; ++i){
 		TimeStamp lhs = TimeStamp(i, 0);
 		TimeStamp rhs = TimeStamp(i, 1);
