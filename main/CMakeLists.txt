@@ -46,7 +46,7 @@ find_package(GTest REQUIRED)
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=thread" )
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=integer -fsanitize=thread" )
 endif()
 
 
@@ -74,7 +74,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
-    src/test/test.cpp
+    src/test/toolstest.cpp
+    src/test/networktest.cpp
     src/main.cpp
     )
 ###############################################################################
@@ -84,7 +85,11 @@ include_directories(${Boost_INCLUDE_DIRS})             # Boost
 include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
-include_directories(src src/test src/tools)   # Project headers are in same folder as source
+include_directories(	src 
+				src/test 
+				src/tools
+				src/network
+				)   # Project headers are in same folder as source
 
 ### LINKER ####################################################################
 # Register libraries needed.
