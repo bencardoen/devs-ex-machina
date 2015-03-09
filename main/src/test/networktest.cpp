@@ -47,7 +47,6 @@ TEST(Time, HashingOperators){
 	}
 	EXPECT_TRUE(father_time.size()==2*TESTSIZE);
 	father_time.clear();
-	EXPECT_TRUE(father_time.size()==TESTSIZE);
 	double a = 0;
 	double b = a + std::numeric_limits<double>::epsilon()*100;
 	bool x = nearly_equal<double>(a, b);
