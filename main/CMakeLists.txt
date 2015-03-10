@@ -26,12 +26,14 @@ project(${PROJECT_NAME})
 ### DEPENDENCIES ##############################################################
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
-# find_package(GSL REQUIRED)
+
+include ( localpreferences.txt )
+
 find_package(Boost COMPONENTS  system)
+
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
-## If gtest is not system-wide installed, uncomment the follwing line (thanks Stijn)
-#SET(GTEST_ROOT "/path/to/custom/gtest/")
+
 find_package(GTest REQUIRED)
 ###############################################################################
 
