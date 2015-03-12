@@ -137,26 +137,26 @@ public:
 };
 
 // In practice, use this typedef.
-typedef Time<std::size_t, std::size_t> TimeStamp;
+typedef Time<std::size_t, std::size_t> t_timestamp;
 
 /**
  * Convenience function : make a TimeStamp object reflecting the current time.
  */
-TimeStamp makeTimeStamp(size_t causal = 0)
+t_timestamp makeTimeStamp(size_t causal = 0)
 {
 	static std::mutex lock;
 	std::lock_guard<std::mutex> locknow(lock);
-	TimeStamp::t_time now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return TimeStamp(now, causal);
+	t_timestamp::t_time now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	return t_timestamp(now, causal);
 }
 
 /**
- * Given a Timestamp, make another with identical time field, but happening after the
+ * Given a t_timestamp, make another with identical time field, but happening after the
  * original.
  */
-TimeStamp makeCausalTimeStamp(const TimeStamp& before)
+t_timestamp makeCausalTimeStamp(const t_timestamp& before)
 {
-	TimeStamp after(before.getTime(), before.getCausality() + 1);
+	t_timestamp after(before.getTime(), before.getCausality() + 1);
 	return after;
 }
 

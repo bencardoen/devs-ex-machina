@@ -2,33 +2,52 @@
  * message.h
  *
  *  Created on: 12 Mar 2015
- *      Author: ben
+ *      Author: Ben Cardoen
  */
 
 #ifndef SRC_NETWORK_MESSAGE_H_
 #define SRC_NETWORK_MESSAGE_H_
 
-namespace n_network{
+#include "timestamp.h"
 
-class Message{
+namespace n_network {
+
+/**
+ * A Message representing either an event passed between models , or synchronization token
+ * between cores.
+ */
+class Message
+{
 private:
-	const std::string	m_destination_model;
-	std::size_t		m_destination_core;
+	const std::string m_destination_model;
+	std::size_t m_destination_core;
+	const t_timestamp m_timestamp;
+
 public:
-	Message(std::string modeldest, std::size_t coredest=0):m_destination_model(modeldest), m_destination_core(coredest){;}
-	std::size_t
+	Message(std::string modeldest, std::size_t coredest, const t_timestamp& time_made)
+		: m_destination_model(modeldest), m_destination_core(coredest), m_timestamp(time_made)
+	{
+		;
+	}
 
-	getDestinationCore()const{return m_destination_core;}
+	std::size_t getDestinationCore() const
+	{
+		return m_destination_core;
+	}
 
-	void
-	setCore(std::size_t dest){m_destination_core = dest;}	// todo get LookupTable
+	void setDestinationCore(std::size_t dest)
+	{
+		m_destination_core = dest;
+	}
 
-	virtual ~Message(){;}
+	virtual ~Message()
+	{
+		;
+	}
 };
 
 typedef std::shared_ptr<Message> t_msgptr;
 
 } // end namespace
-
 
 #endif /* SRC_NETWORK_MESSAGE_H_ */
