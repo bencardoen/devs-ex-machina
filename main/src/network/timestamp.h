@@ -13,6 +13,7 @@
 #include <ctime>
 #include <type_traits>
 #include <sstream>
+#include <cmath>
 
 namespace n_network {
 
