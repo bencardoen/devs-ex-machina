@@ -210,8 +210,8 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 5000;
-	const int threadcount = std::thread::hardware_concurrency() * 4;
+	const int totalsize = 50;
+	const int threadcount = std::thread::hardware_concurrency() * 2;
 	const int pushcount = threadcount / 2;
 	std::atomic<int> writer_done(0);
 	std::mutex pqueue_mutex;

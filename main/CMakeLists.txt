@@ -29,7 +29,8 @@ project(${PROJECT_NAME})
 
 include ( localpreferences.txt )
 
-find_package(Boost COMPONENTS  system)
+ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
+find_package(Boost COMPONENTS log system)
 
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
@@ -96,7 +97,7 @@ include_directories(	src
 ### LINKER ####################################################################
 # Register libraries needed.
 #set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
-set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${Boost_LOG_LIBRARY} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")

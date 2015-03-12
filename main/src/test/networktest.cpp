@@ -7,7 +7,11 @@
 
 #include <gtest/gtest.h>
 #include "timestamp.h"
+#include "network.h"
+#include "objectfactory.h"
 #include <unordered_set>
+#include <thread>
+#include <vector>
 
 using namespace n_network;
 
@@ -59,4 +63,38 @@ TEST(Time, HashingOperators)
 	EXPECT_TRUE(moretime >= lesstime);
 	EXPECT_TRUE(lesstime != moretime);
 	EXPECT_FALSE(lesstime == moretime);
+}
+
+void push(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cores)
+{
+	for(size_t i =0; i<pushcount; ++i){
+		for(size_t j = 0; j<cores; ++j){
+			if(j==coreid)
+				continue;
+			t_msgptr msg= n_tools::createObject<Message>("", j);
+			net.acceptMessage(msg);
+		}
+	}
+}
+
+void pull(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cores){
+	std::vector<t_msgptr> received;
+	while(received.size() != pushcount*(cores-1)){
+		auto messages = net.getMessages(coreid);
+		received.insert(received.begin(), messages.begin(), messages.end());
+	}
+}
+
+TEST(Network, driver)
+{
+	constexpr size_t cores = 2;
+	n_network::Network<cores> n;
+	std::vector<std::thread> workers;
+	for(size_t i = 0; i<cores; ++i){
+		workers.push_back(std::thread(push, 10, i, std::ref(n), cores));
+		workers.push_back(std::thread(pull, 10, i, std::ref(n), cores));
+	}
+	for(auto& t : workers){
+		t.join();
+	}
 }
