@@ -78,6 +78,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 add_executable(${PROJECT_NAME}
     src/test/toolstest.cpp
     src/test/networktest.cpp
+    src/test/compare.cpp
+    src/test/comparetest.cpp
     src/main.cpp
     )
 ###############################################################################
