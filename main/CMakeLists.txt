@@ -28,9 +28,11 @@ project(${PROJECT_NAME})
 # respective include/library paths referenced later.
 
 include ( localpreferences.txt )
+# G3 Logging
+#FIND_LIBRARY(G3_LIBRARY g3logger /home/ben/workspace/bachelor_project/)
+#include_directories("/home/ben/workspace/logger/src/")
 
-ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
-find_package(Boost COMPONENTS log system)
+find_package(Boost COMPONENTS system)
 
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
@@ -45,11 +47,10 @@ find_package(GTest REQUIRED)
 ### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
-
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG  -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=integer -fsanitize=thread" )
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread  " )
 endif()
 
 
@@ -96,8 +97,7 @@ include_directories(	src
 
 ### LINKER ####################################################################
 # Register libraries needed.
-#set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
-set(LIBS ${LIBS} ${Boost_LOG_LIBRARY} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -106,7 +106,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS})
+#FIND_LIBRARY(G3_LIBRARY g3logger /home/ben/workspace/bachelor_project/)
+#include_directories("/home/ben/workspace/logger/src/")
+target_link_libraries( ${PROJECT_NAME} ${LIBS}  ${G3_LIBRARY})
 ###############################################################################
 
 ### Cotire ###

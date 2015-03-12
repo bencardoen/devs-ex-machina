@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <cmath>
 #include <ctime>
 #include <type_traits>
 #include <sstream>

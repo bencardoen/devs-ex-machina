@@ -12,9 +12,10 @@
 #include "msgqueue.h"
 #include <vector>
 #include <array>
-#include <boost/log/trivial.hpp>
 
 namespace n_network{
+
+
 
 /**
  * Abstraction of Network (Cores communicating via network).
@@ -26,7 +27,12 @@ class Network{
 private:
 	std::array<Msgqueue<t_msgptr>, cores> m_queues;
 public:
+
 	typedef std::vector<t_msgptr> t_messages;
+
+	Network(){
+		LOG(INFO) << "Network constructor";
+	}
 
 	/**
 	 * Called by a core pushing a message to the network.
@@ -35,7 +41,7 @@ public:
 	 */
 	void
 	acceptMessage(const t_msgptr& msg){
-		//BOOST_LOG_TRIVIAL(trace) << "Receiving msg for " << msg->getDestinationCore();
+		LOG(INFO) << "Network accepting message";
 		m_queues[msg->getDestinationCore()].push(msg);
 	}
 
@@ -46,7 +52,7 @@ public:
 	 */
 	t_messages
 	getMessages(std::size_t coreid){
-		//BOOST_LOG_TRIVIAL(trace) << "Returning msgs to "<<coreid;
+		LOG(INFO) << "Network sending msgs to" << coreid;
 		return m_queues[coreid].purge();
 	}
 };

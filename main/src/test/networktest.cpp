@@ -65,7 +65,7 @@ TEST(Time, HashingOperators)
 	EXPECT_FALSE(lesstime == moretime);
 }
 
-void push(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cores)
+void push(size_t pushcount,size_t coreid, n_network::Network<4>& net, size_t cores)
 {
 	for(size_t i =0; i<pushcount; ++i){
 		for(size_t j = 0; j<cores; ++j){
@@ -77,7 +77,7 @@ void push(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cor
 	}
 }
 
-void pull(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cores){
+void pull(size_t pushcount,size_t coreid, n_network::Network<4>& net, size_t cores){
 	std::vector<t_msgptr> received;
 	while(received.size() != pushcount*(cores-1)){
 		auto messages = net.getMessages(coreid);
@@ -87,12 +87,13 @@ void pull(size_t pushcount,size_t coreid, n_network::Network<2>& net, size_t cor
 
 TEST(Network, driver)
 {
-	constexpr size_t cores = 2;
+	constexpr size_t cores = 4;
+	constexpr size_t msgcount = 3;
 	n_network::Network<cores> n;
 	std::vector<std::thread> workers;
 	for(size_t i = 0; i<cores; ++i){
-		workers.push_back(std::thread(push, 10, i, std::ref(n), cores));
-		workers.push_back(std::thread(pull, 10, i, std::ref(n), cores));
+		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
+		workers.push_back(std::thread(pull, msgcount, i, std::ref(n), cores));
 	}
 	for(auto& t : workers){
 		t.join();

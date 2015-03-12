@@ -1,4 +1,6 @@
 SET(GTEST_ROOT "/notexistingmap")
 SET(BOOST_ROOT "/notexistingmap")
 MESSAGE( STATUS"Using custom root path")
-# Zet in deze file all local variaties op het project en voeg deze file toe aan gitignore.
+## G3 logging : define where library file (.a) and g3 source code is found
+FIND_LIBRARY(G3_LIBRARY g3logger /home/ben/workspace/bachelor_project/)
+include_directories("/home/ben/workspace/logger/src/")
