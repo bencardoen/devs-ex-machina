@@ -41,25 +41,30 @@ find_package(GTest REQUIRED)
 ### COMPILER ##################################################################
 # NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
 
+## Check for Windows Cygwin installation, if so we must use -std=gnu++11 instead of -std=c++11
+SET(flagstdc11 -std=c++11)
+if (${CYGWIN})
+    SET(flagstdc11 -std=gnu++11)
+endif()
+
 ### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
 
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=integer -fsanitize=thread" )
 endif()
 
-
 ### Profiling -- Clang and G++ ###############################################
-SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 -std=c++11 -pg")
+SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg")
 
 ### Release build - All compilers#############################################
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g -std=c++11 ")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g ${flagstdc11} ")
 
 ###############################################################################
 

@@ -31,9 +31,15 @@ BUILD_DIR="build"
 
 if [ -d "$BUILD_DIR" ]
 	then
+    if [ -k "$BUILD_DIR" ]
+        then
+        echo "$SCRIPT Build directory exists but can't be removed, quitting."
+        exit -1
+    fi
 	if [ -L "$BUILD_DIR" ]
 		then
 		echo "$SCRIPT Build directory found, but it's a link. Computer says no."
+        exit -1
 	else
         echo "$SCRIPT Found stale build directory : Removing"
 		rm -r $BUILD_DIR

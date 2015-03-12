@@ -1,5 +1,5 @@
 /*
- * ObjectFactory.h
+ * objectFactory.h
  *
  *  Created on: 7 Mar 2015
  *      Author: Ben Cardoen
@@ -15,7 +15,7 @@ namespace n_tools {
 /**
  * Create shared_ptr to the new Object with constructor arguments Args.
  */
-template<typename T, typename... Args>
+template<typename T, typename ... Args>
 std::shared_ptr<T> createObject(Args&&... args)
 {
 	// Note to self: std::forward keeps (rlx)valuetype intact.

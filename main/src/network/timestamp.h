@@ -1,40 +1,37 @@
 /*
- * Time.h
+ * timestamp.h
  *
  *  Created on: 9 Mar 2015
  *      Author: Ben Cardoen
  */
 
-#ifndef SRC_NETWORK_TIME_H_
-#define SRC_NETWORK_TIME_H_
+#ifndef SRC_NETWORK_TIMESTAMP_H_
+#define SRC_NETWORK_TIMESTAMP_H_
 
 #include <chrono>
 #include <mutex>
 #include <ctime>
 #include <type_traits>
 #include <sstream>
+#include <cmath>
 
 namespace n_network {
 
 // Declare Comparison for integral, floating point types using SFINAE && enable_if
 
-template<class T ,
-         typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr >
-bool nearly_equal(const T& left,  const T& right)
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+bool nearly_equal(const T& left, const T& right)
 {
 	// Use an epsilon value of approx 2e-12 (not perfect).
-	static constexpr T eps = std::numeric_limits<T>::epsilon()*1000;
-	return(std::fabs(left-right) < eps);
+	static constexpr T eps = std::numeric_limits<T>::epsilon() * 1000;
+	return (std::fabs(left - right) < eps);
 }
 
-template<class T ,
-         typename std::enable_if<std::is_integral<T>::value>::type* = nullptr >
-bool nearly_equal(const T& left,  const T& right)
+template<class T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+bool nearly_equal(const T& left, const T& right)
 {
-	return (left==right);
+	return (left == right);
 }
-
-
 
 /**
  * Represents a timestamp with optional causal ordering.
@@ -49,9 +46,9 @@ private:
 	 */
 	const T m_timestamp;
 
-
 	inline
-	bool timeStampsEqual(const T& lhs, const T& rhs)const{
+	bool timeStampsEqual(const T& lhs, const T& rhs) const
+	{
 		return (lhs.m_timestamp == rhs.m_timestamp);
 	}
 
@@ -139,7 +136,6 @@ public:
 	}
 };
 
-
 // In practice, use this typedef.
 typedef Time<std::size_t, std::size_t> TimeStamp;
 
@@ -177,10 +173,10 @@ struct hash<n_network::Time<T, X>>
 		// todo use enable_if floating point to get better results here.
 		// @warning : test with -fsanitize=integer (mind overflow).
 		size_t result = hash<T>()(item.getTime()) * prime;
-		result +=  hash<X>()(item.getCausality())*prime;	// second field is very small.
+		result += hash<X>()(item.getCausality()) * prime;	// second field is very small.
 		return result;
 	}
 };
 }
 
-#endif /* SRC_NETWORK_TIME_H_ */
+#endif /* SRC_NETWORK_TIMESTAMP_H_ */
