@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 using namespace n_network;
 
@@ -80,12 +81,14 @@ void push(size_t pushcount,size_t coreid, n_network::Network<4>& net, size_t cor
 void pull(size_t pushcount,size_t coreid, n_network::Network<4>& net, size_t cores){
 	std::vector<t_msgptr> received;
 	while(received.size() != pushcount*(cores-1)){
-		auto messages = net.getMessages(coreid);
-		received.insert(received.begin(), messages.begin(), messages.end());
+		if(net.havePendingMessages(coreid)){
+			auto messages = net.getMessages(coreid);
+			received.insert(received.begin(), messages.begin(), messages.end());
+		}
 	}
 }
 
-TEST(Network, driver)
+TEST(Network, threadsafety)
 {
 	constexpr size_t cores = 4;
 	constexpr size_t msgcount = 3;
@@ -98,4 +101,36 @@ TEST(Network, driver)
 	for(auto& t : workers){
 		t.join();
 	}
+}
+
+void benchNetworkSpeed(bool logging = false){
+	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
+	constexpr size_t cores = 4;
+	constexpr size_t msgcount = 50000;
+	n_network::Network<cores> n;
+	n.setVerbose(logging);
+	std::vector<std::thread> workers;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+	for(size_t i = 0; i<cores; ++i){
+		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
+		workers.push_back(std::thread(pull, msgcount, i, std::ref(n), cores));
+	}
+	for(auto& t : workers){
+		t.join();
+	}
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	std::size_t totalcount = (msgcount * (cores-1))*cores;
+	//std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
+	//<< "elapsed time: " << elapsed_seconds.count() << "s\n";
+	LOG(INFO) << "Network element with up to " << cores << " queues simulated with  " << cores*2 << " threads.";
+	LOG(INFO) << "Logging == " << logging;
+	LOG(INFO) << "Processing speed: " << totalcount/ (elapsed_seconds.count()) << "msg / s" ;
+}
+
+TEST(Network, speed){
+	benchNetworkSpeed(true);
+	benchNetworkSpeed(false);
 }

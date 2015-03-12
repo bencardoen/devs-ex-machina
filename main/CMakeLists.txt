@@ -28,9 +28,7 @@ project(${PROJECT_NAME})
 # respective include/library paths referenced later.
 
 include ( localpreferences.txt )
-# G3 Logging
-#FIND_LIBRARY(G3_LIBRARY g3logger /home/ben/workspace/bachelor_project/)
-#include_directories("/home/ben/workspace/logger/src/")
+
 
 find_package(Boost COMPONENTS system)
 
@@ -61,13 +59,13 @@ SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 -std=c++11 -pg")
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g -std=c++11 ")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fPIC -march=native -g -std=c++11 ")
 
 ###############################################################################
 
 
 ### Print everything CMake does to cout to verify the options are sane.
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ### SOURCES ###################################################################
 # 2 choices here:
@@ -106,8 +104,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-#FIND_LIBRARY(G3_LIBRARY g3logger /home/ben/workspace/bachelor_project/)
-#include_directories("/home/ben/workspace/logger/src/")
+
 target_link_libraries( ${PROJECT_NAME} ${LIBS}  ${G3_LIBRARY})
 ###############################################################################
 

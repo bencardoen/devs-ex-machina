@@ -10,6 +10,7 @@
 
 #include "message.h"
 #include "msgqueue.h"
+#include<g2log.hpp>
 #include <vector>
 #include <array>
 
@@ -26,13 +27,17 @@ template<size_t cores=1>
 class Network{
 private:
 	std::array<Msgqueue<t_msgptr>, cores> m_queues;
+	bool m_verbose;
 public:
 
 	typedef std::vector<t_msgptr> t_messages;
 
-	Network(){
-		LOG(INFO) << "Network constructor";
+	Network():m_verbose(true){
+		LOG_IF(DEBUG, m_verbose) << "Network constructor with " << cores << " queues.";
 	}
+
+	void
+	setVerbose(bool v){m_verbose=v;}
 
 	/**
 	 * Called by a core pushing a message to the network.
@@ -41,7 +46,8 @@ public:
 	 */
 	void
 	acceptMessage(const t_msgptr& msg){
-		LOG(INFO) << "Network accepting message";
+		CHECK(msg->getDestinationCore()<cores)<< "Core index invalid : " << msg->getDestinationCore()  << " geq than " << cores;
+		LOG_IF(DEBUG, m_verbose) << "Network accepting message";
 		m_queues[msg->getDestinationCore()].push(msg);
 	}
 
@@ -49,11 +55,19 @@ public:
 	 * Called by a core when it is ready to process messages.
 	 * @return Any messages queued for calling core. (can be empty)
 	 * @attention locked
+	 * @pre coreid < cores
 	 */
 	t_messages
 	getMessages(std::size_t coreid){
-		LOG(INFO) << "Network sending msgs to" << coreid;
+		CHECK(coreid < cores) << "Core index invalid : " << coreid  << " geq than " << cores;
+		LOG_IF(DEBUG, m_verbose) << "Network sending msgs to " << coreid;
 		return m_queues[coreid].purge();
+	}
+
+	bool
+	havePendingMessages(std::size_t coreid)const{
+		CHECK(coreid < cores) << "Core index invalid : " << coreid  << " geq than " << cores;
+		return m_queues[coreid].size()!=0;
 	}
 };
 
