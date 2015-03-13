@@ -103,12 +103,11 @@ TEST(Network, threadsafety)
 	}
 }
 
-void benchNetworkSpeed(bool logging = false){
+void benchNetworkSpeed(){
 	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
 	constexpr size_t cores = 4;
 	constexpr size_t msgcount = 90000;
 	n_network::Network<cores> n;
-	n.setVerbose(logging);
 	std::vector<std::thread> workers;
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
@@ -119,18 +118,17 @@ void benchNetworkSpeed(bool logging = false){
 	for(auto& t : workers){
 		t.join();
 	}
+	/**
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end-start;
 	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 	std::size_t totalcount = (msgcount * (cores-1))*cores;
-	//std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
+	std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
 	//<< "elapsed time: " << elapsed_seconds.count() << "s\n";
-	LOG(INFO) << "Network element with up to " << cores << " queues simulated with  " << cores*2 << " threads.";
-	LOG(INFO) << "Logging == " << logging;
-	LOG(INFO) << "Processing speed: " << totalcount/ (elapsed_seconds.count()) << "msg / s" ;
+	 *
+	 */
 }
 
 TEST(Network, speed){
-	//benchNetworkSpeed(true);
-	benchNetworkSpeed(false);
+	benchNetworkSpeed();
 }

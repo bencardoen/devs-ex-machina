@@ -105,7 +105,7 @@ endif()
 
 # Execute linker
 
-target_link_libraries( ${PROJECT_NAME} ${LIBS}  ${G3_LIBRARY})
+target_link_libraries( ${PROJECT_NAME} ${LIBS} )
 ###############################################################################
 
 ### Cotire ###
