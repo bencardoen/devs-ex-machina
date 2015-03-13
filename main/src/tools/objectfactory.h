@@ -18,8 +18,6 @@ namespace n_tools {
 template<typename T, typename ... Args>
 std::shared_ptr<T> createObject(Args&&... args)
 {
-	// Note to self: std::forward keeps (rlx)valuetype intact.
-	// If needed, replace with allocate_shared...
 	return std::make_shared<T>(std::forward<Args>(args)...);
 }
 } /* namespace n_tools */

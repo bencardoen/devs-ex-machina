@@ -131,6 +131,6 @@ void benchNetworkSpeed(bool logging = false){
 }
 
 TEST(Network, speed){
-	benchNetworkSpeed(true);
+	//benchNetworkSpeed(true);
 	benchNetworkSpeed(false);
 }

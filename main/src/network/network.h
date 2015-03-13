@@ -46,7 +46,7 @@ public:
 	 */
 	void
 	acceptMessage(const t_msgptr& msg){
-		CHECK(msg->getDestinationCore()<cores)<< "Core index invalid : " << msg->getDestinationCore()  << " geq than " << cores;
+		CHECK(msg->getDestinationCore()< cores)<< "Core index invalid : " << msg->getDestinationCore()  << " geq than " << cores;
 		LOG_IF(DEBUG, m_verbose) << "Network accepting message";
 		m_queues[msg->getDestinationCore()].push(msg);
 	}
