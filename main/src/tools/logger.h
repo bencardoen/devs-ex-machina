@@ -133,6 +133,6 @@ namespace n_tools {
 } /* namespace n_tools */
 
 //you can define the log level here. if you want to
-#define LOG_LEVEL n_tools::Logger::E_INFO
+#define LOG_LEVEL 0
 
 #endif /* SRC_TOOLS_LOGGER_H_ */

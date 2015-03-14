@@ -40,8 +40,12 @@
 #elif LOG_LEVEL==LOG_ERROR_I
 #define LOG_FILTER 1
 #define LOGGING true
+#elif LOG_LEVEL!=0
+#define LOG_FILTER LOG_LEVEL
+#define LOGGING true
 #else
-#define LOG_FILTER LOGLEVEL
+#define LOG_FILTER 0
+#define LOGGING false
 #endif
 #else
 #error Cannot use globallog if LogLevel is not defined
@@ -61,7 +65,11 @@ extern std::mutex globalLogMutex;
 #define LOG_MUTEX n_tools::n_globalLog::globalLogMutex
 
 //macro for intitializing the global logger
+#if LOGGING==true
 #define LOG_INIT(filename) n_tools::Logger LOG_GLOBAL(filename, LOG_FILTER); std::mutex LOG_MUTEX;
+#else
+#define LOG_INIT(filename)
+#endif
 //macros for calling the logging functions
 #define LOG_BLOCK(logCommand) do{std::lock_guard<std::mutex> lock(LOG_MUTEX); logCommand}while(0)
 #define LOG_NOOP do{}while(0)
