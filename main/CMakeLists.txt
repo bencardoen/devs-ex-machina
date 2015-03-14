@@ -83,6 +83,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
+	src/model/port.cpp
     src/test/toolstest.cpp
     src/test/networktest.cpp
     src/test/compare.cpp
