@@ -51,6 +51,13 @@
 #error Cannot use globallog if LogLevel is not defined
 #endif
 
+
+#define LOG_GLOBAL n_tools::n_globalLog::globalLog
+#define LOG_MUTEX n_tools::n_globalLog::globalLogMutex
+
+//macro for intitializing the global logger
+#if LOGGING==true
+
 namespace n_tools{
 namespace n_globalLog{
 
@@ -59,13 +66,6 @@ extern std::mutex globalLogMutex;
 
 }	/*namespace n_globalLog*/
 }	/*namespace n_tools*/
-
-
-#define LOG_GLOBAL n_tools::n_globalLog::globalLog
-#define LOG_MUTEX n_tools::n_globalLog::globalLogMutex
-
-//macro for intitializing the global logger
-#if LOGGING==true
 #define LOG_INIT(filename) n_tools::Logger LOG_GLOBAL(filename, LOG_FILTER); std::mutex LOG_MUTEX;
 #else
 #define LOG_INIT(filename)

@@ -14,7 +14,6 @@ namespace n_tools {
 	Logger::~Logger() {
 		m_out.flush();
 		delete m_buf;
-		std::cout << "deleting Logger\n";
 	}
 
 	void Logger::startEntry(LoggingLevel level) {
