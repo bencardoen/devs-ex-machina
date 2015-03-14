@@ -18,6 +18,18 @@
 #include <vector>
 
 namespace n_tools {
+	template<typename T, typename C = std::deque<T> >
+	class LockedQueue: public std::queue<T, C>{
+		private:
+			std::mutex m_mutex;
+		public:
+			using std::queue<T, C>::queue;
+			bool empty(){
+				std::lock_guard<std::mutex> guard(this->m_mutex);
+				return std::queue<T, C>::empty();
+			}
+
+	};
 
 	//http://stackoverflow.com/a/21127776
 	struct async_buf
@@ -25,9 +37,8 @@ namespace n_tools {
 	{
 	    std::ofstream                 out;
 	    std::mutex                    mutex;
-	    std::mutex                    isEmptyMutex;
 	    std::condition_variable       condition;
-	    std::queue<std::vector<char>> queue;
+	    LockedQueue<std::vector<char>> queue;
 	    std::vector<char>             buffer;
 	    std::thread                   thread;
 	    bool                          done;
@@ -59,7 +70,6 @@ namespace n_tools {
 	    }
 
 	    bool isQueueEmpty(){
-	    	std::lock_guard<std::mutex> lock(this->isEmptyMutex);
 	    	return this->queue.empty();
 	    }
 
