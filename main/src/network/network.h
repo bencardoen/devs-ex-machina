@@ -31,6 +31,7 @@ public:
 	typedef std::vector<t_msgptr> t_messages;
 
 	Network(){;
+		LOG_IF(DEBUG, m_verbose) << "Network constructor with " << cores << " queues.";
 	}
 
 	/**
