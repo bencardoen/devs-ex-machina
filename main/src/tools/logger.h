@@ -25,6 +25,7 @@ namespace n_tools {
 	{
 	    std::ofstream                 out;
 	    std::mutex                    mutex;
+	    std::mutex                    isEmptyMutex;
 	    std::condition_variable       condition;
 	    std::queue<std::vector<char>> queue;
 	    std::vector<char>             buffer;
@@ -34,16 +35,16 @@ namespace n_tools {
 	    void worker() {
 	        bool local_done(false);
 	        std::vector<char> buf;
-	        while (!this->queue.empty() || !local_done) {
+	        while (!isQueueEmpty() || !local_done) {
 	            {
 	                std::unique_lock<std::mutex> guard(this->mutex);
 	                this->condition.wait(guard,
 	                                     [this](){ return !this->queue.empty()
 	                                                   || this->done; });
-	                while (this->queue.empty() && !this->done) {
+	                while (isQueueEmpty() && !this->done) {
 	                    this->condition.wait(guard);
 	                }
-	                if (!this->queue.empty()) {
+	                if (!isQueueEmpty()) {
 	                    buf.swap(queue.front());
 	                    queue.pop();
 	                }
@@ -55,6 +56,11 @@ namespace n_tools {
 	                buf.clear();
 	            }
 	        }
+	    }
+
+	    bool isQueueEmpty(){
+	    	std::lock_guard<std::mutex> lock(this->isEmptyMutex);
+	    	return this->queue.empty();
 	    }
 
 	public:
