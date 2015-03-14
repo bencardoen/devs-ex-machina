@@ -143,7 +143,7 @@ typedef Time<std::size_t, std::size_t> t_timestamp;
 /**
  * Convenience function : make a TimeStamp object reflecting the current time.
  */
-t_timestamp makeTimeStamp(size_t causal = 0)
+inline t_timestamp makeTimeStamp(size_t causal = 0)
 {
 	static std::mutex lock;
 	std::lock_guard<std::mutex> locknow(lock);
@@ -155,7 +155,7 @@ t_timestamp makeTimeStamp(size_t causal = 0)
  * Given a t_timestamp, make another with identical time field, but happening after the
  * original.
  */
-t_timestamp makeCausalTimeStamp(const t_timestamp& before)
+inline t_timestamp makeCausalTimeStamp(const t_timestamp& before)
 {
 	t_timestamp after(before.getTime(), before.getCausality() + 1);
 	return after;
