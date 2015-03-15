@@ -56,6 +56,6 @@ namespace n_tools {
 } /* namespace n_tools */
 
 //you can define the log level here. if you want to
-#define LOG_LEVEL 24
+#define LOG_LEVEL 8
 
 #endif /* SRC_TOOLS_LOGGER_H_ */
