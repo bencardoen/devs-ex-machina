@@ -6,7 +6,12 @@
  */
 #ifndef SRC_TOOLS_GLOBALLOG_H_
 #define SRC_TOOLS_GLOBALLOG_H_
+#define LOG_USEGLOBAL
 #include "logger.h"
+#include <cstring>
+
+//http://stackoverflow.com/a/8488201
+#define FILE_SHORT (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 //MACRO's
 //define macros for the message level
@@ -72,8 +77,8 @@ extern std::mutex globalLogMutex;
 #endif
 //macros for calling the logging functions
 #define LOG_BLOCK(logCommand) do{std::lock_guard<std::mutex> lock(LOG_MUTEX); logCommand}while(0)
-#define LOG_NOOP do{}while(0)
-#define LOG_ARGS(start, data) LOG_GLOBAL << start << " \t[ "<< __FILE__ << " L: " << __LINE__ << "] \t" << data << '\n';
+#define LOG_NOOP
+#define LOG_ARGS(start, data) LOG_GLOBAL << start << " \t[ "<< FILE_SHORT << " L: " << __LINE__ << "] \t" << data << '\n';
 
 #if LOG_ERROR_I&LOG_FILTER
 #define LOG_ERROR(data) LOG_BLOCK(LOG_ARGS(LOG_ERROR_STR, data))
