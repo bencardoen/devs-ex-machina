@@ -55,14 +55,15 @@ namespace n_tools{
 	        while (true) {
 	            {
 	                std::unique_lock<std::mutex> guard(this->mutex);
-	                if(isQueueEmpty() && local_done) break;
+	                if(queue.empty() && local_done) break;
 	                this->condition.wait(guard,
-	                                     [this](){ return !this->queue.empty()
-	                                                   || this->done; });
-	                while (isQueueEmpty() && !this->done) {
+	                                     [this]()->bool{ return
+	                                    		 	 (!queue.empty()
+	                                                   || done); });
+	                while (queue.empty() && !this->done) {
 	                    this->condition.wait(guard);
 	                }
-	                if (!isQueueEmpty()) {
+	                if (!queue.empty()) {
 	                    buf.swap(queue.front());
 	                    queue.pop();
 	                }
@@ -76,15 +77,12 @@ namespace n_tools{
 	        }
 	    }
 
-	    bool isQueueEmpty(){
-	    	return this->queue.empty();
-	    }
-
 	public:
 	    ASynchWriter(std::string const& name)
 	        : out(name)
 	        , buffer(512)
-	        , thread(std::bind(&ASynchWriter::worker, this)) {
+	        , thread(std::bind(&ASynchWriter::worker, this))
+			, done(false){
 	        this->setp(this->buffer.data(),
 	                   this->buffer.data() + this->buffer.size() - 1);
 	    }
