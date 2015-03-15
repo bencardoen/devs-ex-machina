@@ -76,7 +76,7 @@ namespace n_tools {
 	public:
 	    async_buf(std::string const& name)
 	        : out(name)
-	        , buffer(128)
+	        , buffer(512)
 	        , thread(std::bind(&async_buf::worker, this)) {
 	        this->setp(this->buffer.data(),
 	                   this->buffer.data() + this->buffer.size() - 1);
@@ -131,6 +131,7 @@ namespace n_tools {
 	    	template<typename T>
 	    	Logger& operator<<(const T& data){
 //	    		if(m_doPrint)
+	    		std::lock_guard<std::mutex> m(this->m_mutex);
 	    			m_out << data;
 	    		return *this;
 	    	}
@@ -140,6 +141,7 @@ namespace n_tools {
 	    	std::ostream m_out;
 	    	int m_levelFilter;
 	    	bool m_doPrint;
+	    	std::mutex m_mutex;
 
 	};
 
