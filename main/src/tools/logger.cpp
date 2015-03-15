@@ -8,7 +8,7 @@
 #include <logger.h>
 
 namespace n_tools {
-	Logger::Logger(const char* filename, int level) :m_buf(new async_buf(filename)), m_out(m_buf), m_levelFilter(level), m_doPrint(false){
+	Logger::Logger(const char* filename, int level) :m_buf(new ASynchWriter(filename)), m_out(m_buf), m_levelFilter(level), m_doPrint(false){
 		m_out.rdbuf(m_buf);
 	}
 	Logger::~Logger() {
