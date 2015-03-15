@@ -106,7 +106,7 @@ TEST(Network, threadsafety)
 void benchNetworkSpeed(){
 	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
 	constexpr size_t cores = 4;
-	constexpr size_t msgcount = 90000;
+	constexpr size_t msgcount = 1000;
 	n_network::Network<cores> n;
 	std::vector<std::thread> workers;
 	std::chrono::time_point<std::chrono::system_clock> start, end;

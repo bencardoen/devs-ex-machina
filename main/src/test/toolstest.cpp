@@ -21,7 +21,7 @@ typedef ExampleItem t_TypeUsed;
 /**
  * @brief pusher Threadtask, push totalsize item on scheduler, mark finish with writer_done.
  */
-void pusher(std::atomic<int>& writer_done, const int totalsize,
+void pusher(std::mutex& queuelock, std::atomic<int>& writer_done, const int totalsize,
         const SchedulerFactory<t_TypeUsed>::t_Scheduler& scheduler, const int id)
 {
 	std::atomic<int> count(0);
@@ -33,6 +33,7 @@ void pusher(std::atomic<int>& writer_done, const int totalsize,
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	shuffle(rands.begin(), rands.end(), std::default_random_engine(seed));
 	for (int i = 0; i < totalsize; ++i) {
+		std::lock_guard<std::mutex> m_lock(queuelock);
 		t_TypeUsed q(rands[i]);
 		scheduler->push_back(q); // scheduler is locked on single operations.
 		count.fetch_add(1);
@@ -164,7 +165,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher, std::ref(pqueue_mutex), std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));
@@ -191,7 +192,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher, std::ref(pqueue_mutex), std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));
@@ -218,7 +219,7 @@ TEST_F(SchedulerTest, Concurrency_threadoverload)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher, std::ref(pqueue_mutex), std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));
