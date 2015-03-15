@@ -13,20 +13,22 @@
 #include <map>
 
 namespace n_model {
-class AtomicModel
+class AtomicModel : public Model
 {
 private:
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
 
 public:
-	State extTransition(const n_network::t_msgptr & message);
-	State intTransition();
-	State confTransition(const n_network::t_msgptr & message);
-	t_timestamp timeAdvance();
-	std::map<t_portptr, n_network::t_msgptr> output();
+	virtual void extTransition(const n_network::t_msgptr & message);
+	virtual void intTransition();
+	virtual void confTransition(const n_network::t_msgptr & message);
+	virtual t_timestamp timeAdvance();
+	virtual std::map<t_portptr, n_network::t_msgptr> output();
 	void setGVT(t_timestamp gvt);
 	void revert(t_timestamp time);
+
+	virtual ~AtomicModel();
 };
 }
 

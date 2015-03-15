@@ -27,7 +27,7 @@ project(${PROJECT_NAME})
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
 
-include ( localpreferences.txt )
+include ( localpreferences.txt OPTIONAL )
 
 
 find_package(Boost COMPONENTS system)

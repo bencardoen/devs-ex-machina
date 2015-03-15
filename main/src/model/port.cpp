@@ -68,11 +68,11 @@ std::function<void(const n_network::t_msgptr&)> Port::getZFunc(std::shared_ptr<P
  *
  * @return whether or not the port wasn't already added
  */
-bool Port::setZFunc(std::shared_ptr<Port> port, std::function<void(const n_network::t_msgptr&)> function)
+bool Port::setZFunc(std::shared_ptr<Port> port, t_zfunc function)
 {
 	if (m_outs.find(port) == m_outs.end())
 		return false;
-	m_outs.insert(std::pair<std::shared_ptr<Port>, std::function<void(const n_network::t_msgptr&)> > (port, function));
+	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc > (port, function));
 	return true;
 }
 

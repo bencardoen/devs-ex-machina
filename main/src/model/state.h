@@ -9,13 +9,15 @@
 #define STATE_H_
 
 namespace n_model {
+
 class State
 {
-	virtual std::string toString();
-	virtual std::string toXML();
-	virtual std::string toJSON();
-	virtual std::string toCell();
-	virtual ~State();
+public:
+	virtual std::string toString() = 0;
+	virtual std::string toXML() = 0;
+	virtual std::string toJSON() = 0;
+	virtual std::string toCell() = 0;
+	virtual ~State() {}
 };
 
 typedef std::shared_ptr<State> t_stateptr;

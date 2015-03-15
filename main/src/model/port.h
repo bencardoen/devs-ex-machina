@@ -15,6 +15,8 @@
 
 namespace n_model {
 
+typedef std::function<n_network::t_msgptr(const n_network::t_msgptr&)> t_zfunc;
+
 class Port
 {
 private:
@@ -23,7 +25,7 @@ private:
 	bool m_inputPort;
 
 	std::vector<std::shared_ptr<Port> > m_ins;
-	std::map<std::shared_ptr<Port>, std::function<void(const n_network::t_msgptr&)> > m_outs;
+	std::map<std::shared_ptr<Port>, t_zfunc> m_outs;
 
 public:
 	Port(std::string name, std::string hostname, bool inputPort);
@@ -32,7 +34,7 @@ public:
 	std::string getFullName() const;
 	bool isInPort() const;
 	std::function<void(const n_network::t_msgptr&)> getZFunc(std::shared_ptr<Port> port) const;
-	bool setZFunc(std::shared_ptr<Port> port, std::function<void(const n_network::t_msgptr&)> function);
+	bool setZFunc(std::shared_ptr<Port> port, t_zfunc function = t_zfunc());
 	bool setInPort(std::shared_ptr<Port> port);
 };
 

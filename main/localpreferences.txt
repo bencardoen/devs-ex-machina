@@ -1,4 +1,0 @@
-SET(GTEST_ROOT "/cygdrive/d/workspace/c++/gtest-1.6.0/")
-SET(BOOST_ROOT "/cygdrive/d/workspace/c++/boost-1.57.0/")
-MESSAGE( STATUS"Using custom root path")
-# Zet in deze file all local variaties op het project en voeg deze file toe aan gitignore.

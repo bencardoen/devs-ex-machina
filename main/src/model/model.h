@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <deque>
 #include <memory>
 #include "port.h"
 #include "state.h"
@@ -35,16 +36,22 @@ private:
 	t_stateptr m_state;
 	std::vector<t_stateptr> m_oldStates;
 
+	std::deque<n_network::t_msgptr> m_sendMessages;
+	std::deque<n_network::t_msgptr> m_receivedMessages;
+
 	t_portptr addPort(std::string name, bool isIn);
 
 protected:
-	Model(std::string name);
-
-	t_portptr addInPort(std::string);
-	t_portptr addOutPort(std::string);
+	t_portptr addInPort(std::string name);
+	t_portptr addOutPort(std::string name);
 
 public:
+	Model() = delete;
+	Model(std::string name);
+	virtual ~Model() {}
+
 	std::string getName() const;
+	t_portptr getPort(std::string name);
 	t_stateptr getState() const;
 	void setState(t_stateptr newState);
 };

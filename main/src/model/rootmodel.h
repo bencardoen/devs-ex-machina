@@ -11,7 +11,7 @@
 #include "atomicmodel.h"
 
 namespace n_model {
-class RootModel
+class RootModel : public Model
 {
 private:
 	std::vector<AtomicModel> m_components;

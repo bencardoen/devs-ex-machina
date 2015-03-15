@@ -11,7 +11,7 @@
 #include "atomicmodel.h"
 
 namespace n_model {
-class CoupledModel
+class CoupledModel : public Model
 {
 private:
 	std::vector<Model> m_components;
