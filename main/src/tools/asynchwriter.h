@@ -55,7 +55,7 @@ namespace n_tools{
 	        while (true) {
 	            {
 	                std::unique_lock<std::mutex> guard(this->mutex);
-	                if(!isQueueEmpty() || !local_done) break;
+	                if(isQueueEmpty() && local_done) break;
 	                this->condition.wait(guard,
 	                                     [this](){ return !this->queue.empty()
 	                                                   || this->done; });
