@@ -29,6 +29,11 @@ namespace n_tools {
 				return std::queue<T, C>::empty();
 			}
 
+			void push(T item){
+				std::lock_guard<std::mutex> guard(this->m_mutex);
+				std::queue<T, C>::push(item);
+			}
+
 	};
 
 	//http://stackoverflow.com/a/21127776
@@ -46,9 +51,10 @@ namespace n_tools {
 	    void worker() {
 	        bool local_done(false);
 	        std::vector<char> buf;
-	        while (!isQueueEmpty() || !local_done) {
+	        while (true) {
 	            {
 	                std::unique_lock<std::mutex> guard(this->mutex);
+	                if(!isQueueEmpty() || !local_done) break;
 	                this->condition.wait(guard,
 	                                     [this](){ return !this->queue.empty()
 	                                                   || this->done; });
@@ -98,10 +104,10 @@ namespace n_tools {
 	            ? std::char_traits<char>::not_eof(c): std::char_traits<char>::eof();
 	    }
 	    int sync() {
+            std::lock_guard<std::mutex> guard(this->mutex);
 	        if (this->pbase() != this->pptr()) {
 	            this->buffer.resize(std::size_t(this->pptr() - this->pbase()));
 	            {
-	                std::unique_lock<std::mutex> guard(this->mutex);
 	                this->queue.push(std::move(this->buffer));
 	            }
 	            this->condition.notify_one();
