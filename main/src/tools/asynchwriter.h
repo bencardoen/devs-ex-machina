@@ -44,7 +44,7 @@ namespace n_tools{
 	    std::ofstream                 out;
 	    std::mutex                    mutex;
 	    std::condition_variable       condition;
-	    LockedQueue<std::vector<char>> queue;
+	    std::queue<std::vector<char>> queue;
 	    std::vector<char>             buffer;
 	    std::thread                   thread;
 	    bool                          done;
