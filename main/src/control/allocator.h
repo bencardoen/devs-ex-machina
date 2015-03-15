@@ -14,6 +14,7 @@ class Allocator
 {
 public:
 	Allocator();
+
 	virtual ~Allocator();
 };
 

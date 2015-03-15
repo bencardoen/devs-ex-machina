@@ -8,13 +8,16 @@
 #ifndef SRC_CONTROL_LOCATIONTABLE_H_
 #define SRC_CONTROL_LOCATIONTABLE_H_
 
-#include "Controller.h"
+#include <unordered_map>
+#include "../model/model.h"
 
-//TEMPORARY:
-//FIXME
+// TEMPORARY:
+// FIXME
 namespace n_core {
+class Core;
 typedef int t_coreID;
 } /* namespace n_core */
+
 
 namespace n_control {
 
@@ -26,7 +29,7 @@ public:
 	virtual ~LocationTable();
 
 	n_core::t_coreID lookupModel(std::string modelName);
-	void registerModel(t_modelPtr model);
+	void registerModel(t_modelPtr model, n_core::t_coreID core);
 
 private:
 	uint m_amountCores;
