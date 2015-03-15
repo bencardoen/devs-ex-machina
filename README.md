@@ -5,7 +5,7 @@
 * CMake
 * Boost (heap, system ; header only)
 * G++ (4.8.2|4.9), MinGW, Clang(3.4|3.5)
-* GTest
+* GTest 1.7
 
 ### Building & running ###
 

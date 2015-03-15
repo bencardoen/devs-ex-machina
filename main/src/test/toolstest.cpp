@@ -156,7 +156,7 @@ TEST_F(SchedulerTest, basic_unschedule_until)
  */
 TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 {
-	const int totalsize = 5000; // On an i5 quad core , 50000 elems requires approx 1 min.
+	const int totalsize = 100; // On an i5 quad core , 50000 elems requires approx 1 min.
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	const int pushcount = threadcount / 2;  //e.g. 4 -1 = 3 , 3/2 = 1 pusher
 	std::atomic<int> writer_done(0);
@@ -183,7 +183,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
  */
 TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 {
-	const int totalsize = 5000;
+	const int totalsize = 100;
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	const int pushcount = 1;
 	std::atomic<int> writer_done(0);
@@ -210,8 +210,8 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 5000;
-	const int threadcount = std::thread::hardware_concurrency() * 4;
+	const int totalsize = 50;
+	const int threadcount = std::thread::hardware_concurrency() * 2;
 	const int pushcount = threadcount / 2;
 	std::atomic<int> writer_done(0);
 	std::mutex pqueue_mutex;

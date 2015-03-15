@@ -31,9 +31,15 @@ BUILD_DIR="build"
 
 if [ -d "$BUILD_DIR" ]
 	then
+    if [ -k "$BUILD_DIR" ]
+        then
+        echo "$SCRIPT Build directory exists but can't be removed, quitting."
+        exit -1
+    fi
 	if [ -L "$BUILD_DIR" ]
 		then
 		echo "$SCRIPT Build directory found, but it's a link. Computer says no."
+        exit -1
 	else
         echo "$SCRIPT Found stale build directory : Removing"
 		rm -r $BUILD_DIR
@@ -48,7 +54,7 @@ echo "$SCRIPT Generating CMake Build."
 # ARG1 argument is not needed for compilation but ensures the indexer in eclipse actually works.
 
 # Uncomment to use clang++ as compiler.
-cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1=-std=c++11 -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../main
+cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1=-std=gnu++11 -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../main
 
 
 echo "$SCRIPT Building project .... "

@@ -27,9 +27,10 @@ project(${PROJECT_NAME})
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
 
-include ( localpreferences.txt )
+include ( localpreferences.txt OPTIONAL )
 
-find_package(Boost COMPONENTS  system)
+
+find_package(Boost COMPONENTS system)
 
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
@@ -41,31 +42,37 @@ find_package(GTest REQUIRED)
 ### COMPILER ##################################################################
 # NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
 
+## Check for Windows Cygwin installation, if so we must use -std=gnu++11 instead of -std=c++11
+SET(flagstdc11 -std=c++11)
+if (${CYGWIN})
+    SET(flagstdc11 -std=gnu++11)
+endif()
+
 ### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
 
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 -std=c++11 -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=integer -fsanitize=thread" )
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread  " )
 endif()
 
-
 ### Profiling -- Clang and G++ ###############################################
-SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 -std=c++11 -pg")
+SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg")
 
 ### Release build - All compilers#############################################
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g -std=c++11 ")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g ${flagstdc11} ")
 
 ###############################################################################
 
 
 ### Print everything CMake does to cout to verify the options are sane.
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ### SOURCES ###################################################################
 # 2 choices here:
@@ -76,8 +83,11 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
+	src/model/port.cpp
     src/test/toolstest.cpp
     src/test/networktest.cpp
+    src/test/compare.cpp
+    src/test/comparetest.cpp
     src/main.cpp
     )
 ###############################################################################
@@ -95,7 +105,6 @@ include_directories(	src
 
 ### LINKER ####################################################################
 # Register libraries needed.
-#set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
@@ -105,7 +114,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS})
+
+target_link_libraries( ${PROJECT_NAME} ${LIBS} )
 ###############################################################################
 
 ### Cotire ###
