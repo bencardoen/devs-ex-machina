@@ -36,7 +36,7 @@ namespace n_tools {
 	    	template<typename T>
 	    	Logger& operator<<(const T& data){
 //	    		if(m_doPrint)
-//	    		std::lock_guard<std::mutex> m(this->m_mutex);
+	    		std::lock_guard<std::mutex> m(this->m_mutex);
 	    			m_out << data;
 	    		return *this;
 	    	}
