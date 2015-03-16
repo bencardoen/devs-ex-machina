@@ -45,7 +45,7 @@ private:
 	 * Integral time in ticks, can be relative to epoch or 0.
 	 * @see makeTimeStamp();
 	 */
-	const T m_timestamp;
+	T m_timestamp;
 
 	inline
 	bool timeStampsEqual(const T& lhs, const T& rhs) const
@@ -57,12 +57,12 @@ private:
 	 * Defines 'happens before' (as in Lamport clocks).
 	 * A.m_causal < B.m_causal IF A happened before B (and time field is equal)
 	 */
-	const X m_causal;
+	X m_causal;
 public:
 	typedef T t_time;
 	typedef X t_causal;
 
-	Time() = delete;
+	Time()=default;
 	Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
 	{

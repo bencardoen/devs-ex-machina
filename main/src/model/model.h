@@ -50,11 +50,13 @@ public:
 	Model(std::string name);
 	virtual ~Model() {}
 
-	std::string getName() const;
+	std::string getName() const{return m_name;}
 	t_portptr getPort(std::string name);
 	t_stateptr getState() const;
 	void setState(t_stateptr newState);
 };
+
+typedef std::shared_ptr<Model> t_modelptr;
 }
 
 #endif /* MODEL_H_ */
