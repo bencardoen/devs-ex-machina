@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <control/allocator.h>
+#include "allocator.h"
 
 namespace n_control {
 

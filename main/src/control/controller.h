@@ -13,37 +13,34 @@
 #include <memory>
 #include <thread>
 #include <unordered_map>
-#include "../network/timestamp.h"
-#include "../model/model.h"
-#include "../model/port.h"
+#include "timestamp.h"
+//#include "model.h"	// TODO uncomment after models are complete.
+#include "port.h"
 #include "locationtable.h"
+#include "core.h"
 
-// TEMPORARY:
-// FIXME
-namespace n_core {
-class Core;
-typedef int t_coreID;
-} /* namespace n_core */
+using n_model::t_coreptr;
 
 namespace n_control {
 
+using n_network::t_timestamp;
+
 class Controller
 {
-	typedef std::shared_ptr<n_model::Model> t_modelPtr;
 public:
 	Controller(std::string name);
 
 	virtual ~Controller();
 
-	void addModel(t_modelPtr model);
+	void addModel(const t_modelptr& model);
 
 	void simulate();
 
 	void setClassicDEVS(bool classicDEVS = true);
 
-	void setTerminationTime(n_network::Time time);
+	void setTerminationTime(t_timestamp time);
 
-	void setTerminationCondition(std::function<bool(n_network::Time, n_model::Model)> termination_condition);
+	void setTerminationCondition(std::function<bool(t_timestamp,const t_modelptr&)> termination_condition);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
@@ -70,10 +67,10 @@ private:
 	bool m_isClassicDEVS;
 	std::string m_name;
 	bool m_checkTermTime;
-	n_network::Time m_terminationTime;
+	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(n_network::Time, n_model::Model)> m_terminationCondition;
-	std::unordered_map<n_core::t_coreID, n_core::Core> m_cores;
+	std::function<bool(t_timestamp, const t_modelptr&)> m_terminationCondition;
+	std::unordered_map<std::size_t, t_coreptr> m_cores;
 };
 
 } /* namespace n_control */

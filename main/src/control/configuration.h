@@ -8,7 +8,8 @@
 #ifndef SRC_CONTROL_CONFIGURATION_H_
 #define SRC_CONTROL_CONFIGURATION_H_
 
-#include "../network/timestamp.h"
+#include "timestamp.h"
+
 
 namespace n_control {
 
@@ -25,7 +26,7 @@ public:
 	// TODO void setScheduler...
 	// TODO void setTracer...
 	// TODO void setAllocator...
-	void setCheckpointing(std::string filename, n_network::Time interval) = delete;
+	void setCheckpointing(std::string filename, n_network::t_timestamp interval) = delete;
 
 private:
 	Formalism m_formalism;
