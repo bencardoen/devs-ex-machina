@@ -39,8 +39,8 @@ int streamcmp(std::istream& str1, std::istream& str2){
 
 int filecmp(const char* file1, const char* file2){
 	if(file1 == nullptr || file2 == nullptr) throw std::ios_base::failure("filecmp: filename(s) are nullptr.");
-	std::ifstream stream1(file1);
-	std::ifstream stream2(file2);
+	std::ifstream stream1(file1, std::fstream::binary);
+	std::ifstream stream2(file2, std::fstream::binary);
 	return streamcmp(stream1, stream2);
 }
 
