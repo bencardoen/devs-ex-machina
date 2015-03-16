@@ -52,6 +52,24 @@ public:
 		return false;
 	}
 
+	/**
+	 * @brief getTracer overload for when the argument is out of bounds.
+	 * The compiler error will complain that a deleted function has been invoked,
+	 * pointing to the place where the function is actually invoked.
+	 */
+	template<std::size_t n>
+	const void*
+	getByID() const = delete;
+
+
+	/**
+	 * @brief getTracer overload for when the argument is out of bounds.
+	 * The compiler error will complain that a deleted function has been invoked,
+	 * pointing to the place where the function is actually invoked.
+	 */
+	template<std::size_t n>
+	void*
+	getByID() = delete;
 
 	/**
 	 * @brief Traces internal state transition
@@ -119,6 +137,14 @@ public:
 	 */
 	std::size_t getSize() const{
 		return (sizeof...(TracerElems) + 1);
+	}
+
+	/**
+	 * @brief Returns whether any tracers are registered.
+	 * @note Disabled tracers still count.
+	 */
+	bool hasTracers() const{
+		return true;
 	}
 
 	/**

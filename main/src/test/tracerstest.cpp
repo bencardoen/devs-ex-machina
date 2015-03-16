@@ -40,15 +40,6 @@ struct testVal{
 	unsigned int i;
 };
 
-//tests whether the constructor copies its arguments or not
-//the copy constructor is deleted so the move constructor is used.
-struct moveTest{
-	moveTest(double d = 5.5):d(d){}
-	moveTest(const moveTest& other) = delete;
-	moveTest(moveTest&& other): d(std::move(other.d)) {}
-	double d;
-};
-
 //the move constructor is deleted so the copy constructor is used.
 struct copyTest{
 	copyTest(char d = 'a'):e(d){}
@@ -67,6 +58,7 @@ struct copyMoveTest{
 
 template<typename... args> void testSize(){
 	EXPECT_EQ(Tracers<args...>().getSize(), sizeof...(args));
+	EXPECT_EQ(Tracers<args...>().hasTracers(), bool(sizeof...(args)));
 }
 TEST(tracing, templateSize_test){
 	testSize<>();
@@ -77,22 +69,18 @@ TEST(tracing, templateSize_test){
 
 
 TEST(tracing, templateCopyMove_test){
-//	TracersTemplated<moveTest> test1(moveTest(1.1));
-//	EXPECT_EQ(test1.getByID<0>().d, 1.1);
 	Tracers<copyTest> test2(copyTest('y'));
 	EXPECT_EQ(test2.getByID<0>().e, 'y');
 	Tracers<copyMoveTest> test3(copyMoveTest(10));
 //	EXPECT_EQ(test3.getByID<0>().f, 9);	//value decremented if move constructor used
 	EXPECT_EQ(test3.getByID<0>().f, 11);	//value incremented if copy constructor used
-
-//	int i = 20;
-//	auto f = [i] () {return copyMoveTest(i);};
-//	TracersTemplated<copyMoveTest> test4(f());
-//	EXPECT_EQ(test4.getTracer<0>().f, 19);	//value subtracted with 1 if move constructor used
-
 }
 
 TEST(tracing, templateGet_test){
+	Tracers<> emptyTester();
+	//should not compile
+//	EXPECT_EQ(emptyTester.getByID<0>(), nullptr);
+
 	auto tester = Tracers<char, int, double, float, testVal>();
 	EXPECT_EQ(tester.getByID<0>(), '\0');
 	EXPECT_EQ(tester.getByID<1>(), 0);
