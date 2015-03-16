@@ -13,16 +13,16 @@
 #include <memory>
 #include <thread>
 #include <unordered_map>
-#include "../network/timestamp.h"
-#include "../model/model.h"
-#include "../model/port.h"
+#include "timestamp.h"
+#include "model.h"
+#include "port.h"
 #include "locationtable.h"
 
 // TEMPORARY:
 // FIXME
 namespace n_core {
 class Core;
-typedef int t_coreID;
+typedef std::size_t t_coreID;
 } /* namespace n_core */
 
 namespace n_control {

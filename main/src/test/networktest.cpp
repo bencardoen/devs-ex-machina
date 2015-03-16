@@ -66,22 +66,23 @@ TEST(Time, HashingOperators)
 	EXPECT_FALSE(lesstime == moretime);
 }
 
-void push(size_t pushcount,size_t coreid, n_network::Network& net, size_t cores)
+void push(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores)
 {
-	for(size_t i =0; i<pushcount; ++i){
-		for(size_t j = 0; j<cores; ++j){
-			if(j==coreid)
+	for (size_t i = 0; i < pushcount; ++i) {
+		for (size_t j = 0; j < cores; ++j) {
+			if (j == coreid)
 				continue;
-			t_msgptr msg= n_tools::createObject<Message>("", j, t_timestamp(i, 0));
+			t_msgptr msg = n_tools::createObject<Message>("", j, t_timestamp(i, 0));
 			net.acceptMessage(msg);
 		}
 	}
 }
 
-void pull(size_t pushcount,size_t coreid, n_network::Network& net, size_t cores){
+void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores)
+{
 	std::vector<t_msgptr> received;
-	while(received.size() != pushcount*(cores-1)){
-		if(net.havePendingMessages(coreid)){
+	while (received.size() != pushcount * (cores - 1)) {
+		if (net.havePendingMessages(coreid)) {
 			auto messages = net.getMessages(coreid);
 			received.insert(received.begin(), messages.begin(), messages.end());
 		}
@@ -91,19 +92,20 @@ void pull(size_t pushcount,size_t coreid, n_network::Network& net, size_t cores)
 TEST(Network, threadsafety)
 {
 	constexpr size_t cores = 4;
-	constexpr size_t msgcount = 3;
+	constexpr size_t msgcount = 100;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
-	for(size_t i = 0; i<cores; ++i){
+	for (size_t i = 0; i < cores; ++i) {
 		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
 		workers.push_back(std::thread(pull, msgcount, i, std::ref(n), cores));
 	}
-	for(auto& t : workers){
+	for (auto& t : workers) {
 		t.join();
 	}
 }
 
-void benchNetworkSpeed(){
+void benchNetworkSpeed()
+{
 	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
 	constexpr size_t cores = 4;
 	constexpr size_t msgcount = 1000;
@@ -111,24 +113,25 @@ void benchNetworkSpeed(){
 	std::vector<std::thread> workers;
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
-	for(size_t i = 0; i<cores; ++i){
+	for (size_t i = 0; i < cores; ++i) {
 		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
 		workers.push_back(std::thread(pull, msgcount, i, std::ref(n), cores));
 	}
-	for(auto& t : workers){
+	for (auto& t : workers) {
 		t.join();
 	}
 	/**
-	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end-start;
-	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-	std::size_t totalcount = (msgcount * (cores-1))*cores;
-	std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
-	//<< "elapsed time: " << elapsed_seconds.count() << "s\n";
+	 end = std::chrono::system_clock::now();
+	 std::chrono::duration<double> elapsed_seconds = end-start;
+	 //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	 std::size_t totalcount = (msgcount * (cores-1))*cores;
+	 std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
+	 //<< "elapsed time: " << elapsed_seconds.count() << "s\n";
 	 *
 	 */
 }
 
-TEST(Network, speed){
+TEST(Network, speed)
+{
 	benchNetworkSpeed();
 }
