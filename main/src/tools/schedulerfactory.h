@@ -19,6 +19,7 @@ enum class Storage
 	FIBONACCI, BINOMIAL
 };
 
+
 /**
  * Provides easy creation to Scheduler instances.
  * @example

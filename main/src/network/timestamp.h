@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <sstream>
 #include <cmath>
+#include <memory>
 
 namespace n_network {
 
