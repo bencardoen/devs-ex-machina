@@ -30,6 +30,8 @@ public:
 
 	virtual ~AtomicModel();
 };
+
+typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
 }
 
 #endif /* ATOMICMODEL_H_ */

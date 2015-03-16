@@ -10,8 +10,10 @@
 
 #include <tuple>
 #include "network/timestamp.h"
+#include "model/atomicmodel.h"
 
 using namespace n_network;
+using namespace n_model;
 
 namespace n_tracers {
 
@@ -72,14 +74,35 @@ public:
 	getByID() = delete;
 
 	/**
-	 * @brief Traces internal state transition
-	 * @param time The timestamp of the transition (temporary for testing)
-	 *
-	 * @note Because this is just a quick prototype, the function doesn't actually trace anything
-	 * @TODO Change to actual trace function traceInternal(ADevs* devs)
+	 * @brief Traces user invoked model change.
+	 * @param time The simulation time when the change was performed
+	 * @warning This functionality is currently NOT supported. If you do use it, compilation will fail.
 	 */
-	template<typename Scheduler>
-	void tracesInternal(t_timestamp time, Scheduler* scheduler){
+	void tracesUser(t_timestamp time) = delete;
+	/**
+	 * @brief Traces state initialization of a model
+	 * @param model The model that is initialized
+	 * @param time The simulation time of initialization.
+	 */
+	void tracesInit(const t_atomicmodelptr&, t_timestamp){
+	}
+	/**
+	 * @brief Traces internal state transition
+	 * @param model The model that just went through an internal transition
+	 */
+	void tracesInternal(const t_atomicmodelptr&){
+	}
+	/**
+	 * @brief Traces external state transition
+	 * @param model The model that just went through an external transition
+	 */
+	void tracesExternal(const t_atomicmodelptr&){
+	}
+	/**
+	 * @brief Traces confluent state transition (simultaneous internal and external transition)
+	 * @param model The model that just went through a confluent transition
+	 */
+	void tracesConfluent(const t_atomicmodelptr&){
 	}
 };
 
@@ -256,17 +279,45 @@ public:
 	const typename std::enable_if<sizeof...(TracerElems) < n, void*>::type
 	getByID() = delete;
 
+
+	/**
+	 * @brief Traces user invoked model change.
+	 * @param time The simulation time when the change was performed
+	 * @warning This functionality is currently NOT supported. If you do use it, compilation will fail.
+	 */
+	void tracesUser(t_timestamp time) = delete;
+	/**
+	 * @brief Traces state initialization of a model
+	 * @param model The model that is initialized
+	 * @param time The simulation time of initialization.
+	 */
+	void tracesInit(const t_atomicmodelptr& model, t_timestamp time){
+		m_elem.tracesInit(model, time);
+		getNext().tracesInit(model, time);
+	}
 	/**
 	 * @brief Traces internal state transition
-	 * @param time The timestamp of the transition (temporary for testing)
-	 *
-	 * @note Because this is just a quick prototype, the function doesn't actually trace anything
-	 * @TODO Change to actual trace function traceInternal(ADevs* devs)
+	 * @param model The model that just went through an internal transition
 	 */
-	template<typename Scheduler>
-	void tracesInternal(t_timestamp time, Scheduler* scheduler){
-		m_elem.traceInternal(time, scheduler);
-		getNext().traceInternal(time, scheduler);
+	void tracesInternal(const t_atomicmodelptr& model){
+		m_elem.tracesInternal(model);
+		getNext().tracesInternal(model);
+	}
+	/**
+	 * @brief Traces external state transition
+	 * @param model The model that just went through an external transition
+	 */
+	void tracesExternal(const t_atomicmodelptr& model){
+		m_elem.tracesExternal(model);
+		getNext().tracesExternal(model);
+	}
+	/**
+	 * @brief Traces confluent state transition (simultaneous internal and external transition)
+	 * @param model The model that just went through a confluent transition
+	 */
+	void tracesConfluent(const t_atomicmodelptr& model){
+		m_elem.tracesConfluent(model);
+		getNext().tracesConfluent(model);
 	}
 
 private:

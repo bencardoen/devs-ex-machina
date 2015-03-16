@@ -60,15 +60,22 @@ template<typename... args> void testSize(){
 	EXPECT_EQ(Tracers<args...>().getSize(), sizeof...(args));
 	EXPECT_EQ(Tracers<args...>().hasTracers(), bool(sizeof...(args)));
 }
-TEST(tracing, templateSize_test){
+TEST(tracing, getSizeHasTracers){
 	testSize<>();
 	testSize<int>();	//as long as we don't access any tracing methods, these work just fine
 	testSize<int, double>();
 	testSize<int, double, char>();
+	//tests what happens when you slice the object
+	EXPECT_EQ(((Tracers<double, char>)Tracers<int, double, char>()).getSize(), 2);
+	EXPECT_EQ(((Tracers<char>)Tracers<int, double, char>()).getSize(), 1);
+	EXPECT_EQ(((Tracers<>)Tracers<int, double, char>()).getSize(), 0);
+	EXPECT_EQ(((Tracers<double, char>)Tracers<int, double, char>()).hasTracers(), true);
+	EXPECT_EQ(((Tracers<char>)Tracers<int, double, char>()).hasTracers(), true);
+	EXPECT_EQ(((Tracers<>)Tracers<int, double, char>()).hasTracers(), false);
 }
 
 
-TEST(tracing, templateCopyMove_test){
+TEST(tracing, tracerCopyMove){
 	Tracers<copyTest> test2(copyTest('y'));
 	EXPECT_EQ(test2.getByID<0>().e, 'y');
 	Tracers<copyMoveTest> test3(copyMoveTest(10));
@@ -76,7 +83,7 @@ TEST(tracing, templateCopyMove_test){
 	EXPECT_EQ(test3.getByID<0>().f, 11);	//value incremented if copy constructor used
 }
 
-TEST(tracing, templateGet_test){
+TEST(tracing, getByID){
 	Tracers<> emptyTester();
 	//should not compile
 //	EXPECT_EQ(emptyTester.getByID<0>(), nullptr);
@@ -121,49 +128,185 @@ TEST(tracing, templateGet_test){
 	EXPECT_EQ(tester.getByID<3>(), 0.0f);
 	EXPECT_EQ(tester.getByID<4>().i, 3u);
 }
-/*
-struct TraceCallTest{
-	TraceCallTest():timesCalled(0), lastTime(-1), value(0){}
-	void traceInternal(Time time, int* newVal){
-		value = *newVal;
-		++timesCalled;
-		lastTime = time;
-	}
+
+struct TraceCall{
+	t_timestamp lastTime;
 	unsigned int timesCalled;
-	Time lastTime;
-	int value;
+
+	void call(t_timestamp t){
+		lastTime = t;
+		++timesCalled;
+	}
+};
+struct TraceCallTest{
+	void tracesInit(const t_atomicmodelptr&, t_timestamp time){
+		value[0].call(time);
+	}
+	void tracesInternal(const t_atomicmodelptr&){
+		value[1].call(t_timestamp());
+	}
+	void tracesExternal(const t_atomicmodelptr&){
+		value[2].call(t_timestamp());
+	}
+	void tracesConfluent(const t_atomicmodelptr&){
+		value[3].call(t_timestamp());
+	}
+	TraceCall value[4];
 };
 
-TEST(tracing, templateTraceCall_test){
-	int useVal = 5;
+TEST(tracing, traceCall){
 	//using multiple copies to test whether they all get called
-	//Notice that I abused the template parameter for the scheduler
 	auto tester = Tracers<TraceCallTest, TraceCallTest>();
-	EXPECT_EQ(tester.getTracer<0>().timesCalled, 0u);
-	EXPECT_EQ(tester.getTracer<1>().timesCalled, 0u);
-	EXPECT_EQ(tester.getTracer<0>().value, 0);
-	EXPECT_EQ(tester.getTracer<1>().value, 0);
-	EXPECT_EQ(tester.getTracer<0>().lastTime, -1);
-	EXPECT_EQ(tester.getTracer<1>().lastTime, -1);
-	tester.traceInternal(10, &useVal);
-	EXPECT_EQ(tester.getTracer<0>().timesCalled, 1u);
-	EXPECT_EQ(tester.getTracer<1>().timesCalled, 1u);
-	EXPECT_EQ(tester.getTracer<0>().value, useVal);
-	EXPECT_EQ(tester.getTracer<1>().value, useVal);
-	EXPECT_EQ(tester.getTracer<0>().lastTime, 10);
-	EXPECT_EQ(tester.getTracer<1>().lastTime, 10);
-	useVal = 42;
-	tester.traceInternal(5, &useVal);
-	EXPECT_EQ(tester.getTracer<0>().timesCalled, 2u);
-	EXPECT_EQ(tester.getTracer<1>().timesCalled, 2u);
-	EXPECT_EQ(tester.getTracer<0>().value, useVal);
-	EXPECT_EQ(tester.getTracer<1>().value, useVal);
-	EXPECT_EQ(tester.getTracer<0>().lastTime, 5);
-	EXPECT_EQ(tester.getTracer<1>().lastTime, 5);
+	for(unsigned int i = 0u; i < 4u; ++i){
+		EXPECT_EQ(tester.getByID<0>().value[i].timesCalled, 0u);
+		EXPECT_EQ(tester.getByID<0>().value[i].lastTime, t_timestamp());
+		EXPECT_EQ(tester.getByID<1>().value[i].timesCalled, 0u);
+		EXPECT_EQ(tester.getByID<1>().value[i].lastTime, t_timestamp());
+	}
+	t_atomicmodelptr ptr;
+	tester.tracesInit(ptr, t_timestamp(1u, 0u));
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(1u, 0u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(1u, 0u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+	tester.tracesInit(ptr, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+
+	tester.tracesInternal(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+	tester.tracesInternal(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+
+	tester.tracesExternal(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+	tester.tracesExternal(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 0u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+
+	tester.tracesConfluent(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 1u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+	tester.tracesConfluent(ptr);
+	EXPECT_EQ(tester.getByID<0>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<1>().value[0].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[0].lastTime, t_timestamp(0u, 1u));
+	EXPECT_EQ(tester.getByID<0>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[1].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[1].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[2].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[2].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<0>().value[3].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
+	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 2u);
+	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
 }
 
-
-TEST(tracing, templateVerboseTracer_test){
+/*
+TEST(tracing, verboseTracer){
 	VerboseTracer<FileWriter> tracer;
 	ContainerAdapter<std::vector<TraceMessage*>> messages;
 
