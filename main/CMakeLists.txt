@@ -84,7 +84,9 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 
 add_executable(${PROJECT_NAME}
 	src/model/port.cpp
+	src/model/core.cpp
     src/test/toolstest.cpp
+    src/test/coretest.cpp
     src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/compare.cpp
@@ -101,6 +103,7 @@ MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
 				src/test 
 				src/tools
+				src/model
 				src/network
 				)   # Project headers are in same folder as source
 

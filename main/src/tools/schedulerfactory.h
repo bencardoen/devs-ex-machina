@@ -37,6 +37,7 @@ public:
 	makeScheduler(const Storage&, bool synchronized = false);
 };
 
+
 }
 #include "schedulerfactory.tpp"
 
