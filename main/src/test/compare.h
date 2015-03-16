@@ -52,7 +52,7 @@ constexpr int conststrcmp(const char* str1, const char* str2){
  * @throws std::ios_base::failure if there is a problem with the streams.
  * @note All input is consumed until either of the streams has ended (eof)
  */
-int streamcmp(std::istream& str1, std::istream& str2);
+int streamcmp(std::istream& str1, std::istream& str2, bool skipWhitespace = true);
 
 /**
  * @brief compares the contents of two files.
@@ -60,7 +60,7 @@ int streamcmp(std::istream& str1, std::istream& str2);
  * @param file2 A c-style string containing the filename of the second file.
  * @throws std::ios_base::failure if an error arises, e.g. if a file is not readable.
  */
-int filecmp(const char* file1, const char* file2);
+int filecmp(const char* file1, const char* file2, bool skipWhitespace = true);
 
 }/*namespace n_misc*/
 

@@ -37,13 +37,19 @@ TEST(Compare, strcmp){
 	EXPECT_THROW(conststrcmp(nullptr, nullptr), std::logic_error);
 }
 
-void basicStreamcmpTest(const char* str1, const char* str2){
+int basicStreamcmp(const char* str1, const char* str2, bool skipWhitespace = false){
 	std::istringstream* stream1 = new std::istringstream(str1);
 	std::istringstream* stream2 = new std::istringstream(str2);
-	//std::cout << ">str1:" << str1 << "\n str2:" << str2 << "\n";
-	EXPECT_EQ(streamcmp(*stream1, *stream2) , conststrcmp(str1, str2));
+
+	int value = streamcmp(*stream1, *stream2, skipWhitespace);
+
 	delete stream1;
 	delete stream2;
+	return value;
+}
+
+void basicStreamcmpTest(const char* str1, const char* str2){
+	EXPECT_EQ(basicStreamcmp(str1, str2) , conststrcmp(str1, str2));
 }
 
 TEST(Compare, streamcmp){
@@ -54,6 +60,8 @@ TEST(Compare, streamcmp){
 	basicStreamcmpTest("abcdef", "cdef");
 	basicStreamcmpTest("abcdef", "");
 	basicStreamcmpTest("", "cdef");
+	EXPECT_EQ(basicStreamcmp("abcdef", "ab cdef", true), 0);
+	EXPECT_NE(basicStreamcmp("abcdef", "abc def", false), 0);
 }
 
 //small shortcut to the folder where the test files are located.
@@ -61,17 +69,19 @@ TEST(Compare, streamcmp){
 #define TESTFOLDER "testfiles/compare/"
 
 TEST(Compare, filecmp){
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_a.txt"), 0);
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_b.txt"), 0);
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1.txt"), 't' - 'L');
-	EXPECT_EQ(filecmp(TESTFOLDER"file1.txt", TESTFOLDER"file0_a.txt"), 'L' - 't');
-	EXPECT_EQ(filecmp(TESTFOLDER"file1_empty.txt", TESTFOLDER"file0_a.txt"), -'t');
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1_empty.txt"), 't');
-	EXPECT_THROW(filecmp(TESTFOLDER"file0_a.txt", "IDontExist.txt"), std::ios_base::failure);
-	EXPECT_THROW(filecmp("IDontExist.txt", TESTFOLDER"file0_a.txt"), std::ios_base::failure);
-	EXPECT_THROW(filecmp("IDontExist.txt", "meNeither.txt"), std::ios_base::failure);
-	EXPECT_THROW(filecmp(nullptr, TESTFOLDER"file0_a.txt"), std::ios_base::failure);
-	EXPECT_THROW(filecmp("", TESTFOLDER"file0_a.txt"), std::ios_base::failure);
+	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_a.txt", false), 0);
+	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_b.txt", false), 0);
+	EXPECT_NE(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_c.txt", false), 0);
+	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_c.txt", true), 0);
+	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1.txt", false), 't' - 'L');
+	EXPECT_EQ(filecmp(TESTFOLDER"file1.txt", TESTFOLDER"file0_a.txt", false), 'L' - 't');
+	EXPECT_EQ(filecmp(TESTFOLDER"file1_empty.txt", TESTFOLDER"file0_a.txt", false), -'t');
+	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1_empty.txt", false), 't');
+	EXPECT_THROW(filecmp(TESTFOLDER"file0_a.txt", "IDontExist.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp("IDontExist.txt", TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp("IDontExist.txt", "meNeither.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp(nullptr, TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp("", TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
 }
 
 //undefine the macro for good measure, even though it shouldn't be necessary as this is not a header file.
