@@ -20,40 +20,39 @@
 
 namespace n_tools {
 
-	class Logger {
-		public:
-	    		enum LoggingLevel{
-	    			E_ERROR = 1,
-					E_WARNING = 2,
-					E_DEBUG = 4,
-	    			E_INFO = 8
-	    		};
-	    	Logger(const char* filename, int level = E_ERROR | E_WARNING | E_DEBUG | E_INFO);
-	    	~Logger();
-
-	    	void startEntry(LoggingLevel level);
-
-	    	template<typename T>
-	    	Logger& operator<<(const T& data){
-	    		std::lock_guard<std::mutex> m(this->m_mutex);
-#ifndef LOG_USEGLOBAL
-	    		if(m_doPrint)
-#endif
-	    			m_out << data;
-	    		return *this;
-	    	}
-
-		private:
-	    	ASynchWriter* m_buf;
-	    	std::ostream m_out;
-	    	int m_levelFilter;
-	    	bool m_doPrint;
-	    	std::mutex m_mutex;
-
+class Logger
+{
+public:
+	enum LoggingLevel
+	{
+		E_ERROR = 1, E_WARNING = 2, E_DEBUG = 4, E_INFO = 8
 	};
+	Logger(const char* filename, int level = E_ERROR | E_WARNING | E_DEBUG | E_INFO);
+	~Logger();
 
-	std::ostream& operator<<(std::ostream& out, Logger::LoggingLevel level);
+	void startEntry(LoggingLevel level);
 
+	template<typename T>
+	Logger& operator<<(const T& data)
+	{
+		std::lock_guard<std::mutex> m(this->m_mutex);
+#ifndef LOG_USEGLOBAL
+		if (m_doPrint)
+#endif
+			m_out << data;
+		return *this;
+	}
+
+private:
+	ASynchWriter* m_buf;
+	std::ostream m_out;
+	int m_levelFilter;
+	bool m_doPrint;
+	std::mutex m_mutex;
+
+};
+
+std::ostream& operator<<(std::ostream& out, Logger::LoggingLevel level);
 
 } /* namespace n_tools */
 
