@@ -9,31 +9,26 @@
 #define SRC_CONTROL_LOCATIONTABLE_H_
 
 #include <unordered_map>
-#include "model.h"
+//#include "model.h"
+#include "core.h"
 
-// TEMPORARY:
-// FIXME
-namespace n_core {
-class Core;
-typedef std::size_t t_coreID;
-} /* namespace n_core */
-
+using n_model::t_modelptr;
+// points to stubbed class in core.h
 
 namespace n_control {
 
 class LocationTable
 {
-	typedef std::shared_ptr<n_model::Model> t_modelPtr;	// TODO use n_model::t_modelptr from model.h
 public:
-	LocationTable(uint amountCores);
+	LocationTable(std::size_t amountCores);
 	virtual ~LocationTable();
 
-	n_core::t_coreID lookupModel(std::string modelName);
-	void registerModel(t_modelPtr model, n_core::t_coreID core);
+	std::size_t lookupModel(std::string modelName);
+	void registerModel(const t_modelptr& model, std::size_t core);
 
 private:
 	std::size_t m_amountCores;
-	std::unordered_map<std::string, n_core::t_coreID> m_locTable;
+	std::unordered_map<std::string, std::size_t> m_locTable;
 };
 
 } /* namespace n_control */

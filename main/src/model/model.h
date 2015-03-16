@@ -56,7 +56,7 @@ public:
 	void setState(t_stateptr newState);
 };
 
-typedef std::shared_ptr<Model> t_modelptr;
+//typedef std::shared_ptr<Model> t_modelptr;
 }
 
 #endif /* MODEL_H_ */

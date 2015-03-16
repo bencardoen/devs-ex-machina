@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <control/configuration.h>
+#include "configuration.h"
 
 namespace n_control {
 

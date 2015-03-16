@@ -5,12 +5,12 @@
  *      Author: matthijs
  */
 
-#include <control/controller.h>
+#include "controller.h"
 
 namespace n_control {
 
 Controller::Controller(std::string name)
-	: m_name(name), m_isClassicDEVS(true), m_checkTermTime(false), m_checkTermCond(false)
+	:m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false)
 {
 }
 
@@ -18,7 +18,7 @@ Controller::~Controller()
 {
 }
 
-void Controller::addModel(t_modelPtr model)
+void Controller::addModel(const t_modelptr& /*model*/)
 {
 	//TODO
 }
@@ -31,18 +31,18 @@ void Controller::simulate()
 
 }
 
-void Controller::setClassicDEVS(bool classicDEVS = true)
+void Controller::setClassicDEVS(bool classicDEVS)
 {
 	m_isClassicDEVS = classicDEVS;
 }
 
-void Controller::setTerminationTime(n_network::Time time)
+void Controller::setTerminationTime(t_timestamp time)
 {
 	m_checkTermTime = true;
 	m_terminationTime = time;
 }
 
-void Controller::setTerminationCondition(std::function<bool(n_network::Time, n_model::Model)> termination_condition)
+void Controller::setTerminationCondition(std::function<bool(t_timestamp, const t_modelptr&)> termination_condition)
 {
 	m_checkTermCond = true;
 	m_terminationCondition = termination_condition;
