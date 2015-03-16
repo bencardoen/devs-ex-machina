@@ -21,7 +21,7 @@ typedef ExampleItem t_TypeUsed;
 /**
  * @brief pusher Threadtask, push totalsize item on scheduler, mark finish with writer_done.
  */
-void pusher(std::atomic<int>& writer_done, const int totalsize,
+void pusher(std::mutex& queuelock, std::atomic<int>& writer_done, const int totalsize,
         const SchedulerFactory<t_TypeUsed>::t_Scheduler& scheduler, const int id)
 {
 	std::atomic<int> count(0);
@@ -33,6 +33,7 @@ void pusher(std::atomic<int>& writer_done, const int totalsize,
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	shuffle(rands.begin(), rands.end(), std::default_random_engine(seed));
 	for (int i = 0; i < totalsize; ++i) {
+		std::lock_guard<std::mutex> lock_sched(queuelock);
 		t_TypeUsed q(rands[i]);
 		scheduler->push_back(q); // scheduler is locked on single operations.
 		count.fetch_add(1);
@@ -156,7 +157,7 @@ TEST_F(SchedulerTest, basic_unschedule_until)
  */
 TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 {
-	const int totalsize = 100; // On an i5 quad core , 50000 elems requires approx 1 min.
+	const int totalsize = 5000; // On an i5 quad core , 50000 elems requires approx 1 min.
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	const int pushcount = threadcount / 2;  //e.g. 4 -1 = 3 , 3/2 = 1 pusher
 	std::atomic<int> writer_done(0);
@@ -164,7 +165,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher, std::ref(pqueue_mutex),std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));
@@ -183,7 +184,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
  */
 TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 {
-	const int totalsize = 100;
+	const int totalsize = 5000;
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	const int pushcount = 1;
 	std::atomic<int> writer_done(0);
@@ -191,7 +192,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher, std::ref(pqueue_mutex),std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));
@@ -210,7 +211,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 50;
+	const int totalsize = 5000;
 	const int threadcount = std::thread::hardware_concurrency() * 2;
 	const int pushcount = threadcount / 2;
 	std::atomic<int> writer_done(0);
@@ -218,7 +219,7 @@ TEST_F(SchedulerTest, Concurrency_threadoverload)
 	std::vector<thread> threads(threadcount);
 	for (auto i = 0; i < threadcount; ++i) {
 		if (i < pushcount) {
-			threads[i] = std::thread(pusher, std::ref(writer_done), totalsize, std::cref(scheduler), i);
+			threads[i] = std::thread(pusher,std::ref(pqueue_mutex), std::ref(writer_done), totalsize, std::cref(scheduler), i);
 		} else {
 			threads[i] = std::thread(popper, std::ref(pqueue_mutex), std::cref(writer_done), pushcount,
 			        std::cref(scheduler));

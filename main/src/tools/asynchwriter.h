@@ -47,33 +47,38 @@ namespace n_tools{
 	    LockedQueue<std::vector<char>> queue;
 	    std::vector<char>             buffer;
 	    std::thread                   thread;
-	    bool                          done;
+        std::atomic<bool>             done;
 
 	    void worker() {
-	        bool local_done(false);
+            std::atomic<bool> local_done(false);
 	        std::vector<char> buf;
 	        while (true) {
 	            {
-	                std::unique_lock<std::mutex> guard(this->mutex);
-	                if(queue.empty() && local_done) break;
+                    std::unique_lock<std::mutex> guard(this->mutex);
+                    if(queue.empty() && local_done) {
+                        guard.unlock();
+                        return;
+                    }
+
 	                this->condition.wait(guard,
-	                                     [this]()->bool{ return
+                                         [this]()->bool{ return
 	                                    		 	 (!queue.empty()
-	                                                   || done); });
+                                                       || done); });
 	                while (queue.empty() && !this->done) {
 	                    this->condition.wait(guard);
-	                }
+                    }
+
 	                if (!queue.empty()) {
 	                    buf.swap(queue.front());
 	                    queue.pop();
 	                }
-	                local_done = this->done;
-	            }
+                    local_done.store(this->done);
+                }
 	            if (!buf.empty()) {
 	                out.write(buf.data(), std::streamsize(buf.size()));
 	                out.flush();
 	                buf.clear();
-	            }
+                }
 	        }
 	    }
 
@@ -82,7 +87,7 @@ namespace n_tools{
 	        : out(name)
 	        , buffer(512)
 	        , thread(std::bind(&ASynchWriter::worker, this))
-			, done(false){
+            , done(false){std::lock_guard<std::mutex> lock(this->mutex);
 	        this->setp(this->buffer.data(),
 	                   this->buffer.data() + this->buffer.size() - 1);
 	    }
@@ -95,6 +100,7 @@ namespace n_tools{
 	        this->thread.join();
 	    }
 	    int overflow(int c) {
+            std::lock_guard<std::mutex> guard(this->mutex);
 	        if (c != std::char_traits<char>::eof()) {
 	            *this->pptr() = std::char_traits<char>::to_char_type(c);
 	            this->pbump(1);
