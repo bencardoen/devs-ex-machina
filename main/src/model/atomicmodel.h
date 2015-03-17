@@ -20,15 +20,18 @@ private:
 	t_timestamp m_lastRead;
 
 public:
-	virtual void extTransition(const n_network::t_msgptr & message);
-	virtual void intTransition();
+	AtomicModel() = delete;
+	AtomicModel(std::string name);
+
+	virtual void extTransition(const n_network::t_msgptr & message) = 0;
+	virtual void intTransition() = 0;
 	virtual void confTransition(const n_network::t_msgptr & message);
-	virtual t_timestamp timeAdvance();
-	virtual std::map<t_portptr, n_network::t_msgptr> output();
+	virtual t_timestamp timeAdvance() = 0;
+	virtual std::map<t_portptr, n_network::t_msgptr> output() = 0;
 	void setGVT(t_timestamp gvt);
 	void revert(t_timestamp time);
 
-	virtual ~AtomicModel();
+	virtual ~AtomicModel() {}
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

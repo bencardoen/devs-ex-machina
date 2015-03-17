@@ -83,11 +83,13 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
+	src/model/atomicmodel.cpp
+	src/model/model.cpp
 	src/model/port.cpp
 	src/model/core.cpp
-    	src/control/allocator.cpp
-    	src/control/configuration.cpp
-    	src/control/controller.cpp
+	src/control/allocator.cpp
+	src/control/configuration.cpp
+	src/control/controller.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
     src/test/tracerstest.cpp
