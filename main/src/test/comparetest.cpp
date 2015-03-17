@@ -64,24 +64,22 @@ TEST(Compare, streamcmp){
 	EXPECT_NE(basicStreamcmp("abcdef", "abc def", false), 0);
 }
 
-//small shortcut to the folder where the test files are located.
-//Using a macro allows me to concatenate string literals easily without having to mess with std::string
-#define TESTFOLDER "testfiles/compare/"
+#define TESTFOLDERCOMP TESTFOLDER"compare/"
 
 TEST(Compare, filecmp){
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_a.txt", false), 0);
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_b.txt", false), 0);
-	EXPECT_NE(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_c.txt", false), 0);
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file0_c.txt", true), 0);
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1.txt", false), 't' - 'L');
-	EXPECT_EQ(filecmp(TESTFOLDER"file1.txt", TESTFOLDER"file0_a.txt", false), 'L' - 't');
-	EXPECT_EQ(filecmp(TESTFOLDER"file1_empty.txt", TESTFOLDER"file0_a.txt", false), -'t');
-	EXPECT_EQ(filecmp(TESTFOLDER"file0_a.txt", TESTFOLDER"file1_empty.txt", false), 't');
-	EXPECT_THROW(filecmp(TESTFOLDER"file0_a.txt", "IDontExist.txt", false), std::ios_base::failure);
-	EXPECT_THROW(filecmp("IDontExist.txt", TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file0_a.txt", false), 0);
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file0_b.txt", false), 0);
+	EXPECT_NE(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file0_c.txt", false), 0);
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file0_c.txt", true), 0);
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file1.txt", false), 't' - 'L');
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file1.txt", TESTFOLDERCOMP"file0_a.txt", false), 'L' - 't');
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file1_empty.txt", TESTFOLDERCOMP"file0_a.txt", false), -'t');
+	EXPECT_EQ(filecmp(TESTFOLDERCOMP"file0_a.txt", TESTFOLDERCOMP"file1_empty.txt", false), 't');
+	EXPECT_THROW(filecmp(TESTFOLDERCOMP"file0_a.txt", "IDontExist.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp("IDontExist.txt", TESTFOLDERCOMP"file0_a.txt", false), std::ios_base::failure);
 	EXPECT_THROW(filecmp("IDontExist.txt", "meNeither.txt", false), std::ios_base::failure);
-	EXPECT_THROW(filecmp(nullptr, TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
-	EXPECT_THROW(filecmp("", TESTFOLDER"file0_a.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp(nullptr, TESTFOLDERCOMP"file0_a.txt", false), std::ios_base::failure);
+	EXPECT_THROW(filecmp("", TESTFOLDERCOMP"file0_a.txt", false), std::ios_base::failure);
 }
 
 //undefine the macro for good measure, even though it shouldn't be necessary as this is not a header file.

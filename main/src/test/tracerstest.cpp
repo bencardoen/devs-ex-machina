@@ -10,9 +10,10 @@
 #include <sstream>
 #include <vector>
 #include "tracers/tracers.h"
-//#include "../../src/tracing/tracemessage.h"
-//#include "../../src/tracing/tracers/policies.h"
+#include "tracers/tracemessage.h"
+#include "tracers/policies.h"
 //#include "../../src/tracing/tracers/verbosetracer.h"
+#include "test/compare.h"
 
 using namespace n_tracers;
 
@@ -303,6 +304,74 @@ TEST(tracing, traceCall){
 	EXPECT_EQ(tester.getByID<0>().value[3].lastTime, t_timestamp());
 	EXPECT_EQ(tester.getByID<1>().value[3].timesCalled, 2u);
 	EXPECT_EQ(tester.getByID<1>().value[3].lastTime, t_timestamp());
+}
+
+void testFunc(int* ref, int newVal){
+	*ref = newVal;
+}
+TEST(tracing, tracerMessage){
+	//test the testFunc function
+	int intvar = 0;
+	EXPECT_EQ(intvar, 0);
+	testFunc(&intvar, 5);
+	EXPECT_EQ(intvar, 5);
+	TraceMessage::t_messagefunc boundFunc = std::bind(&testFunc, &intvar, 42);
+	EXPECT_EQ(intvar, 5);
+	boundFunc();
+	EXPECT_EQ(intvar, 42);
+
+	//test the message
+	TraceMessage::t_messagefunc boundFunc2 = std::bind(&testFunc, &intvar, 18);
+	TraceMessage msg = TraceMessage(t_timestamp(12u, 42u), boundFunc2);
+	EXPECT_EQ(intvar, 42);
+	msg.execute();
+	EXPECT_EQ(intvar, 18);
+}
+
+template<class P>
+class PolicyTester: public P{
+public:
+	template <typename ... Args>
+	void printTest(const Args&... args){
+		this->print(args...);
+	}
+};
+
+
+#define TESTFOLDERTRACE TESTFOLDER"tracer/"
+
+TEST(tracing, policies){
+	PolicyTester<FileWriter> pFile;
+	EXPECT_EQ(pFile.isInitialized(), false);
+	EXPECT_NO_THROW(pFile.initialize(TESTFOLDERTRACE"filewrite_1.txt"));
+	EXPECT_EQ(pFile.isInitialized(), true);
+	pFile.printTest("This is an integer: ", 5, '\n');
+	pFile.stopTracer();
+	pFile.printTest("This is text!\n");
+	pFile.startTracer(true);
+	pFile.printTest("This is ", "MOAR", " text!");
+	pFile.stopTracer();
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"filewrite_1.txt", TESTFOLDERTRACE"filewrite_corr_1.txt"), 0);
+
+	//make sure the buffer is flushed
+	std::cout.flush();
+	//swap the cout stream buffer to a new one so that it doesn't get sent to the console
+	std::streambuf* oldCoutBuf = std::cout.rdbuf();
+	std::stringstream newCoutTarget;
+	std::cout.rdbuf(newCoutTarget.rdbuf());
+
+	PolicyTester<CoutWriter> pCout;
+	pCout.printTest("This is an integer: ", 5, '\n');
+	pCout.stopTracer();
+	pCout.printTest("This is text!\n");
+	pCout.startTracer(true);
+	pCout.printTest("This is ", "MOAR", " text!");
+	pCout.stopTracer();
+	EXPECT_EQ(newCoutTarget.str(), "This is an integer: 5\nThis is MOAR text!");
+
+	//reassign the original stream buffer
+	std::cout.rdbuf(oldCoutBuf);
+
 }
 
 /*
