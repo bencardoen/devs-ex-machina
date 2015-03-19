@@ -64,4 +64,9 @@ int filecmp(const char* file1, const char* file2, bool skipWhitespace = true);
 
 }/*namespace n_misc*/
 
+
+//small shortcut to the folder where the test files are located.
+//Using a macro allows us to concatenate string literals easily without having to mess with std::string
+#define TESTFOLDER "testfiles/"
+
 #endif /* SRC_TEST_COMPARE_H_ */
