@@ -65,10 +65,22 @@ public:
 	friend
 	bool operator==(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
-		return (lhs.m_name == rhs.m_name && lhs.m_scheduled_at == rhs.m_scheduled_at); // uncomment to allow multiple entries per model
+		return (lhs.m_name == rhs.m_name /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model
 	}
 };
 
+}
+
+namespace std {
+template<>
+struct hash<n_model::ModelEntry>
+{
+	size_t operator()(const n_model::ModelEntry& item) const
+	{
+		//std::cout << "Hash function for "<< item.getName()<<std::endl;
+		return hash<std::string>()(item.getName());
+	}
+};
 }
 
 #endif /* SRC_MODEL_MODELENTRY_H_ */

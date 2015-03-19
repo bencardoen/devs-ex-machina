@@ -161,16 +161,4 @@ void runCore(t_coreptr);
 
 }
 
-namespace std {
-template<>
-struct hash<n_model::ModelEntry>
-{
-	size_t operator()(const n_model::ModelEntry& item) const
-	{
-		//std::cout << "Hash function for "<< item.getName()<<std::endl;
-		return hash<std::string>()(item.getName());
-	}
-};
-}
-
 #endif /* SRC_MODEL_CORE_H_ */
