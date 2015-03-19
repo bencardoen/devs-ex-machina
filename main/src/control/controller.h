@@ -14,17 +14,18 @@
 #include <thread>
 #include <unordered_map>
 #include "timestamp.h"
-//#include "model.h"	// TODO uncomment after models are complete.
+#include "atomicmodel.h"
+#include "coupledmodel.h"
 #include "port.h"
 #include "locationtable.h"
 #include "core.h"
 
-using n_model::t_coreptr;
-using n_model::t_coupledmodelptr;
-
 namespace n_control {
 
 using n_network::t_timestamp;
+using n_model::t_coreptr;
+using n_model::t_atomicmodelptr;
+using n_model::t_coupledmodelptr;
 
 class Controller
 {
@@ -36,27 +37,28 @@ private:
 	bool m_checkTermCond;
 	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
-	std::shared_ptr<LocationTable> locTab;
+	std::shared_ptr<LocationTable> m_locTab;
 
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+	        std::shared_ptr<LocationTable> locTab);
 
 	virtual ~Controller();
 
 	/*
 	 * Add an atomic model
 	 */
-	void addModel(const t_atomicmodelptr& atomic);
+	void addModel(t_atomicmodelptr& atomic);
 
 	/*
 	 * Add an atomic model to a specific core
 	 */
-	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
+	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
 	/*
 	 * Add a coupled model to the simulation
 	 */
-	void addModel(const t_coupledmodelptr& coupled);
+	void addModel(t_coupledmodelptr& coupled);
 
 	/*
 	 * Main loop, starts simulation
@@ -76,7 +78,7 @@ public:
 	/*
 	 * Set condition that can terminate the simulation
 	 */
-	void setTerminationCondition(std::function<bool(t_timestamp,const t_atomicmodelptr&)> termination_condition);
+	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
@@ -99,7 +101,7 @@ private:
 	/*
 	 * Flattens coupled model to interconnected atomic models
 	 */
-	std::vector<t_atomicmodelptr> directConnect(const t_coupledmodelptr& coupled);
+	std::vector<t_atomicmodelptr> directConnect(t_coupledmodelptr coupled);
 
 //	bool isFinished(uint amntRunningKernels);
 //	void threadGVT(n_network::Time freq);

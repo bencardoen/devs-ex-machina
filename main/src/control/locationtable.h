@@ -11,11 +11,9 @@
 #include <unordered_map>
 #include "model.h"
 
-// TODO replace with n_model::AtomicModel or equivalent typedef.
-struct AtomicModel;
-typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
-
 namespace n_control {
+
+using n_model::t_atomicmodelptr;
 
 class LocationTable
 {
@@ -24,7 +22,7 @@ public:
 	virtual ~LocationTable();
 
 	std::size_t lookupModel(std::string modelName);
-	void registerModel(const t_atomicmodelptr& model, std::size_t core);
+	void registerModel(t_atomicmodelptr model, std::size_t core);
 
 private:
 	std::size_t m_amountCores;

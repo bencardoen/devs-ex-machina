@@ -9,8 +9,10 @@
 
 namespace n_control {
 
-Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores)
-	: m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores)
+Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+        std::shared_ptr<LocationTable> locTab)
+	: m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores), m_locTab(
+	        locTab)
 {
 }
 
@@ -18,20 +20,20 @@ Controller::~Controller()
 {
 }
 
-void Controller::addModel(const t_atomicmodelptr& atomic)
+void Controller::addModel(t_atomicmodelptr& atomic)
 {
 	//FIXME dumb implementation
 	std::size_t core = 0;
 	addModel(atomic, core);
 }
 
-void Controller::addModel(const t_atomicmodelptr& atomic, std::size_t coreID)
+void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
-	locTab->registerModel(atomic, coreID);
+	m_locTab->registerModel(atomic, coreID);
 }
 
-void Controller::addModel(const t_coupledmodelptr& coupled)
+void Controller::addModel(t_coupledmodelptr& coupled)
 {
 	std::vector<t_atomicmodelptr> atomics = directConnect(coupled);
 	for (auto at : atomics) {
@@ -76,7 +78,7 @@ bool Controller::check()
 	return false;
 }
 
-std::vector<t_atomicmodelptr> Controller::directConnect(const t_coupledmodelptr& coupled)
+std::vector<t_atomicmodelptr> Controller::directConnect(t_coupledmodelptr coupled)
 {
 //	std::vector<t_atomicmodelptr> components = coupled->getComponents(); // MOVE
 
