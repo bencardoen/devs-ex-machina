@@ -85,18 +85,20 @@ void n_model::Core::init(){
 		this->scheduleModel(model.first,model_scheduled_time);
 	}
 	if( not this->m_scheduler->empty()){
-		std::cout << "Core advancing time to first transition time ";
+		//std::cout << "Core advancing time to first transition time ";
 		this->m_time = this->m_scheduler->top().getTime();
-		std::cout << "@" << this->m_time << std::endl;
+		//std::cout << "@" << this->m_time << std::endl;
 	}
 }
 
 void n_model::Core::collectOutput()
 {
 	throw std::logic_error("Core : collectOutput not implemented");
+	/**
 	for(const auto& modelpair : m_models){
 		// call outputfunction. // TODO for all or for imminent only ?
 	}
+	*/
 }
 
 void n_model::Core::routeMessages()
