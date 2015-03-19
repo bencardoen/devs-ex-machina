@@ -11,8 +11,8 @@ namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
         std::shared_ptr<LocationTable> locTab)
-	: m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores), m_locTab(
-	        locTab)
+	: m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores),
+	  m_locTab(locTab)
 {
 }
 
@@ -43,10 +43,16 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 
 void Controller::simulate()
 {
-	while (true) {
-		//TODO
+	if (m_checkpointInterval.getTime() > 0) { // checkpointing is active
+		startGVTThread();
 	}
-
+	// start off all cores
+	for (auto core : m_cores) {
+//		core.second->
+	}
+	// wait until cores are finished simulating
+	waitFinish(m_cores.size());
+	// done :)
 }
 
 void Controller::setClassicDEVS(bool classicDEVS)
@@ -67,6 +73,21 @@ void Controller::setTerminationCondition(
 	m_terminationCondition = termination_condition;
 }
 
+void Controller::setCheckpointInterval(t_timestamp interv)
+{
+	m_checkpointInterval = interv;
+}
+
+void Controller::startGVTThread()
+{
+	throw std::logic_error("Controller : startGVTThread not implemented");
+}
+
+void Controller::waitFinish(size_t runningCores)
+{
+	throw std::logic_error("Controller : waitFinish not implemented");
+}
+
 bool Controller::check()
 {
 	if (m_checkTermTime) {
@@ -80,9 +101,11 @@ bool Controller::check()
 
 std::vector<t_atomicmodelptr> Controller::directConnect(t_coupledmodelptr coupled)
 {
+	// TODO implement directConnect
+
 //	std::vector<t_atomicmodelptr> components = coupled->getComponents(); // MOVE
 
-	std::vector<t_atomicmodelptr> connected; // FIXME Implement direct connect
+	std::vector<t_atomicmodelptr> connected;
 
 	return connected;
 }

@@ -18,6 +18,7 @@
 #include "coupledmodel.h"
 #include "port.h"
 #include "locationtable.h"
+#include "allocator.h"
 #include "core.h"
 
 namespace n_control {
@@ -32,12 +33,14 @@ class Controller
 private:
 	bool m_isClassicDEVS;
 	std::string m_name;
+	t_timestamp m_checkpointInterval;
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	std::shared_ptr<LocationTable> m_locTab;
+	std::shared_ptr<Allocator> m_allocator;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
@@ -80,12 +83,25 @@ public:
 	 */
 	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
 
+	/*
+	 * Set checkpointing interval
+	 */
+	void setCheckpointInterval(t_timestamp interv);
+
+	/*
+	 * Start thread for GVT
+	 */
+	void startGVTThread();
+
+	/*
+	 * Waits until all cores are finished
+	 */
+	void waitFinish(size_t runningCores);
+
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
 //	void setDSDEVS(bool dsdevs = true);
 //	void GVTdone();
-//	void startGVTThread(n_network::Time gvt_interval);
-//	void waitFinish(uint amntRunningKernels);
 //	void checkForTemporaryIrreversible();
 //	void dsRemovePort(const n_model::Port& port);
 //	void dsScheduleModel(const t_modelPtr model);
