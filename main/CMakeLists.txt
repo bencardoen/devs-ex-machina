@@ -87,6 +87,7 @@ add_executable(${PROJECT_NAME}
 	src/model/model.cpp
 	src/model/port.cpp
 	src/model/core.cpp
+	src/examples/trafficlight_classic/trafficlight.cpp
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp

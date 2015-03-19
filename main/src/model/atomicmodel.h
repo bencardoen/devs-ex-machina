@@ -16,7 +16,7 @@
 namespace n_model {
 class AtomicModel : public Model
 {
-private:
+protected:
 	std::size_t m_priority;
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
