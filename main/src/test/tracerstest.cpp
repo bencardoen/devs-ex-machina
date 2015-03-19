@@ -341,6 +341,7 @@ public:
 #define TESTFOLDERTRACE TESTFOLDER"tracer/"
 
 TEST(tracing, policies){
+	{
 	PolicyTester<FileWriter> pFile;
 	EXPECT_EQ(pFile.isInitialized(), false);
 	EXPECT_NO_THROW(pFile.initialize(TESTFOLDERTRACE"filewrite_1.txt"));
@@ -352,6 +353,10 @@ TEST(tracing, policies){
 	pFile.printTest("This is ", "MOAR", " text!");
 	pFile.stopTracer();
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"filewrite_1.txt", TESTFOLDERTRACE"filewrite_corr_1.txt"), 0);
+	}	//filewrite_1.txt is surely released here.
+	//TODO test for files that cannot be opened for writing
+	//test for reopening a finished file
+
 
 	//make sure the buffer is flushed
 	std::cout.flush();
