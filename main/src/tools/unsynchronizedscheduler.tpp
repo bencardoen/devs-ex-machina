@@ -88,5 +88,14 @@ bool UnSynchronizedScheduler<X, R>::erase(const R& elem) {
 	}
 }
 
+template<typename X, typename R>
+void UnSynchronizedScheduler<X, R>::printScheduler()  {
+	auto iter = m_storage.ordered_begin();
+	for(;iter != m_storage.ordered_end(); ++iter){
+		R stored = *iter;
+		std::cout << stored << std::endl;
+	}
+}
+
 } // ENamespace
 #endif

@@ -19,16 +19,8 @@
 using namespace n_model;
 using namespace n_tools;
 
-TEST(Core, BasicUnitTest)
-{
-	t_coreptr mycore = createObject<Core>();
-	t_modelptr model = createObject<modelstub>("amodel");
-	mycore->addModel(model);
-	EXPECT_EQ(mycore->getModel("amodel"), model);
-	mycore->scheduleModel("amodel", t_timestamp(0,0));
-}
-
 TEST(ModelEntry, Scheduling){
+	RecordProperty("description", "Tests if models can be scheduled with identical timestamps, and timestamps differing only in causality.");
 	auto scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	EXPECT_TRUE(scheduler->empty());
 	std::stringstream s;
@@ -46,9 +38,25 @@ TEST(ModelEntry, Scheduling){
 	token = ModelEntry("", t_timestamp(100,0));
 	scheduler->unschedule_until(imminent, token);
 	EXPECT_EQ(scheduler->size(), 0);
+
+	// Test if scheduling models at same time is a problem
+	ModelEntry origin ("Abc", t_timestamp(0));
+	ModelEntry duplicate ("Bca", t_timestamp(0));
+	ModelEntry third ("Cab", t_timestamp(0, 1));
+	scheduler->push_back(origin);
+	scheduler->push_back(duplicate);
+	EXPECT_EQ(scheduler->size(), 2);
+	scheduler->push_back(third);
+	EXPECT_EQ(scheduler->size(), 3);
+	ModelEntry found = scheduler->pop();
+	EXPECT_EQ(found.getName() , "Abc");
+	EXPECT_EQ(scheduler->pop().getName(), "Bca");
+	EXPECT_EQ(scheduler->pop().getName(), "Cab");
+	EXPECT_EQ(scheduler->size(), 0);
 }
 
 TEST(ModelScheduling, BasicOperations){
+	RecordProperty("description", "Verify that std::hash, std::less and related operators are well defined and execute as expected.");
 	ModelEntry me("alone", t_timestamp(0,0));
 	ModelEntry you("home", t_timestamp(0,0));
 	EXPECT_FALSE(me == you);
@@ -58,11 +66,45 @@ TEST(ModelScheduling, BasicOperations){
 	EXPECT_EQ(set.size(),2);
 	set.clear();
 	EXPECT_EQ(set.size(),0);
+	// This is evil, and is never guaranteed to work.
+	// A model entry with the same name is equal no matter what time is set.
+	// The alternative allows insertion multiple times (an error).
+	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
 	me = ModelEntry("alone", t_timestamp(1,0));
 	you = ModelEntry("alone", t_timestamp(1,1));
-	EXPECT_FALSE(me == you);
-	EXPECT_TRUE(me > you);
+	EXPECT_TRUE(me == you);
+	EXPECT_TRUE(me > you); // Note this is so the max-heap property works as a min heap.
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(), 2);
+	EXPECT_EQ(set.size(), 1);
 }
+
+TEST(Core, HelperFunctions){
+	RecordProperty("description", "Verify that Core can schedule models, model lookup is working and core can advance in time.");
+	using n_network::Message;
+	Core c; // single core.
+	EXPECT_EQ(c.getCoreID(), 0);
+	t_msgptr mymessage = createObject<Message>("toBen", (0));
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	EXPECT_EQ(modelfrom->getName(), "Amodel");
+	c.addModel(modelfrom);
+	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
+	c.addModel(modelto);
+	EXPECT_EQ(c.getModel("toBen"), modelto);
+	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
+	EXPECT_TRUE(c.isMessageLocal(mymessage));
+	EXPECT_TRUE(mymessage->getDestinationCore() == 0);
+	c.init();
+	//c.printSchedulerState();
+	EXPECT_TRUE(c.getTime() == t_timestamp(10));
+	auto imminent  = c.getImminent();
+	EXPECT_EQ(imminent.size(), 2);
+	//for(const auto& el : imminent)	std::cout << el << std::endl;
+	c.rescheduleImminent(imminent);
+	imminent = c.getImminent();
+	//for(const auto& el : imminent)		std::cout << el << std::endl;
+	//c.printSchedulerState();
+	EXPECT_EQ(imminent.size(), 2);
+}
+

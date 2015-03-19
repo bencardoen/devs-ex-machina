@@ -52,11 +52,11 @@ endif()
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
 
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread  " )
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" ) ## Use these if hunting obscure bugs :  -fsanitize=undefined -ftrapv -fsanitize=integer (you will end up in boost, stl !!)
 endif()
 
 ### Profiling -- Clang and G++ ###############################################
@@ -110,6 +110,7 @@ include_directories(	src
 				src/tools
 				src/model
 				src/network
+				src/control
 				)   # Project headers are in same folder as source
 
 ### LINKER ####################################################################
