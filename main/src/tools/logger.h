@@ -47,7 +47,7 @@ public:
 	}
 	template<typename... Args>
 	typename std::enable_if<!(logFilter & E_ERROR) && sizeof...(Args), void>::type
-	logError(const Args&... args){
+	logError(const Args&...){
 		//don't log this level
 	}
 
@@ -59,7 +59,7 @@ public:
 	}
 	template<typename... Args>
 	typename std::enable_if<!(logFilter & E_WARNING) && sizeof...(Args), void>::type
-	logWarning(const Args&... args){
+	logWarning(const Args&...){
 		//don't log this level
 	}
 
@@ -71,7 +71,7 @@ public:
 	}
 	template<typename... Args>
 	typename std::enable_if<!(logFilter & E_DEBUG) && sizeof...(Args), void>::type
-	logDebug(const Args&... args){
+	logDebug(const Args&...){
 		//don't log this level
 	}
 
@@ -83,7 +83,7 @@ public:
 	}
 	template<typename... Args>
 	typename std::enable_if<!(logFilter & E_INFO) && sizeof...(Args), void>::type
-	logInfo(const Args&... args){
+	logInfo(const Args&...){
 		//don't log this level
 	}
 
