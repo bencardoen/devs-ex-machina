@@ -60,6 +60,11 @@ void Controller::setClassicDEVS(bool classicDEVS)
 	m_isClassicDEVS = classicDEVS;
 }
 
+void Controller::setDSDEVS(bool dsdevs)
+{
+	m_isClassicDEVS = !dsdevs;
+}
+
 void Controller::setTerminationTime(t_timestamp time)
 {
 	m_checkTermTime = true;
@@ -97,6 +102,11 @@ bool Controller::check()
 		//TODO
 	}
 	return false;
+}
+
+bool Controller::isFinished(size_t runningCores)
+{
+	throw std::logic_error("Controller : isFinished not implemented");
 }
 
 std::vector<t_atomicmodelptr> Controller::directConnect(t_coupledmodelptr coupled)

@@ -74,6 +74,11 @@ public:
 	void setClassicDEVS(bool classicDEVS = true);
 
 	/*
+	 * Set simulation to be Dynamic Structure DEVS
+	 */
+	void setDSDEVS(bool dsdevs = true);
+
+	/*
 	 * Set time at which the simulation will be halted
 	 */
 	void setTerminationTime(t_timestamp time);
@@ -100,7 +105,6 @@ public:
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
-//	void setDSDEVS(bool dsdevs = true);
 //	void GVTdone();
 //	void checkForTemporaryIrreversible();
 //	void dsRemovePort(const n_model::Port& port);
@@ -119,7 +123,11 @@ private:
 	 */
 	std::vector<t_atomicmodelptr> directConnect(t_coupledmodelptr coupled);
 
-//	bool isFinished(uint amntRunningKernels);
+	/*
+	 * Checks if all cores have finished
+	 */
+	bool isFinished(size_t runningCores);
+
 //	void threadGVT(n_network::Time freq);
 };
 
