@@ -42,13 +42,13 @@ public:
 //http://stackoverflow.com/a/21127776
 struct ASynchWriter: std::streambuf
 {
-	std::ofstream out;
-	std::mutex mutex;
-	std::condition_variable condition;
-	LockedQueue<std::vector<char>> queue;
-	std::vector<char> buffer;
-	std::thread thread;
-	std::atomic<bool> done;
+	std::ofstream m_out;
+	std::mutex m_mutex;
+	std::condition_variable m_condition;
+	LockedQueue<std::vector<char>> m_queue;
+	std::vector<char> m_buffer;
+	std::thread m_thread;
+	std::atomic<bool> m_done;
 
 	void worker()
 	{
@@ -56,28 +56,28 @@ struct ASynchWriter: std::streambuf
 		std::vector<char> buf;
 		while (true) {
 			{
-				std::unique_lock<std::mutex> guard(this->mutex);
-				if (queue.empty() && local_done) {
+				std::unique_lock<std::mutex> guard(this->m_mutex);
+				if (m_queue.empty() && local_done) {
 					guard.unlock();
 					return;
 				}
 
-				this->condition.wait(guard, [this]()->bool {return
-					(!queue.empty()
-						|| done);});
-				while (queue.empty() && !this->done) {
-					this->condition.wait(guard);
+				this->m_condition.wait(guard, [this]()->bool {return
+					(!m_queue.empty()
+						|| m_done);});
+				while (m_queue.empty() && !this->m_done) {
+					this->m_condition.wait(guard);
 				}
 
-				if (!queue.empty()) {
-					buf.swap(queue.front());
-					queue.pop();
+				if (!m_queue.empty()) {
+					buf.swap(m_queue.front());
+					m_queue.pop();
 				}
-				local_done.store(this->done);
+				local_done.store(this->m_done);
 			}
 			if (!buf.empty()) {
-				out.write(buf.data(), std::streamsize(buf.size()));
-				out.flush();
+				m_out.write(buf.data(), std::streamsize(buf.size()));
+				m_out.flush();
 				buf.clear();
 			}
 		}
@@ -85,40 +85,42 @@ struct ASynchWriter: std::streambuf
 
 public:
 	ASynchWriter(std::string const& name)
-		: out(name), buffer(512), thread(std::bind(&ASynchWriter::worker, this)), done(false)
+		: m_out(name), m_buffer(512), m_thread(std::bind(&ASynchWriter::worker, this)), m_done(false)
 	{
-		std::lock_guard<std::mutex> lock(this->mutex);
-		this->setp(this->buffer.data(), this->buffer.data() + this->buffer.size() - 1);
+		std::lock_guard<std::mutex> lock(this->m_mutex);
+		this->setp(this->m_buffer.data(), this->m_buffer.data() + this->m_buffer.size() - 1);
 	}
 	~ASynchWriter()
 	{
 		{
-			std::unique_lock<std::mutex> guard(this->mutex);
-			this->done = true;
+			std::unique_lock<std::mutex> guard(this->m_mutex);
+			this->m_done = true;
 		}
-		this->condition.notify_one();
-		this->thread.join();
+		this->m_condition.notify_one();
+		this->m_thread.join();
 	}
 	int overflow(int c)
 	{
-		std::lock_guard<std::mutex> guard(this->mutex);
+		{
+		std::lock_guard<std::mutex> guard(this->m_mutex);
 		if (c != std::char_traits<char>::eof()) {
 			*this->pptr() = std::char_traits<char>::to_char_type(c);
 			this->pbump(1);
+		}
 		}
 		return this->sync() ? std::char_traits<char>::not_eof(c) : std::char_traits<char>::eof();
 	}
 	int sync()
 	{
-		std::lock_guard<std::mutex> guard(this->mutex);
+		std::lock_guard<std::mutex> guard(this->m_mutex);
 		if (this->pbase() != this->pptr()) {
-			this->buffer.resize(std::size_t(this->pptr() - this->pbase()));
+			this->m_buffer.resize(std::size_t(this->pptr() - this->pbase()));
 			{
-				this->queue.push(std::move(this->buffer));
+				this->m_queue.push(std::move(this->m_buffer));
 			}
-			this->condition.notify_one();
-			this->buffer = std::vector<char>(128);
-			this->setp(this->buffer.data(), this->buffer.data() + this->buffer.size() - 1);
+			this->m_condition.notify_one();
+			this->m_buffer = std::vector<char>(128);
+			this->setp(this->m_buffer.data(), this->m_buffer.data() + this->m_buffer.size() - 1);
 			return 1;
 		}
 		return 0;
