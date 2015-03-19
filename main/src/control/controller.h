@@ -20,7 +20,6 @@
 #include "core.h"
 
 using n_model::t_coreptr;
-using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
 
 namespace n_control {
@@ -35,15 +34,15 @@ private:
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_modelptr&)> m_terminationCondition;
+	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
+	std::shared_ptr<LocationTable> locTab;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores);
 
 	virtual ~Controller();
 
-//	void addModel(const t_modelptr& model);
 	/*
 	 * Add an atomic model
 	 */
@@ -100,7 +99,7 @@ private:
 	/*
 	 * Flattens coupled model to interconnected atomic models
 	 */
-	std::vector<t_atomicmodelptr> directConnect(const t_modelptr& coupled);
+	std::vector<t_atomicmodelptr> directConnect(const t_coupledmodelptr& coupled);
 
 //	bool isFinished(uint amntRunningKernels);
 //	void threadGVT(n_network::Time freq);
