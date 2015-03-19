@@ -8,56 +8,23 @@
 #define SRC_TOOLS_GLOBALLOG_H_
 #define LOG_USEGLOBAL
 #include "logger.h"
+#include "macros.h"
 #include <cstring>
 
-//http://stackoverflow.com/a/8488201
-#define FILE_SHORT (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-
-//MACRO's
-//define macros for the message level
-#define LOG_NONE		0
-#define LOG_ERROR_I		1
-#define LOG_WARNING_I	2
-#define LOG_DEBUG_I		4
-#define LOG_INFO_I		8
-#define LOG_ALL_I		LOG_INFO_I
-
-#define LOG_ERROR_STR	"ERROR"
-#define LOG_WARNING_STR	"WARNING"
-#define LOG_DEBUG_STR	"DEBUG"
-#define LOG_INFO_STR	"INFO"
-
-//define macros for the current log level filter
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_INFO_I
+#define LOG_LEVEL 15	//default logging level
 #endif
 
-#ifdef LOG_LEVEL
-#if LOG_LEVEL==LOG_INFO_I
-#define LOG_FILTER 15
+#if LOG_LEVEL
 #define LOGGING true
-#elif LOG_LEVEL==LOG_DEBUG_I
-#define LOG_FILTER 7
-#define LOGGING true
-#elif LOG_LEVEL==LOG_WARNING_I
-#define LOG_FILTER 3
-#define LOGGING true
-#elif LOG_LEVEL==LOG_ERROR_I
-#define LOG_FILTER 1
-#define LOGGING true
-#elif LOG_LEVEL!=0
-#define LOG_FILTER LOG_LEVEL
-#define LOGGING true
-#else
-#define LOG_FILTER 0
-#define LOGGING false
 #endif
-#else
-#error Cannot use globallog if LogLevel is not defined
-#endif
+
+#define LOG_ERROR_I	1u
+#define LOG_WARNING_I	2u
+#define LOG_DEBUG_I	4u
+#define LOG_INFO_I	8u
 
 #define LOG_GLOBAL n_tools::n_globalLog::globalLog
-#define LOG_MUTEX n_tools::n_globalLog::globalLogMutex
 
 //macro for intitializing the global logger
 #if LOGGING==true
@@ -65,39 +32,39 @@
 namespace n_tools {
 namespace n_globalLog {
 
-extern Logger globalLog;
-extern std::mutex globalLogMutex;
+extern Logger<LOG_LEVEL> globalLog;
 
 } /*namespace n_globalLog*/
 } /*namespace n_tools*/
-#define LOG_INIT(filename) n_tools::Logger LOG_GLOBAL(filename, LOG_FILTER); std::mutex LOG_MUTEX;
+#define LOG_INIT(filename) n_tools::Logger<LOG_LEVEL> LOG_GLOBAL(filename);
 #else
 #define LOG_INIT(filename)
 #endif
 //macros for calling the logging functions
-#define LOG_BLOCK(logCommand) do{std::lock_guard<std::mutex> lock(LOG_MUTEX); logCommand}while(0)
+#define LOG_BLOCK(logCommand) do{logCommand;}while(0)
 #define LOG_NOOP
-#define LOG_ARGS(start, data) LOG_GLOBAL << start << " \t[ "<< FILE_SHORT << " L: " << __LINE__ << "] \t" << data << '\n';
+#define LOG_ARGS(start, ...) start " \t[ ", FILE_SHORT, " L: ",__LINE__, "] \t", __VA_ARGS__, '\n'
+#define LOG_CALL(funcname, start, ...) LOG_BLOCK(LOG_GLOBAL.funcname(LOG_ARGS(start, __VA_ARGS__)))
 
-#if LOG_ERROR_I&LOG_FILTER
-#define LOG_ERROR(data) LOG_BLOCK(LOG_ARGS(LOG_ERROR_STR, data))
+#if LOG_ERROR_I&LOG_LEVEL
+#define LOG_ERROR(...) LOG_CALL(logError, "ERROR", __VA_ARGS__)
 #else
-#define LOG_ERROR(data) LOG_NOOP
+#define LOG_ERROR(...) LOG_NOOP
 #endif
-#if LOG_WARNING_I&LOG_FILTER
-#define LOG_WARNING(data) LOG_BLOCK(LOG_ARGS(LOG_WARNING_STR, data))
+#if LOG_WARNING_I&LOG_LEVEL
+#define LOG_WARNING(...) LOG_CALL(logWarning, "WARNING", __VA_ARGS__)
 #else
-#define LOG_WARNING(data) LOG_NOOP
+#define LOG_WARNING(...) LOG_NOOP
 #endif
-#if LOG_DEBUG_I&LOG_FILTER
-#define LOG_DEBUG(data) LOG_BLOCK(LOG_ARGS(LOG_DEBUG_STR, data))
+#if LOG_DEBUG_I&LOG_LEVEL
+#define LOG_DEBUG(...) LOG_CALL(logDebug, "DEBUG", __VA_ARGS__)
 #else
-#define LOG_DEBUG(data) LOG_NOOP
+#define LOG_DEBUG(...) LOG_NOOP
 #endif
-#if LOG_INFO_I&LOG_FILTER
-#define LOG_INFO(data) LOG_BLOCK(LOG_ARGS(LOG_INFO_STR, data))
+#if LOG_INFO_I&LOG_LEVEL
+#define LOG_INFO(...) LOG_CALL(logInfo, "INFO", __VA_ARGS__)
 #else
-#define LOG_INFO(data) LOG_NOOP
+#define LOG_INFO(...) LOG_NOOP
 #endif
 
 //TODO clean up macro definitions
