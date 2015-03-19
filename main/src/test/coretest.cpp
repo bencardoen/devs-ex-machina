@@ -79,8 +79,8 @@ TEST(ModelScheduling, BasicOperations){
 	EXPECT_EQ(set.size(), 1);
 }
 
-TEST(Core, HelperFunctions){
-	RecordProperty("description", "Verify that Core can schedule models, model lookup is working and core can advance in time.");
+TEST(Core, CoreFlow){
+	RecordProperty("description", "Verify that Core can (re)schedule models, model lookup is working and core can advance in time.");
 	using n_network::Message;
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
@@ -104,7 +104,9 @@ TEST(Core, HelperFunctions){
 	c.rescheduleImminent(imminent);
 	imminent = c.getImminent();
 	//for(const auto& el : imminent)		std::cout << el << std::endl;
+	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
+	c.checkCoreIntegrity();
 	EXPECT_EQ(imminent.size(), 2);
 }
 
