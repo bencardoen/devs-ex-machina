@@ -9,8 +9,8 @@
 
 namespace n_control {
 
-Controller::Controller(std::string name)
-	:m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false)
+Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores)
+	:m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores)
 {
 }
 
@@ -18,9 +18,23 @@ Controller::~Controller()
 {
 }
 
-void Controller::addModel(const t_modelptr& /*model*/)
+//void Controller::addModel(const t_modelptr& /*model*/)
+//{
+//}
+
+void Controller::addModel(const t_atomicmodelptr& atomic)
 {
-	//TODO
+	//FIXME dumb implementation
+}
+
+void Controller::addModel(const t_atomicmodelptr& atomic, std::size_t coreID)
+{
+	m_cores[coreID]->addModel(atomic);
+}
+
+void Controller::addModel(const t_coupledmodelptr& coupled)
+{
+	//TODO Flatten: directconnect
 }
 
 void Controller::simulate()
@@ -57,6 +71,15 @@ bool Controller::check()
 		//TODO
 	}
 	return false;
+}
+
+std::vector<t_atomicmodelptr> Controller::directConnect(const t_modelptr& coupled)
+{
+//	std::vector<t_atomicmodelptr> components = coupled->getComponents(); // MOVE
+
+	std::vector<t_atomicmodelptr> connected; // FIXME Implement direct connect
+
+	return connected;
 }
 
 } /* namespace n_control */

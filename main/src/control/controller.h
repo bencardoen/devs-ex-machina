@@ -20,6 +20,8 @@
 #include "core.h"
 
 using n_model::t_coreptr;
+using n_model::t_atomicmodelptr;
+using n_model::t_coupledmodelptr;
 
 namespace n_control {
 
@@ -27,19 +29,54 @@ using n_network::t_timestamp;
 
 class Controller
 {
+private:
+	bool m_isClassicDEVS;
+	std::string m_name;
+	bool m_checkTermTime;
+	t_timestamp m_terminationTime;
+	bool m_checkTermCond;
+	std::function<bool(t_timestamp, const t_modelptr&)> m_terminationCondition;
+	std::unordered_map<std::size_t, t_coreptr> m_cores;
+
 public:
-	Controller(std::string name);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores);
 
 	virtual ~Controller();
 
-	void addModel(const t_modelptr& model);
+//	void addModel(const t_modelptr& model);
+	/*
+	 * Add an atomic model
+	 */
+	void addModel(const t_atomicmodelptr& atomic);
 
+	/*
+	 * Add an atomic model to a specific core
+	 */
+	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
+
+	/*
+	 * Add a coupled model to the simulation
+	 */
+	void addModel(const t_coupledmodelptr& coupled);
+
+	/*
+	 * Main loop, starts simulation
+	 */
 	void simulate();
 
+	/*
+	 * Set simulation to be classic DEVS
+	 */
 	void setClassicDEVS(bool classicDEVS = true);
 
+	/*
+	 * Set time at which the simulation will be halted
+	 */
 	void setTerminationTime(t_timestamp time);
 
+	/*
+	 * Set condition that can terminate the simulation
+	 */
 	void setTerminationCondition(std::function<bool(t_timestamp,const t_modelptr&)> termination_condition);
 
 //	void save(std::string filepath, std::string filename) = delete;
@@ -60,17 +97,13 @@ private:
 	 */
 	bool check();
 
+	/*
+	 * Flattens coupled model to interconnected atomic models
+	 */
+	std::vector<t_atomicmodelptr> directConnect(const t_modelptr& coupled);
+
 //	bool isFinished(uint amntRunningKernels);
 //	void threadGVT(n_network::Time freq);
-
-private:
-	bool m_isClassicDEVS;
-	std::string m_name;
-	bool m_checkTermTime;
-	t_timestamp m_terminationTime;
-	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_modelptr&)> m_terminationCondition;
-	std::unordered_map<std::size_t, t_coreptr> m_cores;
 };
 
 } /* namespace n_control */
