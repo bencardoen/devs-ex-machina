@@ -4,6 +4,7 @@
  *      Author: Ben Cardoen
  */
 #include <core.h>
+#include <cassert>
 
 void n_model::Core::load(const std::string&)
 {
@@ -11,15 +12,30 @@ void n_model::Core::load(const std::string&)
 }
 
 n_model::Core::Core()
-	: m_network(nullptr), m_time(0, 0), m_coreid(0), m_live(false)
+	: m_network(nullptr), m_time(0, 0), m_coreid(0), m_live(false), m_loctable(nullptr)
+{
+
+	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+}
+
+n_model::Core::Core(std::size_t id, const t_networkptr& netlink, const t_loctableptr& loc)
+	: m_network(netlink), m_time(0, 0), m_coreid(id), m_live(false), m_loctable(loc)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 }
 
-n_model::Core::Core(std::size_t id, const t_networkptr& netlink)
-	: m_network(netlink), m_time(0, 0), m_coreid(id), m_live(false)
-{
-	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+bool n_model::Core::isMessageLocal(const t_msgptr& msg){
+	std::string destname = msg->getDestinationModel();
+	std::size_t destid = this->m_coreid;
+	if(this->m_models.find(destname) != this->m_models.end()){
+		msg->setDestinationCore(destid);
+	}else{
+		// TODO LOOKUP in locationtable
+		assert(false && "Lookup of remote model not implemented.");
+		// destid = other..
+		//msg->setDestinationCore()
+	}
+	return (destid == this->m_coreid);
 }
 
 void n_model::Core::save(const std::string&)
@@ -32,14 +48,14 @@ void n_model::Core::revert(t_timestamp)
 	throw std::logic_error("Core : revert not implemented");
 }
 
-void n_model::Core::addModel(t_modelptr model)
+void n_model::Core::addModel(t_atomicmodelptr model)
 {
 	std::string mname = model->getName();
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model allready in core.");
 	this->m_models[mname] = model;
 }
 
-n_model::t_modelptr n_model::Core::getModel(std::string mname)
+n_model::t_atomicmodelptr n_model::Core::getModel(std::string mname)
 {
 	assert(this->m_models.find(mname) != this->m_models.end() && "Model not in core.");
 	return this->m_models[mname];

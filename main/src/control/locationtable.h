@@ -9,11 +9,11 @@
 #define SRC_CONTROL_LOCATIONTABLE_H_
 
 #include <unordered_map>
-//#include "model.h"
-#include "core.h"
+#include "model.h"
 
-using n_model::t_modelptr;
-// points to stubbed class in core.h
+// TODO replace with n_model::AtomicModel or equivalent typedef.
+struct AtomicModel;
+typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
 
 namespace n_control {
 
@@ -24,7 +24,7 @@ public:
 	virtual ~LocationTable();
 
 	std::size_t lookupModel(std::string modelName);
-	void registerModel(const t_modelptr& model, std::size_t core);
+	void registerModel(const t_atomicmodelptr& model, std::size_t core);
 
 private:
 	std::size_t m_amountCores;

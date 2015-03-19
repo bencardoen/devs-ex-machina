@@ -69,6 +69,7 @@ TEST(ModelScheduling, BasicOperations){
 	// This is evil, and is never guaranteed to work.
 	// A model entry with the same name is equal no matter what time is set.
 	// The alternative allows insertion multiple times (an error).
+	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
 	me = ModelEntry("alone", t_timestamp(1,0));
 	you = ModelEntry("alone", t_timestamp(1,1));
 	EXPECT_TRUE(me == you);
@@ -77,3 +78,21 @@ TEST(ModelScheduling, BasicOperations){
 	set.insert(you);
 	EXPECT_EQ(set.size(), 1);
 }
+
+TEST(Core, HelperFunctions){
+	using n_network::Message;
+	Core c; // single core.
+	EXPECT_EQ(c.getCoreID(), 0);
+	t_msgptr mymessage = createObject<Message>("toBen", (0));
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	EXPECT_EQ(modelfrom->getName(), "Amodel");
+	c.addModel(modelfrom);
+	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
+	c.addModel(modelto);
+	EXPECT_EQ(c.getModel("toBen"), modelto);
+	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
+	EXPECT_TRUE(c.isMessageLocal(mymessage));
+	EXPECT_TRUE(mymessage->getDestinationCore() == 0);
+}
+

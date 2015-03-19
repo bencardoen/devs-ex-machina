@@ -32,7 +32,7 @@ public:
 
 	virtual ~Controller();
 
-	void addModel(const t_modelptr& model);
+	void addModel(const t_atomicmodelptr& model);
 
 	void simulate();
 
@@ -40,7 +40,7 @@ public:
 
 	void setTerminationTime(t_timestamp time);
 
-	void setTerminationCondition(std::function<bool(t_timestamp,const t_modelptr&)> termination_condition);
+	void setTerminationCondition(std::function<bool(t_timestamp,const t_atomicmodelptr&)> termination_condition);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
@@ -69,7 +69,7 @@ private:
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_modelptr&)> m_terminationCondition;
+	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 };
 

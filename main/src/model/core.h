@@ -5,6 +5,7 @@
 #include <timestamp.h>
 #include <network.h>
 //#include <model.h>	// TODO uncomment if models are ready.
+//#include "locationtable.h"
 #include "scheduler.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
@@ -17,6 +18,9 @@ namespace n_model {
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
+
+class LocationTable; // TODO stubbed typedef
+typedef std::shared_ptr<LocationTable> t_loctableptr;
 
 // Stub to allow testing without breaking interface with Model
 // TODO replace with Model
@@ -33,7 +37,7 @@ struct modelstub
 		return name;
 	}
 };
-typedef std::shared_ptr<modelstub> t_modelptr;	// TODO remove stubbed typedef if models are live.
+typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO remove stubbed typedef if models are live.
 
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 
@@ -46,14 +50,22 @@ private:
 	t_networkptr m_network;
 	t_timestamp m_time;
 	std::size_t m_coreid;
-	std::unordered_map<std::string, t_modelptr> m_models;
+	std::unordered_map<std::string, t_atomicmodelptr> m_models;
 	bool m_live;
 	t_scheduler m_scheduler;
+	t_loctableptr m_loctable;		// TODO link with location table in constructor
 
 public:
 	/**
+	 * Check if dest model is local, if not:
+	 * Looks up message in lookuptable, set coreid.
+	 * @post msg has correct destination id field set for network.
+	 */
+	bool isMessageLocal(const t_msgptr&);
+
+	/**
 	 * Default single core implementation.
-	 * @attention : network = nullptr !!
+	 * @post : coreid==0, network,loctable == nullptr.
 	 */
 	Core();
 
@@ -61,7 +73,7 @@ public:
 	 * Multicore implementation.
 	 * @pre netlink has at least id queues.
 	 */
-	Core(std::size_t id, const t_networkptr& netlink);
+	Core(std::size_t id, const t_networkptr& netlink, const t_loctableptr& loctable);
 	virtual ~Core() = default;
 
 	/**
@@ -82,13 +94,13 @@ public:
 	/**
 	 * Add model to this core.
 	 */
-	void addModel(t_modelptr model);
+	void addModel(t_atomicmodelptr model);
 
 	/**
 	 * Retrieve model with name from core
 	 * @attention does not change anything in scheduled order.
 	 */
-	t_modelptr
+	t_atomicmodelptr
 	getModel(std::string name);
 
 	/**
