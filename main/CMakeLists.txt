@@ -27,7 +27,7 @@ project(${PROJECT_NAME})
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
 
-include ( localpreferences.txt )
+include ( localpreferences.txt OPTIONAL )
 
 find_package(Boost COMPONENTS  system)
 
@@ -82,7 +82,16 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 
 add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
+	src/model/port.cpp
+	src/model/core.cpp
+	src/control/allocator.cpp
+	src/control/configuration.cpp
+	src/control/controller.cpp
+	src/tracers/policies.cpp
+	src/tracers/tracemessage.cpp
     src/test/toolstest.cpp
+    src/test/coretest.cpp
+    src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/compare.cpp
     src/test/comparetest.cpp
@@ -98,6 +107,7 @@ MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
 				src/test 
 				src/tools
+				src/model
 				src/network
 				)   # Project headers are in same folder as source
 

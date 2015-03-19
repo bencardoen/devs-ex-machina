@@ -27,6 +27,9 @@ then
     echo "$SCRIPT  Overriding Compiler choice with value :: $2"
 fi
 
+# Fix root path testfiles.
+find testfiles -type f -execdir dos2unix {} \;
+
 BUILD_DIR="build"
 
 if [ -d "$BUILD_DIR" ]
@@ -48,6 +51,12 @@ fi
 mkdir $BUILD_DIR
 cd $BUILD_DIR
 
+# Copy testfiles to generated directory so that eclipse finds them (eclipse cwd is BUILD_DIR)
+mkdir "testfiles"
+cp -r ../testfiles/* testfiles/
+
+# Apply dos2unix to avoid errors in filecmp across systems.
+find testfiles -type f -execdir dos2unix {} \;
 
 echo "$SCRIPT Generating CMake Build."
 ## Generate Eclipse IDE project files

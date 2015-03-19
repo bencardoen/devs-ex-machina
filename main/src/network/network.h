@@ -16,22 +16,21 @@
 
 namespace n_network{
 
-
-
 /**
  * Abstraction of Network (Cores communicating via network).
  * Receives (push) messages from cores, messages are pulled from destination core.
  * @attention : individual queues are synchronized.
  */
-template<size_t cores=1>
 class Network{
 private:
-	std::array<Msgqueue<t_msgptr>, cores> m_queues;
+	size_t	m_cores;
+	std::vector<Msgqueue<t_msgptr>> m_queues;
 public:
-
 	typedef std::vector<t_msgptr> t_messages;
 
-	Network(){;
+	Network() = delete;
+
+	Network(size_t cores):m_cores(cores), m_queues(m_cores){
 		LOG_DEBUG("Network constructor with " << cores << " queues.");
 	}
 
@@ -63,6 +62,9 @@ public:
 		return m_queues[coreid].size()!=0;
 	}
 };
+
+
+typedef std::shared_ptr<Network> t_networkptr;
 
 }// end namespace
 

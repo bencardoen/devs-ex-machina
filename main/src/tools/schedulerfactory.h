@@ -19,6 +19,7 @@ enum class Storage
 	FIBONACCI, BINOMIAL
 };
 
+
 /**
  * Provides easy creation to Scheduler instances.
  * @example
@@ -36,6 +37,7 @@ public:
 	static std::shared_ptr<Scheduler<X>>
 	makeScheduler(const Storage&, bool synchronized = false);
 };
+
 
 }
 #include "schedulerfactory.tpp"
