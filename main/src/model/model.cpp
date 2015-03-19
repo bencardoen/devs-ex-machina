@@ -15,7 +15,7 @@ namespace n_model {
  * @param name of model
  */
 Model::Model(std::string name)
-	: m_name(name), m_receivedExt(false), m_location(0)
+	: m_name(name), m_receivedExt(false)
 {
 
 }

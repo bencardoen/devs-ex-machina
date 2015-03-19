@@ -11,17 +11,19 @@
 #include "model.h"
 #include "message.h"
 #include <map>
+#include <iostream>
 
 namespace n_model {
 class AtomicModel : public Model
 {
 private:
+	std::size_t m_priority;
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
 
 public:
 	AtomicModel() = delete;
-	AtomicModel(std::string name);
+	AtomicModel(std::string name, std::size_t priority = 0);
 
 	virtual void extTransition(const n_network::t_msgptr & message) = 0;
 	virtual void intTransition() = 0;
@@ -30,6 +32,7 @@ public:
 	virtual std::map<t_portptr, n_network::t_msgptr> output() = 0;
 	void setGVT(t_timestamp gvt);
 	void revert(t_timestamp time);
+	std::size_t getPriority() const;
 
 	virtual ~AtomicModel() {}
 };

@@ -35,7 +35,6 @@ protected:
 	bool m_receivedExt;
 	t_timestamp m_timeLast;
 	t_timestamp m_timeNext;
-	unsigned int m_location;
 
 	t_stateptr m_state;
 	std::vector<t_stateptr> m_oldStates;

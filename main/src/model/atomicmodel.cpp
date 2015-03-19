@@ -14,15 +14,11 @@ namespace n_model {
  *
  * @param name The name of the model
  */
-AtomicModel::AtomicModel(std::string name)
-	: Model(name)
+AtomicModel::AtomicModel(std::string name, std::size_t priority)
+	: Model(name), m_priority(priority)
 {
 
 }
-
-//AtomicModel::~AtomicModel() {
-//
-//}
 
 void AtomicModel::confTransition(const n_network::t_msgptr & message)
 {
@@ -32,51 +28,61 @@ void AtomicModel::confTransition(const n_network::t_msgptr & message)
 
 void AtomicModel::setGVT(t_timestamp gvt)
 {
-
-	// Model has no memory of past, TODO: just raise error?
-	if (m_oldStates.empty())
+	// Model has no memory of past
+	if (m_oldStates.empty()) {
+		std::cerr << "Model has no memory of past (no old states), no GVT happened!" << std::endl;
 		return;
-
-	t_timestamp c(0);
-
-	for (auto state : m_oldStates) {
-		if (state->m_timeLast >= gvt)
-			;
-		// Something of the form: c.first or c.second +1?
 	}
 
-	// If never gotten into if_statement of for_loop
-	// this->m_oldStates = ...
+	int index = 0;
+	int k = -1;
 
-	// Then some weird shit..
+	for (auto state : m_oldStates) {
+		if (state->m_timeLast >= gvt) {
+			k = std::max(0,index-1);
+			break;
+		}
+		index++;
+	}
 
+	if (k == -1) {
+		// model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
+		t_stateptr state = m_oldStates.at(m_oldStates.size() - 1);
+		m_oldStates.clear();
+		m_oldStates.push_back(state);
+	} else {
+		// Only keep 1 state before GVT, and all states after it
+		auto firstState = m_oldStates.begin() + k;
+		auto lastState = m_oldStates.end();
+		m_oldStates = std::vector<t_stateptr>(firstState, lastState);
+	}
 }
 
 void AtomicModel::revert(t_timestamp time)
 {
 	auto r_itStates = m_oldStates.rbegin();
-	t_timestamp stamp(m_oldStates.size());
+	int index = m_oldStates.size() - 1;
 
-	for (; r_itStates != m_oldStates.rend(); r_itStates++) {
+	// We walk over all old states in reverse, and keep track of the index
+	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size()-1) ; r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
-		// stamp -= 1 ???
+		index--;
 	}
 
-	t_stateptr state = m_oldStates[stamp.getTime()]; // ? dit de bedoeling?
+	t_stateptr state = m_oldStates[index];
 	this->m_timeLast = state->m_timeLast;
 	this->m_timeNext = state->m_timeNext;
 
-	this->m_state = state; // What do we do here?
-
-	// TODO: do we implement memorization?
+	this->m_state = state;
 
 	// Pop all obsolete states
-	this->m_oldStates.resize((int) stamp.getTime());
+	this->m_oldStates.resize(index+1);
+}
 
-	// TODO Check if 1 of reverted states was ever read for the termination condition?
-	// What is this?
+std::size_t AtomicModel::getPriority() const {
+	return m_priority;
 }
 
 }
