@@ -19,7 +19,8 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-class LocationTable; // TODO stubbed typedef
+class LocationTable;
+// TODO stubbed typedef
 typedef std::shared_ptr<LocationTable> t_loctableptr;
 
 // Stub to allow testing without breaking interface with Model
@@ -33,7 +34,10 @@ struct modelstub
 		;
 	}
 
-	t_timestamp timeAdvance(){return t_timestamp(10);}
+	t_timestamp timeAdvance()
+	{
+		return t_timestamp(10);
+	}
 
 	std::string getName()
 	{
@@ -181,6 +185,26 @@ public:
 	 */
 	void init();
 
+	/**
+	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
+	 * @attention : pops all imminent models, they need to be rescheduled (or will be lost forever).
+	 */
+	std::vector<ModelEntry>
+	getImminent();
+
+	/**
+	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
+	 */
+	void
+	rescheduleImminent(const std::vector<ModelEntry>&);
+
+	/**
+	 * Updates local time from first entry in scheduler.
+	 * @attention : if scheduler is empty this will crash. (it should)
+	 */
+	void
+	syncTime();
+
 	// 3 (condensed) stages : output from all models, distr messages, transition, repeat
 	/**
 	 * For all models : get all messages.
@@ -194,13 +218,13 @@ public:
 	virtual void
 	routeMessages();
 
-	t_timestamp
-	getTime(){
+	t_timestamp getTime()
+	{
 		return m_time;
 	}
 
-	t_timestamp
-	getGVT(){
+	t_timestamp getGVT()
+	{
 		return m_gvt;
 	}
 

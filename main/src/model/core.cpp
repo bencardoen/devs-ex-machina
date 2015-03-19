@@ -148,3 +148,41 @@ void n_model::Core::traceModels(const std::vector<std::string>& transitioned){
 void n_model::Core::printSchedulerState(){
 	this->m_scheduler->printScheduler();
 }
+
+std::vector<n_model::ModelEntry>
+n_model::Core::getImminent(){
+	std::vector<ModelEntry> imminent;
+	t_timestamp maxtime = n_network::makeLatest(this->m_time);
+	ModelEntry mark("", maxtime);
+	this->m_scheduler->unschedule_until(imminent, mark);
+	if(imminent.size()==0)
+		std::cerr << "No imminent models ??" << std::endl;
+	return imminent;
+}
+
+/**
+ * Asks for each unscheduled model a new firing time and places items on the scheduler.
+ */
+void
+n_model::Core::rescheduleImminent(const std::vector<n_model::ModelEntry>& oldimms){
+	for(const auto& old : oldimms){
+		std::string oldname = old.getName();
+		t_atomicmodelptr model = this->m_models[oldname];
+		t_timestamp next = model->timeAdvance() + this->m_time;
+		this->scheduleModel(oldname, next);
+	}
+	this->syncTime();
+}
+
+/**
+ * Updates local time from first entry in scheduler.
+ * @attention : if scheduler is empty this will crash. (it should)
+ */
+void
+n_model::Core::syncTime(){
+	assert(not this->m_scheduler->empty() && "Syncing with the void is illadvised.");
+	t_timestamp next = this->m_scheduler->top().getTime();
+	//std::cout << " Core is advancing simtime to :: " << next << std::endl;
+	this->m_time = next;
+	// TODO check gvt etc..
+}
