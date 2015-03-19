@@ -56,7 +56,7 @@ void Controller::setTerminationTime(t_timestamp time)
 	m_terminationTime = time;
 }
 
-void Controller::setTerminationCondition(std::function<bool(t_timestamp, const t_modelptr&)> termination_condition)
+void Controller::setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition)
 {
 	m_checkTermCond = true;
 	m_terminationCondition = termination_condition;

@@ -77,7 +77,7 @@ public:
 	/*
 	 * Set condition that can terminate the simulation
 	 */
-	void setTerminationCondition(std::function<bool(t_timestamp,const t_modelptr&)> termination_condition);
+	void setTerminationCondition(std::function<bool(t_timestamp,const t_atomicmodelptr&)> termination_condition);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;

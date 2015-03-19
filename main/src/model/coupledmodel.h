@@ -25,6 +25,8 @@ public:
 	void connectPorts(Port p1, Port p2, std::function<void> zFunction);
 	void disconnectPorts(Port p1, Port p2);
 };
+
+typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;
 }
 
 #endif /* COUPLEDMODEL_H_ */

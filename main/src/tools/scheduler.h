@@ -115,10 +115,9 @@ public:
 	bool
 	erase(const T& elem) = 0;
 
-	/**
-	 * Reschedule == erase + pop().
-	 */
-	// TODO implement forwarding to increase/decrease.
+	virtual
+	void
+	printScheduler() = 0;
 };
 
 template<typename T>
@@ -176,6 +175,12 @@ struct ExampleItem
 	bool operator==(const ExampleItem& right) const
 	{
 		return this->prior == right.prior;
+	}
+
+	friend
+	std::ostream&
+	operator<<(std::ostream& os, const ExampleItem& rhs){
+		return (os << rhs.prior);
 	}
 };
 

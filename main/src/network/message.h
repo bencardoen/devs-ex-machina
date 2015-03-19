@@ -24,15 +24,24 @@ private:
 	const t_timestamp m_timestamp;
 
 public:
+	Message(std::string modeldest, const t_timestamp& time_made)
+		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made)
+	{
+	}
+
 	Message(std::string modeldest, std::size_t coredest, const t_timestamp& time_made)
 		: m_destination_model(modeldest), m_destination_core(coredest), m_timestamp(time_made)
 	{
-		;
 	}
 
 	std::size_t getDestinationCore() const
 	{
 		return m_destination_core;
+	}
+
+	std::string getDestinationModel() const
+	{
+		return m_destination_model;
 	}
 
 	void setDestinationCore(std::size_t dest)
