@@ -94,5 +94,8 @@ TEST(Core, HelperFunctions){
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	EXPECT_TRUE(c.isMessageLocal(mymessage));
 	EXPECT_TRUE(mymessage->getDestinationCore() == 0);
+	c.init();
+	//c.printSchedulerState();
+	EXPECT_TRUE(c.getTime() == t_timestamp(10));
 }
 

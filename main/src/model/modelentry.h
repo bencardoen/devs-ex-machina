@@ -67,6 +67,11 @@ public:
 	{
 		return (lhs.m_name == rhs.m_name /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model
 	}
+
+	friend
+	std::ostream& operator<<(std::ostream& os, const ModelEntry& rhs){
+		return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
+	}
 };
 
 }

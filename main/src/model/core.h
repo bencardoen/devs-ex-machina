@@ -32,6 +32,9 @@ struct modelstub
 	{
 		;
 	}
+
+	t_timestamp timeAdvance(){return t_timestamp(10);}
+
 	std::string getName()
 	{
 		return name;
@@ -42,17 +45,52 @@ typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO remove stubbed type
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 
 /**
- * A Core is a node in a parallel devs simulator. It manages (multiple) models and drives their transitions.
+ * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
+ * Compares with Yentl's solver.py
  */
 class Core
 {
 private:
+	/**
+	 * The global message scheduler.
+	 */
 	t_networkptr m_network;
+	/**
+	 * Current simulation time
+	 * Loosely corresponds with Yentl's 'clock'
+	 */
 	t_timestamp m_time;
+
+	/**
+	 * GVT.
+	 */
+	t_timestamp m_gvt;
+
+	/**
+	 * Coreid, set at construction. Used by Controller/LocTable
+	 */
 	std::size_t m_coreid;
+
+	/**
+	 * Model storage.
+	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
+	 */
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
-	bool m_live;
+
+	/**
+	 * Indicate if this core can/should run.
+	 * @synchronized
+	 */
+	std::atomic<bool> m_live;
+
+	/**
+	 * Stores the model(entries) in ascending (urgent first) scheduled time.
+	 */
 	t_scheduler m_scheduler;
+
+	/**
+	 * Link to lookup table for messages.
+	 */
 	t_loctableptr m_loctable;		// TODO link with location table in constructor
 
 public:
@@ -130,7 +168,7 @@ public:
 	 */
 	void setLive(bool live)
 	{
-		m_live = live;
+		m_live.store(live);
 	}
 
 	std::size_t getCoreID() const
@@ -138,19 +176,33 @@ public:
 		return m_coreid;
 	}
 
+	/**
+	 * Run at startup, populate the scheduler with the model's advance() results.
+	 */
+	void init();
+
 	// 3 (condensed) stages : output from all models, distr messages, transition, repeat
 	/**
-	 * Iterate over models, collecting output and forward it to tracing.
+	 * For all models : get all messages.
 	 */
 	virtual void
 	collectOutput();
 
 	/**
-	 * Request from all models any triggered messages, deliver outbound messages to network,
-	 * get remote messages and hand them off to models.
+	 * Handle all messages
 	 */
 	virtual void
 	routeMessages();
+
+	t_timestamp
+	getTime(){
+		return m_time;
+	}
+
+	t_timestamp
+	getGVT(){
+		return m_gvt;
+	}
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
@@ -160,10 +212,21 @@ public:
 
 	/**
 	 * Schedule model.name @ time t.
+	 * @pre Cannot be called without removing a previous scheduled entry.
 	 * @TODO make private
 	 */
 	void
 	scheduleModel(std::string name, t_timestamp t);
+
+	/**
+	 * Last action in sequence, Core hands tracer all models.
+	 * @param models to trace
+	 */
+	void
+	traceModels(const std::vector<std::string>& transitioned);
+
+	void
+	printSchedulerState();
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

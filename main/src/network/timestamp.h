@@ -136,6 +136,15 @@ public:
 	{
 		return (not (lhs == rhs));
 	}
+
+	/**
+	 * Addition of time object
+	 * @return (Time (left+right), max(left,right))
+	 */
+	friend
+	Time operator+(const Time& lhs, const Time& rhs){
+		return Time(lhs.m_timestamp+rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
+	}
 };
 
 // In practice, use this typedef.

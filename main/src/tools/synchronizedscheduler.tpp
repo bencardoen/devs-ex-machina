@@ -101,5 +101,15 @@ bool SynchronizedScheduler<X, R>::erase(const R& elem) {
 	}
 }
 
+template<typename X, typename R>
+void SynchronizedScheduler<X, R>::printScheduler()  {
+	std::lock_guard<std::mutex> lock(m_lock);
+	auto iter = m_storage.ordered_begin();
+	for(;iter != m_storage.ordered_end(); ++iter){
+		R stored = *iter;
+		std::cout << stored << std::endl;
+	}
+}
+
 } // ENamespace
 #endif
