@@ -10,9 +10,14 @@
 
 namespace n_model {
 
+using n_network::t_timestamp;
+
 class State
 {
 public:
+	t_timestamp m_timeLast;
+	t_timestamp m_timeNext;
+
 	virtual std::string toString() = 0;
 	virtual std::string toXML() = 0;
 	virtual std::string toJSON() = 0;
