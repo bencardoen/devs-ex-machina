@@ -86,6 +86,7 @@ TEST(Core, CoreFlow){
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
 	t_msgptr mymessage = createObject<Message>("toBen", (0));
+	// TODO Tim , vervang modelstub hier door TrafficLight
 	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
 	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
@@ -96,6 +97,7 @@ TEST(Core, CoreFlow){
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
+	// TODO Tim : replace 10 with first TimeAdvance() time.
 	EXPECT_TRUE(c.getTime() == t_timestamp(10));
 	auto imminent  = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
