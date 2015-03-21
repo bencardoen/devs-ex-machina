@@ -114,6 +114,7 @@ include_directories(	src
 				src/tools
 				src/model
 				src/tracers
+				src/examples/trafficlight_classic
 				src/network
 				src/control
 				)   # Project headers are in same folder as source

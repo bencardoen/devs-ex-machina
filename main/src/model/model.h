@@ -31,8 +31,9 @@ private:
 
 	t_portptr addPort(std::string name, bool isIn);
 
+	int m_coreNumber;
+
 protected:
-	bool m_receivedExt;
 	t_timestamp m_timeLast;
 	t_timestamp m_timeNext;
 
@@ -47,16 +48,20 @@ protected:
 
 public:
 	Model() = delete;
-	Model(std::string name);
+	Model(std::string name, int corenumber);
 	virtual ~Model() {}
 
 	std::string getName() const;
 	t_portptr getPort(std::string name);
 	t_stateptr getState() const;
 	void setState(t_stateptr newState);
+	int getCoreNumber() const;
+	void setCoreNumber(int core);
+	std::map<std::string, t_portptr> getPorts() const;
+
 };
 
-//typedef std::shared_ptr<Model> t_modelptr;
+typedef std::shared_ptr<Model> t_modelptr;
 }
 
 #endif /* MODEL_H_ */

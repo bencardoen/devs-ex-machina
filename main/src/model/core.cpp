@@ -3,7 +3,7 @@
  *
  *      Author: Ben Cardoen
  */
-#include <core.h>
+#include "core.h"
 #include <cassert>
 
 void n_model::Core::load(const std::string&)
