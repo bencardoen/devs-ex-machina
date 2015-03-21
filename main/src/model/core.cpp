@@ -192,8 +192,8 @@ void n_model::Core::syncTime()
 {
 	assert(not this->m_scheduler->empty() && "Syncing with the void is illadvised.");
 	t_timestamp next = this->m_scheduler->top().getTime();
-	std::cout << " Core is advancing simtime to :: " << next << std::endl;
-	this->m_time = next;
+	this->m_time = this->m_time + next;
+	std::cout << " Core is advancing simtime to :: " << this->m_time.getTime() << std::endl;
 	if (this->m_time >= this->m_termtime) {
 		std::cout << "Reached termination time :: now: " << m_time << " >= " << m_termtime << std::endl;
 		m_terminated.store(true);

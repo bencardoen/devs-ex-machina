@@ -98,7 +98,7 @@ TEST(Core, CoreFlow){
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
-	EXPECT_TRUE(c.getTime() == t_timestamp(10));
+	EXPECT_TRUE(c.getTime() == t_timestamp(60));
 	auto imminent  = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
@@ -126,9 +126,9 @@ TEST(Core, smallStep){
 	auto finaltime = c->getTerminationTime();
 
 	EXPECT_EQ(finaltime , t_timestamp::infinity());
-	c->setTerminationTime(t_timestamp(84, 0));
+	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime , t_timestamp(84,0));
+	EXPECT_EQ(finaltime , t_timestamp(200,0));
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
@@ -142,11 +142,8 @@ TEST(Core, smallStep){
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive()== true);
-
-	c->runSmallStep();
-	EXPECT_TRUE(c->terminated() == true);
-	EXPECT_TRUE(c->isLive()== false);
 }
+
 
 TEST(Core, terminationfunction){
 	RecordProperty("description", "Core simulation steps with term function.");
