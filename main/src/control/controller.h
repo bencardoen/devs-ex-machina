@@ -16,6 +16,7 @@
 #include "timestamp.h"
 #include "atomicmodel.h"
 #include "coupledmodel.h"
+#include "rootmodel.h"
 #include "port.h"
 #include "locationtable.h"
 #include "allocator.h"
@@ -41,15 +42,16 @@ private:
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	std::shared_ptr<LocationTable> m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
+	std::shared_ptr<n_model::RootModel> m_root;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-	        std::shared_ptr<LocationTable> locTab);
+	        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc);
 
 	virtual ~Controller();
 
 	/*
-	 * Add an atomic model
+	 * Add an atomic model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
@@ -117,11 +119,6 @@ private:
 	 * Check if simulation needs to continue
 	 */
 	bool check();
-
-	/*
-	 * Flattens coupled model to interconnected atomic models
-	 */
-	std::vector<t_atomicmodelptr> directConnect(t_coupledmodelptr coupled);
 
 	/*
 	 * Checks if all cores have finished

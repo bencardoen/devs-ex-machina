@@ -10,9 +10,9 @@
 namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-        std::shared_ptr<LocationTable> locTab)
+        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc)
 	: m_isClassicDEVS(true), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(cores),
-	  m_locTab(locTab)
+	  m_locTab(locTab), m_allocator(alloc)
 {
 }
 
@@ -22,9 +22,8 @@ Controller::~Controller()
 
 void Controller::addModel(t_atomicmodelptr& atomic)
 {
-	//FIXME dumb implementation
-	std::size_t core = 0;
-	addModel(atomic, core);
+	size_t coreID = m_allocator->allocate(atomic);
+	addModel(atomic, coreID);
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
@@ -46,13 +45,13 @@ void Controller::simulate()
 	if (m_checkpointInterval.getTime() > 0) { // checkpointing is active
 		startGVTThread();
 	}
-	// start off all cores
-	for (auto core : m_cores) {
-//		core.second->
+	while(true) {
+		// start off all cores
+		for (auto core : m_cores) {
+			//core smallstep
+			//check if stopped
+		}
 	}
-	// wait until cores are finished simulating
-	waitFinish(m_cores.size());
-	// done :)
 }
 
 void Controller::setClassicDEVS(bool classicDEVS)
@@ -107,17 +106,6 @@ bool Controller::check()
 bool Controller::isFinished(size_t runningCores)
 {
 	throw std::logic_error("Controller : isFinished not implemented");
-}
-
-std::vector<t_atomicmodelptr> Controller::directConnect(t_coupledmodelptr coupled)
-{
-	// TODO implement directConnect
-
-//	std::vector<t_atomicmodelptr> components = coupled->getComponents(); // MOVE
-
-	std::vector<t_atomicmodelptr> connected;
-
-	return connected;
 }
 
 } /* namespace n_control */
