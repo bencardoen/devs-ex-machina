@@ -14,8 +14,8 @@ namespace n_model {
  *
  * @param name of model
  */
-Model::Model(std::string name)
-	: m_name(name), m_receivedExt(false)
+Model::Model(std::string name, int corenumber)
+	: m_name(name), m_coreNumber(corenumber)
 {
 
 }
@@ -119,5 +119,37 @@ t_portptr Model::addOutPort(std::string name)
 	return this->addPort(name, false);
 }
 
+/*
+ * Get the current core number
+ *
+ * @return current core number
+ */
+int Model::getCoreNumber() const {
+	return m_coreNumber;
 }
+
+/*
+ * Set the current core number
+ *
+ * @param core current core number
+ */
+void Model::setCoreNumber(int core) {
+	m_coreNumber = core;
+}
+
+/*
+ * Return all current ports
+ *
+ * @return current ports
+ */
+std::map<std::string, t_portptr> Model::getPorts() const {
+	std::map<std::string, t_portptr> returnvalue;
+	returnvalue.insert(m_iPorts.begin(), m_iPorts.end());
+	returnvalue.insert(m_oPorts.begin(), m_oPorts.end());
+	return returnvalue;
+}
+
+
+}
+
 

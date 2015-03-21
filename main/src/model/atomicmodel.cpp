@@ -12,15 +12,19 @@ namespace n_model {
 /*
  * Constructor for AtomicModel
  *
+ * Note that 0 is the highest priority. The higher the number,
+ * the lower the priority.
+ *
  * @param name The name of the model
+ * @param priority The priority of the model
  */
-AtomicModel::AtomicModel(std::string name, std::size_t priority)
-	: Model(name), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+	: Model(name, corenumber), m_priority(priority)
 {
 
 }
 
-void AtomicModel::confTransition(const n_network::t_msgptr & message)
+void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
 	this->extTransition(message);

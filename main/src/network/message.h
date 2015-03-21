@@ -22,21 +22,22 @@ private:
 	const std::string m_destination_model;
 	std::size_t m_destination_core;
 	const t_timestamp m_timestamp;
+	std::string m_destination_port;
 
 public:
-	Message(std::string modeldest, const t_timestamp& time_made)
-		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made)
-	{
-	}
-
-	Message(std::string modeldest, std::size_t coredest, const t_timestamp& time_made)
-		: m_destination_model(modeldest), m_destination_core(coredest), m_timestamp(time_made)
+	Message(std::string modeldest, const t_timestamp& time_made, std::string destport = "")
+		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made), m_destination_port(destport)
 	{
 	}
 
 	std::size_t getDestinationCore() const
 	{
 		return m_destination_core;
+	}
+
+	std::string getDestinationPort()const
+	{
+		return m_destination_port;
 	}
 
 	std::string getDestinationModel() const
