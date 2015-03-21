@@ -10,6 +10,7 @@
 #include "network.h"
 #include "objectfactory.h"
 #include "core.h"
+#include "multicore.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -93,8 +94,6 @@ TEST(Core, CoreFlow){
 	c.addModel(modelto);
 	EXPECT_EQ(c.getModel("toBen"), modelto);
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
-	EXPECT_TRUE(c.isMessageLocal(mymessage));
-	EXPECT_TRUE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
 	EXPECT_TRUE(c.getTime() == t_timestamp(10));
@@ -181,6 +180,17 @@ TEST(Core, terminationfunction){
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->terminated() == true);
 	EXPECT_TRUE(c->isLive()== false);
+	c->removeModel("Amodel");
+}
 
+TEST(Core, multicoresafe){
+	using namespace n_network;
+	t_networkptr network = createObject<Network>(2);
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0);
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
+	coreone->getMessages(mailstubone);
+	coretwo->getMessages(mailstubtwo);
 }
 

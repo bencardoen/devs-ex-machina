@@ -19,7 +19,7 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-// TODO replace with Model
+// TODO Tim replace with Model (if atomicmodel interface is ready, remove this struct.
 struct modelstub
 {
 	virtual ~modelstub()
@@ -60,14 +60,18 @@ struct modelstub
 		return msgs;
 	}
 };
-typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO remove stubbed typedef if models are live.
+typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO Tim remove stubbed typedef if models are live.
 
 typedef void t_tracerset;	// TODO Stijn replace with correct type
 
+
+/**
+ * Typedef used by core.
+ */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
+
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
- * Compares with Yentl's solver.py
  */
 class Core
 {
@@ -127,7 +131,7 @@ private:
 	 */
 	// TODO Stijn link with tracers here.
 	// t_tracerset m_tracers;
-public:
+
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -137,18 +141,22 @@ public:
 	bool
 	virtual
 	isMessageLocal(const t_msgptr&);
-
+public:
 	/**
 	 * Default single core implementation.
 	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
 	 */
 	Core();
 
-	/**
-	 * Multicore implementation.
-	 * @pre netlink has at least id queues.
-	 */
+	Core(const Core&) = delete;
+
+	Core& operator=(const Core&) = delete;
+
+
+protected:
 	Core(std::size_t id);
+
+public:
 	virtual ~Core() = default;
 
 	/**
@@ -164,6 +172,7 @@ public:
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 */
+	virtual
 	void revert(t_timestamp totime);
 
 	/**
@@ -225,7 +234,7 @@ public:
 	/**
 	 * Run a single DEVS simulation step:
 	 * 	- collect output
-	 * 	- route messages
+	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
 	 * 	- sync & reschedule
@@ -239,6 +248,9 @@ public:
 	 */
 	virtual void
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
+
+	virtual void
+	sendMessage(const t_msgptr&){;}
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
@@ -328,6 +340,14 @@ public:
 	 */
 	void
 	checkTerminationFunction();
+
+	/**
+	 * Remove model from this core.
+	 * @pre isLive()==false
+	 * @post name is no longer scheduled/present.
+	 */
+	void
+	removeModel(std::string name);
 
 };
 

@@ -25,14 +25,15 @@ n_model::Core::Core(std::size_t id)
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg)
 {
+	// TODO in optimized versions , replace with return true && setting msg->dest.
 	std::string destname = msg->getDestinationModel();
-	std::size_t destid = this->m_coreid;
 	if (this->m_models.find(destname) != this->m_models.end()) {
-		msg->setDestinationCore(destid);
+		msg->setDestinationCore(this->getCoreID());
+		return true;
 	} else {
 		assert(false && "Message to model destination not in single core ??");
+		return false;
 	}
-	return (destid == this->m_coreid);
 }
 
 void n_model::Core::save(const std::string&)
@@ -131,8 +132,10 @@ void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgpt
         const std::vector<t_msgptr>& messages)
 {
 	for (const auto & message : messages) {
-		assert(isMessageLocal(message));
-		message->setDestinationCore(this->m_coreid);
+		// For a single core, the compiler will figure out this branch is never taken.
+		if(not this->isMessageLocal(message)){
+			this->sendMessage(message);
+		}
 		const std::string& destname = message->getDestinationModel();
 		auto found = mailbag.find(destname);
 		if (found == mailbag.end()) {
@@ -304,4 +307,13 @@ void n_model::Core::checkTerminationFunction()
 	} else {
 		std::cout << "No termination function to evaluate, moving on..." << std::endl;
 	}
+}
+
+void n_model::Core::removeModel(std::string name){
+	assert(this->isLive()==false && "Can't remove model from live core.");
+	std::size_t erased = this->m_models.erase(name);
+	assert(erased!=0 && "Trying to remove model not in this core ??");
+	ModelEntry target(name, t_timestamp(0,0));
+	this->m_scheduler->erase(target);
+	assert(this->m_scheduler->contains(target)==false && "Removal from scheduler failed !!");
 }
