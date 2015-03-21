@@ -47,7 +47,10 @@ struct modelstub
 	virtual void extTransition(const std::vector<t_msgptr>&){;}
 	virtual void intTransition(){;}
 	virtual void confTransition(const std::vector<t_msgptr>&){;}
-	virtual std::vector<t_msgptr> output(){return {};}
+	virtual std::vector<t_msgptr> output(){
+		std::vector<t_msgptr> msgs;
+		return msgs;
+	}
 };
 typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO remove stubbed typedef if models are live.
 
