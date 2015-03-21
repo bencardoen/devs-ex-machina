@@ -10,7 +10,7 @@
 namespace n_tracers {
 
 TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func)
-	: Message("", -1, time), m_func(func)
+	: Message("", time), m_func(func)
 {
 }
 

@@ -10,6 +10,7 @@
 #include "network.h"
 #include "objectfactory.h"
 #include "core.h"
+#include "multicore.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -93,8 +94,6 @@ TEST(Core, CoreFlow){
 	c.addModel(modelto);
 	EXPECT_EQ(c.getModel("toBen"), modelto);
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
-	EXPECT_TRUE(c.isMessageLocal(mymessage));
-	EXPECT_TRUE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
 	EXPECT_TRUE(c.getTime() == t_timestamp(10));
@@ -106,7 +105,92 @@ TEST(Core, CoreFlow){
 	//for(const auto& el : imminent)		std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
-	c.checkCoreIntegrity();
 	EXPECT_EQ(imminent.size(), 2);
+}
+
+// TODO Matthijs : this is how a Core expects to be run.
+TEST(Core, smallStep){
+	RecordProperty("description", "Core simulation steps and termination conditions");
+	t_coreptr c = createObject<Core>();
+	// Add Models
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	c->addModel(modelfrom);
+	c->addModel(modelto);
+
+	// Initialize (loads models by ta() into scheduler
+	c->init();
+	// Set termination conditions (optional), both are checked (time first, then function)
+	auto finaltime = c->getTerminationTime();
+
+	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	c->setTerminationTime(t_timestamp(24, 0));
+	finaltime = c->getTerminationTime();
+	EXPECT_EQ(finaltime , t_timestamp(24,0));
+
+	t_timestamp coretimebefore = c->getTime();
+	// Switch 'on' Core.
+	c->setLive(true);
+	EXPECT_TRUE(c->terminated() == false);
+	EXPECT_TRUE(c->isLive()== true);
+
+	// Run simulation.
+	c->runSmallStep();
+	t_timestamp coretimeafter = c->getTime();
+	EXPECT_TRUE(coretimebefore < coretimeafter);
+	EXPECT_TRUE(c->terminated() == false);
+	EXPECT_TRUE(c->isLive()== true);
+
+	c->runSmallStep();
+	EXPECT_TRUE(c->terminated() == true);
+	EXPECT_TRUE(c->isLive()== false);
+}
+
+TEST(Core, terminationfunction){
+	RecordProperty("description", "Core simulation steps with term function.");
+	t_coreptr c = createObject<Core>();
+	// Add Models
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	c->addModel(modelfrom);
+	c->addModel(modelto);
+
+	// Initialize (loads models by ta() into scheduler
+	c->init();
+	// Set termination conditions (optional), both are checked (time first, then function)
+	auto finaltime = c->getTerminationTime();
+	auto termfun = [](const t_atomicmodelptr& model)->bool{
+		if(model->getName() == "Amodel")
+			return true;
+		return false;
+	};
+
+	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	c->setTerminationFunction(termfun);
+
+	t_timestamp coretimebefore = c->getTime();
+	// Switch 'on' Core.
+	c->setLive(true);
+	EXPECT_TRUE(c->terminated() == false);
+	EXPECT_TRUE(c->isLive()== true);
+
+	// Run simulation.
+	c->runSmallStep();
+	t_timestamp coretimeafter = c->getTime();
+	EXPECT_TRUE(coretimebefore < coretimeafter);
+	EXPECT_TRUE(c->terminated() == true);
+	EXPECT_TRUE(c->isLive()== false);
+	c->removeModel("Amodel");
+}
+
+TEST(Core, multicoresafe){
+	using namespace n_network;
+	t_networkptr network = createObject<Network>(2);
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0);
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
+	coreone->getMessages(mailstubone);
+	coretwo->getMessages(mailstubtwo);
 }
 
