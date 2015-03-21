@@ -63,15 +63,12 @@ public:
 	typedef T t_time;
 	typedef X t_causal;
 
-	static
-	inline
-	Time
-	infinity()
+	static inline Time infinity()
 	{
 		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
 	}
 
-	Time()=default;
+	Time() = default;
 	Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
 	{
@@ -149,9 +146,9 @@ public:
 	 * Addition of time object
 	 * @return (Time (left+right), max(left,right))
 	 */
-	friend
-	Time operator+(const Time& lhs, const Time& rhs){
-		return Time(lhs.m_timestamp+rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
+	friend Time operator+(const Time& lhs, const Time& rhs)
+	{
+		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
 
 };
@@ -180,7 +177,8 @@ inline t_timestamp makeCausalTimeStamp(const t_timestamp& before)
 	return after;
 }
 
-inline t_timestamp makeLatest(const t_timestamp& now){
+inline t_timestamp makeLatest(const t_timestamp& now)
+{
 	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
 }
 

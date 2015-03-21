@@ -112,6 +112,7 @@ include_directories(	src
 				src/test 
 				src/tools
 				src/model
+				src/tracers
 				src/network
 				src/control
 				)   # Project headers are in same folder as source

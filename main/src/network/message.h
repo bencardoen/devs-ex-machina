@@ -35,6 +35,11 @@ public:
 		return m_destination_core;
 	}
 
+	std::string getDestinationPort()const
+	{
+		return m_destination_port;
+	}
+
 	std::string getDestinationModel() const
 	{
 		return m_destination_model;

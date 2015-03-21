@@ -4,11 +4,11 @@
  */
 #include <timestamp.h>
 #include <network.h>
-#include <model.h>	// TODO uncomment if models are ready.
-//#include "locationtable.h"
+#include <model.h>
 #include "scheduler.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
+//#include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -19,15 +19,13 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-class LocationTable;
-// TODO stubbed typedef
-typedef std::shared_ptr<LocationTable> t_loctableptr;
-
-// Stub to allow testing without breaking interface with Model
 // TODO replace with Model
 struct modelstub
 {
-	virtual ~modelstub(){;}
+	virtual ~modelstub()
+	{
+		;
+	}
 	std::string name;
 	modelstub(std::string s)
 		: name(s)
@@ -44,18 +42,29 @@ struct modelstub
 	{
 		return name;
 	}
-	virtual void extTransition(const std::vector<t_msgptr>&){;}
-	virtual void intTransition(){;}
-	virtual void confTransition(const std::vector<t_msgptr>&){;}
-	virtual std::vector<t_msgptr> output(){
+	virtual void extTransition(const std::vector<t_msgptr>&)
+	{
+		;
+	}
+	virtual void intTransition()
+	{
+		;
+	}
+	virtual void confTransition(const std::vector<t_msgptr>&)
+	{
+		;
+	}
+	virtual std::vector<t_msgptr> output()
+	{
 		std::vector<t_msgptr> msgs;
 		return msgs;
 	}
 };
 typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO remove stubbed typedef if models are live.
 
-typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
+typedef void t_tracerset;	// TODO Stijn replace with correct type
 
+typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
  * Compares with Yentl's solver.py
@@ -63,10 +72,6 @@ typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 class Core
 {
 private:
-	/**
-	 * The global message scheduler.
-	 */
-	t_networkptr m_network;
 	/**
 	 * Current simulation time
 	 * Loosely corresponds with Yentl's 'clock'
@@ -101,30 +106,37 @@ private:
 	t_scheduler m_scheduler;
 
 	/**
-	 * Link to lookup table for messages.
-	 */
-	t_loctableptr m_loctable;		// TODO link with location table in constructor
-
-	/**
 	 * Termination time, if set.
 	 * @attention : if not set, infinity().
 	 */
-	t_timestamp m_gehenna;
+	t_timestamp m_termtime;
 
 	/**
 	 * Indicates if this core has triggered either termination condition.
 	 */
 	std::atomic<bool> m_terminated;
 
+	/**
+	 * Termination function.
+	 * @default init to nullptr
+	 */
 	std::function<bool(const t_atomicmodelptr&)> m_termination_function;
 
+	/**
+	 * Tracers.
+	 */
+	// TODO Stijn link with tracers here.
+	// t_tracerset m_tracers;
 public:
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
 	 * @post msg has correct destination id field set for network.
+	 * @attention For single core, checks if no message has destination to model not in core (assert).
 	 */
-	bool isMessageLocal(const t_msgptr&);
+	bool
+	virtual
+	isMessageLocal(const t_msgptr&);
 
 	/**
 	 * Default single core implementation.
@@ -136,7 +148,7 @@ public:
 	 * Multicore implementation.
 	 * @pre netlink has at least id queues.
 	 */
-	Core(std::size_t id, const t_networkptr& netlink, const t_loctableptr& loctable);
+	Core(std::size_t id);
 	virtual ~Core() = default;
 
 	/**
@@ -167,20 +179,6 @@ public:
 	getModel(std::string name);
 
 	/**
-	 * Pull all messages from network for processing.
-	 * @TODO protected
-	 */
-	virtual
-	void receiveMessages(std::vector<t_msgptr>&);
-
-	/**
-	 * Send all collected messages to network.
-	 * @TODO protected
-	 */
-	virtual
-	void sendMessages();
-
-	/**
 	 * Indicates if Core is running, or halted.
 	 * @synchronized
 	 */
@@ -188,6 +186,7 @@ public:
 
 	/**
 	 * Start/Stop core.
+	 * @synchronized
 	 */
 	void setLive(bool live);
 
@@ -198,6 +197,7 @@ public:
 
 	/**
 	 * Run at startup, populate the scheduler with the model's advance() results.
+	 * @attention : run this once and once only.
 	 */
 	void init();
 
@@ -231,6 +231,7 @@ public:
 	 * 	- sync & reschedule
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
 	 */
+	virtual
 	void runSmallStep();
 
 	/**
@@ -240,21 +241,24 @@ public:
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
 
 	/**
-	 * Pull messages from network, pass on to models.
-	 * Only useful in multicore context, pulls networked messages.
-	 * This is a noop in the single core implementation, multicore should override this.
+	 * Pull messages from network, and sort them into parameter by destination name.
 	 */
-	virtual void
-	getMessages(){;}
+	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
+	{
+		;
+	}
 
 	/**
 	 * Get Current simulation time.
 	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
 	 * @note The causal field is to be disregarded, it is not relevant here.
 	 */
-	t_timestamp getTime();
+	t_timestamp getTime() const;
 
-	t_timestamp getGVT();
+	/**
+	 * Retrieve GVT. Only makes sense for a multi core.
+	 */
+	t_timestamp getGVT() const;
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
@@ -262,7 +266,8 @@ public:
 	 */
 	virtual
 	void
-	transition(const std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(const std::set<std::string>& imminents,
+	        std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Schedule model.name @ time t.
@@ -278,8 +283,14 @@ public:
 	void
 	printSchedulerState();
 
+	/**
+	 * Given a set of messages, sort them by model destination.
+	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
+	 */
+	virtual
 	void
-	sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag, const std::vector<t_msgptr>& messages);
+	sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag,
+	        const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -293,19 +304,18 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
-
 	void
 	setTerminationTime(t_timestamp endtime);
 
 	t_timestamp
-	getTerminationTime()const;
+	getTerminationTime() const;
 
 	/**
 	 * @returns true when either termination condition is met.
 	 * @attention : implies isLive == false.
 	 */
 	bool
-	terminated()const;
+	terminated() const;
 
 	/**
 	 * Set the the termination function.
@@ -320,8 +330,6 @@ public:
 	checkTerminationFunction();
 
 };
-
-// TODO add TerminationTime, add TerminationFunction
 
 typedef std::shared_ptr<Core> t_coreptr;
 
