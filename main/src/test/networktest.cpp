@@ -72,7 +72,10 @@ void push(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 		for (size_t j = 0; j < cores; ++j) {
 			if (j == coreid)
 				continue;
-			t_msgptr msg = n_tools::createObject<Message>("", j, t_timestamp(i, 0));
+			t_msgptr msg = n_tools::createObject<Message>("", t_timestamp(i, 0));
+			EXPECT_TRUE(msg->getDestinationCore() != j);
+			msg->setDestinationCore(j);
+			EXPECT_TRUE(msg->getDestinationCore() == j);
 			net.acceptMessage(msg);
 		}
 	}

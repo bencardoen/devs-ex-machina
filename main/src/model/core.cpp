@@ -12,16 +12,17 @@ void n_model::Core::load(const std::string&)
 }
 
 n_model::Core::Core()
-	: m_network(nullptr), m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_loctable(nullptr)
+	: m_network(nullptr), m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_loctable(nullptr), m_gehenna(t_timestamp::infinity()),m_terminated(false)
 {
-
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 }
 
 n_model::Core::Core(std::size_t id, const t_networkptr& netlink, const t_loctableptr& loc)
-	: m_network(netlink), m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_loctable(loc)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	m_network = netlink;
+	m_loctable = loc;
+	m_coreid = id;
 }
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg)
@@ -93,62 +94,61 @@ void n_model::Core::init()
 	}
 }
 
-void n_model::Core::collectOutput()
+void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)
 {
-	throw std::logic_error("Core : collectOutput not implemented");
 	/**
-	 for each model:
-	 messages = model.outputfunction();
-	 routeMessages(messages);
+	 * For each model, collect output.
+	 * Then sort that output by destination (for the transition functions)
 	 */
-}
-
-void n_model::Core::routeMessages(const std::map<t_portptr, n_network::t_msgptr>&)
-{
-	throw std::logic_error("Core : routeMessages not implemented");
-	/**
-	 // Collect all messages (output function)
-	 for(const auto& modelpair : m_models){
-	 //auto messagemap = modelpair.second->output();
-	 }
-	 // Send messages
-	 for collected messages : lookup destination
-	 if destination local :
-	 route direct
-	 else
-	 sendMessage()
-	 // Receive pending messages
-	 */
-	//m_network->getMessages(this->m_coreid);
-}
-
-std::set<std::string> n_model::Core::transition(const std::set<std::string>&)
-{
-	std::set<std::string> transitioned;
-	throw std::logic_error("Core : transition not implemented");
-	/**
-	 * std::vector<std::string> transitioned;
-	 * for model in imminent:
-	 * 	if(got external)
-	 * 		model.confluent();
-	 * 	else
-	 * 		model.internal()
-	 * 	transitioned.insert(model.getName());
-	 * for model in models && not in imminent:
-	 * 	if(got external
-	 * 		model.external();
-	 * 	transitioned.insert(model.getname());
-	 */
-	return transitioned;
-}
-
-void n_model::Core::traceModels(const std::set<std::string>& transitioned)
-{
-	for (const auto& modelentry : transitioned) {
-		auto model = this->m_models[modelentry];
-		// Trace model;
+	std::cout << "Collecting output from all models";
+	for(const auto& modelentry : m_models ){
+		auto model = modelentry.second;
+		auto mailfrom = model->output();
+ 	 	this->sortMail(mailbag, mailfrom);
 	}
-	// TODO Stijn, link with tracers here.
+	std::cout << " resulted in " << mailbag.size() << " addressees" << std::endl;
+}
+
+void
+n_model::Core::transition(const std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
+{
+	/**
+	 * For imminents : if message, confluent, else internal
+	 * For others : external
+	 */
+	std::cout << "Transitioning with " << imminents.size() << " imminents, and " << mail.size() << " models to deliver mail to." << std::endl;
+	for(const auto& imminent : imminents){
+		t_atomicmodelptr urgent = this->m_models[imminent];
+		auto found = mail.find(imminent);
+		if(found == mail.end()){
+			urgent->intTransition();
+			this->traceInt(urgent);
+		}else{
+			urgent->confTransition(found->second);
+			std::size_t erased = mail.erase(imminent);	// Erase so we don't need to double check in the next for loop.
+			this->traceConf(urgent);
+			assert(erased != 0 && "Broken logic in collected output");
+		}
+	}
+
+	for(const auto& remaining : mail){
+		const t_atomicmodelptr& model = this->m_models[remaining.first];
+		model->extTransition(remaining.second);
+		this->traceExt(model);
+	}
+}
+
+void
+n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag, const std::vector<t_msgptr>& messages){
+	for(const auto & message : messages){
+		const std::string& destname = message->getDestinationModel();
+		auto found = mailbag.find(destname);
+		if(found == mailbag.end()){
+			mailbag[destname] = {message};
+		}else{
+			mailbag[destname].push_back(message);
+		}
+	}
 }
 
 void n_model::Core::printSchedulerState()
@@ -158,6 +158,7 @@ void n_model::Core::printSchedulerState()
 
 std::set<std::string> n_model::Core::getImminent()
 {
+	std::cout << "Retrieving imminent models" << std::endl;
 	std::set<std::string> imminent;
 	std::vector<ModelEntry> bag;
 	t_timestamp maxtime = n_network::makeLatest(this->m_time);
@@ -177,25 +178,33 @@ std::set<std::string> n_model::Core::getImminent()
  */
 void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 {
+	std::cout << "Rescheduling " << oldimms.size() << " models for next run." << std::endl;
 	for (const auto& old : oldimms) {
 		t_atomicmodelptr model = this->m_models[old];
-		t_timestamp next = model->timeAdvance() + this->m_time;
-		this->scheduleModel(old, next);
+		t_timestamp ta = model->timeAdvance();
+		if(ta != t_timestamp::infinity()){
+			t_timestamp next = ta + this->m_time;
+			this->scheduleModel(old, next);
+		}
+		else{
+			std::cout << "Core:: " << model->getName() << " is no longer scheduled (infinity) " << std::endl;
+		}
 	}
 	this->syncTime();
 }
 
-/**
- * Updates local time from first entry in scheduler.
- * @attention : if scheduler is empty this will crash. (it should)
- */
+
 void n_model::Core::syncTime()
 {
 	assert(not this->m_scheduler->empty() && "Syncing with the void is illadvised.");
 	t_timestamp next = this->m_scheduler->top().getTime();
-	//std::cout << " Core is advancing simtime to :: " << next << std::endl;
+	std::cout << " Core is advancing simtime to :: " << next << std::endl;
 	this->m_time = next;
-	// TODO check gvt etc..
+	if(this->m_time >= this->m_gehenna){
+		std::cout << "Reached termination time :: now: " << m_time << " >= "<<  m_gehenna << std::endl;
+		m_terminated.store(true);
+		m_live.store(false);
+	}
 }
 
 n_network::t_timestamp n_model::Core::getTime()
@@ -226,21 +235,72 @@ std::size_t n_model::Core::getCoreID() const
 void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
+
 	// Get all produced messages, and route them.
-	this->collectOutput();
-	// Transition if/when necessary
-	auto transitioned = this->transition(imminent);
-	// Trace what happened in this step.
-	this->traceModels(transitioned);
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
+	this->collectOutput(mailbag);
+
+	// Transition depending on state.
+	this->transition(imminent, mailbag);
+
 	// Finally find out what next firing times are and place models accordingly.
-	// This also sets the kernel time.
+	// This also sets the kernel time and checks if termination time is reached.
 	this->rescheduleImminent(imminent);
+
+	// Do we need to continue ?
+	this->checkTerminationFunction();
 }
 
-void n_model::Core::checkCoreIntegrity(){
-	for(const auto& modelname : m_models){
-		assert(this->m_scheduler->contains(ModelEntry(modelname.first, t_timestamp(0,0))));
+void
+n_model::Core::traceInt(const t_atomicmodelptr&){
+	// TODO Stijn link with tracer here.
+}
+
+void
+n_model::Core::traceExt(const t_atomicmodelptr&){
+	// TODO Stijn link with tracer here.
+}
+
+void
+n_model::Core::traceConf(const t_atomicmodelptr&){
+	// TODO Stijn link with tracer here.
+}
+
+void
+n_model::Core::setTerminationTime(t_timestamp endtime){
+	assert(endtime > this->m_time && "Error : termination time in the past ??");
+	this->m_gehenna = endtime;
+}
+
+n_network::t_timestamp
+n_model::Core::getTerminationTime()const{return m_gehenna;}
+
+bool
+n_model::Core::terminated()const {return m_terminated;}
+
+
+void
+n_model::Core::setTerminationFunction(std::function<bool(const t_atomicmodelptr& model)> fun){
+	this->m_termination_function = fun;
+}
+
+
+void
+n_model::Core::checkTerminationFunction(){
+	if(m_termination_function){
+		std::cout << "Checking termination function." << std::endl;
+		for(const auto& model : m_models){
+			if( m_termination_function(model.second) ){
+				std::cout << "Termination function evaluated to true for model " << model.first << std::endl;
+				this->m_live.store(false);
+				this->m_terminated.store(true);
+				return;
+			}
+		}
+	}else{
+		std::cout << "No termination function to evaluate, moving on..." << std::endl;
 	}
 }

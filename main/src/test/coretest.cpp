@@ -106,7 +106,81 @@ TEST(Core, CoreFlow){
 	//for(const auto& el : imminent)		std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
-	c.checkCoreIntegrity();
 	EXPECT_EQ(imminent.size(), 2);
+}
+
+// TODO Matthijs : this is how a Core expects to be run.
+TEST(Core, smallStep){
+	RecordProperty("description", "Core simulation steps and termination conditions");
+	Core c;
+	// Add Models
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	c.addModel(modelfrom);
+	c.addModel(modelto);
+
+	// Initialize (loads models by ta() into scheduler
+	c.init();
+	// Set termination conditions (optional), both are checked (time first, then function)
+	auto finaltime = c.getTerminationTime();
+
+	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	c.setTerminationTime(t_timestamp(24, 0));
+	finaltime = c.getTerminationTime();
+	EXPECT_EQ(finaltime , t_timestamp(24,0));
+
+	t_timestamp coretimebefore = c.getTime();
+	// Switch 'on' Core.
+	c.setLive(true);
+	EXPECT_TRUE(c.terminated() == false);
+	EXPECT_TRUE(c.isLive()== true);
+
+	// Run simulation.
+	c.runSmallStep();
+	t_timestamp coretimeafter = c.getTime();
+	EXPECT_TRUE(coretimebefore < coretimeafter);
+	EXPECT_TRUE(c.terminated() == false);
+	EXPECT_TRUE(c.isLive()== true);
+
+	c.runSmallStep();
+	EXPECT_TRUE(c.terminated() == true);
+	EXPECT_TRUE(c.isLive()== false);
+}
+
+TEST(Core, terminationfunction){
+	RecordProperty("description", "Core simulation steps and termination conditions");
+	Core c;
+	// Add Models
+	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
+	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	c.addModel(modelfrom);
+	c.addModel(modelto);
+
+	// Initialize (loads models by ta() into scheduler
+	c.init();
+	// Set termination conditions (optional), both are checked (time first, then function)
+	auto finaltime = c.getTerminationTime();
+	auto termfun = [](const t_atomicmodelptr& model)->bool{
+		if(model->getName() == "Amodel")
+			return true;
+		return false;
+	};
+
+	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	c.setTerminationFunction(termfun);
+
+	t_timestamp coretimebefore = c.getTime();
+	// Switch 'on' Core.
+	c.setLive(true);
+	EXPECT_TRUE(c.terminated() == false);
+	EXPECT_TRUE(c.isLive()== true);
+
+	// Run simulation.
+	c.runSmallStep();
+	t_timestamp coretimeafter = c.getTime();
+	EXPECT_TRUE(coretimebefore < coretimeafter);
+	EXPECT_TRUE(c.terminated() == true);
+	EXPECT_TRUE(c.isLive()== false);
+
 }
 

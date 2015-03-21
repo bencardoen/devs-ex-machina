@@ -63,6 +63,14 @@ public:
 	typedef T t_time;
 	typedef X t_causal;
 
+	static
+	inline
+	Time
+	infinity()
+	{
+		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
+	}
+
 	Time()=default;
 	Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
