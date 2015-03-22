@@ -8,10 +8,10 @@
 #ifndef SRC_TRACERS_VERBOSETRACER_H_
 #define SRC_TRACERS_VERBOSETRACER_H_
 
-#include "network/timestamp.h"
-#include "tracers/tracemessage.h"
-#include "tools/objectfactory.h"
-#include "model/atomicmodel.h"
+#include "timestamp.h"
+#include "tracemessage.h"
+#include "objectfactory.h"
+#include "atomicmodel.h"
 
 namespace n_tracers{
 

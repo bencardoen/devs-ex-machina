@@ -9,8 +9,8 @@
 #define SRC_TRACING_TRACERS_H_
 
 #include <tuple>
-#include "network/timestamp.h"
-#include "model/atomicmodel.h"
+#include "timestamp.h"
+#include "atomicmodel.h"
 
 using namespace n_network;
 using namespace n_model;
