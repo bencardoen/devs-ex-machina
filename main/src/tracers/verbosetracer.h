@@ -83,7 +83,7 @@ public:
 			"\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
-		const std::deque<n_network::t_msgptr>& messages = adevs->getSendMessages();
+//		const std::deque<n_network::t_msgptr>& messages = adevs->getSendMessages();
 		for(const std::map<std::string, t_portptr>::value_type& item: ports){
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 //			for(const n_network::t_msgptr& message:messages)
@@ -114,7 +114,7 @@ public:
 	        	"\t\tNew State: " << state->toString() << "\n"
 	        	"\t\tInput Port Configuration:\n";
 			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+//			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
 			for(const std::map<std::string, t_portptr>::value_type& item: ports){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
 //				for(const n_network::t_msgptr& message:messages)
@@ -144,7 +144,7 @@ public:
 	        	"\tCONFLUENT TRANSITION in model " << adevs->getName() << "\n"
 	        	"\t\tInput Port Configuration:\n";
 			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+//			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
 			for(const std::map<std::string, t_portptr>::value_type& item: ports){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
 //				for(const n_network::t_msgptr& message:messages)
@@ -153,11 +153,11 @@ public:
 			}
 	        *ssr <<	"\t\tNew State: " << state->toString() << "\n"
 	        	"\t\tOutput Port Configuration:\n";
-			ports = adevs->getOPorts();
-			messages = adevs->getSendMessages();
-			for(const std::map<std::string, t_portptr>::value_type& item: ports){
+	        const std::map<std::string, t_portptr>& ports2 = adevs->getOPorts();
+//	        const std::deque<n_network::t_msgptr>& messages2 = adevs->getSendMessages();
+			for(const std::map<std::string, t_portptr>::value_type& item: ports2){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
-//				for(const n_network::t_msgptr& message:messages)
+//				for(const n_network::t_msgptr& message:messages2)
 //					if(message->getDestinationPort() == item.first)	//TODO get from which port a message was send
 //						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
 			}
