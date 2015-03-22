@@ -12,7 +12,7 @@
 #include "atomicmodel.h"
 
 namespace n_model {
-class RootModel : public Model
+class RootModel: public Model
 {
 private:
 	std::vector<t_atomicmodelptr> m_components;

@@ -43,7 +43,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 
 	for (auto state : m_oldStates) {
 		if (state->m_timeLast >= gvt) {
-			k = std::max(0,index-1);
+			k = std::max(0, index - 1);
 			break;
 		}
 		index++;
@@ -68,7 +68,7 @@ void AtomicModel::revert(t_timestamp time)
 	int index = m_oldStates.size() - 1;
 
 	// We walk over all old states in reverse, and keep track of the index
-	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size()-1) ; r_itStates++) {
+	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
@@ -79,13 +79,15 @@ void AtomicModel::revert(t_timestamp time)
 	this->m_timeLast = state->m_timeLast;
 	this->m_timeNext = state->m_timeNext;
 
-	this->m_state = state;
-
 	// Pop all obsolete states
-	this->m_oldStates.resize(index+1);
+	this->m_oldStates.resize(index);
+
+	this->setState(state);
+
 }
 
-std::size_t AtomicModel::getPriority() const {
+std::size_t AtomicModel::getPriority() const
+{
 	return m_priority;
 }
 

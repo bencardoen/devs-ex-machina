@@ -33,7 +33,7 @@ std::string TrafficLightMode::toCell()
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
 	: AtomicModel(name, 0, priority)
 {
-	m_state = std::make_shared<TrafficLightMode>("Red");
+	this->setState(std::make_shared<TrafficLightMode>("Red"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
 }
@@ -45,12 +45,13 @@ void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> &)
 
 void TrafficLight::intTransition()
 {
-	if (m_state->m_state == "Red")
-		m_state->m_state = "Green";
-	else if(m_state->m_state == "Green")
-		m_state->m_state = "Yellow";
-	else if (m_state->m_state == "Yellow")
-		m_state->m_state = "Red";
+	t_stateptr state = this->getState();
+	if (*state == "Red")
+		this->mysetState("Green");
+	else if(*state == "Green")
+		this->mysetState("Yellow");
+	else if (*state == "Yellow")
+		this->mysetState("Red");
 	else
 		assert(false); // You shouldn't come here...
 	return;
@@ -58,11 +59,12 @@ void TrafficLight::intTransition()
 
 t_timestamp TrafficLight::timeAdvance()
 {
-	if (m_state->m_state == "Red")
+	t_stateptr state = this->getState();
+	if (*state == "Red")
 		return t_timestamp(60);
-	else if(m_state->m_state == "Green")
+	else if(*state == "Green")
 		return t_timestamp(50);
-	else if (m_state->m_state == "Yellow")
+	else if (*state == "Yellow")
 		return t_timestamp(10);
 	else
 		assert(false); // You shouldn't come here...
@@ -72,6 +74,11 @@ t_timestamp TrafficLight::timeAdvance()
 std::vector<n_network::t_msgptr> TrafficLight::output()
 {
 	return std::vector<n_network::t_msgptr>();
+}
+
+t_stateptr TrafficLight::mysetState(std::string s) {
+	this->Model::setState(std::make_shared<TrafficLightMode>(s));
+	return this->getState();
 }
 
 }

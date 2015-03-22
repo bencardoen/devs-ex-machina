@@ -14,7 +14,7 @@
 #include <iostream>
 
 namespace n_model {
-class AtomicModel : public Model
+class AtomicModel: public Model
 {
 protected:
 	// lower number -> higher priority
@@ -35,7 +35,9 @@ public:
 	void revert(t_timestamp time);
 	std::size_t getPriority() const;
 
-	virtual ~AtomicModel() {}
+	virtual ~AtomicModel()
+	{
+	}
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

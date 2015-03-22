@@ -85,6 +85,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 add_executable(${PROJECT_NAME}
 	src/model/atomicmodel.cpp
 	src/model/model.cpp
+	src/model/state.cpp
 	src/model/port.cpp
 	src/model/core.cpp
 	src/model/multicore.cpp
@@ -98,6 +99,7 @@ add_executable(${PROJECT_NAME}
 	src/test/coretest.cpp
 	src/test/tracerstest.cpp
  	src/test/networktest.cpp
+ 	src/test/modeltest.cpp
 	src/test/compare.cpp
 	src/test/comparetest.cpp
  	src/main.cpp
