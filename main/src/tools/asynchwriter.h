@@ -47,8 +47,8 @@ struct ASynchWriter: std::streambuf
 	std::condition_variable m_condition;
 	LockedQueue<std::vector<char>> m_queue;
 	std::vector<char> m_buffer;
-	std::thread m_thread;
 	std::atomic<bool> m_done;
+	std::thread m_thread;
 
 	void worker()
 	{
@@ -85,7 +85,7 @@ struct ASynchWriter: std::streambuf
 
 public:
 	ASynchWriter(std::string const& name)
-		: m_out(name), m_buffer(512), m_thread(std::bind(&ASynchWriter::worker, this)), m_done(false)
+		: m_out(name), m_buffer(512), m_done(false), m_thread(std::bind(&ASynchWriter::worker, this))
 	{
 		std::lock_guard<std::mutex> lock(this->m_mutex);
 		this->setp(this->m_buffer.data(), this->m_buffer.data() + this->m_buffer.size() - 1);

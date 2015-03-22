@@ -2,7 +2,7 @@
  * macros.h
  *
  *  Created on: Mar 19, 2015
- *      Author: lttlemoi
+ *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
 #ifndef SRC_TOOLS_MACROS_H_
