@@ -9,8 +9,8 @@
 #define SRC_TRACING_TRACERS_H_
 
 #include <tuple>
-#include "network/timestamp.h"
-#include "model/atomicmodel.h"
+#include "timestamp.h"
+#include "atomicmodel.h"
 
 using namespace n_network;
 using namespace n_model;
@@ -42,7 +42,8 @@ public:
 	/**
 	 * @brief Returns the amount of registered tracers.
 	 */
-	std::size_t getSize() const{
+	std::size_t getSize() const
+	{
 		return 0;
 	}
 
@@ -50,7 +51,8 @@ public:
 	 * @brief Returns whether any tracers are registered.
 	 * @note Disabled tracers still count.
 	 */
-	bool hasTracers() const{
+	bool hasTracers() const
+	{
 		return false;
 	}
 
@@ -84,25 +86,29 @@ public:
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	void tracesInit(const t_atomicmodelptr&, t_timestamp){
+	void tracesInit(const t_atomicmodelptr&, t_timestamp)
+	{
 	}
 	/**
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr&){
+	void tracesInternal(const t_atomicmodelptr&)
+	{
 	}
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr&){
+	void tracesExternal(const t_atomicmodelptr&)
+	{
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr&){
+	void tracesConfluent(const t_atomicmodelptr&)
+	{
 	}
 };
 
@@ -153,12 +159,11 @@ public:
 //			: TracersTemplated<TracerElems...>(std::forward<TracerElems>(other)...), elem(std::forward<T>(tracer))
 //	{
 //	}
-
-
 	/**
 	 * @brief Returns the amount of registered tracers.
 	 */
-	std::size_t getSize() const{
+	std::size_t getSize() const
+	{
 		return (sizeof...(TracerElems) + 1);
 	}
 
@@ -166,7 +171,8 @@ public:
 	 * @brief Returns whether any tracers are registered.
 	 * @note Disabled tracers still count.
 	 */
-	bool hasTracers() const{
+	bool hasTracers() const
+	{
 		return true;
 	}
 
@@ -174,7 +180,8 @@ public:
 	 * @brief Gets a const reference to the first tracer in line.
 	 * @return The very first tracer in this collection of tracers.
 	 */
-	const T& getTracer() const{
+	const T& getTracer() const
+	{
 		return m_elem;
 	}
 
@@ -182,7 +189,8 @@ public:
 	 * @brief Gets a reference to the first tracer in line.
 	 * @return The very first tracer in this collection of tracers.
 	 */
-	T& getTracer(){
+	T& getTracer()
+	{
 		return m_elem;
 	}
 
@@ -212,10 +220,11 @@ public:
 	template<std::size_t n>
 	typename std::enable_if<n <= sizeof...(TracerElems) && n != 0,
 		typename std::tuple_element<n, std::tuple<T, TracerElems...>>::type>::type&
-	getByID(){
+	getByID()
+	{
 		static_assert(n <= sizeof...(TracerElems), "TracersTemplated::getByID n out of bounds.");
 		//the assertion well never be called though. I added it for extra clarity
-        return getNext(). template getByID<n-1>();
+		return getNext(). template getByID<n-1>();
 	}
 
 	/**
@@ -226,7 +235,8 @@ public:
 	template<std::size_t n>
 	typename std::enable_if<n==0 ,
 		typename std::tuple_element<n, std::tuple<T, TracerElems...>>::type>::type&
-	getByID(){
+	getByID()
+	{
 		static_assert(n <= sizeof...(TracerElems), "TracersTemplated::getByID n out of bounds.");
 		//the assertion well never be called though. I added it for extra clarity
 		return getTracer();
@@ -240,10 +250,11 @@ public:
 	template<std::size_t n>
 	const typename std::enable_if<n <= sizeof...(TracerElems) && n != 0,
 		typename std::tuple_element<n, std::tuple<T, TracerElems...>>::type>::type&
-	getByID() const{
+	getByID() const
+	{
 		static_assert(n <= sizeof...(TracerElems), "TracersTemplated::getByID n out of bounds.");
 		//the assertion well never be called though. I added it for extra clarity
-        return getNext(). template getByID<n-1>();
+		return getNext(). template getByID<n-1>();
 	}
 
 	/**
@@ -254,7 +265,8 @@ public:
 	template<std::size_t n>
 	const typename std::enable_if<n==0,
 		typename std::tuple_element<n, std::tuple<T, TracerElems...>>::type>::type&
-	getByID() const{
+	getByID() const
+	{
 		static_assert(n <= sizeof...(TracerElems), "TracersTemplated::getTracer n out of bounds.");
 		//the assertion well never be called though. I added it for extra clarity
 		return getTracer();
@@ -291,7 +303,8 @@ public:
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	void tracesInit(const t_atomicmodelptr& model, t_timestamp time){
+	void tracesInit(const t_atomicmodelptr& model, t_timestamp time)
+	{
 		m_elem.tracesInit(model, time);
 		getNext().tracesInit(model, time);
 	}
@@ -299,7 +312,8 @@ public:
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr& model){
+	void tracesInternal(const t_atomicmodelptr& model)
+	{
 		m_elem.tracesInternal(model);
 		getNext().tracesInternal(model);
 	}
@@ -307,7 +321,8 @@ public:
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr& model){
+	void tracesExternal(const t_atomicmodelptr& model)
+	{
 		m_elem.tracesExternal(model);
 		getNext().tracesExternal(model);
 	}
@@ -315,7 +330,8 @@ public:
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr& model){
+	void tracesConfluent(const t_atomicmodelptr& model)
+	{
 		m_elem.tracesConfluent(model);
 		getNext().tracesConfluent(model);
 	}
@@ -326,13 +342,15 @@ private:
 	/**
 	 * @brief retrieves a reference to the sliced instance of the direct superclass
 	 */
-	Tracers<TracerElems...>& getNext(){
+	Tracers<TracerElems...>& getNext()
+	{
 		return *static_cast<Tracers<TracerElems...>*>(this);
 	}
 	/**
 	 * @brief retrieves a const reference to the sliced instance of the direct superclass
 	 */
-	const Tracers<TracerElems...>& getNext() const{
+	const Tracers<TracerElems...>& getNext() const
+	{
 		return *static_cast<Tracers<TracerElems...>*>(this);
 	}
 };

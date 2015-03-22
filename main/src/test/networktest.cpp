@@ -72,7 +72,10 @@ void push(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 		for (size_t j = 0; j < cores; ++j) {
 			if (j == coreid)
 				continue;
-			t_msgptr msg = n_tools::createObject<Message>("", j, t_timestamp(i, 0));
+			t_msgptr msg = n_tools::createObject<Message>("Q", t_timestamp(i, 0));
+			EXPECT_TRUE(msg->getDestinationCore() != j);
+			msg->setDestinationCore(j);
+			EXPECT_TRUE(msg->getDestinationCore() == j);
 			net.acceptMessage(msg);
 		}
 	}
@@ -92,7 +95,7 @@ void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 TEST(Network, threadsafety)
 {
 	constexpr size_t cores = 4;
-	constexpr size_t msgcount = 100;
+	constexpr size_t msgcount = 10000;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
 	for (size_t i = 0; i < cores; ++i) {
@@ -108,7 +111,7 @@ void benchNetworkSpeed()
 {
 	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
 	constexpr size_t cores = 4;
-	constexpr size_t msgcount = 1000;
+	constexpr size_t msgcount = 200;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
 	std::chrono::time_point<std::chrono::system_clock> start, end;

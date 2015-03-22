@@ -54,7 +54,7 @@ endif()
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE -fsanitize=integer -fsanitize=thread" )
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" ) ## Use these if hunting obscure bugs :  -fsanitize=undefined -ftrapv -fsanitize=integer (you will end up in boost, stl !!)
 endif()
 
 ### Profiling -- Clang and G++ ###############################################
@@ -82,21 +82,25 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 
 add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
+	src/model/atomicmodel.cpp
+	src/model/model.cpp
 	src/model/port.cpp
 	src/model/core.cpp
+	src/model/multicore.cpp
+	src/examples/trafficlight_classic/trafficlight.cpp
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
-    src/test/toolstest.cpp
-    src/test/coretest.cpp
-    src/test/tracerstest.cpp
-    src/test/networktest.cpp
-    src/test/compare.cpp
-    src/test/comparetest.cpp
-    src/main.cpp
-    )
+	src/test/toolstest.cpp
+	src/test/coretest.cpp
+	src/test/tracerstest.cpp
+ 	src/test/networktest.cpp
+	src/test/compare.cpp
+	src/test/comparetest.cpp
+ 	src/main.cpp
+ 	)
 ###############################################################################
 
 ### INCLUDE PATHS ############################################################
@@ -108,7 +112,10 @@ include_directories(	src
 				src/test 
 				src/tools
 				src/model
+				src/tracers
+				src/examples/trafficlight_classic
 				src/network
+				src/control
 				)   # Project headers are in same folder as source
 
 ### LINKER ####################################################################
