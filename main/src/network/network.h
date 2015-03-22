@@ -31,7 +31,7 @@ public:
 	Network() = delete;
 
 	Network(size_t cores):m_cores(cores), m_queues(m_cores){
-		//LOG_DEBUG("Network constructor with ", cores, " queues.");
+		LOG_DEBUG("NETWORK: Network constructor with ", cores, " queues.");
 	}
 
 	/**
@@ -42,7 +42,7 @@ public:
 	void
 	acceptMessage(const t_msgptr& msg){
 		m_queues[msg->getDestinationCore()].push(msg);
-		//LOG_DEBUG("Network accepting message");
+		LOG_DEBUG("NETWORK: Network accepting message");
 	}
 
 	/**
@@ -53,7 +53,7 @@ public:
 	 */
 	t_messages
 	getMessages(std::size_t coreid){
-		//LOG_DEBUG("Network sending msgs to ", coreid);
+		LOG_DEBUG("NETWORK: Network sending msgs to ", coreid);
 		return m_queues[coreid].purge();
 	}
 

@@ -130,9 +130,9 @@ void benchNetworkSpeed()
 //	std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
 	//<< "elapsed time: " << elapsed_seconds.count() << "s\n";
 
-	LOG_INFO("Network element with up to ", cores, " queues simulated with  ", cores*2, " threads.");
-	LOG_INFO("Logging == ", LOGGING);
-	LOG_INFO("Processing speed: ", totalcount/ (elapsed_seconds.count()), "msg / s");
+	LOG_INFO("NETWORK: Network element with up to ", cores, " queues simulated with  ", cores*2, " threads.");
+	LOG_INFO("NETWORK: Logging == ", LOGGING);
+	LOG_INFO("NETWORK: Processing speed: ", totalcount/ (elapsed_seconds.count()), "msg / s");
 }
 
 TEST(Network, speed)
