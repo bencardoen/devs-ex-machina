@@ -2,7 +2,7 @@
  * asynchwriter.h
  *
  *  Created on: Mar 15, 2015
- *      Author: lttlemoi
+ *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
 #ifndef SRC_TOOLS_ASYNCHWRITER_H_

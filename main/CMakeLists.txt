@@ -99,6 +99,7 @@ add_executable(${PROJECT_NAME}
  	src/test/networktest.cpp
 	src/test/compare.cpp
 	src/test/comparetest.cpp
+	src/test/loggertest.cpp
  	src/main.cpp
  	)
 ###############################################################################
