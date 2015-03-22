@@ -84,6 +84,7 @@ add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
 	src/model/atomicmodel.cpp
 	src/model/model.cpp
+	src/model/state.cpp
 	src/model/port.cpp
 	src/model/core.cpp
 	src/model/multicore.cpp
@@ -97,6 +98,7 @@ add_executable(${PROJECT_NAME}
 	src/test/coretest.cpp
 	src/test/tracerstest.cpp
  	src/test/networktest.cpp
+ 	src/test/modeltest.cpp
 	src/test/compare.cpp
 	src/test/comparetest.cpp
 	src/test/loggertest.cpp

@@ -38,6 +38,12 @@ public:
 	void intTransition();
 	t_timestamp timeAdvance();
 	std::vector<n_network::t_msgptr> output();
+
+	/*
+	 * The following function has been created to easily
+	 * create states using a string
+	 */
+	t_stateptr mysetState(std::string);
 };
 
 }
