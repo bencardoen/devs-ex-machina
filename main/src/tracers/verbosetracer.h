@@ -61,8 +61,9 @@ public:
 	        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
 	        std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		TraceMessage* message = n_tools::createRawObject<TraceMessage>(time, fun);
-		//TODO deal with the trace message
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun);
+		//deal with the message
+		scheduleMessage(message);
 	}
 
 	/**
@@ -77,17 +78,25 @@ public:
 		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a raw object
 
 		t_stateptr state = adevs->getState();
-	        *ssr <<	"\n"
-	        	"\tINTERNAL TRANSITION in model " << adevs->getName() << "\n"
-	        	"\t\tNew State: " << state->toString() << "\n"
-	        	"\t\tOutput Port Configuration:\n"
-	        << "\t\t\t[Todo: actual port configuration]\n"
-	        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+		*ssr <<	"\n"
+			"\tINTERNAL TRANSITION in model " << adevs->getName() << "\n"
+			"\t\tNew State: " << state->toString() << "\n"
+			"\t\tOutput Port Configuration:\n";
+		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
+		const std::deque<n_network::t_msgptr>& messages = adevs->getSendMessages();
+		for(const std::map<std::string, t_portptr>::value_type& item: ports){
+			*ssr << "\t\t\tport <" << item.first << ">:\n";
+//			for(const n_network::t_msgptr& message:messages)
+//				if(message->getDestinationPort() == item.first)		//TODO get from which port a message was send
+//					*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+		}
+       *ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
-	        t_timestamp time; //= adevs->getTimeLast();	//TODO get timestamp of the transition
+       	       t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		TraceMessage* message = n_tools::createRawObject<TraceMessage>(time, fun);
-		//TODO deal with the trace message
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun);
+		//deal with the message
+		scheduleMessage(message);
 	}
 	/**
 	 * @brief Traces external state transition
@@ -103,14 +112,22 @@ public:
 	        *ssr <<	"\n"
 	        	"\tEXTERNAL TRANSITION in model " << adevs->getName() << "\n"
 	        	"\t\tNew State: " << state->toString() << "\n"
-	        	"\t\tInput Port Configuration:\n"
-	        << "\t\t\t[Todo: actual port configuration]\n"
-	        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+	        	"\t\tInput Port Configuration:\n";
+			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+			for(const std::map<std::string, t_portptr>::value_type& item: ports){
+				*ssr << "\t\t\tport <" << item.first << ">:\n";
+//				for(const n_network::t_msgptr& message:messages)
+//					if(message->getDestinationPort() == item.first)
+//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+			}
+	       *ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
-	        t_timestamp time; //= adevs->getTimeLast();	//TODO get timestamp of the transition
+	        t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		TraceMessage* message = n_tools::createRawObject<TraceMessage>(time, fun);
-		//TODO deal with the trace message
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun);
+		//deal with the message
+		scheduleMessage(message);
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
@@ -125,17 +142,33 @@ public:
 		t_stateptr state = adevs->getState();
 	        *ssr <<	"\n"
 	        	"\tCONFLUENT TRANSITION in model " << adevs->getName() << "\n"
-	        	"\t\tInput Port Configuration:\n"
-	        << "\t\t\t[Todo: actual port configuration]\n"
-	        	"\t\tNew State: " << state->toString() << "\n"
-	        	"\t\tOutput Port Configuration:\n"
-	        << "\t\t\t[Todo: actual port configuration]\n"
+	        	"\t\tInput Port Configuration:\n";
+			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+			for(const std::map<std::string, t_portptr>::value_type& item: ports){
+				*ssr << "\t\t\tport <" << item.first << ">:\n";
+//				for(const n_network::t_msgptr& message:messages)
+//					if(message->getDestinationPort() == item.first)
+//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+			}
+	        *ssr <<	"\t\tNew State: " << state->toString() << "\n"
+	        	"\t\tOutput Port Configuration:\n";
+			ports = adevs->getOPorts();
+			messages = adevs->getSendMessages();
+			for(const std::map<std::string, t_portptr>::value_type& item: ports){
+				*ssr << "\t\t\tport <" << item.first << ">:\n";
+//				for(const n_network::t_msgptr& message:messages)
+//					if(message->getDestinationPort() == item.first)	//TODO get from which port a message was send
+//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+			}
+	       *ssr
 	        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
-	        t_timestamp time; //= adevs->getTimeLast();	//TODO get timestamp of the transition
+	        t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		TraceMessage* message = n_tools::createRawObject<TraceMessage>(time, fun);
-		//TODO deal with the trace message
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun);
+		//deal with the message
+		scheduleMessage(message);
 	}
 };
 

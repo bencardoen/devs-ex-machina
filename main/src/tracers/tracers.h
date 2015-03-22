@@ -11,6 +11,7 @@
 #include <tuple>
 #include "timestamp.h"
 #include "atomicmodel.h"
+#include "tracemessage.h"
 
 using namespace n_network;
 using namespace n_model;
@@ -37,6 +38,12 @@ public:
 	 */
 	Tracers()
 	{
+	}
+
+	~Tracers()
+	{
+		//clean up all left over trace messages
+		n_tracers::clearAll();
 	}
 
 	/**

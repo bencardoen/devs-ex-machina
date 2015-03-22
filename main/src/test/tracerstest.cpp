@@ -12,7 +12,7 @@
 #include "tracers/tracers.h"
 #include "tracers/tracemessage.h"
 #include "tracers/policies.h"
-//#include "../../src/tracing/tracers/verbosetracer.h"
+#include "verbosetracer.h"
 #include "test/compare.h"
 
 using namespace n_tracers;
@@ -377,6 +377,51 @@ TEST(tracing, policies){
 	//reassign the original stream buffer
 	std::cout.rdbuf(oldCoutBuf);
 
+}
+
+class TestState: public n_model::State{
+public:
+	TestState(std::size_t time = 0):State("This is a test state"){ m_timeLast = t_timestamp(time, 0);}
+
+	virtual std::string toXML() {return toString();};
+	virtual std::string toJSON() {return toString();};
+	virtual std::string toCell() {return toString();};
+};
+class TestModel: public n_model::AtomicModel{
+public:
+	TestModel():AtomicModel("TestModel", 1)
+	{
+		this->addInPort("portIn");
+		this->addInPort("portIn2");
+		this->addOutPort("MyVerySpecialOutput");
+		this->setState(std::make_shared<TestState>());
+	}
+	t_timestamp timeAdvance(){
+		return t_timestamp(getState()->m_timeLast.getTime()+1, 1);
+	}
+};
+//very simple macro for testing a single tracer class
+//call it like this:
+//	SINGLETRACERTEST(TESTFOLDERTRACE, ClassYouWantToTest)
+#define SINGLETRACERTEST(outputFolder, tracerclass)\
+TEST(tracing, tracer##tracerclass){\
+	{\
+		tracerclass<FileWriter> tracer;\
+		n_model::t_atomicmodelptr model = std::make_shared<TestModel>();\
+		tracer.initialize(outputFolder STRINGIFY(tracerclass) "_out.txt");\
+		tracer.tracesInit(model, t_timestamp(42, 1));\
+		tracer.tracesInternal(model);\
+		tracer.tracesExternal(model);\
+		tracer.tracesConfluent(model);\
+		model->setState(std::make_shared<TestState>(12));\
+		tracer.tracesInit(model, t_timestamp(48, 1));\
+		tracer.tracesInternal(model);\
+		tracer.tracesExternal(model);\
+		tracer.tracesConfluent(model);\
+		n_tracers::traceUntil(t_timestamp(400, 0));\
+		n_tracers::clearAll();\
+	}\
+	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY(tracerclass) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
 }
 
 /*
