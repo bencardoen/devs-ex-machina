@@ -9,23 +9,10 @@
 
 namespace n_examples {
 
-TrafficLightMode::TrafficLightMode(e_colors color)
-	: m_color(color)
+TrafficLightMode::TrafficLightMode(std::string state)
+	: State(state)
 {
 
-}
-std::string TrafficLightMode::toString()
-{
-	switch (m_color) {
-	case RED:
-		return "Red";
-	case GREEN:
-		return "Green";
-	case YELLOW:
-		return "Yellow";
-	}
-	assert(false); // This should never happen!
-	return "";
 }
 
 std::string TrafficLightMode::toXML()
@@ -44,59 +31,54 @@ std::string TrafficLightMode::toCell()
 }
 
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel(name, 0, priority)
 {
-	m_state = std::make_shared<TrafficLightMode>(RED);
+	this->setState(std::make_shared<TrafficLightMode>("Red"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
 }
 
-void TrafficLight::extTransition(const t_msgptr & message)
+void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> &)
 {
 	// No external transitions available yet...
 }
 
 void TrafficLight::intTransition()
 {
-	std::shared_ptr<TrafficLightMode> state;
-
-	state = std::dynamic_pointer_cast<TrafficLightMode>(m_state);
-
-	switch (state->m_color) {
-	case RED:
-		state->m_color = GREEN;
-		return;
-	case GREEN:
-		state->m_color = YELLOW;
-		return;
-	case YELLOW:
-		state->m_color = RED;
-		return;
-	}
+	t_stateptr state = this->getState();
+	if (*state == "Red")
+		this->mysetState("Green");
+	else if(*state == "Green")
+		this->mysetState("Yellow");
+	else if (*state == "Yellow")
+		this->mysetState("Red");
+	else
+		assert(false); // You shouldn't come here...
+	return;
 }
 
 t_timestamp TrafficLight::timeAdvance()
 {
-	std::shared_ptr<TrafficLightMode> state;
-
-	state = std::dynamic_pointer_cast<TrafficLightMode>(m_state);
-
-	switch(state->m_color) {
-	case RED:
+	t_stateptr state = this->getState();
+	if (*state == "Red")
 		return t_timestamp(60);
-	case GREEN:
+	else if(*state == "Green")
 		return t_timestamp(50);
-	case YELLOW:
+	else if (*state == "Yellow")
 		return t_timestamp(10);
-	}
-	assert(false); // You shouldn't come here...
+	else
+		assert(false); // You shouldn't come here...
 	return t_timestamp();
 }
 
-std::map<t_portptr, t_msgptr> TrafficLight::output()
+std::vector<n_network::t_msgptr> TrafficLight::output()
 {
-	// TODO not implement?
-	return std::map<t_portptr, t_msgptr>();
+	return std::vector<n_network::t_msgptr>();
+}
+
+t_stateptr TrafficLight::mysetState(std::string s) {
+	this->Model::setState(std::make_shared<TrafficLightMode>(s));
+	return this->getState();
 }
 
 }

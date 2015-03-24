@@ -72,7 +72,7 @@ bool Port::setZFunc(std::shared_ptr<Port> port, t_zfunc function)
 {
 	if (m_outs.find(port) == m_outs.end())
 		return false;
-	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc > (port, function));
+	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc>(port, function));
 	return true;
 }
 

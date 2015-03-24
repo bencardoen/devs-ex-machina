@@ -8,6 +8,8 @@
 #ifndef STATE_H_
 #define STATE_H_
 
+#include "timestamp.h"
+
 namespace n_model {
 
 using n_network::t_timestamp;
@@ -18,11 +20,27 @@ public:
 	t_timestamp m_timeLast;
 	t_timestamp m_timeNext;
 
-	virtual std::string toString() = 0;
+	std::string m_state;
+
+	State(std::string state)
+	{
+		m_state = state;
+	}
+
+	virtual std::string toString()
+	{
+		return m_state;
+	}
+	;
 	virtual std::string toXML() = 0;
 	virtual std::string toJSON() = 0;
 	virtual std::string toCell() = 0;
-	virtual ~State() {}
+	virtual ~State()
+	{
+	}
+
+	friend bool operator==(const State& lhs, const std::string rhs);
+	friend bool operator==(const std::string lhs, const State& rhs);
 };
 
 typedef std::shared_ptr<State> t_stateptr;

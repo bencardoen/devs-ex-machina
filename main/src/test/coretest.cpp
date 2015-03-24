@@ -11,6 +11,7 @@
 #include "objectfactory.h"
 #include "core.h"
 #include "multicore.h"
+#include "trafficlight.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -19,6 +20,7 @@
 
 using namespace n_model;
 using namespace n_tools;
+using namespace n_examples;
 
 TEST(ModelEntry, Scheduling){
 	RecordProperty("description", "Tests if models can be scheduled with identical timestamps, and timestamps differing only in causality.");
@@ -86,8 +88,8 @@ TEST(Core, CoreFlow){
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
 	t_msgptr mymessage = createObject<Message>("toBen", (0));
-	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
-	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
+	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
 	c.addModel(modelfrom);
 	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
@@ -96,7 +98,7 @@ TEST(Core, CoreFlow){
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
-	EXPECT_TRUE(c.getTime() == t_timestamp(10));
+	EXPECT_TRUE(c.getTime() == t_timestamp(60));
 	auto imminent  = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
@@ -113,8 +115,8 @@ TEST(Core, smallStep){
 	RecordProperty("description", "Core simulation steps and termination conditions");
 	t_coreptr c = createObject<Core>();
 	// Add Models
-	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
-	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
+	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
 	c->addModel(modelfrom);
 	c->addModel(modelto);
 
@@ -124,9 +126,9 @@ TEST(Core, smallStep){
 	auto finaltime = c->getTerminationTime();
 
 	EXPECT_EQ(finaltime , t_timestamp::infinity());
-	c->setTerminationTime(t_timestamp(24, 0));
+	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime , t_timestamp(24,0));
+	EXPECT_EQ(finaltime , t_timestamp(200,0));
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
@@ -140,18 +142,15 @@ TEST(Core, smallStep){
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive()== true);
-
-	c->runSmallStep();
-	EXPECT_TRUE(c->terminated() == true);
-	EXPECT_TRUE(c->isLive()== false);
 }
+
 
 TEST(Core, terminationfunction){
 	RecordProperty("description", "Core simulation steps with term function.");
 	t_coreptr c = createObject<Core>();
 	// Add Models
-	t_atomicmodelptr modelfrom = createObject<modelstub>("Amodel");
-	t_atomicmodelptr modelto = createObject<modelstub>("toBen");
+	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
+	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
 	c->addModel(modelfrom);
 	c->addModel(modelto);
 

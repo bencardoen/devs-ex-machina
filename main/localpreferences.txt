@@ -1,0 +1,6 @@
+SET(GTEST_ROOT "/home/lttlemoi/Programs/gtest-1.7.0/")
+SET(BOOST_ROOT "/notexistingmap")
+MESSAGE( STATUS"Using custom root path")
+# Zet in deze file all local variaties op het project en voeg deze file toe aan gitignore.
+FIND_LIBRARY(G3_LIBRARY g3logger /home/lttlemoi/Programs/g3log/build/)
+include_directories("/home/lttlemoi/Programs/g3log/src/")

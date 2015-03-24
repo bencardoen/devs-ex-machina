@@ -123,15 +123,16 @@ void benchNetworkSpeed()
 	for (auto& t : workers) {
 		t.join();
 	}
-	/**
-	 end = std::chrono::system_clock::now();
-	 std::chrono::duration<double> elapsed_seconds = end-start;
-	 //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-	 std::size_t totalcount = (msgcount * (cores-1))*cores;
-	 std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
-	 //<< "elapsed time: " << elapsed_seconds.count() << "s\n";
-	 *
-	 */
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	std::size_t totalcount = (msgcount * (cores-1))*cores;
+//	std::cout << "Sending / Receiving of  " << totalcount << " messages finished at\t" << std::ctime(&end_time)
+	//<< "elapsed time: " << elapsed_seconds.count() << "s\n";
+
+	LOG_INFO("NETWORK: Network element with up to ", cores, " queues simulated with  ", cores*2, " threads.");
+	LOG_INFO("NETWORK: Logging == ", LOGGING);
+	LOG_INFO("NETWORK: Processing speed: ", totalcount/ (elapsed_seconds.count()), "msg / s");
 }
 
 TEST(Network, speed)

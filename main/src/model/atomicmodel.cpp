@@ -12,15 +12,19 @@ namespace n_model {
 /*
  * Constructor for AtomicModel
  *
+ * Note that 0 is the highest priority. The higher the number,
+ * the lower the priority.
+ *
  * @param name The name of the model
+ * @param priority The priority of the model
  */
-AtomicModel::AtomicModel(std::string name, std::size_t priority)
-	: Model(name), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+	: Model(name, corenumber), m_priority(priority)
 {
 
 }
 
-void AtomicModel::confTransition(const n_network::t_msgptr & message)
+void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
 	this->extTransition(message);
@@ -39,7 +43,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 
 	for (auto state : m_oldStates) {
 		if (state->m_timeLast >= gvt) {
-			k = std::max(0,index-1);
+			k = std::max(0, index - 1);
 			break;
 		}
 		index++;
@@ -64,7 +68,7 @@ void AtomicModel::revert(t_timestamp time)
 	int index = m_oldStates.size() - 1;
 
 	// We walk over all old states in reverse, and keep track of the index
-	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size()-1) ; r_itStates++) {
+	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
@@ -75,13 +79,15 @@ void AtomicModel::revert(t_timestamp time)
 	this->m_timeLast = state->m_timeLast;
 	this->m_timeNext = state->m_timeNext;
 
-	this->m_state = state;
-
 	// Pop all obsolete states
-	this->m_oldStates.resize(index+1);
+	this->m_oldStates.resize(index);
+
+	this->setState(state);
+
 }
 
-std::size_t AtomicModel::getPriority() const {
+std::size_t AtomicModel::getPriority() const
+{
 	return m_priority;
 }
 

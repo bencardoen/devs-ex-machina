@@ -5,6 +5,7 @@
 #include <timestamp.h>
 #include <network.h>
 #include <model.h>
+#include <atomicmodel.h>
 #include "scheduler.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
@@ -18,49 +19,6 @@ namespace n_model {
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
-
-// TODO Tim replace with Model (if atomicmodel interface is ready, remove this struct.
-struct modelstub
-{
-	virtual ~modelstub()
-	{
-		;
-	}
-	std::string name;
-	modelstub(std::string s)
-		: name(s)
-	{
-		;
-	}
-
-	t_timestamp timeAdvance()
-	{
-		return t_timestamp(10);
-	}
-
-	std::string getName()
-	{
-		return name;
-	}
-	virtual void extTransition(const std::vector<t_msgptr>&)
-	{
-		;
-	}
-	virtual void intTransition()
-	{
-		;
-	}
-	virtual void confTransition(const std::vector<t_msgptr>&)
-	{
-		;
-	}
-	virtual std::vector<t_msgptr> output()
-	{
-		std::vector<t_msgptr> msgs;
-		return msgs;
-	}
-};
-typedef std::shared_ptr<modelstub> t_atomicmodelptr;	// TODO Tim remove stubbed typedef if models are live.
 
 typedef void t_tracerset;	// TODO Stijn replace with correct type
 

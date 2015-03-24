@@ -14,8 +14,8 @@ namespace n_model {
  *
  * @param name of model
  */
-Model::Model(std::string name)
-	: m_name(name), m_receivedExt(false)
+Model::Model(std::string name, int corenumber)
+	: m_name(name), m_coreNumber(corenumber), m_state(nullptr)
 {
 
 }
@@ -47,6 +47,7 @@ t_portptr Model::getPort(std::string name)
 			return ptr2->second;
 	} else
 		return ptr1->second;
+	return nullptr;
 }
 
 /*
@@ -60,15 +61,17 @@ t_stateptr Model::getState() const
 }
 
 /*
- * Set the current state of the model to a new state
+ * Set the current state of the model to a new state and pushes this new state on
+ * the list of all oldStates.
  *
- * @param newState the new state the model should switch to
+ * @param newState the new state the model should switch to (as a State object)
  */
 void Model::setState(t_stateptr newState)
 {
 	if (newState == nullptr)
 		return;
 	m_state = newState;
+	m_oldStates.push_back(m_state);
 }
 
 /*
@@ -117,6 +120,66 @@ t_portptr Model::addInPort(std::string name)
 t_portptr Model::addOutPort(std::string name)
 {
 	return this->addPort(name, false);
+}
+
+/*
+ * Get the current core number
+ *
+ * @return current core number
+ */
+int Model::getCoreNumber() const
+{
+	return m_coreNumber;
+}
+
+/*
+ * Set the current core number
+ *
+ * @param core current core number
+ */
+void Model::setCoreNumber(int core)
+{
+	m_coreNumber = core;
+}
+
+/*
+ * Return all current input ports
+ *
+ * @return current input ports
+ */
+const std::map<std::string, t_portptr>& Model::getIPorts() const
+{
+	return m_iPorts;
+}
+
+/*
+ * Return all current output ports
+ *
+ * @return current output ports
+ */
+const std::map<std::string, t_portptr>& Model::getOPorts() const
+{
+	return m_oPorts;
+}
+
+/*
+ * Return all current send messages
+ *
+ * @return current send messages
+ */
+const std::deque<n_network::t_msgptr>& Model::getSendMessages() const
+{
+	return m_sendMessages;
+}
+
+/*
+ * Return all current received messages
+ *
+ * @return current received messages
+ */
+const std::deque<n_network::t_msgptr>& Model::getReceivedMessages() const
+{
+	return m_receivedMessages;
 }
 
 }

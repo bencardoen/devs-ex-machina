@@ -20,6 +20,24 @@ std::shared_ptr<T> createObject(Args&&... args)
 {
 	return std::make_shared<T>(std::forward<Args>(args)...);
 }
+
+/**
+ * Create a raw pointer to the new Object with constructor arguments Args.
+ * @warning	atm, you have to make sure you delete the object yourself.
+ * 		This may change in the future so be warned!
+ */
+template<typename T, typename ... Args>
+T* createRawObject(Args&&... args){
+	return new T(args...);
+}
+
+/**
+ * Takes back a pointer created by createRawObject and clears its memory
+ */
+template<typename T>
+void takeBack(T* pointer){
+	delete pointer;
+}
 } /* namespace n_tools */
 
 #endif /* SRC_TOOLS_OBJECTFACTORY_H_ */
