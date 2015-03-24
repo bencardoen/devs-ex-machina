@@ -9,7 +9,7 @@
 #define SRC_CONTROL_LOCATIONTABLE_H_
 
 #include <unordered_map>
-#include "model.h"
+#include "atomicmodel.h"
 
 namespace n_control {
 
@@ -22,7 +22,7 @@ public:
 	virtual ~LocationTable();
 
 	std::size_t lookupModel(std::string modelName);
-	void registerModel(t_atomicmodelptr model, std::size_t core);
+	void registerModel(t_atomicmodelptr& model, std::size_t core);
 
 private:
 	std::size_t m_amountCores;

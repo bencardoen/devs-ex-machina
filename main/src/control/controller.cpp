@@ -29,15 +29,13 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
+
 	m_locTab->registerModel(atomic, coreID);
 }
 
-void Controller::addModel(t_coupledmodelptr& coupled)
+void Controller::addModel(t_coupledmodelptr&)
 {
-	std::vector<t_atomicmodelptr> atomics = directConnect(coupled);
-	for (auto at : atomics) {
-		addModel(at);
-	}
+	throw std::logic_error("Controller : addModel(Coupled) not implemented");
 }
 
 void Controller::simulate()
@@ -87,7 +85,7 @@ void Controller::startGVTThread()
 	throw std::logic_error("Controller : startGVTThread not implemented");
 }
 
-void Controller::waitFinish(size_t runningCores)
+void Controller::waitFinish(size_t)
 {
 	throw std::logic_error("Controller : waitFinish not implemented");
 }
@@ -103,7 +101,7 @@ bool Controller::check()
 	return false;
 }
 
-bool Controller::isFinished(size_t runningCores)
+bool Controller::isFinished(size_t)
 {
 	throw std::logic_error("Controller : isFinished not implemented");
 }
