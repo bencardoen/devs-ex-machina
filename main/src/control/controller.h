@@ -21,6 +21,7 @@
 #include "locationtable.h"
 #include "allocator.h"
 #include "core.h"
+#include "tracers.h"
 
 namespace n_control {
 
@@ -29,10 +30,13 @@ using n_model::t_coreptr;
 using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
 
+typedef void t_tracerset;	// TODO Stijn replace with correct type
+
 class Controller
 {
 private:
 	bool m_isClassicDEVS;
+	bool m_isDSDEVS;
 	std::string m_name;
 	t_timestamp m_checkpointInterval;
 	bool m_checkTermTime;
@@ -43,10 +47,12 @@ private:
 	std::shared_ptr<LocationTable> m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
+	std::shared_ptr<t_tracerset> m_tracers;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-	        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc);
+	        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc,
+	        std::shared_ptr<t_tracerset> tracers);
 
 	virtual ~Controller();
 
@@ -119,6 +125,21 @@ private:
 	 * Check if simulation needs to continue
 	 */
 	bool check();
+
+	/*
+	 * Simulation setup and loop using regular Classic DEVS
+	 */
+	void simCDEVS();
+
+	/*
+	 * Simulation setup and loop using Dynamic Structure DEVS
+	 */
+	void simDSDEVS();
+
+	/*
+	 * Simulation setup and loop using Parallel DEVS
+	 */
+	void simPDEVS();
 
 	/*
 	 * Checks if all cores have finished
