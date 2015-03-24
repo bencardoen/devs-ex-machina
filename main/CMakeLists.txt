@@ -92,6 +92,7 @@ add_executable(${PROJECT_NAME}
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp
+	src/control/locationtable.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/test/toolstest.cpp

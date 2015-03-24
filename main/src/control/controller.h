@@ -14,40 +14,106 @@
 #include <thread>
 #include <unordered_map>
 #include "timestamp.h"
-//#include "model.h"	// TODO uncomment after models are complete.
+#include "atomicmodel.h"
+#include "coupledmodel.h"
+#include "rootmodel.h"
 #include "port.h"
 #include "locationtable.h"
+#include "allocator.h"
 #include "core.h"
-
-using n_model::t_coreptr;
+#include "tracers.h"
 
 namespace n_control {
 
 using n_network::t_timestamp;
+using n_model::t_coreptr;
+using n_model::t_atomicmodelptr;
+using n_model::t_coupledmodelptr;
+
+typedef void t_tracerset;	// TODO Stijn replace with correct type
 
 class Controller
 {
+private:
+	bool m_isClassicDEVS;
+	bool m_isDSDEVS;
+	std::string m_name;
+	t_timestamp m_checkpointInterval;
+	bool m_checkTermTime;
+	t_timestamp m_terminationTime;
+	bool m_checkTermCond;
+	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
+	std::unordered_map<std::size_t, t_coreptr> m_cores;
+	std::shared_ptr<LocationTable> m_locTab;
+	std::shared_ptr<Allocator> m_allocator;
+	std::shared_ptr<n_model::RootModel> m_root;
+	std::shared_ptr<t_tracerset> m_tracers;
+
 public:
-	Controller(std::string name);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+	        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc,
+	        std::shared_ptr<t_tracerset> tracers);
 
 	virtual ~Controller();
 
-	void addModel(const t_atomicmodelptr& model);
+	/*
+	 * Add an atomic model using the given allocator
+	 */
+	void addModel(t_atomicmodelptr& atomic);
 
+	/*
+	 * Add an atomic model to a specific core
+	 */
+	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
+
+	/*
+	 * Add a coupled model to the simulation
+	 */
+	void addModel(t_coupledmodelptr& coupled);
+
+	/*
+	 * Main loop, starts simulation
+	 */
 	void simulate();
 
+	/*
+	 * Set simulation to be classic DEVS
+	 */
 	void setClassicDEVS(bool classicDEVS = true);
 
+	/*
+	 * Set simulation to be Dynamic Structure DEVS
+	 */
+	void setDSDEVS(bool dsdevs = true);
+
+	/*
+	 * Set time at which the simulation will be halted
+	 */
 	void setTerminationTime(t_timestamp time);
 
-	void setTerminationCondition(std::function<bool(t_timestamp,const t_atomicmodelptr&)> termination_condition);
+	/*
+	 * Set condition that can terminate the simulation
+	 */
+	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
+
+	/*
+	 * Set checkpointing interval
+	 */
+	void setCheckpointInterval(t_timestamp interv);
+
+	/*
+	 * Start thread for GVT
+	 */
+	void startGVTThread();
+
+	/*
+	 * Waits until all cores are finished
+	 */
+	void waitFinish(size_t runningCores);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
-//	void setDSDEVS(bool dsdevs = true);
 //	void GVTdone();
-//	void startGVTThread(n_network::Time gvt_interval);
-//	void waitFinish(uint amntRunningKernels);
 //	void checkForTemporaryIrreversible();
 //	void dsRemovePort(const n_model::Port& port);
 //	void dsScheduleModel(const t_modelPtr model);
@@ -60,17 +126,27 @@ private:
 	 */
 	bool check();
 
-//	bool isFinished(uint amntRunningKernels);
-//	void threadGVT(n_network::Time freq);
+	/*
+	 * Simulation setup and loop using regular Classic DEVS
+	 */
+	void simCDEVS();
 
-private:
-	bool m_isClassicDEVS;
-	std::string m_name;
-	bool m_checkTermTime;
-	t_timestamp m_terminationTime;
-	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
-	std::unordered_map<std::size_t, t_coreptr> m_cores;
+	/*
+	 * Simulation setup and loop using Dynamic Structure DEVS
+	 */
+	void simDSDEVS();
+
+	/*
+	 * Simulation setup and loop using Parallel DEVS
+	 */
+	void simPDEVS();
+
+	/*
+	 * Checks if all cores have finished
+	 */
+	bool isFinished(size_t runningCores);
+
+//	void threadGVT(n_network::Time freq);
 };
 
 } /* namespace n_control */
