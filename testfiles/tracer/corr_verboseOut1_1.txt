@@ -1,0 +1,9 @@
+
+__  Current Time: 2____________________
+
+
+	INTERNAL TRANSITION in model [actual model name]
+		New State: [actual new state]
+		Output Port Configuration:
+			[actual port configuration]
+		Next scheduled internal transition at time [actual next time]
