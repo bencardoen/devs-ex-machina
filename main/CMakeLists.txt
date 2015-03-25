@@ -29,8 +29,7 @@ project(${PROJECT_NAME})
 
 include ( localpreferences.txt OPTIONAL )
 
-
-find_package(Boost COMPONENTS system)
+find_package(Boost COMPONENTS  system)
 
 #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
@@ -52,8 +51,7 @@ endif()
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
 
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE")
-
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" ) ## Use these if hunting obscure bugs :  -fsanitize=undefined -ftrapv -fsanitize=integer (you will end up in boost, stl !!)
@@ -72,7 +70,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 
 
 ### Print everything CMake does to cout to verify the options are sane.
-#set(CMAKE_VERBOSE_MAKEFILE ON)
+# set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ### SOURCES ###################################################################
 # 2 choices here:
@@ -83,6 +81,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
+    src/tools/logger.cpp
 	src/model/atomicmodel.cpp
 	src/model/model.cpp
 	src/model/state.cpp
@@ -93,6 +92,7 @@ add_executable(${PROJECT_NAME}
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp
+	src/control/locationtable.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/test/toolstest.cpp
@@ -102,6 +102,7 @@ add_executable(${PROJECT_NAME}
  	src/test/modeltest.cpp
 	src/test/compare.cpp
 	src/test/comparetest.cpp
+	src/test/loggertest.cpp
  	src/main.cpp
  	)
 ###############################################################################
@@ -123,6 +124,7 @@ include_directories(	src
 
 ### LINKER ####################################################################
 # Register libraries needed.
+#set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
@@ -132,8 +134,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-
-target_link_libraries( ${PROJECT_NAME} ${LIBS} )
+target_link_libraries( ${PROJECT_NAME} ${LIBS})
 ###############################################################################
 
 ### Cotire ###

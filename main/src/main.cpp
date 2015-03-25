@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include "tools/globallog.h"
+
+LOG_INIT("out.txt")
 
 
 int main(int argc, char** argv)
@@ -7,5 +10,3 @@ int main(int argc, char** argv)
 	int rv = RUN_ALL_TESTS();
 	return rv;
 }
-
-

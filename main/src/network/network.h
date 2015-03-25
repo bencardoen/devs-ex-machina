@@ -12,6 +12,7 @@
 #include "msgqueue.h"
 #include <vector>
 #include <array>
+#include "tools/globallog.h"
 
 namespace n_network{
 
@@ -30,6 +31,7 @@ public:
 	Network() = delete;
 
 	Network(size_t cores):m_cores(cores), m_queues(m_cores){
+		LOG_DEBUG("NETWORK: Network constructor with ", cores, " queues.");
 	}
 
 	/**
@@ -40,6 +42,7 @@ public:
 	void
 	acceptMessage(const t_msgptr& msg){
 		m_queues[msg->getDestinationCore()].push(msg);
+		LOG_DEBUG("NETWORK: Network accepting message");
 	}
 
 	/**
@@ -50,6 +53,7 @@ public:
 	 */
 	t_messages
 	getMessages(std::size_t coreid){
+		LOG_DEBUG("NETWORK: Network sending msgs to ", coreid);
 		return m_queues[coreid].purge();
 	}
 
