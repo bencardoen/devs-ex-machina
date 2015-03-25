@@ -47,11 +47,11 @@ void TrafficLight::intTransition()
 {
 	t_stateptr state = this->getState();
 	if (*state == "Red")
-		this->mysetState("Green");
+		this->setState("Green");
 	else if(*state == "Green")
-		this->mysetState("Yellow");
+		this->setState("Yellow");
 	else if (*state == "Yellow")
-		this->mysetState("Red");
+		this->setState("Red");
 	else
 		assert(false); // You shouldn't come here...
 	return;
@@ -76,7 +76,7 @@ std::vector<n_network::t_msgptr> TrafficLight::output()
 	return std::vector<n_network::t_msgptr>();
 }
 
-t_stateptr TrafficLight::mysetState(std::string s) {
+t_stateptr TrafficLight::setState(std::string s) {
 	this->Model::setState(std::make_shared<TrafficLightMode>(s));
 	return this->getState();
 }

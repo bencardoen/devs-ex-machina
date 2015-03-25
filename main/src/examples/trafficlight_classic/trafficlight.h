@@ -43,7 +43,8 @@ public:
 	 * The following function has been created to easily
 	 * create states using a string
 	 */
-	t_stateptr mysetState(std::string);
+	using AtomicModel::setState;
+	t_stateptr setState(std::string);
 };
 
 }
