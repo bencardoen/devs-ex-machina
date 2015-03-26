@@ -10,7 +10,7 @@
 namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc, std::shared_ptr<t_tracerset> tracers)
+	std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, std::shared_ptr<t_tracerset> tracers)
 	: m_isClassicDEVS(true), m_isDSDEVS(false), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(
 	        cores), m_locTab(locTab), m_allocator(alloc), m_tracers(tracers)
 {
@@ -43,30 +43,16 @@ void Controller::simulate()
 //		// TODO ERROR
 //	}
 
-	if (m_isClassicDEVS) {
-		if (m_isDSDEVS) {
-			simDSDEVS();
-		} else {
-			simCDEVS();
-		}
+	if (m_isDSDEVS) {
+		simDSDEVS();
 	} else {
-		simPDEVS();
+		simDEVS();
 	}
 }
 
-void Controller::simCDEVS()
+void Controller::simDEVS()
 {
-	throw std::logic_error("Controller : simCDEVS not implemented");
-}
-
-void Controller::simDSDEVS()
-{
-	throw std::logic_error("Controller : simDSDEVS not implemented");
-}
-
-void Controller::simPDEVS()
-{
-	if (m_checkpointInterval.getTime() > 0) { // checkpointing is active
+	if (!m_isClassicDEVS && m_checkpointInterval.getTime() > 0) { // checkpointing is active
 		startGVTThread();
 	}
 
@@ -87,7 +73,11 @@ void Controller::simPDEVS()
 		}
 		if(!check()) break; // leave loop if all cores have stopped
 	}
-	// done :)
+}
+
+void Controller::simDSDEVS()
+{
+	throw std::logic_error("Controller : simDSDEVS not implemented");
 }
 
 void Controller::setClassicDEVS(bool classicDEVS)
