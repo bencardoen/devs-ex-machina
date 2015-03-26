@@ -136,9 +136,4 @@ bool Controller::check()
 	return false;
 }
 
-bool Controller::isFinished(size_t)
-{
-	throw std::logic_error("Controller : isFinished not implemented");
-}
-
 } /* namespace n_control */

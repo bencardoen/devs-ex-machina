@@ -140,11 +140,6 @@ private:
 	 */
 	void simDSDEVS();
 
-	/*
-	 * Checks if all cores have finished
-	 */
-	bool isFinished(size_t runningCores);
-
 //	void threadGVT(n_network::Time freq);
 };
 
