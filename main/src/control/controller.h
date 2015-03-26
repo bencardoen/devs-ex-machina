@@ -22,6 +22,7 @@
 #include "allocator.h"
 #include "core.h"
 #include "tracers.h"
+#include "tools/globallog.h"
 
 namespace n_control {
 
@@ -37,12 +38,15 @@ class Controller
 private:
 	bool m_isClassicDEVS;
 	bool m_isDSDEVS;
+
 	std::string m_name;
+
 	t_timestamp m_checkpointInterval;
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
+
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	std::shared_ptr<LocationTable> m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
@@ -51,7 +55,7 @@ private:
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-	        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc,
+		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
 	        std::shared_ptr<t_tracerset> tracers);
 
 	virtual ~Controller();
@@ -127,24 +131,14 @@ private:
 	bool check();
 
 	/*
-	 * Simulation setup and loop using regular Classic DEVS
+	 * Simulation setup and loop using regular DEVS
 	 */
-	void simCDEVS();
+	void simDEVS();
 
 	/*
 	 * Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
-
-	/*
-	 * Simulation setup and loop using Parallel DEVS
-	 */
-	void simPDEVS();
-
-	/*
-	 * Checks if all cores have finished
-	 */
-	bool isFinished(size_t runningCores);
 
 //	void threadGVT(n_network::Time freq);
 };
