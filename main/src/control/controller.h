@@ -22,6 +22,7 @@
 #include "allocator.h"
 #include "core.h"
 #include "tracers.h"
+#include "tools/globallog.h"
 
 namespace n_control {
 

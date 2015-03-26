@@ -22,7 +22,7 @@ using namespace n_tools;
 using namespace n_examples;
 
 /*
- * Simple allocator for test use
+ * Simple, dumb allocator for test use
  * Spreads models evenly
  */
 class SimpleAllocator: public Allocator
@@ -80,7 +80,7 @@ TEST(Controller, allocation)
 
 TEST(Controller, cDEVS)
 {
-	RecordProperty("description", "b");
+	RecordProperty("description", "Running a simple single core simulation");
 
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
@@ -90,5 +90,16 @@ TEST(Controller, cDEVS)
 	coreMap[0] = c;
 
 	Controller ctrl = Controller("testController", coreMap, allocator, locTab, 0);
+	ctrl.setClassicDEVS();
+	ctrl.setTerminationTime(t_timestamp(360, 0));
+
+	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
+	t_atomicmodelptr m2 = createObject<TrafficLight>("Snd");
+	ctrl.addModel(m1);
+	ctrl.addModel(m2);
+
+	ctrl.simulate();
+	EXPECT_TRUE(c->terminated() == true);
+	EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 }
 

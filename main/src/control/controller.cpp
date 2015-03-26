@@ -67,12 +67,20 @@ void Controller::simDEVS()
 		}
 		core.second->setLive(true);
 	}
-	while (true) {
+
+	// run simulation
+	uint i = 0;
+	while (check()) { // As long any cores are active
+		++i;
+		LOG_INFO("CONTROLLER: Commencing simulation loop #",i,"...");
 		for (auto core : m_cores) {
-			core.second->runSmallStep();
+			if(core.second->isLive()) {
+				LOG_INFO("CONTROLLER: Core ",core.second->getCoreID()," starting small step.");
+				core.second->runSmallStep();
+			} else LOG_INFO("CONTROLLER: Shhh, core ",core.second->getCoreID()," is resting now.");
 		}
-		if(!check()) break; // leave loop if all cores have stopped
 	}
+	LOG_INFO("CONTROLLER: All cores terminated, simulation finished.");
 }
 
 void Controller::simDSDEVS()
@@ -123,7 +131,7 @@ void Controller::waitFinish(size_t)
 bool Controller::check()
 {
 	for (auto core : m_cores) {
-		if(core.second->terminated()) return true;
+		if(!core.second->terminated()) return true;
 	}
 	return false;
 }
