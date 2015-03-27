@@ -10,7 +10,7 @@
 namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-        std::shared_ptr<LocationTable> locTab, std::shared_ptr<Allocator> alloc, std::shared_ptr<t_tracerset> tracers)
+	std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, std::shared_ptr<t_tracerset> tracers)
 	: m_isClassicDEVS(true), m_isDSDEVS(false), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(
 	        cores), m_locTab(locTab), m_allocator(alloc), m_tracers(tracers)
 {
@@ -43,30 +43,16 @@ void Controller::simulate()
 //		// TODO ERROR
 //	}
 
-	if (m_isClassicDEVS) {
-		if (m_isDSDEVS) {
-			simDSDEVS();
-		} else {
-			simCDEVS();
-		}
+	if (m_isDSDEVS) {
+		simDSDEVS();
 	} else {
-		simPDEVS();
+		simDEVS();
 	}
 }
 
-void Controller::simCDEVS()
+void Controller::simDEVS()
 {
-	throw std::logic_error("Controller : simCDEVS not implemented");
-}
-
-void Controller::simDSDEVS()
-{
-	throw std::logic_error("Controller : simDSDEVS not implemented");
-}
-
-void Controller::simPDEVS()
-{
-	if (m_checkpointInterval.getTime() > 0) { // checkpointing is active
+	if (!m_isClassicDEVS && m_checkpointInterval.getTime() > 0) { // checkpointing is active
 		startGVTThread();
 	}
 
@@ -81,13 +67,25 @@ void Controller::simPDEVS()
 		}
 		core.second->setLive(true);
 	}
-	while (true) {
+
+	// run simulation
+	uint i = 0;
+	while (check()) { // As long any cores are active
+		++i;
+		LOG_INFO("CONTROLLER: Commencing simulation loop #",i,"...");
 		for (auto core : m_cores) {
-			core.second->runSmallStep();
+			if(core.second->isLive()) {
+				LOG_INFO("CONTROLLER: Core ",core.second->getCoreID()," starting small step.");
+				core.second->runSmallStep();
+			} else LOG_INFO("CONTROLLER: Shhh, core ",core.second->getCoreID()," is resting now.");
 		}
-		if(!check()) break; // leave loop if all cores have stopped
 	}
-	// done :)
+	LOG_INFO("CONTROLLER: All cores terminated, simulation finished.");
+}
+
+void Controller::simDSDEVS()
+{
+	throw std::logic_error("Controller : simDSDEVS not implemented");
 }
 
 void Controller::setClassicDEVS(bool classicDEVS)
@@ -133,14 +131,9 @@ void Controller::waitFinish(size_t)
 bool Controller::check()
 {
 	for (auto core : m_cores) {
-		if(core.second->terminated()) return true;
+		if(!core.second->terminated()) return true;
 	}
 	return false;
-}
-
-bool Controller::isFinished(size_t)
-{
-	throw std::logic_error("Controller : isFinished not implemented");
 }
 
 } /* namespace n_control */
