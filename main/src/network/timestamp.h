@@ -90,6 +90,14 @@ public:
 		return this->m_causal;
 	}
 
+	/**
+	 * Simulates CPDevs' select function. A priority/offset of 0 (highest) will force a model to be chosen first.
+	 */
+	void increaseCausality(const X& offset)
+	{
+		this->m_causal += offset;
+	}
+
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
 	{

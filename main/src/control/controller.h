@@ -48,7 +48,7 @@ private:
 	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
-	std::shared_ptr<LocationTable> m_locTab;
+	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
 	std::shared_ptr<t_tracerset> m_tracers;
