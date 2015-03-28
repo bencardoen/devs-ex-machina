@@ -1,0 +1,52 @@
+
+	INTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 1
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 1
+
+	CONFLUENT TRANSITION in model TestModel
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 1
+
+	INTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 13
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 13
+
+	CONFLUENT TRANSITION in model TestModel
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 13
+
+	INITIAL CONDITIONS in model TestModel
+		Initial State: This is a test state
+		Next scheduled internal transition at time 1
+
+	INITIAL CONDITIONS in model TestModel
+		Initial State: This is a test state
+		Next scheduled internal transition at time 13

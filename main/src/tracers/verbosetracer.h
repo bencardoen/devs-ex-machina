@@ -75,7 +75,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesInternal argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a raw object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a shared object
 
 		t_stateptr state = adevs->getState();
 		*ssr <<	"\n"
@@ -83,12 +83,12 @@ public:
 			"\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
-//		const std::deque<n_network::t_msgptr>& messages = adevs->getSendMessages();
+		const std::deque<n_network::t_msgptr>& messages = adevs->getSendMessages();
 		for(const std::map<std::string, t_portptr>::value_type& item: ports){
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
-//			for(const n_network::t_msgptr& message:messages)
-//				if(message->getDestinationPort() == item.first)		//TODO get from which port a message was send
-//					*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+			for(const n_network::t_msgptr& message:messages)
+				if(message->getSourcePort() == item.first)		// get from which port a message was send
+					*ssr << "\t\t\t\t" << message->toString() << '\n';		// message->toString()?
 		}
        *ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
@@ -106,7 +106,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesExternal argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a raw object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a shared object
 
 		t_stateptr state = adevs->getState();
 	        *ssr <<	"\n"
@@ -114,12 +114,12 @@ public:
 	        	"\t\tNew State: " << state->toString() << "\n"
 	        	"\t\tInput Port Configuration:\n";
 			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-//			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
 			for(const std::map<std::string, t_portptr>::value_type& item: ports){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
-//				for(const n_network::t_msgptr& message:messages)
-//					if(message->getDestinationPort() == item.first)
-//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+				for(const n_network::t_msgptr& message:messages)
+					if(message->getDestinationPort() == item.first)
+						*ssr << "\t\t\t\t" << message->toString() << '\n';		// message->toString()?
 			}
 	       *ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
@@ -137,29 +137,29 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesConfluent argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a raw object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();	//we don't need a shared object
 
 		t_stateptr state = adevs->getState();
 	        *ssr <<	"\n"
 	        	"\tCONFLUENT TRANSITION in model " << adevs->getName() << "\n"
 	        	"\t\tInput Port Configuration:\n";
 			const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-//			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
+			const std::deque<n_network::t_msgptr>& messages = adevs->getReceivedMessages();
 			for(const std::map<std::string, t_portptr>::value_type& item: ports){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
-//				for(const n_network::t_msgptr& message:messages)
-//					if(message->getDestinationPort() == item.first)
-//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+				for(const n_network::t_msgptr& message:messages)
+					if(message->getDestinationPort() == item.first)
+						*ssr << "\t\t\t\t" << message->toString() << '\n';
 			}
 	        *ssr <<	"\t\tNew State: " << state->toString() << "\n"
 	        	"\t\tOutput Port Configuration:\n";
 	        const std::map<std::string, t_portptr>& ports2 = adevs->getOPorts();
-//	        const std::deque<n_network::t_msgptr>& messages2 = adevs->getSendMessages();
+	        const std::deque<n_network::t_msgptr>& messages2 = adevs->getSendMessages();
 			for(const std::map<std::string, t_portptr>::value_type& item: ports2){
 				*ssr << "\t\t\tport <" << item.first << ">:\n";
-//				for(const n_network::t_msgptr& message:messages2)
-//					if(message->getDestinationPort() == item.first)	//TODO get from which port a message was send
-//						*ssr << "\t\t\t\t" << *message << '\n';		//TODO message->toString()?
+				for(const n_network::t_msgptr& message:messages2)
+					if(message->getSourcePort() == item.first)
+						*ssr << "\t\t\t\t" << message->toString() << '\n';
 			}
 	       *ssr
 	        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";

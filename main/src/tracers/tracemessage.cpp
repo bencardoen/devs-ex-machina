@@ -5,9 +5,10 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include <tracers/tracemessage.h>
-#include "tools/schedulerfactory.h"
+#include "tracemessage.h"
+#include "schedulerfactory.h"
 #include "objectfactory.h"
+#include "globallog.h"
 
 using namespace n_tools;
 
@@ -23,40 +24,41 @@ void TraceMessage::execute()
 	m_func();
 }
 
-std::shared_ptr<Scheduler<t_tracemessageptr>> scheduler = SchedulerFactory<t_tracemessageptr>::makeScheduler(Storage::FIBONACCI, true);
+std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(Storage::FIBONACCI, true);
 
 void scheduleMessage(t_tracemessageptr message)
 {
-	scheduler->push_back(message);
+	scheduler->push_back(TraceMessageEntry(message));
 }
 
 void traceUntil(n_network::t_timestamp time)
 {
-	std::vector<t_tracemessageptr> messages;
+	std::vector<TraceMessageEntry> messages;
 	TraceMessage t(time, nullptr);
 	scheduler->unschedule_until(messages, &t);
-	for(t_tracemessageptr mess : messages){
+	for(TraceMessageEntry& mess : messages){
+		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTimeStamp());
 		mess->execute();
-		n_tools::takeBack(mess);
+		n_tools::takeBack(mess.getPointer());
 	}
 }
 
 void revertTo(n_network::t_timestamp time)
 {
-	std::vector<t_tracemessageptr> messages;
+	std::vector<TraceMessageEntry> messages;
 	TraceMessage t(time, nullptr);
 	scheduler->unschedule_until(messages, &t);
 	clearAll();
-	for(const t_tracemessageptr& mess: messages)
+	for(const TraceMessageEntry& mess: messages)
 		scheduler->push_back(mess);
 }
 
 void clearAll()
 {
 	while(!scheduler->empty()){
-		t_tracemessageptr ptr = scheduler->pop();
+		TraceMessageEntry ptr = scheduler->pop();
 		//TODO unsure whether we have to print all these. I think not
-		n_tools::takeBack(ptr);
+		n_tools::takeBack(ptr.getPointer());
 	}
 }
 

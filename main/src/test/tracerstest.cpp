@@ -9,11 +9,12 @@
 #include "gtest/gtest.h"
 #include <sstream>
 #include <vector>
-#include "tracers/tracers.h"
-#include "tracers/tracemessage.h"
-#include "tracers/policies.h"
+#include "tracers.h"
+#include "tracemessage.h"
+#include "policies.h"
 #include "verbosetracer.h"
-#include "test/compare.h"
+#include "compare.h"
+#include "macros.h"
 
 using namespace n_tracers;
 
@@ -396,6 +397,11 @@ public:
 		this->addOutPort("MyVerySpecialOutput");
 		this->setState(std::make_shared<TestState>());
 	}
+
+	virtual void extTransition(const std::vector<n_network::t_msgptr> &) {};
+	virtual void intTransition() {};
+//	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
+	virtual std::vector<n_network::t_msgptr> output() const {return std::vector<n_network::t_msgptr>();}
 	t_timestamp timeAdvance(){
 		return t_timestamp(getState()->m_timeLast.getTime()+1, 1);
 	}
@@ -408,7 +414,7 @@ TEST(tracing, tracer##tracerclass){\
 	{\
 		tracerclass<FileWriter> tracer;\
 		n_model::t_atomicmodelptr model = std::make_shared<TestModel>();\
-		tracer.initialize(outputFolder STRINGIFY(tracerclass) "_out.txt");\
+		tracer.initialize(outputFolder STRINGIFY( tracerclass ) "_out.txt");\
 		tracer.tracesInit(model, t_timestamp(42, 1));\
 		tracer.tracesInternal(model);\
 		tracer.tracesExternal(model);\
@@ -421,9 +427,10 @@ TEST(tracing, tracer##tracerclass){\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
 		n_tracers::clearAll();\
 	}\
-	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY(tracerclass) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
+	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY( tracerclass ) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
 }
 
+SINGLETRACERTEST(TESTFOLDERTRACE, VerboseTracer)
 /*
 TEST(tracing, verboseTracer){
 	VerboseTracer<FileWriter> tracer;
