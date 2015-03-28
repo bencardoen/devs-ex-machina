@@ -32,12 +32,12 @@ private:
 	t_portptr addPort(std::string name, bool isIn);
 
 	int m_coreNumber;
-	t_stateptr m_state;
 
 protected:
 	t_timestamp m_timeLast;
 	t_timestamp m_timeNext;
 
+	t_stateptr m_state;
 	std::vector<t_stateptr> m_oldStates;
 
 	std::deque<n_network::t_msgptr> m_sendMessages;
