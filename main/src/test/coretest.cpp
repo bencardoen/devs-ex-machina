@@ -187,12 +187,16 @@ TEST(Core, terminationfunction){
 
 TEST(Core, multicoresafe){
 	using namespace n_network;
+	using n_control::t_location_tableptr;
+	using n_control::LocationTable;
 	t_networkptr network = createObject<Network>(2);
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0);
+	t_location_tableptr loctable = createObject<LocationTable>(2);
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
 	coreone->getMessages(mailstubone);
 	coretwo->getMessages(mailstubtwo);
+
 }
 

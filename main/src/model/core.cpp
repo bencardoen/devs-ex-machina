@@ -26,7 +26,7 @@ n_model::Core::Core(std::size_t id)
 	m_coreid = id;
 }
 
-bool n_model::Core::isMessageLocal(const t_msgptr& msg)
+bool n_model::Core::isMessageLocal(const t_msgptr& msg)const
 {
 	// TODO in optimized versions , replace with return true && setting msg->dest.
 	std::string destname = msg->getDestinationModel();
@@ -56,10 +56,15 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	this->m_models[mname] = model;
 }
 
-n_model::t_atomicmodelptr n_model::Core::getModel(std::string mname)
+n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
 {
-	assert(this->m_models.find(mname) != this->m_models.end() && "Model not in core.");
+	assert(this->containsModel(mname) && "Model not in core.");
 	return this->m_models[mname];
+}
+
+bool n_model::Core::containsModel(const std::string& mname)const
+{
+	return (this->m_models.find(mname)!=this->m_models.end());
 }
 
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
@@ -115,10 +120,12 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {
-			urgent->intTransition();
+			urgent->intTransition(); // TODO check with Stijn.
+			urgent->setTime(this->m_time);
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);
+			urgent->setTime(this->m_time);
 			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
 			this->traceConf(urgent);
 			assert(erased != 0 && "Broken logic in collected output");
@@ -128,6 +135,7 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
+		model->setTime(this->m_time);
 		this->traceExt(model);
 	}
 }
@@ -221,7 +229,7 @@ bool n_model::Core::isLive() const
 
 void n_model::Core::setLive(bool b)
 {
-	return m_live.store(b);
+	m_live.store(b);
 }
 
 std::size_t n_model::Core::getCoreID() const

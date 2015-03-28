@@ -96,7 +96,8 @@ private:
 	 */
 	bool
 	virtual
-	isMessageLocal(const t_msgptr&);
+	isMessageLocal(const t_msgptr&)const;
+
 public:
 	/**
 	 * Default single core implementation.
@@ -137,10 +138,17 @@ public:
 
 	/**
 	 * Retrieve model with name from core
+	 * @pre model is present in this core.
 	 * @attention does not change anything in scheduled order.
 	 */
 	t_atomicmodelptr
-	getModel(std::string name);
+	getModel(const std::string& name);
+
+	/**
+	 * Check if model is present in core.
+	 */
+	bool
+	containsModel(const std::string& name)const;
 
 	/**
 	 * Indicates if Core is running, or halted.
