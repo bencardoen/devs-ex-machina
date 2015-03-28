@@ -71,7 +71,7 @@ t_timestamp TrafficLight::timeAdvance()
 	return t_timestamp();
 }
 
-std::vector<n_network::t_msgptr> TrafficLight::output()
+std::vector<n_network::t_msgptr> TrafficLight::output() const
 {
 	return std::vector<n_network::t_msgptr>();
 }

@@ -54,9 +54,9 @@ public:
 	}
 
 	std::string getName() const;
-	t_portptr getPort(std::string name);
+	t_portptr getPort(std::string name) const;
 	t_stateptr getState() const;
-	void setState(t_stateptr newState);
+	void setState(const t_stateptr& newState);
 	int getCoreNumber() const;
 	void setCoreNumber(int core);
 	const std::map<std::string, t_portptr>& getIPorts() const;

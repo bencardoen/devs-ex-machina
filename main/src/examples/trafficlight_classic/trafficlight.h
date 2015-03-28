@@ -21,9 +21,9 @@ class TrafficLightMode: public State
 {
 public:
 	TrafficLightMode(std::string state);
-	std::string toXML();
-	std::string toJSON();
-	std::string toCell();
+	std::string toXML() override;
+	std::string toJSON() override;
+	std::string toCell() override;
 	~TrafficLightMode() {}
 };
 
@@ -34,10 +34,10 @@ public:
 	TrafficLight(std::string, std::size_t priority = 0);
 	~TrafficLight() {}
 
-	void extTransition(const std::vector<n_network::t_msgptr> & message);
-	void intTransition();
-	t_timestamp timeAdvance();
-	std::vector<n_network::t_msgptr> output();
+	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
+	void intTransition() override;
+	t_timestamp timeAdvance() override;
+	std::vector<n_network::t_msgptr> output() const override;
 
 	/*
 	 * The following function has been created to easily
