@@ -19,14 +19,34 @@ namespace n_network {
 class Message
 {
 private:
+	/**
+	 * Unique model name of target.
+	 */
 	const std::string m_destination_model;
+
+	/**
+	 * Core id in this simulator.
+	 */
 	std::size_t m_destination_core;
+
+	/**
+	 * Time message is created (by model/port)
+	 */
 	const t_timestamp m_timestamp;
-	std::string m_destination_port;
+
+	/**
+	 * Full name of destination port.
+	 */
+	const std::string m_destination_port;//fullname
+
+	/**
+	 * Full name of source port.
+	 */
+	const std::string m_source_port;	// fullname
 
 public:
-	Message(std::string modeldest, const t_timestamp& time_made, std::string destport = "")
-		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made), m_destination_port(destport)
+	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport)
+		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made), m_destination_port(destport),m_source_port(sourceport)
 	{
 	}
 
@@ -43,6 +63,11 @@ public:
 	std::string getDestinationModel() const
 	{
 		return m_destination_model;
+	}
+
+	std::string getSourcePort()const
+	{
+		return m_source_port;
 	}
 
 	void setDestinationCore(std::size_t dest)

@@ -14,7 +14,7 @@ using namespace n_tools;
 namespace n_tracers {
 
 TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func)
-	: Message("", time), m_func(func)
+	: Message("", time, "", ""), m_func(func)
 {
 }
 

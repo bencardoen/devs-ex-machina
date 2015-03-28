@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "tools/globallog.h"
+#include "globallog.h"
 
 LOG_INIT("out.txt")
 

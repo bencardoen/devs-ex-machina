@@ -87,7 +87,8 @@ TEST(Core, CoreFlow){
 	using n_network::Message;
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
-	t_msgptr mymessage = createObject<Message>("toBen", (0));
+	std::string portname_stub = "model_port";
+	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");

@@ -109,8 +109,6 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 	 * For others : external
 	 */
 	LOG_DEBUG("CORE: Transitioning with ",  imminents.size(), " imminents, and ", mail.size(), " models to deliver mail to.");
-//	std::cout << "Transitioning with " << imminents.size() << " imminents, and " << mail.size()
-//	        << " models to deliver mail to." << std::endl;
 	for (const auto& imminent : imminents) {
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
@@ -158,7 +156,6 @@ void n_model::Core::printSchedulerState()
 std::set<std::string> n_model::Core::getImminent()
 {
 	LOG_DEBUG("CORE: Retrieving imminent models");
-//	std::cout << "Retrieving imminent models" << std::endl;
 	std::set<std::string> imminent;
 	std::vector<ModelEntry> bag;
 	t_timestamp maxtime = n_network::makeLatest(this->m_time);
@@ -166,7 +163,6 @@ std::set<std::string> n_model::Core::getImminent()
 	this->m_scheduler->unschedule_until(bag, mark);
 	if (bag.size() == 0)
 		LOG_ERROR("CORE: No imminent models ??");
-		//std::cerr << "No imminent models ??" << std::endl;
 	for (const auto& entry : bag) {
 		bool inserted = imminent.insert(entry.getName()).second;
 		assert(inserted && "Logic fail in Core get Imminent.");
@@ -180,7 +176,6 @@ std::set<std::string> n_model::Core::getImminent()
 void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 {
 	LOG_DEBUG("CORE: Rescheduling ", oldimms.size(), " models for next run.");
-//	std::cout << "Rescheduling " << oldimms.size() << " models for next run." << std::endl;
 	for (const auto& old : oldimms) {
 		t_atomicmodelptr model = this->m_models[old];
 		t_timestamp ta = model->timeAdvance();
@@ -189,8 +184,6 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 			this->scheduleModel(old, next);
 		} else {
 			LOG_DEBUG("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
-//			std::cout << "Core:: " << model->getName() << " is no longer scheduled (infinity) "
-//			        << std::endl;
 		}
 	}
 	this->syncTime();
@@ -202,10 +195,8 @@ void n_model::Core::syncTime()
 	t_timestamp next = this->m_scheduler->top().getTime();
 	this->m_time = this->m_time + next;
 	LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
-//	std::cout << " Core is advancing simtime to :: " << this->m_time.getTime() << std::endl;
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
-//		std::cout << "Reached termination time :: now: " << m_time << " >= " << m_termtime << std::endl;
 		m_terminated.store(true);
 		m_live.store(false);
 	}
@@ -305,12 +296,9 @@ void n_model::Core::checkTerminationFunction()
 {
 	if (m_termination_function) {
 		LOG_DEBUG("CORE: Checking termination function.");
-//		std::cout << "Checking termination function." << std::endl;
 		for (const auto& model : m_models) {
 			if (m_termination_function(model.second)) {
 				LOG_DEBUG("CORE: Termination function evaluated to true for model ", model.first);
-//				std::cout << "Termination function evaluated to true for model " << model.first
-//				        << std::endl;
 				this->m_live.store(false);
 				this->m_terminated.store(true);
 				return;
@@ -318,7 +306,6 @@ void n_model::Core::checkTerminationFunction()
 		}
 	} else {
 		LOG_DEBUG("CORE: No termination function to evaluate, moving on...");
-//		std::cout << "No termination function to evaluate, moving on..." << std::endl;
 	}
 }
 

@@ -97,7 +97,7 @@ public:
 		if (t.m_causal != 0) {
 			os << "\tcausal ::" << t.m_causal;
 		}
-		return os << std::endl;
+		return os;
 	}
 
 	friend
