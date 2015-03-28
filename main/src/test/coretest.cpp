@@ -145,6 +145,14 @@ TEST(Core, smallStep){
 	EXPECT_TRUE(c->isLive()== true);
 }
 
+class termfun : public n_model::TerminationFunctor{
+public:
+	virtual
+	bool evaluateModel(const t_atomicmodelptr& model)const override{
+		return (model->getName()=="Amodel");
+	}
+};
+
 
 TEST(Core, terminationfunction){
 	RecordProperty("description", "Core simulation steps with term function.");
@@ -159,14 +167,8 @@ TEST(Core, terminationfunction){
 	c->init();
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-	auto termfun = [](const t_atomicmodelptr& model)->bool{
-		if(model->getName() == "Amodel")
-			return true;
-		return false;
-	};
-
 	EXPECT_EQ(finaltime , t_timestamp::infinity());
-	c->setTerminationFunction(termfun);
+	c->setTerminationFunction(createObject<termfun>());
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.

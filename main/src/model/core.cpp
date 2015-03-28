@@ -6,6 +6,7 @@
 #include "core.h"
 #include <cassert>
 #include "globallog.h"
+#include "objectfactory.h"
 
 void n_model::Core::load(const std::string&)
 {
@@ -16,6 +17,7 @@ n_model::Core::Core()
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(false)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
 n_model::Core::Core(std::size_t id)
@@ -287,7 +289,7 @@ bool n_model::Core::terminated() const
 	return m_terminated;
 }
 
-void n_model::Core::setTerminationFunction(std::function<bool(const t_atomicmodelptr& model)> fun)
+void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
 {
 	this->m_termination_function = fun;
 }
@@ -297,7 +299,7 @@ void n_model::Core::checkTerminationFunction()
 	if (m_termination_function) {
 		LOG_DEBUG("CORE: Checking termination function.");
 		for (const auto& model : m_models) {
-			if (m_termination_function(model.second)) {
+			if ((*m_termination_function)(model.second)) {
 				LOG_DEBUG("CORE: Termination function evaluated to true for model ", model.first);
 				this->m_live.store(false);
 				this->m_terminated.store(true);
@@ -305,7 +307,7 @@ void n_model::Core::checkTerminationFunction()
 			}
 		}
 	} else {
-		LOG_DEBUG("CORE: No termination function to evaluate, moving on...");
+		LOG_ERROR("CORE: Termination functor == nullptr, not evaluating.");
 	}
 }
 

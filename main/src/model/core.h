@@ -2,11 +2,11 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include <timestamp.h>
-#include <network.h>
-#include <model.h>
-#include <atomicmodel.h>
+#include "timestamp.h"
+#include "network.h"
+#include "atomicmodel.h"
 #include "scheduler.h"
+#include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
 //#include "tracers.h"
@@ -21,7 +21,6 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 
 typedef void t_tracerset;	// TODO Stijn replace with correct type
-
 
 /**
  * Typedef used by core.
@@ -80,17 +79,15 @@ private:
 
 	/**
 	 * Termination function.
-	 * @default init to nullptr
+	 * The constructor initializes this to a default functor returning false for each model (simulating forever)
 	 */
-	std::function<bool(const t_atomicmodelptr&)> m_termination_function;
-
+	t_terminationfunctor m_termination_function;
 
 	/**
 	 * Tracers.
 	 */
 	// TODO Stijn link with tracers here.
 	// t_tracerset m_tracers;
-
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -110,7 +107,6 @@ public:
 	Core(const Core&) = delete;
 
 	Core& operator=(const Core&) = delete;
-
 
 protected:
 	Core(std::size_t id);
@@ -208,11 +204,14 @@ public:
 	virtual void
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
 
-	virtual void
-	sendMessage(const t_msgptr&){;}
+	virtual void sendMessage(const t_msgptr&)
+	{
+		;
+	}
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
+	 * Base class = noop.
 	 */
 	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
 	{
@@ -275,6 +274,10 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
+	/**
+	 * If the current simulation time >= endtime, halt.
+	 * This is checked after all transitions have happened.
+	 */
 	void
 	setTerminationTime(t_timestamp endtime);
 
@@ -292,7 +295,7 @@ public:
 	 * Set the the termination function.
 	 */
 	void
-	setTerminationFunction(std::function<bool(const t_atomicmodelptr&)> newfunc);
+	setTerminationFunction(const t_terminationfunctor&);
 
 	/**
 	 * After a simulation step, verify that we need to continue.

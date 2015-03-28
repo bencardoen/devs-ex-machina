@@ -17,10 +17,13 @@ namespace n_model{
  * Subclass should override evaluateModel to provide user defined termination behaviour.
  */
 class TerminationFunctor{
-
+public:
 	TerminationFunctor() = default;
 	virtual ~TerminationFunctor(){;}
 
+	/**
+	 * Operator calls virtual function evaluateModel for each model in the simkernel.
+	 */
 	bool
 	operator()(const t_atomicmodelptr& model)const{
 		return evaluateModel(model);
@@ -28,6 +31,7 @@ class TerminationFunctor{
 
 	/**
 	 * Evaluate model, test if a user specified condition is met to terminate simulation.
+	 * Default implementation returns false always
 	 * @return false to continue simulation, true to signal termination.
 	 */
 	virtual
