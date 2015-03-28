@@ -84,6 +84,7 @@ private:
 	 */
 	std::function<bool(const t_atomicmodelptr&)> m_termination_function;
 
+
 	/**
 	 * Tracers.
 	 */
