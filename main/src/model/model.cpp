@@ -36,7 +36,7 @@ std::string Model::getName() const
  * @param name The name of the port
  * @return a shared pointer to the port
  */
-t_portptr Model::getPort(std::string name)
+t_portptr Model::getPort(std::string name) const
 {
 	auto ptr1 = m_iPorts.find(name);
 	auto ptr2 = m_oPorts.find(name);
@@ -66,7 +66,7 @@ t_stateptr Model::getState() const
  *
  * @param newState the new state the model should switch to (as a State object)
  */
-void Model::setState(t_stateptr newState)
+void Model::setState(const t_stateptr& newState)
 {
 	if (newState == nullptr)
 		return;

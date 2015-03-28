@@ -30,10 +30,11 @@ public:
 	virtual void intTransition() = 0;
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual t_timestamp timeAdvance() = 0;
-	virtual std::vector<n_network::t_msgptr> output() = 0;
+	virtual std::vector<n_network::t_msgptr> output() const = 0;
 	void setGVT(t_timestamp gvt);
 	void revert(t_timestamp time);
 	std::size_t getPriority() const;
+	void setTime(t_timestamp time);
 
 	virtual ~AtomicModel()
 	{

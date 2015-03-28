@@ -19,7 +19,7 @@ private:
 	bool m_directConnected;
 
 public:
-	std::vector<t_atomicmodelptr> directConnect(t_coupledmodelptr);
+	std::vector<t_atomicmodelptr> directConnect(const t_coupledmodelptr&);
 	void undoDirectConnect();
 };
 }
