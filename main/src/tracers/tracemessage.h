@@ -9,7 +9,8 @@
 #define SRC_TRACERS_TRACEMESSAGE_H_
 
 #include <functional>	//defines std::less<T>
-#include <message.h>
+#include "message.h"
+#include "globallog.h"
 
 namespace n_tracers {
 
@@ -27,16 +28,28 @@ public:
 	 * 		This is the time that the scheduler uses for scheduling the message
 	 * @param func A function object. This function will be executed when the message is received.
 	 * 		The function must take no arguments and return no result.
+	 * @param tracerID A unique identifier for the tracer that registered this message.
 	 */
-	TraceMessage(n_network::t_timestamp time, const t_messagefunc& func);
+	TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t tracerID);
 
 	/**
 	 * @brief Executes the scheduled functionality.
 	 */
 	void execute();
 
+	/**
+	 * @brief Comparison operator needed for scheduling these messages in a scheduler
+	 */
+	bool operator<(const TraceMessage& other) const;
+
+	/**
+	 * @brief Comparison operator needed for scheduling these messages in a scheduler
+	 */
+	bool operator>(const TraceMessage& other) const;
+
 private:
 	t_messagefunc m_func;	//function to be executed. This function takes no arguments
+	const std::size_t m_tracerID;
 };
 
 typedef TraceMessage* t_tracemessageptr;
@@ -61,31 +74,40 @@ public:
 		return m_pointer;
 	}
 
-	TraceMessageEntry(t_tracemessageptr ptr): m_pointer(ptr) {}
+	TraceMessageEntry(t_tracemessageptr ptr)
+		: m_pointer(ptr)
+	{
+	}
 	~TraceMessageEntry() = default;
 	TraceMessageEntry(const TraceMessageEntry&) = default;
 	TraceMessageEntry(TraceMessageEntry&&) = default;
 	TraceMessageEntry& operator=(const TraceMessageEntry&) = default;
 	TraceMessageEntry& operator=(TraceMessageEntry&&) = default;
-	TraceMessage& operator*() {
+	TraceMessage& operator*()
+	{
 		return *m_pointer;
 	}
-	const TraceMessage& operator*() const {
+	const TraceMessage& operator*() const
+	{
 		return *m_pointer;
 	}
-	TraceMessage* operator->() {
+	TraceMessage* operator->()
+	{
 		return m_pointer;
 	}
-	const TraceMessage* operator->() const {
+	const TraceMessage* operator->() const
+	{
 		return m_pointer;
 	}
 
 	friend
 	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 	{
-		if (lhs->getTimeStamp() ==  rhs->getTimeStamp())
+		if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
+			LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
 			return lhs.m_pointer > rhs.m_pointer;
-		return lhs->getTimeStamp() >  rhs->getTimeStamp();
+		}
+		return *lhs > *rhs;
 	}
 
 	friend
@@ -103,12 +125,12 @@ public:
 	friend
 	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 	{
-		return (lhs.m_pointer == rhs.m_pointer); // uncomment to allow multiple entries per model
+		return (lhs.m_pointer == rhs.m_pointer);
 	}
 
-	friend
-	std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs){
-		return (os<< "Trace message scheduled at " << rhs->getTimeStamp());
+	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
+	{
+		return (os << "Trace message scheduled at " << rhs->getTimeStamp());
 	}
 };
 
@@ -120,21 +142,10 @@ struct hash<n_tracers::TraceMessageEntry>
 {
 	size_t operator()(const n_tracers::TraceMessageEntry& item) const
 	{
-		//std::cout << "Hash function for "<< item.getName()<<std::endl;
+		//just hash on the pointer value
 		return hash<n_tracers::t_tracemessageptr>()(item.getPointer());
 	}
 };
 }
-//namespace std {
-//template<>
-//struct less<n_tracers::t_tracemessageptr>
-//{
-//	bool operator()(const n_tracers::t_tracemessageptr& k1, const n_tracers::t_tracemessageptr& k2) const
-//	{
-//		//get the timestamp from the messages and compare those, else: directly compare pointers
-//		return(k1->getTimeStamp() < k2->getTimeStamp() || k1 < k2);
-//	}
-//};
-//}
 
 #endif /* SRC_TRACERS_TRACEMESSAGE_H_ */
