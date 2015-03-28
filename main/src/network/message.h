@@ -9,6 +9,7 @@
 #define SRC_NETWORK_MESSAGE_H_
 
 #include "timestamp.h"
+#include "stringtools.h"
 
 namespace n_network {
 
@@ -45,6 +46,13 @@ private:
 	const std::string m_source_port;	// fullname
 
 public:
+	/**
+	 * @param modeldest : destination model
+	 * @param time_made
+	 * @param destport : full name of destination port
+	 * @param sourceport : full name of source port
+	 * @attention Core id is initialized at limits::max().
+	 */
 	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport)
 		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made), m_destination_port(destport),m_source_port(sourceport)
 	{
@@ -57,22 +65,37 @@ public:
 
 	std::string getDestinationPort()const
 	{
-		return m_destination_port;
+		return n_tools::copyString(m_destination_port);
 	}
 
 	std::string getDestinationModel() const
 	{
-		return m_destination_model;
+		return n_tools::copyString(m_destination_model);
 	}
 
 	std::string getSourcePort()const
 	{
-		return m_source_port;
+		return n_tools::copyString(m_source_port);
 	}
 
 	void setDestinationCore(std::size_t dest)
 	{
 		m_destination_core = dest;
+	}
+
+
+	virtual
+	std::string toString()const{
+		std::stringstream result;
+		result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
+		result << " @" << m_timestamp;
+		result << " to model " << this->getDestinationModel() << " @core_nr " << m_destination_core;
+		return result.str();
+	}
+
+	t_timestamp
+	getTimeStamp()const{
+		return m_timestamp;
 	}
 
 	virtual ~Message()

@@ -98,12 +98,13 @@ add_executable(${PROJECT_NAME}
 	src/test/toolstest.cpp
 	src/test/coretest.cpp
 	src/test/tracerstest.cpp
- 	src/test/networktest.cpp
- 	src/test/modeltest.cpp
+	src/test/networktest.cpp
+	src/test/modeltest.cpp
 	src/test/compare.cpp
 	src/test/comparetest.cpp
 	src/test/loggertest.cpp
 	src/test/controllertest.cpp
+	src/test/messagetest.cpp
  	src/main.cpp
  	)
 ###############################################################################

@@ -95,7 +95,7 @@ public:
 	{
 		os << "TimeStamp ::" << t.getTime();
 		if (t.m_causal != 0) {
-			os << "\tcausal ::" << t.m_causal;
+			os << " causal ::" << t.m_causal;
 		}
 		return os;
 	}
