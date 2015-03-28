@@ -34,6 +34,7 @@ public:
 	void setGVT(t_timestamp gvt);
 	void revert(t_timestamp time);
 	std::size_t getPriority() const;
+	void setTime(t_timestamp time);
 
 	virtual ~AtomicModel()
 	{
