@@ -112,6 +112,12 @@ public:
 protected:
 	Core(std::size_t id);
 
+	/**
+	 * Allow multicore implemenation to directly modify time.
+	 */
+	void
+	setTime(const t_timestamp&);
+
 public:
 	virtual ~Core() = default;
 
@@ -227,6 +233,12 @@ public:
 	}
 
 	/**
+	 * Subclass hook.
+	 * If the current scheduler top time < than an event, execute any subclass logic to correct it.
+	 */
+	virtual void adjustTime(){;}
+
+	/**
 	 * Get Current simulation time.
 	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
 	 * @note The causal field is to be disregarded, it is not relevant here.
@@ -244,8 +256,7 @@ public:
 	 */
 	virtual
 	void
-	transition(const std::set<std::string>& imminents,
-	        std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Schedule model.name @ time t.

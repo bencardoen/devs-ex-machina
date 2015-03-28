@@ -24,6 +24,14 @@ TEST(Time, FactoryFunctions)
 	auto third = first;
 	EXPECT_TRUE(first.getTime() == third.getTime());
 	EXPECT_TRUE(second.getCausality() < aftersecond.getCausality());
+	EXPECT_TRUE(first < decltype(first)::infinity());
+	EXPECT_TRUE(first != decltype(first)::infinity());
+	t_timestamp zero(0,0);
+	t_timestamp selected(0,0);
+	EXPECT_EQ(zero, selected);
+	EXPECT_FALSE(zero > selected);
+	zero.increaseCausality(1);	// equivalent of select(selected).
+	EXPECT_TRUE(zero > selected);
 }
 
 TEST(Time, HashingOperators)

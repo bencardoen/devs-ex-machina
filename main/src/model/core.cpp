@@ -28,9 +28,8 @@ n_model::Core::Core(std::size_t id)
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg)const
 {
-	// TODO in optimized versions , replace with return true && setting msg->dest.
-	std::string destname = msg->getDestinationModel();
-	if (this->m_models.find(destname) != this->m_models.end()) {
+	const bool found = this->containsModel(msg->getDestinationModel());
+	if (found) {
 		msg->setDestinationCore(this->getCoreID());
 		return true;
 	} else {
@@ -85,9 +84,8 @@ void n_model::Core::init()
 		this->scheduleModel(model.first, model_scheduled_time);
 	}
 	if (not this->m_scheduler->empty()) {
-		//std::cout << "Core advancing time to first transition time ";
 		this->m_time = this->m_scheduler->top().getTime();
-		//std::cout << "@" << this->m_time << std::endl;
+		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
 }
 
@@ -105,10 +103,9 @@ void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_
 		this->sortMail(mailbag, mailfrom);
 	}
 	LOG_DEBUG("CORE:  resulted in ",  mailbag.size(), " addressees");
-	//std::cout << " resulted in " << mailbag.size() << " addressees" << std::endl;
 }
 
-void n_model::Core::transition(const std::set<std::string>& imminents,
+void n_model::Core::transition(std::set<std::string>& imminents,
         std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
 {
 	/**
@@ -136,6 +133,12 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
 		model->setTime(this->m_time);
+		t_timestamp queried = model->timeAdvance();
+		// If a model 'wakes up' after an event (ta goes from infinity to a scheduleable value), make sure we reschedule it.
+		if(queried != t_timestamp::infinity()){
+			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried, " rescheduling.");
+			imminents.insert(model->getName());
+		}
 		this->traceExt(model);
 	}
 }
@@ -144,7 +147,6 @@ void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgpt
         const std::vector<t_msgptr>& messages)
 {
 	for (const auto & message : messages) {
-		// For a single core, the compiler will figure out this branch is never taken.
 		if(not this->isMessageLocal(message)){
 			this->sendMessage(message);
 		}
@@ -156,6 +158,9 @@ void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgpt
 			mailbag[destname].push_back(message);
 		}
 	}
+	// At this point we have send all remote messages, sorted the rest for local delivery.
+	// Add a hook to multicore pull from network.
+	getMessages(mailbag);
 }
 
 void n_model::Core::printSchedulerState()
@@ -171,8 +176,9 @@ std::set<std::string> n_model::Core::getImminent()
 	t_timestamp maxtime = n_network::makeLatest(this->m_time);
 	ModelEntry mark("", maxtime);
 	this->m_scheduler->unschedule_until(bag, mark);
-	if (bag.size() == 0)
+	if (bag.size() == 0){
 		LOG_ERROR("CORE: No imminent models ??");
+	}
 	for (const auto& entry : bag) {
 		bool inserted = imminent.insert(entry.getName()).second;
 		assert(inserted && "Logic fail in Core get Imminent.");
@@ -187,10 +193,13 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 {
 	LOG_DEBUG("CORE: Rescheduling ", oldimms.size(), " models for next run.");
 	for (const auto& old : oldimms) {
+		assert(this->containsModel(old));
 		t_atomicmodelptr model = this->m_models[old];
-		t_timestamp ta = model->timeAdvance();
+		t_timestamp ta = model->timeAdvance();			// Timeadvance if infinity == model indicates it does not want scheduling.
 		if (ta != t_timestamp::infinity()) {
 			t_timestamp next = ta + this->m_time;
+			size_t prior = model->getPriority();		// Simulate select function for models firing simultaneously by changing causality vals.
+			next.increaseCausality(prior);
 			this->scheduleModel(old, next);
 		} else {
 			LOG_DEBUG("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
@@ -201,10 +210,16 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
-	assert(not this->m_scheduler->empty() && "Syncing with the void is illadvised.");
-	t_timestamp next = this->m_scheduler->top().getTime();
-	this->m_time = this->m_time + next;
-	LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
+	if(not this->m_scheduler->empty()){
+		t_timestamp next = this->m_scheduler->top().getTime();
+		this->m_time = this->m_time + next;
+		LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
+	}else{
+		LOG_WARNING("CORE:: Core has no scheduled models, time is no longer advancing.");
+	}
+
+	this->adjustTime(); // Allow subclasses to do their own thing here.
+
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
 		m_terminated.store(true);
@@ -326,4 +341,9 @@ void n_model::Core::removeModel(std::string name){
 	ModelEntry target(name, t_timestamp(0,0));
 	this->m_scheduler->erase(target);
 	assert(this->m_scheduler->contains(target)==false && "Removal from scheduler failed !!");
+}
+
+void
+n_model::Core::setTime(const t_timestamp& t){
+	m_time = t;
 }
