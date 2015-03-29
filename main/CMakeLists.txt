@@ -83,12 +83,16 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
 	src/model/atomicmodel.cpp
+	src/model/coupledmodel.cpp
 	src/model/model.cpp
 	src/model/state.cpp
 	src/model/port.cpp
 	src/model/core.cpp
 	src/model/multicore.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
+	src/examples/trafficlight_coupled/trafficlightc.cpp
+	src/examples/trafficlight_coupled/policemanc.cpp
+	src/examples/trafficlight_coupled/trafficsystemc.cpp
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp
@@ -121,6 +125,7 @@ include_directories(	src
 				src/model
 				src/tracers
 				src/examples/trafficlight_classic
+				src/examples/trafficlight_coupled
 				src/network
 				src/control
 				)   # Project headers are in same folder as source

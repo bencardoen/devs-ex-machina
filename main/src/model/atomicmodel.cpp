@@ -18,8 +18,8 @@ namespace n_model {
  * @param name The name of the model
  * @param priority The priority of the model
  */
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
-	: Model(name, corenumber), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, std::size_t priority)
+	: Model(name), m_priority(priority)
 {
 
 }

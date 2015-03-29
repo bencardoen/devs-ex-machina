@@ -13,12 +13,15 @@
 namespace n_model {
 class CoupledModel: public Model
 {
-private:
+protected:
 	std::vector<t_modelptr> m_components;
 
 public:
+	CoupledModel() = delete;
+	CoupledModel(std::string name);
+	virtual ~CoupledModel() {}
 	void addSubModel(const t_modelptr& model);
-	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction);
+	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction = [](const n_network::t_msgptr& m){return m;});
 	std::vector<t_modelptr> getComponents() const;
 };
 
