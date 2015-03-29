@@ -14,8 +14,8 @@ namespace n_model {
  *
  * @param name of model
  */
-Model::Model(std::string name, int corenumber)
-	: m_name(name), m_coreNumber(corenumber), m_state(nullptr)
+Model::Model(std::string name)
+	: m_name(name), m_state(nullptr)
 {
 
 }
@@ -120,26 +120,6 @@ t_portptr Model::addInPort(std::string name)
 t_portptr Model::addOutPort(std::string name)
 {
 	return this->addPort(name, false);
-}
-
-/*
- * Get the current core number
- *
- * @return current core number
- */
-int Model::getCoreNumber() const
-{
-	return m_coreNumber;
-}
-
-/*
- * Set the current core number
- *
- * @param core current core number
- */
-void Model::setCoreNumber(int core)
-{
-	m_coreNumber = core;
 }
 
 /*

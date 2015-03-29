@@ -145,7 +145,7 @@ TEST(Core, smallStep){
 	EXPECT_TRUE(c->isLive()== true);
 }
 
-class termfun : public n_model::TerminationFunctor{
+class termfun: public n_model::TerminationFunctor{
 public:
 	virtual
 	bool evaluateModel(const t_atomicmodelptr& model)const override{

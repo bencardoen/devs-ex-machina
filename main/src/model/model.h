@@ -31,8 +31,6 @@ private:
 
 	t_portptr addPort(std::string name, bool isIn);
 
-	int m_coreNumber;
-
 protected:
 	t_timestamp m_timeLast;
 	t_timestamp m_timeNext;
@@ -48,7 +46,7 @@ protected:
 
 public:
 	Model() = delete;
-	Model(std::string name, int corenumber);
+	Model(std::string name);
 	virtual ~Model()
 	{
 	}
@@ -57,8 +55,6 @@ public:
 	t_portptr getPort(std::string name) const;
 	t_stateptr getState() const;
 	void setState(const t_stateptr& newState);
-	int getCoreNumber() const;
-	void setCoreNumber(int core);
 	const std::map<std::string, t_portptr>& getIPorts() const;
 	const std::map<std::string, t_portptr>& getOPorts() const;
 	const std::deque<n_network::t_msgptr>& getSendMessages() const;

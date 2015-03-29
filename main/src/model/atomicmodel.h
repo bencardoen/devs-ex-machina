@@ -24,7 +24,7 @@ protected:
 
 public:
 	AtomicModel() = delete;
-	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
+	AtomicModel(std::string name, std::size_t priority = 0);
 
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) = 0;
 	virtual void intTransition() = 0;

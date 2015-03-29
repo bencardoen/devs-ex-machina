@@ -13,9 +13,10 @@
 using namespace n_model;
 using namespace n_examples;
 
-TEST(Model, Basic) {
+TEST(Model, Basic)
+{
 	RecordProperty("description", "Verifies all basic functionality of the default model functions");
-	Model model1("ABC", 0);
+	Model model1("ABC");
 	EXPECT_EQ(model1.getState(), nullptr);
 	EXPECT_EQ(model1.getIPorts().size(), 0);
 	EXPECT_EQ(model1.getOPorts().size(), 0);
@@ -23,45 +24,46 @@ TEST(Model, Basic) {
 	EXPECT_EQ(model1.getReceivedMessages().size(), 0);
 	EXPECT_EQ(model1.getName(), "ABC");
 	EXPECT_EQ(model1.getPort(""), nullptr);
-	EXPECT_EQ(model1.getCoreNumber(), 0);
-	model1.setCoreNumber(1);
-	EXPECT_EQ(model1.getCoreNumber(), 1);
-	Model model2("DEF", 5);
+	Model model2("DEF");
 	EXPECT_EQ(model2.getName(), "DEF");
-	EXPECT_EQ(model2.getCoreNumber(), 5);
 }
 
-TEST(Model, AtomicModel) {
+TEST(Model, AtomicModel)
+{
 	RecordProperty("description", "Verifies all basic functionality of AtomicModel");
 	TrafficLight tl("Trafficlight1");
 	EXPECT_EQ(tl.getPriority(), 0);
 	EXPECT_EQ(tl.getName(), "Trafficlight1");
 }
 
-TEST(Model, TransitionTesting) {
+TEST(Model, TransitionTesting)
+{
 	RecordProperty("description", "Verifies transition functionality of models using the TrafficLightModel");
 	TrafficLight tl("TrafficLight1");
-	EXPECT_EQ(tl.getState()->toString(), "Red");
+	EXPECT_EQ(tl.getState()->toString(), "red");
+	tl.setTime(t_timestamp(30));
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(60));
+	EXPECT_EQ(tl.getState()->m_timeLast, t_timestamp(30));
+	EXPECT_EQ(tl.getState()->m_timeNext, t_timestamp(90));
 	tl.intTransition();
-	EXPECT_EQ(tl.getState()->toString(), "Green");
+	EXPECT_EQ(tl.getState()->toString(), "green");
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(50));
 	tl.intTransition();
-	EXPECT_EQ(tl.getState()->toString(), "Yellow");
+	EXPECT_EQ(tl.getState()->toString(), "yellow");
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(10));
 	tl.intTransition();
-	EXPECT_EQ(tl.getState()->toString(), "Red");
+	EXPECT_EQ(tl.getState()->toString(), "red");
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(60));
 }
 
-TEST(State, Basic) {
+TEST(State, Basic)
+{
 	RecordProperty("description", "Verifies bassic functionality of state");
-	TrafficLightMode mode("Red");
-	EXPECT_EQ(mode.toString(), "Red");
-	EXPECT_EQ(mode.toXML(), "<state color =\"Red\"/>");
-	EXPECT_EQ(mode.toJSON(), "{ \"state\": \"Red\" }");
-	EXPECT_TRUE(mode == "Red");
-	EXPECT_TRUE("Red" == mode);
+	TrafficLightMode mode("red");
+	EXPECT_EQ(mode.toString(), "red");
+	EXPECT_EQ(mode.toXML(), "<state color =\"red\"/>");
+	EXPECT_EQ(mode.toJSON(), "{ \"state\": \"red\" }");
+	EXPECT_TRUE(mode == "red");
+	EXPECT_TRUE("red" == mode);
 }
-
 
