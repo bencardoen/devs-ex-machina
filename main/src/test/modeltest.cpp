@@ -9,6 +9,9 @@
 #include "model.h"
 #include "atomicmodel.h"
 #include "trafficlight.h"
+#include "port.h"
+#include "coupledmodel.h"
+#include "trafficsystemc.h"
 
 using namespace n_model;
 using namespace n_examples;
@@ -65,5 +68,15 @@ TEST(State, Basic)
 	EXPECT_EQ(mode.toJSON(), "{ \"state\": \"red\" }");
 	EXPECT_TRUE(mode == "red");
 	EXPECT_TRUE("red" == mode);
+}
+
+TEST(Port, Basic)
+{
+	n_examples_coupled::TrafficSystem trafficsystem("trafficsystem");
+	auto components = trafficsystem.getComponents();
+	t_modelptr policeman = components.at(0);
+	t_modelptr trafficlight = components.at(1);
+	EXPECT_TRUE(policeman->getPort("OUT") != nullptr);
+	EXPECT_TRUE(trafficlight->getPort("INTERRUPT") != nullptr);
 }
 
