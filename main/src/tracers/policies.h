@@ -70,7 +70,8 @@ protected:
 	void print(const Args&... args)
 	{
 		assert(isInitialized());
-		if(m_disabled) return;		//this way, the check is not performed for each argument
+		if (m_disabled)
+			return;		//this way, the check is not performed for each argument
 		printImpl(args...);
 	}
 
@@ -90,7 +91,7 @@ private:
 	/**
 	 * @brief print base case. Finalizes printing the data.
 	 */
-	template<typename...>
+	template<typename ...>
 	void printImpl()
 	{
 		//nothing to do here
@@ -135,7 +136,8 @@ protected:
 	template<typename ... Args>
 	void print(const Args& ... args)
 	{
-		if(m_disabled) return;	//this way, the check is not performed for each argument
+		if (m_disabled)
+			return;	//this way, the check is not performed for each argument
 		printImpl(args...);
 	}
 
@@ -152,13 +154,14 @@ private:
 	/**
 	 * @brief print base case. Finalizes printing the data.
 	 */
-	template<typename...>
+	template<typename ...>
 	void printImpl()
 	{
 		//nothing to do here
 	}
 };
 
-} /* namespace n_tracers */
+}
+/* namespace n_tracers */
 
 #endif /* SRC_TRACERS_POLICIES_H_ */

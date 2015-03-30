@@ -22,7 +22,7 @@
 #include "allocator.h"
 #include "core.h"
 #include "tracers.h"
-#include "tools/globallog.h"
+#include "globallog.h"
 
 namespace n_control {
 
@@ -30,8 +30,6 @@ using n_network::t_timestamp;
 using n_model::t_coreptr;
 using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
-
-typedef void t_tracerset;	// TODO Stijn replace with correct type
 
 class Controller
 {
@@ -51,12 +49,12 @@ private:
 	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
-	std::shared_ptr<t_tracerset> m_tracers;
+	n_tracers::t_tracersetptr m_tracers;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-	        std::shared_ptr<t_tracerset> tracers);
+		n_tracers::t_tracersetptr tracers);
 
 	virtual ~Controller();
 

@@ -9,7 +9,8 @@
 #define SRC_TRACERS_TRACEMESSAGE_H_
 
 #include <functional>	//defines std::less<T>
-#include <message.h>
+#include "message.h"
+#include "globallog.h"
 
 namespace n_tracers {
 
@@ -25,18 +26,35 @@ public:
 	 * @brief Constructor for the TraceMessage
 	 * @param time The timestamp of the message.
 	 * 		This is the time that the scheduler uses for scheduling the message
+	 * @param tracerID A unique identifier for the tracer that registered this message.
 	 * @param func A function object. This function will be executed when the message is received.
 	 * 		The function must take no arguments and return no result.
+	 * @param takeback [optional, default value: []{}, the empty lambda function] A cleanup function object.
+	 * 		This function is called when the message is destroyed, in order to clean up any memory that can otherwise no longer be accessed
+	 * @precondition The two function objects are valid function pointers. No nullptr allowed!
 	 */
-	TraceMessage(n_network::t_timestamp time, const t_messagefunc& func);
+	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, const t_messagefunc& takeback = []{});
+	~TraceMessage();
 
 	/**
 	 * @brief Executes the scheduled functionality.
 	 */
 	void execute();
 
+	/**
+	 * @brief Comparison operator needed for scheduling these messages in a scheduler
+	 */
+	bool operator<(const TraceMessage& other) const;
+
+	/**
+	 * @brief Comparison operator needed for scheduling these messages in a scheduler
+	 */
+	bool operator>(const TraceMessage& other) const;
+
 private:
-	t_messagefunc m_func;	//function to be executed. This function takes no arguments
+	t_messagefunc m_func;		//function to be executed. This function takes no arguments
+	t_messagefunc m_takeBack;	//function for destroying this object
+	const std::size_t m_tracerID;
 };
 
 typedef TraceMessage* t_tracemessageptr;
@@ -46,16 +64,90 @@ void traceUntil(n_network::t_timestamp time);
 void revertTo(n_network::t_timestamp time);
 void clearAll();
 
+
+/**
+ * Entry for a TraceMessage in a scheduler.
+ * Keeps modelname and imminent time for a Model, without having to store the entire model.
+ * @attention : reverse ordered on time : 1 > 2 == true (for max heap).
+ */
+class TraceMessageEntry
+{
+	t_tracemessageptr m_pointer;
+public:
+	t_tracemessageptr getPointer() const
+	{
+		return m_pointer;
+	}
+
+	TraceMessageEntry(t_tracemessageptr ptr)
+		: m_pointer(ptr)
+	{
+	}
+	TraceMessageEntry(const TraceMessageEntry&) = default;
+	TraceMessageEntry(TraceMessageEntry&&) = default;
+	TraceMessageEntry& operator=(const TraceMessageEntry&) = default;
+	TraceMessageEntry& operator=(TraceMessageEntry&&) = default;
+	TraceMessage& operator*()
+	{
+		return *m_pointer;
+	}
+	const TraceMessage& operator*() const
+	{
+		return *m_pointer;
+	}
+	TraceMessage* operator->()
+	{
+		return m_pointer;
+	}
+	const TraceMessage* operator->() const
+	{
+		return m_pointer;
+	}
+
+	friend
+	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+	{
+		if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
+			LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
+			return lhs.m_pointer > rhs.m_pointer;
+		}
+		return *lhs > *rhs;
+	}
+
+	friend
+	bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+	{
+		return (rhs > lhs);
+	}
+
+	friend
+	bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+	{
+		return (!(lhs < rhs));
+	}
+
+	friend
+	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+	{
+		return (lhs.m_pointer == rhs.m_pointer);
+	}
+
+	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
+	{
+		return (os << "Trace message scheduled at " << rhs->getTimeStamp());
+	}
+};
+
 } /* namespace n_tracers */
 
 namespace std {
 template<>
-struct less<n_tracers::t_tracemessageptr>
+struct hash<n_tracers::TraceMessageEntry>
 {
-	bool operator()(const n_tracers::t_tracemessageptr& k1, const n_tracers::t_tracemessageptr& k2) const
+	size_t operator()(const n_tracers::TraceMessageEntry& item) const
 	{
-		//TODO get the timestamp from the messages and compare those
-		return k1 < k2;
+		//just hash on the pointer value
+		return hash<n_tracers::t_tracemessageptr>()(item.getPointer());
 	}
 };
 }

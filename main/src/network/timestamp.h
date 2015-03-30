@@ -68,7 +68,7 @@ public:
 		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
 	}
 
-	Time() = default;
+	Time(): m_timestamp(0), m_causal(0){}// = default;
 	Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
 	{

@@ -58,6 +58,10 @@ TEST(Controller, allocation)
 	t_coreptr c2 = createObject<Core>();
 	coreMap[0] = c1;
 	coreMap[1] = c2;
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c1->setTracers(tracers);
+	c2->setTracers(tracers);
 
 	Controller c = Controller("testController", coreMap, allocator, locTab, 0);
 
@@ -87,6 +91,9 @@ TEST(Controller, cDEVS)
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
 	coreMap[0] = c;
 
 	Controller ctrl = Controller("testController", coreMap, allocator, locTab, 0);
