@@ -20,10 +20,10 @@ n_model::Core::Core()
 	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
-n_model::Core::Core(std::size_t id): m_live(false)	//TODO Ben initialize other variables!
+n_model::Core::Core(std::size_t id)
+: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(false)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
-	m_coreid = id;
 }
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg)const
@@ -96,7 +96,6 @@ void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_
 	 * Then sort that output by destination (for the transition functions)
 	 */
 	LOG_DEBUG("CORE: Collecting output from all models");
-//	std::cout << "Collecting output from all models";
 	for (const auto& modelentry : m_models) {
 		const auto& model = modelentry.second;
 		auto mailfrom = model->output();
