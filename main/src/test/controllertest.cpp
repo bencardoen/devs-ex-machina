@@ -46,22 +46,22 @@ public:
 	}
 };
 
+/*
+ * Function to test part of the functionality present in Controller's addModel methods
+ */
+void testAddModel(const t_atomicmodelptr& model, std::shared_ptr<Allocator> allocator,
+        std::shared_ptr<n_control::LocationTable> locTab)
+{
+	size_t coreID = allocator->allocate(model);
+	locTab->registerModel(model, coreID);
+}
+
 TEST(Controller, allocation)
 {
 	RecordProperty("description", "Adding and allocation of models, recorded in LocationTable");
 
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
-
-	t_coreptr c1 = createObject<Core>();
-	t_coreptr c2 = createObject<Core>();
-	coreMap[0] = c1;
-	coreMap[1] = c2;
-	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
-
-	Controller c = Controller("testController", coreMap, allocator, locTab, tracers);
 
 	// Add Models
 	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
@@ -69,15 +69,15 @@ TEST(Controller, allocation)
 	t_atomicmodelptr m3 = createObject<TrafficLight>("Thd");
 	t_atomicmodelptr m4 = createObject<TrafficLight>("Fth");
 
-	c.addModel(m1); // Model placement via allocator
-	c.addModel(m2);
-	c.addModel(m3);
-	c.addModel(m4, 0); // Manual placement
+	testAddModel(m1, allocator, locTab);
+	testAddModel(m2, allocator, locTab);
+	testAddModel(m3, allocator, locTab);
+	testAddModel(m4, allocator, locTab);
 
 	EXPECT_EQ(locTab->lookupModel("Fst"), 0);
 	EXPECT_EQ(locTab->lookupModel("Snd"), 1);
 	EXPECT_EQ(locTab->lookupModel("Thd"), 0);
-	EXPECT_EQ(locTab->lookupModel("Fth"), 0);
+	EXPECT_EQ(locTab->lookupModel("Fth"), 1);
 }
 
 TEST(Controller, cDEVS)
@@ -98,9 +98,7 @@ TEST(Controller, cDEVS)
 	ctrl.setTerminationTime(t_timestamp(360, 0));
 
 	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
-	t_atomicmodelptr m2 = createObject<TrafficLight>("Snd");
 	ctrl.addModel(m1);
-	ctrl.addModel(m2);
 
 	ctrl.simulate();
 	EXPECT_TRUE(c->terminated() == true);

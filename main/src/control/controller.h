@@ -36,6 +36,8 @@ class Controller
 private:
 	bool m_isClassicDEVS;
 	bool m_isDSDEVS;
+	bool m_hasMainModel;
+	bool m_isSimulating;
 
 	std::string m_name;
 
@@ -59,17 +61,12 @@ public:
 	virtual ~Controller();
 
 	/*
-	 * Add an atomic model using the given allocator
+	 * Set an atomic model as the main model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
 	/*
-	 * Add an atomic model to a specific core
-	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
-
-	/*
-	 * Add a coupled model to the simulation
+	 * Set a coupled model as the main model using the given allocator
 	 */
 	void addModel(const t_coupledmodelptr& coupled);
 
@@ -137,6 +134,16 @@ private:
 	 * Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
+
+	/*
+	 * Removes models from all cores
+	 */
+	void emptyAllCores();
+
+	/*
+	 * Add an atomic model to a specific core
+	 */
+	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
 };
