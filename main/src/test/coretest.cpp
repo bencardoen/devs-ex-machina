@@ -12,6 +12,7 @@
 #include "core.h"
 #include "multicore.h"
 #include "trafficlight.h"
+#include "trafficlightc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -185,6 +186,14 @@ TEST(Core, terminationfunction){
 	c->removeModel("Amodel");
 }
 
+void core_worker(const t_coreptr& core){
+	core->setLive(true);
+	core->init();
+	while(core->isLive()){
+		core->runSmallStep();
+	}
+}
+
 TEST(Core, multicoresafe){
 	using namespace n_network;
 	using n_control::t_location_tableptr;
@@ -197,6 +206,29 @@ TEST(Core, multicoresafe){
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
 	coreone->getMessages(mailstubone);
 	coretwo->getMessages(mailstubtwo);
-
+	std::vector<t_coreptr> coreptrs;
+	coreptrs.push_back( coreone);
+	coreptrs.push_back( coretwo);
+	auto tcmodel = createObject<TrafficLight>("mylight", 0);
+	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
+	coreone->addModel(tcmodel);
+	coreone->setTerminationTime(t_timestamp(20000,0));
+	coretwo->addModel(tc2model);
+	coretwo->setTerminationTime(t_timestamp(20000,0));
+	//const size_t cores = std::thread::hardware_concurrency();
+	const size_t threadcount = 2;
+	if(threadcount <= 1){
+		LOG_WARNING("Skipping test, no threads!");
+		return;
+	}
+	std::vector<std::thread> workers;
+	for(size_t i = 0; i<threadcount; ++i){
+		workers.push_back(std::thread(core_worker, std::cref(coreptrs[i])));
+	}
+	for(auto& worker : workers){
+		worker.join();
+	}
+	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
+	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
 }
 

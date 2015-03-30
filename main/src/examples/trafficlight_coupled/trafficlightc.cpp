@@ -106,7 +106,7 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 	else  // nothing happens
 		return std::vector<n_network::t_msgptr>();
 
-	return this->getPort("OBSERVED")->createMessages("message");
+	return this->getPort("OBSERVED")->createMessages(message);
 }
 
 t_stateptr TrafficLight::setState(std::string s)
