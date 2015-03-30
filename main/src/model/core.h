@@ -9,7 +9,7 @@
 #include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
-//#include "tracers.h"
+#include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -20,7 +20,6 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-typedef void t_tracerset;	// TODO Stijn replace with correct type
 
 /**
  * Typedef used by core.
@@ -86,8 +85,7 @@ private:
 	/**
 	 * Tracers.
 	 */
-	// TODO Stijn link with tracers here.
-	// t_tracerset m_tracers;
+	n_tracers::t_tracersetptr m_tracers;
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -113,7 +111,7 @@ protected:
 	Core(std::size_t id);
 
 	/**
-	 * Allow multicore implemenation to directly modify time.
+	 * Allow multicore implementation to directly modify time.
 	 */
 	void
 	setTime(const t_timestamp&);
@@ -330,6 +328,12 @@ public:
 	void
 	removeModel(std::string name);
 
+	/**
+	 * @brief Sets the tracers that will be used from now on
+	 * @precondition isLive()==false
+	 */
+	void
+	setTracers(n_tracers::t_tracersetptr ptr);
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

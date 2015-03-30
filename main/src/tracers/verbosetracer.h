@@ -42,7 +42,10 @@ public:
 			m_prevTime = time;
 		}
 		OutputPolicy::print(ssr->str());	//print using the policy
-		n_tools::takeBack(ssr);			//delete created ostringstream
+	}
+
+	void takeBack(std::ostringstream* ssr){
+		delete ssr;
 	}
 	/**
 	 * @brief Traces state initialization of a model
@@ -62,7 +65,8 @@ public:
 		        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, TracerBase::getID());
+		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -95,7 +99,8 @@ public:
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, TracerBase::getID());
+		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -126,7 +131,8 @@ public:
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, TracerBase::getID());
+		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -166,7 +172,8 @@ public:
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, TracerBase::getID());
+		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}

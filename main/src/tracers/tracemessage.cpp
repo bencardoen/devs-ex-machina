@@ -13,9 +13,16 @@ using namespace n_tools;
 
 namespace n_tracers {
 
-TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t tracerID)
-	: Message("", time, "", ""), m_func(func), m_tracerID(tracerID)
+TraceMessage::TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, const t_messagefunc& takeback)
+	: Message("", time, "", ""), m_func(func), m_takeBack(takeback), m_tracerID(tracerID)
 {
+	assert(m_func != nullptr && "TraceMessage::TraceMessage can't accept nullptr as execution function");
+	assert(m_takeBack != nullptr && "TraceMessage::TraceMessage Can't accept nullptr as cleanup function. If you don't need a cleanup function, either provide an empty one or omit the argument.");
+}
+
+TraceMessage::~TraceMessage()
+{
+	m_takeBack();
 }
 
 void TraceMessage::execute()
@@ -48,7 +55,7 @@ void scheduleMessage(t_tracemessageptr message)
 void traceUntil(n_network::t_timestamp time)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, nullptr, std::numeric_limits<std::size_t>::max());
+	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{});
 	scheduler->unschedule_until(messages, &t);
 	for (TraceMessageEntry& mess : messages) {
 		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTimeStamp());
@@ -60,7 +67,7 @@ void traceUntil(n_network::t_timestamp time)
 void revertTo(n_network::t_timestamp time)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, nullptr, std::numeric_limits<std::size_t>::max());
+	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{});
 	scheduler->unschedule_until(messages, &t);
 	clearAll();
 	for (const TraceMessageEntry& mess : messages)

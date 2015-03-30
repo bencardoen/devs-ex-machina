@@ -115,6 +115,10 @@ TEST(Core, CoreFlow){
 TEST(Core, smallStep){
 	RecordProperty("description", "Core simulation steps and termination conditions");
 	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
+	//TODO Matthijs : Creating the tracers should be done by the user, not the Controller
 	// Add Models
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
@@ -157,6 +161,9 @@ public:
 TEST(Core, terminationfunction){
 	RecordProperty("description", "Core simulation steps with term function.");
 	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
 	// Add Models
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
@@ -191,8 +198,12 @@ TEST(Core, multicoresafe){
 	using n_control::LocationTable;
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
+	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
+	coretwo->setTracers(tracers);
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
 	coreone->getMessages(mailstubone);

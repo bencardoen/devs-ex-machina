@@ -20,7 +20,7 @@ n_model::Core::Core()
 	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
-n_model::Core::Core(std::size_t id)
+n_model::Core::Core(std::size_t id): m_live(false)	//TODO Ben initialize other variables!
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	m_coreid = id;
@@ -277,23 +277,23 @@ void n_model::Core::runSmallStep()
 	this->checkTerminationFunction();
 }
 
-void n_model::Core::traceInt(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceInt(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesInternal(model);
+	 this->m_tracers->tracesInternal(model);
 
 }
 
-void n_model::Core::traceExt(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceExt(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesExternal(model);
+	 this->m_tracers->tracesExternal(model);
 }
 
-void n_model::Core::traceConf(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceConf(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesConfluent(model);
+	 this->m_tracers->tracesConfluent(model);
 }
 
 void n_model::Core::setTerminationTime(t_timestamp endtime)
@@ -346,4 +346,10 @@ void n_model::Core::removeModel(std::string name){
 void
 n_model::Core::setTime(const t_timestamp& t){
 	m_time = t;
+}
+
+void n_model::Core::setTracers(n_tracers::t_tracersetptr ptr)
+{
+	assert(this->isLive()==false && "Can't change the tracers of a live core.");
+	m_tracers = ptr;
 }
