@@ -84,6 +84,7 @@ add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
 	src/model/atomicmodel.cpp
 	src/model/coupledmodel.cpp
+	src/model/rootmodel.cpp
 	src/model/model.cpp
 	src/model/state.cpp
 	src/model/port.cpp

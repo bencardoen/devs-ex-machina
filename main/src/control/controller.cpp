@@ -15,6 +15,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	  m_checkTermTime(false), m_checkTermCond(false), m_cores(cores), m_locTab(locTab), m_allocator(alloc),
 	  m_tracers(tracers)
 {
+	m_root = n_tools::createObject<n_model::RootModel>();
 }
 
 Controller::~Controller()
@@ -59,6 +60,7 @@ void Controller::simulate()
 //	if (!m_tracers->isInitialized()) {
 //		// TODO ERROR
 //	}
+	assert(m_isSimulating == false && "Can't start a simulation while already simulating, dummy");
 
 	if (!m_hasMainModel) {
 		// nothing to do, so don't even start
@@ -171,6 +173,7 @@ void Controller::emptyAllCores()
 	for (auto core : m_cores) {
 //		core.second->dropModels(); // TODO uncomment when method added
 	}
+	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }
 
 } /* namespace n_control */
