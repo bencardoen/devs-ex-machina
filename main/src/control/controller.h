@@ -43,7 +43,7 @@ private:
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
+	t_terminationfunctor m_terminationCondition;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
@@ -71,7 +71,7 @@ public:
 	/*
 	 * Add a coupled model to the simulation
 	 */
-	void addModel(t_coupledmodelptr& coupled);
+	void addModel(const t_coupledmodelptr& coupled);
 
 	/*
 	 * Main loop, starts simulation
@@ -96,7 +96,7 @@ public:
 	/*
 	 * Set condition that can terminate the simulation
 	 */
-	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
+	void setTerminationCondition(t_terminationfunctor termination_condition);
 
 	/*
 	 * Set checkpointing interval
