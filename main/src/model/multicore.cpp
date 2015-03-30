@@ -77,6 +77,7 @@ Multicore::adjustTime(){
 	// TODO expand
 	t_timestamp scheduled_next = this->getTime();
 	if(scheduled_next < this->m_future_max){
+		LOG_INFO("Adjusting time with max timestamp message ", this->m_future_max);
 		this->setTime(this->m_future_max);
 	}
 }
