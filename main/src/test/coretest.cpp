@@ -202,7 +202,6 @@ void core_worker(const t_coreptr& core){
 }
 
 TEST(Core, multicoresafe){
-	/**
 	using namespace n_network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
@@ -211,9 +210,9 @@ TEST(Core, multicoresafe){
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
-	//coreone->setTracers(tracers);
+	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
-	//coretwo->setTracers(tracers);
+	coretwo->setTracers(tracers);
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
 	coreone->getMessages(mailstubone);
@@ -242,6 +241,5 @@ TEST(Core, multicoresafe){
 	}
 	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
 	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
-	*/
 }
 

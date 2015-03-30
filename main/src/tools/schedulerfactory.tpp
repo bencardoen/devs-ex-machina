@@ -16,13 +16,13 @@ typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(con
 	switch (stype) {
 	case Storage::FIBONACCI: {
         if(synchronized)
-            return t_Scheduler(new UnSynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
-	return t_Scheduler(new SynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
+            return t_Scheduler(new SynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
+	return t_Scheduler(new UnSynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
 	}
 	case Storage::BINOMIAL: {
         if(synchronized)
-            return t_Scheduler(new UnSynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
-	return t_Scheduler(new SynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
+            return t_Scheduler(new SynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
+	return t_Scheduler(new UnSynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
 	}
 	default:
 		assert(false && "No such storage type");
