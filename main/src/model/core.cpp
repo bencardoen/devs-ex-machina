@@ -199,9 +199,10 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 			t_timestamp next = ta + this->m_time;
 			size_t prior = model->getPriority();		// Simulate select function for models firing simultaneously by changing causality vals.
 			next.increaseCausality(prior);
+			LOG_DEBUG("CORE: ", model->getName() , " timeadv = ", ta, " rescheduled @ ", next );
 			this->scheduleModel(old, next);
 		} else {
-			LOG_DEBUG("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
+			LOG_INFO("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
 		}
 	}
 	this->syncTime();
@@ -211,8 +212,8 @@ void n_model::Core::syncTime()
 {
 	if(not this->m_scheduler->empty()){
 		t_timestamp next = this->m_scheduler->top().getTime();
-		this->m_time = this->m_time + next;
-		LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
+		this->m_time = next;
+		LOG_DEBUG("CORE:  Core is advancing simulationtime to :: ", this->m_time.getTime());
 	}else{
 		LOG_WARNING("CORE:: Core has no scheduled models, time is no longer advancing.");
 	}
@@ -278,21 +279,29 @@ void n_model::Core::runSmallStep()
 
 void n_model::Core::traceInt(const t_atomicmodelptr& model)
 {
-	// TODO Stijn uncomment
-	 this->m_tracers->tracesInternal(model);
-
+	if(not this->m_tracers){
+		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
+	}else{
+		this->m_tracers->tracesInternal(model);
+	}
 }
 
 void n_model::Core::traceExt(const t_atomicmodelptr& model)
 {
-	// TODO Stijn uncomment
-	 this->m_tracers->tracesExternal(model);
+	if(not this->m_tracers){
+		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
+	}else{
+		this->m_tracers->tracesExternal(model);
+	}
 }
 
 void n_model::Core::traceConf(const t_atomicmodelptr& model)
 {
-	// TODO Stijn uncomment
-	 this->m_tracers->tracesConfluent(model);
+	if(not this->m_tracers){
+		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
+	}else{
+		this->m_tracers->tracesConfluent(model);
+	}
 }
 
 void n_model::Core::setTerminationTime(t_timestamp endtime)
@@ -351,4 +360,10 @@ void n_model::Core::setTracers(n_tracers::t_tracersetptr ptr)
 {
 	assert(this->isLive()==false && "Can't change the tracers of a live core.");
 	m_tracers = ptr;
+}
+
+void
+n_model::Core::signalTracersFlush()const{
+	LOG_DEBUG("CORE:: asking tracers to write output up to ", this->getTime());
+	n_tracers::traceUntil(this->m_time);
 }

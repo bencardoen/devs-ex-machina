@@ -108,10 +108,13 @@ public:
 	Core& operator=(const Core&) = delete;
 
 protected:
+	/**
+	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
+	 */
 	Core(std::size_t id);
 
 	/**
-	 * Allow multicore implementation to directly modify time.
+	 * Allow multicore implementation to directly modify time. (GVT etc)
 	 */
 	void
 	setTime(const t_timestamp&);
@@ -216,6 +219,9 @@ public:
 	virtual void
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
 
+	/**
+	 * Hook for subclasses to override. Called whenever a message for the net is found.
+	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
 		;
@@ -334,6 +340,15 @@ public:
 	 */
 	void
 	setTracers(n_tracers::t_tracersetptr ptr);
+
+	/**
+	 * Signal tracers to flush output up to a given time.
+	 * For the single core implementation this is the local time.
+	 * @attention : this can only be run IF all cores are stopped. !!!!!
+	 */
+	virtual
+	void
+	signalTracersFlush()const;
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

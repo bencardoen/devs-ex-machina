@@ -196,6 +196,7 @@ TEST(Core, terminationfunction){
 void core_worker(const t_coreptr& core){
 	core->setLive(true);
 	core->init();
+
 	while(core->isLive()){
 		core->runSmallStep();
 	}
@@ -239,6 +240,8 @@ TEST(Core, multicoresafe){
 	for(auto& worker : workers){
 		worker.join();
 	}
+	coreone->signalTracersFlush();
+	coretwo->signalTracersFlush();
 	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
 	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
 }
