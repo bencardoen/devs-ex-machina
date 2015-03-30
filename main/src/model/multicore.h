@@ -9,10 +9,8 @@
 #define SRC_MODEL_MULTICORE_H_
 
 #include "core.h"
-//#include "locationtable.h"
+#include "locationtable.h"
 
-class LocationTable;
-typedef std::shared_ptr<LocationTable> t_loctableptr;
 
 namespace n_model {
 
@@ -22,15 +20,17 @@ namespace n_model {
 class Multicore: public Core
 {
 private:
-	std::mutex	m_lock;
-	t_networkptr	m_network;
+	std::mutex		m_lock;
+	t_networkptr		m_network;
+	n_control::t_location_tableptr	m_loctable;
+	t_timestamp		m_future_max;
 public:
 	Multicore()=delete;
-	Multicore(const t_networkptr&, std::size_t coreid /*, const t_loctableptr ltable*/);
+	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable);
 	virtual ~Multicore(){;}
 
 	/**
-	 * Overridden , pulls messages from network into mailbag (sorted by destination name
+	 * Pulls messages from network into mailbag (sorted by destination name
 	 */
 	void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)override;
 
@@ -43,6 +43,17 @@ public:
 	 * Sort pulled messages into mailbag.
 	 */
 	virtual void sortIncoming(std::unordered_map<std::string, std::vector<t_msgptr>>&, const std::vector<t_msgptr>& messages);
+
+	virtual
+	bool isMessageLocal(const t_msgptr&)const override;
+
+	virtual
+	void adjustTime()override;
+
+	/**
+	 * Examine a message/event to see if any constraints are broken and/or time needs to be adjusted.
+	 */
+	void processMessage(const t_msgptr&);
 };
 
 } /* namespace n_model */

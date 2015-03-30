@@ -2,14 +2,14 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include <timestamp.h>
-#include <network.h>
-#include <model.h>
-#include <atomicmodel.h>
+#include "timestamp.h"
+#include "network.h"
+#include "atomicmodel.h"
 #include "scheduler.h"
+#include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
-//#include "tracers.h"
+#include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -19,8 +19,6 @@ namespace n_model {
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
-
-typedef void t_tracerset;	// TODO Stijn replace with correct type
 
 
 /**
@@ -80,16 +78,14 @@ private:
 
 	/**
 	 * Termination function.
-	 * @default init to nullptr
+	 * The constructor initializes this to a default functor returning false for each model (simulating forever)
 	 */
-	std::function<bool(const t_atomicmodelptr&)> m_termination_function;
+	t_terminationfunctor m_termination_function;
 
 	/**
 	 * Tracers.
 	 */
-	// TODO Stijn link with tracers here.
-	// t_tracerset m_tracers;
-
+	n_tracers::t_tracersetptr m_tracers;
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -98,7 +94,8 @@ private:
 	 */
 	bool
 	virtual
-	isMessageLocal(const t_msgptr&);
+	isMessageLocal(const t_msgptr&)const;
+
 public:
 	/**
 	 * Default single core implementation.
@@ -110,9 +107,14 @@ public:
 
 	Core& operator=(const Core&) = delete;
 
-
 protected:
 	Core(std::size_t id);
+
+	/**
+	 * Allow multicore implementation to directly modify time.
+	 */
+	void
+	setTime(const t_timestamp&);
 
 public:
 	virtual ~Core() = default;
@@ -140,10 +142,17 @@ public:
 
 	/**
 	 * Retrieve model with name from core
+	 * @pre model is present in this core.
 	 * @attention does not change anything in scheduled order.
 	 */
 	t_atomicmodelptr
-	getModel(std::string name);
+	getModel(const std::string& name);
+
+	/**
+	 * Check if model is present in core.
+	 */
+	bool
+	containsModel(const std::string& name)const;
 
 	/**
 	 * Indicates if Core is running, or halted.
@@ -207,16 +216,25 @@ public:
 	virtual void
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
 
-	virtual void
-	sendMessage(const t_msgptr&){;}
+	virtual void sendMessage(const t_msgptr&)
+	{
+		;
+	}
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
+	 * Base class = noop.
 	 */
 	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
 	{
 		;
 	}
+
+	/**
+	 * Subclass hook.
+	 * If the current scheduler top time < than an event, execute any subclass logic to correct it.
+	 */
+	virtual void adjustTime(){;}
 
 	/**
 	 * Get Current simulation time.
@@ -236,8 +254,7 @@ public:
 	 */
 	virtual
 	void
-	transition(const std::set<std::string>& imminents,
-	        std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Schedule model.name @ time t.
@@ -274,6 +291,10 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
+	/**
+	 * If the current simulation time >= endtime, halt.
+	 * This is checked after all transitions have happened.
+	 */
 	void
 	setTerminationTime(t_timestamp endtime);
 
@@ -291,7 +312,7 @@ public:
 	 * Set the the termination function.
 	 */
 	void
-	setTerminationFunction(std::function<bool(const t_atomicmodelptr&)> newfunc);
+	setTerminationFunction(const t_terminationfunctor&);
 
 	/**
 	 * After a simulation step, verify that we need to continue.
@@ -307,6 +328,12 @@ public:
 	void
 	removeModel(std::string name);
 
+	/**
+	 * @brief Sets the tracers that will be used from now on
+	 * @precondition isLive()==false
+	 */
+	void
+	setTracers(n_tracers::t_tracersetptr ptr);
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

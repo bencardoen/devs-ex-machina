@@ -14,8 +14,8 @@ namespace n_model {
  *
  * @param name of model
  */
-Model::Model(std::string name, int corenumber)
-	: m_name(name), m_coreNumber(corenumber), m_state(nullptr)
+Model::Model(std::string name)
+	: m_name(name), m_state(nullptr)
 {
 
 }
@@ -36,7 +36,7 @@ std::string Model::getName() const
  * @param name The name of the port
  * @return a shared pointer to the port
  */
-t_portptr Model::getPort(std::string name)
+t_portptr Model::getPort(std::string name) const
 {
 	auto ptr1 = m_iPorts.find(name);
 	auto ptr2 = m_oPorts.find(name);
@@ -66,7 +66,7 @@ t_stateptr Model::getState() const
  *
  * @param newState the new state the model should switch to (as a State object)
  */
-void Model::setState(t_stateptr newState)
+void Model::setState(const t_stateptr& newState)
 {
 	if (newState == nullptr)
 		return;
@@ -120,26 +120,6 @@ t_portptr Model::addInPort(std::string name)
 t_portptr Model::addOutPort(std::string name)
 {
 	return this->addPort(name, false);
-}
-
-/*
- * Get the current core number
- *
- * @return current core number
- */
-int Model::getCoreNumber() const
-{
-	return m_coreNumber;
-}
-
-/*
- * Set the current core number
- *
- * @param core current core number
- */
-void Model::setCoreNumber(int core)
-{
-	m_coreNumber = core;
 }
 
 /*

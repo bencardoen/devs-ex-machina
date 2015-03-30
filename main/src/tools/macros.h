@@ -8,7 +8,6 @@
 #ifndef SRC_TOOLS_MACROS_H_
 #define SRC_TOOLS_MACROS_H_
 
-
 /**
  * @brief The macro value is a computation for the short filename (without the filepath)
  * @see http://stackoverflow.com/a/8488201

@@ -18,18 +18,29 @@ namespace n_model {
  * @param name The name of the model
  * @param priority The priority of the model
  */
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
-	: Model(name, corenumber), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, std::size_t priority)
+	: Model(name), m_priority(priority)
 {
 
 }
 
+/*
+ * Transitions the model confluently with given messages
+ *
+ * @param message List of messages that are needed for the transition
+ */
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
 	this->extTransition(message);
 }
 
+/*
+ * Sets the correct GVT for the model and fixes all necessary internal changes (like
+ * the removal of old states that aren't necessary anymore)
+ *
+ * @param gvt The gvt that we need to reset to
+ */
 void AtomicModel::setGVT(t_timestamp gvt)
 {
 	// Model has no memory of past
@@ -62,6 +73,11 @@ void AtomicModel::setGVT(t_timestamp gvt)
 	}
 }
 
+/*
+ * Reverts the model the given time
+ *
+ * @param time The time the model needs to be reverted to
+ */
 void AtomicModel::revert(t_timestamp time)
 {
 	auto r_itStates = m_oldStates.rbegin();
@@ -86,9 +102,31 @@ void AtomicModel::revert(t_timestamp time)
 
 }
 
+/*
+ * Returns the priority of the model
+ */
 std::size_t AtomicModel::getPriority() const
 {
 	return m_priority;
+}
+
+/*
+ * Sets the correct time of the model after a transition has happened.
+ * This function has to be called immediately after a transition!
+ *
+ * @param time The current time of the simulation
+ */
+void AtomicModel::setTime(t_timestamp time)
+{
+	this->m_timeLast = time;
+	this->m_timeNext = time + this->timeAdvance();
+	m_state->m_timeLast = this->m_timeLast;
+	m_state->m_timeNext = this->m_timeNext;
+
+	// The following is not necessary because they point to the same state
+//	t_stateptr laststate = this->m_oldStates.at(this->m_oldStates.size()-1);
+//	laststate->m_timeLast = this->m_timeLast;
+//	laststate->m_timeNext = this->m_timeNext;
 }
 
 }

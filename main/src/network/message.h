@@ -9,6 +9,7 @@
 #define SRC_NETWORK_MESSAGE_H_
 
 #include "timestamp.h"
+#include "stringtools.h"
 
 namespace n_network {
 
@@ -19,14 +20,51 @@ namespace n_network {
 class Message
 {
 private:
+	/**
+	 * Unique model name of target.
+	 */
 	const std::string m_destination_model;
+
+	/**
+	 * Core id in this simulator.
+	 */
 	std::size_t m_destination_core;
-	const t_timestamp m_timestamp;
-	std::string m_destination_port;
+
+	/**
+	 * Time message is created (by model/port)
+	 */
+	t_timestamp m_timestamp;
+
+	/**
+	 * Full name of destination port.
+	 */
+	const std::string m_destination_port; //fullname
+
+	/**
+	 * Full name of source port.
+	 */
+	const std::string m_source_port;	// fullname
+
+	/**
+	 * User defined payload.
+	 * @see toString()
+	 */
+	const std::string m_payload;
 
 public:
-	Message(std::string modeldest, const t_timestamp& time_made, std::string destport = "")
-		: m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()), m_timestamp(time_made), m_destination_port(destport)
+	/**
+	 * @param modeldest : destination model
+	 * @param time_made
+	 * @param destport : full name of destination port
+	 * @param sourceport : full name of source port
+	 * @param payload : user supplied content.
+	 * @attention Core id is initialized at limits::max().
+	 */
+	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport,
+	        const std::string& payload = "")
+		:
+		m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()),
+		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_payload(payload)
 	{
 	}
 
@@ -35,19 +73,49 @@ public:
 		return m_destination_core;
 	}
 
-	std::string getDestinationPort()const
+	std::string getDestinationPort() const
 	{
-		return m_destination_port;
+		return n_tools::copyString(m_destination_port);
 	}
 
 	std::string getDestinationModel() const
 	{
-		return m_destination_model;
+		return n_tools::copyString(m_destination_model);
+	}
+
+	std::string getSourcePort() const
+	{
+		return n_tools::copyString(m_source_port);
+	}
+
+	std::string getPayload() const
+	{
+		return n_tools::copyString(m_payload);
 	}
 
 	void setDestinationCore(std::size_t dest)
 	{
 		m_destination_core = dest;
+	}
+
+	virtual std::string toString() const
+	{
+		std::stringstream result;
+		result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
+		result << " @" << m_timestamp;
+		result << " to model " << this->getDestinationModel() << " @core_nr " << m_destination_core;
+		result << " payload " << this->getPayload();
+		return result.str();
+	}
+
+	t_timestamp getTimeStamp() const
+	{
+		return m_timestamp;
+	}
+
+	void setTimeStamp(const t_timestamp& now)
+	{
+		m_timestamp = now;
 	}
 
 	virtual ~Message()

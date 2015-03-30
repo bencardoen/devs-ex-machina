@@ -10,7 +10,7 @@
 namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-	std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, std::shared_ptr<t_tracerset> tracers)
+	std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers)
 	: m_isClassicDEVS(true), m_isDSDEVS(false), m_name(name), m_checkTermTime(false), m_checkTermCond(false), m_cores(
 	        cores), m_locTab(locTab), m_allocator(alloc), m_tracers(tracers)
 {

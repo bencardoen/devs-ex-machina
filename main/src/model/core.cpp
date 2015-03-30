@@ -6,6 +6,7 @@
 #include "core.h"
 #include <cassert>
 #include "globallog.h"
+#include "objectfactory.h"
 
 void n_model::Core::load(const std::string&)
 {
@@ -16,19 +17,19 @@ n_model::Core::Core()
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(false)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
-n_model::Core::Core(std::size_t id)
+n_model::Core::Core(std::size_t id): m_live(false)	//TODO Ben initialize other variables!
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	m_coreid = id;
 }
 
-bool n_model::Core::isMessageLocal(const t_msgptr& msg)
+bool n_model::Core::isMessageLocal(const t_msgptr& msg)const
 {
-	// TODO in optimized versions , replace with return true && setting msg->dest.
-	std::string destname = msg->getDestinationModel();
-	if (this->m_models.find(destname) != this->m_models.end()) {
+	const bool found = this->containsModel(msg->getDestinationModel());
+	if (found) {
 		msg->setDestinationCore(this->getCoreID());
 		return true;
 	} else {
@@ -54,10 +55,15 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	this->m_models[mname] = model;
 }
 
-n_model::t_atomicmodelptr n_model::Core::getModel(std::string mname)
+n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
 {
-	assert(this->m_models.find(mname) != this->m_models.end() && "Model not in core.");
+	assert(this->containsModel(mname) && "Model not in core.");
 	return this->m_models[mname];
+}
+
+bool n_model::Core::containsModel(const std::string& mname)const
+{
+	return (this->m_models.find(mname)!=this->m_models.end());
 }
 
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
@@ -78,9 +84,8 @@ void n_model::Core::init()
 		this->scheduleModel(model.first, model_scheduled_time);
 	}
 	if (not this->m_scheduler->empty()) {
-		//std::cout << "Core advancing time to first transition time ";
 		this->m_time = this->m_scheduler->top().getTime();
-		//std::cout << "@" << this->m_time << std::endl;
+		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
 }
 
@@ -98,10 +103,9 @@ void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_
 		this->sortMail(mailbag, mailfrom);
 	}
 	LOG_DEBUG("CORE:  resulted in ",  mailbag.size(), " addressees");
-	//std::cout << " resulted in " << mailbag.size() << " addressees" << std::endl;
 }
 
-void n_model::Core::transition(const std::set<std::string>& imminents,
+void n_model::Core::transition(std::set<std::string>& imminents,
         std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
 {
 	/**
@@ -109,16 +113,16 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 	 * For others : external
 	 */
 	LOG_DEBUG("CORE: Transitioning with ",  imminents.size(), " imminents, and ", mail.size(), " models to deliver mail to.");
-//	std::cout << "Transitioning with " << imminents.size() << " imminents, and " << mail.size()
-//	        << " models to deliver mail to." << std::endl;
 	for (const auto& imminent : imminents) {
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {
-			urgent->intTransition();
+			urgent->intTransition(); // TODO check with Stijn.
+			urgent->setTime(this->m_time);
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);
+			urgent->setTime(this->m_time);
 			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
 			this->traceConf(urgent);
 			assert(erased != 0 && "Broken logic in collected output");
@@ -128,6 +132,13 @@ void n_model::Core::transition(const std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
+		model->setTime(this->m_time);
+		t_timestamp queried = model->timeAdvance();
+		// If a model 'wakes up' after an event (ta goes from infinity to a scheduleable value), make sure we reschedule it.
+		if(queried != t_timestamp::infinity()){
+			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried, " rescheduling.");
+			imminents.insert(model->getName());
+		}
 		this->traceExt(model);
 	}
 }
@@ -136,7 +147,6 @@ void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgpt
         const std::vector<t_msgptr>& messages)
 {
 	for (const auto & message : messages) {
-		// For a single core, the compiler will figure out this branch is never taken.
 		if(not this->isMessageLocal(message)){
 			this->sendMessage(message);
 		}
@@ -148,6 +158,9 @@ void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgpt
 			mailbag[destname].push_back(message);
 		}
 	}
+	// At this point we have send all remote messages, sorted the rest for local delivery.
+	// Add a hook to multicore pull from network.
+	getMessages(mailbag);
 }
 
 void n_model::Core::printSchedulerState()
@@ -158,15 +171,14 @@ void n_model::Core::printSchedulerState()
 std::set<std::string> n_model::Core::getImminent()
 {
 	LOG_DEBUG("CORE: Retrieving imminent models");
-//	std::cout << "Retrieving imminent models" << std::endl;
 	std::set<std::string> imminent;
 	std::vector<ModelEntry> bag;
 	t_timestamp maxtime = n_network::makeLatest(this->m_time);
 	ModelEntry mark("", maxtime);
 	this->m_scheduler->unschedule_until(bag, mark);
-	if (bag.size() == 0)
+	if (bag.size() == 0){
 		LOG_ERROR("CORE: No imminent models ??");
-		//std::cerr << "No imminent models ??" << std::endl;
+	}
 	for (const auto& entry : bag) {
 		bool inserted = imminent.insert(entry.getName()).second;
 		assert(inserted && "Logic fail in Core get Imminent.");
@@ -180,17 +192,17 @@ std::set<std::string> n_model::Core::getImminent()
 void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 {
 	LOG_DEBUG("CORE: Rescheduling ", oldimms.size(), " models for next run.");
-//	std::cout << "Rescheduling " << oldimms.size() << " models for next run." << std::endl;
 	for (const auto& old : oldimms) {
+		assert(this->containsModel(old));
 		t_atomicmodelptr model = this->m_models[old];
-		t_timestamp ta = model->timeAdvance();
+		t_timestamp ta = model->timeAdvance();			// Timeadvance if infinity == model indicates it does not want scheduling.
 		if (ta != t_timestamp::infinity()) {
 			t_timestamp next = ta + this->m_time;
+			size_t prior = model->getPriority();		// Simulate select function for models firing simultaneously by changing causality vals.
+			next.increaseCausality(prior);
 			this->scheduleModel(old, next);
 		} else {
 			LOG_DEBUG("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
-//			std::cout << "Core:: " << model->getName() << " is no longer scheduled (infinity) "
-//			        << std::endl;
 		}
 	}
 	this->syncTime();
@@ -198,14 +210,18 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
-	assert(not this->m_scheduler->empty() && "Syncing with the void is illadvised.");
-	t_timestamp next = this->m_scheduler->top().getTime();
-	this->m_time = this->m_time + next;
-	LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
-//	std::cout << " Core is advancing simtime to :: " << this->m_time.getTime() << std::endl;
+	if(not this->m_scheduler->empty()){
+		t_timestamp next = this->m_scheduler->top().getTime();
+		this->m_time = this->m_time + next;
+		LOG_DEBUG("CORE:  Core is advancing simtime to :: ", this->m_time.getTime());
+	}else{
+		LOG_WARNING("CORE:: Core has no scheduled models, time is no longer advancing.");
+	}
+
+	this->adjustTime(); // Allow subclasses to do their own thing here.
+
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
-//		std::cout << "Reached termination time :: now: " << m_time << " >= " << m_termtime << std::endl;
 		m_terminated.store(true);
 		m_live.store(false);
 	}
@@ -228,7 +244,7 @@ bool n_model::Core::isLive() const
 
 void n_model::Core::setLive(bool b)
 {
-	return m_live.store(b);
+	m_live.store(b);
 }
 
 std::size_t n_model::Core::getCoreID() const
@@ -261,23 +277,23 @@ void n_model::Core::runSmallStep()
 	this->checkTerminationFunction();
 }
 
-void n_model::Core::traceInt(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceInt(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesInternal(model);
+	 this->m_tracers->tracesInternal(model);
 
 }
 
-void n_model::Core::traceExt(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceExt(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesExternal(model);
+	 this->m_tracers->tracesExternal(model);
 }
 
-void n_model::Core::traceConf(const t_atomicmodelptr& /* model */)
+void n_model::Core::traceConf(const t_atomicmodelptr& model)
 {
 	// TODO Stijn uncomment
-	// m_tracerset->tracesConfluent(model);
+	 this->m_tracers->tracesConfluent(model);
 }
 
 void n_model::Core::setTerminationTime(t_timestamp endtime)
@@ -296,7 +312,7 @@ bool n_model::Core::terminated() const
 	return m_terminated;
 }
 
-void n_model::Core::setTerminationFunction(std::function<bool(const t_atomicmodelptr& model)> fun)
+void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
 {
 	this->m_termination_function = fun;
 }
@@ -305,20 +321,16 @@ void n_model::Core::checkTerminationFunction()
 {
 	if (m_termination_function) {
 		LOG_DEBUG("CORE: Checking termination function.");
-//		std::cout << "Checking termination function." << std::endl;
 		for (const auto& model : m_models) {
-			if (m_termination_function(model.second)) {
+			if ((*m_termination_function)(model.second)) {
 				LOG_DEBUG("CORE: Termination function evaluated to true for model ", model.first);
-//				std::cout << "Termination function evaluated to true for model " << model.first
-//				        << std::endl;
 				this->m_live.store(false);
 				this->m_terminated.store(true);
 				return;
 			}
 		}
 	} else {
-		LOG_DEBUG("CORE: No termination function to evaluate, moving on...");
-//		std::cout << "No termination function to evaluate, moving on..." << std::endl;
+		LOG_ERROR("CORE: Termination functor == nullptr, not evaluating.");
 	}
 }
 
@@ -329,4 +341,15 @@ void n_model::Core::removeModel(std::string name){
 	ModelEntry target(name, t_timestamp(0,0));
 	this->m_scheduler->erase(target);
 	assert(this->m_scheduler->contains(target)==false && "Removal from scheduler failed !!");
+}
+
+void
+n_model::Core::setTime(const t_timestamp& t){
+	m_time = t;
+}
+
+void n_model::Core::setTracers(n_tracers::t_tracersetptr ptr)
+{
+	assert(this->isLive()==false && "Can't change the tracers of a live core.");
+	m_tracers = ptr;
 }

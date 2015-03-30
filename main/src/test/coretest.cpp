@@ -87,7 +87,8 @@ TEST(Core, CoreFlow){
 	using n_network::Message;
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
-	t_msgptr mymessage = createObject<Message>("toBen", (0));
+	std::string portname_stub = "model_port";
+	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
@@ -114,6 +115,10 @@ TEST(Core, CoreFlow){
 TEST(Core, smallStep){
 	RecordProperty("description", "Core simulation steps and termination conditions");
 	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
+	//TODO Matthijs : Creating the tracers should be done by the user, not the Controller
 	// Add Models
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
@@ -144,10 +149,21 @@ TEST(Core, smallStep){
 	EXPECT_TRUE(c->isLive()== true);
 }
 
+class termfun: public n_model::TerminationFunctor{
+public:
+	virtual
+	bool evaluateModel(const t_atomicmodelptr& model)const override{
+		return (model->getName()=="Amodel");
+	}
+};
+
 
 TEST(Core, terminationfunction){
 	RecordProperty("description", "Core simulation steps with term function.");
 	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
 	// Add Models
 	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
 	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
@@ -158,14 +174,8 @@ TEST(Core, terminationfunction){
 	c->init();
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-	auto termfun = [](const t_atomicmodelptr& model)->bool{
-		if(model->getName() == "Amodel")
-			return true;
-		return false;
-	};
-
 	EXPECT_EQ(finaltime , t_timestamp::infinity());
-	c->setTerminationFunction(termfun);
+	c->setTerminationFunction(createObject<termfun>());
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
@@ -184,12 +194,20 @@ TEST(Core, terminationfunction){
 
 TEST(Core, multicoresafe){
 	using namespace n_network;
+	using n_control::t_location_tableptr;
+	using n_control::LocationTable;
 	t_networkptr network = createObject<Network>(2);
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0);
+	t_location_tableptr loctable = createObject<LocationTable>(2);
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
+	coreone->setTracers(tracers);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
+	coretwo->setTracers(tracers);
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
 	coreone->getMessages(mailstubone);
 	coretwo->getMessages(mailstubtwo);
+
 }
 

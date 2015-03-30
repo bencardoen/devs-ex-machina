@@ -11,8 +11,20 @@
 # Generate build folder in ./build/
 SCRIPT="__SCRIPT__:"
 echo "$SCRIPT Received "$#" arguments".
+
 BUILD_TYPE="Debug"
 COMPILER="g++"
+ECLIPSE_INDEXER_ARGS="-std=c++11"
+
+# Detect if we are on cygwin, if we are Eclipse's cdt needs gnu++11, if not we need c++11 (or face horrors in the ide)
+OSNAME=$(uname -o)
+echo "$SCRIPT Running script on OS::  $OSNAME"
+if [ "$OSNAME" == "Cygwin" ]
+then
+    echo "$SCRIPT Changing eclipse indexer to $ECLIPSE_INDEXER_ARGS"
+    ECLIPSE_INDEXER_ARGS="-std=gnu++11"
+fi
+
 if [ "$#" -ge 1 ]
 then
     BUILD_TYPE="$1"
@@ -62,8 +74,9 @@ echo "$SCRIPT Generating CMake Build."
 ## Generate Eclipse IDE project files
 # ARG1 argument is not needed for compilation but ensures the indexer in eclipse actually works.
 
+
 # Uncomment to use clang++ as compiler.
-cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1=-std=gnu++11 -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../main
+cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1="$ECLIPSE_INDEXER_ARGS" -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../main
 
 
 echo "$SCRIPT Building project .... "

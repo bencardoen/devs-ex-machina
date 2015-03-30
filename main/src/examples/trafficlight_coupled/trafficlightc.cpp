@@ -1,13 +1,13 @@
 /*
- * trafficlight.cpp
+ * trafficlightc.cpp
  *
  *  Created on: Mar 19, 2015
  *      Author: tim
  */
 
-#include "trafficlight.h"
+#include "trafficlightc.h"
 
-namespace n_examples {
+namespace n_examples_coupled {
 
 TrafficLightMode::TrafficLightMode(std::string state)
 	: State(state)
@@ -36,11 +36,28 @@ TrafficLight::TrafficLight(std::string name, std::size_t priority)
 	this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
+
+	this->addInPort("INTERRUPT");
+	this->addOutPort("OBSERVED");
 }
 
-void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> &)
+void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> & inputs)
 {
-	// No external transitions available yet...
+	auto input = inputs.at(0);
+
+	t_stateptr state = this->getState();
+
+	if (input->toString() == "toManual") {
+		if (*state == "manual")
+			this->setState("manual"); // Keep light on manual
+		else if (*state == "red" || *state == "green" || *state == "yellow")
+			this->setState("manual"); // Set light to manual
+	} else if (input->toString() == "toAutonomous") {
+		if (*state == "manual")
+			this->setState("red"); // Restart with a red light
+		else if (*state == "red" || *state == "green" || *state == "yellow")
+			this->setState(state->m_state); // Keep the same light
+	}
 }
 
 void TrafficLight::intTransition()
@@ -66,6 +83,8 @@ t_timestamp TrafficLight::timeAdvance()
 		return t_timestamp(50);
 	else if (*state == "yellow")
 		return t_timestamp(10);
+	else if (*state == "manual")
+		return t_timestamp::infinity();
 	else
 		assert(false); // You shouldn't come here...
 	return t_timestamp();
@@ -73,7 +92,21 @@ t_timestamp TrafficLight::timeAdvance()
 
 std::vector<n_network::t_msgptr> TrafficLight::output() const
 {
-	return std::vector<n_network::t_msgptr>();
+	// BEFORE USING THIS FUNCTION
+	// READ EXAMPLE @ PYTHONPDEVS trafficlight_classic/model.py line 117 ( def outputFnc(self):)
+	t_stateptr state = this->getState();
+	std::string message = "";
+
+	if (*state == "red")
+		message = "grey";
+	else if (*state == "green")
+		message = "yellow";
+	else if (*state == "yellow")
+		message = "grey";
+	else  // nothing happens
+		return std::vector<n_network::t_msgptr>();
+
+	return this->getPort("OBSERVED")->createMessages("message");
 }
 
 t_stateptr TrafficLight::setState(std::string s)

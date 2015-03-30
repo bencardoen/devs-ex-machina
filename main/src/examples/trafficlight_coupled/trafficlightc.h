@@ -1,5 +1,5 @@
 /*
- * trafficlight.h
+ * trafficlightc.h
  *
  *  Created on: Mar 19, 2015
  *      Author: tim
@@ -12,7 +12,7 @@
 #include "state.h"
 #include <assert.h>
 
-namespace n_examples {
+namespace n_examples_coupled {
 
 using namespace n_model;
 using n_network::t_msgptr;

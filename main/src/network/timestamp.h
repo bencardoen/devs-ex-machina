@@ -68,7 +68,7 @@ public:
 		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
 	}
 
-	Time() = default;
+	Time(): m_timestamp(0), m_causal(0){}// = default;
 	Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
 	{
@@ -90,14 +90,22 @@ public:
 		return this->m_causal;
 	}
 
+	/**
+	 * Simulates CPDevs' select function. A priority/offset of 0 (highest) will force a model to be chosen first.
+	 */
+	void increaseCausality(const X& offset)
+	{
+		this->m_causal += offset;
+	}
+
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
 	{
 		os << "TimeStamp ::" << t.getTime();
 		if (t.m_causal != 0) {
-			os << "\tcausal ::" << t.m_causal;
+			os << " causal ::" << t.m_causal;
 		}
-		return os << std::endl;
+		return os;
 	}
 
 	friend

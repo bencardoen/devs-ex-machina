@@ -1,38 +1,38 @@
 /*
- * trafficlight.h
+ * policemanc.h
  *
- *  Created on: Mar 19, 2015
+ *  Created on: Mar 28, 2015
  *      Author: tim
  */
 
-#ifndef SRC_EXAMPLES_TRAFFICLIGHT_H_
-#define SRC_EXAMPLES_TRAFFICLIGHT_H_
+#ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
+#define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
 
 #include "atomicmodel.h"
 #include "state.h"
 #include <assert.h>
 
-namespace n_examples {
+namespace n_examples_coupled {
 
 using namespace n_model;
 using n_network::t_msgptr;
 
-class TrafficLightMode: public State
+class PolicemanMode: public State
 {
 public:
-	TrafficLightMode(std::string state);
+	PolicemanMode(std::string state);
 	std::string toXML() override;
 	std::string toJSON() override;
 	std::string toCell() override;
-	~TrafficLightMode() {}
+	~PolicemanMode() {}
 };
 
-class TrafficLight: public AtomicModel
+class Policeman: public AtomicModel
 {
 public:
-	TrafficLight() = delete;
-	TrafficLight(std::string, std::size_t priority = 0);
-	~TrafficLight() {}
+	Policeman() = delete;
+	Policeman(std::string, std::size_t priority = 0);
+	~Policeman() {}
 
 	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	void intTransition() override;
@@ -49,4 +49,7 @@ public:
 
 }
 
-#endif /* SRC_EXAMPLES_TRAFFICLIGHT_H_ */
+
+
+
+#endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_ */
