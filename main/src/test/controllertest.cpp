@@ -61,7 +61,7 @@ TEST(Controller, allocation)
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 
-	Controller c = Controller("testController", coreMap, allocator, locTab, 0);
+	Controller c = Controller("testController", coreMap, allocator, locTab, tracers);
 
 	// Add Models
 	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
@@ -93,7 +93,7 @@ TEST(Controller, cDEVS)
 	tracers->stopTracers();	//disable the output
 	coreMap[0] = c;
 
-	Controller ctrl = Controller("testController", coreMap, allocator, locTab, 0);
+	Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setClassicDEVS();
 	ctrl.setTerminationTime(t_timestamp(360, 0));
 

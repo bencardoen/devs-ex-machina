@@ -34,9 +34,7 @@ void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 
 void Controller::addModel(const t_coupledmodelptr& coupled)
 {
-	throw std::logic_error("Controller : addModel(Coupled) not implemented");
-
-
+	throw std::logic_error("Controller : simDSDEVS not implemented");
 	std::vector<t_atomicmodelptr> atomics = m_root->directConnect(coupled);
 	for( auto at : atomics ) {
 		addModel(at);
@@ -55,8 +53,8 @@ void Controller::simulate()
 
 	// configure all cores
 	for (auto core : m_cores) {
-		core.second->init();
 		core.second->setTracers(m_tracers);
+		core.second->init();
 		if (m_checkTermTime) core.second->setTerminationTime(m_terminationTime);
 		if (m_checkTermCond) core.second->setTerminationFunction(m_terminationCondition);
 		core.second->setLive(true);
