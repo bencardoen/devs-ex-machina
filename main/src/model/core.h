@@ -96,6 +96,12 @@ private:
 	virtual
 	isMessageLocal(const t_msgptr&)const;
 
+	/**
+	 * After a simulation step, verify that we need to continue.
+	 */
+	void
+	checkTerminationFunction();
+
 public:
 	/**
 	 * Default single core implementation.
@@ -194,9 +200,7 @@ public:
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time from first entry in scheduler.
-	 * @attention : if scheduler is empty this will crash hard.
-	 * @post m_time >= m_time
+	 * Updates local time. The core time will advance to max(recd timestamp, first firing transition)
 	 */
 	void
 	syncTime();
@@ -214,7 +218,7 @@ public:
 	void runSmallStep();
 
 	/**
-	 * For all models : get all messages.
+	 * Collect output from all models, sort them in the mailbag by destination name.
 	 */
 	virtual void
 	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
@@ -319,12 +323,6 @@ public:
 	 */
 	void
 	setTerminationFunction(const t_terminationfunctor&);
-
-	/**
-	 * After a simulation step, verify that we need to continue.
-	 */
-	void
-	checkTerminationFunction();
 
 	/**
 	 * Remove model from this core.

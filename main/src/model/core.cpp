@@ -22,8 +22,8 @@ n_model::Core::Core()
 }
 
 n_model::Core::Core(std::size_t id)
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
-	        false)
+	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
+	  m_terminated(false)
 {
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 }
@@ -83,6 +83,8 @@ void n_model::Core::init()
 {
 	for (const auto& model : this->m_models) {
 		t_timestamp model_scheduled_time = model.second->timeAdvance();
+		std::size_t priority = model.second->getPriority();
+		model_scheduled_time.increaseCausality(priority);
 		this->scheduleModel(model.first, model_scheduled_time);
 	}
 	if (not this->m_scheduler->empty()) {
