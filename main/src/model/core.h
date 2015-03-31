@@ -349,6 +349,15 @@ public:
 	virtual
 	void
 	signalTracersFlush()const;
+
+	/**
+	 * Remove all models from this core.
+	 * @pre (not this->isLive())
+	 * @post this->getTime()==t_timestamp(0,0) (same for gvt)
+	 * @attention : DO NOT invoke this once simulation has started (timewarp!!)
+	 */
+	void
+	clearModels();
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

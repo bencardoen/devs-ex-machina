@@ -12,9 +12,11 @@
 SCRIPT="__SCRIPT__:"
 echo "$SCRIPT Received "$#" arguments".
 
+## Set default values of build variables.
 BUILD_TYPE="Debug"
 COMPILER="g++"
 ECLIPSE_INDEXER_ARGS="-std=c++11"
+BUILD_DIR="build"
 
 # Detect if we are on cygwin, if we are Eclipse's cdt needs gnu++11, if not we need c++11 (or face horrors in the ide)
 OSNAME=$(uname -o)
@@ -25,6 +27,7 @@ then
     ECLIPSE_INDEXER_ARGS="-std=gnu++11"
 fi
 
+# Override build type with first argument
 if [ "$#" -ge 1 ]
 then
     BUILD_TYPE="$1"
@@ -33,17 +36,17 @@ else
     echo "$SCRIPT  Using Default BUILD_TYPE :: $BUILD_TYPE"
 fi
 
+# Override compiler invocation with second argument
 if [ "$#" -eq 2 ]
 then
     COMPILER="$2"
     echo "$SCRIPT  Overriding Compiler choice with value :: $2"
 fi
 
-# Fix root path testfiles.
-find testfiles -type f -execdir dos2unix {} \;
+# Fix root path testfiles. (filecompare trips over win<>*nix)
+find testfiles -type f -execdir dos2unix -q {} \;
 
-BUILD_DIR="build"
-
+# If stale build is found, try to remove it.
 if [ -d "$BUILD_DIR" ]
 	then
     if [ -k "$BUILD_DIR" ]
@@ -67,17 +70,13 @@ cd $BUILD_DIR
 mkdir "testfiles"
 cp -r ../testfiles/* testfiles/
 
-# Apply dos2unix to avoid errors in filecmp across systems.
-find testfiles -type f -execdir dos2unix {} \;
+# Apply dos2unix to avoid errors in filecmp across systems. (in theory line 46 covers this, but it has failed before)
+find testfiles -type f -execdir dos2unix -q {} \;
 
 echo "$SCRIPT Generating CMake Build."
 ## Generate Eclipse IDE project files
 # ARG1 argument is not needed for compilation but ensures the indexer in eclipse actually works.
-
-
-# Uncomment to use clang++ as compiler.
 cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1="$ECLIPSE_INDEXER_ARGS" -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../main
-
 
 echo "$SCRIPT Building project .... "
 # Compile & link everything in build, assuming quad core
