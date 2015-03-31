@@ -19,9 +19,11 @@ private:
 	bool m_directConnected;
 
 public:
+	RootModel();
+	virtual ~RootModel();
 	std::vector<t_atomicmodelptr> directConnect(const t_coupledmodelptr&);
 	void undoDirectConnect();
 };
-}
+} /* namespace n_model */
 
 #endif /* ROOTMODEL_H_ */

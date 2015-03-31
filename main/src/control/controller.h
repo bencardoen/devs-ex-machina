@@ -36,6 +36,8 @@ class Controller
 private:
 	bool m_isClassicDEVS;
 	bool m_isDSDEVS;
+	bool m_hasMainModel;
+	bool m_isSimulating;
 
 	std::string m_name;
 
@@ -43,7 +45,7 @@ private:
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
+	t_terminationfunctor m_terminationCondition;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
@@ -59,19 +61,14 @@ public:
 	virtual ~Controller();
 
 	/*
-	 * Add an atomic model using the given allocator
+	 * Set an atomic model as the main model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
 	/*
-	 * Add an atomic model to a specific core
+	 * Set a coupled model as the main model using the given allocator
 	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
-
-	/*
-	 * Add a coupled model to the simulation
-	 */
-	void addModel(t_coupledmodelptr& coupled);
+	void addModel(const t_coupledmodelptr& coupled);
 
 	/*
 	 * Main loop, starts simulation
@@ -96,7 +93,7 @@ public:
 	/*
 	 * Set condition that can terminate the simulation
 	 */
-	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
+	void setTerminationCondition(t_terminationfunctor termination_condition);
 
 	/*
 	 * Set checkpointing interval
@@ -137,6 +134,16 @@ private:
 	 * Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
+
+	/*
+	 * Removes models from all cores
+	 */
+	void emptyAllCores();
+
+	/*
+	 * Add an atomic model to a specific core
+	 */
+	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
 };
