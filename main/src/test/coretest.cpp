@@ -118,7 +118,6 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(imminent.size(), 2);
 }
 
-// TODO Matthijs : this is how a Core expects to be run.
 TEST(Core, smallStep)
 {
 	RecordProperty("description", "Core simulation steps and termination conditions");
@@ -220,7 +219,7 @@ TEST(Core, multicoresafe)
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
+	//tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
@@ -263,4 +262,92 @@ TEST(Core, multicoresafe)
 	coretwo->clearModels();
 	EXPECT_FALSE(coreone->containsModel("mylight"));
 	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
+}
+
+
+void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<bool>& threadsignal, std::mutex& vectorlock, std::size_t turns){
+	/// A predicate is needed to freeze the thread if gets a spurious awakening.
+	auto predicate = [&]()->bool{
+		std::lock_guard<std::mutex > lv(vectorlock);
+		return not threadsignal[myid];
+	};
+
+	for(size_t i = 0; i<turns; ++i){
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1)); /// In reality, do some work here. If this code fails with anything higher than 10, it's not threadsafe.
+		{
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			threadsignal[myid] = true;	// Set my own flag to signal I'm waiting to main thread.
+			//std::cout << "Thread holding on condition var, my id:: " << myid  << std::endl;
+		}
+		std::unique_lock<std::mutex> mylock(cvlock);
+		cv.wait(mylock, predicate);
+		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
+		{
+			//std::cout << "Thread freed with id " << myid << std::endl;
+		}
+	}
+}
+
+TEST(Core, threading){
+	/**
+	 * Make a nr of threads run until a flag is set, have the main thread check (wait) until all threads are sleeping, then release them for the next iteration.
+	 *
+	 */
+	// The prelude
+	std::mutex cvlock;
+	std::condition_variable cv;
+
+	std::vector<std::thread> threads;
+	const std::size_t threadcount = std::thread::hardware_concurrency();
+	if (threadcount <= 1) {
+		LOG_WARNING("Skipping test, no threads!");
+		return;
+	}
+	const std::size_t rounds = 100;
+
+	std::mutex veclock;
+	std::vector<bool> threadsignal(threadcount);		// Store true @ threadid if the thread has hit the barrier, false if it can go on.
+
+	for(size_t i = 0; i<threadcount; ++i){
+		threads.push_back(std::thread(
+			cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal), std::ref(veclock), rounds));
+	}
+
+	/**
+	 * The threads are running now, wait until ALL threads are sleeping on the condition variable,
+	 * then reset their flags and release the variable (NOT the other way around!!!!!!!)
+	 * Rinse and repeat.
+	 */
+
+	for(std::size_t i = 0; i<rounds; ++i){
+		bool all_waiting = false;
+		while(not all_waiting){
+			std::lock_guard<std::mutex> lock(veclock);	// Threads are writing/reading to this vector, lock hard.
+			{
+				all_waiting = true;
+				for(const auto tsignal : threadsignal)	// vector<bool> is special case, don't use &. (and keep sanitizer silent)
+				{
+					if(tsignal == false){
+						all_waiting = false;
+						break;
+					}
+				}
+			}
+		}
+		/// All threads have arrived and are sleeping, next we need to reset their flags BEFORE releasing the condition variable.
+		/// In reverse threads can be too fast and reset their flag to true. Spuriuous wake ups are no longer a problem here (they need to wake up anyway).
+		{
+			std::lock_guard<std::mutex> lock(veclock);
+			for(size_t i = 0; i<threadsignal.size(); ++i)
+			{
+				threadsignal[i] = false;
+			}
+		}
+		/// Finally, release the cvar. (It's possible some threads are allready running now by spurious awakening.
+		cv.notify_all();
+	}
+
+	for(auto& t : threads){
+		t.join();
+	}
 }
