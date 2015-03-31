@@ -219,7 +219,7 @@ TEST(Core, multicoresafe)
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	//tracers->stopTracers();	//disable the output
+	tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
@@ -303,7 +303,7 @@ TEST(Core, threading){
 		LOG_WARNING("Skipping test, no threads!");
 		return;
 	}
-	const std::size_t rounds = 100;
+	const std::size_t rounds = 5;	// 1000 works on hardware, 100 cripples virtualbox (and jenkins).
 
 	std::mutex veclock;
 	std::vector<bool> threadsignal(threadcount);		// Store true @ threadid if the thread has hit the barrier, false if it can go on.
