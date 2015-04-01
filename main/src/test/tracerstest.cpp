@@ -14,6 +14,7 @@
 #include "verbosetracer.h"
 #include "compare.h"
 #include "macros.h"
+#include "coutredirect.h"
 
 using namespace n_tracers;
 
@@ -426,23 +427,19 @@ TEST(tracing, policies) {
 	//test for reopening a finished file
 
 	//make sure the buffer is flushed
-	std::cout.flush();
-	//swap the cout stream buffer to a new one so that it doesn't get sent to the console
-	std::streambuf* oldCoutBuf = std::cout.rdbuf();
 	std::stringstream newCoutTarget;
-	std::cout.rdbuf(newCoutTarget.rdbuf());
+	{
+		n_tools::CoutRedirect redirect(newCoutTarget);
 
-	PolicyTester<CoutWriter> pCout;
-	pCout.printTest("This is an integer: ", 5, '\n');
-	pCout.stopTracer();
-	pCout.printTest("This is text!\n");
-	pCout.startTracer(true);
-	pCout.printTest("This is ", "MOAR", " text!");
-	pCout.stopTracer();
+		PolicyTester<CoutWriter> pCout;
+		pCout.printTest("This is an integer: ", 5, '\n');
+		pCout.stopTracer();
+		pCout.printTest("This is text!\n");
+		pCout.startTracer(true);
+		pCout.printTest("This is ", "MOAR", " text!");
+		pCout.stopTracer();
+	}
 	EXPECT_EQ(newCoutTarget.str(), "This is an integer: 5\nThis is MOAR text!");
-
-	//reassign the original stream buffer
-	std::cout.rdbuf(oldCoutBuf);
 
 }
 
