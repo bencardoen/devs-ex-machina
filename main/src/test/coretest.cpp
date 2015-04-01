@@ -345,10 +345,12 @@ TEST(Core, threading)
 	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
 	coreone->addModel(tcmodel);
 	EXPECT_TRUE(coreone->containsModel("mylight"));
-	coreone->setTerminationTime(t_timestamp(2000, 0));
+
+	t_timestamp endtime(2000,0);
+	coreone->setTerminationTime(endtime);
 	coretwo->addModel(tc2model);
 	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
-	coretwo->setTerminationTime(t_timestamp(2000, 0));
+	coretwo->setTerminationTime(endtime);
 	coreone->init();
 	coreone->setLive(true);
 	coretwo->init();
@@ -366,7 +368,7 @@ TEST(Core, threading)
 		LOG_WARNING("Skipping test, no threads!");
 		return;
 	}
-	const std::size_t rounds = 10000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
+	const std::size_t rounds = 100;	// Safety, if main thread ever reaches this value, consider it a deadlock.
 
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal = {ThreadSignal::FREE, ThreadSignal::FREE};
@@ -412,7 +414,7 @@ TEST(Core, threading)
 			std::lock_guard<std::mutex> lock(veclock);
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
 				if(threadsignal[i]!= ThreadSignal::ISFINISHED){
-					if((round %3)==0){				// Signal interrupt, threads will stop before the barrier next time
+					if(round == 4 || round == 9){				// Signal interrupt, threads will stop before the barrier next time
 						//LOG_DEBUG("Main : threads will wait next round", round);
 						threadsignal[i] = ThreadSignal::SHOULDWAIT;
 					}else{
@@ -431,4 +433,7 @@ TEST(Core, threading)
 	}
 	// Finally, dump trace buffers.
 	n_tracers::traceUntil(t_timestamp::infinity());
+	EXPECT_FALSE(coreone->isLive());
+	EXPECT_FALSE(coretwo->isLive());
+	EXPECT_TRUE(coreone->getTime()>= endtime || coretwo->getTime()>= endtime);
 }
