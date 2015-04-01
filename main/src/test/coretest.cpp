@@ -23,59 +23,63 @@ using namespace n_model;
 using namespace n_tools;
 using namespace n_examples;
 
-TEST(ModelEntry, Scheduling){
-	RecordProperty("description", "Tests if models can be scheduled with identical timestamps, and timestamps differing only in causality.");
+TEST(ModelEntry, Scheduling)
+{
+	RecordProperty("description",
+	        "Tests if models can be scheduled with identical timestamps, and timestamps differing only in causality.");
 	auto scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	EXPECT_TRUE(scheduler->empty());
 	std::stringstream s;
-	for(size_t i = 0; i<100; ++i){
+	for (size_t i = 0; i < 100; ++i) {
 		s << i;
 		std::string name = s.str();
 		s.str(std::string(""));
 		scheduler->push_back(ModelEntry(name, t_timestamp(i, 0)));
-		EXPECT_EQ(scheduler->size(), i+1);
+		EXPECT_EQ(scheduler->size(), i + 1);
 	}
 	std::vector<ModelEntry> imminent;
-	ModelEntry token ("", t_timestamp(50, 0));
+	ModelEntry token("", t_timestamp(50, 0));
 	scheduler->unschedule_until(imminent, token);
 	EXPECT_EQ(scheduler->size(), 50);
-	token = ModelEntry("", t_timestamp(100,0));
+	token = ModelEntry("", t_timestamp(100, 0));
 	scheduler->unschedule_until(imminent, token);
 	EXPECT_EQ(scheduler->size(), 0);
 
 	// Test if scheduling models at same time is a problem
-	ModelEntry origin ("Abc", t_timestamp(0));
-	ModelEntry duplicate ("Bca", t_timestamp(0));
-	ModelEntry third ("Cab", t_timestamp(0, 1));
+	ModelEntry origin("Abc", t_timestamp(0));
+	ModelEntry duplicate("Bca", t_timestamp(0));
+	ModelEntry third("Cab", t_timestamp(0, 1));
 	scheduler->push_back(origin);
 	scheduler->push_back(duplicate);
 	EXPECT_EQ(scheduler->size(), 2);
 	scheduler->push_back(third);
 	EXPECT_EQ(scheduler->size(), 3);
 	ModelEntry found = scheduler->pop();
-	EXPECT_EQ(found.getName() , "Abc");
+	EXPECT_EQ(found.getName(), "Abc");
 	EXPECT_EQ(scheduler->pop().getName(), "Bca");
 	EXPECT_EQ(scheduler->pop().getName(), "Cab");
 	EXPECT_EQ(scheduler->size(), 0);
 }
 
-TEST(ModelScheduling, BasicOperations){
-	RecordProperty("description", "Verify that std::hash, std::less and related operators are well defined and execute as expected.");
-	ModelEntry me("alone", t_timestamp(0,0));
-	ModelEntry you("home", t_timestamp(0,0));
+TEST(ModelScheduling, BasicOperations)
+{
+	RecordProperty("description",
+	        "Verify that std::hash, std::less and related operators are well defined and execute as expected.");
+	ModelEntry me("alone", t_timestamp(0, 0));
+	ModelEntry you("home", t_timestamp(0, 0));
 	EXPECT_FALSE(me == you);
 	std::unordered_set<ModelEntry> set;
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(),2);
+	EXPECT_EQ(set.size(), 2);
 	set.clear();
-	EXPECT_EQ(set.size(),0);
+	EXPECT_EQ(set.size(), 0);
 	// This is evil, and is never guaranteed to work.
 	// A model entry with the same name is equal no matter what time is set.
 	// The alternative allows insertion multiple times (an error).
 	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
-	me = ModelEntry("alone", t_timestamp(1,0));
-	you = ModelEntry("alone", t_timestamp(1,1));
+	me = ModelEntry("alone", t_timestamp(1, 0));
+	you = ModelEntry("alone", t_timestamp(1, 1));
 	EXPECT_TRUE(me == you);
 	EXPECT_TRUE(me > you); // Note this is so the max-heap property works as a min heap.
 	set.insert(me);
@@ -83,8 +87,10 @@ TEST(ModelScheduling, BasicOperations){
 	EXPECT_EQ(set.size(), 1);
 }
 
-TEST(Core, CoreFlow){
-	RecordProperty("description", "Verify that Core can (re)schedule models, model lookup is working and core can advance in time.");
+TEST(Core, CoreFlow)
+{
+	RecordProperty("description",
+	        "Verify that Core can (re)schedule models, model lookup is working and core can advance in time.");
 	using n_network::Message;
 	Core c; // single core.
 	EXPECT_EQ(c.getCoreID(), 0);
@@ -101,7 +107,7 @@ TEST(Core, CoreFlow){
 	c.init();
 	//c.printSchedulerState();
 	EXPECT_TRUE(c.getTime() == t_timestamp(60));
-	auto imminent  = c.getImminent();
+	auto imminent = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
@@ -113,7 +119,8 @@ TEST(Core, CoreFlow){
 }
 
 // TODO Matthijs : this is how a Core expects to be run.
-TEST(Core, smallStep){
+TEST(Core, smallStep)
+{
 	RecordProperty("description", "Core simulation steps and termination conditions");
 	t_coreptr c = createObject<Core>();
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
@@ -131,35 +138,37 @@ TEST(Core, smallStep){
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
 
-	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime , t_timestamp(200,0));
+	EXPECT_EQ(finaltime, t_timestamp(200, 0));
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
 	c->setLive(true);
 	EXPECT_TRUE(c->terminated() == false);
-	EXPECT_TRUE(c->isLive()== true);
+	EXPECT_TRUE(c->isLive() == true);
 
 	// Run simulation.
 	c->runSmallStep();
 	t_timestamp coretimeafter = c->getTime();
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->terminated() == false);
-	EXPECT_TRUE(c->isLive()== true);
+	EXPECT_TRUE(c->isLive() == true);
 }
 
-class termfun: public n_model::TerminationFunctor{
+class termfun: public n_model::TerminationFunctor
+{
 public:
 	virtual
-	bool evaluateModel(const t_atomicmodelptr& model)const override{
-		return (model->getName()=="Amodel");
+	bool evaluateModel(const t_atomicmodelptr& model) const override
+	{
+		return (model->getName() == "Amodel");
 	}
 };
 
-
-TEST(Core, terminationfunction){
+TEST(Core, terminationfunction)
+{
 	RecordProperty("description", "Core simulation steps with term function.");
 	t_coreptr c = createObject<Core>();
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
@@ -175,34 +184,36 @@ TEST(Core, terminationfunction){
 	c->init();
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime , t_timestamp::infinity());
+	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	c->setTerminationFunction(createObject<termfun>());
 
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
 	c->setLive(true);
 	EXPECT_TRUE(c->terminated() == false);
-	EXPECT_TRUE(c->isLive()== true);
+	EXPECT_TRUE(c->isLive() == true);
 
 	// Run simulation.
 	c->runSmallStep();
 	t_timestamp coretimeafter = c->getTime();
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->terminated() == true);
-	EXPECT_TRUE(c->isLive()== false);
+	EXPECT_TRUE(c->isLive() == false);
 	c->removeModel("Amodel");
 }
 
-void core_worker(const t_coreptr& core){
+void core_worker(const t_coreptr& core)
+{
 	core->setLive(true);
 	core->init();
 
-	while(core->isLive()){
+	while (core->isLive()) {
 		core->runSmallStep();
 	}
 }
 
-TEST(Core, multicoresafe){
+TEST(Core, multicoresafe)
+{
 	using namespace n_network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
@@ -219,30 +230,37 @@ TEST(Core, multicoresafe){
 	coreone->getMessages(mailstubone);
 	coretwo->getMessages(mailstubtwo);
 	std::vector<t_coreptr> coreptrs;
-	coreptrs.push_back( coreone);
-	coreptrs.push_back( coretwo);
+	coreptrs.push_back(coreone);
+	coreptrs.push_back(coretwo);
 	auto tcmodel = createObject<TrafficLight>("mylight", 0);
 	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
 	coreone->addModel(tcmodel);
-	coreone->setTerminationTime(t_timestamp(20000,0));
+	EXPECT_TRUE(coreone->containsModel("mylight"));
+	coreone->setTerminationTime(t_timestamp(20000, 0));
 	coretwo->addModel(tc2model);
-	coretwo->setTerminationTime(t_timestamp(20000,0));
+	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
+	coretwo->setTerminationTime(t_timestamp(20000, 0));
 	//const size_t cores = std::thread::hardware_concurrency();
 	const size_t threadcount = 2;
-	if(threadcount <= 1){
+	if (threadcount <= 1) {
 		LOG_WARNING("Skipping test, no threads!");
 		return;
 	}
 	std::vector<std::thread> workers;
-	for(size_t i = 0; i<threadcount; ++i){
+	for (size_t i = 0; i < threadcount; ++i) {
 		workers.push_back(std::thread(core_worker, std::cref(coreptrs[i])));
 	}
-	for(auto& worker : workers){
+	for (auto& worker : workers) {
 		worker.join();
 	}
 	coreone->signalTracersFlush();
 	coretwo->signalTracersFlush();
 	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
 	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
+	EXPECT_TRUE(not coreone->isLive());
+	EXPECT_TRUE(not coretwo->isLive());
+	coreone->clearModels();
+	coretwo->clearModels();
+	EXPECT_FALSE(coreone->containsModel("mylight"));
+	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
-

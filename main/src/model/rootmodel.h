@@ -21,7 +21,10 @@ private:
 public:
 	RootModel();
 	virtual ~RootModel();
-	std::vector<t_atomicmodelptr> directConnect(const t_coupledmodelptr&);
+	/**
+	 * @precondition All atomic models have a unique name
+	 */
+	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
 	void undoDirectConnect();
 };
 } /* namespace n_model */

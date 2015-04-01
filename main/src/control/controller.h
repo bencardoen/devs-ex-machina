@@ -68,7 +68,7 @@ public:
 	/*
 	 * Set a coupled model as the main model using the given allocator
 	 */
-	void addModel(const t_coupledmodelptr& coupled);
+	void addModel(t_coupledmodelptr& coupled);
 
 	/*
 	 * Main loop, starts simulation

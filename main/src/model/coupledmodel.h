@@ -9,6 +9,7 @@
 #define COUPLEDMODEL_H_
 
 #include "model.h"
+#include "objectfactory.h"
 
 namespace n_model {
 class CoupledModel: public Model
@@ -21,7 +22,7 @@ public:
 	CoupledModel(std::string name);
 	virtual ~CoupledModel() {}
 	void addSubModel(const t_modelptr& model);
-	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction = [](const n_network::t_msgptr& m){return m;});
+	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction = n_tools::createObject<ZFunc>());
 	std::vector<t_modelptr> getComponents() const;
 };
 

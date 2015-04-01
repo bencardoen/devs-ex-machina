@@ -34,7 +34,7 @@ void pusher(std::mutex& queuelock, std::atomic<int>& writer_done, const int tota
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	shuffle(rands.begin(), rands.end(), std::default_random_engine(seed));
 	for (int i = 0; i < totalsize; ++i) {
-		std::lock_guard<std::mutex> m_lock(queuelock);
+		std::lock_guard<std::mutex> m_lock(queuelock);	// This lock is required for threadsafety only on virtualbox with windows as bare metal os.
 		t_TypeUsed q(rands[i]);
 		scheduler->push_back(q); // scheduler is locked on single operations.
 		count.fetch_add(1);
@@ -68,7 +68,7 @@ class SchedulerTest: public ::testing::Test
 public:
 	SchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, true);
 	}
 
 	void SetUp()
@@ -152,7 +152,7 @@ TEST_F(SchedulerTest, basic_unschedule_until)
 }
 
 /**
- *  Specifically designed to trap conccurency errors. Keeping writer/readers even over max supported threads by hw
+ *  Specifically designed to trap concurency errors. Keeping writer/readers even over max supported threads by hw
  *  introduces maximum stress on locking code, without starving. Note that VM size can be extreme for this testcase (TB's is not unusual).
  *  @note (in reality there is 1 thread allocated extra (main = thread 0), but no cpu that I know of has odd threadcount.
  */
@@ -220,7 +220,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 50;
+	const int totalsize = 5000;
 	const int threadcount = std::thread::hardware_concurrency() * 2;
 	if(std::thread::hardware_concurrency() <= 1){
 		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
@@ -251,7 +251,7 @@ class UnSyncedSchedulerTest: public ::testing::Test
 public:
 	UnSyncedSchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, true);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, false);
 	}
 
 	void SetUp()
