@@ -106,14 +106,15 @@ bool Port::setInPort(const std::shared_ptr<Port>& port)
  *
  * @param port New input port
  *
- * @return whether or not the port wasn already added
  */
-bool Port::setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function)
+void Port::setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function)
 {
-	if (m_coupled_outs.find(port) == m_coupled_outs.end())
-		return false;
-	m_coupled_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc>(port, function));
-	return true;
+	std::map<std::shared_ptr<Port>, std::vector<t_zfunc>>::iterator it = m_coupled_outs.find(port);
+	if (it == m_coupled_outs.end()){
+		m_coupled_outs.emplace(port, std::vector<t_zfunc>({function}));
+		return;
+	}
+	it->second.push_back(function);
 }
 
 /*
@@ -124,6 +125,48 @@ bool Port::setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function)
 void Port::setUsingDirectConnect(bool dc)
 {
 	m_usingDirectConnect = dc;
+}
+
+const std::vector<std::shared_ptr<Port> >& Port::getIns() const
+{
+	return m_ins;
+}
+
+std::vector<std::shared_ptr<Port> >& Port::getIns()
+{
+	return m_ins;
+}
+
+void Port::resetDirectConnect()
+{
+	m_usingDirectConnect = false;
+	m_coupled_outs.clear();
+	m_coupled_ins.clear();
+}
+
+void Port::setInPortCoupled(const t_portptr& port)
+{
+	m_coupled_ins.push_back(port);
+}
+
+const std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts() const
+{
+	return m_outs;
+}
+
+std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts()
+{
+	return m_outs;
+}
+
+
+n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+        const std::string msg, t_zfunc& func)
+{
+	n_network::t_msgptr messagetobesend = std::make_shared<n_network::Message>(dest,
+	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	messagetobesend = (*func)(messagetobesend);
+	return messagetobesend;
 }
 
 /*
@@ -139,23 +182,28 @@ std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 	std::vector<n_network::t_msgptr> returnarray;
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
-	std::map<std::shared_ptr<Port>, t_zfunc>& ports = m_outs;
-	if (m_usingDirectConnect)
-		ports = m_coupled_outs;
+	if (!m_usingDirectConnect) {
+		for (auto& pair : m_outs) {
+			t_zfunc& zFunction = pair.second;
+			std::string model_destination = pair.first->getHostName();
+			std::string sourcePort = this->getFullName();
+			std::string destPort = pair.first->getFullName();
+			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 
-	for (auto& pair : ports) {
-
-		t_zfunc& zFunction = pair.second;
-		std::string model_destination = pair.first->getHostName();;
-		std::string sourcePort = this->getFullName();
-		std::string destPort = pair.first->getFullName();
-		n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
-
-		// We now know everything, we create the message, apply the zFunction and push it on the vector
-		n_network::t_msgptr messagetobesend = std::make_shared<n_network::Message>(model_destination,
-		        dummytimestamp, destPort, sourcePort, message);
-		messagetobesend = (*zFunction)(messagetobesend);
-		returnarray.push_back(messagetobesend);
+			// We now know everything, we create the message, apply the zFunction and push it on the vector
+			returnarray.push_back(createMsg(model_destination,
+				destPort, sourcePort, message, zFunction));
+		}
+	} else {
+		for(auto& pair : m_coupled_outs){
+			std::string model_destination = pair.first->getHostName();
+			std::string sourcePort = this->getFullName();
+			std::string destPort = pair.first->getFullName();
+			for(t_zfunc& zFunction : pair.second){
+				returnarray.push_back(createMsg(model_destination,
+					destPort, sourcePort, message, zFunction));
+			}
+		}
 	}
 
 	return returnarray;

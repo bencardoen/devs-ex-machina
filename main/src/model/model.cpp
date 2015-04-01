@@ -143,6 +143,26 @@ const std::map<std::string, t_portptr>& Model::getOPorts() const
 }
 
 /*
+ * Return all current input ports
+ *
+ * @return current input ports
+ */
+std::map<std::string, t_portptr>& Model::getIPorts()
+{
+	return m_iPorts;
+}
+
+/*
+ * Return all current output ports
+ *
+ * @return current output ports
+ */
+std::map<std::string, t_portptr>& Model::getOPorts()
+{
+	return m_oPorts;
+}
+
+/*
  * Return all current send messages
  *
  * @return current send messages
