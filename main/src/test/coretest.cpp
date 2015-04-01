@@ -264,13 +264,16 @@ TEST(Core, multicoresafe)
 	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
 
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<bool>& threadsignal,
+enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
+
+void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<ThreadSignal>& threadsignal,
         std::mutex& vectorlock, std::size_t turns, const t_coreptr& core)
 {
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex > lv(vectorlock);
-		return not threadsignal[myid];
+		return not (threadsignal[myid]==ThreadSignal::ISWAITING);
+		//return not threadsignal[myid];
 	};
 
 	for (size_t i = 0; i < turns; ++i) {
@@ -281,7 +284,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			threadsignal[myid] = true;	// Set my own flag to signal I'm waiting to main thread.
+			threadsignal[myid] = ThreadSignal::ISWAITING;	// Set my own flag to signal I'm waiting to main thread.
 		}
 
 		std::unique_lock<std::mutex> mylock(cvlock);
@@ -338,7 +341,8 @@ TEST(Core, threading)
 	const std::size_t rounds = 50;	// 1000 works on hardware, 100 cripples virtualbox (and jenkins).
 
 	std::mutex veclock;
-	std::vector<bool> threadsignal(threadcount);// Store true @ threadid if the thread has hit the barrier, false if it can go on.
+	//std::vector<bool> threadsignal(threadcount);// Store true @ threadid if the thread has hit the barrier, false if it can go on.
+	std::vector<ThreadSignal> threadsignal = {ThreadSignal::FREE, ThreadSignal::FREE};
 
 	//std::cout.sync_with_stdio(false); // TODO danger here
 
@@ -357,7 +361,7 @@ TEST(Core, threading)
 				all_waiting = true;
 				for (const auto tsignal : threadsignal)// vector<bool> is proxy, can't use &
 				{
-					if (tsignal == false) {
+					if (tsignal == ThreadSignal::FREE) {
 						all_waiting = false;
 						break;
 					}
@@ -377,7 +381,7 @@ TEST(Core, threading)
 		{
 			std::lock_guard<std::mutex> lock(veclock);
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				threadsignal[i] = false;
+				threadsignal[i] = ThreadSignal::FREE;
 			}
 		}
 		cv.notify_all();// End of a round, it's possible some threads are allready running (spurious), release all explicitly.
@@ -387,7 +391,6 @@ TEST(Core, threading)
 		t.join();
 	}
 
-	std::cout.flush();
 	for (const auto& c : cores){
 		EXPECT_TRUE(c->getTime() >= t_timestamp(2000,0));
 		EXPECT_FALSE(c->isLive());
