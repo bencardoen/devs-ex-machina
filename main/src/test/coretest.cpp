@@ -273,22 +273,50 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex > lv(vectorlock);
 		return not (threadsignal[myid]==ThreadSignal::ISWAITING);
-		//return not threadsignal[myid];
 	};
-
-	for (size_t i = 0; i < turns; ++i) {
-		//Run a simulation step, if we can, if not still wait for the barrier.
-		if (core->isLive()) {
-			core->runSmallStep();
+	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
+		{	// If another thread has finished, main will flag us down, we need to stop as well.
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			if(threadsignal[myid] == ThreadSignal::ISFINISHED){
+				core->setLive(false);
+				return;
+			}
 		}
 
+		// Try a simulationstep, if core has terminated, set finished flag, else continue.
+		if (core->isLive()) {
+			LOG_DEBUG("Thread for core ", core->getCoreID() , " running simstep in round ", i);
+			core->runSmallStep();
+		}else{
+			LOG_DEBUG("Thread for core ", core->getCoreID() , " is finished, setting flag.");
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			threadsignal[myid] = ThreadSignal::ISFINISHED;
+			return;
+		}
+
+		// Has Main asked us to wait for the other ??
+		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			threadsignal[myid] = ThreadSignal::ISWAITING;	// Set my own flag to signal I'm waiting to main thread.
+			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
+			if(threadsignal[myid] == ThreadSignal::SHOULDWAIT){
+				LOG_DEBUG("Thread for core ", core->getCoreID() , " switching flag to WAITING");
+				threadsignal[myid] = ThreadSignal::ISWAITING;
+			}
+			// Case 2 : We can skip the barrier ahead.
+			if(threadsignal[myid] == ThreadSignal::FREE){
+				LOG_DEBUG("Thread for core ", core->getCoreID() , " skipping barrier, FREE is set.");
+				skip_barrier = true;
+			}
 		}
 
-		std::unique_lock<std::mutex> mylock(cvlock);
-		cv.wait(mylock, predicate);
+
+		if(skip_barrier){
+			continue;
+		}else{
+			std::unique_lock<std::mutex> mylock(cvlock);
+			cv.wait(mylock, predicate);				/// Infinite loop : while(!pred) wait().
+		}
 		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
 	}
 }
@@ -301,7 +329,7 @@ TEST(Core, threading)
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	//tracers->stopTracers();	//disable the output
+	tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable);
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable);
@@ -338,13 +366,10 @@ TEST(Core, threading)
 		LOG_WARNING("Skipping test, no threads!");
 		return;
 	}
-	const std::size_t rounds = 50;	// 1000 works on hardware, 100 cripples virtualbox (and jenkins).
+	const std::size_t rounds = 10000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
 
-	std::mutex veclock;
-	//std::vector<bool> threadsignal(threadcount);// Store true @ threadid if the thread has hit the barrier, false if it can go on.
+	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal = {ThreadSignal::FREE, ThreadSignal::FREE};
-
-	//std::cout.sync_with_stdio(false); // TODO danger here
 
 	for (size_t i = 0; i < threadcount; ++i) {
 		threads.push_back(
@@ -353,46 +378,57 @@ TEST(Core, threading)
 	}
 
 
-	// Threads are live, check for each thread if they have hit the barrier, if all have, call threadunsafe functions on cores.
-	for (std::size_t i = 0; i < rounds; ++i) {
+
+	for (std::size_t round = 0; round < rounds; ++round) {
+		bool exit_threads = false;
+		for(size_t j = 0;j<threadcount; ++j){
+			std::lock_guard<std::mutex> lock(veclock);
+			if(threadsignal[j]==ThreadSignal::ISFINISHED){
+				LOG_INFO("Main :: Thread id ", j, " has finished, flagging down the rest.");
+				threadsignal = std::vector<ThreadSignal>(threadcount, ThreadSignal::ISFINISHED);
+				exit_threads = true;
+				break;
+			}
+		}
+		if(exit_threads){break;}
+
 		bool all_waiting = false;
 		while (not all_waiting) {
 				std::lock_guard<std::mutex> lock(veclock);
 				all_waiting = true;
-				for (const auto tsignal : threadsignal)// vector<bool> is proxy, can't use &
+				for (const auto& tsignal : threadsignal)
 				{
-					if (tsignal == ThreadSignal::FREE) {
+					if (tsignal == ThreadSignal::SHOULDWAIT) {	// FREE is ok, ISWAITING is ok, SHOULDWAIT is the one that shouldn't be set.
 						all_waiting = false;
 						break;
 					}
 				}
 		}
-
-		/// All threads have arrived and are sleeping, next we need to reset their flags BEFORE releasing the condition variable.
-		/// Begin threadsafe section -- you can call anything from save, load, trace, testLive, get/set gvt etc...
-		{
-			/**for (const auto& core : cores) {
-				//core->signalTracersFlush();
-			}*/
-			n_tracers::traceUntil(t_timestamp::infinity());	// or allow main to do this.
-		}
-		/// End threadsafe section
+		{/// This section is only threadsafe if you have set all threads to SHOULDWAIT
+			;
+		}/// End threadsafe section
 		/// Revive threads, first toggle predicate, then release threads (reverse order will deadlock).
 		{
 			std::lock_guard<std::mutex> lock(veclock);
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				threadsignal[i] = ThreadSignal::FREE;
+				if(threadsignal[i]!= ThreadSignal::ISFINISHED){
+					if((round %3)==0){				// Signal interrupt, threads will stop before the barrier next time
+						//LOG_DEBUG("Main : threads will wait next round", round);
+						threadsignal[i] = ThreadSignal::SHOULDWAIT;
+					}else{
+						//LOG_DEBUG("Main : threads can skip next round", round);
+						threadsignal[i] = ThreadSignal::FREE;
+					}
+				}else{
+					LOG_DEBUG("Main : seeing finished thread with id " , i);
+				}
 			}
 		}
-		cv.notify_all();// End of a round, it's possible some threads are allready running (spurious), release all explicitly.
+		cv.notify_all();// End of a round, it's possible some threads are already running (spurious), release all explicitly. Any FREE threads don't even hit the barrier.
 	}
-
 	for (auto& t : threads) {
 		t.join();
 	}
-
-	for (const auto& c : cores){
-		EXPECT_TRUE(c->getTime() >= t_timestamp(2000,0));
-		EXPECT_FALSE(c->isLive());
-	}
+	// Finally, dump trace buffers.
+	n_tracers::traceUntil(t_timestamp::infinity());
 }
