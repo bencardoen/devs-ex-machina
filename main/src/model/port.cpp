@@ -65,7 +65,7 @@ bool Port::isInPort() const
  *
  * @return the matching function
  */
-std::function<void(const n_network::t_msgptr&)> Port::getZFunc(const std::shared_ptr<Port>& port) const
+t_zfunc Port::getZFunc(const std::shared_ptr<Port>& port) const
 {
 	return m_outs.at(port);
 }
@@ -154,7 +154,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 		// We now know everything, we create the message, apply the zFunction and push it on the vector
 		n_network::t_msgptr messagetobesend = std::make_shared<n_network::Message>(model_destination,
 		        dummytimestamp, destPort, sourcePort, message);
-		messagetobesend = zFunction(messagetobesend);
+		messagetobesend = (*zFunction)(messagetobesend);
 		returnarray.push_back(messagetobesend);
 	}
 

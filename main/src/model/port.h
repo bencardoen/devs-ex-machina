@@ -12,10 +12,9 @@
 #include <map>
 #include <algorithm>
 #include "message.h"
+#include "zfunc.h"
 
 namespace n_model {
-
-typedef std::function<n_network::t_msgptr(const n_network::t_msgptr&)> t_zfunc;
 
 class Port
 {
@@ -38,7 +37,7 @@ public:
 	std::string getFullName() const;
 	std::string getHostName() const;
 	bool isInPort() const;
-	std::function<void(const n_network::t_msgptr&)> getZFunc(const std::shared_ptr<Port>& port) const;
+	t_zfunc getZFunc(const std::shared_ptr<Port>& port) const;
 	bool setZFunc(const std::shared_ptr<Port>& port, t_zfunc function);
 	bool setInPort(const std::shared_ptr<Port>& port);
 
