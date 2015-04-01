@@ -298,7 +298,7 @@ TEST(Core, threading)
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
+	//tracers->stopTracers();	//disable the output
 	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable);
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable);
@@ -314,10 +314,10 @@ TEST(Core, threading)
 	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
 	coreone->addModel(tcmodel);
 	EXPECT_TRUE(coreone->containsModel("mylight"));
-	coreone->setTerminationTime(t_timestamp(400, 0));
+	coreone->setTerminationTime(t_timestamp(2000, 0));
 	coretwo->addModel(tc2model);
 	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
-	coretwo->setTerminationTime(t_timestamp(400, 0));
+	coretwo->setTerminationTime(t_timestamp(2000, 0));
 	coreone->init();
 	coreone->setLive(true);
 	coretwo->init();
@@ -335,10 +335,12 @@ TEST(Core, threading)
 		LOG_WARNING("Skipping test, no threads!");
 		return;
 	}
-	const std::size_t rounds = 10;	// 1000 works on hardware, 100 cripples virtualbox (and jenkins).
+	const std::size_t rounds = 50;	// 1000 works on hardware, 100 cripples virtualbox (and jenkins).
 
 	std::mutex veclock;
 	std::vector<bool> threadsignal(threadcount);// Store true @ threadid if the thread has hit the barrier, false if it can go on.
+
+	//std::cout.sync_with_stdio(false); // TODO danger here
 
 	for (size_t i = 0; i < threadcount; ++i) {
 		threads.push_back(
@@ -365,10 +367,10 @@ TEST(Core, threading)
 		/// All threads have arrived and are sleeping, next we need to reset their flags BEFORE releasing the condition variable.
 		/// Begin threadsafe section -- you can call anything from save, load, trace, testLive, get/set gvt etc...
 		{
-			for (const auto& core : cores) {
-				core->signalTracersFlush();
-			}
-			//n_tracers::traceUntil(t_timestamp::infinity());	// or allow main to do this.
+			/**for (const auto& core : cores) {
+				//core->signalTracersFlush();
+			}*/
+			n_tracers::traceUntil(t_timestamp::infinity());	// or allow main to do this.
 		}
 		/// End threadsafe section
 		/// Revive threads, first toggle predicate, then release threads (reverse order will deadlock).
@@ -384,8 +386,10 @@ TEST(Core, threading)
 	for (auto& t : threads) {
 		t.join();
 	}
+
+	std::cout.flush();
 	for (const auto& c : cores){
-		EXPECT_TRUE(c->getTime() >= t_timestamp(400,0));
+		EXPECT_TRUE(c->getTime() >= t_timestamp(2000,0));
 		EXPECT_FALSE(c->isLive());
 	}
 }
