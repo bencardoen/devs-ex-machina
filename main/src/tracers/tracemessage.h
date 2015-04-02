@@ -10,7 +10,6 @@
 
 #include <functional>	//defines std::less<T>
 #include "message.h"
-#include "globallog.h"
 
 namespace n_tracers {
 
@@ -67,75 +66,42 @@ void clearAll();
 
 /**
  * Entry for a TraceMessage in a scheduler.
- * Keeps modelname and imminent time for a Model, without having to store the entire model.
+ * Provides overloads for the most important comparison operators.
  * @attention : reverse ordered on time : 1 > 2 == true (for max heap).
  */
 class TraceMessageEntry
 {
 	t_tracemessageptr m_pointer;
 public:
-	t_tracemessageptr getPointer() const
-	{
-		return m_pointer;
-	}
+	/**
+	 * @brief Gives access to the raw pointer contained within this entry
+	 */
+	t_tracemessageptr getPointer() const;
 
-	TraceMessageEntry(t_tracemessageptr ptr)
-		: m_pointer(ptr)
-	{
-	}
+	TraceMessageEntry(t_tracemessageptr ptr);
 	TraceMessageEntry(const TraceMessageEntry&) = default;
 	TraceMessageEntry(TraceMessageEntry&&) = default;
 	TraceMessageEntry& operator=(const TraceMessageEntry&) = default;
 	TraceMessageEntry& operator=(TraceMessageEntry&&) = default;
-	TraceMessage& operator*()
-	{
-		return *m_pointer;
-	}
-	const TraceMessage& operator*() const
-	{
-		return *m_pointer;
-	}
-	TraceMessage* operator->()
-	{
-		return m_pointer;
-	}
-	const TraceMessage* operator->() const
-	{
-		return m_pointer;
-	}
+
+	TraceMessage& operator*();
+	const TraceMessage& operator*() const;
+	TraceMessage* operator->();
+	const TraceMessage* operator->() const;
 
 	friend
-	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
-			LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
-			return lhs.m_pointer > rhs.m_pointer;
-		}
-		return *lhs > *rhs;
-	}
+	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (rhs > lhs);
-	}
+	bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (!(lhs < rhs));
-	}
+	bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (lhs.m_pointer == rhs.m_pointer);
-	}
+	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
-	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
-	{
-		return (os << "Trace message scheduled at " << rhs->getTimeStamp());
-	}
+	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs);
 };
 
 } /* namespace n_tracers */

@@ -82,6 +82,8 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 
 add_executable(${PROJECT_NAME}
     src/tools/logger.cpp
+    src/tools/coutredirect.cpp
+    src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
 	src/model/coupledmodel.cpp
 	src/model/rootmodel.cpp

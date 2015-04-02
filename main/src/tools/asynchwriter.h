@@ -39,9 +39,17 @@ public:
 
 };
 
-//http://stackoverflow.com/a/21127776
-struct ASynchWriter: std::streambuf
+/**
+ * @brief Asynchronous writer. Can write stuff to a file in an asynchronous way.
+ * You can turn any output stream (including std::cout) into an asynchronous file output stream
+ * by switching its buffer with this class.
+ *
+ * Thanks a lot to Dietmar Kühl for providing the basic idea behind this class (http://stackoverflow.com/a/21127776)
+ * We messed around with the code quite a bit and fixed some important data races, but he still deserves the credit.
+ */
+class ASynchWriter: public std::streambuf
 {
+private:
 	std::ofstream m_out;
 	std::mutex m_mutex;
 	std::condition_variable m_condition;
@@ -50,81 +58,18 @@ struct ASynchWriter: std::streambuf
 	std::atomic<bool> m_done;
 	std::thread m_thread;
 
-	void worker()
-	{
-		std::atomic<bool> local_done(false);
-		std::vector<char> buf;
-		while (true) {
-			{
-				std::unique_lock<std::mutex> guard(this->m_mutex);
-				if (m_queue.empty() && local_done) {
-					guard.unlock();
-					return;
-				}
-
-				this->m_condition.wait(guard, [this]()->bool {return
-					(!m_queue.empty()
-						|| m_done);});
-				while (m_queue.empty() && !this->m_done) {
-					this->m_condition.wait(guard);
-				}
-
-				if (!m_queue.empty()) {
-					buf.swap(m_queue.front());
-					m_queue.pop();
-				}
-				local_done.store(this->m_done);
-			}
-			if (!buf.empty()) {
-				m_out.write(buf.data(), std::streamsize(buf.size()));
-				m_out.flush();
-				buf.clear();
-			}
-		}
-	}
+	void worker();
 
 public:
-	ASynchWriter(std::string const& name)
-		: m_out(name), m_buffer(512), m_done(false), m_thread(std::bind(&ASynchWriter::worker, this))
-	{
-		std::lock_guard<std::mutex> lock(this->m_mutex);
-		this->setp(this->m_buffer.data(), this->m_buffer.data() + this->m_buffer.size() - 1);
-	}
-	~ASynchWriter()
-	{
-		{
-			std::unique_lock<std::mutex> guard(this->m_mutex);
-			this->m_done = true;
-		}
-		this->m_condition.notify_one();
-		this->m_thread.join();
-	}
-	int overflow(int c)
-	{
-		{
-		std::lock_guard<std::mutex> guard(this->m_mutex);
-		if (c != std::char_traits<char>::eof()) {
-			*this->pptr() = std::char_traits<char>::to_char_type(c);
-			this->pbump(1);
-		}
-		}
-		return this->sync() ? std::char_traits<char>::not_eof(c) : std::char_traits<char>::eof();
-	}
-	int sync()
-	{
-		std::lock_guard<std::mutex> guard(this->m_mutex);
-		if (this->pbase() != this->pptr()) {
-			this->m_buffer.resize(std::size_t(this->pptr() - this->pbase()));
-			{
-				this->m_queue.push(std::move(this->m_buffer));
-			}
-			this->m_condition.notify_one();
-			this->m_buffer = std::vector<char>(128);
-			this->setp(this->m_buffer.data(), this->m_buffer.data() + this->m_buffer.size() - 1);
-			return 1;
-		}
-		return 0;
-	}
+	/**
+	 * @brief Creates a new Asynchronous writer and opens a file to dump the output.
+	 * @param name The name of the file that will be opened.
+	 * @precondition The system must be able to open the file for output.
+	 */
+	ASynchWriter(const std::string& name);
+	~ASynchWriter();
+	int overflow(int c);
+	int sync();
 
 };
 } /* namespace n_tools */

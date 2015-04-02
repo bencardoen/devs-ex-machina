@@ -8,6 +8,7 @@
 #include "tracemessage.h"
 #include "schedulerfactory.h"
 #include "objectfactory.h"
+#include "globallog.h"
 
 using namespace n_tools;
 
@@ -43,6 +44,62 @@ bool TraceMessage::operator >(const TraceMessage& other) const
 		return this->m_tracerID > other.m_tracerID;
 	return (this->getTimeStamp() > other.getTimeStamp());
 }
+
+t_tracemessageptr TraceMessageEntry::getPointer() const
+{
+	return m_pointer;
+}
+
+TraceMessageEntry::TraceMessageEntry(t_tracemessageptr ptr)
+	: m_pointer(ptr)
+{
+}
+TraceMessage& TraceMessageEntry::operator*()
+{
+	return *m_pointer;
+}
+const TraceMessage& TraceMessageEntry::operator*() const
+{
+	return *m_pointer;
+}
+TraceMessage* TraceMessageEntry::operator->()
+{
+	return m_pointer;
+}
+const TraceMessage* TraceMessageEntry::operator->() const
+{
+	return m_pointer;
+}
+
+bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+{
+	if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
+		LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
+		return lhs.m_pointer > rhs.m_pointer;
+	}
+	return *lhs > *rhs;
+}
+
+bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+{
+	return (rhs > lhs);
+}
+
+bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+{
+	return (!(lhs < rhs));
+}
+
+bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+{
+	return (lhs.m_pointer == rhs.m_pointer);
+}
+
+std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
+{
+	return (os << "Trace message scheduled at " << rhs->getTimeStamp());
+}
+
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
         Storage::FIBONACCI, true);

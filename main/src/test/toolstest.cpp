@@ -338,6 +338,7 @@ TEST_F(UnSyncedSchedulerTest, basic_unschedule_until)
 TEST(CoutRedirectTest, main_test){
 	std::stringstream ssr1;
 	std::stringstream ssr2;
+	std::stringstream ssr3;
 	{
 		n_tools::CoutRedirect redirect(ssr1.rdbuf());
 		std::cout << "This is written to ssr1.";
@@ -349,7 +350,13 @@ TEST(CoutRedirectTest, main_test){
 	{
 		n_tools::CoutRedirect redirect(ssr1.rdbuf());
 		std::cout << "This is MOAR text written to ssr1!";
+		{
+			n_tools::CoutRedirect redirect2(ssr3.rdbuf());
+			std::cout << "This is written to ssr3, nested within ssr1.";
+		}
+		std::cout << "This is EVEN MOAR text written to ssr1!";
 	}
-	EXPECT_EQ(ssr1.str(), "This is written to ssr1.This is MOAR text written to ssr1!");
+	EXPECT_EQ(ssr1.str(), "This is written to ssr1.This is MOAR text written to ssr1!This is EVEN MOAR text written to ssr1!");
 	EXPECT_EQ(ssr2.str(), "This is written to ssr2.");
+	EXPECT_EQ(ssr3.str(), "This is written to ssr3, nested within ssr1.");
 }
