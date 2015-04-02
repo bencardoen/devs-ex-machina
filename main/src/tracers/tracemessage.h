@@ -58,10 +58,35 @@ private:
 
 typedef TraceMessage* t_tracemessageptr;
 
+/**
+ * Schedules a trace message.
+ * @param message A pointer to the message that must be scheduled.
+ * @precodition message is a valid message
+ */
 void scheduleMessage(t_tracemessageptr message);
+/**
+ * Performs all output
+ * @param time. All output scheduled before this time will be printed
+ * @warning Writing the output itself is asynchronously.
+ * 	 Make sure that, before exiting the program, this thread has been stopped.
+ * 	 Normally, the Tracers class handles this for you, but if you are feeling adventurous, don't forget this function!
+ * @see waitForTracer
+ */
 void traceUntil(n_network::t_timestamp time);
+/**
+ * @brief reverts the output to a certain time.
+ */
 void revertTo(n_network::t_timestamp time);
+/**
+ * @brief clears the entire queue of trace messages.
+ */
 void clearAll();
+/**
+ * @brief block current thread until the previous batch of trace messages has been dealt with.
+ * Normally, the Tracers class takes care of this.
+ * However, if you are messing around with trace messages yourself, do not forget calling this method!
+ */
+void waitForTracer();
 
 
 /**

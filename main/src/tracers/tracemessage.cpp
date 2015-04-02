@@ -9,6 +9,8 @@
 #include "schedulerfactory.h"
 #include "objectfactory.h"
 #include "globallog.h"
+#include <thread>
+#include <future>
 
 using namespace n_tools;
 
@@ -103,10 +105,29 @@ std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
         Storage::FIBONACCI, true);
+std::future<void>* tracerFuture = nullptr;
 
 void scheduleMessage(t_tracemessageptr message)
 {
+	assert(message && "scheduleMessage: Can't schedule a nullptr message");
 	scheduler->push_back(TraceMessageEntry(message));
+}
+
+void waitForTracer()
+{
+	if(tracerFuture != nullptr){
+		tracerFuture->wait();
+		delete tracerFuture;
+		tracerFuture = nullptr;
+	}
+}
+
+void doRealTrace(std::vector<TraceMessageEntry> entries){
+	for (TraceMessageEntry& mess : entries) {
+		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTimeStamp());
+		mess->execute();
+		n_tools::takeBack(mess.getPointer());
+	}
 }
 
 void traceUntil(n_network::t_timestamp time)
@@ -114,11 +135,8 @@ void traceUntil(n_network::t_timestamp time)
 	std::vector<TraceMessageEntry> messages;
 	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{});
 	scheduler->unschedule_until(messages, &t);
-	for (TraceMessageEntry& mess : messages) {
-		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTimeStamp());
-		mess->execute();
-		n_tools::takeBack(mess.getPointer());
-	}
+	waitForTracer();
+	tracerFuture = new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages)));
 }
 
 void revertTo(n_network::t_timestamp time)

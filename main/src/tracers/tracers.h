@@ -44,6 +44,7 @@ public:
 	{
 		//clean up all left over trace messages
 		n_tracers::clearAll();
+		n_tracers::waitForTracer();
 	}
 
 	/**

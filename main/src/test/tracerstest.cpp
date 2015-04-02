@@ -516,6 +516,7 @@ TEST(tracing, tracer##tracerclass){\
 		tracer.tracesConfluent(model);\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
 		n_tracers::clearAll();\
+		n_tracers::waitForTracer();\
 	}\
 	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY( tracerclass ) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
 }
