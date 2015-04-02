@@ -159,7 +159,7 @@ TEST_F(SchedulerTest, basic_unschedule_until)
  */
 TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 {
-	const int totalsize = 5000; // On an i5 quad core , 50000 elems requires approx 1 min.
+	const int totalsize = 500; // On an i5 quad core , 50000 elems requires approx 1 min.
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	if(std::thread::hardware_concurrency() <= 1){
 		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!");
@@ -190,7 +190,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
  */
 TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 {
-	const int totalsize = 5000;
+	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	if(std::thread::hardware_concurrency() <= 1){
 		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
@@ -221,7 +221,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 5000;
+	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency() * 2;
 	if(std::thread::hardware_concurrency() <= 1){
 		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.

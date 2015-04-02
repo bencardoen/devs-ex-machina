@@ -121,7 +121,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {
-			urgent->intTransition(); // TODO check with Stijn.
+			urgent->intTransition();
 			urgent->setTime(this->m_time);
 			this->traceInt(urgent);
 		} else {
@@ -371,8 +371,9 @@ void n_model::Core::setTracers(n_tracers::t_tracersetptr ptr)
 
 void n_model::Core::signalTracersFlush() const
 {
-	LOG_DEBUG("CORE:: asking tracers to write output up to ", this->getTime());
-	n_tracers::traceUntil(this->m_time);
+	t_timestamp marktime(this->m_time.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
+	LOG_DEBUG("CORE:: asking tracers to write output up to ", marktime);
+	n_tracers::traceUntil(marktime);
 }
 
 void n_model::Core::clearModels()
