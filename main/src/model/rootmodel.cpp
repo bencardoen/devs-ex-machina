@@ -61,7 +61,9 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 		// loop over all atomic models
 		for(t_atomicmodelptr& atomic: m_components){
 			//loop over all its output ports
+			LOG_INFO("DIRCON: Direct connecting model ",atomic->getName());
 			for(std::pair<const std::string, t_portptr>& out:atomic->getOPorts()){
+				LOG_INFO("DIRCON: Direct connecting outport ",out.second->getName());
 				//reset any previous data for direct connect
 				out.second->resetDirectConnect();
 				out.second->setUsingDirectConnect(true);
@@ -69,6 +71,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 				std::deque<record> worklist;
 				//get all outgoing connections
 				for(std::pair<t_portptr, t_zfunc> link:out.second->getOuts()){
+					LOG_INFO("DIRCON: Worklist: ", out.second->getFullName()," => ",link.first->getFullName());
 					worklist.emplace_back(out.second, link.first, link.second);
 				}
 				//do the direct connect
@@ -77,6 +80,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 					worklist.pop_front();
 					if(atomics.find(rec.in->getHostName()) != atomics.end()){
 						//link to atomic model, make the direct connection
+						LOG_INFO("DIRCON: Linking ",rec.out->getFullName(),"[OUT] to ",rec.in->getFullName(),"[IN]");
 						rec.out->setZFuncCoupled(rec.in, rec.zfunc);
 					} else {
 						//this is a link to a port of a coupled devs!
@@ -89,6 +93,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 			}
 			//loop over all the input ports
 			for(std::pair<const std::string, t_portptr>& in:atomic->getIPorts()){
+				LOG_INFO("DIRCON: Direct connecting inport ",in.second->getName());
 				in.second->resetDirectConnect();
 				in.second->setUsingDirectConnect(true);
 				std::deque<t_portptr> worklist;
@@ -103,6 +108,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 					worklist.pop_front();
 					if(atomics.find(rec->getHostName()) != atomics.end()){
 						//link to atomic model, make the direct connection
+						LOG_INFO("DIRCON: Linking ",in.second->getFullName(),"[IN] from ",rec->getFullName(),"[OUT]");
 						in.second->setInPortCoupled(rec);
 					} else {
 						//this is a link to a port of a coupled devs!

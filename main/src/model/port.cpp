@@ -80,7 +80,7 @@ t_zfunc Port::getZFunc(const std::shared_ptr<Port>& port) const
  */
 bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
 {
-	if (m_outs.find(port) == m_outs.end())
+	if (m_outs.find(port) != m_outs.end())
 		return false;
 	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc>(port, function));
 	return true;
@@ -95,7 +95,7 @@ bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
  */
 bool Port::setInPort(const std::shared_ptr<Port>& port)
 {
-	if (std::find(m_ins.begin(), m_ins.end(), port) == m_ins.end())
+	if (std::find(m_ins.begin(), m_ins.end(), port) != m_ins.end())
 		return false;
 	m_ins.push_back(port);
 	return true;
@@ -144,6 +144,11 @@ void Port::resetDirectConnect()
 	m_coupled_ins.clear();
 }
 
+bool Port::isUsingDirectConnect() const
+{
+	return m_usingDirectConnect;
+}
+
 void Port::setInPortCoupled(const t_portptr& port)
 {
 	m_coupled_ins.push_back(port);
@@ -157,6 +162,16 @@ const std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts() const
 std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts()
 {
 	return m_outs;
+}
+
+const std::vector<t_portptr>& Port::getCoupledIns() const
+{
+	return m_coupled_ins;
+}
+
+const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const
+{
+	return m_coupled_outs;
 }
 
 

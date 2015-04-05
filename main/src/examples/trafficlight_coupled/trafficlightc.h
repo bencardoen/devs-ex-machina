@@ -5,8 +5,8 @@
  *      Author: tim
  */
 
-#ifndef SRC_EXAMPLES_TRAFFICLIGHT_H_
-#define SRC_EXAMPLES_TRAFFICLIGHT_H_
+#ifndef SRC_EXAMPLES_TRAFFICLIGHTC_H_
+#define SRC_EXAMPLES_TRAFFICLIGHTC_H_
 
 #include "atomicmodel.h"
 #include "state.h"
@@ -49,4 +49,4 @@ public:
 
 }
 
-#endif /* SRC_EXAMPLES_TRAFFICLIGHT_H_ */
+#endif /* SRC_EXAMPLES_TRAFFICLIGHTC_H_ */

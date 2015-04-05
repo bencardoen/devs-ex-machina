@@ -50,12 +50,15 @@ public:
 	void setInPortCoupled(const t_portptr& port);
 	void setUsingDirectConnect(bool dc);
 	void resetDirectConnect();
+	bool isUsingDirectConnect() const;
 
 	std::vector<n_network::t_msgptr> createMessages(std::string message);
 	const std::vector<t_portptr >& getIns() const;
 	const std::map<t_portptr, t_zfunc>& getOuts() const;
 	std::vector<t_portptr >& getIns();
 	std::map<t_portptr, t_zfunc>& getOuts();
+	const std::vector<t_portptr>& getCoupledIns() const;
+	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
 };
 
 }
