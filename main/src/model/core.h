@@ -372,6 +372,7 @@ public:
 
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
+	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
 	 */
 	t_timestamp
 	getFirstMessageTime()const;

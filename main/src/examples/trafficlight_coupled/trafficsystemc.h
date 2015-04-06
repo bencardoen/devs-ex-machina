@@ -17,7 +17,7 @@
 
 namespace n_examples_coupled {
 
-using namespace n_model;
+using n_model::CoupledModel;
 using n_network::t_msgptr;
 
 class TrafficSystem: public CoupledModel

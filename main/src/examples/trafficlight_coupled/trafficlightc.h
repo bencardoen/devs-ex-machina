@@ -5,8 +5,8 @@
  *      Author: tim
  */
 
-#ifndef SRC_EXAMPLES_TRAFFICLIGHT_H_
-#define SRC_EXAMPLES_TRAFFICLIGHT_H_
+#ifndef SRC_EXAMPLES_TRAFFICLIGHTC_H_
+#define SRC_EXAMPLES_TRAFFICLIGHTC_H_
 
 #include "atomicmodel.h"
 #include "state.h"
@@ -14,8 +14,12 @@
 
 namespace n_examples_coupled {
 
-using namespace n_model;
 using n_network::t_msgptr;
+using n_model::AtomicModel;
+using n_model::State;
+using n_model::t_stateptr;
+using n_model::t_modelptr;
+using n_network::t_timestamp;
 
 class TrafficLightMode: public State
 {
