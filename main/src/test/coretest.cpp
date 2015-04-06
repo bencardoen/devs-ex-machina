@@ -224,10 +224,6 @@ TEST(Core, multicoresafe)
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
 	coretwo->setTracers(tracers);
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
-	coreone->getMessages(mailstubone);
-	coretwo->getMessages(mailstubtwo);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
 	coreptrs.push_back(coretwo);
@@ -334,10 +330,6 @@ TEST(Core, threading)
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable);
 	coretwo->setTracers(tracers);
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
-	coreone->getMessages(mailstubone);
-	coretwo->getMessages(mailstubtwo);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
 	coreptrs.push_back(coretwo);

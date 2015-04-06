@@ -10,6 +10,7 @@
 #include "schedulerfactory.h"
 #include "modelentry.h"
 #include "tracers.h"
+#include <queue>
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -20,6 +21,8 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
+
+typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
 
 /**
  * Typedef used by core.
@@ -53,6 +56,11 @@ private:
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
 	 */
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
+
+	/**
+	 * Store received messages (local and networked)
+	 */
+	std::unordered_map<std::string, t_msgqueue>	m_received_messages;
 
 	/**
 	 * Indicate if this core can/should run.
@@ -200,7 +208,7 @@ public:
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time. The core time will advance to max(recd timestamp, first firing transition)
+	 * Updates local time. The core time will advance to min(first transition, earliest received message).
 	 */
 	void
 	syncTime();
@@ -221,7 +229,7 @@ public:
 	 * Collect output from all models, sort them in the mailbag by destination name.
 	 */
 	virtual void
-	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
+	collectOutput();
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
@@ -235,16 +243,10 @@ public:
 	 * Pull messages from network, and sort them into parameter by destination name.
 	 * Base class = noop.
 	 */
-	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
+	virtual void getMessages()
 	{
 		;
 	}
-
-	/**
-	 * Subclass hook.
-	 * If the current scheduler top time < than an event, execute any subclass logic to correct it.
-	 */
-	virtual void adjustTime(){;}
 
 	/**
 	 * Get Current simulation time.
@@ -286,8 +288,7 @@ public:
 	 */
 	virtual
 	void
-	sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag,
-	        const std::vector<t_msgptr>& messages);
+	sortMail(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -356,6 +357,24 @@ public:
 	 */
 	void
 	clearModels();
+
+	/**
+	 * Sort message in individual receiving queue.
+	 */
+	virtual
+	void receiveMessage(const t_msgptr&);
+
+	/**
+	 * Get the mail with timestamp < nowtime sorted by destination.
+	 */
+	virtual
+	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+
+	/**
+	 * For all pending messages, retrieve the smallest (earliest) timestamp.
+	 */
+	t_timestamp
+	getFirstMessageTime()const;
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

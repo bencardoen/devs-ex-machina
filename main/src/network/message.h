@@ -10,6 +10,7 @@
 
 #include "timestamp.h"
 #include "stringtools.h"
+#include <cassert>
 
 namespace n_network {
 
@@ -126,6 +127,17 @@ public:
 
 typedef std::shared_ptr<Message> t_msgptr;
 
+/**
+ * Comparison object to allow storing msgptrs in min heap queues.
+ */
+struct compare_msgptr{
+	bool operator()( const std::shared_ptr<Message>& left, const std::shared_ptr<Message>& right ) const {
+		return (left->getTimeStamp() > right->getTimeStamp());
+	}
+};
+
 } // end namespace
+
+
 
 #endif /* SRC_NETWORK_MESSAGE_H_ */

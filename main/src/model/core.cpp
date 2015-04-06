@@ -22,10 +22,13 @@ n_model::Core::Core()
 }
 
 n_model::Core::Core(std::size_t id)
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
-	  m_terminated(false)
+	: Core()
 {
+	m_coreid = id;
+	assert(m_time == t_timestamp(0,0));
+	assert(m_live == false);
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
@@ -91,9 +94,16 @@ void n_model::Core::init()
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
+	for (const auto& model : this->m_models){
+		std::string modelname = model.first;
+		if(this->m_received_messages.find(modelname)== this->m_received_messages.end()){
+			m_received_messages[modelname] = t_msgqueue();
+			LOG_DEBUG("CORE:: made new msgqueue for model", modelname);
+		}
+	}
 }
 
-void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)
+void n_model::Core::collectOutput()
 {
 	/**
 	 * For each model, collect output.
@@ -103,9 +113,8 @@ void n_model::Core::collectOutput(std::unordered_map<std::string, std::vector<t_
 	for (const auto& modelentry : m_models) {
 		const auto& model = modelentry.second;
 		auto mailfrom = model->output();
-		this->sortMail(mailbag, mailfrom);
+		this->sortMail(mailfrom);
 	}
-	LOG_DEBUG("CORE:  resulted in ", mailbag.size(), " addressees");
 }
 
 void n_model::Core::transition(std::set<std::string>& imminents,
@@ -148,24 +157,19 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	}
 }
 
-void n_model::Core::sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag,
-        const std::vector<t_msgptr>& messages)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
 	for (const auto & message : messages) {
 		if (not this->isMessageLocal(message)) {
 			this->sendMessage(message);
-		}
-		const std::string& destname = message->getDestinationModel();
-		auto found = mailbag.find(destname);
-		if (found == mailbag.end()) {
-			mailbag[destname] = {message};
-		} else {
-			mailbag[destname].push_back(message);
+		}else{
+			this->receiveMessage(message);
 		}
 	}
-	// At this point we have send all remote messages, sorted the rest for local delivery.
+	// At this point we have sent all remote messages, sorted the rest for local delivery.
 	// Add a hook to multicore pull from network.
-	getMessages(mailbag);
+	// This request the network to put in any messages into our mailbag.
+	getMessages();
 }
 
 void n_model::Core::printSchedulerState()
@@ -216,15 +220,19 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
+	/**
+	 * Find out what is less, message time or next firing time, and update core with that value.
+	 */
+	t_timestamp firstmessagetime = this->getFirstMessageTime();
+	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
-		t_timestamp next = this->m_scheduler->top().getTime();
-		this->m_time = next;
-		LOG_DEBUG("CORE:  Core is advancing simulationtime to :: ", this->m_time.getTime());
+		nextfired = this->m_scheduler->top().getTime();
 	} else {
-		LOG_WARNING("CORE:: Core has no scheduled models, time is no longer advancing.");
+		LOG_WARNING("CORE:: Core has no scheduled models.");
 	}
+	t_timestamp newtime = std::min(firstmessagetime, nextfired);
+	this->setTime(newtime);
 
-	this->adjustTime(); // Allow subclasses to do their own thing here.
 
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
@@ -266,11 +274,14 @@ void n_model::Core::runSmallStep()
 	auto imminent = this->getImminent();
 
 	// Get all produced messages, and route them.
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
-	this->collectOutput(mailbag);
+	this->collectOutput();
 
 	// Noop in single core. Pull messages from network, sort them.
-	this->getMessages(mailbag);
+	this->getMessages();
+
+	// From all pending messages, get those with time <= now and sort them.
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
+	this->getPendingMail(mailbag);
 
 	// Transition depending on state.
 	this->transition(imminent, mailbag);
@@ -315,6 +326,8 @@ void n_model::Core::setTerminationTime(t_timestamp endtime)
 	assert(endtime > this->m_time && "Error : termination time in the past ??");
 	this->m_termtime = endtime;
 }
+
+
 
 n_network::t_timestamp n_model::Core::getTerminationTime() const
 {
@@ -382,6 +395,55 @@ void n_model::Core::clearModels()
 	LOG_DEBUG("CORE:: removing all models from core.");
 	this->m_models.clear();
 	this->m_scheduler->clear();
-	this->m_time = t_timestamp(0, 0);
+	this->setTime(t_timestamp(0,0));
 	this->m_gvt = t_timestamp(0, 0);
+}
+
+void n_model::Core::receiveMessage(const t_msgptr& msg){
+	t_timestamp msgtime = msg->getTimeStamp();
+	if(msgtime < this->getTime()){
+		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
+	}else{
+		std::string destination = msg->getDestinationModel();
+		this->m_received_messages[destination].push(msg);
+	}
+}
+
+
+void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag){
+	/**
+	 * Check if we have pending messages with time <= (now, oo);
+	 * If so, add them to the mailbag
+	 */
+	t_timestamp nowtime = makeLatest(this->getTime());
+	for(auto& modelqueue : this->m_received_messages){
+		std::string modelname = modelqueue.first;
+		if(not modelqueue.second.empty()){
+			auto message = modelqueue.second.top();
+			mailbag[modelname] = std::vector<t_msgptr>();
+			while(message->getTimeStamp()<= nowtime){
+				modelqueue.second.pop();
+				mailbag[modelname].push_back(message);
+				if(modelqueue.second.empty()){
+					break;
+				}else{
+					message = modelqueue.second.top();
+				}
+			}
+		}
+	}
+}
+
+t_timestamp
+n_model::Core::getFirstMessageTime()const{
+	t_timestamp mintime = t_timestamp::infinity();
+	for(const auto& modelqueue : this->m_received_messages){
+		if(not modelqueue.second.empty()){
+			auto msg = modelqueue.second.top();
+			if(msg->getTimeStamp() < mintime){
+				mintime = msg->getTimeStamp();
+			}
+		}
+	}
+	return mintime;
 }
