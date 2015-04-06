@@ -8,6 +8,23 @@
 #include "globallog.h"
 #include "objectfactory.h"
 
+
+n_model::Core::~Core(){
+	// Make sure we don't keep stale pointers alive
+	for(auto& model : m_models){
+		model.second.reset();
+	}
+	m_models.clear();
+	for(auto& msgqueue : m_received_messages){
+		auto& queue = msgqueue.second;
+		while(not queue.empty()){
+			auto msgtop = queue.top();
+			queue.pop();
+			msgtop.reset();
+		}
+	}
+}
+
 void n_model::Core::load(const std::string&)
 {
 	throw std::logic_error("Core : load not implemented");

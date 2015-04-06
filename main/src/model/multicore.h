@@ -26,7 +26,10 @@ private:
 public:
 	Multicore()=delete;
 	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable);
-	virtual ~Multicore(){;}
+	/**
+	 * Resets ptrs to network and locationtable.
+	 */
+	virtual ~Multicore();
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name

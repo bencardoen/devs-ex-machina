@@ -10,6 +10,11 @@
 using namespace n_model;
 using n_control::t_location_tableptr;
 
+Multicore::~Multicore(){
+	this->m_loctable.reset();
+	this->m_network.reset();
+}
+
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable)
 :Core(coreid), m_network(net) , m_loctable(ltable)
 {
@@ -17,7 +22,6 @@ Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_locati
 
 void
 Multicore::sendMessage(const t_msgptr& msg){
-	// TODO lookup msg destination field to get Core destination field.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	msg->setDestinationCore(coreid);
 	this->m_network->acceptMessage(msg);

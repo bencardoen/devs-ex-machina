@@ -128,7 +128,10 @@ protected:
 	Core(std::size_t id);
 
 public:
-	virtual ~Core() = default;
+	/**
+	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
+	 */
+	virtual ~Core();
 
 	/**
 	 * Serialize this core to file fname.
