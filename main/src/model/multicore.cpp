@@ -17,6 +17,9 @@ Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_locati
 
 void
 Multicore::sendMessage(const t_msgptr& msg){
+	// TODO lookup msg destination field to get Core destination field.
+	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
+	msg->setDestinationCore(coreid);
 	this->m_network->acceptMessage(msg);
 }
 
@@ -38,18 +41,4 @@ Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	}
 }
 
-
-bool
-Multicore::isMessageLocal(const t_msgptr& msg)const{
-	std::string destname = msg->getDestinationModel();
-	const bool local = this->containsModel(destname);
-	if (local) {
-		msg->setDestinationCore(this->getCoreID());
-		return true;
-	} else {
-		const size_t destid = m_loctable->lookupModel(destname);
-		msg->setDestinationCore(destid);
-		return false;
-	}
-}
 

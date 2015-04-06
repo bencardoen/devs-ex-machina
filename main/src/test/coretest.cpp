@@ -13,6 +13,7 @@
 #include "multicore.h"
 #include "trafficlight.h"
 #include "trafficlightc.h"
+#include "policemanc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -25,6 +26,7 @@ using namespace n_examples;
 
 typedef n_examples::TrafficLight ATOMIC_TRAFFICLIGHT;
 typedef n_examples_coupled::TrafficLight COUPLED_TRAFFICLIGHT;
+typedef n_examples_coupled::Policeman COUPLED_POLICEMAN;
 
 TEST(ModelEntry, Scheduling)
 {
@@ -189,6 +191,45 @@ TEST(Core, terminationfunction)
 	EXPECT_TRUE(c->terminated() == true);
 	EXPECT_TRUE(c->isLive() == false);
 	c->removeModel("Amodel");
+}
+
+TEST(Core, Messaging)
+{
+	RecordProperty("description", "Core simulation steps with term function.");
+	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
+	t_atomicmodelptr modellight = createObject<COUPLED_TRAFFICLIGHT>("mylight");
+	t_atomicmodelptr modelcop = createObject<COUPLED_POLICEMAN>("mycop");
+	c->addModel(modellight);
+	c->addModel(modelcop);
+
+	c->init();
+	auto finaltime = c->getTerminationTime();
+	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	t_timestamp coretimebefore = c->getTime();
+	c->setLive(true);
+	EXPECT_TRUE(c->terminated() == false);
+	EXPECT_TRUE(c->isLive() == true);
+	t_timestamp timemessagelight(59,0);
+	t_timestamp timemessagecop(59,1);
+	// Set time slightly before first firing to detect if messagetimestamp can overrule firing.
+	c->setTime(t_timestamp(50,0));	// Note that otherwise getTime would be 60 (first transition)
+	auto msgtolight = createObject<Message>("mylight", timemessagelight, "dport", "sport", "payload");
+	auto msgtocop = createObject<Message>("mycop", timemessagecop, "dport", "sport", "payload");
+	std::vector<t_msgptr> messages;
+	messages.push_back(msgtolight);
+	messages.push_back(msgtocop);
+	c->sortMail(messages);
+	EXPECT_EQ(c->getFirstMessageTime(), timemessagelight);
+	c->syncTime();
+	EXPECT_EQ(c->getTime(), timemessagelight);
+	EXPECT_FALSE(c->getTime() == timemessagecop);
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
+	c->getPendingMail(mailbag);
+	EXPECT_EQ(mailbag["mylight"][0], msgtolight);
+	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
 }
 
 void core_worker(const t_coreptr& core)

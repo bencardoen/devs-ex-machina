@@ -127,12 +127,6 @@ protected:
 	 */
 	Core(std::size_t id);
 
-	/**
-	 * Allow multicore implementation to directly modify time. (GVT etc)
-	 */
-	void
-	setTime(const t_timestamp&);
-
 public:
 	virtual ~Core() = default;
 
@@ -214,12 +208,19 @@ public:
 	syncTime();
 
 	/**
+	 * Allow multicore implementation to directly modify time. (GVT etc)
+	 */
+	void
+	setTime(const t_timestamp&);
+
+	/**
 	 * Run a single DEVS simulation step:
 	 * 	- collect output
 	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
-	 * 	- sync & reschedule
+	 * 	- reschedule fired models
+	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
 	 */
 	virtual
@@ -227,6 +228,7 @@ public:
 
 	/**
 	 * Collect output from all models, sort them in the mailbag by destination name.
+	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
 	collectOutput();
@@ -236,7 +238,7 @@ public:
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
-		;
+		assert(false && "A message for a remote core in a single core implemenation.");
 	}
 
 	/**
@@ -281,6 +283,13 @@ public:
 	 */
 	void
 	printSchedulerState();
+
+	/**
+	 * Print all queued messages.
+	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
+	 */
+	void
+	printPendingMessages();
 
 	/**
 	 * Given a set of messages, sort them by model destination.

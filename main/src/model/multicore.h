@@ -43,11 +43,6 @@ public:
 	 */
 	virtual void sortIncoming(const std::vector<t_msgptr>& messages);
 
-	/**
-	 * Query the locationtable to see if message is destined for local/net.
-	 */
-	virtual
-	bool isMessageLocal(const t_msgptr&)const override;
 
 };
 

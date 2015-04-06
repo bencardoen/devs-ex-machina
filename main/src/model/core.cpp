@@ -27,18 +27,18 @@ n_model::Core::Core(std::size_t id)
 	m_coreid = id;
 	assert(m_time == t_timestamp(0,0));
 	assert(m_live == false);
-	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
-	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 {
+	/**
+	 *  Got a generated message from my own models, figure out if destination is local.
+	 */
 	const bool found = this->containsModel(msg->getDestinationModel());
 	if (found) {
 		msg->setDestinationCore(this->getCoreID());
 		return true;
 	} else {
-		assert(false && "Message to model destination not in single core ??");
 		return false;
 	}
 }
@@ -56,7 +56,7 @@ void n_model::Core::revert(t_timestamp)
 void n_model::Core::addModel(t_atomicmodelptr model)
 {
 	std::string mname = model->getName();
-	assert(this->m_models.find(mname) == this->m_models.end() && "Model allready in core.");
+	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
 }
 
@@ -73,7 +73,6 @@ bool n_model::Core::containsModel(const std::string& mname) const
 
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
-	// Add call to priority for coupled models.
 	if (this->m_models.find(name) != this->m_models.end()) {
 		ModelEntry entry(name, t);
 		this->m_scheduler->push_back(entry);
@@ -113,6 +112,11 @@ void n_model::Core::collectOutput()
 	for (const auto& modelentry : m_models) {
 		const auto& model = modelentry.second;
 		auto mailfrom = model->output();
+		LOG_DEBUG("CORE: got ", mailfrom.size(), " messages from ", modelentry.first);
+		// Model has no clue what time it is, set timestamp now.
+		for(const auto& msg : mailfrom){
+			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));
+		}
 		this->sortMail(mailfrom);
 	}
 }
@@ -120,10 +124,8 @@ void n_model::Core::collectOutput()
 void n_model::Core::transition(std::set<std::string>& imminents,
         std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
 {
-	/**
-	 * For imminents : if message, confluent, else internal
-	 * For others : external
-	 */
+	// Imminents : need at least internal transition
+	// Mail : models with pending messages (ext or confluent)
 	LOG_DEBUG("CORE: Transitioning with ", imminents.size(), " imminents, and ", mail.size(),
 	        " models to deliver mail to.");
 	for (const auto& imminent : imminents) {
@@ -131,45 +133,43 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {
 			urgent->intTransition();
-			urgent->setTime(this->m_time);
+			urgent->setTime(this->getTime());
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);
-			urgent->setTime(this->m_time);
-			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
+			urgent->setTime(this->getTime());
 			this->traceConf(urgent);
+
+			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
 	}
 
-	for (const auto& remaining : mail) {
+	for (const auto& remaining : mail) {		// Models with pending mail only
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
-		model->setTime(this->m_time);
-		t_timestamp queried = model->timeAdvance();
-		// If a model 'wakes up' after an event (ta goes from infinity to a scheduleable value), make sure we reschedule it.
+		model->setTime(this->getTime());
+		this->traceExt(model);
+
+		t_timestamp queried = model->timeAdvance();	// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried,
 			        " rescheduling.");
 			imminents.insert(model->getName());
 		}
-		this->traceExt(model);
 	}
 }
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
 	for (const auto & message : messages) {
+		LOG_DEBUG("CORE: sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
-			this->sendMessage(message);
+			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		}else{
 			this->receiveMessage(message);
 		}
 	}
-	// At this point we have sent all remote messages, sorted the rest for local delivery.
-	// Add a hook to multicore pull from network.
-	// This request the network to put in any messages into our mailbag.
-	getMessages();
 }
 
 void n_model::Core::printSchedulerState()
@@ -186,7 +186,7 @@ std::set<std::string> n_model::Core::getImminent()
 	ModelEntry mark("", maxtime);
 	this->m_scheduler->unschedule_until(bag, mark);
 	if (bag.size() == 0) {
-		LOG_ERROR("CORE: No imminent models ??");
+		LOG_WARNING("CORE: No imminent models ??");
 	}
 	for (const auto& entry : bag) {
 		bool inserted = imminent.insert(entry.getName()).second;
@@ -224,6 +224,7 @@ void n_model::Core::syncTime()
 	 * Find out what is less, message time or next firing time, and update core with that value.
 	 */
 	t_timestamp firstmessagetime = this->getFirstMessageTime();
+	LOG_DEBUG("CORE first messagetime = ", firstmessagetime);
 	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
 		nextfired = this->m_scheduler->top().getTime();
@@ -231,6 +232,10 @@ void n_model::Core::syncTime()
 		LOG_WARNING("CORE:: Core has no scheduled models.");
 	}
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
+	if(this->getTime() > newtime){
+		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:",this->getTime(), " new time :", newtime);
+		assert(false);// crash hard.
+	}
 	this->setTime(newtime);
 
 
@@ -327,8 +332,6 @@ void n_model::Core::setTerminationTime(t_timestamp endtime)
 	this->m_termtime = endtime;
 }
 
-
-
 n_network::t_timestamp n_model::Core::getTerminationTime() const
 {
 	return m_termtime;
@@ -357,7 +360,7 @@ void n_model::Core::checkTerminationFunction()
 			}
 		}
 	} else {
-		LOG_ERROR("CORE: Termination functor == nullptr, not evaluating.");
+		LOG_WARNING("CORE: Termination functor == nullptr, not evaluating.");
 	}
 }
 
@@ -400,8 +403,10 @@ void n_model::Core::clearModels()
 }
 
 void n_model::Core::receiveMessage(const t_msgptr& msg){
+	LOG_DEBUG("CORE:: receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
 	if(msgtime < this->getTime()){
+		// TODO trigger revert/synchro here.
 		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
 	}else{
 		std::string destination = msg->getDestinationModel();
@@ -446,4 +451,18 @@ n_model::Core::getFirstMessageTime()const{
 		}
 	}
 	return mintime;
+}
+
+void
+n_model::Core::printPendingMessages(){
+	auto copypending = this->m_received_messages;
+	for(auto& modelqueue : copypending){
+		std::cout << "Messages for " << modelqueue.first << std::endl;
+		auto queued = modelqueue.second;
+		while(not queued.empty()){
+			auto msg = queued.top();
+			std::cout << msg->toString() << std::endl;
+			queued.pop();
+		}
+	}
 }
