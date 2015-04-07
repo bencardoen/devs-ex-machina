@@ -153,6 +153,15 @@ TEST(DynamicCore, smallStep)
 		EXPECT_EQ(imms[0],modelfrom);
 		EXPECT_EQ(imms[1], modelto);
 	}
+	// This is not how to run a core, but a check of safety blocks.
+	c->setLive(true);
+	c->removeModel("Amodel");
+	EXPECT_EQ(c->containsModel("Amodel"), false);
+	c->removeModel("toBen");
+	EXPECT_EQ(c->containsModel("toBen"), false);
+	c->runSmallStep();
+	c->getLastImminents(imms);
+	EXPECT_EQ(imms.size(), 0);
 }
 
 class termfun: public n_model::TerminationFunctor

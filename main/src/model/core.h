@@ -361,8 +361,11 @@ public:
 	setTerminationFunction(const t_terminationfunctor&);
 
 	/**
-	 * Remove model from this core.
-	 * @pre isLive()==false
+	 * Remove model with specified name from this core (if present).
+	 * This removes the model, unschedules it (if it is scheduled). It does
+	 * not remove queued messages for this model, but the core takes this into
+	 * account.
+	 * @attention : call only in single core or if core is not live.
 	 * @post name is no longer scheduled/present.
 	 */
 	void

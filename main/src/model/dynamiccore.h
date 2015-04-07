@@ -18,11 +18,11 @@ namespace n_model {
 class DynamicCore: public Core
 {
 private:
-	std::vector<t_atomicmodelptr>	m_lastimminents;
+	std::vector<t_atomicmodelptr> m_lastimminents;
 protected:
 	/**
 	 * Called during Simulation Step.
-	 * Parameters contains names of models transitioned in the last step,
+	 * Parameter contains names of models transitioned in the last step,
 	 * atomicmodelptrs are retrieved and stored in m_lastimminents;
 	 */
 	void
@@ -35,7 +35,7 @@ public:
 	/**
 	 * Called in case of Dynamic structured Devs.
 	 * Stores imminent models into parameter.
-	 * @attention : noop in superclass
+	 * Controller calls this to check which models have transitioned (int||conf).
 	 */
 	virtual
 	void

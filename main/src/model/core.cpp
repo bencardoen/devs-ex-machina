@@ -10,9 +10,10 @@
 
 using n_network::MessageEntry;
 
-n_model::Core::~Core(){
+n_model::Core::~Core()
+{
 	// Make sure we don't keep stale pointers alive
-	for(auto& model : m_models){
+	for (auto& model : m_models) {
 		model.second.reset();
 	}
 	m_models.clear();
@@ -37,7 +38,7 @@ n_model::Core::Core(std::size_t id)
 	: Core()
 {
 	m_coreid = id;
-	assert(m_time == t_timestamp(0,0));
+	assert(m_time == t_timestamp(0, 0));
 	assert(m_live == false);
 }
 
@@ -119,7 +120,7 @@ void n_model::Core::collectOutput()
 		auto mailfrom = model->output();
 		LOG_DEBUG("CORE: got ", mailfrom.size(), " messages from ", modelentry.first);
 		// Model has no clue what time it is, set timestamp now.
-		for(const auto& msg : mailfrom){
+		for (const auto& msg : mailfrom) {
 			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));
 		}
 		this->sortMail(mailfrom);
@@ -156,7 +157,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->setTime(this->getTime());
 		this->traceExt(model);
 
-		t_timestamp queried = model->timeAdvance();	// A previously inactive model can be awoken, make sure we check this.
+		t_timestamp queried = model->timeAdvance();// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried,
 			        " rescheduling.");
@@ -171,7 +172,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 		LOG_DEBUG("CORE: sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
-		}else{
+		} else {
 			this->receiveMessage(message);
 		}
 	}
@@ -236,12 +237,11 @@ void n_model::Core::syncTime()
 		LOG_WARNING("CORE:: Core has no scheduled models.");
 	}
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
-	if(this->getTime() > newtime){
-		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:",this->getTime(), " new time :", newtime);
-		assert(false);// crash hard.
+	if (this->getTime() > newtime) {
+		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
+		assert(false);	// crash hard.
 	}
 	this->setTime(newtime);
-
 
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
@@ -275,8 +275,7 @@ std::size_t n_model::Core::getCoreID() const
 	return m_coreid;
 }
 
-void
-n_model::Core::runSmallStep()
+void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 
@@ -376,13 +375,16 @@ void n_model::Core::checkTerminationFunction()
 
 void n_model::Core::removeModel(std::string name)
 {
-	// Removing model : needs messages cleaned.
-	assert(this->isLive() == false && "Can't remove model from live core.");
-	std::size_t erased = this->m_models.erase(name);
-	assert(erased != 0 && "Trying to remove model not in this core ??");
-	ModelEntry target(name, t_timestamp(0, 0));
-	this->m_scheduler->erase(target);
-	assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
+	if(this->containsModel(name)){
+		std::size_t erased = this->m_models.erase(name);
+		assert(erased >0 && "Failed to erase model ??");
+		ModelEntry target(name, t_timestamp(0, 0));
+		this->m_scheduler->erase(target);
+		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
+	}
+	else{
+		LOG_WARNING("Core :: you've aksed to remove model with name ", name, " which is not in this core.");
+	}
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
@@ -410,24 +412,25 @@ void n_model::Core::clearModels()
 	this->m_models.clear();
 	this->m_scheduler->clear();
 	this->m_received_messages->clear();
-	this->setTime(t_timestamp(0,0));
+	this->setTime(t_timestamp(0, 0));
 	this->m_gvt = t_timestamp(0, 0);
 }
 
-void n_model::Core::receiveMessage(const t_msgptr& msg){
+void n_model::Core::receiveMessage(const t_msgptr& msg)
+{
 	LOG_DEBUG("CORE:: receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
-	if(msgtime < this->getTime()){
+	if (msgtime < this->getTime()) {
 		// TODO trigger revert/synchro here.
 		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
-	}else{
+	} else {
 		MessageEntry entry(msg);
 		this->m_received_messages->push_back(entry);
 	}
 }
 
-
-void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag){
+void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)
+{
 	/**
 	 * Check if we have pending messages with time <= (now, oo);
 	 * If so, add them to the mailbag
@@ -437,26 +440,37 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>("", nowtime, "", "", "");
 	MessageEntry tokentime(token);
 	this->m_received_messages->unschedule_until(messages, tokentime);
-	for(const auto& entry : messages){
+	for (const auto& entry : messages) {
 		std::string modelname = entry.getMessage()->getDestinationModel();
-		if(mailbag.find(modelname)==mailbag.end()){
-			mailbag[modelname] = std::vector<t_msgptr>();
+		if (not this->containsModel(modelname)) {//In Dynamic Struc Devs it can happen a model is removed in a live simulation
+			continue;//if so, it can be that there a still messages queued without valid destination, we need to skip these.
+		} else {
+			if (mailbag.find(modelname) == mailbag.end()) {
+				mailbag[modelname] = std::vector<t_msgptr>();
+			}
+			mailbag[modelname].push_back(entry.getMessage());
 		}
-		mailbag[modelname].push_back(entry.getMessage());
 	}
 }
 
-t_timestamp
-n_model::Core::getFirstMessageTime()const{
+t_timestamp n_model::Core::getFirstMessageTime() const
+{
 	t_timestamp mintime = t_timestamp::infinity();
-	if(not this->m_received_messages->empty()){
+	while (not this->m_received_messages->empty()) {// We need to skip messages with destmodel not in this core (dyn structured)
 		MessageEntry first = this->m_received_messages->top();
-		mintime = first.getMessage()->getTimeStamp();
+		std::string modeldest = first.getMessage()->getDestinationModel();
+		if (this->containsModel(modeldest)) {
+			mintime = first.getMessage()->getTimeStamp();
+			return mintime;
+		} else {
+			LOG_DEBUG("Core : removing message from msgqueue with destination ", modeldest);
+			this->m_received_messages->pop();
+		}
 	}
 	return mintime;
 }
 
-void
-n_model::Core::printPendingMessages(){
+void n_model::Core::printPendingMessages()
+{
 	this->m_received_messages->printScheduler();
 }

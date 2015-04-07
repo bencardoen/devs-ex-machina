@@ -17,15 +17,15 @@ DynamicCore::~DynamicCore()
 {
 }
 
-void
-DynamicCore::getLastImminents(std::vector<t_atomicmodelptr>& imms){
+void DynamicCore::getLastImminents(std::vector<t_atomicmodelptr>& imms)
+{
 	imms = this->m_lastimminents;
 }
 
-void
-DynamicCore::signalImminent(const std::set<std::string>& imminents){
+void DynamicCore::signalImminent(const std::set<std::string>& imminents)
+{
 	this->m_lastimminents.clear();
-	for(const auto& immname : imminents){
+	for (const auto& immname : imminents) {
 		assert(this->containsModel(immname) && "imminent model not in core ??");
 		t_atomicmodelptr model = this->getModel(immname);
 		this->m_lastimminents.push_back(model);

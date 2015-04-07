@@ -77,6 +77,9 @@ namespace std {
 template<>
 struct hash<n_network::MessageEntry>
 {
+	/**
+	 * Use the hash function of Message (which we're pointing to).
+	 */
 	size_t operator()(const n_network::MessageEntry& item) const
 	{
 		size_t hashvalue = std::hash<n_network::Message>()(*(item.getMessage()));

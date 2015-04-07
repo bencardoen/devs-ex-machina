@@ -160,13 +160,14 @@ struct compare_msgptr{
 } // end namespace n_network
 
 
-/**
- * Hash specialization for Message. Appends all const member strings , then hashes that value.
- */
+
 namespace std {
 template<>
 struct hash<n_network::Message>
 {
+	/**
+	 * Hash specialization for Message. Appends all const members to string, hashes result. (aka poor man's hash)
+	 */
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
