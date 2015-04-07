@@ -9,8 +9,8 @@
 #include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
+#include "messageentry.h"
 #include "tracers.h"
-#include <queue>
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -22,12 +22,13 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 
 
-typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
+//typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
 
 /**
- * Typedef used by core.
+ * Typedefs used by core.
  */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
+typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
@@ -60,7 +61,7 @@ private:
 	/**
 	 * Store received messages (local and networked)
 	 */
-	std::unordered_map<std::string, t_msgqueue>	m_received_messages;
+	t_msgscheduler	m_received_messages;
 
 	/**
 	 * Indicate if this core can/should run.
@@ -126,6 +127,14 @@ protected:
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
 	 */
 	Core(std::size_t id);
+
+	/**
+	 * Subclass hook. Is called after imminents are collected.
+	 * Superclass does nothing.
+	 */
+	virtual
+	void
+	signalImminent(const std::set<std::string>& ){;}
 
 public:
 	/**
@@ -199,6 +208,17 @@ public:
 	getImminent();
 
 	/**
+	 * Called in case of Dynamic structured Devs.
+	 * Stores imminent models into parameter (which is cleared first)
+	 * @attention : noop in superclass
+	 */
+	virtual
+	void
+	getLastImminents(std::vector<t_atomicmodelptr>&){
+		assert(false && "Not supported in non dynamic structured devs");
+	}
+
+	/**
 	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
 	 */
 	void
@@ -225,9 +245,12 @@ public:
 	 * 	- reschedule fired models
 	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
+	 * @return Models who have transitioned (internal or confluent)
+	 * @attention null return value for superclass.
 	 */
 	virtual
-	void runSmallStep();
+	void
+	runSmallStep();
 
 	/**
 	 * Collect output from all models, sort them in the mailbag by destination name.

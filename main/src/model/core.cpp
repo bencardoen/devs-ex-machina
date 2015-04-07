@@ -8,6 +8,7 @@
 #include "globallog.h"
 #include "objectfactory.h"
 
+using n_network::MessageEntry;
 
 n_model::Core::~Core(){
 	// Make sure we don't keep stale pointers alive
@@ -15,14 +16,7 @@ n_model::Core::~Core(){
 		model.second.reset();
 	}
 	m_models.clear();
-	for(auto& msgqueue : m_received_messages){
-		auto& queue = msgqueue.second;
-		while(not queue.empty()){
-			auto msgtop = queue.top();
-			queue.pop();
-			msgtop.reset();
-		}
-	}
+	m_received_messages->clear();
 }
 
 void n_model::Core::load(const std::string&)
@@ -34,6 +28,7 @@ n_model::Core::Core()
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
 	        false)
 {
+	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
@@ -109,13 +104,6 @@ void n_model::Core::init()
 	if (not this->m_scheduler->empty()) {
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->m_time);
-	}
-	for (const auto& model : this->m_models){
-		std::string modelname = model.first;
-		if(this->m_received_messages.find(modelname)== this->m_received_messages.end()){
-			m_received_messages[modelname] = t_msgqueue();
-			LOG_DEBUG("CORE:: made new msgqueue for model", modelname);
-		}
 	}
 }
 
@@ -232,7 +220,6 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 			LOG_INFO("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
 		}
 	}
-	this->syncTime();
 }
 
 void n_model::Core::syncTime()
@@ -288,12 +275,16 @@ std::size_t n_model::Core::getCoreID() const
 	return m_coreid;
 }
 
-void n_model::Core::runSmallStep()
+void
+n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
+
+	// Give DynStructured Devs a chance to store imminent models.
+	this->signalImminent(imminent);
 
 	// Get all produced messages, and route them.
 	this->collectOutput();
@@ -309,8 +300,10 @@ void n_model::Core::runSmallStep()
 	this->transition(imminent, mailbag);
 
 	// Finally find out what next firing times are and place models accordingly.
-	// This also sets the kernel time and checks if termination time is reached.
 	this->rescheduleImminent(imminent);
+
+	// Forward time to next message/firing.
+	this->syncTime();
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
@@ -383,6 +376,7 @@ void n_model::Core::checkTerminationFunction()
 
 void n_model::Core::removeModel(std::string name)
 {
+	// Removing model : needs messages cleaned.
 	assert(this->isLive() == false && "Can't remove model from live core.");
 	std::size_t erased = this->m_models.erase(name);
 	assert(erased != 0 && "Trying to remove model not in this core ??");
@@ -415,6 +409,7 @@ void n_model::Core::clearModels()
 	LOG_DEBUG("CORE:: removing all models from core.");
 	this->m_models.clear();
 	this->m_scheduler->clear();
+	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0,0));
 	this->m_gvt = t_timestamp(0, 0);
 }
@@ -426,8 +421,8 @@ void n_model::Core::receiveMessage(const t_msgptr& msg){
 		// TODO trigger revert/synchro here.
 		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
 	}else{
-		std::string destination = msg->getDestinationModel();
-		this->m_received_messages[destination].push(msg);
+		MessageEntry entry(msg);
+		this->m_received_messages->push_back(entry);
 	}
 }
 
@@ -438,48 +433,30 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	 * If so, add them to the mailbag
 	 */
 	t_timestamp nowtime = makeLatest(this->getTime());
-	for(auto& modelqueue : this->m_received_messages){
-		std::string modelname = modelqueue.first;
-		if(not modelqueue.second.empty()){
-			auto message = modelqueue.second.top();
+	std::vector<MessageEntry> messages;
+	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>("", nowtime, "", "", "");
+	MessageEntry tokentime(token);
+	this->m_received_messages->unschedule_until(messages, tokentime);
+	for(const auto& entry : messages){
+		std::string modelname = entry.getMessage()->getDestinationModel();
+		if(mailbag.find(modelname)==mailbag.end()){
 			mailbag[modelname] = std::vector<t_msgptr>();
-			while(message->getTimeStamp()<= nowtime){
-				modelqueue.second.pop();
-				mailbag[modelname].push_back(message);
-				if(modelqueue.second.empty()){
-					break;
-				}else{
-					message = modelqueue.second.top();
-				}
-			}
 		}
+		mailbag[modelname].push_back(entry.getMessage());
 	}
 }
 
 t_timestamp
 n_model::Core::getFirstMessageTime()const{
 	t_timestamp mintime = t_timestamp::infinity();
-	for(const auto& modelqueue : this->m_received_messages){
-		if(not modelqueue.second.empty()){
-			auto msg = modelqueue.second.top();
-			if(msg->getTimeStamp() < mintime){
-				mintime = msg->getTimeStamp();
-			}
-		}
+	if(not this->m_received_messages->empty()){
+		MessageEntry first = this->m_received_messages->top();
+		mintime = first.getMessage()->getTimeStamp();
 	}
 	return mintime;
 }
 
 void
 n_model::Core::printPendingMessages(){
-	auto copypending = this->m_received_messages;
-	for(auto& modelqueue : copypending){
-		std::cout << "Messages for " << modelqueue.first << std::endl;
-		auto queued = modelqueue.second;
-		while(not queued.empty()){
-			auto msg = queued.top();
-			std::cout << msg->toString() << std::endl;
-			queued.pop();
-		}
-	}
+	this->m_received_messages->printScheduler();
 }

@@ -11,6 +11,7 @@
 #include "objectfactory.h"
 #include "core.h"
 #include "multicore.h"
+#include "dynamiccore.h"
 #include "trafficlight.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
@@ -116,36 +117,42 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
+	c.syncTime();
 	imminent = c.getImminent();
 	//for(const auto& el : imminent)		std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
+	c.syncTime();
 	EXPECT_EQ(imminent.size(), 2);
 }
 
-TEST(Core, smallStep)
+TEST(DynamicCore, smallStep)
 {
-	RecordProperty("description", "Core simulation steps and termination conditions");
-	t_coreptr c = createObject<Core>();
+	t_coreptr c = createObject<DynamicCore>();
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	c->setTracers(tracers);
-	//TODO Matthijs : Creating the tracers should be done by the user, not the Controller
-	// Add Models
 	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
 	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	c->addModel(modelfrom);
 	c->addModel(modelto);
-
-	// Initialize (loads models by ta() into scheduler
 	c->init();
-	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-
 	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
+	std::vector<t_atomicmodelptr> imms;
+	c->getLastImminents(imms);
+	EXPECT_EQ(imms.size(), 0);
+	c->setLive(true);
+	while(c->isLive()){
+		c->runSmallStep();
+		c->getLastImminents(imms);
+		EXPECT_EQ(imms.size(), 2);
+		EXPECT_EQ(imms[0],modelfrom);
+		EXPECT_EQ(imms[1], modelto);
+	}
 }
 
 class termfun: public n_model::TerminationFunctor
