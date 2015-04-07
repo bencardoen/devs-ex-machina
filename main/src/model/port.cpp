@@ -80,8 +80,9 @@ t_zfunc Port::getZFunc(const std::shared_ptr<Port>& port) const
  */
 bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
 {
-	if (m_outs.find(port) != m_outs.end())
+	if (m_outs.find(port) != m_outs.end()) {
 		return false;
+	}
 	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc>(port, function));
 	return true;
 }
@@ -167,6 +168,14 @@ std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts()
 const std::vector<t_portptr>& Port::getCoupledIns() const
 {
 	return m_coupled_ins;
+}
+
+void Port::clear()
+{
+	m_ins.clear();
+	m_outs.clear();
+	m_coupled_ins.clear();
+	m_coupled_outs.clear();
 }
 
 const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const

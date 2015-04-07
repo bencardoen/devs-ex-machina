@@ -49,6 +49,13 @@ public:
 	Model(std::string name);
 	virtual ~Model()
 	{
+		for (auto& p : m_iPorts) {
+			p.second->clear();
+
+		}
+		for (auto& p : m_oPorts) {
+			p.second->clear();
+		}
 	}
 
 	std::string getName() const;

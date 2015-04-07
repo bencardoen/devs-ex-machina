@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "message.h"
 #include "zfunc.h"
+#include "globallog.h"
 
 namespace n_model {
 
@@ -45,6 +46,7 @@ public:
 	t_zfunc getZFunc(const t_portptr& port) const;
 	bool setZFunc(const t_portptr& port, t_zfunc function);
 	bool setInPort(const t_portptr& port);
+	void clear();
 
 	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
 	void setInPortCoupled(const t_portptr& port);
