@@ -10,7 +10,9 @@
 
 #include "timestamp.h"
 #include "stringtools.h"
+#include "globallog.h"
 #include <cassert>
+#include <sstream>
 
 namespace n_network {
 
@@ -123,6 +125,25 @@ public:
 	{
 		;
 	}
+
+	friend
+	bool operator==(const Message& left, const Message& right){
+		return(
+			left.getDestinationModel()==right.getDestinationModel()
+			&&
+			left.getDestinationPort() == right.getDestinationPort()
+			&&
+			left.getSourcePort() == right.getSourcePort()
+			&&
+			left.getTimeStamp() == right.getTimeStamp()
+		);
+	}
+
+	friend
+	bool operator!=(const Message& left, const Message& right){
+		return (not (left == right));
+	}
+
 };
 
 typedef std::shared_ptr<Message> t_msgptr;
@@ -136,8 +157,26 @@ struct compare_msgptr{
 	}
 };
 
-} // end namespace
+} // end namespace n_network
 
+
+/**
+ * Hash specialization for Message. Appends all const member strings , then hashes that value.
+ */
+namespace std {
+template<>
+struct hash<n_network::Message>
+{
+	size_t operator()(const n_network::Message& message) const
+	{
+		std::stringstream ss;
+		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel() << message.getTimeStamp();
+		std::string hashkey = ss.str();
+		//LOG_DEBUG("MESSAGE HASH ", hashkey);
+		return std::hash<std::string>()(hashkey);
+	}
+};
+}	// end namespace std
 
 
 #endif /* SRC_NETWORK_MESSAGE_H_ */

@@ -48,7 +48,7 @@ bool UnSynchronizedScheduler<X, R>::empty() const {
 
 template<typename X, typename R>
 bool UnSynchronizedScheduler<X, R>::isLockable() const {
-	return true;
+	return false;
 }
 
 template<typename X, typename R>
