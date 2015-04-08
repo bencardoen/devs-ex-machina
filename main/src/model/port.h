@@ -12,10 +12,14 @@
 #include <map>
 #include <algorithm>
 #include "message.h"
+#include "zfunc.h"
+#include "globallog.h"
 
 namespace n_model {
 
-typedef std::function<n_network::t_msgptr(const n_network::t_msgptr&)> t_zfunc;
+class Port;
+
+typedef std::shared_ptr<Port> t_portptr;
 
 class Port
 {
@@ -24,10 +28,11 @@ private:
 	std::string m_hostname;
 	bool m_inputPort;
 
-	std::vector<std::shared_ptr<Port> > m_ins;
-	std::map<std::shared_ptr<Port>, t_zfunc> m_outs;
+	std::vector<t_portptr > m_ins;
+	std::map<t_portptr, t_zfunc> m_outs;
 
-	std::map<std::shared_ptr<Port>, t_zfunc> m_coupled_outs;
+	std::map<t_portptr, std::vector<t_zfunc>> m_coupled_outs;
+	std::vector<t_portptr> m_coupled_ins;
 
 	bool m_usingDirectConnect;
 
@@ -38,17 +43,26 @@ public:
 	std::string getFullName() const;
 	std::string getHostName() const;
 	bool isInPort() const;
-	std::function<void(const n_network::t_msgptr&)> getZFunc(const std::shared_ptr<Port>& port) const;
-	bool setZFunc(const std::shared_ptr<Port>& port, t_zfunc function);
-	bool setInPort(const std::shared_ptr<Port>& port);
+	t_zfunc getZFunc(const t_portptr& port) const;
+	bool setZFunc(const t_portptr& port, t_zfunc function);
+	bool setInPort(const t_portptr& port);
+	void clear();
 
-	bool setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function);
+	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
+	void setInPortCoupled(const t_portptr& port);
 	void setUsingDirectConnect(bool dc);
+	void resetDirectConnect();
+	bool isUsingDirectConnect() const;
 
 	std::vector<n_network::t_msgptr> createMessages(std::string message);
+	const std::vector<t_portptr >& getIns() const;
+	const std::map<t_portptr, t_zfunc>& getOuts() const;
+	std::vector<t_portptr >& getIns();
+	std::map<t_portptr, t_zfunc>& getOuts();
+	const std::vector<t_portptr>& getCoupledIns() const;
+	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
 };
 
-typedef std::shared_ptr<Port> t_portptr;
 }
 
 #endif /* PORT_H_ */

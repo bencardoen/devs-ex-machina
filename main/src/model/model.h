@@ -49,6 +49,13 @@ public:
 	Model(std::string name);
 	virtual ~Model()
 	{
+		for (auto& p : m_iPorts) {
+			p.second->clear();
+
+		}
+		for (auto& p : m_oPorts) {
+			p.second->clear();
+		}
 	}
 
 	std::string getName() const;
@@ -57,6 +64,8 @@ public:
 	void setState(const t_stateptr& newState);
 	const std::map<std::string, t_portptr>& getIPorts() const;
 	const std::map<std::string, t_portptr>& getOPorts() const;
+	std::map<std::string, t_portptr>& getIPorts();
+	std::map<std::string, t_portptr>& getOPorts();
 	const std::deque<n_network::t_msgptr>& getSendMessages() const;
 	const std::deque<n_network::t_msgptr>& getReceivedMessages() const;
 

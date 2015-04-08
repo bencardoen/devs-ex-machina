@@ -91,6 +91,7 @@ add_executable(${PROJECT_NAME}
 	src/model/core.cpp
 	src/model/dynamiccore.cpp
 	src/model/multicore.cpp
+	src/model/zfunc.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
 	src/examples/trafficlight_coupled/trafficlightc.cpp
 	src/examples/trafficlight_coupled/policemanc.cpp

@@ -53,4 +53,4 @@ public:
 
 }
 
-#endif /* SRC_EXAMPLES_TRAFFICLIGHT_H_ */
+#endif /* SRC_EXAMPLES_TRAFFICLIGHTC_H_ */

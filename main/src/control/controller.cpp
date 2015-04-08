@@ -40,7 +40,7 @@ void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 	m_locTab->registerModel(atomic, coreID);
 }
 
-void Controller::addModel(const t_coupledmodelptr& coupled)
+void Controller::addModel(t_coupledmodelptr& coupled)
 {
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	if (m_hasMainModel) { // old models need to be replaced
@@ -48,7 +48,7 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 		emptyAllCores();
 	}
 	throw std::logic_error("Controller : simDSDEVS not implemented");
-	std::vector<t_atomicmodelptr> atomics = m_root->directConnect(coupled);
+	const std::vector<t_atomicmodelptr>& atomics = m_root->directConnect(coupled);
 	for( auto at : atomics ) {
 		addModel(at);
 	}
@@ -171,7 +171,7 @@ bool Controller::check()
 void Controller::emptyAllCores()
 {
 	for (auto core : m_cores) {
-//		core.second->dropModels(); // TODO uncomment when method added
+		core.second->clearModels();
 	}
 	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }

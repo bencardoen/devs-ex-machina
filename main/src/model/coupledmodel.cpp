@@ -40,8 +40,10 @@ void CoupledModel::addSubModel(const t_modelptr& model)
  */
 void CoupledModel::connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction)
 {
+	//TODO make sure that the connection is not illegal!
+	//e.g. connectPorts(portA, portA)
 	p1->setZFunc(p2, zFunction);
-	p2->setInPort(p2);
+	p2->setInPort(p1);
 }
 
 /*
