@@ -10,6 +10,9 @@
 
 #include "timestamp.h"
 #include "stringtools.h"
+#include "globallog.h"
+#include <cassert>
+#include <sstream>
 
 namespace n_network {
 
@@ -122,10 +125,59 @@ public:
 	{
 		;
 	}
+
+	friend
+	bool operator==(const Message& left, const Message& right){
+		return(
+			left.getDestinationModel()==right.getDestinationModel()
+			&&
+			left.getDestinationPort() == right.getDestinationPort()
+			&&
+			left.getSourcePort() == right.getSourcePort()
+			&&
+			left.getTimeStamp() == right.getTimeStamp()
+		);
+	}
+
+	friend
+	bool operator!=(const Message& left, const Message& right){
+		return (not (left == right));
+	}
+
 };
 
 typedef std::shared_ptr<Message> t_msgptr;
 
-} // end namespace
+/**
+ * Comparison object to allow storing msgptrs in min heap queues.
+ */
+struct compare_msgptr{
+	bool operator()( const std::shared_ptr<Message>& left, const std::shared_ptr<Message>& right ) const {
+		return (left->getTimeStamp() > right->getTimeStamp());
+	}
+};
+
+} // end namespace n_network
+
+
+
+namespace std {
+template<>
+struct hash<n_network::Message>
+{
+	/**
+	 * Hash specialization for Message. Appends all const members to string, hashes result. (aka poor man's hash)
+	 */
+	size_t operator()(const n_network::Message& message) const
+	{
+		std::stringstream ss;
+		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel() << message.getTimeStamp();
+		std::string hashkey = ss.str();
+		//LOG_DEBUG("MESSAGE HASH ", hashkey);
+		return std::hash<std::string>()(hashkey);
+	}
+};
+}	// end namespace std
+
 
 #endif /* SRC_NETWORK_MESSAGE_H_ */

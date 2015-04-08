@@ -11,8 +11,10 @@
 #include "objectfactory.h"
 #include "core.h"
 #include "multicore.h"
+#include "dynamiccore.h"
 #include "trafficlight.h"
 #include "trafficlightc.h"
+#include "policemanc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -22,6 +24,10 @@
 using namespace n_model;
 using namespace n_tools;
 using namespace n_examples;
+
+typedef n_examples::TrafficLight ATOMIC_TRAFFICLIGHT;
+typedef n_examples_coupled::TrafficLight COUPLED_TRAFFICLIGHT;
+typedef n_examples_coupled::Policeman COUPLED_POLICEMAN;
 
 TEST(ModelEntry, Scheduling)
 {
@@ -96,8 +102,8 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(c.getCoreID(), 0);
 	std::string portname_stub = "model_port";
 	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
-	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
-	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
+	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
+	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
 	c.addModel(modelfrom);
 	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
@@ -111,49 +117,51 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
+	c.syncTime();
 	imminent = c.getImminent();
 	//for(const auto& el : imminent)		std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
+	c.syncTime();
 	EXPECT_EQ(imminent.size(), 2);
 }
 
-TEST(Core, smallStep)
+TEST(DynamicCore, smallStep)
 {
-	RecordProperty("description", "Core simulation steps and termination conditions");
-	t_coreptr c = createObject<Core>();
+	t_coreptr c = createObject<DynamicCore>();
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	c->setTracers(tracers);
-	//TODO Matthijs : Creating the tracers should be done by the user, not the Controller
-	// Add Models
-	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
-	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
+	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
+	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	c->addModel(modelfrom);
 	c->addModel(modelto);
-
-	// Initialize (loads models by ta() into scheduler
 	c->init();
-	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-
 	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
-
-	t_timestamp coretimebefore = c->getTime();
-	// Switch 'on' Core.
+	std::vector<t_atomicmodelptr> imms;
+	c->getLastImminents(imms);
+	EXPECT_EQ(imms.size(), 0);
 	c->setLive(true);
-	EXPECT_TRUE(c->terminated() == false);
-	EXPECT_TRUE(c->isLive() == true);
-
-	// Run simulation.
+	while(c->isLive()){
+		c->runSmallStep();
+		c->getLastImminents(imms);
+		EXPECT_EQ(imms.size(), 2);
+		EXPECT_EQ(imms[0],modelfrom);
+		EXPECT_EQ(imms[1], modelto);
+	}
+	// This is not how to run a core, but a check of safety blocks.
+	c->setLive(true);
+	c->removeModel("Amodel");
+	EXPECT_EQ(c->containsModel("Amodel"), false);
+	c->removeModel("toBen");
+	EXPECT_EQ(c->containsModel("toBen"), false);
 	c->runSmallStep();
-	t_timestamp coretimeafter = c->getTime();
-	EXPECT_TRUE(coretimebefore < coretimeafter);
-	EXPECT_TRUE(c->terminated() == false);
-	EXPECT_TRUE(c->isLive() == true);
+	c->getLastImminents(imms);
+	EXPECT_EQ(imms.size(), 0);
 }
 
 class termfun: public n_model::TerminationFunctor
@@ -174,8 +182,8 @@ TEST(Core, terminationfunction)
 	tracers->stopTracers();	//disable the output
 	c->setTracers(tracers);
 	// Add Models
-	t_atomicmodelptr modelfrom = createObject<TrafficLight>("Amodel");
-	t_atomicmodelptr modelto = createObject<TrafficLight>("toBen");
+	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
+	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	c->addModel(modelfrom);
 	c->addModel(modelto);
 
@@ -201,6 +209,45 @@ TEST(Core, terminationfunction)
 	c->removeModel("Amodel");
 }
 
+TEST(Core, Messaging)
+{
+	RecordProperty("description", "Core simulation steps with term function.");
+	t_coreptr c = createObject<Core>();
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c->setTracers(tracers);
+	t_atomicmodelptr modellight = createObject<COUPLED_TRAFFICLIGHT>("mylight");
+	t_atomicmodelptr modelcop = createObject<COUPLED_POLICEMAN>("mycop");
+	c->addModel(modellight);
+	c->addModel(modelcop);
+
+	c->init();
+	auto finaltime = c->getTerminationTime();
+	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	t_timestamp coretimebefore = c->getTime();
+	c->setLive(true);
+	EXPECT_TRUE(c->terminated() == false);
+	EXPECT_TRUE(c->isLive() == true);
+	t_timestamp timemessagelight(59,0);
+	t_timestamp timemessagecop(59,1);
+	// Set time slightly before first firing to detect if messagetimestamp can overrule firing.
+	c->setTime(t_timestamp(50,0));	// Note that otherwise getTime would be 60 (first transition)
+	auto msgtolight = createObject<Message>("mylight", timemessagelight, "dport", "sport", "payload");
+	auto msgtocop = createObject<Message>("mycop", timemessagecop, "dport", "sport", "payload");
+	std::vector<t_msgptr> messages;
+	messages.push_back(msgtolight);
+	messages.push_back(msgtocop);
+	c->sortMail(messages);
+	EXPECT_EQ(c->getFirstMessageTime(), timemessagelight);
+	c->syncTime();
+	EXPECT_EQ(c->getTime(), timemessagelight);
+	EXPECT_FALSE(c->getTime() == timemessagecop);
+	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
+	c->getPendingMail(mailbag);
+	EXPECT_EQ(mailbag["mylight"][0], msgtolight);
+	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
+}
+
 void core_worker(const t_coreptr& core)
 {
 	core->setLive(true);
@@ -213,7 +260,7 @@ void core_worker(const t_coreptr& core)
 
 TEST(Core, multicoresafe)
 {
-	using namespace n_network;
+	using n_network::Network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
 	t_networkptr network = createObject<Network>(2);
@@ -224,15 +271,11 @@ TEST(Core, multicoresafe)
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
 	coretwo->setTracers(tracers);
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
-	coreone->getMessages(mailstubone);
-	coretwo->getMessages(mailstubtwo);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
 	coreptrs.push_back(coretwo);
-	auto tcmodel = createObject<TrafficLight>("mylight", 0);
-	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
+	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
+	auto tc2model = createObject<COUPLED_TRAFFICLIGHT>("myotherlight", 0);
 	coreone->addModel(tcmodel);
 	EXPECT_TRUE(coreone->containsModel("mylight"));
 	coreone->setTerminationTime(t_timestamp(20000, 0));
@@ -263,6 +306,7 @@ TEST(Core, multicoresafe)
 	EXPECT_FALSE(coreone->containsModel("mylight"));
 	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
+
 
 enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
 
@@ -334,15 +378,11 @@ TEST(Core, threading)
 	coreone->setTracers(tracers);
 	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable);
 	coretwo->setTracers(tracers);
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubone;
-	std::unordered_map<std::string, std::vector<t_msgptr>> mailstubtwo;
-	coreone->getMessages(mailstubone);
-	coretwo->getMessages(mailstubtwo);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
 	coreptrs.push_back(coretwo);
-	auto tcmodel = createObject<TrafficLight>("mylight", 0);
-	auto tc2model = createObject<TrafficLight>("myotherlight", 0);
+	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
+	auto tc2model = createObject<COUPLED_TRAFFICLIGHT>("myotherlight", 0);
 	coreone->addModel(tcmodel);
 	EXPECT_TRUE(coreone->containsModel("mylight"));
 
