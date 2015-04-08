@@ -107,7 +107,7 @@ TEST(Network, threadsafety)
 		LOG_WARNING("No threads available for threaded test.");
 		return;
 	}
-	constexpr size_t msgcount = 10000;
+	constexpr size_t msgcount = 500;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
 	for (size_t i = 0; i < cores; ++i) {
@@ -155,3 +155,4 @@ TEST(Network, speed)
 {
 	//benchNetworkSpeed();
 }
+

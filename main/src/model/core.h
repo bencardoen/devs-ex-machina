@@ -9,6 +9,7 @@
 #include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
+#include "messageentry.h"
 #include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
@@ -21,10 +22,13 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 
 
+//typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
+
 /**
- * Typedef used by core.
+ * Typedefs used by core.
  */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
+typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
@@ -53,6 +57,11 @@ private:
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
 	 */
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
+
+	/**
+	 * Store received messages (local and networked)
+	 */
+	t_msgscheduler	m_received_messages;
 
 	/**
 	 * Indicate if this core can/should run.
@@ -120,13 +129,18 @@ protected:
 	Core(std::size_t id);
 
 	/**
-	 * Allow multicore implementation to directly modify time. (GVT etc)
+	 * Subclass hook. Is called after imminents are collected.
+	 * Superclass does nothing.
 	 */
+	virtual
 	void
-	setTime(const t_timestamp&);
+	signalImminent(const std::set<std::string>& ){;}
 
 public:
-	virtual ~Core() = default;
+	/**
+	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
+	 */
+	virtual ~Core();
 
 	/**
 	 * Serialize this core to file fname.
@@ -194,16 +208,33 @@ public:
 	getImminent();
 
 	/**
+	 * Called in case of Dynamic structured Devs.
+	 * Stores imminent models into parameter (which is cleared first)
+	 * @attention : noop in superclass
+	 */
+	virtual
+	void
+	getLastImminents(std::vector<t_atomicmodelptr>&){
+		assert(false && "Not supported in non dynamic structured devs");
+	}
+
+	/**
 	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
 	 */
 	void
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time. The core time will advance to max(recd timestamp, first firing transition)
+	 * Updates local time. The core time will advance to min(first transition, earliest received message).
 	 */
 	void
 	syncTime();
+
+	/**
+	 * Allow multicore implementation to directly modify time. (GVT etc)
+	 */
+	void
+	setTime(const t_timestamp&);
 
 	/**
 	 * Run a single DEVS simulation step:
@@ -211,40 +242,39 @@ public:
 	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
-	 * 	- sync & reschedule
+	 * 	- reschedule fired models
+	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
+	 * @return Models who have transitioned (internal or confluent)
+	 * @attention null return value for superclass.
 	 */
 	virtual
-	void runSmallStep();
+	void
+	runSmallStep();
 
 	/**
 	 * Collect output from all models, sort them in the mailbag by destination name.
+	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
-	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
+	collectOutput();
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
-		;
+		assert(false && "A message for a remote core in a single core implemenation.");
 	}
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
 	 * Base class = noop.
 	 */
-	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
+	virtual void getMessages()
 	{
 		;
 	}
-
-	/**
-	 * Subclass hook.
-	 * If the current scheduler top time < than an event, execute any subclass logic to correct it.
-	 */
-	virtual void adjustTime(){;}
 
 	/**
 	 * Get Current simulation time.
@@ -281,13 +311,19 @@ public:
 	printSchedulerState();
 
 	/**
+	 * Print all queued messages.
+	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
+	 */
+	void
+	printPendingMessages();
+
+	/**
 	 * Given a set of messages, sort them by model destination.
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 */
 	virtual
 	void
-	sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag,
-	        const std::vector<t_msgptr>& messages);
+	sortMail(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -325,8 +361,11 @@ public:
 	setTerminationFunction(const t_terminationfunctor&);
 
 	/**
-	 * Remove model from this core.
-	 * @pre isLive()==false
+	 * Remove model with specified name from this core (if present).
+	 * This removes the model, unschedules it (if it is scheduled). It does
+	 * not remove queued messages for this model, but the core takes this into
+	 * account.
+	 * @attention : call only in single core or if core is not live.
 	 * @post name is no longer scheduled/present.
 	 */
 	void
@@ -356,6 +395,25 @@ public:
 	 */
 	void
 	clearModels();
+
+	/**
+	 * Sort message in individual receiving queue.
+	 */
+	virtual
+	void receiveMessage(const t_msgptr&);
+
+	/**
+	 * Get the mail with timestamp < nowtime sorted by destination.
+	 */
+	virtual
+	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+
+	/**
+	 * For all pending messages, retrieve the smallest (earliest) timestamp.
+	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
+	 */
+	t_timestamp
+	getFirstMessageTime()const;
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

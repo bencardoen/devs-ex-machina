@@ -3,7 +3,6 @@
 
 LOG_INIT("out.txt")
 
-
 int main(int argc, char** argv)
 {
 	::testing::InitGoogleTest(&argc, argv);

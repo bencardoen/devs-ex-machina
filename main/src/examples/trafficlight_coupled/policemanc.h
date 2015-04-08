@@ -14,8 +14,12 @@
 
 namespace n_examples_coupled {
 
-using namespace n_model;
+using n_model::State;
+using n_model::t_stateptr;
+using n_model::AtomicModel;
 using n_network::t_msgptr;
+using n_network::t_timestamp;
+using n_model::t_atomicmodelptr;
 
 class PolicemanMode: public State
 {
