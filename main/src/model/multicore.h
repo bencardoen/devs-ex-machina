@@ -10,6 +10,8 @@
 
 #include "core.h"
 #include "locationtable.h"
+#include "message.h"
+#include "v.h"
 
 
 namespace n_model {
@@ -20,12 +22,17 @@ namespace n_model {
 class Multicore: public Core
 {
 private:
-	t_networkptr		m_network;
+	t_networkptr			m_network;
 	n_control::t_location_tableptr	m_loctable;
+	n_network::MessageColor		m_color;
+	t_V				m_mcount_vector;
+	std::mutex&			m_vlock;
+	t_timestamp			m_tmin;
+
 
 public:
 	Multicore()=delete;
-	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable);
+	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, std::mutex& vlock);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */

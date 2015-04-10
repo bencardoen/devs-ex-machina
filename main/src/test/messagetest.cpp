@@ -25,7 +25,7 @@ TEST(Message, TestThreadRaceConditions){
 		LOG_WARNING("Thread test skipped, OS report no threads avaiable");
 	auto msg = createObject<Message>("TargetModel", t_timestamp(0,1), "TargetPort", "SourcePort", " cargo ");
 	msg->setDestinationCore(42);
-	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 to model TargetModel @core_nr 42 payload  cargo ";
+	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 to model TargetModel @core_nr 42 payload  cargo  color : WHITE";
 	EXPECT_EQ(msg->toString(), expected_out);
 	std::vector<std::thread> workers;
 	// Try to trigger races.

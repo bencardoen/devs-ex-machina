@@ -100,6 +100,8 @@ add_executable(${PROJECT_NAME}
 	src/control/configuration.cpp
 	src/control/controller.cpp
 	src/control/locationtable.cpp
+	src/network/message.cpp
+	src/network/controlmessage.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/tracers/tracerbase.cpp
