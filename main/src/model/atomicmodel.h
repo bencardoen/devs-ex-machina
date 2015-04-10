@@ -24,16 +24,79 @@ protected:
 
 public:
 	AtomicModel() = delete;
+
+	/**
+	 * Constructor for AtomicModel
+	 *
+	 * Note that 0 is the highest priority. The higher the number,
+	 * the lower the priority.
+	 *
+	 * @param name The name of the model
+	 * @param priority The priority of the model
+	 */
 	AtomicModel(std::string name, std::size_t priority = 0);
 
+	/**
+	 * Perform an external transition
+	 *
+	 * @param message A vector of messagepointers that represent events
+	 */
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) = 0;
+
+	/**
+	 * Perform an internal transition
+	 */
 	virtual void intTransition() = 0;
+
+	/**
+	 * Transitions the model confluently with given messages
+	 *
+	 * @param message List of messages that are needed for the transition
+	 */
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
+
+	/*
+	 * Get the current time advance
+	 *
+	 * @return Current time advance
+	 */
 	virtual t_timestamp timeAdvance() = 0;
+
+	/*
+	 * Get the current output
+	 *
+	 * @return vector with pointers to all output messages in it
+	 */
 	virtual std::vector<n_network::t_msgptr> output() const = 0;
+
+	/**
+	 * Sets the correct GVT for the model and fixes all necessary internal changes (like
+	 * the removal of old states that aren't necessary anymore)
+	 *
+	 * @param gvt The gvt that we need to reset to
+	 */
 	void setGVT(t_timestamp gvt);
+
+	/**
+	 * Reverts the model the given time
+	 *
+	 * @param time The time the model needs to be reverted to
+	 */
 	void revert(t_timestamp time);
+
+	/**
+	 * Returns the priority of the model
+	 *
+	 * @return priority of model
+	 */
 	std::size_t getPriority() const;
+
+	/**
+	 * Sets the correct time of the model after a transition has happened.
+	 * This function has to be called immediately after a transition!
+	 *
+	 * @param time The current time of the simulation
+	 */
 	void setTime(t_timestamp time);
 
 	virtual ~AtomicModel()

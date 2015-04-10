@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "message.h"
 #include "zfunc.h"
+#include "globallog.h"
 
 namespace n_model {
 
@@ -45,17 +46,21 @@ public:
 	t_zfunc getZFunc(const t_portptr& port) const;
 	bool setZFunc(const t_portptr& port, t_zfunc function);
 	bool setInPort(const t_portptr& port);
+	void clear();
 
 	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
 	void setInPortCoupled(const t_portptr& port);
 	void setUsingDirectConnect(bool dc);
 	void resetDirectConnect();
+	bool isUsingDirectConnect() const;
 
 	std::vector<n_network::t_msgptr> createMessages(std::string message);
 	const std::vector<t_portptr >& getIns() const;
 	const std::map<t_portptr, t_zfunc>& getOuts() const;
 	std::vector<t_portptr >& getIns();
 	std::map<t_portptr, t_zfunc>& getOuts();
+	const std::vector<t_portptr>& getCoupledIns() const;
+	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
 };
 
 }

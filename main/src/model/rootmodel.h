@@ -10,6 +10,7 @@
 
 #include "coupledmodel.h"
 #include "atomicmodel.h"
+#include "globallog.h"
 
 namespace n_model {
 class RootModel: public Model

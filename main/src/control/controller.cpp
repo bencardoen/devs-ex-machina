@@ -171,7 +171,7 @@ bool Controller::check()
 void Controller::emptyAllCores()
 {
 	for (auto core : m_cores) {
-//		core.second->dropModels(); // TODO uncomment when method added
+		core.second->clearModels();
 	}
 	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }

@@ -86,7 +86,7 @@ TEST(Controller, cDEVS)
 
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 	t_coreptr c = createObject<Core>();
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
