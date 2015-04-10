@@ -20,8 +20,8 @@ private:
 public:
 	std::vector<int>&
 	getVector(){return m_vec;}
-	V();
-	virtual ~V();
+	V(std::size_t cores):m_vec(cores){;}
+	virtual ~V(){;}
 };
 
 typedef std::shared_ptr<V> t_V;

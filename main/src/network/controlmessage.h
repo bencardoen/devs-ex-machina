@@ -28,6 +28,10 @@ public:
 	ControlMessage(size_t cores, t_timestamp clock, t_timestamp send);
 	virtual ~ControlMessage();
 	t_count&	getCountVector(){return m_count;}
+	t_timestamp getClock()const{return m_clock;}
+	void setClock(t_timestamp nt){m_clock=nt;}
+	t_timestamp getSend()const{return m_send;}
+	void setSend(t_timestamp nt){m_send=nt;}
 };
 
 typedef std::shared_ptr<ControlMessage> t_controlmsg;
