@@ -2,14 +2,16 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include <timestamp.h>
-#include <network.h>
-#include <model.h>
-#include <atomicmodel.h>
+#include "timestamp.h"
+#include "network.h"
+#include "atomicmodel.h"
 #include "scheduler.h"
+#include "terminationfunction.h"
 #include "schedulerfactory.h"
 #include "modelentry.h"
-//#include "tracers.h"
+#include "messageentry.h"
+#include "controlmessage.h"
+#include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -20,13 +22,14 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-typedef void t_tracerset;	// TODO Stijn replace with correct type
 
+//typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
 
 /**
- * Typedef used by core.
+ * Typedefs used by core.
  */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
+typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
@@ -57,6 +60,11 @@ private:
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
 
 	/**
+	 * Store received messages (local and networked)
+	 */
+	t_msgscheduler	m_received_messages;
+
+	/**
 	 * Indicate if this core can/should run.
 	 * @synchronized
 	 */
@@ -80,16 +88,14 @@ private:
 
 	/**
 	 * Termination function.
-	 * @default init to nullptr
+	 * The constructor initializes this to a default functor returning false for each model (simulating forever)
 	 */
-	std::function<bool(const t_atomicmodelptr&)> m_termination_function;
+	t_terminationfunctor m_termination_function;
 
 	/**
 	 * Tracers.
 	 */
-	// TODO Stijn link with tracers here.
-	// t_tracerset m_tracers;
-
+	n_tracers::t_tracersetptr m_tracers;
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -98,7 +104,14 @@ private:
 	 */
 	bool
 	virtual
-	isMessageLocal(const t_msgptr&);
+	isMessageLocal(const t_msgptr&)const;
+
+	/**
+	 * After a simulation step, verify that we need to continue.
+	 */
+	void
+	checkTerminationFunction();
+
 public:
 	/**
 	 * Default single core implementation.
@@ -110,12 +123,25 @@ public:
 
 	Core& operator=(const Core&) = delete;
 
-
 protected:
+	/**
+	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
+	 */
 	Core(std::size_t id);
 
+	/**
+	 * Subclass hook. Is called after imminents are collected.
+	 * Superclass does nothing.
+	 */
+	virtual
+	void
+	signalImminent(const std::set<std::string>& ){;}
+
 public:
-	virtual ~Core() = default;
+	/**
+	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
+	 */
+	virtual ~Core();
 
 	/**
 	 * Serialize this core to file fname.
@@ -140,10 +166,17 @@ public:
 
 	/**
 	 * Retrieve model with name from core
+	 * @pre model is present in this core.
 	 * @attention does not change anything in scheduled order.
 	 */
 	t_atomicmodelptr
-	getModel(std::string name);
+	getModel(const std::string& name);
+
+	/**
+	 * Check if model is present in core.
+	 */
+	bool
+	containsModel(const std::string& name)const;
 
 	/**
 	 * Indicates if Core is running, or halted.
@@ -176,18 +209,33 @@ public:
 	getImminent();
 
 	/**
+	 * Called in case of Dynamic structured Devs.
+	 * Stores imminent models into parameter (which is cleared first)
+	 * @attention : noop in superclass
+	 */
+	virtual
+	void
+	getLastImminents(std::vector<t_atomicmodelptr>&){
+		assert(false && "Not supported in non dynamic structured devs");
+	}
+
+	/**
 	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
 	 */
 	void
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time from first entry in scheduler.
-	 * @attention : if scheduler is empty this will crash hard.
-	 * @post m_time >= m_time
+	 * Updates local time. The core time will advance to min(first transition, earliest received message).
 	 */
 	void
 	syncTime();
+
+	/**
+	 * Allow multicore implementation to directly modify time. (GVT etc)
+	 */
+	void
+	setTime(const t_timestamp&);
 
 	/**
 	 * Run a single DEVS simulation step:
@@ -195,25 +243,36 @@ public:
 	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
-	 * 	- sync & reschedule
+	 * 	- reschedule fired models
+	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
+	 * @return Models who have transitioned (internal or confluent)
+	 * @attention null return value for superclass.
 	 */
 	virtual
-	void runSmallStep();
+	void
+	runSmallStep();
 
 	/**
-	 * For all models : get all messages.
+	 * Collect output from all models, sort them in the mailbag by destination name.
+	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
-	collectOutput(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag);
+	collectOutput();
 
-	virtual void
-	sendMessage(const t_msgptr&){;}
+	/**
+	 * Hook for subclasses to override. Called whenever a message for the net is found.
+	 */
+	virtual void sendMessage(const t_msgptr&)
+	{
+		assert(false && "A message for a remote core in a single core implemenation.");
+	}
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
+	 * Base class = noop.
 	 */
-	virtual void getMessages(std::unordered_map<std::string, std::vector<t_msgptr>>&)
+	virtual void getMessages()
 	{
 		;
 	}
@@ -236,8 +295,7 @@ public:
 	 */
 	virtual
 	void
-	transition(const std::set<std::string>& imminents,
-	        std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Schedule model.name @ time t.
@@ -254,13 +312,19 @@ public:
 	printSchedulerState();
 
 	/**
+	 * Print all queued messages.
+	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
+	 */
+	void
+	printPendingMessages();
+
+	/**
 	 * Given a set of messages, sort them by model destination.
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 */
 	virtual
 	void
-	sortMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag,
-	        const std::vector<t_msgptr>& messages);
+	sortMail(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -274,6 +338,10 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
+	/**
+	 * If the current simulation time >= endtime, halt.
+	 * This is checked after all transitions have happened.
+	 */
 	void
 	setTerminationTime(t_timestamp endtime);
 
@@ -291,22 +359,73 @@ public:
 	 * Set the the termination function.
 	 */
 	void
-	setTerminationFunction(std::function<bool(const t_atomicmodelptr&)> newfunc);
+	setTerminationFunction(const t_terminationfunctor&);
 
 	/**
-	 * After a simulation step, verify that we need to continue.
-	 */
-	void
-	checkTerminationFunction();
-
-	/**
-	 * Remove model from this core.
-	 * @pre isLive()==false
+	 * Remove model with specified name from this core (if present).
+	 * This removes the model, unschedules it (if it is scheduled). It does
+	 * not remove queued messages for this model, but the core takes this into
+	 * account.
+	 * @attention : call only in single core or if core is not live.
 	 * @post name is no longer scheduled/present.
 	 */
 	void
 	removeModel(std::string name);
 
+	/**
+	 * @brief Sets the tracers that will be used from now on
+	 * @precondition isLive()==false
+	 */
+	void
+	setTracers(n_tracers::t_tracersetptr ptr);
+
+	/**
+	 * Signal tracers to flush output up to a given time.
+	 * For the single core implementation this is the local time.
+	 * @attention : this can only be run IF all cores are stopped. !!!!!
+	 */
+	virtual
+	void
+	signalTracersFlush()const;
+
+	/**
+	 * Remove all models from this core.
+	 * @pre (not this->isLive())
+	 * @post this->getTime()==t_timestamp(0,0) (same for gvt)
+	 * @attention : DO NOT invoke this once simulation has started (timewarp!!)
+	 */
+	void
+	clearModels();
+
+	/**
+	 * Sort message in individual receiving queue.
+	 */
+	virtual
+	void receiveMessage(const t_msgptr&);
+
+	/**
+	 * Get the mail with timestamp < nowtime sorted by destination.
+	 */
+	virtual
+	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+
+	/**
+	 * For all pending messages, retrieve the smallest (earliest) timestamp.
+	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
+	 */
+	t_timestamp
+	getFirstMessageTime()const;
+
+
+	/**
+	 * Mattern's algorithm nrs 1.6/1.7
+	 * @attention : only sensible in multicore setting, single core will assert fail.
+	 */
+	virtual
+	void
+	receiveControl(const t_controlmsg& /*controlmessage*/){
+		assert(false);
+	}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

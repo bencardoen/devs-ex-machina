@@ -24,6 +24,14 @@ TEST(Time, FactoryFunctions)
 	auto third = first;
 	EXPECT_TRUE(first.getTime() == third.getTime());
 	EXPECT_TRUE(second.getCausality() < aftersecond.getCausality());
+	EXPECT_TRUE(first < decltype(first)::infinity());
+	EXPECT_TRUE(first != decltype(first)::infinity());
+	t_timestamp zero(0,0);
+	t_timestamp selected(0,0);
+	EXPECT_EQ(zero, selected);
+	EXPECT_FALSE(zero > selected);
+	zero.increaseCausality(1);	// equivalent of select(selected).
+	EXPECT_TRUE(zero > selected);
 }
 
 TEST(Time, HashingOperators)
@@ -72,7 +80,7 @@ void push(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 		for (size_t j = 0; j < cores; ++j) {
 			if (j == coreid)
 				continue;
-			t_msgptr msg = n_tools::createObject<Message>("Q", t_timestamp(i, 0));
+			t_msgptr msg = n_tools::createObject<Message>("Q", t_timestamp(i, 0), "X", "R");
 			EXPECT_TRUE(msg->getDestinationCore() != j);
 			msg->setDestinationCore(j);
 			EXPECT_TRUE(msg->getDestinationCore() == j);
@@ -94,8 +102,12 @@ void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 
 TEST(Network, threadsafety)
 {
-	constexpr size_t cores = 4;
-	constexpr size_t msgcount = 10000;
+	const size_t cores = std::thread::hardware_concurrency();
+	if(cores <= 1){
+		LOG_WARNING("No threads available for threaded test.");
+		return;
+	}
+	constexpr size_t msgcount = 500;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
 	for (size_t i = 0; i < cores; ++i) {
@@ -111,6 +123,10 @@ void benchNetworkSpeed()
 {
 	// Each thread pushes msgcount * cores-1 messages, pulls msgcount * cores-1messages.
 	constexpr size_t cores = 4;
+	if(cores <= 1){
+		LOG_WARNING("No threads available for threaded test.");
+		return;
+	}
 	constexpr size_t msgcount = 200;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
@@ -137,5 +153,6 @@ void benchNetworkSpeed()
 
 TEST(Network, speed)
 {
-	benchNetworkSpeed();
+	//benchNetworkSpeed();
 }
+

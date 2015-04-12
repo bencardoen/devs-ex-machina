@@ -21,13 +21,15 @@ public:
 	LocationTable(std::size_t amountCores);
 	virtual ~LocationTable();
 
-	std::size_t lookupModel(std::string modelName);
-	void registerModel(t_atomicmodelptr& model, std::size_t core);
+	std::size_t lookupModel(const std::string& modelName);
+	void registerModel(const t_atomicmodelptr& model, std::size_t core);
 
 private:
-	std::size_t m_amountCores;
+	const std::size_t m_amountCores;
 	std::unordered_map<std::string, std::size_t> m_locTable;
 };
+
+typedef std::shared_ptr<LocationTable> t_location_tableptr;
 
 } /* namespace n_control */
 

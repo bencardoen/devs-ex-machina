@@ -117,6 +117,14 @@ public:
 	void tracesConfluent(const t_atomicmodelptr&)
 	{
 	}
+
+	/**
+	 * @brief Stops all tracers
+	 * @note Each tracer has to be restarted individually.
+	 */
+	void stopTracers()
+	{
+	}
 };
 
 //recursive case; take one type from the pack and continue with the rest.
@@ -153,19 +161,7 @@ public:
 	Tracers(): Tracers<TracerElems...>(), m_elem()
 	{
 	}
-//	TracersTemplated(T tracer, TracerElems ... other)
-//		: TracersTemplated<TracerElems...>(other...), elem(tracer)
-//	{
-//	}
 
-	/*
-	 * implementation of the constructor that uses move semantics.
-	 * I would love to be able to use both of them automatically.
-	 */
-//	TracersTemplated(T&& tracer, TracerElems&& ... other)
-//			: TracersTemplated<TracerElems...>(std::forward<TracerElems>(other)...), elem(std::forward<T>(tracer))
-//	{
-//	}
 	/**
 	 * @brief Returns the amount of registered tracers.
 	 */
@@ -343,6 +339,15 @@ public:
 		getNext().tracesConfluent(model);
 	}
 
+	/**
+	 * @brief Stops all tracers
+	 * @note Each tracer has to be restarted individually.
+	 */
+	void stopTracers()
+	{
+		m_elem.stopTracer();
+		getNext().stopTracers();
+	}
 private:
 	T m_elem;
 
@@ -363,5 +368,7 @@ private:
 };
 
 } /*namespace n_tracers*/
+
+#include "fwddecl.h"
 
 #endif /* SRC_TRACING_TRACERS_H_ */

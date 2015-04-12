@@ -10,6 +10,7 @@
 
 #include "coupledmodel.h"
 #include "atomicmodel.h"
+#include "globallog.h"
 
 namespace n_model {
 class RootModel: public Model
@@ -19,9 +20,14 @@ private:
 	bool m_directConnected;
 
 public:
-	std::vector<t_atomicmodelptr> directConnect(t_coupledmodelptr);
+	RootModel();
+	virtual ~RootModel();
+	/**
+	 * @precondition All atomic models have a unique name
+	 */
+	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
 	void undoDirectConnect();
 };
-}
+} /* namespace n_model */
 
 #endif /* ROOTMODEL_H_ */

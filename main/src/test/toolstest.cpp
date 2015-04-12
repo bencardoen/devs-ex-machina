@@ -10,6 +10,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include "globallog.h"
 
 using std::cout;
 using std::endl;
@@ -33,7 +34,7 @@ void pusher(std::mutex& queuelock, std::atomic<int>& writer_done, const int tota
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	shuffle(rands.begin(), rands.end(), std::default_random_engine(seed));
 	for (int i = 0; i < totalsize; ++i) {
-		std::lock_guard<std::mutex> m_lock(queuelock);
+		std::lock_guard<std::mutex> m_lock(queuelock);	// This lock is required for threadsafety only on virtualbox with windows as bare metal os.
 		t_TypeUsed q(rands[i]);
 		scheduler->push_back(q); // scheduler is locked on single operations.
 		count.fetch_add(1);
@@ -67,7 +68,7 @@ class SchedulerTest: public ::testing::Test
 public:
 	SchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, true);
 	}
 
 	void SetUp()
@@ -151,14 +152,18 @@ TEST_F(SchedulerTest, basic_unschedule_until)
 }
 
 /**
- *  Specifically designed to trap conccurency errors. Keeping writer/readers even over max supported threads by hw
+ *  Specifically designed to trap concurency errors. Keeping writer/readers even over max supported threads by hw
  *  introduces maximum stress on locking code, without starving. Note that VM size can be extreme for this testcase (TB's is not unusual).
  *  @note (in reality there is 1 thread allocated extra (main = thread 0), but no cpu that I know of has odd threadcount.
  */
 TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 {
-	const int totalsize = 5000; // On an i5 quad core , 50000 elems requires approx 1 min.
+	const int totalsize = 500; // On an i5 quad core , 50000 elems requires approx 1 min.
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
+	if(std::thread::hardware_concurrency() <= 1){
+		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!");
+		return;
+	}
 	const int pushcount = threadcount / 2;  //e.g. 4 -1 = 3 , 3/2 = 1 pusher
 	std::atomic<int> writer_done(0);
 	std::mutex pqueue_mutex;
@@ -184,8 +189,12 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
  */
 TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 {
-	const int totalsize = 5000;
+	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
+	if(std::thread::hardware_concurrency() <= 1){
+		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
+		return;
+	}
 	const int pushcount = 1;
 	std::atomic<int> writer_done(0);
 	std::mutex pqueue_mutex;
@@ -211,8 +220,12 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
  */
 TEST_F(SchedulerTest, Concurrency_threadoverload)
 {
-	const int totalsize = 50;
+	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency() * 2;
+	if(std::thread::hardware_concurrency() <= 1){
+		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
+		return;
+	}
 	const int pushcount = threadcount / 2;
 	std::atomic<int> writer_done(0);
 	std::mutex pqueue_mutex;
@@ -238,7 +251,7 @@ class UnSyncedSchedulerTest: public ::testing::Test
 public:
 	UnSyncedSchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, true);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, false);
 	}
 
 	void SetUp()

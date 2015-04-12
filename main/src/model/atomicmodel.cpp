@@ -9,17 +9,8 @@
 
 namespace n_model {
 
-/*
- * Constructor for AtomicModel
- *
- * Note that 0 is the highest priority. The higher the number,
- * the lower the priority.
- *
- * @param name The name of the model
- * @param priority The priority of the model
- */
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
-	: Model(name, corenumber), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, std::size_t priority)
+	: Model(name), m_priority(priority)
 {
 
 }
@@ -89,6 +80,19 @@ void AtomicModel::revert(t_timestamp time)
 std::size_t AtomicModel::getPriority() const
 {
 	return m_priority;
+}
+
+void AtomicModel::setTime(t_timestamp time)
+{
+	this->m_timeLast = time;
+	this->m_timeNext = time + this->timeAdvance();
+	m_state->m_timeLast = this->m_timeLast;
+	m_state->m_timeNext = this->m_timeNext;
+
+	// The following is not necessary because they point to the same state
+//	t_stateptr laststate = this->m_oldStates.at(this->m_oldStates.size()-1);
+//	laststate->m_timeLast = this->m_timeLast;
+//	laststate->m_timeNext = this->m_timeNext;
 }
 
 }

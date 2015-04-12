@@ -22,7 +22,7 @@
 #include "allocator.h"
 #include "core.h"
 #include "tracers.h"
-#include "tools/globallog.h"
+#include "globallog.h"
 
 namespace n_control {
 
@@ -31,13 +31,13 @@ using n_model::t_coreptr;
 using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
 
-typedef void t_tracerset;	// TODO Stijn replace with correct type
-
 class Controller
 {
 private:
 	bool m_isClassicDEVS;
 	bool m_isDSDEVS;
+	bool m_hasMainModel;
+	bool m_isSimulating;
 
 	std::string m_name;
 
@@ -45,33 +45,28 @@ private:
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
-	std::function<bool(t_timestamp, const t_atomicmodelptr&)> m_terminationCondition;
+	t_terminationfunctor m_terminationCondition;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
-	std::shared_ptr<LocationTable> m_locTab;
+	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
-	std::shared_ptr<t_tracerset> m_tracers;
+	n_tracers::t_tracersetptr m_tracers;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-	        std::shared_ptr<t_tracerset> tracers);
+		n_tracers::t_tracersetptr tracers);
 
 	virtual ~Controller();
 
 	/*
-	 * Add an atomic model using the given allocator
+	 * Set an atomic model as the main model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
 	/*
-	 * Add an atomic model to a specific core
-	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
-
-	/*
-	 * Add a coupled model to the simulation
+	 * Set a coupled model as the main model using the given allocator
 	 */
 	void addModel(t_coupledmodelptr& coupled);
 
@@ -98,7 +93,7 @@ public:
 	/*
 	 * Set condition that can terminate the simulation
 	 */
-	void setTerminationCondition(std::function<bool(t_timestamp, const t_atomicmodelptr&)> termination_condition);
+	void setTerminationCondition(t_terminationfunctor termination_condition);
 
 	/*
 	 * Set checkpointing interval
@@ -139,6 +134,16 @@ private:
 	 * Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
+
+	/*
+	 * Removes models from all cores
+	 */
+	void emptyAllCores();
+
+	/*
+	 * Add an atomic model to a specific core
+	 */
+	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
 };
