@@ -18,7 +18,45 @@ AtomicModel::AtomicModel(std::string name, std::size_t priority)
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
+	this->doExtTransition(message);
+}
+
+void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& message)
+{
+	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
+	for (auto& port : m_iPorts)
+		port.second->clearReceivedMessages();
+
+	// Do the actual external transition
 	this->extTransition(message);
+
+	for (auto& m : message) {
+		std::string destport = m->getDestinationPort();
+		auto it = m_iPorts.find(destport);
+		// When we find the port, we add the message temporarily to it for the tracer
+		if (it != m_iPorts.end())
+			it->second->addMessage(m, true);
+	}
+}
+
+std::vector<n_network::t_msgptr> AtomicModel::doOutput()
+{
+	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
+	for (auto& port : m_oPorts)
+		port.second->clearSentMessages();
+
+	// Do the actual output function
+	auto messages = this->output();
+
+	for (auto& message : messages) {
+		std::string srcport = message->getSourcePort();
+		auto it = m_oPorts.find(srcport);
+		// When we find the port, we add the message temporarily to it for the tracer
+		if (it != m_oPorts.end())
+			it->second->addMessage(message, false);
+	}
+	// We return the output back to the core
+	return messages;
 }
 
 void AtomicModel::setGVT(t_timestamp gvt)
