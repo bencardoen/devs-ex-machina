@@ -7,11 +7,11 @@
 
 #include <gtest/gtest.h>
 #include "port.h"
-#include <cereal/types/map.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/unordered_map.hpp>
-#include <cereal/archives/binary.hpp>
+#include "cereal/types/map.hpp"
+#include "cereal/types/vector.hpp"
+#include "cereal/types/memory.hpp"
+#include "cereal/types/unordered_map.hpp"
+#include "cereal/archives/binary.hpp"
 #include <sstream>
 
 using namespace n_model;
