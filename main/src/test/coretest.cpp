@@ -267,9 +267,10 @@ TEST(Core, multicoresafe)
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable);
+	std::mutex vlock;
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable, vlock,2);
 	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable, vlock,2);
 	coretwo->setTracers(tracers);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
@@ -374,9 +375,10 @@ TEST(Core, threading)
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable);
+	std::mutex vlock;
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, vlock,2 );
 	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable, vlock, 2);
 	coretwo->setTracers(tracers);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
@@ -476,4 +478,15 @@ TEST(Core, threading)
 	EXPECT_FALSE(coreone->isLive());
 	EXPECT_FALSE(coretwo->isLive());
 	EXPECT_TRUE(coreone->getTime()>= endtime || coretwo->getTime()>= endtime);
+}
+
+
+
+TEST(MultiCore, GVT){
+	std::atomic<bool> run(true);
+	std::thread gvt(&n_model::calculateGVT, 500, std::ref(run));
+	for(size_t i = 0; i<10000000; ++i){
+	}
+	run.store(false);
+	gvt.join();
 }

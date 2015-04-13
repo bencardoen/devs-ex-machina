@@ -113,6 +113,8 @@ add_executable(${PROJECT_NAME}
 	src/control/configuration.cpp
 	src/control/controller.cpp
 	src/control/locationtable.cpp
+	src/network/message.cpp
+	src/network/controlmessage.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/tracers/tracerbase.cpp
@@ -126,6 +128,7 @@ add_executable(${PROJECT_NAME}
 	src/test/loggertest.cpp
 	src/test/controllertest.cpp
 	src/test/messagetest.cpp
+	src/test/cerealtest.cpp
  	src/main.cpp
  	)
 ###############################################################################
@@ -136,6 +139,7 @@ include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
+				include
 				src/test 
 				src/tools
 				src/model

@@ -10,6 +10,7 @@
 #include "schedulerfactory.h"
 #include "modelentry.h"
 #include "messageentry.h"
+#include "controlmessage.h"
 #include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
@@ -414,6 +415,17 @@ public:
 	 */
 	t_timestamp
 	getFirstMessageTime()const;
+
+
+	/**
+	 * Mattern's algorithm nrs 1.6/1.7
+	 * @attention : only sensible in multicore setting, single core will assert fail.
+	 */
+	virtual
+	void
+	receiveControl(const t_controlmsg& /*controlmessage*/){
+		assert(false);
+	}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;
