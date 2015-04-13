@@ -126,7 +126,7 @@ include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
-				cereal
+				include
 				src/test 
 				src/tools
 				src/model
