@@ -115,6 +115,7 @@ add_executable(${PROJECT_NAME}
 	src/test/loggertest.cpp
 	src/test/controllertest.cpp
 	src/test/messagetest.cpp
+	src/test/cerealtest.cpp
  	src/main.cpp
  	)
 ###############################################################################
