@@ -11,6 +11,7 @@
 #include "core.h"
 #include "locationtable.h"
 #include "message.h"
+#include <deque>
 #include "v.h"
 using n_network::MessageColor;
 
@@ -30,6 +31,8 @@ private:
 	std::mutex&			m_vlock;
 	/*std::mutex			m_locallock;*/ // Possibly required to sync access to getTime() ?
 	t_timestamp			m_tmin;
+	std::deque<t_msgptr>		m_sent_messages;
+	std::deque<t_msgptr>		m_processed_messages;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -79,6 +82,12 @@ public:
 	 */
 	virtual
 	void receiveMessage(const t_msgptr&);
+
+	/**
+	 * If a model received a set of messages, store these message as processed in the core.
+	 */
+	virtual
+	void markProcessed(const std::vector<t_msgptr>&);
 
 	// TODO
 	void

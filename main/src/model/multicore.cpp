@@ -30,7 +30,10 @@ Multicore::sendMessage(const t_msgptr& msg){
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	msg->setDestinationCore(coreid);
 	msg->paint(this->getColor());
+	LOG_DEBUG("MCore:: sending message", msg->toString());
 	this->m_network->acceptMessage(msg);
+	LOG_DEBUG("MCore:: storing sent message", msg->toString());
+	this->m_sent_messages.push_back(msg);
 }
 
 void
@@ -98,6 +101,15 @@ Multicore::receiveControl(const t_controlmsg& msg){	// TODO Tim 1.7/6
 			Count[i] += this->m_mcount_vector->getVector()[i];
 			this->m_mcount_vector->getVector()[i] = 0;
 		}
+	}
+}
+
+
+void
+Multicore::markProcessed(const std::vector<t_msgptr>& messages) {
+	for(const auto& msg : messages){
+		LOG_DEBUG("MCore : storing processed msg", msg->toString());
+		this->m_processed_messages.push_back(msg);
 	}
 }
 

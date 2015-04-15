@@ -290,6 +290,12 @@ public:
 	t_timestamp getGVT() const;
 
 	/**
+	 * Set current GVT
+	 */
+	virtual void
+	setGVT(const t_timestamp& newgvt);
+
+	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
 	 * @return all transitioned models.
 	 */
@@ -408,6 +414,13 @@ public:
 	 */
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+
+	/**
+	 * After a model received a set of messages, store these for later use.
+	 * @attention noop in single core, only relevant in multicore (revert)
+	 */
+	virtual
+	void markProcessed(const std::vector<t_msgptr>&) {;}
 
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
