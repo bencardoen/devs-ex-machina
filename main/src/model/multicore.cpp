@@ -47,6 +47,20 @@ Multicore::sendAntiMessage(const t_msgptr& msg){
 }
 
 void
+Multicore::handleAntiMessage(const t_msgptr& msg){
+	// TODO needs testing
+	if(this->m_received_messages->contains(MessageEntry(msg))){
+		this->m_received_messages->erase(MessageEntry(msg));
+	}else{
+		if(this->getTime()>msg->getTimeStamp())
+			this->revert(msg->getTimeStamp());
+		else{
+			// TODO, what if original did not arrive yet ?;
+		}
+	}
+}
+
+void
 Multicore::markMessageStored(const t_msgptr& msg){
 	LOG_DEBUG("MCore:: storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
