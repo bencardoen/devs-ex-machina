@@ -35,8 +35,21 @@ find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
 
 find_package(GTest REQUIRED)
+
+find_package(Doxygen)
 ###############################################################################
 
+### DOCUMENTATION #############################################################
+# add a target to generate API documentation with Doxygen
+if(DOXYGEN_FOUND)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+add_custom_target(doc
+${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+COMMENT "Generating API documentation with Doxygen" VERBATIM
+)
+endif(DOXYGEN_FOUND)
+###############################################################################
 
 ### COMPILER ##################################################################
 # NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
@@ -102,6 +115,8 @@ add_executable(${PROJECT_NAME}
 	src/control/configuration.cpp
 	src/control/controller.cpp
 	src/control/locationtable.cpp
+	src/network/message.cpp
+	src/network/controlmessage.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/tracers/tracerbase.cpp
@@ -115,6 +130,7 @@ add_executable(${PROJECT_NAME}
 	src/test/loggertest.cpp
 	src/test/controllertest.cpp
 	src/test/messagetest.cpp
+	src/test/cerealtest.cpp
  	src/main.cpp
  	)
 ###############################################################################
@@ -125,6 +141,7 @@ include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
+				include
 				src/test 
 				src/tools
 				src/model

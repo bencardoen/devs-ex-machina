@@ -76,7 +76,7 @@ public:
 	 * @param adevs The atomic model that just performed an internal transition
 	 * @precondition The model pointer is not a nullptr
 	 */
-	void tracesInternal(const t_atomicmodelptr& adevs)
+	void tracesInternal(const t_atomicmodelptr& adevs, std::size_t /*coreid*/ = 0)
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesInternal argument cannot be a nullptr.");
 
@@ -108,7 +108,7 @@ public:
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr& adevs)
+	void tracesExternal(const t_atomicmodelptr& adevs, std::size_t /*coreid*/ = 0)
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesExternal argument cannot be a nullptr.");
 
@@ -140,7 +140,7 @@ public:
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr& adevs)
+	void tracesConfluent(const t_atomicmodelptr& adevs, std::size_t /*coreid*/ = 0)
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesConfluent argument cannot be a nullptr.");
 

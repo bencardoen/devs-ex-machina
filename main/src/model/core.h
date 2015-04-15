@@ -10,6 +10,7 @@
 #include "schedulerfactory.h"
 #include "modelentry.h"
 #include "messageentry.h"
+#include "controlmessage.h"
 #include "tracers.h"
 
 #ifndef SRC_MODEL_CORE_H_
@@ -110,6 +111,19 @@ private:
 	 */
 	void
 	checkTerminationFunction();
+
+
+	virtual
+	void
+	lockSimulatorStep(){
+		;
+	}
+
+	virtual
+	void
+	unlockSimulatorStep(){
+		;
+	}
 
 public:
 	/**
@@ -289,6 +303,12 @@ public:
 	t_timestamp getGVT() const;
 
 	/**
+	 * Set current GVT
+	 */
+	virtual void
+	setGVT(const t_timestamp& newgvt);
+
+	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
 	 * @return all transitioned models.
 	 */
@@ -409,11 +429,33 @@ public:
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
 
 	/**
+	 * After a model received a set of messages, store these for later use.
+	 * @attention noop in single core, only relevant in multicore (revert)
+	 */
+	virtual
+	void markProcessed(const std::vector<t_msgptr>&) {;}
+
+	// TODO make private
+	virtual
+	void markMessageStored(const t_msgptr&){;}
+
+	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
 	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
 	 */
 	t_timestamp
 	getFirstMessageTime()const;
+
+
+	/**
+	 * Mattern's algorithm nrs 1.6/1.7
+	 * @attention : only sensible in multicore setting, single core will assert fail.
+	 */
+	virtual
+	void
+	receiveControl(const t_controlmsg& /*controlmessage*/){
+		assert(false);
+	}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

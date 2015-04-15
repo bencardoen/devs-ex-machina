@@ -103,8 +103,6 @@ TEST(Model, Basic)
 	EXPECT_EQ(model1.getState(), nullptr);
 	EXPECT_EQ(model1.getIPorts().size(), 0);
 	EXPECT_EQ(model1.getOPorts().size(), 0);
-	EXPECT_EQ(model1.getSendMessages().size(), 0);
-	EXPECT_EQ(model1.getReceivedMessages().size(), 0);
 	EXPECT_EQ(model1.getName(), "ABC");
 	EXPECT_EQ(model1.getPort(""), nullptr);
 	Model model2("DEF");

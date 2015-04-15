@@ -117,7 +117,7 @@ void n_model::Core::collectOutput()
 	LOG_DEBUG("CORE: Collecting output from all models");
 	for (const auto& modelentry : m_models) {
 		const auto& model = modelentry.second;
-		auto mailfrom = model->output();
+		auto mailfrom = model->doOutput();
 		LOG_DEBUG("CORE: got ", mailfrom.size(), " messages from ", modelentry.first);
 		// Model has no clue what time it is, set timestamp now.
 		for (const auto& msg : mailfrom) {
@@ -137,25 +137,30 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& imminent : imminents) {
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
-		if (found == mail.end()) {
+		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
 			urgent->setTime(this->getTime());
+			urgent->setGVT(this->getGVT());
 			this->traceInt(urgent);
 		} else {
-			urgent->confTransition(found->second);
+			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(this->getTime());
+			urgent->setGVT(this->getGVT());
 			this->traceConf(urgent);
+			this->markProcessed(found->second);
 
 			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
 	}
 
-	for (const auto& remaining : mail) {		// Models with pending mail only
+	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
 		model->setTime(this->getTime());
+		model->setGVT(this->getGVT());
 		this->traceExt(model);
+		this->markProcessed(remaining.second);
 
 		t_timestamp queried = model->timeAdvance();// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
@@ -279,6 +284,10 @@ void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 
+	// Lock simulator to allow setGVT/Revert to clear things up.
+
+	this->lockSimulatorStep();
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
 
@@ -306,6 +315,9 @@ void n_model::Core::runSmallStep()
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
+
+	// Finally, unlock simulator.
+	this->unlockSimulatorStep();
 }
 
 void n_model::Core::traceInt(const t_atomicmodelptr& model)
@@ -313,7 +325,8 @@ void n_model::Core::traceInt(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		this->m_tracers->tracesInternal(model);
+		// TODO add coreid
+		this->m_tracers->tracesInternal(model, this->getCoreID());
 	}
 }
 
@@ -322,7 +335,8 @@ void n_model::Core::traceExt(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		this->m_tracers->tracesExternal(model);
+		// TODO add coreid
+		this->m_tracers->tracesExternal(model), this->getCoreID();
 	}
 }
 
@@ -331,7 +345,8 @@ void n_model::Core::traceConf(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		this->m_tracers->tracesConfluent(model);
+		// TODO add coreid
+		this->m_tracers->tracesConfluent(model, this->getCoreID());
 	}
 }
 
@@ -468,6 +483,13 @@ t_timestamp n_model::Core::getFirstMessageTime() const
 		}
 	}
 	return mintime;
+}
+
+void
+n_model::Core::setGVT(const t_timestamp& newgvt){
+	assert(newgvt > this->m_gvt);
+	LOG_DEBUG("Setting gvt from ::" , this->getGVT(), " to ", newgvt);
+	this->m_gvt = newgvt;
 }
 
 void n_model::Core::printPendingMessages()
