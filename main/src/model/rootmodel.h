@@ -13,9 +13,12 @@
 #include "globallog.h"
 
 namespace n_model {
-class RootModel: public Model
+class RootModel final: public Model	//don't allow users to derive from this class
 {
 private:
+	using Model::m_control;	//change access to private
+	using Model::setController;
+
 	std::vector<t_atomicmodelptr> m_components;
 	bool m_directConnected;
 

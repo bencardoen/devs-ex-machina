@@ -47,6 +47,11 @@ public:
 	bool setZFunc(const t_portptr& port, t_zfunc function);
 	bool setInPort(const t_portptr& port);
 	void clear();
+	/**
+	 * @brief Remove a connection from this port to the other
+	 */
+	void removeOutPort(const t_portptr& port);
+	void removeInPort(const t_portptr& port);
 
 	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
 	void setInPortCoupled(const t_portptr& port);

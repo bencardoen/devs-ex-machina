@@ -23,6 +23,7 @@
 #include "core.h"
 #include "tracers.h"
 #include "globallog.h"
+#include "dssharedstate.h"
 
 namespace n_control {
 
@@ -51,7 +52,14 @@ private:
 	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
+	t_coupledmodelptr m_coupledOrigin;
 	n_tracers::t_tracersetptr m_tracers;
+
+	DSScharedState m_sharedState;
+	bool m_dsPhase;
+
+	void doDirectConnect();
+	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
@@ -114,10 +122,46 @@ public:
 //	void load(std::string filepath, std::string filename) = delete;
 //	void GVTdone();
 //	void checkForTemporaryIrreversible();
-//	void dsRemovePort(const n_model::Port& port);
-//	void dsScheduleModel(const t_modelPtr model);
-//	void dsUndoDirectConnect();
-//	void dsUnscheduleModel(const t_modelPtr model);
+
+	/**
+	 * @brief Adds a connection during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 * @param from The starting port of the connection
+	 * @param to The destination port of the connection
+	 */
+	void dsAddConnection(const n_model::t_portptr& from, const n_model::t_portptr& to, const t_zfunc& zFunction);
+	/**
+	 * @brief Removes a connection during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 * @param from The starting port of the connection
+	 * @param to The destination port of the connection
+	 */
+	void dsRemoveConnection(const n_model::t_portptr& from,const n_model::t_portptr& to);
+	/**
+	 * @brief Remove a port during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 */
+	void dsRemovePort(n_model::t_portptr& port);
+	/**
+	 * @brief add a model during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 */
+	void dsScheduleModel(const n_model::t_modelptr& model);
+	/**
+	 * @brief remove a model during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 */
+	void dsUnscheduleModel(n_model::t_modelptr& model);
+	/**
+	 * @brief Undo direct connect during Dynamic Structured DEVS
+	 * @preconditions We are in the Dynamic Structured phase.
+	 */
+	void dsUndoDirectConnect();
+
+	/**
+	 * @return Whether or not the simulator is currently performing Dynamic Structured DEVS
+	 */
+	bool isInDSPhase() const;
 
 private:
 	/*

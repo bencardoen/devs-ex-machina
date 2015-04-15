@@ -6,13 +6,13 @@
  */
 
 #include "model.h"
+#include "controller.h"
 
 namespace n_model {
 
 Model::Model(std::string name)
-	: m_name(name), m_state(nullptr)
+	: m_name(name), m_state(nullptr), m_control(nullptr)
 {
-
 }
 
 std::string Model::getName() const
@@ -81,7 +81,21 @@ t_portptr Model::addPort(std::string name, bool isIn)
 	else
 		m_oPorts.insert(std::pair<std::string, t_portptr>(name, port));
 
+	if(m_control){
+		m_control->dsUndoDirectConnect();
+	}
+
 	return port;
+}
+
+void Model::removePort(t_portptr& port)
+{
+	//TODO model remove port
+	//remove all outgoing connections of this port
+	//remove all incoming connections of this port
+	//remove the port itself
+	if(m_control)
+		m_control->dsRemovePort(port);
 }
 
 t_portptr Model::addInPort(std::string name)
@@ -124,5 +138,14 @@ const std::deque<n_network::t_msgptr>& Model::getReceivedMessages() const
 	return m_receivedMessages;
 }
 
+bool Model::modelTransition(DSScharedState*)
+{
+	return false;
 }
 
+void Model::setController(n_control::Controller* newControl)
+{
+	m_control = newControl;
+}
+
+}

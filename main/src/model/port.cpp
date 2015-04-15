@@ -87,6 +87,21 @@ bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
 	return true;
 }
 
+
+void n_model::Port::removeOutPort(const t_portptr& port)
+{
+	std::map<t_portptr, t_zfunc>::iterator it = m_outs.find(port);
+	if(it != m_outs.end()){
+		//there is a connection to this port
+		m_outs.erase(it);
+	}
+}
+
+void Port::removeInPort(const t_portptr& port)
+{
+	m_ins.erase(std::find(m_ins.begin(), m_ins.end(), port));
+}
+
 /*
  * Sets an input port to this port
  *

@@ -16,6 +16,11 @@
 #include <sstream>
 #include "port.h"
 #include "state.h"
+#include "dssharedstate.h"
+
+namespace n_control{
+	class Controller;
+}
 
 namespace n_model {
 
@@ -23,6 +28,7 @@ using n_network::t_timestamp;
 
 class Model
 {
+	friend n_control::Controller;
 private:
 	std::string m_name;
 
@@ -52,6 +58,8 @@ protected:
 
 	std::deque<n_network::t_msgptr> m_sendMessages;
 	std::deque<n_network::t_msgptr> m_receivedMessages;
+
+	n_control::Controller* m_control;	//@Pieter Deze member moet je niet serializeren.
 
 	/**
 	 * Add an input port to the model
@@ -106,6 +114,11 @@ public:
 	 * @return a shared pointer to the port
 	 */
 	t_portptr getPort(std::string name) const;
+
+	/**
+	 * @brief Removes a port from this model.
+	 */
+	void removePort(t_portptr& port);
 
 	/**
 	 * Returns the current state of the model
@@ -177,6 +190,19 @@ public:
 	const std::deque<n_network::t_msgptr>& getSendMessages() const;
 	const std::deque<n_network::t_msgptr>& getReceivedMessages() const;
 
+	/**
+	 * @brief Transition function for dynamic structured DEVS.
+	 * This function will be called during the simulation for changing the structure of the model.
+	 * @return If true, propagate this call upwards in the model tree.
+	 * @note Only this function is allowed to change the structure during the simulation.
+	 */
+	virtual bool modelTransition(DSScharedState* shared);
+
+	/**
+	 * @brief Sets the Controller of this model.
+	 * @note The user doesn't have to worry about this one.
+	 */
+	virtual void setController(n_control::Controller* newControl);
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

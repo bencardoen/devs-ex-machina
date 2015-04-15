@@ -16,6 +16,10 @@
 namespace n_model {
 class AtomicModel: public Model
 {
+private:
+	using Model::m_control;	//change access to private
+	using Model::setController;
+
 protected:
 	// lower number -> higher priority
 	std::size_t m_priority;
