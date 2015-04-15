@@ -118,17 +118,6 @@ public:
 	virtual ~AtomicModel()
 	{
 	}
-
-	// TODO : STUBS, REMOVE THESE STUBS
-	std::deque<n_network::t_msgptr> m_stub;
-	__attribute__((deprecated)) const std::deque<n_network::t_msgptr>& getSendMessages()
-	{
-		return m_stub;
-	}
-	__attribute__((deprecated)) const std::deque<n_network::t_msgptr>& getReceivedMessages()
-	{
-		return m_stub;
-	}
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

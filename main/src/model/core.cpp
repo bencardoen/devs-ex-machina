@@ -333,7 +333,7 @@ void n_model::Core::traceExt(const t_atomicmodelptr& model)
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
 		// TODO add coreid
-		this->m_tracers->tracesExternal(model), this->getCoreID();
+		this->m_tracers->tracesExternal(model, this->getCoreID());
 	}
 }
 
