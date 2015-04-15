@@ -16,11 +16,12 @@ using namespace n_tools;
 
 namespace n_tracers {
 
-TraceMessage::TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, const t_messagefunc& takeback)
+TraceMessage::TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback)
 	: Message("", time, "", ""), m_func(func), m_takeBack(takeback), m_tracerID(tracerID)
 {
 	assert(m_func != nullptr && "TraceMessage::TraceMessage can't accept nullptr as execution function");
 	assert(m_takeBack != nullptr && "TraceMessage::TraceMessage Can't accept nullptr as cleanup function. If you don't need a cleanup function, either provide an empty one or omit the argument.");
+	setSourceCore(coreID);
 }
 
 TraceMessage::~TraceMessage()
@@ -133,18 +134,33 @@ void doRealTrace(std::vector<TraceMessageEntry> entries){
 void traceUntil(n_network::t_timestamp time)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{});
+	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
 	waitForTracer();
 	tracerFuture = new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages)));
 }
 
-void revertTo(n_network::t_timestamp time)
+void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{});
+	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
-	clearAll();
+	std::vector<TraceMessageEntry> messagesLost;
+	TraceMessage inf(n_network::t_timestamp::infinity(), std::numeric_limits<std::size_t>::max(), []{}, 0u);
+	scheduler->unschedule_until(messagesLost, &inf);
+	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ", messagesLost.size(), " messages");
+	if(coreID == -1u) {
+		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(), " messages");
+		for(const TraceMessageEntry& mess : messagesLost)
+			n_tools::takeBack(mess.getPointer());
+	} else {
+		for(const TraceMessageEntry& mess : messagesLost){
+			if(mess->getSourceCore() != coreID)
+				scheduler->push_back(mess);
+			else
+				n_tools::takeBack(mess.getPointer());
+		}
+	}
 	for (const TraceMessageEntry& mess : messages)
 		scheduler->push_back(mess);
 }
