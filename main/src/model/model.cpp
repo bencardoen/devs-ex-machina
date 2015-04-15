@@ -128,16 +128,6 @@ std::map<std::string, t_portptr>& Model::getOPorts()
 	return m_oPorts;
 }
 
-const std::deque<n_network::t_msgptr>& Model::getSendMessages() const
-{
-	return m_sendMessages;
-}
-
-const std::deque<n_network::t_msgptr>& Model::getReceivedMessages() const
-{
-	return m_receivedMessages;
-}
-
 bool Model::modelTransition(DSScharedState*)
 {
 	return false;

@@ -14,9 +14,6 @@
 namespace n_model {
 class CoupledModel: public Model
 {
-private:
-	using Model::m_control;	//change access to private
-
 protected:
 	std::vector<t_modelptr> m_components;
 	void setController(n_control::Controller* newControl);

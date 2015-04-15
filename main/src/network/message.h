@@ -11,10 +11,18 @@
 #include "timestamp.h"
 #include "stringtools.h"
 #include "globallog.h"
-#include <cassert>
 #include <sstream>
+#include <iosfwd>
 
 namespace n_network {
+
+/**
+ * Denote cut-type in gvt synchronization.
+ */
+enum MessageColor {WHITE=0, RED=1};
+
+std::ostream&
+operator<<(std::ostream& os, const MessageColor& c);
 
 /**
  * A Message representing either an event passed between models , or synchronization token
@@ -28,10 +36,9 @@ private:
 	 */
 	const std::string m_destination_model;
 
-	/**
-	 * Core id in this simulator.
-	 */
 	std::size_t m_destination_core;
+
+	std::size_t m_source_core;
 
 	/**
 	 * Time message is created (by model/port)
@@ -41,18 +48,27 @@ private:
 	/**
 	 * Full name of destination port.
 	 */
-	const std::string m_destination_port; //fullname
+	const std::string m_destination_port;
 
 	/**
 	 * Full name of source port.
 	 */
-	const std::string m_source_port;	// fullname
+	const std::string m_source_port;
 
 	/**
 	 * User defined payload.
 	 * @see toString()
 	 */
 	const std::string m_payload;
+
+	/**
+	 * Color in synchronization algorithms.
+	 * @default WHITE
+	 * @see MessageColor
+	 */
+	MessageColor m_color;
+
+	bool  m_antimessage;
 
 public:
 	/**
@@ -61,19 +77,34 @@ public:
 	 * @param destport : full name of destination port
 	 * @param sourceport : full name of source port
 	 * @param payload : user supplied content.
+	 * @note : Color is set by default to white.
 	 * @attention Core id is initialized at limits::max().
 	 */
 	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport,
-	        const std::string& payload = "")
-		:
-		m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()),
-		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_payload(payload)
-	{
-	}
+	        const std::string& payload = "");
 
 	std::size_t getDestinationCore() const
 	{
 		return m_destination_core;
+	}
+
+	void setAntiMessage(bool b){m_antimessage = b;}
+
+	bool isAntiMessage(){return m_antimessage;}
+
+	void setDestinationCore(std::size_t dest)
+	{
+		m_destination_core = dest;
+	}
+
+	std::size_t getSourceCore() const
+	{
+		return m_source_core;
+	}
+
+	void setSourceCore(std::size_t src)
+	{
+		m_source_core = src;
 	}
 
 	std::string getDestinationPort() const
@@ -96,20 +127,7 @@ public:
 		return n_tools::copyString(m_payload);
 	}
 
-	void setDestinationCore(std::size_t dest)
-	{
-		m_destination_core = dest;
-	}
-
-	virtual std::string toString() const
-	{
-		std::stringstream result;
-		result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
-		result << " @" << m_timestamp;
-		result << " to model " << this->getDestinationModel() << " @core_nr " << m_destination_core;
-		result << " payload " << this->getPayload();
-		return result.str();
-	}
+	virtual std::string toString() const;
 
 	t_timestamp getTimeStamp() const
 	{
@@ -126,30 +144,32 @@ public:
 		;
 	}
 
-	friend
-	bool operator==(const Message& left, const Message& right){
-		return(
-			left.getDestinationModel()==right.getDestinationModel()
-			&&
-			left.getDestinationPort() == right.getDestinationPort()
-			&&
-			left.getSourcePort() == right.getSourcePort()
-			&&
-			left.getTimeStamp() == right.getTimeStamp()
-		);
+	MessageColor
+	getColor()const {
+		return m_color;
+	}
+
+	void
+	paint(MessageColor newcolor){
+		this->m_color = newcolor;
 	}
 
 	friend
-	bool operator!=(const Message& left, const Message& right){
-		return (not (left == right));
-	}
+	bool operator==(const Message& left, const Message& right);
+
+	friend
+	bool operator!=(const Message& left, const Message& right);
 
 };
 
+/**
+ * Typedef for client classes
+ */
 typedef std::shared_ptr<Message> t_msgptr;
 
 /**
  * Comparison object to allow storing msgptrs in min heap queues.
+ * @deprecated
  */
 struct compare_msgptr{
 	bool operator()( const std::shared_ptr<Message>& left, const std::shared_ptr<Message>& right ) const {
@@ -173,7 +193,6 @@ struct hash<n_network::Message>
 		std::stringstream ss;
 		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel() << message.getTimeStamp();
 		std::string hashkey = ss.str();
-		//LOG_DEBUG("MESSAGE HASH ", hashkey);
 		return std::hash<std::string>()(hashkey);
 	}
 };

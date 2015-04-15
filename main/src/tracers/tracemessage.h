@@ -32,7 +32,7 @@ public:
 	 * 		This function is called when the message is destroyed, in order to clean up any memory that can otherwise no longer be accessed
 	 * @precondition The two function objects are valid function pointers. No nullptr allowed!
 	 */
-	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, const t_messagefunc& takeback = []{});
+	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback = []{});
 	~TraceMessage();
 
 	/**
@@ -74,9 +74,10 @@ void scheduleMessage(t_tracemessageptr message);
  */
 void traceUntil(n_network::t_timestamp time);
 /**
- * @brief reverts the output to a certain time.
+ * @brief reverts the output of a single core to a certain time.
+ * @param coreID [default -1] Only throw away trace messages with this ID. If -1, throw away everything
  */
-void revertTo(n_network::t_timestamp time);
+void revertTo(n_network::t_timestamp time, std::size_t coreID = -1u);
 /**
  * @brief clears the entire queue of trace messages.
  */

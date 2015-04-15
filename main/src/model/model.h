@@ -32,9 +32,6 @@ class Model
 private:
 	std::string m_name;
 
-	std::map<std::string, t_portptr> m_iPorts;
-	std::map<std::string, t_portptr> m_oPorts;
-
 	/**
 	 * Utility function to create a new port and add it
 	 *
@@ -50,16 +47,19 @@ protected:
 	t_stateptr m_state;
 	std::vector<t_stateptr> m_oldStates;
 
-	/**
-	 * Parent node of this model, mainly used for direct connect and DS
-	 * Weak pointer is used for easier destruction
-	 */
-	std::weak_ptr<Model> m_parent;
+	std::map<std::string, t_portptr> m_iPorts;
+	std::map<std::string, t_portptr> m_oPorts;
 
 	std::deque<n_network::t_msgptr> m_sendMessages;
 	std::deque<n_network::t_msgptr> m_receivedMessages;
 
 	n_control::Controller* m_control;	//@Pieter Deze member moet je niet serializeren.
+
+	/**
+	 * Parent node of this model, mainly used for direct connect and DS
+	 * Weak pointer is used for easier destruction
+	 */
+	std::weak_ptr<Model> m_parent;
 
 	/**
 	 * Add an input port to the model
@@ -181,14 +181,6 @@ public:
 	 * @return current output ports
 	 */
 	std::map<std::string, t_portptr>& getOPorts();
-
-	/**
-	 * Return all current send messages
-	 *
-	 * @return current send messages
-	 */
-	const std::deque<n_network::t_msgptr>& getSendMessages() const;
-	const std::deque<n_network::t_msgptr>& getReceivedMessages() const;
 
 	/**
 	 * @brief Transition function for dynamic structured DEVS.

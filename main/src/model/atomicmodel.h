@@ -41,14 +41,22 @@ public:
 	AtomicModel(std::string name, std::size_t priority = 0);
 
 	/**
-	 * Perform an external transition
+	 * Perform an external transition, one of the functions the user has to implement
 	 *
 	 * @param message A vector of messagepointers that represent events
 	 */
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) = 0;
 
 	/**
-	 * Perform an internal transition
+	 * Perform an external transition, this function will call the user-implemented extTransition
+	 * function and will also store all messages properly for the tracer to find them
+	 *
+	 * @param message A vector of messagepointers that represent events
+	 */
+	void doExtTransition(const std::vector<n_network::t_msgptr>& message);
+
+	/**
+	 * Perform an internal transition, one of the functions the user has to implement
 	 */
 	virtual void intTransition() = 0;
 
@@ -59,19 +67,27 @@ public:
 	 */
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 
-	/*
-	 * Get the current time advance
+	/**
+	 * Get the current time advance, one of the functions the user has to implement
 	 *
 	 * @return Current time advance
 	 */
 	virtual t_timestamp timeAdvance() = 0;
 
-	/*
-	 * Get the current output
+	/**
+	 * Get the current output, one of the functions the user has to implement
 	 *
 	 * @return vector with pointers to all output messages in it
 	 */
 	virtual std::vector<n_network::t_msgptr> output() const = 0;
+
+	/**
+	 * Get the current output, this function will call the user-implemented output function
+	 * and will also store all messages properly for the tracer to find them.
+	 *
+	 * @return vector with pointers to all output messages in it
+	 */
+	std::vector<n_network::t_msgptr> doOutput();
 
 	/**
 	 * Sets the correct GVT for the model and fixes all necessary internal changes (like

@@ -6,6 +6,7 @@
 * Boost (heap, system ; header only)
 * G++ (4.8.2|4.9), Cygwin, Clang(3.4|3.5)
 * GTest 1.7
+* Cereal 1.1.1 (header only)
 
 ### Building & running ###
 

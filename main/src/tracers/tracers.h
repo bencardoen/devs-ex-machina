@@ -101,21 +101,21 @@ public:
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr&)
+	void tracesInternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr&)
+	void tracesExternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr&)
+	void tracesConfluent(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 
@@ -316,28 +316,28 @@ public:
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr& model)
+	void tracesInternal(const t_atomicmodelptr& model, std::size_t coreid)
 	{
-		m_elem.tracesInternal(model);
-		getNext().tracesInternal(model);
+		m_elem.tracesInternal(model, coreid);
+		getNext().tracesInternal(model, coreid);
 	}
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr& model)
+	void tracesExternal(const t_atomicmodelptr& model, std::size_t coreid)
 	{
-		m_elem.tracesExternal(model);
-		getNext().tracesExternal(model);
+		m_elem.tracesExternal(model, coreid);
+		getNext().tracesExternal(model, coreid);
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr& model)
+	void tracesConfluent(const t_atomicmodelptr& model, std::size_t coreid)
 	{
-		m_elem.tracesConfluent(model);
-		getNext().tracesConfluent(model);
+		m_elem.tracesConfluent(model, coreid);
+		getNext().tracesConfluent(model, coreid);
 	}
 
 	/**
