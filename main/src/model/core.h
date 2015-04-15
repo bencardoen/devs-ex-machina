@@ -435,6 +435,10 @@ public:
 	virtual
 	void markProcessed(const std::vector<t_msgptr>&) {;}
 
+	// TODO make private
+	virtual
+	void markMessageStored(const t_msgptr&){;}
+
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
 	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.

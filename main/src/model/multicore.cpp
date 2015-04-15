@@ -32,6 +32,11 @@ Multicore::sendMessage(const t_msgptr& msg){
 	msg->paint(this->getColor());
 	LOG_DEBUG("MCore:: sending message", msg->toString());
 	this->m_network->acceptMessage(msg);
+	this->markMessageStored(msg);
+}
+
+void
+Multicore::markMessageStored(const t_msgptr& msg){
 	LOG_DEBUG("MCore:: storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
 }
@@ -125,14 +130,21 @@ Multicore::setGVT(const t_timestamp& newgvt){
 			break;
 		}
 	}
+	LOG_DEBUG("MCore:: setgvt found " , distance(m_processed_messages.begin(),iter), " processed messages to erase.");
 	m_processed_messages.erase(m_processed_messages.begin(), iter);		//erase[......GVT x)
+	LOG_DEBUG("MCore:: processed messages now contains :: ", m_processed_messages.size());
+
 	auto senditer = m_sent_messages.begin();
 	for(; senditer != m_sent_messages.end(); ++senditer){
 		if(  (*senditer)->getTimeStamp() > this->getGVT()  ){
 			break;
 		}
 	}
+
+	LOG_DEBUG("MCore:: found " , distance(m_sent_messages.begin(),senditer), " sent messages to erase.");
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
+	LOG_DEBUG("MCore:: processed sent messages now contains :: ", m_sent_messages.size());
+
 	this->unlockSimulatorStep();
 }
 

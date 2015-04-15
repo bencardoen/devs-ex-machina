@@ -64,6 +64,8 @@ public:
 	 */
 	void sendMessage(const t_msgptr&)override;
 
+	void markMessageStored(const t_msgptr&)override;
+
 	MessageColor
 	getColor()const{return m_color;}
 
