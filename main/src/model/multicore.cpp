@@ -109,8 +109,45 @@ void
 Multicore::markProcessed(const std::vector<t_msgptr>& messages) {
 	for(const auto& msg : messages){
 		LOG_DEBUG("MCore : storing processed msg", msg->toString());
+		std::lock_guard<std::mutex> lock(m_locallock);
 		this->m_processed_messages.push_back(msg);
 	}
+}
+
+void
+Multicore::setGVT(const t_timestamp& newgvt){
+	Core::setGVT(newgvt);
+	this->lockSimulatorStep();
+	// Clear processed messages with time < gvt
+	auto iter = m_processed_messages.begin();
+	for(; iter != m_processed_messages.end(); ++iter){
+		if( (*iter)->getTimeStamp() > this->getGVT() ){
+			break;
+		}
+	}
+	m_processed_messages.erase(m_processed_messages.begin(), iter);		//erase[......GVT x)
+	auto senditer = m_sent_messages.begin();
+	for(; senditer != m_sent_messages.end(); ++senditer){
+		if(  (*senditer)->getTimeStamp() > this->getGVT()  ){
+			break;
+		}
+	}
+	m_sent_messages.erase(m_sent_messages.begin(), senditer);
+	this->unlockSimulatorStep();
+}
+
+void
+n_model::Multicore::lockSimulatorStep(){
+	LOG_DEBUG("MCORE:: trying to lock simulator core");
+	this->m_locallock.lock();
+	LOG_DEBUG("MCORE:: simulator core locked");
+}
+
+void
+n_model::Multicore::unlockSimulatorStep(){
+	LOG_DEBUG("MCORE:: trying to unlock simulator core");
+	this->m_locallock.unlock();
+	LOG_DEBUG("MCORE:: simulator core unlocked");
 }
 
 void
@@ -123,3 +160,5 @@ n_model::calculateGVT(/* access to cores,*/ std::size_t ms, std::atomic<bool>& r
 		 */
 	}
 }
+
+

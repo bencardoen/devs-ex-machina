@@ -112,6 +112,19 @@ private:
 	void
 	checkTerminationFunction();
 
+
+	virtual
+	void
+	lockSimulatorStep(){
+		;
+	}
+
+	virtual
+	void
+	unlockSimulatorStep(){
+		;
+	}
+
 public:
 	/**
 	 * Default single core implementation.

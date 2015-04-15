@@ -28,8 +28,14 @@ private:
 	n_control::t_location_tableptr	m_loctable;
 	MessageColor		m_color;
 	t_V				m_mcount_vector;
+	/**
+	 * Locks access to shared vector that counts recvd, sent msgs.
+	 */
 	std::mutex&			m_vlock;
-	/*std::mutex			m_locallock;*/ // Possibly required to sync access to getTime() ?
+	/**
+	 * Simulation lock
+	 */
+	std::mutex			m_locallock;
 	t_timestamp			m_tmin;
 	std::deque<t_msgptr>		m_sent_messages;
 	std::deque<t_msgptr>		m_processed_messages;
@@ -74,20 +80,33 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg&);
+	receiveControl(const t_controlmsg&)override;
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)
 	 * @attention locked
 	 */
 	virtual
-	void receiveMessage(const t_msgptr&);
+	void receiveMessage(const t_msgptr&)override;
 
 	/**
 	 * If a model received a set of messages, store these message as processed in the core.
 	 */
+	void markProcessed(const std::vector<t_msgptr>&) override;
+
+	/**
+	 * Sets new gvt.
+	 * This clears all processed messages time < newgvt, all send messages < newgvt
+	 * @pre newgvt >= this->getGVT()
+	 */
 	virtual
-	void markProcessed(const std::vector<t_msgptr>&);
+	void setGVT(const t_timestamp&)override;
+
+	void
+	lockSimulatorStep()override;
+
+	void
+	unlockSimulatorStep()override;
 
 	// TODO
 	void

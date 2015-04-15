@@ -140,10 +140,12 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
 			urgent->setTime(this->getTime());
+			urgent->setGVT(this->getGVT());
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(this->getTime());
+			urgent->setGVT(this->getGVT());
 			this->traceConf(urgent);
 			this->markProcessed(found->second);
 
@@ -156,6 +158,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->extTransition(remaining.second);
 		model->setTime(this->getTime());
+		model->setGVT(this->getGVT());
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
 
@@ -281,6 +284,10 @@ void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 
+	// Lock simulator to allow setGVT/Revert to clear things up.
+
+	this->lockSimulatorStep();
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
 
@@ -308,6 +315,9 @@ void n_model::Core::runSmallStep()
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
+
+	// Finally, unlock simulator.
+	this->unlockSimulatorStep();
 }
 
 void n_model::Core::traceInt(const t_atomicmodelptr& model)
@@ -478,6 +488,7 @@ t_timestamp n_model::Core::getFirstMessageTime() const
 void
 n_model::Core::setGVT(const t_timestamp& newgvt){
 	assert(newgvt > this->m_gvt);
+	LOG_DEBUG("Setting gvt from ::" , this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
 
