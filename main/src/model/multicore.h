@@ -46,6 +46,15 @@ private:
 	void
 	countMessage(const t_msgptr& msg);
 
+	/**
+	 * Send an antimessage based on this one.
+	 */
+	void
+	sendAntiMessage(const t_msgptr& msg);
+
+	void
+	handleAntiMessage(const t_msgptr& msg);
+
 public:
 	Multicore()=delete;
 	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, std::mutex& vlock, size_t cores);
@@ -68,6 +77,9 @@ public:
 
 	MessageColor
 	getColor()const{return m_color;}
+
+	virtual
+	void revert(const t_timestamp& totime)override;
 
 	void
 	setColor(MessageColor c){m_color = c;}

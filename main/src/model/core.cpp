@@ -61,11 +61,6 @@ void n_model::Core::save(const std::string&)
 	throw std::logic_error("Core : save not implemented");
 }
 
-void n_model::Core::revert(t_timestamp)
-{
-	throw std::logic_error("Core : revert not implemented");
-}
-
 void n_model::Core::addModel(t_atomicmodelptr model)
 {
 	std::string mname = model->getName();
@@ -87,6 +82,7 @@ bool n_model::Core::containsModel(const std::string& mname) const
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
 	if (this->m_models.find(name) != this->m_models.end()) {
+		LOG_DEBUG("Core : rescheduling : ",name ,"@" ,t);
 		ModelEntry entry(name, t);
 		this->m_scheduler->push_back(entry);
 	} else {
@@ -121,6 +117,7 @@ void n_model::Core::collectOutput()
 		LOG_DEBUG("CORE: got ", mailfrom.size(), " messages from ", modelentry.first);
 		// Model has no clue what time it is, set timestamp now.
 		for (const auto& msg : mailfrom) {
+			msg->setSourceCore(this->getCoreID());
 			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));
 		}
 		this->sortMail(mailfrom);
@@ -431,12 +428,31 @@ void n_model::Core::clearModels()
 	this->m_gvt = t_timestamp(0, 0);
 }
 
+void n_model::Core::queuePendingMessage(const t_msgptr& msg){
+	MessageEntry entry(msg);
+	this->m_received_messages->push_back(entry);
+}
+
+void
+n_model::Core::rescheduleAll(const t_timestamp& totime){
+	this->m_scheduler->clear();
+	assert(m_scheduler->empty());
+	for(const auto& modelentry : m_models){
+		modelentry.second->revert(totime);	// Todo need last scheduled time from models here.
+		modelentry.second->setTime(this->getTime());
+		t_timestamp nexttime = modelentry.second->timeAdvance();	// for now use this
+		if(nexttime != t_timestamp::infinity()){
+			nexttime.increaseCausality(modelentry.second->getPriority());
+			this->scheduleModel(modelentry.first, nexttime+this->getTime());
+		}
+	}
+}
+
 void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
 	LOG_DEBUG("CORE:: receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
 	if (msgtime < this->getTime()) {
-		// TODO trigger revert/synchro here.
 		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
 	} else {
 		MessageEntry entry(msg);

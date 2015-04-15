@@ -36,6 +36,17 @@ Multicore::sendMessage(const t_msgptr& msg){
 }
 
 void
+Multicore::sendAntiMessage(const t_msgptr& msg){
+	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
+	amsg->paint(msg->getColor());
+	amsg->setAntiMessage(true);
+	amsg->setDestinationCore(msg->getDestinationCore());
+	amsg->setSourceCore(msg->getSourceCore());
+	LOG_DEBUG("MCore:: sending antimessage : ", amsg->toString());
+	this->m_network->acceptMessage(amsg);
+}
+
+void
 Multicore::markMessageStored(const t_msgptr& msg){
 	LOG_DEBUG("MCore:: storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
@@ -153,6 +164,38 @@ n_model::Multicore::lockSimulatorStep(){
 	LOG_DEBUG("MCORE:: trying to lock simulator core");
 	this->m_locallock.lock();
 	LOG_DEBUG("MCORE:: simulator core locked");
+}
+
+void
+n_model::Multicore::revert(const t_timestamp& totime){
+	assert(totime >= this->getGVT());
+	LOG_DEBUG("MCORE:: reverting from ", this->getTime(), " to ", totime);
+	// We're allready locked on simstep.
+	// TODO vcount lock ?
+	while(!m_processed_messages.empty()){
+		auto msg = m_processed_messages.back();
+		if(msg->getTimeStamp()>totime){
+			LOG_DEBUG("MCORE:: repushing processed message ", msg->toString());
+			m_processed_messages.pop_back();
+			this->queuePendingMessage(msg);
+		}else{
+			break;
+		}
+	}
+	// All send messages time < totime, delete (antimessage).
+	while(!m_sent_messages.empty()){
+		auto msg = m_sent_messages.back();
+		if(msg->getTimeStamp() > totime){
+			m_sent_messages.pop_back();
+			LOG_DEBUG("MCORE:: popping sent message ", msg->toString());
+			this->sendAntiMessage(msg);
+		}else{
+			break;
+		}
+	}
+	this->setTime(totime);
+	this->rescheduleAll(totime);
+	// Unload/Reload scheduler.
 }
 
 void

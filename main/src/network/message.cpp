@@ -26,7 +26,7 @@ n_network::operator<<(std::ostream& os, const n_network::MessageColor& c){
 n_network::Message::Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport,const std::string& payload)
 		:
 		m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()),m_source_core(std::numeric_limits<std::size_t>::max()),
-		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_payload(payload), m_color(MessageColor::WHITE)
+		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_payload(payload), m_color(MessageColor::WHITE),m_antimessage(false)
 	{
 	}
 
@@ -37,11 +37,14 @@ n_network::Message::toString() const
 	std::stringstream result;
 	result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
 	result << " @" << m_timestamp;
-	result << " to model " << this->getDestinationModel() << " @core_nr " << m_destination_core;
-	if(m_source_core != std::numeric_limits<decltype(m_source_core)>::max())
-		result << " from : " << m_source_core;
+	result << " to model " << this->getDestinationModel() ;
+	result << " from kernel " << m_source_core;
+	result << " to kernel " << m_destination_core;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
+	if(m_antimessage){
+		result << " anti="<< std::boolalpha << m_antimessage;
+	}
 	return result.str();
 }
 

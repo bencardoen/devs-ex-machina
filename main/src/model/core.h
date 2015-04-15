@@ -60,11 +60,6 @@ private:
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
 
 	/**
-	 * Store received messages (local and networked)
-	 */
-	t_msgscheduler	m_received_messages;
-
-	/**
 	 * Indicate if this core can/should run.
 	 * @synchronized
 	 */
@@ -125,18 +120,18 @@ private:
 		;
 	}
 
-public:
-	/**
-	 * Default single core implementation.
-	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
-	 */
-	Core();
-
-	Core(const Core&) = delete;
-
-	Core& operator=(const Core&) = delete;
 
 protected:
+	/**
+	* Store received messages (local and networked)
+	*/
+	t_msgscheduler	m_received_messages;
+
+	/**
+	 * Push msg onto pending stack of msgs. Called by revert, receive.
+	 */
+	void queuePendingMessage(const t_msgptr& msg);
+
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
 	 */
@@ -150,7 +145,25 @@ protected:
 	void
 	signalImminent(const std::set<std::string>& ){;}
 
+	/**
+	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
+	 * with fresh entries.
+	 */
+	void
+	rescheduleAll(const t_timestamp& totime);
+
 public:
+	/**
+	 * Default single core implementation.
+	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
+	 */
+	Core();
+
+	Core(const Core&) = delete;
+
+	Core& operator=(const Core&) = delete;
+
+
 	/**
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
@@ -170,7 +183,7 @@ public:
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 */
 	virtual
-	void revert(t_timestamp totime);
+	void revert(const t_timestamp& /*totime*/){;}
 
 	/**
 	 * Add model to this core.

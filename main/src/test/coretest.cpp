@@ -504,14 +504,26 @@ TEST(Multicore, GVTfunctions){
 	t_timestamp gvt(1,0);
 	t_timestamp aftergvt(2,0);
 	t_msgptr msg = createObject<Message>("mylight", beforegvt, "", "");
+	msg->setSourceCore(0);
+	msg->setDestinationCore(1);
 	t_msgptr msggvt = createObject<Message>("mylight", gvt, "", "");
+	msggvt->setSourceCore(0);
+	msggvt->setDestinationCore(1);
 	t_msgptr msgaftergvt = createObject<Message>("mylight", aftergvt, "", "");
+	msgaftergvt->setSourceCore(0);
+	msgaftergvt->setDestinationCore(1);
 	std::vector<t_msgptr> processed = {msg, msggvt, msgaftergvt};
 	coreone->markProcessed(processed);
 	for(const auto& msg : processed){
 		coreone->markMessageStored(msg);
 	}
 	coreone->setGVT(gvt);
+	//coreone->printSchedulerState();
+	//coreone->printPendingMessages();
+	coreone->revert(gvt);
+	//coreone->printSchedulerState();
+	//coreone->printPendingMessages();
+	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 }
 
 
