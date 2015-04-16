@@ -149,7 +149,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	TraceMessage inf(n_network::t_timestamp::infinity(), std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messagesLost, &inf);
 	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ", messagesLost.size(), " messages");
-	if(coreID == -1u) {
+	if(coreID == std::numeric_limits<std::size_t>::max()) {
 		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(), " messages");
 		for(const TraceMessageEntry& mess : messagesLost)
 			n_tools::takeBack(mess.getPointer());

@@ -9,6 +9,7 @@
 #define SRC_TRACERS_TRACEMESSAGE_H_
 
 #include <functional>	//defines std::less<T>
+#include <limits>	//defines std::numeric_limits<T>
 #include "message.h"
 
 namespace n_tracers {
@@ -77,7 +78,7 @@ void traceUntil(n_network::t_timestamp time);
  * @brief reverts the output of a single core to a certain time.
  * @param coreID [default -1] Only throw away trace messages with this ID. If -1, throw away everything
  */
-void revertTo(n_network::t_timestamp time, std::size_t coreID = -1u);
+void revertTo(n_network::t_timestamp time, std::size_t coreID = std::numeric_limits<std::size_t>::max());
 /**
  * @brief clears the entire queue of trace messages.
  */
