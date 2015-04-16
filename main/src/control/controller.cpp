@@ -120,34 +120,13 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	}
 }
 
-void Controller::dsUnscheduleModel(n_model::t_modelptr& model)
+void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
 {
 	assert(isInDSPhase() && "Controller::dsUnscheduleModel called while not in the DS phase.");
 	dsUndoDirectConnect();
-	//TODO move most of this stuff to the model side of the implementation
-	//remove all ports
-	std::map<std::string, t_portptr> ports = model->getIPorts();
-	for(std::map<std::string, t_portptr>::value_type& port: ports)
-		model->removePort(port.second);
-	ports = model->getOPorts();
-	for(std::map<std::string, t_portptr>::value_type& port: ports)
-		model->removePort(port.second);
-	t_coupledmodelptr coupled = std::dynamic_pointer_cast<CoupledModel>(model);
-	if(coupled){
-		//it is a coupled model, remove all its children
-		std::vector<t_modelptr> comp = coupled->getComponents();
-		for(t_modelptr& sub:comp)
-			coupled->removeSubModel(sub);
-		return;
-	}
-	t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(model);
-	if(atomic){
-		//it is an atomic model. Just remove this one from the core and the root devs
-		m_cores.begin()->second->removeModel(atomic->getName());
-		//no need to remove the model from the root devs. We have to redo direct connect anyway
-		return;
-	}
-	throw std::logic_error("Controller::dsUnscheduleModel requested to unschedule a model that is neither a coupled model nor an atomic model.");
+
+	//it is an atomic model. Just remove this one from the core
+	m_cores.begin()->second->removeModel(model->getName());
 }
 
 void Controller::dsUndoDirectConnect()

@@ -14,6 +14,29 @@
 namespace n_model {
 class CoupledModel: public Model
 {
+private:
+	/**
+	 * Removes all connections between two models
+	 */
+	void removeConnectionsBetween(t_modelptr& mod1, t_modelptr& mod2);
+
+	/**
+	 * Tests whether a connection from one port to the other is legal.
+	 * @param p1 The port from which output is sent
+	 * @param p2 The port to which the output is sent
+	 * A connection p1 -> p2 is valid if:
+	 * 	both p1 and p2 are either a port of a direct submodel or this model
+	 * 	if the ports are both of this model or both of a submodel
+	 * 		and the link is from an output port to an input port
+	 * 	if the port that is not of this model has the correct direction
+	 */
+	bool isLegalConnection(const t_portptr& p1, const t_portptr& p2) const;
+
+	/**
+	 * Unschedule all the children
+	 * @precondition: The simulation is in Dynamic Structured DEVS phase
+	 */
+	void unscheduleChildren();
 protected:
 	std::vector<t_modelptr> m_components;
 	void setController(n_control::Controller* newControl);
@@ -47,7 +70,9 @@ public:
 	/**
 	 * Adds a submodel to this coupled model
 	 *
-	 * @param model The submodel that is to be added
+	 * @param model The submodel that is to be removed
+	 * @precondition The model is owned by this Coupled Model
+	 * @precondition The simulation is not running or this is in Dynamic Structured DEVS
 	 */
 	void removeSubModel(t_modelptr& model);
 

@@ -151,7 +151,7 @@ public:
 	 * @brief remove a model during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
 	 */
-	void dsUnscheduleModel(n_model::t_modelptr& model);
+	void dsUnscheduleModel(n_model::t_atomicmodelptr& model);
 	/**
 	 * @brief Undo direct connect during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.

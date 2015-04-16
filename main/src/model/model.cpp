@@ -64,6 +64,7 @@ void Model::resetParents()
 
 t_portptr Model::addPort(std::string name, bool isIn)
 {
+	assert(allowDS() && "Model::addPort: Dynamic structured DEVS is not allowed in this phase.");
 	// Find new name for port if name was empty
 	std::string n = name;
 	if (n == "") {
@@ -90,10 +91,11 @@ t_portptr Model::addPort(std::string name, bool isIn)
 
 void Model::removePort(t_portptr& port)
 {
-	//TODO model remove port
-	//remove all outgoing connections of this port
-	//remove all incoming connections of this port
 	//remove the port itself
+	assert(allowDS() && "Model::removePort: Dynamic structured DEVS is not allowed in this phase.");
+	if(port->isInPort()) m_iPorts.erase(port->getName());
+	else m_oPorts.erase(port->getName());
+
 	if(m_control)
 		m_control->dsRemovePort(port);
 }
@@ -136,6 +138,13 @@ bool Model::modelTransition(DSScharedState*)
 void Model::setController(n_control::Controller* newControl)
 {
 	m_control = newControl;
+}
+
+bool Model::allowDS() const
+{
+	if(m_control)
+		return m_control->isInDSPhase();
+	return true;
 }
 
 }

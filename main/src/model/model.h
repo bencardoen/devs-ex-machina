@@ -75,6 +75,11 @@ protected:
 	 */
 	t_portptr addOutPort(std::string name);
 
+	/**
+	 * @return Whether or not to allow structural changes
+	 */
+	bool allowDS() const;
+
 public:
 	Model() = delete;
 

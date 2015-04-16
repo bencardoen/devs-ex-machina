@@ -134,6 +134,7 @@ public:
 	void resetDirectConnect();
 	bool isUsingDirectConnect() const;
 
+
 	/**
 	 * Function that creates messages with a give payload.
 	 * These messages are addressed to all out-ports that are currently connected

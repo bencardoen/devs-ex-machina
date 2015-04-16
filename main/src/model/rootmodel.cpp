@@ -130,13 +130,6 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 		}
 
 	}
-//	  Maak een lijst van verbindingen van output poorten van de atomic devs in de lijst van 4.1 naar hun input poorten + z-functie
-//	  loop over de lijst en doe het volgende:
-//		Voor elke verbinding naar een inputpoort
-//		  Als: verbinding naar een poort van een atomic devs
-//			maak de verbinding en steek die in de lijst van directe verbindingen van de output poort (denk aan de z-functie)
-//		  anders:
-//			sla nieuwe verbindingen op in de lijst van de outputpoort naar alle poorten waarmee de inputpoort van deze verbinding is verbonden & voeg de z-functies samen
 
 	return m_components;
 }
