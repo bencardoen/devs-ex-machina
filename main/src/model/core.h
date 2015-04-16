@@ -60,11 +60,6 @@ private:
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
 
 	/**
-	 * Store received messages (local and networked)
-	 */
-	t_msgscheduler	m_received_messages;
-
-	/**
 	 * Indicate if this core can/should run.
 	 * @synchronized
 	 */
@@ -112,18 +107,31 @@ private:
 	void
 	checkTerminationFunction();
 
-public:
-	/**
-	 * Default single core implementation.
-	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
-	 */
-	Core();
 
-	Core(const Core&) = delete;
+	virtual
+	void
+	lockSimulatorStep(){
+		;
+	}
 
-	Core& operator=(const Core&) = delete;
+	virtual
+	void
+	unlockSimulatorStep(){
+		;
+	}
+
 
 protected:
+	/**
+	* Store received messages (local and networked)
+	*/
+	t_msgscheduler	m_received_messages;
+
+	/**
+	 * Push msg onto pending stack of msgs. Called by revert, receive.
+	 */
+	void queuePendingMessage(const t_msgptr& msg);
+
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
 	 */
@@ -137,7 +145,25 @@ protected:
 	void
 	signalImminent(const std::set<std::string>& ){;}
 
+	/**
+	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
+	 * with fresh entries.
+	 */
+	void
+	rescheduleAll(const t_timestamp& totime);
+
 public:
+	/**
+	 * Default single core implementation.
+	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
+	 */
+	Core();
+
+	Core(const Core&) = delete;
+
+	Core& operator=(const Core&) = delete;
+
+
 	/**
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
@@ -157,7 +183,7 @@ public:
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 */
 	virtual
-	void revert(t_timestamp totime);
+	void revert(const t_timestamp& /*totime*/){;}
 
 	/**
 	 * Add model to this core.
@@ -290,6 +316,12 @@ public:
 	t_timestamp getGVT() const;
 
 	/**
+	 * Set current GVT
+	 */
+	virtual void
+	setGVT(const t_timestamp& newgvt);
+
+	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
 	 * @return all transitioned models.
 	 */
@@ -408,6 +440,17 @@ public:
 	 */
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+
+	/**
+	 * After a model received a set of messages, store these for later use.
+	 * @attention noop in single core, only relevant in multicore (revert)
+	 */
+	virtual
+	void markProcessed(const std::vector<t_msgptr>&) {;}
+
+	// TODO make private
+	virtual
+	void markMessageStored(const t_msgptr&){;}
 
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.

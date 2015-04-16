@@ -10,7 +10,6 @@
 
 #include <functional>	//defines std::less<T>
 #include "message.h"
-#include "globallog.h"
 
 namespace n_tracers {
 
@@ -33,7 +32,7 @@ public:
 	 * 		This function is called when the message is destroyed, in order to clean up any memory that can otherwise no longer be accessed
 	 * @precondition The two function objects are valid function pointers. No nullptr allowed!
 	 */
-	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, const t_messagefunc& takeback = []{});
+	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback = []{});
 	~TraceMessage();
 
 	/**
@@ -59,83 +58,76 @@ private:
 
 typedef TraceMessage* t_tracemessageptr;
 
+/**
+ * Schedules a trace message.
+ * @param message A pointer to the message that must be scheduled.
+ * @precodition message is a valid message
+ */
 void scheduleMessage(t_tracemessageptr message);
+/**
+ * Performs all output
+ * @param time. All output scheduled before this time will be printed
+ * @warning Writing the output itself is asynchronously.
+ * 	 Make sure that, before exiting the program, this thread has been stopped.
+ * 	 Normally, the Tracers class handles this for you, but if you are feeling adventurous, don't forget this function!
+ * @see waitForTracer
+ */
 void traceUntil(n_network::t_timestamp time);
-void revertTo(n_network::t_timestamp time);
+/**
+ * @brief reverts the output of a single core to a certain time.
+ * @param coreID [default -1] Only throw away trace messages with this ID. If -1, throw away everything
+ */
+void revertTo(n_network::t_timestamp time, std::size_t coreID = -1u);
+/**
+ * @brief clears the entire queue of trace messages.
+ */
 void clearAll();
+/**
+ * @brief block current thread until the previous batch of trace messages has been dealt with.
+ * Normally, the Tracers class takes care of this.
+ * However, if you are messing around with trace messages yourself, do not forget calling this method!
+ */
+void waitForTracer();
 
 
 /**
  * Entry for a TraceMessage in a scheduler.
- * Keeps modelname and imminent time for a Model, without having to store the entire model.
+ * Provides overloads for the most important comparison operators.
  * @attention : reverse ordered on time : 1 > 2 == true (for max heap).
  */
 class TraceMessageEntry
 {
 	t_tracemessageptr m_pointer;
 public:
-	t_tracemessageptr getPointer() const
-	{
-		return m_pointer;
-	}
+	/**
+	 * @brief Gives access to the raw pointer contained within this entry
+	 */
+	t_tracemessageptr getPointer() const;
 
-	TraceMessageEntry(t_tracemessageptr ptr)
-		: m_pointer(ptr)
-	{
-	}
+	TraceMessageEntry(t_tracemessageptr ptr);
 	TraceMessageEntry(const TraceMessageEntry&) = default;
 	TraceMessageEntry(TraceMessageEntry&&) = default;
 	TraceMessageEntry& operator=(const TraceMessageEntry&) = default;
 	TraceMessageEntry& operator=(TraceMessageEntry&&) = default;
-	TraceMessage& operator*()
-	{
-		return *m_pointer;
-	}
-	const TraceMessage& operator*() const
-	{
-		return *m_pointer;
-	}
-	TraceMessage* operator->()
-	{
-		return m_pointer;
-	}
-	const TraceMessage* operator->() const
-	{
-		return m_pointer;
-	}
+
+	TraceMessage& operator*();
+	const TraceMessage& operator*() const;
+	TraceMessage* operator->();
+	const TraceMessage* operator->() const;
 
 	friend
-	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
-			LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
-			return lhs.m_pointer > rhs.m_pointer;
-		}
-		return *lhs > *rhs;
-	}
+	bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (rhs > lhs);
-	}
+	bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (!(lhs < rhs));
-	}
+	bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
 	friend
-	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
-	{
-		return (lhs.m_pointer == rhs.m_pointer);
-	}
+	bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs);
 
-	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
-	{
-		return (os << "Trace message scheduled at " << rhs->getTimeStamp());
-	}
+	friend std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs);
 };
 
 } /* namespace n_tracers */

@@ -68,6 +68,8 @@ private:
 	 */
 	MessageColor m_color;
 
+	bool  m_antimessage;
+
 public:
 	/**
 	 * @param modeldest : destination model
@@ -85,6 +87,10 @@ public:
 	{
 		return m_destination_core;
 	}
+
+	void setAntiMessage(bool b){m_antimessage = b;}
+
+	bool isAntiMessage(){return m_antimessage;}
 
 	void setDestinationCore(std::size_t dest)
 	{

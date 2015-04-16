@@ -30,7 +30,40 @@ Multicore::sendMessage(const t_msgptr& msg){
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	msg->setDestinationCore(coreid);
 	msg->paint(this->getColor());
+	LOG_DEBUG("MCore:: sending message", msg->toString());
 	this->m_network->acceptMessage(msg);
+	this->markMessageStored(msg);
+}
+
+void
+Multicore::sendAntiMessage(const t_msgptr& msg){
+	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
+	amsg->paint(msg->getColor());
+	amsg->setAntiMessage(true);
+	amsg->setDestinationCore(msg->getDestinationCore());
+	amsg->setSourceCore(msg->getSourceCore());
+	LOG_DEBUG("MCore:: sending antimessage : ", amsg->toString());
+	this->m_network->acceptMessage(amsg);
+}
+
+void
+Multicore::handleAntiMessage(const t_msgptr& msg){
+	// TODO needs testing
+	if(this->m_received_messages->contains(MessageEntry(msg))){
+		this->m_received_messages->erase(MessageEntry(msg));
+	}else{
+		if(this->getTime()>msg->getTimeStamp())
+			this->revert(msg->getTimeStamp());
+		else{
+			// TODO, what if original did not arrive yet ?;
+		}
+	}
+}
+
+void
+Multicore::markMessageStored(const t_msgptr& msg){
+	LOG_DEBUG("MCore:: storing sent message", msg->toString());
+	this->m_sent_messages.push_back(msg);
 }
 
 void
@@ -101,6 +134,91 @@ Multicore::receiveControl(const t_controlmsg& msg){	// TODO Tim 1.7/6
 	}
 }
 
+
+void
+Multicore::markProcessed(const std::vector<t_msgptr>& messages) {
+	for(const auto& msg : messages){
+		LOG_DEBUG("MCore : storing processed msg", msg->toString());
+		std::lock_guard<std::mutex> lock(m_locallock);
+		this->m_processed_messages.push_back(msg);
+	}
+}
+
+void
+Multicore::setGVT(const t_timestamp& newgvt){
+	Core::setGVT(newgvt);
+	this->lockSimulatorStep();
+	// Clear processed messages with time < gvt
+	auto iter = m_processed_messages.begin();
+	for(; iter != m_processed_messages.end(); ++iter){
+		if( (*iter)->getTimeStamp() > this->getGVT() ){
+			break;
+		}
+	}
+	LOG_DEBUG("MCore:: setgvt found " , distance(m_processed_messages.begin(),iter), " processed messages to erase.");
+	m_processed_messages.erase(m_processed_messages.begin(), iter);		//erase[......GVT x)
+	LOG_DEBUG("MCore:: processed messages now contains :: ", m_processed_messages.size());
+
+	auto senditer = m_sent_messages.begin();
+	for(; senditer != m_sent_messages.end(); ++senditer){
+		if(  (*senditer)->getTimeStamp() > this->getGVT()  ){
+			break;
+		}
+	}
+
+	LOG_DEBUG("MCore:: found " , distance(m_sent_messages.begin(),senditer), " sent messages to erase.");
+	m_sent_messages.erase(m_sent_messages.begin(), senditer);
+	LOG_DEBUG("MCore:: processed sent messages now contains :: ", m_sent_messages.size());
+
+	this->unlockSimulatorStep();
+}
+
+void
+n_model::Multicore::lockSimulatorStep(){
+	LOG_DEBUG("MCORE:: trying to lock simulator core");
+	this->m_locallock.lock();
+	LOG_DEBUG("MCORE:: simulator core locked");
+}
+
+void
+n_model::Multicore::revert(const t_timestamp& totime){
+	assert(totime >= this->getGVT());
+	LOG_DEBUG("MCORE:: reverting from ", this->getTime(), " to ", totime);
+	// We're allready locked on simstep.
+	// TODO vcount lock ?
+	while(!m_processed_messages.empty()){
+		auto msg = m_processed_messages.back();
+		if(msg->getTimeStamp()>totime){
+			LOG_DEBUG("MCORE:: repushing processed message ", msg->toString());
+			m_processed_messages.pop_back();
+			this->queuePendingMessage(msg);
+		}else{
+			break;
+		}
+	}
+	// All send messages time < totime, delete (antimessage).
+	while(!m_sent_messages.empty()){
+		auto msg = m_sent_messages.back();
+		if(msg->getTimeStamp() > totime){
+			m_sent_messages.pop_back();
+			LOG_DEBUG("MCORE:: popping sent message ", msg->toString());
+			this->sendAntiMessage(msg);
+		}else{
+			break;
+		}
+	}
+	this->setTime(totime);
+	this->rescheduleAll(totime);
+	// Unload/Reload scheduler.
+}
+
+void
+n_model::Multicore::unlockSimulatorStep(){
+	LOG_DEBUG("MCORE:: trying to unlock simulator core");
+	this->m_locallock.unlock();
+	LOG_DEBUG("MCORE:: simulator core unlocked");
+}
+
 void
 n_model::calculateGVT(/* access to cores,*/ std::size_t ms, std::atomic<bool>& run){
 	while(run.load()==true){
@@ -111,3 +229,5 @@ n_model::calculateGVT(/* access to cores,*/ std::size_t ms, std::atomic<bool>& r
 		 */
 	}
 }
+
+

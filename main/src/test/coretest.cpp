@@ -480,9 +480,54 @@ TEST(Core, threading)
 	EXPECT_TRUE(coreone->getTime()>= endtime || coretwo->getTime()>= endtime);
 }
 
+TEST(Multicore, GVTfunctions){
+	using namespace n_network;
+	using n_control::t_location_tableptr;
+	using n_control::LocationTable;
+	t_networkptr network = createObject<Network>(2);
+	t_location_tableptr loctable = createObject<LocationTable>(2);
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	std::mutex vlock;
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, vlock,2 );
+	coreone->setTracers(tracers);
+	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
+	coreone->addModel(tcmodel);
+	EXPECT_TRUE(coreone->containsModel("mylight"));
+	t_timestamp endtime(2000,0);
+	coreone->setTerminationTime(endtime);
+	coreone->init();
+	coreone->setLive(true);
+	coreone->runSmallStep();
+	coreone->getTime();
+	t_timestamp beforegvt(0,0);
+	t_timestamp gvt(1,0);
+	t_timestamp aftergvt(2,0);
+	t_msgptr msg = createObject<Message>("mylight", beforegvt, "", "");
+	msg->setSourceCore(0);
+	msg->setDestinationCore(1);
+	t_msgptr msggvt = createObject<Message>("mylight", gvt, "", "");
+	msggvt->setSourceCore(0);
+	msggvt->setDestinationCore(1);
+	t_msgptr msgaftergvt = createObject<Message>("mylight", aftergvt, "", "");
+	msgaftergvt->setSourceCore(0);
+	msgaftergvt->setDestinationCore(1);
+	std::vector<t_msgptr> processed = {msg, msggvt, msgaftergvt};
+	coreone->markProcessed(processed);
+	for(const auto& msg : processed){
+		coreone->markMessageStored(msg);
+	}
+	coreone->setGVT(gvt);
+	//coreone->printSchedulerState();
+	//coreone->printPendingMessages();
+	coreone->revert(gvt);
+	//coreone->printSchedulerState();
+	//coreone->printPendingMessages();
+	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
+}
 
 
-TEST(MultiCore, GVT){
+TEST(Multicore, GVT){
 	std::atomic<bool> run(true);
 	std::thread gvt(&n_model::calculateGVT, 500, std::ref(run));
 	for(size_t i = 0; i<10000000; ++i){
