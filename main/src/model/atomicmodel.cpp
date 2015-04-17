@@ -70,7 +70,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 	int index = 0;
 	int k = -1;
 
-	for (auto state : m_oldStates) {
+	for (auto& state : m_oldStates) {
 		if (state->m_timeLast >= gvt) {
 			k = std::max(0, index - 1);
 			break;
@@ -83,6 +83,11 @@ void AtomicModel::setGVT(t_timestamp gvt)
 		t_stateptr state = m_oldStates.at(m_oldStates.size() - 1);
 		m_oldStates.clear();
 		m_oldStates.push_back(state);
+	} else if (k == 0) {
+		// Do nothing as nothing is to happen
+		// m_oldStates has 1 state before the GVT (the first element)
+		// the rest of m_oldStates consist of states with a timeLast
+		// greater than or equal to our GVT
 	} else {
 		// Only keep 1 state before GVT, and all states after it
 		auto firstState = m_oldStates.begin() + k;
@@ -91,7 +96,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 	}
 }
 
-void AtomicModel::revert(t_timestamp time)
+t_timestamp AtomicModel::revert(t_timestamp time)
 {
 	auto r_itStates = m_oldStates.rbegin();
 	int index = m_oldStates.size() - 1;
@@ -108,10 +113,12 @@ void AtomicModel::revert(t_timestamp time)
 	this->m_timeLast = state->m_timeLast;
 	this->m_timeNext = state->m_timeNext;
 
-	// Pop all obsolete states
-	this->m_oldStates.resize(index);
+	// Pop all obsolete states and set the last old_state as your new state
+	this->m_oldStates.resize(index + 1);
+	this->m_state = state;
 
-	this->setState(state);
+	// We return the m_timeNext of our current state
+	return this->m_timeNext;
 
 }
 
