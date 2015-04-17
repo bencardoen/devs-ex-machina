@@ -13,7 +13,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
         std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
         size_t saveInterval)
 	: m_isClassicDEVS(true), m_isDSDEVS(false), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
-	        false), m_checkTermCond(false), m_saveInterval(traceInterval), m_cores(cores), m_locTab(locTab), m_allocator(
+	        false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
 	        alloc), m_tracers(tracers)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
