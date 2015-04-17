@@ -46,6 +46,7 @@ private:
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
+	size_t m_saveInterval;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
@@ -56,7 +57,7 @@ private:
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-		n_tracers::t_tracersetptr tracers);
+		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
 	virtual ~Controller();
 
@@ -124,6 +125,11 @@ private:
 	 * Check if simulation needs to continue
 	 */
 	bool check();
+
+	/*
+	 * Serialize all cores and models, dump tracer output
+	 */
+	void save(bool traceOnly = false);
 
 	/*
 	 * Simulation setup and loop using regular DEVS

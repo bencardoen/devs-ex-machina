@@ -10,10 +10,11 @@
 namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-        std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers)
-	: m_isClassicDEVS(true), m_isDSDEVS(false), m_hasMainModel(false), m_isSimulating(false), m_name(name),
-	  m_checkTermTime(false), m_checkTermCond(false), m_cores(cores), m_locTab(locTab), m_allocator(alloc),
-	  m_tracers(tracers)
+        std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
+        size_t saveInterval)
+	: m_isClassicDEVS(true), m_isDSDEVS(false), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
+	        false), m_checkTermCond(false), m_saveInterval(traceInterval), m_cores(cores), m_locTab(locTab), m_allocator(
+	        alloc), m_tracers(tracers)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -34,6 +35,19 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	m_hasMainModel = true;
 }
 
+void Controller::save(bool traceOnly)
+{
+	if (m_isClassicDEVS) {
+		if (!traceOnly) {
+			// TODO implement serialization
+		}
+		t_timestamp time = m_cores.begin()->second->getTime();
+		n_tracers::traceUntil(time);
+	} else {
+		// TODO implement parallel tracing, serialization
+	}
+}
+
 void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
@@ -49,7 +63,7 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 	}
 	throw std::logic_error("Controller : simDSDEVS not implemented");
 	const std::vector<t_atomicmodelptr>& atomics = m_root->directConnect(coupled);
-	for( auto at : atomics ) {
+	for (auto at : atomics) {
 		addModel(at);
 	}
 	m_hasMainModel = true;
@@ -57,9 +71,6 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 
 void Controller::simulate()
 {
-//	if (!m_tracers->isInitialized()) {
-//		// TODO ERROR
-//	}
 	assert(m_isSimulating == false && "Can't start a simulation while already simulating, dummy");
 
 	if (!m_hasMainModel) {
@@ -75,12 +86,22 @@ void Controller::simulate()
 	}
 
 	// configure all cores
+	size_t save_i = 1;
 	for (auto core : m_cores) {
 		core.second->setTracers(m_tracers);
 		core.second->init();
-		if (m_checkTermTime) core.second->setTerminationTime(m_terminationTime);
-		if (m_checkTermCond) core.second->setTerminationFunction(m_terminationCondition);
+		if (m_checkTermTime)
+			core.second->setTerminationTime(m_terminationTime);
+		if (m_checkTermCond)
+			core.second->setTerminationFunction(m_terminationCondition);
 		core.second->setLive(true);
+
+		if (save_i == m_saveInterval) {
+			save(true); // TODO remove boolean when serialization implemented
+			save_i = 0;
+		} else {
+			++save_i;
+		}
 	}
 
 	// run simulation
@@ -89,6 +110,10 @@ void Controller::simulate()
 	} else {
 		simDEVS();
 	}
+
+	n_tracers::traceUntil(t_timestamp::infinity());
+//	n_tracers::clearAll();
+	n_tracers::waitForTracer();
 
 	m_isSimulating = false;
 }
@@ -103,7 +128,8 @@ void Controller::simDEVS()
 			if (core.second->isLive()) {
 				LOG_INFO("CONTROLLER: Core ", core.second->getCoreID(), " starting small step.");
 				core.second->runSmallStep();
-			} else LOG_INFO("CONTROLLER: Shhh, core ", core.second->getCoreID(), " is resting now.");
+			} else
+				LOG_INFO("CONTROLLER: Shhh, core ", core.second->getCoreID(), " is resting now.");
 		}
 	}
 	LOG_INFO("CONTROLLER: All cores terminated, simulation finished.");
