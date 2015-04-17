@@ -12,9 +12,9 @@ namespace n_control {
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
         std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
         size_t saveInterval)
-	: m_isClassicDEVS(true), m_isDSDEVS(false), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
-	        false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
-	        alloc), m_tracers(tracers)
+	: m_simtype(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(false), m_checkTermCond(
+	        false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(alloc), m_tracers(
+	        tracers)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -37,14 +37,23 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 
 void Controller::save(bool traceOnly)
 {
-	if (m_isClassicDEVS) {
+	switch (m_simtype) {
+	case CLASSIC: {
 		if (!traceOnly) {
-			// TODO implement serialization
+			throw std::logic_error("Controller : serialization for CLASSIC not implemented");
 		}
 		t_timestamp time = m_cores.begin()->second->getTime();
 		n_tracers::traceUntil(time);
-	} else {
-		// TODO implement parallel tracing, serialization
+		break;
+	}
+	case PDEVS: {
+		throw std::logic_error("Controller : save() for PDEVS not implemented");
+		break;
+	}
+	case DSDEVS: {
+		throw std::logic_error("Controller : save() for DSDEVS not implemented");
+		break;
+	}
 	}
 }
 
@@ -81,34 +90,17 @@ void Controller::simulate()
 
 	m_isSimulating = true;
 
-	if (!m_isClassicDEVS && m_checkpointInterval.getTime() > 0) { // checkpointing is active
-		startGVTThread();
-	}
-
-	// configure all cores
-	size_t save_i = 1;
-	for (auto core : m_cores) {
-		core.second->setTracers(m_tracers);
-		core.second->init();
-		if (m_checkTermTime)
-			core.second->setTerminationTime(m_terminationTime);
-		if (m_checkTermCond)
-			core.second->setTerminationFunction(m_terminationCondition);
-		core.second->setLive(true);
-
-		if (save_i == m_saveInterval) {
-			save(true); // TODO remove boolean when serialization implemented
-			save_i = 0;
-		} else {
-			++save_i;
-		}
-	}
-
 	// run simulation
-	if (m_isDSDEVS) {
-		simDSDEVS();
-	} else {
+	switch(m_simtype) {
+	case CLASSIC:
 		simDEVS();
+		break;
+	case PDEVS:
+		simPDEVS();
+		break;
+	case DSDEVS:
+		simDSDEVS();
+		break;
 	}
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -120,6 +112,18 @@ void Controller::simulate()
 
 void Controller::simDEVS()
 {
+	// configure core
+	auto core = m_cores.begin()->second; // there is only one core in Classic DEVS
+	core->setTracers(m_tracers);
+	core->init();
+
+	if (m_checkTermTime)
+		core->setTerminationTime(m_terminationTime);
+	if (m_checkTermCond)
+		core->setTerminationFunction(m_terminationCondition);
+
+	core->setLive(true);
+
 	uint i = 0;
 	while (check()) { // As long any cores are active
 		++i;
@@ -131,8 +135,16 @@ void Controller::simDEVS()
 			} else
 				LOG_INFO("CONTROLLER: Shhh, core ", core.second->getCoreID(), " is resting now.");
 		}
+		if (i % m_saveInterval == 0) {
+			save(true); // TODO remove boolean when serialization implemented
+		}
 	}
 	LOG_INFO("CONTROLLER: All cores terminated, simulation finished.");
+}
+
+void Controller::simPDEVS()
+{
+	throw std::logic_error("Controller : simPDEVS not implemented");
 }
 
 void Controller::simDSDEVS()
@@ -140,20 +152,22 @@ void Controller::simDSDEVS()
 	throw std::logic_error("Controller : simDSDEVS not implemented");
 }
 
-void Controller::setClassicDEVS(bool classicDEVS)
+void Controller::setClassicDEVS()
 {
 	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_isClassicDEVS = classicDEVS;
-	if (!classicDEVS)
-		m_isDSDEVS = false;
+	m_simtype = CLASSIC;
 }
 
-void Controller::setDSDEVS(bool dsdevs)
+void Controller::setPDEVS()
 {
 	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	if (dsdevs)
-		m_isClassicDEVS = true;
-	m_isDSDEVS = dsdevs;
+	m_simtype = PDEVS;
+}
+
+void Controller::setDSDEVS()
+{
+	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
+	m_simtype = DSDEVS;
 }
 
 void Controller::setTerminationTime(t_timestamp time)

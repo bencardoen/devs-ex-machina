@@ -33,9 +33,10 @@ using n_model::t_coupledmodelptr;
 
 class Controller
 {
+	enum simtype {CLASSIC, PDEVS, DSDEVS};
+
 private:
-	bool m_isClassicDEVS;
-	bool m_isDSDEVS;
+	simtype m_simtype;
 	bool m_hasMainModel;
 	bool m_isSimulating;
 
@@ -79,12 +80,17 @@ public:
 	/*
 	 * Set simulation to be classic DEVS
 	 */
-	void setClassicDEVS(bool classicDEVS = true);
+	void setClassicDEVS();
+
+	/*
+	 * Set simulation to be Parallel DEVS
+	 */
+	void setPDEVS();
 
 	/*
 	 * Set simulation to be Dynamic Structure DEVS
 	 */
-	void setDSDEVS(bool dsdevs = true);
+	void setDSDEVS();
 
 	/*
 	 * Set time at which the simulation will be halted
@@ -135,6 +141,11 @@ private:
 	 * Simulation setup and loop using regular DEVS
 	 */
 	void simDEVS();
+
+	/*
+	 * Simulation setup and loop using Parallel DEVS
+	 */
+	void simPDEVS();
 
 	/*
 	 * Simulation setup and loop using Dynamic Structure DEVS
