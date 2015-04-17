@@ -19,6 +19,12 @@ LocationTable::~LocationTable()
 {
 }
 
+std::size_t LocationTable::operator [](const std::string& modelName)
+{
+	assert(m_locTable.find(modelName)!= m_locTable.end() && "model not in locationtable");
+	return m_locTable[modelName];
+}
+
 std::size_t LocationTable::lookupModel(const std::string& modelName)
 {
 	assert(m_locTable.find(modelName)!= m_locTable.end() && "model not in locationtable");
@@ -31,3 +37,5 @@ void LocationTable::registerModel(const t_atomicmodelptr& model, std::size_t cor
 }
 
 } /* namespace n_control */
+
+

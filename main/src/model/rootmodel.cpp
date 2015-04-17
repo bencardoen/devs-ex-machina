@@ -11,16 +11,16 @@
 
 namespace n_model {
 
-n_model::RootModel::RootModel()
+RootModel::RootModel()
 	: Model("_ROOT"), m_directConnected(false)
 {
 }
 
-n_model::RootModel::~RootModel()
+RootModel::~RootModel()
 {
 }
 
-const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupledmodelptr& model)
+std::vector<t_atomicmodelptr>& RootModel::directConnect(t_coupledmodelptr& model)
 {
 	if (m_directConnected)
 		return m_components;

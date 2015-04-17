@@ -13,6 +13,8 @@
 #include "tracers.h"
 #include "coutredirect.h"
 #include "compare.h"
+#include "multicore.h"
+#include "trafficsystemc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -86,7 +88,7 @@ TEST(Controller, allocation)
 TEST(Controller, cDEVS)
 {
 	RecordProperty("description", "Running a simple single core simulation");
-	std::ofstream filestream(TESTFOLDER "controller/ctrltest.txt");
+	std::ofstream filestream(TESTFOLDER "controller/devstest.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto tracers = createObject<n_tracers::t_tracerset>();
@@ -110,6 +112,44 @@ TEST(Controller, cDEVS)
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
-	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/ctrltest.txt", TESTFOLDER "controller/ctrltest.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstest.txt", TESTFOLDER "controller/devstest.corr"), 0);
 }
 
+TEST(Controller, pDEVS)
+{
+	RecordProperty("description", "Running a simple multicore simulation");
+	std::ofstream filestream(TESTFOLDER "controller/pdevstest.corr");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
+
+		t_networkptr network = createObject<Network>(2);
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+		std::mutex vlock;
+		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, vlock,2);
+		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, vlock,2);
+		coreMap[0] = c1;
+		coreMap[1] = c2;
+
+		t_timestamp endTime(2000, 0);
+
+		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setPDEVS();
+		ctrl.setTerminationTime(endTime);
+
+		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl.addModel(m);
+
+		EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+		ctrl.simulate();
+		EXPECT_TRUE(c1->isLive() == false);
+		EXPECT_TRUE(c2->isLive() == false);
+		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
+	};
+
+//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.corr", TESTFOLDER "controller/pdevstest.corr"), 0);
+}

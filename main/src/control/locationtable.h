@@ -21,8 +21,10 @@ public:
 	LocationTable(std::size_t amountCores);
 	virtual ~LocationTable();
 
+	std::size_t operator[](const std::string& modelName);
 	std::size_t lookupModel(const std::string& modelName);
 	void registerModel(const t_atomicmodelptr& model, std::size_t core);
+
 
 private:
 	const std::size_t m_amountCores;

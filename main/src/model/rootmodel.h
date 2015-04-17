@@ -25,7 +25,7 @@ public:
 	/**
 	 * @precondition All atomic models have a unique name
 	 */
-	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
+	std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
 	void undoDirectConnect();
 };
 } /* namespace n_model */

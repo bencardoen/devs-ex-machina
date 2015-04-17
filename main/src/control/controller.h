@@ -33,10 +33,12 @@ using n_model::t_coupledmodelptr;
 
 class Controller
 {
-	enum simtype {CLASSIC, PDEVS, DSDEVS};
+public:
+	enum SimType {CLASSIC, PDEVS, DSDEVS};
+	enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
 
 private:
-	simtype m_simtype;
+	SimType m_simType;
 	bool m_hasMainModel;
 	bool m_isSimulating;
 
@@ -54,6 +56,7 @@ private:
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
 	n_tracers::t_tracersetptr m_tracers;
+	std::vector<std::shared_ptr<std::thread>> m_threads;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
@@ -164,6 +167,10 @@ private:
 
 //	void threadGVT(n_network::Time freq);
 };
+
+void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
+	        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+	        const t_coreptr& core, size_t saveInterval);
 
 } /* namespace n_control */
 
