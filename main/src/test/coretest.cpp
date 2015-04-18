@@ -521,9 +521,14 @@ TEST(Multicore, GVTfunctions){
 	//coreone->printSchedulerState();
 	//coreone->printPendingMessages();
 	coreone->revert(gvt);
-	//coreone->printSchedulerState();
-	//coreone->printPendingMessages();
+	coreone->printSchedulerState();
+	coreone->printPendingMessages();
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
+	coreone->setTime(t_timestamp(3,0));	// need to cheat here, else we won't get the result we're aiming for.
+	Message origin = *msgaftergvt;
+	t_msgptr antimessage( new Message(origin));
+	antimessage->setAntiMessage(true);
+	coreone->receiveMessage(antimessage);
 }
 
 

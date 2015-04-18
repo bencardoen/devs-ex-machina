@@ -152,6 +152,12 @@ protected:
 	void
 	rescheduleAll(const t_timestamp& totime);
 
+	/**
+	 * Called by subclasses, undo tracing up to a time < totime, with totime >= gvt.
+	 */
+	void
+	revertTracerUntil(const t_timestamp& totime);
+
 public:
 	/**
 	 * Default single core implementation.
@@ -469,6 +475,13 @@ public:
 	receiveControl(const t_controlmsg& /*controlmessage*/){
 		assert(false);
 	}
+
+	/**
+	 * Noop in single core (and is never called), but it is called as base trigger by receiveMessage()
+	 */
+	virtual
+	void
+	handleAntiMessage(const t_msgptr&){;}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

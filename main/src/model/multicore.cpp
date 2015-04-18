@@ -48,15 +48,11 @@ Multicore::sendAntiMessage(const t_msgptr& msg){
 
 void
 Multicore::handleAntiMessage(const t_msgptr& msg){
-	// TODO needs testing
+	LOG_DEBUG("MCore:: handling antimessage ", msg->toString());
 	if(this->m_received_messages->contains(MessageEntry(msg))){
 		this->m_received_messages->erase(MessageEntry(msg));
 	}else{
-		if(this->getTime()>msg->getTimeStamp())
-			this->revert(msg->getTimeStamp());
-		else{
-			LOG_ERROR("MCore:: received antimessage without corresponding message", msg->toString());
-		}
+		LOG_ERROR("MCore:: received antimessage without corresponding message", msg->toString());
 	}
 }
 
@@ -184,7 +180,7 @@ void
 n_model::Multicore::revert(const t_timestamp& totime){
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: reverting from ", this->getTime(), " to ", totime);
-	// We're allready locked on simstep.
+	// We're inside
 	// TODO vcount lock ?
 	while(!m_processed_messages.empty()){
 		auto msg = m_processed_messages.back();
@@ -208,9 +204,8 @@ n_model::Multicore::revert(const t_timestamp& totime){
 		}
 	}
 	this->setTime(totime);
-	this->rescheduleAll(totime);
-	/// TODO revertTo tracer(totime, coreid).
-	// Unload/Reload scheduler.
+	this->rescheduleAll(totime);	// Make sure the scheduler is reloaded with fresh/stale models
+	this->revertTracerUntil(totime); // Finally, revert trace output
 }
 
 void

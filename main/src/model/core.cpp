@@ -102,6 +102,10 @@ void n_model::Core::init()
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
+	// Make sure models have first time set correctly.
+	for (const auto& model : this->m_models) {
+		model.second->setTime(this->getTime());
+	}
 }
 
 void n_model::Core::collectOutput()
@@ -451,11 +455,17 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
 	LOG_DEBUG("CORE:: receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
+	if(msg->isAntiMessage()){
+		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
+	}else{
+		// Don't store antimessages, we're partially ordered.
+		this->m_received_messages->push_back(MessageEntry(msg));
+	}
+
+	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
 	if (msgtime < this->getTime()) {
-		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
-	} else {
-		MessageEntry entry(msg);
-		this->m_received_messages->push_back(entry);
+		LOG_INFO("Core:: received message time < than now : " , this->getTime(), " msg follows: ", msg->toString());
+		this->revert(msg->getTimeStamp());
 	}
 }
 
@@ -474,6 +484,7 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 		std::string modelname = entry.getMessage()->getDestinationModel();
 		if (not this->containsModel(modelname)) {//In Dynamic Struc Devs it can happen a model is removed in a live simulation
 			continue;//if so, it can be that there a still messages queued without valid destination, we need to skip these.
+			// it's faster to do this than for each removal breaking the heap
 		} else {
 			if (mailbag.find(modelname) == mailbag.end()) {
 				mailbag[modelname] = std::vector<t_msgptr>();
@@ -502,7 +513,7 @@ t_timestamp n_model::Core::getFirstMessageTime() const
 
 void
 n_model::Core::setGVT(const t_timestamp& newgvt){
-	assert(newgvt > this->m_gvt);
+	assert(newgvt >= this->m_gvt && "oldgvt > newgvt");
 	LOG_DEBUG("Setting gvt from ::" , this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
@@ -510,4 +521,8 @@ n_model::Core::setGVT(const t_timestamp& newgvt){
 void n_model::Core::printPendingMessages()
 {
 	this->m_received_messages->printScheduler();
+}
+
+void n_model::Core::revertTracerUntil(const t_timestamp& totime){
+	n_tracers::revertTo(totime, this->getCoreID());
 }
