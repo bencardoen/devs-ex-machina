@@ -26,17 +26,30 @@ class Multicore: public Core
 private:
 	t_networkptr			m_network;
 	n_control::t_location_tableptr	m_loctable;
-	MessageColor		m_color;
-	t_V				m_mcount_vector;
+	MessageColor			m_color;
+	V				m_mcount_vector;
+
 	/**
-	 * Locks access to shared vector that counts recvd, sent msgs.
+	 * Locks access to V vector of this core
 	 */
-	std::mutex&			m_vlock;
+	std::mutex			m_vlock;
+
 	/**
 	 * Simulation lock
 	 */
 	std::mutex			m_locallock;
-	t_timestamp			m_tmin;			// TODO update this field with min time of messages stored.
+
+	/**
+	 * Lock for Tred value (as described in Mattern's GVT algorithm
+	 * on pages 117 - 121 (Fujimoto) )
+	 */
+	std::mutex			m_tredlock;
+
+	/**
+	 * Tred is defined as the smallest time stamp of any red message sent by the processor
+	 * (Mattern)
+	 */
+	t_timestamp			m_tred;
 	std::deque<t_msgptr>		m_sent_messages;
 	std::deque<t_msgptr>		m_processed_messages;
 
@@ -67,7 +80,7 @@ private:
 
 public:
 	Multicore()=delete;
-	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, std::mutex& vlock, size_t cores);
+	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */
