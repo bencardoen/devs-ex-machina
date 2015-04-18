@@ -16,15 +16,23 @@ namespace n_model {
 class V
 {
 private:
-	std::vector<int>	m_vec;
+	std::vector<int> m_vec;
 public:
 	std::vector<int>&
-	getVector(){return m_vec;}
-	V(std::size_t cores):m_vec(cores){;}
-	virtual ~V(){;}
+	getVector()
+	{
+		return m_vec;
+	}
+	V(std::size_t cores)
+		: m_vec(cores)
+	{
+		;
+	}
+	virtual ~V()
+	{
+		;
+	}
 };
-
-typedef std::shared_ptr<V> t_V;
 
 } /* namespace n_model */
 

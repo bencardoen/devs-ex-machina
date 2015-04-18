@@ -60,11 +60,6 @@ private:
 	std::unordered_map<std::string, t_atomicmodelptr> m_models;
 
 	/**
-	 * Store received messages (local and networked)
-	 */
-	t_msgscheduler	m_received_messages;
-
-	/**
 	 * Indicate if this core can/should run.
 	 * @synchronized
 	 */
@@ -96,6 +91,7 @@ private:
 	 * Tracers.
 	 */
 	n_tracers::t_tracersetptr m_tracers;
+
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -125,18 +121,33 @@ private:
 		;
 	}
 
-public:
+	virtual
+	void
+	lockMessages(){;}
+
+	virtual
+	void
+	unlockMessages(){;}
+
 	/**
-	 * Default single core implementation.
-	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
+	 * Schedule model.name @ time t.
+	 * @pre Cannot be called without removing a previous scheduled entry.
 	 */
-	Core();
-
-	Core(const Core&) = delete;
-
-	Core& operator=(const Core&) = delete;
+	void
+	scheduleModel(std::string name, t_timestamp t);
 
 protected:
+	/**
+	* Store received messages (local and networked)
+	*/
+	t_msgscheduler	m_received_messages;
+
+	/**
+	 * Push msg onto pending stack of msgs. Called by revert, receive.
+	 * @lock Unlocked (ie locked by caller)
+	 */
+	void queuePendingMessage(const t_msgptr& msg);
+
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
 	 */
@@ -150,7 +161,31 @@ protected:
 	void
 	signalImminent(const std::set<std::string>& ){;}
 
+	/**
+	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
+	 * with fresh entries.
+	 */
+	void
+	rescheduleAll(const t_timestamp& totime);
+
+	/**
+	 * Called by subclasses, undo tracing up to a time < totime, with totime >= gvt.
+	 */
+	void
+	revertTracerUntil(const t_timestamp& totime);
+
 public:
+	/**
+	 * Default single core implementation.
+	 * @post : coreid==0, network,loctable == nullptr., termination time=inf, termination function = null
+	 */
+	Core();
+
+	Core(const Core&) = delete;
+
+	Core& operator=(const Core&) = delete;
+
+
 	/**
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
@@ -168,12 +203,14 @@ public:
 
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
+	 * @pre totime >= this->getGVT() && totime < this->getTime()
 	 */
 	virtual
-	void revert(t_timestamp totime);
+	void revert(const t_timestamp& /*totime*/){;}
 
 	/**
 	 * Add model to this core.
+	 * @pre !containsModel(model->getName());
 	 */
 	void addModel(t_atomicmodelptr model);
 
@@ -210,7 +247,9 @@ public:
 
 	/**
 	 * Run at startup, populate the scheduler with the model's advance() results.
-	 * @attention : run this once and once only.
+	 * Sets earliests possible time for all models.
+	 * @attention : run this once and once only. Multiple runs can trigger asserts, which will hang the
+	 * process in multithreaded setting.
 	 */
 	void init();
 
@@ -304,25 +343,19 @@ public:
 
 	/**
 	 * Set current GVT
+	 * @lock simulator, messages in multicore.
 	 */
 	virtual void
 	setGVT(const t_timestamp& newgvt);
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @return all transitioned models.
+	 * @param imminent modelnames with firing time == to current time
+	 * @param mail collected from local/network by collectOutput/getMessages
 	 */
 	virtual
 	void
 	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
-
-	/**
-	 * Schedule model.name @ time t.
-	 * @pre Cannot be called without removing a previous scheduled entry.
-	 * @TODO make private
-	 */
-	void
-	scheduleModel(std::string name, t_timestamp t);
 
 	/**
 	 * Debug function : print out the currently scheduled models.
@@ -333,6 +366,7 @@ public:
 	/**
 	 * Print all queued messages.
 	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
+	 * @lock : locks on messages
 	 */
 	void
 	printPendingMessages();
@@ -340,6 +374,7 @@ public:
 	/**
 	 * Given a set of messages, sort them by model destination.
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
+	 * @lock: locks on messagelock.
 	 */
 	virtual
 	void
@@ -424,6 +459,7 @@ public:
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.
+	 * @locks on messagelock
 	 */
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
@@ -442,9 +478,10 @@ public:
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
 	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
+	 * @locks on messagelock
 	 */
 	t_timestamp
-	getFirstMessageTime()const;
+	getFirstMessageTime();
 
 
 	/**
@@ -456,6 +493,20 @@ public:
 	receiveControl(const t_controlmsg& /*controlmessage*/){
 		assert(false);
 	}
+
+	/**
+	 * Noop in single core (and is never called), but it is called as base trigger by receiveMessage()
+	 */
+	virtual
+	void
+	handleAntiMessage(const t_msgptr&){;}
+
+	/**
+	 * Noop in single core. Paints message according to current color in core. (multicore).
+	 */
+	virtual
+	void
+	paintMessage(const t_msgptr&){;}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

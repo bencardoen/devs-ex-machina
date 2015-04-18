@@ -11,19 +11,19 @@
 
 namespace n_model {
 
-n_model::RootModel::RootModel()
+RootModel::RootModel()
 	: Model("_ROOT"), m_directConnected(false)
 {
 }
 
-n_model::RootModel::~RootModel()
+RootModel::~RootModel()
 {
 }
 
-const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupledmodelptr& model)
+void RootModel::directConnect(t_coupledmodelptr& model)
 {
 	if (m_directConnected)
-		return m_components;
+		return;
 	m_components.clear();
 
 	std::set<std::string> atomics;
@@ -137,13 +137,16 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 //			maak de verbinding en steek die in de lijst van directe verbindingen van de output poort (denk aan de z-functie)
 //		  anders:
 //			sla nieuwe verbindingen op in de lijst van de outputpoort naar alle poorten waarmee de inputpoort van deze verbinding is verbonden & voeg de z-functies samen
-
-	return m_components;
 }
 
-void n_model::RootModel::undoDirectConnect()
+void RootModel::undoDirectConnect()
 {
 	m_directConnected = false;
+}
+
+std::vector<t_atomicmodelptr> RootModel::getComponents()
+{
+	return m_components;
 }
 
 } /* namespace n_model */

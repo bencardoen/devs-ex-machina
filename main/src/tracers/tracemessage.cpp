@@ -106,7 +106,7 @@ std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
         Storage::FIBONACCI, true);
-std::future<void>* tracerFuture = nullptr;
+std::atomic<std::future<void>*> tracerFuture(nullptr);
 
 void scheduleMessage(t_tracemessageptr message)
 {
@@ -117,9 +117,9 @@ void scheduleMessage(t_tracemessageptr message)
 void waitForTracer()
 {
 	if(tracerFuture != nullptr){
-		tracerFuture->wait();
-		delete tracerFuture;
-		tracerFuture = nullptr;
+		tracerFuture.load()->wait();
+		delete tracerFuture.load();
+		tracerFuture.store(nullptr);
 	}
 }
 
@@ -137,7 +137,7 @@ void traceUntil(n_network::t_timestamp time)
 	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
 	waitForTracer();
-	tracerFuture = new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages)));
+	tracerFuture.store(new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages))));
 }
 
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
