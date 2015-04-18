@@ -1,0 +1,54 @@
+
+__  Current Time: 60____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 50
+
+__  Current Time: 110____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 10
+
+__  Current Time: 120____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 60
+
+__  Current Time: 180____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 50
+
+__  Current Time: 230____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 10
+
+__  Current Time: 240____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 60

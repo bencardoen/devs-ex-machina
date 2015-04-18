@@ -23,7 +23,7 @@ public:
 	/*
 	 * Decide on which core to place a model
 	 */
-	virtual size_t allocate(n_model::t_atomicmodelptr) = 0;
+	virtual size_t allocate(const n_model::t_atomicmodelptr&) = 0;
 
 	virtual ~Allocator();
 };

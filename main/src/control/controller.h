@@ -33,9 +33,12 @@ using n_model::t_coupledmodelptr;
 
 class Controller
 {
+public:
+	enum SimType {CLASSIC, PDEVS, DSDEVS};
+	enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
+
 private:
-	bool m_isClassicDEVS;
-	bool m_isDSDEVS;
+	SimType m_simType;
 	bool m_hasMainModel;
 	bool m_isSimulating;
 
@@ -46,24 +49,26 @@ private:
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
+	size_t m_saveInterval;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
 	n_tracers::t_tracersetptr m_tracers;
+	std::vector<std::shared_ptr<std::thread>> m_threads;
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-		n_tracers::t_tracersetptr tracers);
+		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
 	virtual ~Controller();
 
 	/*
 	 * Set an atomic model as the main model using the given allocator
 	 */
-	void addModel(t_atomicmodelptr& atomic);
+	void addModel(const t_atomicmodelptr& atomic);
 
 	/*
 	 * Set a coupled model as the main model using the given allocator
@@ -78,12 +83,17 @@ public:
 	/*
 	 * Set simulation to be classic DEVS
 	 */
-	void setClassicDEVS(bool classicDEVS = true);
+	void setClassicDEVS();
+
+	/*
+	 * Set simulation to be Parallel DEVS
+	 */
+	void setPDEVS();
 
 	/*
 	 * Set simulation to be Dynamic Structure DEVS
 	 */
-	void setDSDEVS(bool dsdevs = true);
+	void setDSDEVS();
 
 	/*
 	 * Set time at which the simulation will be halted
@@ -126,9 +136,19 @@ private:
 	bool check();
 
 	/*
+	 * Serialize all cores and models, dump tracer output
+	 */
+	void save(bool traceOnly = false);
+
+	/*
 	 * Simulation setup and loop using regular DEVS
 	 */
 	void simDEVS();
+
+	/*
+	 * Simulation setup and loop using Parallel DEVS
+	 */
+	void simPDEVS();
 
 	/*
 	 * Simulation setup and loop using Dynamic Structure DEVS
@@ -143,10 +163,14 @@ private:
 	/*
 	 * Add an atomic model to a specific core
 	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
+	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
 };
+
+void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
+	        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+	        const t_coreptr& core, size_t saveInterval);
 
 } /* namespace n_control */
 
