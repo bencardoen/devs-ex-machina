@@ -494,12 +494,17 @@ TEST(Multicore, GVTfunctions){
 	t_timestamp endtime(2000,0);
 	coreone->setTerminationTime(endtime);
 	coreone->init();
+	EXPECT_EQ(coreone->getTime().getTime(), 60);
+	//coreone->printSchedulerState();
 	coreone->setLive(true);
 	coreone->runSmallStep();
-	coreone->getTime();
-	t_timestamp beforegvt(0,0);
-	t_timestamp gvt(1,0);
-	t_timestamp aftergvt(2,0);
+	EXPECT_EQ(coreone->getTime().getTime(), 110);
+	//coreone->printSchedulerState();
+	// Trigger revert
+	// Setup message state to test all paths
+	t_timestamp beforegvt(61,0);
+	t_timestamp gvt(62,0);
+	t_timestamp aftergvt(63,0);
 	t_msgptr msg = createObject<Message>("mylight", beforegvt, "", "");
 	msg->setSourceCore(0);
 	msg->setDestinationCore(1);
@@ -514,18 +519,19 @@ TEST(Multicore, GVTfunctions){
 	for(const auto& msg : processed){
 		coreone->markMessageStored(msg);
 	}
+
 	coreone->setGVT(gvt);
-	//coreone->printSchedulerState();
-	//coreone->printPendingMessages();
-	coreone->revert(gvt);
-	coreone->printSchedulerState();
-	coreone->printPendingMessages();
+	coreone->revert(gvt);		// We were @110, went back to 62
+	EXPECT_EQ(coreone->getTime(), 62);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
-	coreone->setTime(t_timestamp(3,0));	// need to cheat here, else we won't get the result we're aiming for.
+	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	Message origin = *msgaftergvt;
 	t_msgptr antimessage( new Message(origin));
 	antimessage->setAntiMessage(true);
-	coreone->receiveMessage(antimessage);
+	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
+	EXPECT_EQ(coreone->getTime().getTime(), 63);
+	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 110, time = 62)
+	EXPECT_EQ(coreone->getTime().getTime(), 110);
 }
 
 

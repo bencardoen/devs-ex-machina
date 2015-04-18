@@ -24,9 +24,24 @@ namespace n_model {
 class Multicore: public Core
 {
 private:
+	/**
+	 * Link to network
+	 */
 	t_networkptr			m_network;
+
+	/**
+	 *
+	 */
 	n_control::t_location_tableptr	m_loctable;
+
+	/**
+	 * This core's current color state.
+	 */
 	MessageColor			m_color;
+
+	/**
+	 * Local count vector for Mattern.
+	 */
 	V				m_mcount_vector;
 
 	/**
@@ -40,6 +55,11 @@ private:
 	std::mutex			m_locallock;
 
 	/**
+	 * Message lock. Excludes access to [sent|processed|pending]
+	 */
+	std::mutex			m_msglock;
+
+	/**
 	 * Lock for Tred value (as described in Mattern's GVT algorithm
 	 * on pages 117 - 121 (Fujimoto) )
 	 */
@@ -50,7 +70,15 @@ private:
 	 * (Mattern)
 	 */
 	t_timestamp			m_tred;
+
+	/**
+	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
+	 */
 	std::deque<t_msgptr>		m_sent_messages;
+
+	/**
+	 * Processed messages, stored in Front[earliest....latest..now] Back order.
+	 */
 	std::deque<t_msgptr>		m_processed_messages;
 
 	/**
@@ -63,7 +91,8 @@ private:
 	 * Send an antimessage.
 	 * Will construct an in place copy (remeber the original is shared mem),
 	 * that has the same identifying content and resend it to annihilate it's predecessor.
-	 * @param msg the original message..
+	 * @param msg the original message.
+	 * @attention : triggers 1.4 Mattern
 	 */
 	void
 	sendAntiMessage(const t_msgptr& msg);
@@ -74,13 +103,23 @@ private:
 	 * If y is processed, trigger a revert.
 	 * If y is not yet received : store x and destroy y if it arrives.
 	 * @param msg the antimessage
+	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
 	 */
 	void
 	handleAntiMessage(const t_msgptr& msg);
 
 public:
 	Multicore()=delete;
-	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+	/**
+	 * MCore constructor
+	 * @param coreid Unique sequential id (next=last+1).
+	 * @param ltable Controller set loctable.
+	 * @param n Link to network (message queueing system).
+	 * @param cores : To properly allocate V/C vectors in Mattern, we need to know how many cores there are.
+	 * @pre coreid < cores
+	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
+	 */
+	Multicore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */
@@ -88,6 +127,7 @@ public:
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
+	 * @attention does not yet lock on messages acces
 	 */
 	void getMessages()override;
 
@@ -111,6 +151,8 @@ public:
 	 * Revert from current time to totime.
 	 * This requeues processed messages up to totime, sends antimessages for all sent
 	 * messages.
+	 * @pre totime >= this->getGVT();
+	 * @lock called during simlock(smallStep) && msglock (sort->receive)
 	 */
 	virtual
 	void revert(const t_timestamp& totime)override;
@@ -122,7 +164,8 @@ public:
 	setColor(MessageColor c){m_color = c;}
 
 	/**
-	 * Sort network received messages into local queues.
+	 * Sort incoming mail into time based scheduler.
+	 * @locks messagelock --> do not lock func called by this function (receive, mark and friends)
 	 */
 	virtual void sortIncoming(const std::vector<t_msgptr>& messages);
 
@@ -135,7 +178,7 @@ public:
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)
-	 * @attention locked
+	 * @attention locked by caller on msglock
 	 */
 	virtual
 	void receiveMessage(const t_msgptr&)override;
@@ -149,6 +192,7 @@ public:
 	 * Sets new gvt.
 	 * This clears all processed messages time < newgvt, all send messages < newgvt
 	 * @pre newgvt >= this->getGVT()
+	 * @locks : acquires simulatorlock, msglock (in order)
 	 */
 	virtual
 	void setGVT(const t_timestamp&)override;
@@ -165,9 +209,26 @@ public:
 	void
 	unlockSimulatorStep()override;
 
-	// TODO
+	/**
+	 * Request lock on [pending|sent|processed] messages.
+	 */
+	virtual
 	void
-	waitUntilAllReceived();
+	lockMessages()override;
+
+	/**
+	 * Release lock on [pending|sent|processed] messages.
+	 */
+	virtual
+	void
+	unlockMessages()override;
+
+	/**
+	 * Set the color of msg with this core's color.
+	 */
+	virtual
+	void
+	paintMessage(const t_msgptr& msg)override;
 
 };
 
