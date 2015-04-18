@@ -29,7 +29,7 @@ template<unsigned int logFilter = 15>
 class Logger
 {
 public:
-	Logger(const char* filename)
+	Logger(const std::string& filename)
 		: m_buf(new ASynchWriter(filename))
 		, m_out(m_buf){
 		m_out.rdbuf(m_buf);

@@ -97,8 +97,9 @@ public:
 	 * Reverts the model the given time
 	 *
 	 * @param time The time the model needs to be reverted to
+	 * @return timeNext of the model after the revert has happened
 	 */
-	void revert(t_timestamp time);
+	t_timestamp revert(t_timestamp time);
 
 	/**
 	 * Returns the priority of the model
@@ -117,17 +118,6 @@ public:
 
 	virtual ~AtomicModel()
 	{
-	}
-
-	// TODO : STUBS, REMOVE THESE STUBS
-	std::deque<n_network::t_msgptr> m_stub;
-	__attribute__((deprecated)) const std::deque<n_network::t_msgptr>& getSendMessages()
-	{
-		return m_stub;
-	}
-	__attribute__((deprecated)) const std::deque<n_network::t_msgptr>& getReceivedMessages()
-	{
-		return m_stub;
 	}
 };
 
