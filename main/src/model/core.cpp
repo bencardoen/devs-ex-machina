@@ -285,17 +285,18 @@ void n_model::Core::runSmallStep()
 
 	this->lockSimulatorStep();
 
+	// Get all produced messages, and route them.
+	this->collectOutput();
+
+	// Noop in single core. Pull messages from network, sort them.
+	// This step can trigger a revert, which is why it before getImminent (which would be void otherwise)
+	this->getMessages();		// >revert()	send->anti, processed -> pending,
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
-
-	// Get all produced messages, and route them.
-	this->collectOutput();
-
-	// Noop in single core. Pull messages from network, sort them.
-	this->getMessages();		// >revert()	send->anti, processed -> pending,
 
 	// From all pending messages, get those with time <= now and sort them.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
@@ -438,12 +439,10 @@ n_model::Core::rescheduleAll(const t_timestamp& totime){
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
 	for(const auto& modelentry : m_models){
-		modelentry.second->revert(totime);	// Todo need last scheduled time from models here.
+		t_timestamp modellast = modelentry.second->revert(totime);
 		modelentry.second->setTime(this->getTime());
-		t_timestamp nexttime = modelentry.second->timeAdvance();	// for now use this
-		if(nexttime != t_timestamp::infinity()){
-			nexttime.increaseCausality(modelentry.second->getPriority());
-			this->scheduleModel(modelentry.first, nexttime+this->getTime());
+		if(modellast != t_timestamp::infinity()){
+			this->scheduleModel(modelentry.first, modellast);
 		}
 	}
 }

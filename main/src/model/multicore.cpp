@@ -55,7 +55,7 @@ Multicore::handleAntiMessage(const t_msgptr& msg){
 		if(this->getTime()>msg->getTimeStamp())
 			this->revert(msg->getTimeStamp());
 		else{
-			// TODO, what if original did not arrive yet ?;
+			LOG_ERROR("MCore:: received antimessage without corresponding message", msg->toString());
 		}
 	}
 }
