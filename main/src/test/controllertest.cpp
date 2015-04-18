@@ -118,7 +118,7 @@ TEST(Controller, cDEVS)
 TEST(Controller, pDEVS)
 {
 	RecordProperty("description", "Running a simple multicore simulation");
-	std::ofstream filestream(TESTFOLDER "controller/pdevstest.corr");
+	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto tracers = createObject<n_tracers::t_tracerset>();
@@ -150,5 +150,5 @@ TEST(Controller, pDEVS)
 		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
 	};
 
-//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
 }
