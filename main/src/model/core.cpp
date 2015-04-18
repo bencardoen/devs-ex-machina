@@ -102,6 +102,10 @@ void n_model::Core::init()
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
+	// Make sure models have first time set correctly.
+	for (const auto& model : this->m_models) {
+		model.second->setTime(this->getTime());
+	}
 }
 
 void n_model::Core::collectOutput()
@@ -285,17 +289,18 @@ void n_model::Core::runSmallStep()
 
 	this->lockSimulatorStep();
 
+	// Get all produced messages, and route them.
+	this->collectOutput();
+
+	// Noop in single core. Pull messages from network, sort them.
+	// This step can trigger a revert, which is why it before getImminent (which would be void otherwise)
+	this->getMessages();		// >revert()	send->anti, processed -> pending,
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
-
-	// Get all produced messages, and route them.
-	this->collectOutput();
-
-	// Noop in single core. Pull messages from network, sort them.
-	this->getMessages();
 
 	// From all pending messages, get those with time <= now and sort them.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
@@ -438,12 +443,10 @@ n_model::Core::rescheduleAll(const t_timestamp& totime){
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
 	for(const auto& modelentry : m_models){
-		modelentry.second->revert(totime);	// Todo need last scheduled time from models here.
+		t_timestamp modellast = modelentry.second->revert(totime);
 		modelentry.second->setTime(this->getTime());
-		t_timestamp nexttime = modelentry.second->timeAdvance();	// for now use this
-		if(nexttime != t_timestamp::infinity()){
-			nexttime.increaseCausality(modelentry.second->getPriority());
-			this->scheduleModel(modelentry.first, nexttime+this->getTime());
+		if(modellast != t_timestamp::infinity()){
+			this->scheduleModel(modelentry.first, modellast);
 		}
 	}
 }
@@ -452,11 +455,17 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
 	LOG_DEBUG("CORE:: receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
+	if(msg->isAntiMessage()){
+		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
+	}else{
+		// Don't store antimessages, we're partially ordered.
+		this->m_received_messages->push_back(MessageEntry(msg));
+	}
+
+	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
 	if (msgtime < this->getTime()) {
-		LOG_ERROR("CORE:: received msg before now time", msg->getTimeStamp(), this->getTime());
-	} else {
-		MessageEntry entry(msg);
-		this->m_received_messages->push_back(entry);
+		LOG_INFO("Core:: received message time < than now : " , this->getTime(), " msg follows: ", msg->toString());
+		this->revert(msg->getTimeStamp());
 	}
 }
 
@@ -475,6 +484,7 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 		std::string modelname = entry.getMessage()->getDestinationModel();
 		if (not this->containsModel(modelname)) {//In Dynamic Struc Devs it can happen a model is removed in a live simulation
 			continue;//if so, it can be that there a still messages queued without valid destination, we need to skip these.
+			// it's faster to do this than for each removal breaking the heap
 		} else {
 			if (mailbag.find(modelname) == mailbag.end()) {
 				mailbag[modelname] = std::vector<t_msgptr>();
@@ -503,7 +513,7 @@ t_timestamp n_model::Core::getFirstMessageTime() const
 
 void
 n_model::Core::setGVT(const t_timestamp& newgvt){
-	assert(newgvt > this->m_gvt);
+	assert(newgvt >= this->m_gvt && "oldgvt > newgvt");
 	LOG_DEBUG("Setting gvt from ::" , this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
@@ -511,4 +521,8 @@ n_model::Core::setGVT(const t_timestamp& newgvt){
 void n_model::Core::printPendingMessages()
 {
 	this->m_received_messages->printScheduler();
+}
+
+void n_model::Core::revertTracerUntil(const t_timestamp& totime){
+	n_tracers::revertTo(totime, this->getCoreID());
 }

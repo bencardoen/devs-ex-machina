@@ -21,17 +21,32 @@ namespace n_network {
 class ControlMessage
 {
 private:
-	t_timestamp		m_clock;
-	t_timestamp		m_send;
-	t_count			m_count;
+	t_timestamp 		m_tmin;
+	t_timestamp 		m_tred;
+	t_count 		m_count;
 public:
 	ControlMessage(size_t cores, t_timestamp clock, t_timestamp send);
 	virtual ~ControlMessage();
-	t_count&	getCountVector(){return m_count;}
-	t_timestamp getClock()const{return m_clock;}
-	void setClock(t_timestamp nt){m_clock=nt;}
-	t_timestamp getSend()const{return m_send;}
-	void setSend(t_timestamp nt){m_send=nt;}
+	t_count& getCountVector()
+	{
+		return m_count;
+	}
+	t_timestamp getTmin() const
+	{
+		return m_tmin;
+	}
+	void setTmin(t_timestamp nt)
+	{
+		m_tmin = nt;
+	}
+	t_timestamp getTred() const
+	{
+		return m_tred;
+	}
+	void setTred(t_timestamp nt)
+	{
+		m_tred = nt;
+	}
 };
 
 typedef std::shared_ptr<ControlMessage> t_controlmsg;

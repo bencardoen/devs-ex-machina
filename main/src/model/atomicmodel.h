@@ -97,8 +97,9 @@ public:
 	 * Reverts the model the given time
 	 *
 	 * @param time The time the model needs to be reverted to
+	 * @return timeNext of the model after the revert has happened
 	 */
-	void revert(t_timestamp time);
+	t_timestamp revert(t_timestamp time);
 
 	/**
 	 * Returns the priority of the model

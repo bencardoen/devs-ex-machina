@@ -267,10 +267,9 @@ TEST(Core, multicoresafe)
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	std::mutex vlock;
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable, vlock,2);
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable, 2);
 	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable, vlock,2);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable, 2);
 	coretwo->setTracers(tracers);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
@@ -375,10 +374,9 @@ TEST(Core, threading)
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	std::mutex vlock;
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, vlock,2 );
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, 2 );
 	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable, vlock, 2);
+	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable, 2);
 	coretwo->setTracers(tracers);
 	std::vector<t_coreptr> coreptrs;
 	coreptrs.push_back(coreone);
@@ -488,8 +486,7 @@ TEST(Multicore, GVTfunctions){
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	std::mutex vlock;
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, vlock,2 );
+	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, 2 );
 	coreone->setTracers(tracers);
 	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
 	coreone->addModel(tcmodel);
@@ -521,9 +518,14 @@ TEST(Multicore, GVTfunctions){
 	//coreone->printSchedulerState();
 	//coreone->printPendingMessages();
 	coreone->revert(gvt);
-	//coreone->printSchedulerState();
-	//coreone->printPendingMessages();
+	coreone->printSchedulerState();
+	coreone->printPendingMessages();
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
+	coreone->setTime(t_timestamp(3,0));	// need to cheat here, else we won't get the result we're aiming for.
+	Message origin = *msgaftergvt;
+	t_msgptr antimessage( new Message(origin));
+	antimessage->setAntiMessage(true);
+	coreone->receiveMessage(antimessage);
 }
 
 
