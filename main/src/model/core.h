@@ -128,6 +128,14 @@ private:
 	virtual
 	void
 	unlockMessages(){;}
+
+	/**
+	 * Schedule model.name @ time t.
+	 * @pre Cannot be called without removing a previous scheduled entry.
+	 */
+	void
+	scheduleModel(std::string name, t_timestamp t);
+
 protected:
 	/**
 	* Store received messages (local and networked)
@@ -136,6 +144,7 @@ protected:
 
 	/**
 	 * Push msg onto pending stack of msgs. Called by revert, receive.
+	 * @lock Unlocked (ie locked by caller)
 	 */
 	void queuePendingMessage(const t_msgptr& msg);
 
@@ -194,12 +203,14 @@ public:
 
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
+	 * @pre totime >= this->getGVT() && totime < this->getTime()
 	 */
 	virtual
 	void revert(const t_timestamp& /*totime*/){;}
 
 	/**
 	 * Add model to this core.
+	 * @pre !containsModel(model->getName());
 	 */
 	void addModel(t_atomicmodelptr model);
 
@@ -236,7 +247,9 @@ public:
 
 	/**
 	 * Run at startup, populate the scheduler with the model's advance() results.
-	 * @attention : run this once and once only.
+	 * Sets earliests possible time for all models.
+	 * @attention : run this once and once only. Multiple runs can trigger asserts, which will hang the
+	 * process in multithreaded setting.
 	 */
 	void init();
 
@@ -330,25 +343,19 @@ public:
 
 	/**
 	 * Set current GVT
+	 * @lock simulator, messages in multicore.
 	 */
 	virtual void
 	setGVT(const t_timestamp& newgvt);
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @return all transitioned models.
+	 * @param imminent modelnames with firing time == to current time
+	 * @param mail collected from local/network by collectOutput/getMessages
 	 */
 	virtual
 	void
 	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
-
-	/**
-	 * Schedule model.name @ time t.
-	 * @pre Cannot be called without removing a previous scheduled entry.
-	 * @TODO make private
-	 */
-	void
-	scheduleModel(std::string name, t_timestamp t);
 
 	/**
 	 * Debug function : print out the currently scheduled models.

@@ -92,12 +92,17 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 
 void n_model::Core::init()
 {
+	if(this->m_scheduler->size() != 0){
+		LOG_ERROR("CORE:: scheduler is not empty on call to init(), are you calling it multiple times ? Hint: don't!!");
+		return;
+	}
 	for (const auto& model : this->m_models) {
 		t_timestamp model_scheduled_time = model.second->timeAdvance();
 		std::size_t priority = model.second->getPriority();
 		model_scheduled_time.increaseCausality(priority);
 		this->scheduleModel(model.first, model_scheduled_time);
 	}
+	// Read a first time setting.
 	if (not this->m_scheduler->empty()) {
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->m_time);
@@ -106,6 +111,8 @@ void n_model::Core::init()
 	for (const auto& model : this->m_models) {
 		model.second->setTime(this->getTime());
 	}
+	// This avoid problems with reverting to before first core time, which breaks the models.
+	this->m_gvt = this->getTime();
 }
 
 void n_model::Core::collectOutput()
@@ -119,13 +126,13 @@ void n_model::Core::collectOutput()
 		const auto& model = modelentry.second;
 		auto mailfrom = model->doOutput();
 		LOG_DEBUG("CORE: got ", mailfrom.size(), " messages from ", modelentry.first);
-		// Model has no clue what time it is, set timestamp now.
+		// Set timetstamp, source and color (info model does not have).
 		for (const auto& msg : mailfrom) {
 			msg->setSourceCore(this->getCoreID());
 			paintMessage(msg);
-			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));
+			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));	// gives models a chance to differentiate (p-order)
 		}
-		this->sortMail(mailfrom);
+		this->sortMail(mailfrom);// <-- Locked here on msglock
 	}
 }
 
@@ -149,22 +156,22 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			urgent->setTime(this->getTime());
 			urgent->setGVT(this->getGVT());
 			this->traceConf(urgent);
-			this->markProcessed(found->second);
+			this->markProcessed(found->second);		// Store message as processed for timewarp.
 
-			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
+			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
 	}
 
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
-		model->extTransition(remaining.second);
+		model->doExtTransition(remaining.second);
 		model->setTime(this->getTime());
 		model->setGVT(this->getGVT());
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
 
-		t_timestamp queried = model->timeAdvance();// A previously inactive model can be awoken, make sure we check this.
+		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried,
 			        " rescheduling.");
@@ -237,7 +244,7 @@ void n_model::Core::syncTime()
 	/**
 	 * Find out what is less, message time or next firing time, and update core with that value.
 	 */
-	t_timestamp firstmessagetime = this->getFirstMessageTime();
+	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
 	LOG_DEBUG("CORE first messagetime = ", firstmessagetime);
 	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
@@ -289,15 +296,14 @@ void n_model::Core::runSmallStep()
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 
 	// Lock simulator to allow setGVT/Revert to clear things up.
-
 	this->lockSimulatorStep();
 
 	// Get all produced messages, and route them.
-	this->collectOutput();
+	this->collectOutput();	// locked on msgs
 
 	// Noop in single core. Pull messages from network, sort them.
-	// This step can trigger a revert, which is why it before getImminent (which would be void otherwise)
-	this->getMessages();		// >revert()	send->anti, processed -> pending,
+	// This step can trigger a revert, which is why its before getImminent
+	this->getMessages();	// locked on msgs
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
@@ -307,7 +313,7 @@ void n_model::Core::runSmallStep()
 
 	// From all pending messages, get those with time <= now and sort them.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
-	this->getPendingMail(mailbag);
+	this->getPendingMail(mailbag);	// locked on msgs
 
 	// Transition depending on state.
 	this->transition(imminent, mailbag);
@@ -316,7 +322,7 @@ void n_model::Core::runSmallStep()
 	this->rescheduleImminent(imminent);
 
 	// Forward time to next message/firing.
-	this->syncTime();
+	this->syncTime();		// locked on msgs
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
@@ -444,9 +450,11 @@ n_model::Core::rescheduleAll(const t_timestamp& totime){
 	assert(m_scheduler->empty());
 	for(const auto& modelentry : m_models){
 		t_timestamp modellast = modelentry.second->revert(totime);
-		modelentry.second->setTime(this->getTime());
+		// Bug lived here : Do not set time on model.
 		if(modellast != t_timestamp::infinity()){
 			this->scheduleModel(modelentry.first, modellast);
+		}else{
+			LOG_DEBUG("MCore:: model did not give a new time for rescheduling after revert", modelentry.second->getName());
 		}
 	}
 }
@@ -458,13 +466,13 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 	if(msg->isAntiMessage()){
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	}else{
-		// Don't store antimessages, we're partially ordered.
+		// Don't store antimessages, we're partially ordered, there is no way a sent messages can be hopped over in a FIFO by its antimessage.
 		this->m_received_messages->push_back(MessageEntry(msg));
 	}
 
 	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
 	if (msgtime < this->getTime()) {
-		LOG_INFO("Core:: received message time < than now : " , this->getTime(), " msg follows: ", msg->toString());
+		LOG_INFO("Core:: ", this->getCoreID(), " received message time < than now : " , this->getTime(), " msg follows: ", msg->toString());
 		this->revert(msg->getTimeStamp());
 	}
 }
@@ -481,17 +489,16 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	MessageEntry tokentime(token);
 
 	this->lockMessages();
-	this->m_received_messages->unschedule_until(messages, tokentime);	// In theory this is safe, in practice (vbox) it is not.
+	this->m_received_messages->unschedule_until(messages, tokentime);	// In theory this is safe, in practice (vbox) it is not, so this is not a synced scheduler
 	this->unlockMessages();
 
 	for (const auto& entry : messages) {
 		std::string modelname = entry.getMessage()->getDestinationModel();
-		if (not this->containsModel(modelname)) {//In Dynamic Struc Devs it can happen a model is removed in a live simulation
-			continue;//if so, it can be that there a still messages queued without valid destination, we need to skip these.
-			// it's faster to do this than for each removal breaking the heap
+		if (not this->containsModel(modelname)) {			//DynSDevs : filter void messages
+			continue;
 		} else {
 			if (mailbag.find(modelname) == mailbag.end()) {
-				mailbag[modelname] = std::vector<t_msgptr>();
+				mailbag[modelname] = std::vector<t_msgptr>();	// Only make them if we have mail.
 			}
 			mailbag[modelname].push_back(entry.getMessage());
 		}
@@ -506,14 +513,14 @@ t_timestamp n_model::Core::getFirstMessageTime()
 		MessageEntry first = this->m_received_messages->top();
 		std::string modeldest = first.getMessage()->getDestinationModel();
 		if (this->containsModel(modeldest)) {
-			mintime = first.getMessage()->getTimeStamp();
-			return mintime;
+			return first.getMessage()->getTimeStamp();
 		} else {
 			LOG_DEBUG("Core : removing message from msgqueue with destination ", modeldest);
 			this->m_received_messages->pop();
 		}
 	}
 	this->unlockMessages();
+	// Get here if we have no valid messages.
 	return mintime;
 }
 

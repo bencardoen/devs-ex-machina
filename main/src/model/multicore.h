@@ -24,9 +24,24 @@ namespace n_model {
 class Multicore: public Core
 {
 private:
+	/**
+	 * Link to network
+	 */
 	t_networkptr			m_network;
+
+	/**
+	 *
+	 */
 	n_control::t_location_tableptr	m_loctable;
+
+	/**
+	 * This core's current color state.
+	 */
 	MessageColor			m_color;
+
+	/**
+	 * Local count vector for Mattern.
+	 */
 	V				m_mcount_vector;
 
 	/**
@@ -55,7 +70,15 @@ private:
 	 * (Mattern)
 	 */
 	t_timestamp			m_tred;
+
+	/**
+	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
+	 */
 	std::deque<t_msgptr>		m_sent_messages;
+
+	/**
+	 * Processed messages, stored in Front[earliest....latest..now] Back order.
+	 */
 	std::deque<t_msgptr>		m_processed_messages;
 
 	/**
@@ -87,7 +110,16 @@ private:
 
 public:
 	Multicore()=delete;
-	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+	/**
+	 * MCore constructor
+	 * @param coreid Unique sequential id (next=last+1).
+	 * @param ltable Controller set loctable.
+	 * @param n Link to network (message queueing system).
+	 * @param cores : To properly allocate V/C vectors in Mattern, we need to know how many cores there are.
+	 * @pre coreid < cores
+	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
+	 */
+	Multicore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */
@@ -119,6 +151,8 @@ public:
 	 * Revert from current time to totime.
 	 * This requeues processed messages up to totime, sends antimessages for all sent
 	 * messages.
+	 * @pre totime >= this->getGVT();
+	 * @lock called during simlock(smallStep) && msglock (sort->receive)
 	 */
 	virtual
 	void revert(const t_timestamp& totime)override;
@@ -158,6 +192,7 @@ public:
 	 * Sets new gvt.
 	 * This clears all processed messages time < newgvt, all send messages < newgvt
 	 * @pre newgvt >= this->getGVT()
+	 * @locks : acquires simulatorlock, msglock (in order)
 	 */
 	virtual
 	void setGVT(const t_timestamp&)override;
@@ -174,14 +209,23 @@ public:
 	void
 	unlockSimulatorStep()override;
 
+	/**
+	 * Request lock on [pending|sent|processed] messages.
+	 */
 	virtual
 	void
 	lockMessages()override;
 
+	/**
+	 * Release lock on [pending|sent|processed] messages.
+	 */
 	virtual
 	void
 	unlockMessages()override;
 
+	/**
+	 * Set the color of msg with this core's color.
+	 */
 	virtual
 	void
 	paintMessage(const t_msgptr& msg)override;

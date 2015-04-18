@@ -16,6 +16,9 @@ Multicore::~Multicore()
 {
 	this->m_loctable.reset();
 	this->m_network.reset();
+	// this->m_received_messages member of Core.cpp, don't touch.
+	this->m_sent_messages.clear();
+	this->m_processed_messages.clear();
 }
 
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
@@ -26,11 +29,10 @@ Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_locati
 
 void Multicore::sendMessage(const t_msgptr& msg)
 {
-	// We're locked on msglock
-	msg->setSourceCore(this->getCoreID());
+	// We're locked on msglock.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
-	msg->setDestinationCore(coreid);
-	LOG_DEBUG("MCore:: sending message", msg->toString());
+	msg->setDestinationCore(coreid);		// time, color, source are set by collectOutput(). Rest is set by model.
+	LOG_DEBUG("MCore:: sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
 	this->countMessage(msg);					// Make sure Mattern is notified
@@ -41,6 +43,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	// We're locked on msglock
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
 	        msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());	// Use explicit copy accessors to void any chance for races.
+	// TODO Race : it's still possible a model uses msg->Payload while we copy it. Don't use it ? (it's not in hash).
 	amsg->paint(msg->getColor());		// Antimessage should have same color as originally sent, core color can be different now !!
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
@@ -56,6 +59,7 @@ void Multicore::paintMessage(const t_msgptr& msg){
 
 void
 Multicore::handleAntiMessage(const t_msgptr& msg){
+	// We're locked on msgs
 	LOG_DEBUG("MCore:: handling antimessage ", msg->toString());
 	if(this->m_received_messages->contains(MessageEntry(msg))){
 		this->m_received_messages->erase(MessageEntry(msg));
@@ -86,8 +90,8 @@ void Multicore::countMessage(const t_msgptr& msg)
 
 void Multicore::receiveMessage(const t_msgptr& msg)
 {
-	// first let superclass do its thing, this includes antimessages and all that fun.
-	Core::receiveMessage(msg);
+	Core::receiveMessage(msg);	// Trigger antimessage handling etc (and possibly revert)
+
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	std::lock_guard<std::mutex> lock(this->m_vlock);
 	if (msg->getColor() == MessageColor::WHITE) {
@@ -210,16 +214,16 @@ void n_model::Multicore::unlockSimulatorStep()
 
 void
 n_model::Multicore::lockMessages(){
-	LOG_DEBUG("MCORE:: trying to lock msg core", this->getCoreID());
+	LOG_DEBUG("MCORE:: sim msgs locking ... ", this->getCoreID());
 	m_msglock.lock();
-	LOG_DEBUG("MCORE:: simulator msg locked", this->getCoreID());
+	LOG_DEBUG("MCORE:: sim msgs locked ", this->getCoreID());
 }
 
 void
 n_model::Multicore::unlockMessages(){
-	LOG_DEBUG("MCORE:: simulator msg unlocking");
+	LOG_DEBUG("MCORE:: sim msg unlocking ...");
 	m_msglock.unlock();
-	LOG_DEBUG("MCORE:: simulator msg unlocked");
+	LOG_DEBUG("MCORE:: sim msg unlocked");
 }
 
 void n_model::Multicore::revert(const t_timestamp& totime)
@@ -227,8 +231,7 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: reverting from ", this->getTime(), " to ", totime);
 	// We have the simulator lock
-	// We need the msglocks.
-	this->lockMessages();
+	// DO NOT lock on msgs, we're called by receive message, which is locked !!
 	while (!m_processed_messages.empty()) {
 		auto msg = m_processed_messages.back();
 		if (msg->getTimeStamp() > totime) {
@@ -250,10 +253,9 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 			break;
 		}
 	}
-	this->unlockMessages();
 	this->setTime(totime);
-	this->rescheduleAll(totime);	// Make sure the scheduler is reloaded with fresh/stale models
-	this->revertTracerUntil(totime); // Finally, revert trace output
+	this->rescheduleAll(totime);		// Make sure the scheduler is reloaded with fresh/stale models
+	this->revertTracerUntil(totime); 	// Finally, revert trace output
 }
 
 void n_model::calculateGVT(/* access to cores,*/std::size_t ms, std::atomic<bool>& run)
