@@ -209,6 +209,7 @@ n_model::Multicore::revert(const t_timestamp& totime){
 	}
 	this->setTime(totime);
 	this->rescheduleAll(totime);
+	/// TODO revertTo tracer(totime, coreid).
 	// Unload/Reload scheduler.
 }
 

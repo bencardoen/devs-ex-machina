@@ -295,7 +295,7 @@ void n_model::Core::runSmallStep()
 	this->collectOutput();
 
 	// Noop in single core. Pull messages from network, sort them.
-	this->getMessages();
+	this->getMessages();		// >revert()	send->anti, processed -> pending,
 
 	// From all pending messages, get those with time <= now and sort them.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;

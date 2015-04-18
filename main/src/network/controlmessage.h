@@ -21,9 +21,9 @@ namespace n_network {
 class ControlMessage
 {
 private:
-	t_timestamp		m_clock;
-	t_timestamp		m_send;
-	t_count			m_count;
+	t_timestamp		m_clock;		//
+	t_timestamp		m_send;			//
+	t_count			m_count;		// Count pdf
 public:
 	ControlMessage(size_t cores, t_timestamp clock, t_timestamp send);
 	virtual ~ControlMessage();

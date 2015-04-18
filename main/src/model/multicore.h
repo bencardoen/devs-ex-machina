@@ -27,11 +27,15 @@ private:
 	t_networkptr			m_network;
 	n_control::t_location_tableptr	m_loctable;
 	MessageColor		m_color;
+
+	/// V <---
 	t_V				m_mcount_vector;
+
 	/**
 	 * Locks access to shared vector that counts recvd, sent msgs.
 	 */
-	std::mutex&			m_vlock;
+	std::mutex&			m_vlock;   /// <-self.vlock
+
 	/**
 	 * Simulation lock
 	 */
