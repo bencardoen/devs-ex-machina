@@ -23,7 +23,7 @@ public:
 
 	std::size_t operator[](const std::string& modelName);
 	std::size_t lookupModel(const std::string& modelName);
-	void registerModel(const t_atomicmodelptr& model, std::size_t core);
+	void registerModel(const t_atomicmodelptr model, std::size_t core);
 
 
 private:

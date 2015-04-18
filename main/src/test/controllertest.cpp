@@ -43,7 +43,7 @@ public:
 	virtual ~SimpleAllocator()
 	{
 	}
-	size_t allocate(t_atomicmodelptr)
+	size_t allocate(const t_atomicmodelptr&)
 	{
 		int i = m_i;
 		m_i = (m_i + 1) % m_cores;

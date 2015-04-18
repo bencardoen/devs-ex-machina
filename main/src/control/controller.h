@@ -68,7 +68,7 @@ public:
 	/*
 	 * Set an atomic model as the main model using the given allocator
 	 */
-	void addModel(t_atomicmodelptr& atomic);
+	void addModel(const t_atomicmodelptr& atomic);
 
 	/*
 	 * Set a coupled model as the main model using the given allocator
@@ -163,7 +163,7 @@ private:
 	/*
 	 * Add an atomic model to a specific core
 	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
+	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
 };

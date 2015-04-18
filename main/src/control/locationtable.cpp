@@ -31,7 +31,7 @@ std::size_t LocationTable::lookupModel(const std::string& modelName)
 	return m_locTable[modelName];
 }
 
-void LocationTable::registerModel(const t_atomicmodelptr& model, std::size_t core)
+void LocationTable::registerModel(const t_atomicmodelptr model, std::size_t core)
 {
 	m_locTable.insert(std::pair<std::string, std::size_t>(model->getName(), core));
 }

@@ -23,18 +23,6 @@ Controller::~Controller()
 {
 }
 
-void Controller::addModel(t_atomicmodelptr& atomic)
-{
-	assert(m_isSimulating == false && "Cannot replace main model during simulation");
-	if (m_hasMainModel) { // old models need to be replaced
-		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
-		emptyAllCores();
-	}
-	size_t coreID = m_allocator->allocate(atomic);
-	addModel(atomic, coreID);
-	m_hasMainModel = true;
-}
-
 void Controller::save(bool traceOnly)
 {
 	switch (m_simType) {
@@ -57,7 +45,19 @@ void Controller::save(bool traceOnly)
 	}
 }
 
-void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
+void Controller::addModel(const t_atomicmodelptr& atomic)
+{
+	assert(m_isSimulating == false && "Cannot replace main model during simulation");
+	if (m_hasMainModel) { // old models need to be replaced
+		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
+		emptyAllCores();
+	}
+	size_t coreID = m_allocator->allocate(atomic);
+	addModel(atomic, coreID);
+	m_hasMainModel = true;
+}
+
+void Controller::addModel(const t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
 	m_locTab->registerModel(atomic, coreID);
@@ -70,10 +70,10 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
 		emptyAllCores();
 	}
-	std::vector<t_atomicmodelptr>& atomics = m_root->directConnect(coupled);
+	m_root->directConnect(coupled);
 
-	for (size_t i = 0; i < atomics.size(); ++i) {
-		addModel(atomics[i]);
+	for(auto& model : m_root->getComponents()){
+		addModel(model);
 	}
 	m_hasMainModel = true;
 
