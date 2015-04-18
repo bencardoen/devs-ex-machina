@@ -122,6 +122,7 @@ void n_model::Core::collectOutput()
 		// Model has no clue what time it is, set timestamp now.
 		for (const auto& msg : mailfrom) {
 			msg->setSourceCore(this->getCoreID());
+			paintMessage(msg);
 			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));
 		}
 		this->sortMail(mailfrom);
@@ -174,6 +175,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
+	this->lockMessages();
 	for (const auto & message : messages) {
 		LOG_DEBUG("CORE: sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
@@ -182,6 +184,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 			this->receiveMessage(message);
 		}
 	}
+	this->unlockMessages();
 }
 
 void n_model::Core::printSchedulerState()
@@ -327,7 +330,6 @@ void n_model::Core::traceInt(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		// TODO add coreid
 		this->m_tracers->tracesInternal(model, this->getCoreID());
 	}
 }
@@ -337,7 +339,6 @@ void n_model::Core::traceExt(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		// TODO add coreid
 		this->m_tracers->tracesExternal(model, this->getCoreID());
 	}
 }
@@ -347,7 +348,6 @@ void n_model::Core::traceConf(const t_atomicmodelptr& model)
 	if (not this->m_tracers) {
 		LOG_WARNING("CORE:: ", "i have no tracers ?? , tracerset = nullptr.");
 	} else {
-		// TODO add coreid
 		this->m_tracers->tracesConfluent(model, this->getCoreID());
 	}
 }
@@ -400,7 +400,7 @@ void n_model::Core::removeModel(std::string name)
 		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
 	}
 	else{
-		LOG_WARNING("Core :: you've aksed to remove model with name ", name, " which is not in this core.");
+		LOG_WARNING("Core :: you've asked to remove model with name ", name, " which is not in this core.");
 	}
 }
 
@@ -479,7 +479,11 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	std::vector<MessageEntry> messages;
 	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>("", nowtime, "", "", "");
 	MessageEntry tokentime(token);
-	this->m_received_messages->unschedule_until(messages, tokentime);
+
+	this->lockMessages();
+	this->m_received_messages->unschedule_until(messages, tokentime);	// In theory this is safe, in practice (vbox) it is not.
+	this->unlockMessages();
+
 	for (const auto& entry : messages) {
 		std::string modelname = entry.getMessage()->getDestinationModel();
 		if (not this->containsModel(modelname)) {//In Dynamic Struc Devs it can happen a model is removed in a live simulation
@@ -494,8 +498,9 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	}
 }
 
-t_timestamp n_model::Core::getFirstMessageTime() const
+t_timestamp n_model::Core::getFirstMessageTime()
 {
+	this->lockMessages();
 	t_timestamp mintime = t_timestamp::infinity();
 	while (not this->m_received_messages->empty()) {// We need to skip messages with destmodel not in this core (dyn structured)
 		MessageEntry first = this->m_received_messages->top();
@@ -508,6 +513,7 @@ t_timestamp n_model::Core::getFirstMessageTime() const
 			this->m_received_messages->pop();
 		}
 	}
+	this->unlockMessages();
 	return mintime;
 }
 
@@ -520,7 +526,9 @@ n_model::Core::setGVT(const t_timestamp& newgvt){
 
 void n_model::Core::printPendingMessages()
 {
+	this->lockMessages();
 	this->m_received_messages->printScheduler();
+	this->unlockMessages();
 }
 
 void n_model::Core::revertTracerUntil(const t_timestamp& totime){

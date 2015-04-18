@@ -91,6 +91,7 @@ private:
 	 * Tracers.
 	 */
 	n_tracers::t_tracersetptr m_tracers;
+
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -120,7 +121,13 @@ private:
 		;
 	}
 
+	virtual
+	void
+	lockMessages(){;}
 
+	virtual
+	void
+	unlockMessages(){;}
 protected:
 	/**
 	* Store received messages (local and networked)
@@ -352,6 +359,7 @@ public:
 	/**
 	 * Print all queued messages.
 	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
+	 * @lock : locks on messages
 	 */
 	void
 	printPendingMessages();
@@ -359,6 +367,7 @@ public:
 	/**
 	 * Given a set of messages, sort them by model destination.
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
+	 * @lock: locks on messagelock.
 	 */
 	virtual
 	void
@@ -443,6 +452,7 @@ public:
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.
+	 * @locks on messagelock
 	 */
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
@@ -461,9 +471,10 @@ public:
 	/**
 	 * For all pending messages, retrieve the smallest (earliest) timestamp.
 	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
+	 * @locks on messagelock
 	 */
 	t_timestamp
-	getFirstMessageTime()const;
+	getFirstMessageTime();
 
 
 	/**
@@ -482,6 +493,13 @@ public:
 	virtual
 	void
 	handleAntiMessage(const t_msgptr&){;}
+
+	/**
+	 * Noop in single core. Paints message according to current color in core. (multicore).
+	 */
+	virtual
+	void
+	paintMessage(const t_msgptr&){;}
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

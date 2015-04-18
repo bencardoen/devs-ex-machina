@@ -40,6 +40,11 @@ private:
 	std::mutex			m_locallock;
 
 	/**
+	 * Message lock. Excludes access to [sent|processed|pending]
+	 */
+	std::mutex			m_msglock;
+
+	/**
 	 * Lock for Tred value (as described in Mattern's GVT algorithm
 	 * on pages 117 - 121 (Fujimoto) )
 	 */
@@ -63,7 +68,8 @@ private:
 	 * Send an antimessage.
 	 * Will construct an in place copy (remeber the original is shared mem),
 	 * that has the same identifying content and resend it to annihilate it's predecessor.
-	 * @param msg the original message..
+	 * @param msg the original message.
+	 * @attention : triggers 1.4 Mattern
 	 */
 	void
 	sendAntiMessage(const t_msgptr& msg);
@@ -74,6 +80,7 @@ private:
 	 * If y is processed, trigger a revert.
 	 * If y is not yet received : store x and destroy y if it arrives.
 	 * @param msg the antimessage
+	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
 	 */
 	void
 	handleAntiMessage(const t_msgptr& msg);
@@ -88,6 +95,7 @@ public:
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
+	 * @attention does not yet lock on messages acces
 	 */
 	void getMessages()override;
 
@@ -122,7 +130,8 @@ public:
 	setColor(MessageColor c){m_color = c;}
 
 	/**
-	 * Sort network received messages into local queues.
+	 * Sort incoming mail into time based scheduler.
+	 * @locks messagelock --> do not lock func called by this function (receive, mark and friends)
 	 */
 	virtual void sortIncoming(const std::vector<t_msgptr>& messages);
 
@@ -135,7 +144,7 @@ public:
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)
-	 * @attention locked
+	 * @attention locked by caller on msglock
 	 */
 	virtual
 	void receiveMessage(const t_msgptr&)override;
@@ -165,9 +174,17 @@ public:
 	void
 	unlockSimulatorStep()override;
 
-	// TODO
+	virtual
 	void
-	waitUntilAllReceived();
+	lockMessages()override;
+
+	virtual
+	void
+	unlockMessages()override;
+
+	virtual
+	void
+	paintMessage(const t_msgptr& msg)override;
 
 };
 

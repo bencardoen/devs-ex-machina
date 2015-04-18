@@ -26,25 +26,32 @@ Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_locati
 
 void Multicore::sendMessage(const t_msgptr& msg)
 {
+	// We're locked on msglock
 	msg->setSourceCore(this->getCoreID());
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	msg->setDestinationCore(coreid);
-	msg->paint(this->getColor());
 	LOG_DEBUG("MCore:: sending message", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
+	this->countMessage(msg);					// Make sure Mattern is notified
 }
 
 void Multicore::sendAntiMessage(const t_msgptr& msg)
 {
+	// We're locked on msglock
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
-	        msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
-	amsg->paint(msg->getColor());
+	        msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());	// Use explicit copy accessors to void any chance for races.
+	amsg->paint(msg->getColor());		// Antimessage should have same color as originally sent, core color can be different now !!
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
 	LOG_DEBUG("MCore:: sending antimessage : ", amsg->toString());
 	this->m_network->acceptMessage(amsg);
+	this->countMessage(amsg);					//Make sure Mattern is notified
+}
+
+void Multicore::paintMessage(const t_msgptr& msg){
+	msg->paint(this->getColor());
 }
 
 void
@@ -79,7 +86,7 @@ void Multicore::countMessage(const t_msgptr& msg)
 
 void Multicore::receiveMessage(const t_msgptr& msg)
 {
-	// first let superclass do its thing
+	// first let superclass do its thing, this includes antimessages and all that fun.
 	Core::receiveMessage(msg);
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	std::lock_guard<std::mutex> lock(this->m_vlock);
@@ -97,10 +104,12 @@ void Multicore::getMessages()
 
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
+	this->lockMessages();
 	for (const auto & message : messages) {
 		assert(message->getDestinationCore() == this->getCoreID());
 		this->receiveMessage(message);
 	}
+	this->unlockMessages();
 }
 
 void Multicore::receiveControl(const t_controlmsg& msg)
@@ -146,7 +155,6 @@ void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
 {
 	for (const auto& msg : messages) {
 		LOG_DEBUG("MCore : storing processed msg", msg->toString());
-		std::lock_guard<std::mutex> lock(m_locallock);
 		this->m_processed_messages.push_back(msg);
 	}
 }
@@ -156,6 +164,7 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 	Core::setGVT(newgvt);
 	this->lockSimulatorStep();
 	// Clear processed messages with time < gvt
+	this->lockMessages();
 	auto iter = m_processed_messages.begin();
 	for (; iter != m_processed_messages.end(); ++iter) {
 		if ((*iter)->getTimeStamp() > this->getGVT()) {
@@ -180,7 +189,7 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 
 	this->m_color = MessageColor::WHITE;
 	LOG_INFO("Mcore:: painted core back to white, for next gvt calculation");
-
+	this->unlockMessages();
 	this->unlockSimulatorStep();
 }
 
@@ -191,12 +200,35 @@ void n_model::Multicore::lockSimulatorStep()
 	LOG_DEBUG("MCORE:: simulator core locked");
 }
 
+void n_model::Multicore::unlockSimulatorStep()
+{
+	LOG_DEBUG("MCORE:: trying to unlock simulator core", this->getCoreID());
+	this->m_locallock.unlock();
+	LOG_DEBUG("MCORE:: simulator core unlocked", this->getCoreID());
+}
+
+
+void
+n_model::Multicore::lockMessages(){
+	LOG_DEBUG("MCORE:: trying to lock msg core", this->getCoreID());
+	m_msglock.lock();
+	LOG_DEBUG("MCORE:: simulator msg locked", this->getCoreID());
+}
+
+void
+n_model::Multicore::unlockMessages(){
+	LOG_DEBUG("MCORE:: simulator msg unlocking");
+	m_msglock.unlock();
+	LOG_DEBUG("MCORE:: simulator msg unlocked");
+}
+
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: reverting from ", this->getTime(), " to ", totime);
-	// We're inside
-	// TODO vcount lock ?
+	// We have the simulator lock
+	// We need the msglocks.
+	this->lockMessages();
 	while (!m_processed_messages.empty()) {
 		auto msg = m_processed_messages.back();
 		if (msg->getTimeStamp() > totime) {
@@ -218,16 +250,10 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 			break;
 		}
 	}
+	this->unlockMessages();
 	this->setTime(totime);
 	this->rescheduleAll(totime);	// Make sure the scheduler is reloaded with fresh/stale models
 	this->revertTracerUntil(totime); // Finally, revert trace output
-}
-
-void n_model::Multicore::unlockSimulatorStep()
-{
-	LOG_DEBUG("MCORE:: trying to unlock simulator core");
-	this->m_locallock.unlock();
-	LOG_DEBUG("MCORE:: simulator core unlocked");
 }
 
 void n_model::calculateGVT(/* access to cores,*/std::size_t ms, std::atomic<bool>& run)

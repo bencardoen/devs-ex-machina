@@ -515,8 +515,8 @@ TEST(Multicore, GVTfunctions){
 		coreone->markMessageStored(msg);
 	}
 	coreone->setGVT(gvt);
-	//coreone->printSchedulerState();
-	//coreone->printPendingMessages();
+	coreone->printSchedulerState();
+	coreone->printPendingMessages();
 	coreone->revert(gvt);
 	coreone->printSchedulerState();
 	coreone->printPendingMessages();
@@ -525,7 +525,7 @@ TEST(Multicore, GVTfunctions){
 	Message origin = *msgaftergvt;
 	t_msgptr antimessage( new Message(origin));
 	antimessage->setAntiMessage(true);
-	coreone->receiveMessage(antimessage);
+	//coreone->receiveMessage(antimessage);
 }
 
 
