@@ -128,9 +128,8 @@ TEST(Controller, pDEVS)
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
 		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
-		std::mutex vlock;
-		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, vlock,2);
-		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, vlock,2);
+		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
 		coreMap[0] = c1;
 		coreMap[1] = c2;
 
@@ -151,5 +150,5 @@ TEST(Controller, pDEVS)
 		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
 	};
 
-//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.corr", TESTFOLDER "controller/pdevstest.corr"), 0);
+//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
 }
