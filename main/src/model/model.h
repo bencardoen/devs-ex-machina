@@ -200,6 +200,11 @@ public:
 	 * @note The user doesn't have to worry about this one.
 	 */
 	virtual void setController(n_control::Controller* newControl);
+
+	/**
+	 * @brief Get the next absolute time on which this model is scheduled
+	 */
+	t_timestamp getTimeNext() const;
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

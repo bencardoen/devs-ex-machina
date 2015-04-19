@@ -159,7 +159,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			urgent->setGVT(this->getGVT());
 			this->traceConf(urgent);
 			this->markProcessed(found->second);		// Store message as processed for timewarp.
-
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
@@ -168,11 +167,11 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
+		m_scheduler->erase(ModelEntry(model->getName(), model->getTimeNext()));
 		model->setTime(this->getTime());
 		model->setGVT(this->getGVT());
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
-
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_INFO("Model ", model->getName(), " changed ta value from infinity to ", queried,
@@ -296,13 +295,10 @@ std::size_t n_model::Core::getCoreID() const
 void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
-
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
-
 	// Get all produced messages, and route them.
 	this->collectOutput();	// locked on msgs
-
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
 	this->getMessages();	// locked on msgs

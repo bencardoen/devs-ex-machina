@@ -74,7 +74,7 @@ t_timestamp Policeman::timeAdvance()
 		return t_timestamp(50);
 	else if (substr == "work")
 		return t_timestamp(100);
-	else if (substr == "move")
+	else if (substr == "movi")
 		return t_timestamp(150);
 	else
 		assert(false); // You shouldn't come here...
