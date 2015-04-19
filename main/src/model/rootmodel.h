@@ -27,6 +27,8 @@ public:
 	 */
 	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
 	void undoDirectConnect();
+
+	std::vector<t_atomicmodelptr> getComponents();
 };
 } /* namespace n_model */
 

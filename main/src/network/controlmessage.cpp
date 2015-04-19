@@ -9,7 +9,8 @@
 
 namespace n_network {
 
-ControlMessage::ControlMessage(std::size_t cores, t_timestamp clock, t_timestamp send):m_clock(clock), m_send(send)
+ControlMessage::ControlMessage(std::size_t cores, t_timestamp tmin, t_timestamp tred)
+	: m_tmin(tmin), m_tred(tred)
 {
 	m_count = t_count(cores, 0);
 

@@ -10,6 +10,11 @@
 #include "objectfactory.h"
 #include "controller.h"
 #include "trafficlight.h"
+#include "tracers.h"
+#include "coutredirect.h"
+#include "compare.h"
+#include "multicore.h"
+#include "trafficsystemc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -38,7 +43,7 @@ public:
 	virtual ~SimpleAllocator()
 	{
 	}
-	size_t allocate(t_atomicmodelptr)
+	size_t allocate(const t_atomicmodelptr&)
 	{
 		int i = m_i;
 		m_i = (m_i + 1) % m_cores;
@@ -83,25 +88,67 @@ TEST(Controller, allocation)
 TEST(Controller, cDEVS)
 {
 	RecordProperty("description", "Running a simple single core simulation");
+	std::ofstream filestream(TESTFOLDER "controller/devstest.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
 
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
-	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
-	t_coreptr c = createObject<Core>();
-	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
-	coreMap[0] = c;
+		t_coreptr c = createObject<Core>();
+		coreMap[0] = c;
 
-	Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setClassicDEVS();
-	ctrl.setTerminationTime(t_timestamp(360, 0));
+		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setClassicDEVS();
+		ctrl.setTerminationTime(t_timestamp(360, 0));
 
-	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
-	ctrl.addModel(m1);
+		t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
+		ctrl.addModel(m1);
 
-	ctrl.simulate();
-	EXPECT_TRUE(c->terminated() == true);
-	EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
+		ctrl.simulate();
+		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
+	};
+
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstest.txt", TESTFOLDER "controller/devstest.corr"), 0);
 }
 
+TEST(Controller, pDEVS)
+{
+	RecordProperty("description", "Running a simple multicore simulation");
+	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
+
+		t_networkptr network = createObject<Network>(2);
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+		coreMap[0] = c1;
+		coreMap[1] = c2;
+
+		t_timestamp endTime(2000, 0);
+
+		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setPDEVS();
+		ctrl.setTerminationTime(endTime);
+
+		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl.addModel(m);
+
+		EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+		ctrl.simulate();
+		EXPECT_TRUE(c1->isLive() == false);
+		EXPECT_TRUE(c2->isLive() == false);
+		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
+	};
+
+//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
+}
