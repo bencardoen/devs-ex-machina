@@ -59,7 +59,7 @@ private:
 	t_coupledmodelptr m_coupledOrigin;
 	n_tracers::t_tracersetptr m_tracers;
 
-	DSScharedState m_sharedState;
+	DSSharedState m_sharedState;
 	bool m_dsPhase;
 
 	void doDirectConnect();

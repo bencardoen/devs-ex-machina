@@ -99,6 +99,9 @@ TEST(Core, CoreFlow)
 	        "Verify that Core can (re)schedule models, model lookup is working and core can advance in time.");
 	using n_network::Message;
 	Core c; // single core.
+	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
+	tracers->stopTracers();	//disable the output
+	c.setTracers(tracers);
 	EXPECT_EQ(c.getCoreID(), 0);
 	std::string portname_stub = "model_port";
 	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);

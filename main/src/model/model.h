@@ -193,7 +193,7 @@ public:
 	 * @return If true, propagate this call upwards in the model tree.
 	 * @note Only this function is allowed to change the structure during the simulation.
 	 */
-	virtual bool modelTransition(DSScharedState* shared);
+	virtual bool modelTransition(DSSharedState* shared);
 
 	/**
 	 * @brief Sets the Controller of this model.

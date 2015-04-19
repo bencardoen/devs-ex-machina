@@ -39,7 +39,6 @@ private:
 	void unscheduleChildren();
 protected:
 	std::vector<t_modelptr> m_components;
-	void setController(n_control::Controller* newControl);
 
 public:
 	CoupledModel() = delete;
@@ -105,6 +104,9 @@ public:
 	 * @return a vector with pointers to these models
 	 */
 	std::vector<t_modelptr> getComponents() const;
+
+
+	void setController(n_control::Controller* newControl) override;
 };
 
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;

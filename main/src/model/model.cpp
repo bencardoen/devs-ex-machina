@@ -130,7 +130,7 @@ std::map<std::string, t_portptr>& Model::getOPorts()
 	return m_oPorts;
 }
 
-bool Model::modelTransition(DSScharedState*)
+bool Model::modelTransition(DSSharedState*)
 {
 	return false;
 }

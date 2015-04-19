@@ -15,6 +15,8 @@
 #include "compare.h"
 #include "multicore.h"
 #include "trafficsystemc.h"
+#include "trafficsystemds.h"
+#include "dynamiccore.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -115,8 +117,39 @@ TEST(Controller, cDEVS)
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstest.txt", TESTFOLDER "controller/devstest.corr"), 0);
 }
 
+TEST(Controller, DSDEVS_connections)
+{
+	RecordProperty("description", "Running a simple single core simulation with DS");
+	std::ofstream filestream(TESTFOLDER "controller/dstestConnections.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
+
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+		t_coreptr c = createObject<DynamicCore>();
+		coreMap[0] = c;
+
+		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setDSDEVS();
+		ctrl.setTerminationTime(t_timestamp(3600, 0));
+
+		t_coupledmodelptr m = createObject<n_examples_ds::TrafficSystem>("trafficSystem");
+		ctrl.addModel(m);
+
+		ctrl.simulate();
+		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->getTime() >= t_timestamp(3600, 0));
+	};
+
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/dstestConnections.txt", TESTFOLDER "controller/dstestConnections.corr"), 0);
+}
+
 TEST(Controller, pDEVS)
 {
+	return;
 	RecordProperty("description", "Running a simple multicore simulation");
 	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
 	{
@@ -150,5 +183,5 @@ TEST(Controller, pDEVS)
 		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
 	};
 
-//	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
 }

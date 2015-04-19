@@ -36,7 +36,8 @@ Controller::~Controller()
 void Controller::save(bool traceOnly)
 {
 	switch (m_simType) {
-	case CLASSIC: {
+	case CLASSIC:
+	case DSDEVS:{
 		if (!traceOnly) {
 			throw std::logic_error("Controller : serialization for CLASSIC not implemented");
 		}
@@ -46,10 +47,6 @@ void Controller::save(bool traceOnly)
 	}
 	case PDEVS: {
 		throw std::logic_error("Controller : save() for PDEVS not implemented");
-		break;
-	}
-	case DSDEVS: {
-		throw std::logic_error("Controller : save() for DSDEVS not implemented");
 		break;
 	}
 	}
@@ -64,6 +61,9 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	}
 	size_t coreID = m_allocator->allocate(atomic);
 	addModel(atomic, coreID);
+
+	if(m_simType == SimType::DSDEVS)
+		atomic->setController(this);
 	m_hasMainModel = true;
 }
 
@@ -189,9 +189,14 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 	}
 	m_root->directConnect(coupled);
 
-	for(auto& model : m_root->getComponents()){
-		addModel(model);
+	for(t_atomicmodelptr& model : m_root->getComponents()){
+//		addModel(model);
+		size_t coreID = m_allocator->allocate(model);
+		addModel(model, coreID);
+		LOG_DEBUG("Controller::addModel added model with name ", model->getName());
 	}
+	if(m_simType == SimType::DSDEVS)
+		coupled->setController(this);
 	m_hasMainModel = true;
 }
 
@@ -353,18 +358,34 @@ void Controller::simPDEVS()
 
 void Controller::simDSDEVS()
 {
-	t_coreptr& core = m_cores.begin()->second;
+	auto core = m_cores.begin()->second; // there is only one core in DS DEVS
+	core->setTracers(m_tracers);
+	core->init();
+
+	if (m_checkTermTime)
+		core->setTerminationTime(m_terminationTime);
+	if (m_checkTermCond)
+		core->setTerminationFunction(m_terminationCondition);
+
+	core->setLive(true);
+
 	std::vector<n_model::t_atomicmodelptr> imminent;
 	std::size_t i = 0;
 	while(!core->terminated()) {
 		++i;
 		imminent.clear();
-		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, "...");
+		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, " at time ", core->getTime());
 		if(core->isLive()){
 			LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
 			core->runSmallStep();
 			core->getLastImminents(imminent);
 			doDSDevs(imminent);
+		} else {
+			LOG_DEBUG("CONTROLLER: NO LONGER LIFE");
+			break;
+		}
+		if (i % m_saveInterval == 0) {
+			save(true); // TODO remove boolean when serialization implemented
 		}
 	}
 }

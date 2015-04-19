@@ -16,7 +16,7 @@ namespace n_model {
 /**
  * @brief Container for the shared state used by dynamic structured DEVS
  */
-struct DSScharedState
+struct DSSharedState
 {
 	std::multimap<std::string, std::string> values;
 };
