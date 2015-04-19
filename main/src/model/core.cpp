@@ -97,6 +97,8 @@ void n_model::Core::init()
 		return;
 	}
 	for (const auto& model : this->m_models) {
+		//trace init
+		m_tracers->tracesInit(model.second, getTime());
 		t_timestamp model_scheduled_time = model.second->timeAdvance();
 		std::size_t priority = model.second->getPriority();
 		model_scheduled_time.increaseCausality(priority);
