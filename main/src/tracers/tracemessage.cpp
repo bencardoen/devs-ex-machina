@@ -106,7 +106,8 @@ std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
         Storage::FIBONACCI, true);
-std::future<void>* tracerFuture = nullptr;
+std::atomic<std::future<void>*> tracerFuture(nullptr);
+std::mutex mu;
 
 void scheduleMessage(t_tracemessageptr message)
 {
@@ -116,10 +117,11 @@ void scheduleMessage(t_tracemessageptr message)
 
 void waitForTracer()
 {
-	if(tracerFuture != nullptr){
-		tracerFuture->wait();
-		delete tracerFuture;
-		tracerFuture = nullptr;
+	std::lock_guard<std::mutex> guard(mu);
+	if(tracerFuture.load() != nullptr){
+		tracerFuture.load()->wait();
+		delete tracerFuture.load();
+		tracerFuture.store(nullptr);
 	}
 }
 
@@ -133,11 +135,18 @@ void doRealTrace(std::vector<TraceMessageEntry> entries){
 
 void traceUntil(n_network::t_timestamp time)
 {
+	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
 	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
-	waitForTracer();
-	tracerFuture = new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages)));
+
+	if(tracerFuture.load() != nullptr){
+		tracerFuture.load()->wait();
+		delete tracerFuture.load();
+		tracerFuture.store(nullptr);
+	}
+
+	tracerFuture.store(new std::future<void>(std::async(std::launch::async, std::bind(&doRealTrace, messages))));
 }
 
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
@@ -149,7 +158,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	TraceMessage inf(n_network::t_timestamp::infinity(), std::numeric_limits<std::size_t>::max(), []{}, 0u);
 	scheduler->unschedule_until(messagesLost, &inf);
 	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ", messagesLost.size(), " messages");
-	if(coreID == -1u) {
+	if(coreID == std::numeric_limits<std::size_t>::max()) {
 		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(), " messages");
 		for(const TraceMessageEntry& mess : messagesLost)
 			n_tools::takeBack(mess.getPointer());

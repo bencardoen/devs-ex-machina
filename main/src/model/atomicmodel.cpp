@@ -118,6 +118,7 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	this->m_state = state;
 
 	// We return the m_timeNext of our current state
+	LOG_DEBUG("AMODEL:: revert for totime ", time , " returning ", this->m_timeNext);
 	return this->m_timeNext;
 
 }
