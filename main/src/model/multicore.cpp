@@ -47,12 +47,12 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	this->m_network->acceptMessage(amsg);
 }
 
-void
-Multicore::handleAntiMessage(const t_msgptr& msg){
+void Multicore::handleAntiMessage(const t_msgptr& msg)
+{
 	LOG_DEBUG("MCore:: handling antimessage ", msg->toString());
-	if(this->m_received_messages->contains(MessageEntry(msg))){
+	if (this->m_received_messages->contains(MessageEntry(msg))) {
 		this->m_received_messages->erase(MessageEntry(msg));
-	}else{
+	} else {
 		LOG_ERROR("MCore:: received antimessage without corresponding message", msg->toString());
 	}
 }
@@ -103,11 +103,85 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	}
 }
 
-void Multicore::receiveControl(const t_controlmsg& msg)
-{	// TODO Tim 1.7/6
-	if (this->getCoreID() == 0) {
-		// same as below, @see 1.7 in pdf.
-		// 1.7
+void Multicore::waitUntilOK(const t_controlmsg& msg)
+{
+	// We don't have to get the count from the message each time,
+	// because the control message doesn't change, it stays in this core
+	// The V vector of this core can change because ordinary message are
+	// still being received by another thread in this core, this is why
+	// we lock the V vector
+	int msgcount = msg->getCountVector()[this->getCoreID()];
+	while (true) {
+		std::lock_guard<std::mutex> lock(m_vlock);
+		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0)
+			break; // Lock is released, all white messages are received!
+	}
+}
+
+void Multicore::receiveControl(const t_controlmsg& msg, bool first)
+{	// TODO Beautify!!
+// ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
+// Also see snapshot_gvt.pdf
+
+	if (this->getCoreID() == 0 && first) {
+		// If this processor is Pinit and is the first to be called in the GVT calculation
+		// Might want to put this in a different function?
+		this->m_color = MessageColor::RED;
+		this->m_tredlock.lock();
+		this->m_tred = t_timestamp::infinity();
+		this->m_tredlock.unlock();
+
+		msg->setTmin(this->getFirstMessageTime());
+		msg->setTred(t_timestamp::infinity());
+
+		t_count& count = msg->getCountVector();
+		// We want to make sure our count vector starts with 0
+		std::fill(count.begin(), count.end(), 0);
+		// Lock because we will change our V vector
+		std::lock_guard<std::mutex> lock(this->m_vlock);
+		for (size_t i = 0; i < count.size(); i++) {
+			count[i] += this->m_mcount_vector.getVector()[i];
+			this->m_mcount_vector.getVector()[i] = 0;
+		}
+
+		// Send message to next process in ring
+		return;
+
+	} else if (this->getCoreID() == 0) {
+		// Else if Pinit gets the control message back after a complete first round
+		// Pinit must be red! Pinit will start a second round if necessary (if count != 0)
+		// Note that Msg_count and Msg_tred must be accumulated over both rounds, whereas
+		// Msg_tmin is calculated individually for each round. If initiator gets back control
+		// message after second round, Msg_count is guaranteed to be zero vector and GVT
+		// approximation is found.
+
+		// Wait until we have received all messages
+		this->waitUntilOK(msg);
+		t_count& count = msg->getCountVector();
+		// If all items in count vectors are zero
+		if (msg->countIsZero()) {
+			// We found GVT!
+			t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
+
+			// Stop
+			return;
+		} else {
+			// We start a second round
+			msg->setTmin(this->getFirstMessageTime());
+			this->m_tredlock.lock();
+			msg->setTred(std::min(msg->getTred(), this->m_tred));
+			this->m_tredlock.unlock();
+			t_count& count = msg->getCountVector();
+			// Lock because we will change our V vector
+			std::lock_guard<std::mutex> lock(this->m_vlock);
+			for (size_t i = 0; i < count.size(); ++i) {
+				count[i] += this->m_mcount_vector.getVector()[i];
+				this->m_mcount_vector.getVector()[i] = 0;
+			}
+
+			// Send message to next process in ring
+			return;
+		}
 
 	} else {
 		// ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
@@ -120,13 +194,8 @@ void Multicore::receiveControl(const t_controlmsg& msg)
 			this->m_color = MessageColor::RED;	// LOCK
 		}
 		// We wait until we have received all messages
-		while (true) {	// TODO replace with condition variables
-			std::lock_guard<std::mutex> lock(m_vlock);
-			int count = this->m_mcount_vector.getVector()[this->getCoreID()];
-			count += msg->getCountVector()[this->getCoreID()];
-			if (count <= 0)
-				break;	// Lock is released, but that's ok, we're no longer getting white messages.
-		}
+		waitUntilOK(msg);
+
 		// Equivalent to sending message, controlmessage is passed to next core.
 		t_timestamp msg_tmin = msg->getTmin();
 		t_timestamp msg_tred = msg->getTred();
@@ -135,10 +204,15 @@ void Multicore::receiveControl(const t_controlmsg& msg)
 		msg->setTred(std::min(msg_tred, this->m_tred));
 		this->m_tredlock.unlock();
 		t_count& Count = msg->getCountVector();
+		// Lock because we will change our V vector
+		std::lock_guard<std::mutex> lock(this->m_vlock);
 		for (size_t i = 0; i < Count.size(); ++i) {
 			Count[i] += this->m_mcount_vector.getVector()[i];
 			this->m_mcount_vector.getVector()[i] = 0;
 		}
+
+		// Send message to next process in ring
+		return;
 	}
 }
 

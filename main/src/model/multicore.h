@@ -12,6 +12,7 @@
 #include "locationtable.h"
 #include "message.h"
 #include <deque>
+#include <algorithm>
 #include "v.h"
 using n_network::MessageColor;
 
@@ -78,6 +79,13 @@ private:
 	void
 	handleAntiMessage(const t_msgptr& msg);
 
+	/**
+	 * Waits until all send messages were received and we can move on with our GVT algorithm
+	 * @param msg the received control message
+	 */
+	void
+	waitUntilOK(const t_controlmsg& msg);
+
 public:
 	Multicore()=delete;
 	Multicore(const t_networkptr&, std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
@@ -131,7 +139,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg&)override;
+	receiveControl(const t_controlmsg&, bool first=false)override;
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)

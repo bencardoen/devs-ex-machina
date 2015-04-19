@@ -472,7 +472,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg& /*controlmessage*/){
+	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/){
 		assert(false);
 	}
 
