@@ -11,6 +11,7 @@
 #include "timestamp.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 typedef std::vector<int> t_count;
 
@@ -46,6 +47,14 @@ public:
 	void setTred(t_timestamp nt)
 	{
 		m_tred = nt;
+	}
+	/**
+	 * Checks if all items in the count vector are equal to 0
+	 * @return true or false
+	 */
+	bool countIsZero()
+	{
+		return std::all_of(m_count.cbegin(), m_count.cend(), [](int i){ return i == 0;});
 	}
 };
 
