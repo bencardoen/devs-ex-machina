@@ -74,7 +74,10 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 	m_root->directConnect(coupled);
 
 	for(auto& model : m_root->getComponents()){
-		addModel(model);
+		// addModel(model); // see git
+		size_t coreID = m_allocator->allocate(model);
+		addModel(model, coreID);
+		LOG_DEBUG("Controller::addModel added model with name ", model->getName());
 	}
 	m_hasMainModel = true;
 
@@ -211,14 +214,8 @@ void Controller::simPDEVS()
 			std::lock_guard<std::mutex> lock(veclock);
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
 				if (threadsignal[i] != ThreadSignal::ISFINISHED) {
-					if (round == 4 || round == 9) {	// Signal interrupt, threads will stop before
-									// the barrier next time
-//						LOG_DEBUG("CONTROLLER: threads will wait next round", round);
-						threadsignal[i] = ThreadSignal::SHOULDWAIT;
-					} else {
-//						LOG_DEBUG("CONTROLLER: threads can skip next round", round);
-						threadsignal[i] = ThreadSignal::FREE;
-					}
+//					LOG_DEBUG("CONTROLLER: threads can skip next round", round);
+					threadsignal[i] = ThreadSignal::FREE;
 				} else {
 					LOG_DEBUG("CONTROLLER : seeing finished thread with id ", i);
 				}
@@ -301,7 +298,6 @@ void Controller::emptyAllCores()
 	}
 	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }
-
 
 // TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,

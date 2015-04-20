@@ -307,7 +307,6 @@ TEST(Core, multicoresafe)
 	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
 
-
 enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
 
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<ThreadSignal>& threadsignal,

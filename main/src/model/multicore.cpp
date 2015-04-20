@@ -307,14 +307,14 @@ void n_model::Multicore::unlockSimulatorStep()
 void n_model::Multicore::lockMessages()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msgs locking ... ", this->getCoreID());
-	m_msglock.lock();
+	//m_msglock.lock();
 	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msgs locked ", this->getCoreID());
 }
 
 void n_model::Multicore::unlockMessages()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msg unlocking ...");
-	m_msglock.unlock();
+	//m_msglock.unlock();
 	LOG_DEBUG("MCORE:: ", this->getCoreID()," sim msg unlocked");
 }
 

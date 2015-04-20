@@ -133,7 +133,7 @@ TEST(Controller, pDEVS)
 		coreMap[0] = c1;
 		coreMap[1] = c2;
 
-		t_timestamp endTime(2000, 0);
+		t_timestamp endTime(500, 0);
 
 		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setPDEVS();
