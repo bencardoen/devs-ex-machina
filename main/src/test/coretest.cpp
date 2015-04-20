@@ -522,6 +522,10 @@ TEST(Multicore, GVTfunctions){
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
+
+
+	//coreone->printSchedulerState();
+
 	EXPECT_EQ(coreone->getTime(), 62);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
