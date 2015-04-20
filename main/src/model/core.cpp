@@ -167,6 +167,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
 		model->setTime(this->getTime());
+		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		model->setGVT(this->getGVT());
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
