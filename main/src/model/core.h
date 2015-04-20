@@ -310,7 +310,7 @@ public:
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
-	collectOutput();
+	collectOutput(std::set<std::string>& imminents);
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
