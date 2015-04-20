@@ -6,6 +6,11 @@
  */
 
 #include "port.h"
+#include "cereal/types/string.hpp"
+#include "cereal/types/map.hpp"
+#include "cereal/types/vector.hpp"
+#include "cereal/types/memory.hpp"
+#include "cereal/types/polymorphic.hpp"
 
 namespace n_model {
 
@@ -206,6 +211,28 @@ const std::vector<n_network::t_msgptr>& Port::getSentMessages() const
 const std::vector<n_network::t_msgptr>& Port::getReceivedMessages() const
 {
 	return m_receivedMessages;
+}
+
+void Port::serialize(n_serialisation::t_oarchive& archive)
+{
+	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
+			m_coupled_outs, m_coupled_ins, m_usingDirectConnect);
+}
+
+void Port::serialize(n_serialisation::t_iarchive& archive)
+{
+	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
+			m_coupled_outs, m_coupled_ins, m_usingDirectConnect);
+}
+
+void Port::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<Port>& construct )
+{
+	std::string name;
+	std::string hostname;
+	bool inputPort;
+
+	archive(name, hostname, inputPort);
+	construct(name, hostname, inputPort);
 }
 
 }

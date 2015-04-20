@@ -152,4 +152,21 @@ t_timestamp Model::getTimeNext() const
 	return m_timeNext;
 }
 
+void Model::serialize(n_serialisation::t_oarchive& archive)
+{
+	archive(m_name, m_timeLast, m_timeNext, m_state);
+}
+
+void Model::serialize(n_serialisation::t_iarchive& archive)
+{
+	archive(m_name, m_timeLast, m_timeNext, m_state);
+}
+
+void Model::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<Model>& construct)
+{
+	std::string name;
+	archive(name);
+	construct(name);
+}
+
 }

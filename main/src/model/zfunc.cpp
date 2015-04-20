@@ -18,6 +18,14 @@ n_network::t_msgptr ZFunc::operator()(const n_network::t_msgptr& msg)
 	return msg;
 }
 
+void ZFunc::serialize(n_serialisation::t_oarchive& archive)
+{
+}
+
+void ZFunc::serialize(n_serialisation::t_iarchive& archive)
+{
+}
+
 ZFuncCombo::ZFuncCombo(const t_zfunc& left, const t_zfunc& right):
 	m_left(left), m_right(right)
 {
@@ -32,4 +40,4 @@ n_network::t_msgptr ZFuncCombo::operator ()(const n_network::t_msgptr& msg)
 	return (*m_right)((*m_left)(msg));
 }
 
-} /* namespace n_model */
+}

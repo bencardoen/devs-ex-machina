@@ -7,17 +7,21 @@
 
 #include <gtest/gtest.h>
 #include "port.h"
-#include "cereal/types/map.hpp"
-#include "cereal/types/vector.hpp"
-#include "cereal/types/memory.hpp"
-#include "cereal/types/unordered_map.hpp"
+#include "state.h"
+#include "zfunc.h"
+#include "message.h"
+#include "model.h"
+#include "atomicmodel.h"
+#include "coupledmodel.h"
 #include "cereal/archives/binary.hpp"
 #include <sstream>
 
 using namespace n_model;
+using namespace n_network;
 
-struct MyRecord
+class MyRecord
 {
+public:
   uint8_t x, y;
   float z;
 
@@ -48,4 +52,121 @@ TEST(Cereal, General)
 	EXPECT_EQ(recOut.x, recIn.x);
 	EXPECT_EQ(recOut.y, recIn.y);
 	EXPECT_EQ(recOut.z, recIn.z);
+}
+
+TEST(Cereal, Port)
+{
+	std::stringstream ss;
+
+	Port po1 = Port("poort1", "host1", true);
+	Port po2 = Port("err", "err", false);
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(po1);
+	iarchive(po2);
+
+	EXPECT_EQ(po1.getFullName(), po2.getFullName());
+	EXPECT_EQ(po1.isInPort(), po2.isInPort());
+}
+
+TEST(Cereal, Zfunc)
+{
+	std::stringstream ss;
+
+	ZFunc z1;
+	ZFunc z2;
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(z1);
+	iarchive(z2);
+
+	t_msgptr m0 = std::make_shared<n_network::Message>("test", 0, "dest", "source");
+	t_msgptr m1, m2;
+	m1 = z1(m0);
+	m2 = z2(m0);
+	EXPECT_TRUE(m1 == m2);
+}
+
+TEST(Cereal, Message)
+{
+	std::stringstream ss;
+
+	Message m1 ("test", 0, "dest", "source");
+	Message m2 ("err", 1, "err", "err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(m1);
+	iarchive(m2);
+
+	//EXPECT_TRUE(m1 == m2);
+}
+
+TEST(Cereal, State)
+{
+	std::stringstream ss;
+
+	State s1 = State("test");
+	State s2 = State("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(s1);
+	iarchive(s2);
+
+	EXPECT_EQ(s1.toString(), s2.toString());
+}
+
+TEST(Cereal, Model)
+{
+	std::stringstream ss;
+
+	Model m1 = Model("test");
+	Model m2 = Model("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(m1);
+	iarchive(m2);
+
+	EXPECT_EQ(m1.getName(), m2.getName());
+}
+
+TEST(Cereal, AtomicModel)
+{
+	std::stringstream ss;
+
+	AtomicModel m1 = AtomicModel("test");
+	AtomicModel m2 = AtomicModel("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(m1);
+	iarchive(m2);
+
+	EXPECT_EQ(m1.getName(), m2.getName());
+}
+
+TEST(Cereal, CoupledModel)
+{
+	std::stringstream ss;
+
+	CoupledModel m1 = CoupledModel("test");
+	CoupledModel m2 = CoupledModel("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(m1);
+	iarchive(m2);
+
+	EXPECT_EQ(m1.getName(), m2.getName());
 }

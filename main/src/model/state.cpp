@@ -6,6 +6,7 @@
  */
 
 #include "state.h"
+#include "cereal/types/string.hpp"
 
 namespace n_model {
 
@@ -16,6 +17,23 @@ bool operator==(const State& lhs, const std::string rhs)
 bool operator==(const std::string lhs, const State& rhs)
 {
 	return rhs == lhs;
+}
+
+void State::serialize(n_serialisation::t_oarchive& archive)
+{
+	archive(m_state);
+}
+
+void State::serialize(n_serialisation::t_iarchive& archive)
+{
+	archive(m_state);
+}
+
+void State::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<State>& construct)
+{
+	std::string state;
+	archive(state);
+	construct(state);
 }
 
 }

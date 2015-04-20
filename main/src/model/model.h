@@ -205,6 +205,28 @@ public:
 	 * @brief Gets the next scheduled time.
 	 */
 	t_timestamp getTimeNext() const;
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialisation::t_oarchive& archive);
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialisation::t_iarchive& archive);
+
+	/**
+	 * Helper function for unserializing smart pointers to an object of this class.
+	 *
+	 * @param archive A container for the desired input stream
+	 * @param construct A helper struct for constructing the original object
+	 */
+	static void load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<Model>& construct);
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

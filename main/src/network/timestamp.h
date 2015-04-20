@@ -8,6 +8,7 @@
 #ifndef SRC_NETWORK_TIMESTAMP_H_
 #define SRC_NETWORK_TIMESTAMP_H_
 
+#include "archive.h"
 #include <chrono>
 #include <mutex>
 #include <cmath>
@@ -159,6 +160,25 @@ public:
 		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
 
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialisation::t_oarchive& archive)
+	{
+		archive(m_timestamp, m_causal);
+	}
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialisation::t_iarchive& archive)
+	{
+		archive(m_timestamp, m_causal);
+	}
 };
 
 // In practice, use this typedef.

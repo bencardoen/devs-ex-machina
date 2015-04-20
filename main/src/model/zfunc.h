@@ -9,26 +9,39 @@
 #define SRC_MODEL_ZFUNC_H_
 
 #include "message.h"
+#include "archive.h"
+#include "cereal/types/polymorphic.hpp"
 
 namespace n_model {
 
 /**
  * @brief Z function base functor class
- * TODO Pieter serialization
  */
 class ZFunc
 {
 public:
 	virtual ~ZFunc();
 	virtual n_network::t_msgptr operator()(const n_network::t_msgptr&);
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	virtual void serialize(n_serialisation::t_oarchive& archive);
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	virtual void serialize(n_serialisation::t_iarchive& archive);
 };
 
 typedef std::shared_ptr<ZFunc> t_zfunc;
 
-
 /**
  * @brief Z function combinator functor class
- * TODO Pieter serialization
  */
 class ZFuncCombo final: public ZFunc{
 private:
@@ -40,7 +53,6 @@ public:
 	virtual ~ZFuncCombo();
 
 	virtual n_network::t_msgptr operator()(const n_network::t_msgptr&);
-
 };
 
 

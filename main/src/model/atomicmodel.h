@@ -44,7 +44,7 @@ public:
 	 *
 	 * @param message A vector of messagepointers that represent events
 	 */
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) = 0;
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) {};
 
 	/**
 	 * Perform an external transition, this function will call the user-implemented extTransition
@@ -57,7 +57,7 @@ public:
 	/**
 	 * Perform an internal transition, one of the functions the user has to implement
 	 */
-	virtual void intTransition() = 0;
+	virtual void intTransition() {};
 
 	/**
 	 * Transitions the model confluently with given messages
@@ -71,14 +71,14 @@ public:
 	 *
 	 * @return Current time advance
 	 */
-	virtual t_timestamp timeAdvance() = 0;
+	virtual t_timestamp timeAdvance() {}
 
 	/**
 	 * Get the current output, one of the functions the user has to implement
 	 *
 	 * @return vector with pointers to all output messages in it
 	 */
-	virtual std::vector<n_network::t_msgptr> output() const = 0;
+	virtual std::vector<n_network::t_msgptr> output() const {}
 
 	/**
 	 * Get the current output, this function will call the user-implemented output function
@@ -128,6 +128,28 @@ public:
 	 * Elapsed time allows to shift the transitions of a model in time without having to change the TimeAdvance function.
 	 */
 	t_timestamp getTimeElapsed() const;
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialisation::t_oarchive& archive);
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialisation::t_iarchive& archive);
+
+	/**
+	 * Helper function for unserializing smart pointers to an object of this class.
+	 *
+	 * @param archive A container for the desired input stream
+	 * @param construct A helper struct for constructing the original object
+	 */
+	static void load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
