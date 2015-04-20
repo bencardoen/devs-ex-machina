@@ -179,7 +179,6 @@ TEST(Controller, DSDEVS_connections)
 
 TEST(Controller, pDEVS)
 {
-	return;
 	RecordProperty("description", "Running a simple multicore simulation");
 	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
 	{
