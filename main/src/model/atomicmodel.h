@@ -18,7 +18,6 @@ class AtomicModel: public Model
 {
 private:
 	using Model::m_control;	//change access to private
-	using Model::setController;
 
 protected:
 	// lower number -> higher priority
