@@ -110,10 +110,12 @@ void n_model::Core::init()
 		m_tracers->tracesInit(model.second, getTime());
 	}
 	// Read a first time setting.
+/*
 	if (not this->m_scheduler->empty()) {
 		this->m_time = this->m_scheduler->top().getTime();
 		LOG_INFO("Core initialized to first time : ", this->getCoreID() ,this->m_time);
 	}
+	*/
 	// Make sure models have first time set correctly.
 //	for (const auto& model : this->m_models) {
 //		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
@@ -124,17 +126,19 @@ void n_model::Core::init()
 	this->m_gvt = this->getTime();
 }
 
-void n_model::Core::collectOutput()
+void n_model::Core::collectOutput(std::set<std::string>& imminents)
 {
 	/**
 	 * For each model, collect output.
 	 * Then sort that output by destination (for the transition functions)
 	 */
 	LOG_DEBUG("CORE: Collecting output from all models");
-	for (const auto& modelentry : m_models) {
-		const auto& model = modelentry.second;
+	//for (const auto& modelentry : m_models) {
+	for(const auto& modelname : imminents){
+		const auto& model = m_models[modelname];
+		//const auto& model = modelentry.second;
 		auto mailfrom = model->doOutput();
-		LOG_DEBUG("CORE:", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelentry.first);
+		LOG_DEBUG("CORE:", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
 		// Set timetstamp, source and color (info model does not have).
 		for (const auto& msg : mailfrom) {
 			msg->setSourceCore(this->getCoreID());
@@ -305,14 +309,15 @@ void n_model::Core::runSmallStep()
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
-	// Get all produced messages, and route them.
-	this->collectOutput();	// locked on msgs
-	// Noop in single core. Pull messages from network, sort them.
-	// This step can trigger a revert, which is why its before getImminent
-	this->getMessages();	// locked on msgs
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
+	// Get all produced messages, and route them.
+	this->collectOutput(imminent);	// locked on msgs
+
+	// Noop in single core. Pull messages from network, sort them.
+	// This step can trigger a revert, which is why its before getImminent
+	this->getMessages();	// locked on msgs
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
