@@ -527,7 +527,9 @@ t_timestamp n_model::Core::getFirstMessageTime()
 
 void
 n_model::Core::setGVT(const t_timestamp& newgvt){
-	assert(newgvt >= this->m_gvt && "oldgvt > newgvt");
+//	TODO check if this assert is still useful
+//	GVT can be infinite when no messages are being send during the calculation
+//	assert(newgvt >= this->m_gvt && "oldgvt > newgvt");
 	LOG_DEBUG("Setting gvt from ::" , this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
