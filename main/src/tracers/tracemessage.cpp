@@ -36,15 +36,21 @@ void TraceMessage::execute()
 
 bool TraceMessage::operator <(const TraceMessage& other) const
 {
-	if (this->getTimeStamp() == other.getTimeStamp())
+	if (this->getTimeStamp() == other.getTimeStamp()){
+		if(this->m_tracerID == other.m_tracerID)
+			LOG_ERROR("TraceMessage::operator< Received two messages with the exact same timestamp and tracer ID");
 		return this->m_tracerID < other.m_tracerID;
+	}
 	return (this->getTimeStamp() < other.getTimeStamp());
 }
 
 bool TraceMessage::operator >(const TraceMessage& other) const
 {
-	if (this->getTimeStamp() == other.getTimeStamp())
+	if (this->getTimeStamp() == other.getTimeStamp()){
+		if(this->m_tracerID == other.m_tracerID)
+			LOG_ERROR("TraceMessage::operator> Received two messages with the exact same timestamp and tracer ID");
 		return this->m_tracerID > other.m_tracerID;
+	}
 	return (this->getTimeStamp() > other.getTimeStamp());
 }
 

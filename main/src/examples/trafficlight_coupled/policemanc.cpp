@@ -82,7 +82,7 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 	else // nothing happens
 		return std::vector<n_network::t_msgptr>();
 
-	return this->getPort("OUT")->createMessages("message");
+	return this->getPort("OUT")->createMessages(message);
 }
 
 t_stateptr Policeman::setState(std::string s)

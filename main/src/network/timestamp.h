@@ -102,6 +102,10 @@ public:
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
 	{
+		if(t == infinity()){
+			os << "inf";
+			return os;
+		}
 		os << "TimeStamp ::" << t.getTime();
 		if (t.m_causal != 0) {
 			os << " causal ::" << t.m_causal;
@@ -157,6 +161,8 @@ public:
 	 */
 	friend Time operator+(const Time& lhs, const Time& rhs)
 	{
+		if(rhs == infinity())
+			return infinity();
 		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
 

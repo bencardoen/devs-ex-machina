@@ -35,7 +35,7 @@ TrafficLight::TrafficLight(std::string name, std::size_t priority)
 {
 	this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
-	m_elapsed = 1.5;
+	m_elapsed = 2;
 
 	this->addInPort("INTERRUPT");
 	this->addOutPort("OBSERVED");
@@ -47,12 +47,12 @@ void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> & inputs
 
 	t_stateptr state = this->getState();
 
-	if (input->toString() == "toManual") {
+	if (input->getPayload() == "toManual") {
 		if (*state == "manual")
 			this->setState("manual"); // Keep light on manual
 		else if (*state == "red" || *state == "green" || *state == "yellow")
 			this->setState("manual"); // Set light to manual
-	} else if (input->toString() == "toAutonomous") {
+	} else if (input->getPayload() == "toAutonomous") {
 		if (*state == "manual")
 			this->setState("red"); // Restart with a red light
 		else if (*state == "red" || *state == "green" || *state == "yellow")
@@ -105,7 +105,7 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 		message = "grey";
 	else  // nothing happens
 		return std::vector<n_network::t_msgptr>();
-
+	LOG_DEBUG("TrafficLight::output message = ", message);
 	return this->getPort("OBSERVED")->createMessages(message);
 }
 

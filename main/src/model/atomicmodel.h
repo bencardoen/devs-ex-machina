@@ -17,6 +17,10 @@ namespace n_model {
 class AtomicModel: public Model
 {
 private:
+	static size_t nextPriority(){
+		static size_t initprior = 0;
+		return ++initprior;
+	}
 	using Model::m_control;	//change access to private
 
 protected:

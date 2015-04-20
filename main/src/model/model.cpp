@@ -17,7 +17,8 @@ Model::Model(std::string name)
 
 std::string Model::getName() const
 {
-	return m_name;
+	//return m_name;  // Do not enable, threadrace on COW implementation of std string
+	return n_tools::copyString(m_name);
 }
 
 t_portptr Model::getPort(std::string name) const

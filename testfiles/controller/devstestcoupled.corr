@@ -1,0 +1,81 @@
+
+__  Current Time: 0____________________
+
+
+	INITIAL CONDITIONS in model policeman
+		Initial State: idle
+		Next scheduled internal transition at time 200
+
+	INITIAL CONDITIONS in model trafficLight
+		Initial State: red
+		Next scheduled internal transition at time 58
+
+__  Current Time: 58____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 108
+
+__  Current Time: 108____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 118
+
+__  Current Time: 118____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 178
+
+__  Current Time: 178____________________
+
+
+	INTERNAL TRANSITION in model trafficLight
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 228
+
+__  Current Time: 200____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 300
+
+	EXTERNAL TRANSITION in model trafficLight
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 300____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 500
+
+	EXTERNAL TRANSITION in model trafficLight
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 360

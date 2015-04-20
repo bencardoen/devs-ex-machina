@@ -46,12 +46,12 @@ void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> & inputs
 
 	t_stateptr state = this->getState();
 
-	if (input->toString() == "toManual") {
+	if (input->getPayload() == "toManual") {
 		if (*state == "manual")
 			this->setState("manual"); // Keep light on manual
 		else if (*state == "red" || *state == "green" || *state == "yellow")
 			this->setState("manual"); // Set light to manual
-	} else if (input->toString() == "toAutonomous") {
+	} else if (input->getPayload() == "toAutonomous") {
 		if (*state == "manual")
 			this->setState("red"); // Restart with a red light
 		else if (*state == "red" || *state == "green" || *state == "yellow")
