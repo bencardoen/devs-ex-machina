@@ -273,7 +273,7 @@ void Controller::simPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal;
-	const std::size_t deadlockVal = 100;	// Safety, if main thread ever reaches this value, consider it a deadlock.
+	constexpr std::size_t deadlockVal = 1000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -312,21 +312,20 @@ void Controller::simPDEVS()
 			break;
 		}
 
-		bool all_waiting = false;
+		bool all_waiting = false;		/// Main : keep looping until all threads are waiting (if requested)
 		while (not all_waiting) {
 			std::lock_guard<std::mutex> lock(veclock);
 			all_waiting = true;
 			for (const auto& tsignal : threadsignal) {
 				if (tsignal == ThreadSignal::SHOULDWAIT) {// FREE is ok, ISWAITING is ok, SHOULDWAIT is
-									  // the one that shouldn't be set.
-					all_waiting = false;
+					all_waiting = false;		// the one that shouldn't be set.
 					break;
 				}
 			}
 		}
 
 		{	/// This section is only threadsafe if you have set all threads to SHOULDWAIT
-			;
+			;	// You can/could call traceUntil here.
 		}	/// End threadsafe section
 
 		/// Revive threads, first toggle predicate, then release threads (reverse order will deadlock).
@@ -334,7 +333,7 @@ void Controller::simPDEVS()
 			std::lock_guard<std::mutex> lock(veclock);
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
 				if (threadsignal[i] != ThreadSignal::ISFINISHED) {
-//					LOG_DEBUG("CONTROLLER: threads can skip next round", round);
+					LOG_DEBUG("CONTROLLER : Thread ", i , " set to state free.");
 					threadsignal[i] = ThreadSignal::FREE;
 				} else {
 					LOG_DEBUG("CONTROLLER : seeing finished thread with id ", i);
@@ -451,7 +450,7 @@ void Controller::emptyAllCores()
 // TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t saveInterval)
+        const t_coreptr& core, size_t /*saveInterval*/)
 {
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
@@ -478,8 +477,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			return;
 		}
 
-		// Has Main asked us to wait for the other ??
-		bool skip_barrier = false;
+		// Has Main asked us to wait for the barrier ??
+		bool skip_barrier = false;	// assume it has
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
@@ -490,7 +489,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			// Case 2 : We can skip the barrier ahead.
 			if (threadsignal[myid] == Controller::ThreadSignal::FREE) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " skipping barrier, FREE is set.");
-				skip_barrier = true;
+				skip_barrier = true;	// only now explicitly skip the barrier.
 			}
 		}
 
