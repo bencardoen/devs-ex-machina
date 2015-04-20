@@ -11,6 +11,7 @@
 #include "timestamp.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 typedef std::vector<int> t_count;
 
@@ -24,6 +25,8 @@ private:
 	t_timestamp 		m_tmin;
 	t_timestamp 		m_tred;
 	t_count 		m_count;
+	bool			m_gvt_found;
+	t_timestamp		m_gvt;
 public:
 	ControlMessage(size_t cores, t_timestamp clock, t_timestamp send);
 	virtual ~ControlMessage();
@@ -46,6 +49,34 @@ public:
 	void setTred(t_timestamp nt)
 	{
 		m_tred = nt;
+	}
+	/**
+	 * Checks if all items in the count vector are equal to 0
+	 * @return true or false
+	 */
+	bool countIsZero()
+	{
+		return std::all_of(m_count.cbegin(), m_count.cend(), [](int i){ return i == 0;});
+	}
+
+	const t_timestamp& getGvt() const
+	{
+		return m_gvt;
+	}
+
+	void setGvt(const t_timestamp& gvt)
+	{
+		m_gvt = gvt;
+	}
+
+	bool isGvtFound() const
+	{
+		return m_gvt_found;
+	}
+
+	void setGvtFound(bool gvtFound)
+	{
+		m_gvt_found = gvtFound;
 	}
 };
 

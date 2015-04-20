@@ -1,16 +1,19 @@
 
+__  Current Time: 0____________________
+
+
 	INTERNAL TRANSITION in model TestModel
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 1
+		Next scheduled internal transition at time 0
 
 __  Current Time: 12____________________
 
 
 	INITIAL CONDITIONS in model TestModel
 		Initial State: This is a test state
-		Next scheduled internal transition at time 1
+		Next scheduled internal transition at time 0
 
 __  Current Time: 13____________________
 
@@ -20,7 +23,7 @@ __  Current Time: 13____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 14
+		Next scheduled internal transition at time 27
 
 __  Current Time: 14____________________
 
@@ -30,7 +33,7 @@ __  Current Time: 14____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 15
+		Next scheduled internal transition at time 29
 
 	CONFLUENT TRANSITION in model TestModel
 		Input Port Configuration:
@@ -39,27 +42,27 @@ __  Current Time: 14____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 15
+		Next scheduled internal transition at time 29
 
 __  Current Time: 16____________________
 
-
-	INITIAL CONDITIONS in model TestModel
-		Initial State: This is a test state
-		Next scheduled internal transition at time 16
 
 	INTERNAL TRANSITION in model TestModel
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 17
+		Next scheduled internal transition at time 33
+
+	INITIAL CONDITIONS in model TestModel
+		Initial State: This is a test state
+		Next scheduled internal transition at time 31
 
 	EXTERNAL TRANSITION in model TestModel
 		New State: This is a test state
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 17
+		Next scheduled internal transition at time 33
 
 __  Current Time: 17____________________
 
@@ -69,7 +72,7 @@ __  Current Time: 17____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 18
+		Next scheduled internal transition at time 35
 
 __  Current Time: 18____________________
 
@@ -81,4 +84,4 @@ __  Current Time: 18____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 19
+		Next scheduled internal transition at time 37

@@ -54,12 +54,6 @@ private:
 	std::size_t m_coreid;
 
 	/**
-	 * Model storage.
-	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
-	 */
-	std::unordered_map<std::string, t_atomicmodelptr> m_models;
-
-	/**
 	 * Indicate if this core can/should run.
 	 * @synchronized
 	 */
@@ -137,6 +131,12 @@ private:
 	scheduleModel(std::string name, t_timestamp t);
 
 protected:
+	/**
+	 * Model storage.
+	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
+	 */
+	std::unordered_map<std::string, t_atomicmodelptr> m_models;
+
 	/**
 	* Store received messages (local and networked)
 	*/
@@ -490,7 +490,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg& /*controlmessage*/){
+	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/){
 		assert(false);
 	}
 

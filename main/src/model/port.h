@@ -2,7 +2,7 @@
  * port.h
  *
  *  Created on: 9-mrt.-2015
- *      Author: Pieter Tim Matthijs
+ *      Author: Pieter
  */
 
 #ifndef PORT_H_
@@ -117,6 +117,9 @@ public:
 	 * @param port New input port
 	 *
 	 */
+	void removeOutPort(const t_portptr& port);
+	void removeInPort(const t_portptr& port);
+
 	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
 
 	void setInPortCoupled(const t_portptr& port);
@@ -130,6 +133,7 @@ public:
 
 	void resetDirectConnect();
 	bool isUsingDirectConnect() const;
+
 
 	/**
 	 * Function that creates messages with a give payload.
