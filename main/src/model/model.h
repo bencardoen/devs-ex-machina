@@ -16,6 +16,11 @@
 #include <sstream>
 #include "port.h"
 #include "state.h"
+#include "dssharedstate.h"
+
+namespace n_control{
+	class Controller;
+}
 
 namespace n_model {
 
@@ -23,6 +28,7 @@ using n_network::t_timestamp;
 
 class Model
 {
+	friend n_control::Controller;
 private:
 	std::string m_name;
 
@@ -44,6 +50,11 @@ protected:
 	std::map<std::string, t_portptr> m_iPorts;
 	std::map<std::string, t_portptr> m_oPorts;
 
+	std::deque<n_network::t_msgptr> m_sendMessages;
+	std::deque<n_network::t_msgptr> m_receivedMessages;
+
+	n_control::Controller* m_control;	//@Pieter Deze member moet je niet serializeren.
+
 	/**
 	 * Parent node of this model, mainly used for direct connect and DS
 	 * Weak pointer is used for easier destruction
@@ -63,6 +74,11 @@ protected:
 	 * @param name The name of the port
 	 */
 	t_portptr addOutPort(std::string name);
+
+	/**
+	 * @return Whether or not to allow structural changes
+	 */
+	bool allowDS() const;
 
 public:
 	Model() = delete;
@@ -103,6 +119,11 @@ public:
 	 * @return a shared pointer to the port
 	 */
 	t_portptr getPort(std::string name) const;
+
+	/**
+	 * @brief Removes a port from this model.
+	 */
+	void removePort(t_portptr& port);
 
 	/**
 	 * Returns the current state of the model
@@ -166,6 +187,24 @@ public:
 	 */
 	std::map<std::string, t_portptr>& getOPorts();
 
+	/**
+	 * @brief Transition function for dynamic structured DEVS.
+	 * This function will be called during the simulation for changing the structure of the model.
+	 * @return If true, propagate this call upwards in the model tree.
+	 * @note Only this function is allowed to change the structure during the simulation.
+	 */
+	virtual bool modelTransition(DSSharedState* shared);
+
+	/**
+	 * @brief Sets the Controller of this model.
+	 * @note The user doesn't have to worry about this one.
+	 */
+	virtual void setController(n_control::Controller* newControl);
+
+	/*
+	 * @brief Gets the next scheduled time.
+	 */
+	t_timestamp getTimeNext() const;
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

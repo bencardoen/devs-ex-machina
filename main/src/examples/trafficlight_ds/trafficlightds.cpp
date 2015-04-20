@@ -1,17 +1,18 @@
 /*
- * trafficlightc.cpp
+ * trafficlightds.cpp
  *
- *  Created on: Mar 19, 2015
- *      Author: tim
+ *  Created on: Apr 19, 2015
+ *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "trafficlightc.h"
+#include "trafficlightds.h"
 
-namespace n_examples_coupled {
+namespace n_examples_ds {
 
 TrafficLightMode::TrafficLightMode(std::string state)
 	: State(state)
 {
+
 }
 
 std::string TrafficLightMode::toXML()
@@ -34,7 +35,7 @@ TrafficLight::TrafficLight(std::string name, std::size_t priority)
 {
 	this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
-	m_elapsed = 2;
+	m_elapsed = 1.5;
 
 	this->addInPort("INTERRUPT");
 	this->addOutPort("OBSERVED");

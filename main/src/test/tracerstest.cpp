@@ -543,20 +543,26 @@ TEST(tracing, tracer##tracerclass){\
 		tracer.tracesInit(model, t_timestamp(12, 1));\
 		tracer.tracesInternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(13));\
+		model->setTime(13); \
 		tracer.tracesExternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(14));\
+		model->setTime(14); \
 		tracer.tracesExternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(14, 1));\
 		tracer.tracesConfluent(model, 0u);\
 		model->setState(std::make_shared<TestState>(15));\
+		model->setTime(15); \
 		tracer.tracesInit(model, t_timestamp(16, 1));\
 		model->setState(std::make_shared<TestState>(16, 2));\
+		model->setTime(16); \
 		tracer.tracesInternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(16, 3));\
 		tracer.tracesExternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(17));\
+		model->setTime(17); \
 		tracer.tracesExternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(18));\
+		model->setTime(18); \
 		tracer.tracesConfluent(model, 0u);\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
 		n_tracers::clearAll();\

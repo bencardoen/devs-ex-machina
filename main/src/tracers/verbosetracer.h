@@ -31,13 +31,16 @@ private:
 	t_timestamp m_prevTime;
 
 public:
+	VerboseTracer(): m_prevTime(0, std::numeric_limits<t_timestamp::t_causal>::max())
+	{
+	}
 	/**
 	 * @brief Performs the actual tracing. Once this function is called, there is no going back.
 	 */
 	void doTrace(t_timestamp time, std::ostringstream* ssr)
 	{
 		assert(ssr != nullptr);
-		if (time.getTime() > m_prevTime.getTime()) {
+		if (time.getTime() > m_prevTime.getTime() || m_prevTime == t_timestamp(0, std::numeric_limits<t_timestamp::t_causal>::max())) {
 			OutputPolicy::print("\n__  Current Time: ", time.getTime(), "____________________\n\n");//do not print causality
 			m_prevTime = time;
 		}
@@ -62,7 +65,7 @@ public:
 		*ssr << "\n"
 			"\tINITIAL CONDITIONS in model " << adevs->getName() << "\n"
 			"\t\tInitial State: " << state->toString() << "\n"
-		        << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+		        << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
@@ -95,7 +98,7 @@ public:
 				if (message->getSourcePort() == item.first)// get from which port a message was send
 					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
@@ -127,7 +130,7 @@ public:
 				if (message->getDestinationPort() == item.first)
 					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
@@ -168,7 +171,7 @@ public:
 				if (message->getSourcePort() == item.first)
 					*ssr << "\t\t\t\t" << message->toString() << '\n';
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->timeAdvance().getTime() << "\n";
+		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);

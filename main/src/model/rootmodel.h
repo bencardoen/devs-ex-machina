@@ -13,7 +13,7 @@
 #include "globallog.h"
 
 namespace n_model {
-class RootModel: public Model
+class RootModel final: public Model	//don't allow users to derive from this class
 {
 private:
 	std::vector<t_atomicmodelptr> m_components;
@@ -25,7 +25,7 @@ public:
 	/**
 	 * @precondition All atomic models have a unique name
 	 */
-	void directConnect(t_coupledmodelptr&);
+	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
 	void undoDirectConnect();
 
 	std::vector<t_atomicmodelptr> getComponents();

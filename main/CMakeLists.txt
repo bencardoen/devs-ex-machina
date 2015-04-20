@@ -111,6 +111,9 @@ add_executable(${PROJECT_NAME}
 	src/examples/trafficlight_coupled/trafficlightc.cpp
 	src/examples/trafficlight_coupled/policemanc.cpp
 	src/examples/trafficlight_coupled/trafficsystemc.cpp
+	src/examples/trafficlight_ds/trafficlightds.cpp
+	src/examples/trafficlight_ds/policemands.cpp
+	src/examples/trafficlight_ds/trafficsystemds.cpp
 	src/control/allocator.cpp
 	src/control/configuration.cpp
 	src/control/controller.cpp
@@ -148,6 +151,7 @@ include_directories(	src
 				src/tracers
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
+				src/examples/trafficlight_ds
 				src/network
 				src/control
 				)   # Project headers are in same folder as source

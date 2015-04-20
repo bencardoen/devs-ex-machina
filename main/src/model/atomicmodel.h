@@ -16,6 +16,9 @@
 namespace n_model {
 class AtomicModel: public Model
 {
+private:
+	using Model::m_control;	//change access to private
+
 protected:
 	// lower number -> higher priority
 	std::size_t m_priority;
@@ -119,6 +122,12 @@ public:
 	virtual ~AtomicModel()
 	{
 	}
+
+	/**
+	 * @brief Returns the elapsed time set by the model on initialization.
+	 * Elapsed time allows to shift the transitions of a model in time without having to change the TimeAdvance function.
+	 */
+	t_timestamp getTimeElapsed() const;
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

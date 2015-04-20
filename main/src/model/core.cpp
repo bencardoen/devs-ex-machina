@@ -100,10 +100,14 @@ void n_model::Core::init()
 		LOG_DEBUG("Core :", this->getCoreID(), " has ", model.first);
 	}
 	for (const auto& model : this->m_models) {
-		t_timestamp model_scheduled_time = model.second->timeAdvance();
+		//trace init
+		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
+		model.second->setTime(modelTime);
+		t_timestamp model_scheduled_time = model.second->getTimeNext();// model.second->timeAdvance();
 		std::size_t priority = model.second->getPriority();
 		model_scheduled_time.increaseCausality(priority);
 		this->scheduleModel(model.first, model_scheduled_time);
+		m_tracers->tracesInit(model.second, getTime());
 	}
 	// Read a first time setting.
 	if (not this->m_scheduler->empty()) {
@@ -111,9 +115,10 @@ void n_model::Core::init()
 		LOG_INFO("Core initialized to first time : ", this->getCoreID() ,this->m_time);
 	}
 	// Make sure models have first time set correctly.
-	for (const auto& model : this->m_models) {
-		model.second->setTime(this->getTime());
-	}
+//	for (const auto& model : this->m_models) {
+//		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
+//		model.second->setTime(modelTime);
+//	}
 	// This avoid problems with reverting to before first core time, which breaks the models.
 	// [60,110]
 	this->m_gvt = this->getTime();
@@ -159,7 +164,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			urgent->setTime(this->getTime());
 			this->traceConf(urgent);
 			this->markProcessed(found->second);		// Store message as processed for timewarp.
-
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
@@ -168,11 +172,11 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
+		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		model->setTime(this->getTime());
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
-
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_INFO("Core: ", this->getCoreID(), " Model ", model->getName(), " changed ta value from infinity to ", queried,
@@ -299,13 +303,10 @@ std::size_t n_model::Core::getCoreID() const
 void n_model::Core::runSmallStep()
 {
 	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
-
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
-
 	// Get all produced messages, and route them.
 	this->collectOutput();	// locked on msgs
-
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
 	this->getMessages();	// locked on msgs
