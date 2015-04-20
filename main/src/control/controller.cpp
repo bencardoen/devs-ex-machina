@@ -47,10 +47,11 @@ void Controller::save(bool traceOnly)
 
 void Controller::addModel(const t_atomicmodelptr& atomic)
 {
+
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	if (m_hasMainModel) { // old models need to be replaced
 		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
-		emptyAllCores();
+		emptyAllCores();		// TODO erases correctly allocated models from core in pdevs.
 	}
 	size_t coreID = m_allocator->allocate(atomic);
 	addModel(atomic, coreID);
