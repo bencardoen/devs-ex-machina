@@ -10,7 +10,7 @@
 namespace n_network {
 
 ControlMessage::ControlMessage(std::size_t cores, t_timestamp tmin, t_timestamp tred)
-	: m_tmin(tmin), m_tred(tred)
+	: m_tmin(tmin), m_tred(tred), m_gvt_found(false)
 {
 	m_count = t_count(cores, 0);
 
