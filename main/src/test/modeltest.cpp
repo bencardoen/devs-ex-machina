@@ -123,8 +123,8 @@ TEST(Model, TransitionTesting)
 	EXPECT_EQ(tl.getState()->toString(), "red");
 	tl.setTime(t_timestamp(30));
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(60));
-	EXPECT_EQ(tl.getState()->m_timeLast, t_timestamp(30));
-	EXPECT_EQ(tl.getState()->m_timeNext, t_timestamp(90));
+	EXPECT_EQ(tl.getState()->m_timeLast.getTime(), 30);
+	EXPECT_EQ(tl.getState()->m_timeNext.getTime(), 90);
 	tl.intTransition();
 	EXPECT_EQ(tl.getState()->toString(), "green");
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(50));

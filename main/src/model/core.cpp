@@ -84,7 +84,11 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 	if (this->m_models.find(name) != this->m_models.end()) {
 		LOG_DEBUG("Core : rescheduling : ",name ,"@" ,t);
 		ModelEntry entry(name, t);
-		this->m_scheduler->push_back(entry);
+		if(this->m_scheduler->contains(entry)){
+//			this->m_scheduler->erase(entry);
+			LOG_ERROR("Core::scheduleModel Tried to schedule a model that is already scheduled: ", name, " at t=", t);
+		}// else
+			this->m_scheduler->push_back(entry);
 	} else {
 		std::cerr << "Model with name " + name + " not in core, can't reschedule." << std::endl;
 	}
@@ -109,18 +113,6 @@ void n_model::Core::init()
 		this->scheduleModel(model.first, model_scheduled_time);
 		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
 	}
-	// Read a first time setting.
-/*
-	if (not this->m_scheduler->empty()) {
-		this->m_time = this->m_scheduler->top().getTime();
-		LOG_INFO("Core initialized to first time : ", this->getCoreID() ,this->m_time);
-	}
-	*/
-	// Make sure models have first time set correctly.
-//	for (const auto& model : this->m_models) {
-//		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
-//		model.second->setTime(modelTime);
-//	}
 	// This avoid problems with reverting to before first core time, which breaks the models.
 	// [60,110]
 	this->m_gvt = this->getTime();
@@ -176,7 +168,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
-		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		model->setTime(this->getTime());
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		this->traceExt(model);
@@ -310,14 +301,14 @@ void n_model::Core::runSmallStep()
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
 
+	// Noop in single core. Pull messages from network, sort them.
+	// This step can trigger a revert, which is why its before getImminent
+	this->getMessages();	// locked on msgs
+
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
 	// Get all produced messages, and route them.
 	this->collectOutput(imminent);	// locked on msgs
-
-	// Noop in single core. Pull messages from network, sort them.
-	// This step can trigger a revert, which is why its before getImminent
-	this->getMessages();	// locked on msgs
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
