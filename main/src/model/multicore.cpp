@@ -281,6 +281,10 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCore:: processed sent messages now contains :: ", m_sent_messages.size());
 
+	for(const auto& modelentry : this->m_models){
+		modelentry.second->setGVT(newgvt);
+	}
+
 	this->m_color = MessageColor::WHITE;
 	LOG_INFO("Mcore:: painted core back to white, for next gvt calculation");
 	this->unlockMessages();

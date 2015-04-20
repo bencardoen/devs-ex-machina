@@ -112,6 +112,7 @@ void n_model::Core::init()
 		model.second->setTime(this->getTime());
 	}
 	// This avoid problems with reverting to before first core time, which breaks the models.
+	// [60,110]
 	this->m_gvt = this->getTime();
 }
 
@@ -149,12 +150,10 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
 			urgent->setTime(this->getTime());
-			urgent->setGVT(this->getGVT());
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(this->getTime());
-			urgent->setGVT(this->getGVT());
 			this->traceConf(urgent);
 			this->markProcessed(found->second);		// Store message as processed for timewarp.
 
@@ -168,7 +167,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->doExtTransition(remaining.second);
 		model->setTime(this->getTime());
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
-		model->setGVT(this->getGVT());
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
 
