@@ -478,10 +478,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			return;
 		}
 
-		if (i % saveInterval == 0) {
-			n_tracers::traceUntil(core->getTime());
-		}
-
 		// Has Main asked us to wait for the other ??
 		bool skip_barrier = false;
 		{

@@ -35,7 +35,7 @@ TrafficLight::TrafficLight(std::string name, std::size_t priority)
 {
 	this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
-	m_elapsed = 1.5;
+	m_elapsed = 2;
 
 	this->addInPort("INTERRUPT");
 	this->addOutPort("OBSERVED");
