@@ -65,7 +65,12 @@ public:
 		*ssr << "\n"
 			"\tINITIAL CONDITIONS in model " << adevs->getName() << "\n"
 			"\t\tInitial State: " << state->toString() << "\n"
-		        << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+		        "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
@@ -98,7 +103,12 @@ public:
 				if (message->getSourcePort() == item.first)// get from which port a message was send
 					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		LOG_DEBUG("TracesInternal: current time", time);
@@ -131,7 +141,12 @@ public:
 				if (message->getDestinationPort() == item.first)
 					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		LOG_DEBUG("TracesExternal: current time", time);
@@ -173,7 +188,12 @@ public:
 				if (message->getSourcePort() == item.first)
 					*ssr << "\t\t\t\t" << message->toString() << '\n';
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
 		LOG_DEBUG("TracesConfluent: current time", time);
