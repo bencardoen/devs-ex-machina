@@ -29,8 +29,8 @@ n_model::Core::Core()
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
 	        false)
 {
-	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
-	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
+	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
 	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
 }
 
@@ -492,7 +492,7 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	MessageEntry tokentime(token);
 
 	this->lockMessages();
-	this->m_received_messages->unschedule_until(messages, tokentime);	// In theory this is safe, in practice (vbox) it is not, so this is not a synced scheduler
+	this->m_received_messages->unschedule_until(messages, tokentime);
 	this->unlockMessages();
 
 	for (const auto& entry : messages) {
@@ -516,6 +516,7 @@ t_timestamp n_model::Core::getFirstMessageTime()
 		MessageEntry first = this->m_received_messages->top();
 		std::string modeldest = first.getMessage()->getDestinationModel();
 		if (this->containsModel(modeldest)) {
+			this->unlockMessages();
 			return first.getMessage()->getTimeStamp();
 		} else {
 			LOG_DEBUG("Core : ", this->getCoreID(), " removing message from msgqueue with destination ", modeldest);
