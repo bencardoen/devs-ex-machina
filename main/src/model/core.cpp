@@ -167,7 +167,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
-		m_scheduler->erase(ModelEntry(model->getName(), model->getTimeNext()));
+		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
 		model->setTime(this->getTime());
 		model->setGVT(this->getGVT());
 		this->traceExt(model);
