@@ -129,7 +129,7 @@ std::size_t AtomicModel::getPriority() const
 
 void AtomicModel::setTime(t_timestamp time)
 {
-	this->m_timeLast = time;
+	this->m_timeLast = t_timestamp(time.getTime(), m_priority);
 	this->m_timeNext = time + this->timeAdvance();
 	m_state->m_timeLast = this->m_timeLast;
 	m_state->m_timeNext = this->m_timeNext;

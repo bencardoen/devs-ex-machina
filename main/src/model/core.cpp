@@ -101,13 +101,13 @@ void n_model::Core::init()
 	}
 	for (const auto& model : this->m_models) {
 		//trace init
-		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
+		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(), model.second->getPriority());
 		model.second->setTime(modelTime);
 		t_timestamp model_scheduled_time = model.second->getTimeNext();// model.second->timeAdvance();
 		std::size_t priority = model.second->getPriority();
 		model_scheduled_time.increaseCausality(priority);
 		this->scheduleModel(model.first, model_scheduled_time);
-		m_tracers->tracesInit(model.second, getTime());
+		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
 	}
 	// Read a first time setting.
 	if (not this->m_scheduler->empty()) {

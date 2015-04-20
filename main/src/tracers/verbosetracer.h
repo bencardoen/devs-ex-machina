@@ -101,6 +101,7 @@ public:
 		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesInternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
@@ -133,6 +134,7 @@ public:
 		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesExternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
@@ -174,6 +176,7 @@ public:
 		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesConfluent: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);

@@ -144,7 +144,7 @@ TEST(Controller, cDEVS_coupled)
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
-	//EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstestcoupled.txt", TESTFOLDER "controller/devstestcoupled.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstestcoupled.txt", TESTFOLDER "controller/devstestcoupled.corr"), 0);
 }
 
 TEST(Controller, DSDEVS_connections)
@@ -174,7 +174,7 @@ TEST(Controller, DSDEVS_connections)
 		EXPECT_TRUE(c->getTime() >= t_timestamp(3600, 0));
 	};
 
-	//EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/dstestConnections.txt", TESTFOLDER "controller/dstestConnections.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/dstestConnections.txt", TESTFOLDER "controller/dstestConnections.corr"), 0);
 }
 
 TEST(Controller, pDEVS)
