@@ -115,7 +115,7 @@ TEST(Core, CoreFlow)
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
-	EXPECT_TRUE(c.getTime() == t_timestamp(60));
+	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
 	auto imminent = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;

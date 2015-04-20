@@ -113,7 +113,6 @@ TEST(Model, AtomicModel)
 {
 	RecordProperty("description", "Verifies all basic functionality of AtomicModel");
 	n_examples::TrafficLight tl("Trafficlight1");
-	EXPECT_EQ(tl.getPriority(), 0);
 	EXPECT_EQ(tl.getName(), "Trafficlight1");
 }
 

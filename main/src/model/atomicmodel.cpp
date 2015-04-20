@@ -9,10 +9,9 @@
 
 namespace n_model {
 
-AtomicModel::AtomicModel(std::string name, std::size_t priority)
-	: Model(name), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, std::size_t)
+	: Model(name), m_priority(nextPriority())
 {
-
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
