@@ -151,7 +151,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 		this->m_tred = t_timestamp::infinity();
 		this->m_tredlock.unlock();
 
-		msg->setTmin(this->getFirstMessageTime());
+		msg->setTmin(this->getTime());
 		msg->setTred(t_timestamp::infinity());
 
 		t_count& count = msg->getCountVector();
@@ -194,7 +194,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 			LOG_INFO("MCore:: process init received control message, starting 2nd round");
 
 			// We start a second round
-			msg->setTmin(this->getFirstMessageTime());
+			msg->setTmin(this->getTime());
 			this->m_tredlock.lock();
 			msg->setTred(std::min(msg->getTred(), this->m_tred));
 			this->m_tredlock.unlock();
@@ -228,7 +228,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 		// Equivalent to sending message, controlmessage is passed to next core.
 		t_timestamp msg_tmin = msg->getTmin();
 		t_timestamp msg_tred = msg->getTred();
-		msg->setTmin(std::min(msg_tmin, this->getFirstMessageTime()));
+		msg->setTmin(std::min(msg_tmin, this->getTime()));
 		this->m_tredlock.lock();
 		msg->setTred(std::min(msg_tred, this->m_tred));
 		this->m_tredlock.unlock();
