@@ -53,12 +53,14 @@ __  Current Time: 200____________________
 		New State: working
 		Output Port Configuration:
 			port <OUT>:
+				toManual
 		Next scheduled internal transition at time 300
 
 	EXTERNAL TRANSITION in model trafficLight
 		New State: manual
 		Input Port Configuration:
 			port <INTERRUPT>:
+				toManual
 		Next scheduled internal transition at time inf
 
 __  Current Time: 300____________________
@@ -68,10 +70,12 @@ __  Current Time: 300____________________
 		New State: idle
 		Output Port Configuration:
 			port <OUT>:
+				toAutonomous
 		Next scheduled internal transition at time 500
 
 	EXTERNAL TRANSITION in model trafficLight
 		New State: red
 		Input Port Configuration:
 			port <INTERRUPT>:
+				toAutonomous
 		Next scheduled internal transition at time 360

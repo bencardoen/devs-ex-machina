@@ -192,6 +192,7 @@ void Port::clearReceivedMessages()
 
 void Port::addMessage(const n_network::t_msgptr& message, bool received)
 {
+	LOG_DEBUG("Added message ", message->getPayload(), ", we ", received? "RECEIVED":"SENT", " this message.");
 	if (received)
 		m_receivedMessages.push_back(message);
 	else

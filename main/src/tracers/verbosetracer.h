@@ -100,8 +100,7 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getSourcePort() == item.first)// get from which port a message was send
-					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
 		}
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
@@ -138,8 +137,7 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getDestinationPort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
 		}
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
@@ -175,8 +173,7 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getDestinationPort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
 		}
 		*ssr << "\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
@@ -185,8 +182,7 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages2 = item.second->getSentMessages();
 			for (const n_network::t_msgptr& message : messages2)
-				if (message->getSourcePort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
 		}
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
