@@ -247,7 +247,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
 {
 	for (const auto& msg : messages) {
-		LOG_DEBUG("MCore : ", this->getCoreID(),"storing processed msg", msg->toString());
+		LOG_DEBUG("MCore : ", this->getCoreID()," storing processed msg", msg->toString());
 		this->m_processed_messages.push_back(msg);
 	}
 }
@@ -255,6 +255,10 @@ void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
 void Multicore::setGVT(const t_timestamp& newgvt)
 {
 	Core::setGVT(newgvt);
+	if(newgvt < this->getGVT() or newgvt==t_timestamp::infinity()){
+		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ", this->getGVT());
+		return;
+	}
 	this->lockSimulatorStep();
 	// Clear processed messages with time < gvt
 	// Message don't need a lock, simulator can't change
@@ -276,9 +280,9 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 		}
 	}
 
-	LOG_DEBUG("MCore:: found ", distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " found ", distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
-	LOG_DEBUG("MCore:: ", this->getCoreID()," processed sent messages now contains :: ", m_sent_messages.size());
+	LOG_DEBUG("MCore:: ", this->getCoreID()," sent messages now contains :: ", m_sent_messages.size());
 
 	for(const auto& modelentry : this->m_models){
 		modelentry.second->setGVT(newgvt);
@@ -314,7 +318,7 @@ void n_model::Multicore::unlockMessages()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msg unlocking ...");
 	m_msglock.unlock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID()," sim msg unlocked");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msg unlocked");
 }
 
 void n_model::Multicore::revert(const t_timestamp& totime)

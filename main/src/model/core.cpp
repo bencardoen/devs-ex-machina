@@ -121,14 +121,12 @@ void n_model::Core::init()
 void n_model::Core::collectOutput(std::set<std::string>& imminents)
 {
 	/**
-	 * For each model, collect output.
+	 * For each imminent model, collect output.
 	 * Then sort that output by destination (for the transition functions)
 	 */
-	LOG_DEBUG("CORE: Collecting output from all models");
-	//for (const auto& modelentry : m_models) {
+	LOG_DEBUG("CORE: ",this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
 	for(const auto& modelname : imminents){
 		const auto& model = m_models[modelname];
-		//const auto& model = modelentry.second;
 		auto mailfrom = model->doOutput();
 		LOG_DEBUG("CORE:", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
 		// Set timetstamp, source and color (info model does not have).
@@ -255,7 +253,8 @@ void n_model::Core::syncTime()
 	}
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if(newtime == t_timestamp::infinity()){
-
+		LOG_ERROR("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models");
+		return;
 	}
 	if (this->getTime() > newtime) {
 		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
@@ -427,14 +426,14 @@ void n_model::Core::setTracers(n_tracers::t_tracersetptr ptr)
 void n_model::Core::signalTracersFlush() const
 {
 	t_timestamp marktime(this->m_time.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
-	LOG_DEBUG("CORE:: asking tracers to write output up to ", marktime);
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " asking tracers to write output up to ", marktime);
 	n_tracers::traceUntil(marktime);
 }
 
 void n_model::Core::clearModels()
 {
 	assert(this->isLive() == false && "Clearing models during simulation is not supported.");
-	LOG_DEBUG("CORE:: removing all models from core.");
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " removing all models from core.");
 	this->m_models.clear();
 	this->m_scheduler->clear();
 	this->m_received_messages->clear();
@@ -464,7 +463,7 @@ n_model::Core::rescheduleAll(const t_timestamp& totime){
 
 void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
-	LOG_DEBUG("CORE:: receiving message", msg->toString());
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
 	if(msg->isAntiMessage()){
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
@@ -516,7 +515,7 @@ t_timestamp n_model::Core::getFirstMessageTime()
 		MessageEntry first = this->m_received_messages->top();
 		std::string modeldest = first.getMessage()->getDestinationModel();
 		if (this->containsModel(modeldest)) {
-			this->unlockMessages();
+			this->unlockMessages();	// second exit path, don't forget to unlock.
 			return first.getMessage()->getTimeStamp();
 		} else {
 			LOG_DEBUG("Core : ", this->getCoreID(), " removing message from msgqueue with destination ", modeldest);
@@ -530,9 +529,14 @@ t_timestamp n_model::Core::getFirstMessageTime()
 
 void
 n_model::Core::setGVT(const t_timestamp& newgvt){
-//	TODO check if this assert is still useful
-//	GVT can be infinite when no messages are being send during the calculation
-//	assert(newgvt >= this->m_gvt && "oldgvt > newgvt");
+	if(newgvt == t_timestamp::infinity()){
+		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to infinity.");
+		return;
+	}
+	if(newgvt < this->getGVT()){
+		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ", this->getGVT());
+		return;
+	}
 	LOG_DEBUG("Core: " , this->getCoreID(), " Setting gvt from ::" , this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
