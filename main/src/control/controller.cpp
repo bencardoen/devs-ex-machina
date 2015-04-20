@@ -72,7 +72,8 @@ void Controller::doDirectConnect()
 {
 	if(m_coupledOrigin){
 		m_root->directConnect(m_coupledOrigin);
-	}
+	} else
+		LOG_DEBUG("doDirectConnect no coupled origin!");
 }
 
 void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
@@ -188,6 +189,7 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
 		emptyAllCores();
 	}
+	m_coupledOrigin = coupled;
 	m_root->directConnect(coupled);
 
 	for(t_atomicmodelptr& model : m_root->getComponents()){

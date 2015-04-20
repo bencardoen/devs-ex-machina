@@ -105,7 +105,7 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 		message = "grey";
 	else  // nothing happens
 		return std::vector<n_network::t_msgptr>();
-
+	LOG_DEBUG("TrafficLight::output message = ", message);
 	return this->getPort("OBSERVED")->createMessages(message);
 }
 

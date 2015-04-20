@@ -35,6 +35,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 			t_coupledmodelptr& top = toDo.front();
 			toDo.pop_front();
 			for (t_modelptr& current : top->getComponents()) {
+				current->setParent(top);
 				t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(current);
 				if (atomic) {
 					//model = atomic
@@ -137,6 +138,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 void RootModel::undoDirectConnect()
 {
 	m_directConnected = false;
+	LOG_DEBUG("undid direct connect");
 }
 
 std::vector<t_atomicmodelptr> RootModel::getComponents()
