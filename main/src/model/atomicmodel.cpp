@@ -141,5 +141,10 @@ void AtomicModel::setTime(t_timestamp time)
 //	laststate->m_timeNext = this->m_timeNext;
 }
 
+t_timestamp AtomicModel::getTimeElapsed() const
+{
+	return m_elapsed;
+}
+
 }
 

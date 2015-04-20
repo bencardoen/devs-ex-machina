@@ -1,4 +1,7 @@
 
+__  Current Time: 0____________________
+
+
 	INITIAL CONDITIONS in model Fst
 		Initial State: red
 		Next scheduled internal transition at time 60
@@ -9,7 +12,7 @@ __  Current Time: 60____________________
 	INTERNAL TRANSITION in model Fst
 		New State: green
 		Output Port Configuration:
-		Next scheduled internal transition at time 50
+		Next scheduled internal transition at time 110
 
 __  Current Time: 110____________________
 
@@ -17,7 +20,7 @@ __  Current Time: 110____________________
 	INTERNAL TRANSITION in model Fst
 		New State: yellow
 		Output Port Configuration:
-		Next scheduled internal transition at time 10
+		Next scheduled internal transition at time 120
 
 __  Current Time: 120____________________
 
@@ -25,7 +28,7 @@ __  Current Time: 120____________________
 	INTERNAL TRANSITION in model Fst
 		New State: red
 		Output Port Configuration:
-		Next scheduled internal transition at time 60
+		Next scheduled internal transition at time 180
 
 __  Current Time: 180____________________
 
@@ -33,7 +36,7 @@ __  Current Time: 180____________________
 	INTERNAL TRANSITION in model Fst
 		New State: green
 		Output Port Configuration:
-		Next scheduled internal transition at time 50
+		Next scheduled internal transition at time 230
 
 __  Current Time: 230____________________
 
@@ -41,7 +44,7 @@ __  Current Time: 230____________________
 	INTERNAL TRANSITION in model Fst
 		New State: yellow
 		Output Port Configuration:
-		Next scheduled internal transition at time 10
+		Next scheduled internal transition at time 240
 
 __  Current Time: 240____________________
 
@@ -49,7 +52,7 @@ __  Current Time: 240____________________
 	INTERNAL TRANSITION in model Fst
 		New State: red
 		Output Port Configuration:
-		Next scheduled internal transition at time 60
+		Next scheduled internal transition at time 300
 
 __  Current Time: 300____________________
 
@@ -57,7 +60,7 @@ __  Current Time: 300____________________
 	INTERNAL TRANSITION in model Fst
 		New State: green
 		Output Port Configuration:
-		Next scheduled internal transition at time 50
+		Next scheduled internal transition at time 350
 
 __  Current Time: 350____________________
 
@@ -65,4 +68,4 @@ __  Current Time: 350____________________
 	INTERNAL TRANSITION in model Fst
 		New State: yellow
 		Output Port Configuration:
-		Next scheduled internal transition at time 10
+		Next scheduled internal transition at time 360

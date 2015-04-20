@@ -7,7 +7,7 @@ __  Current Time: 2____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 3
+		Next scheduled internal transition at time 4
 
 __  Current Time: 3____________________
 
@@ -16,7 +16,7 @@ __  Current Time: 3____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 4
+		Next scheduled internal transition at time 6
 
 __  Current Time: 4____________________
 
@@ -28,7 +28,7 @@ __  Current Time: 4____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 5
+		Next scheduled internal transition at time 8
 
 __  Current Time: 6____________________
 
@@ -37,7 +37,7 @@ __  Current Time: 6____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 7
+		Next scheduled internal transition at time 12
 
 __  Current Time: 7____________________
 
@@ -49,7 +49,7 @@ __  Current Time: 7____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 8
+		Next scheduled internal transition at time 14
 
 __  Current Time: 8____________________
 
@@ -59,7 +59,7 @@ __  Current Time: 8____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 9
+		Next scheduled internal transition at time 16
 
 __  Current Time: 10____________________
 
@@ -71,7 +71,7 @@ __  Current Time: 10____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 11
+		Next scheduled internal transition at time 20
 
 __  Current Time: 11____________________
 
@@ -81,7 +81,7 @@ __  Current Time: 11____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 12
+		Next scheduled internal transition at time 22
 
 __  Current Time: 12____________________
 
@@ -90,7 +90,7 @@ __  Current Time: 12____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 13
+		Next scheduled internal transition at time 24
 
 __  Current Time: 13____________________
 
@@ -102,7 +102,7 @@ __  Current Time: 13____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 14
+		Next scheduled internal transition at time 26
 
 __  Current Time: 15____________________
 
@@ -111,7 +111,7 @@ __  Current Time: 15____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 16
+		Next scheduled internal transition at time 30
 
 __  Current Time: 16____________________
 
@@ -123,7 +123,7 @@ __  Current Time: 16____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 17
+		Next scheduled internal transition at time 32
 
 __  Current Time: 17____________________
 
@@ -133,7 +133,7 @@ __  Current Time: 17____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 18
+		Next scheduled internal transition at time 34
 
 __  Current Time: 19____________________
 
@@ -145,7 +145,7 @@ __  Current Time: 19____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 20
+		Next scheduled internal transition at time 38
 
 __  Current Time: 20____________________
 
@@ -155,7 +155,7 @@ __  Current Time: 20____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 21
+		Next scheduled internal transition at time 40
 
 __  Current Time: 21____________________
 
@@ -164,7 +164,7 @@ __  Current Time: 21____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 22
+		Next scheduled internal transition at time 42
 
 __  Current Time: 24____________________
 
@@ -173,7 +173,7 @@ __  Current Time: 24____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 25
+		Next scheduled internal transition at time 48
 
 __  Current Time: 25____________________
 
@@ -185,7 +185,7 @@ __  Current Time: 25____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 26
+		Next scheduled internal transition at time 50
 
 __  Current Time: 26____________________
 
@@ -195,7 +195,7 @@ __  Current Time: 26____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 27
+		Next scheduled internal transition at time 52
 
 __  Current Time: 28____________________
 
@@ -207,7 +207,7 @@ __  Current Time: 28____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 29
+		Next scheduled internal transition at time 56
 
 __  Current Time: 29____________________
 
@@ -217,7 +217,7 @@ __  Current Time: 29____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 30
+		Next scheduled internal transition at time 58
 
 __  Current Time: 30____________________
 
@@ -226,7 +226,7 @@ __  Current Time: 30____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 31
+		Next scheduled internal transition at time 60
 
 __  Current Time: 32____________________
 
@@ -236,7 +236,7 @@ __  Current Time: 32____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 33
+		Next scheduled internal transition at time 64
 
 __  Current Time: 33____________________
 
@@ -245,7 +245,7 @@ __  Current Time: 33____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 34
+		Next scheduled internal transition at time 66
 
 __  Current Time: 34____________________
 
@@ -257,7 +257,7 @@ __  Current Time: 34____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 35
+		Next scheduled internal transition at time 68
 
 __  Current Time: 35____________________
 
@@ -267,7 +267,7 @@ __  Current Time: 35____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 36
+		Next scheduled internal transition at time 70
 
 __  Current Time: 37____________________
 
@@ -279,7 +279,7 @@ __  Current Time: 37____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 38
+		Next scheduled internal transition at time 74
 
 __  Current Time: 38____________________
 
@@ -289,7 +289,7 @@ __  Current Time: 38____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 39
+		Next scheduled internal transition at time 76
 
 __  Current Time: 39____________________
 
@@ -298,7 +298,7 @@ __  Current Time: 39____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 40
+		Next scheduled internal transition at time 78
 
 __  Current Time: 41____________________
 
@@ -308,7 +308,7 @@ __  Current Time: 41____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 42
+		Next scheduled internal transition at time 82
 
 __  Current Time: 42____________________
 
@@ -317,7 +317,7 @@ __  Current Time: 42____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 43
+		Next scheduled internal transition at time 84
 
 __  Current Time: 43____________________
 
@@ -329,7 +329,7 @@ __  Current Time: 43____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 44
+		Next scheduled internal transition at time 86
 
 __  Current Time: 58____________________
 
@@ -341,7 +341,7 @@ __  Current Time: 58____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 59
+		Next scheduled internal transition at time 116
 
 __  Current Time: 59____________________
 
@@ -351,7 +351,7 @@ __  Current Time: 59____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 60
+		Next scheduled internal transition at time 118
 
 __  Current Time: 60____________________
 
@@ -360,7 +360,7 @@ __  Current Time: 60____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 61
+		Next scheduled internal transition at time 120
 
 __  Current Time: 62____________________
 
@@ -370,7 +370,7 @@ __  Current Time: 62____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 63
+		Next scheduled internal transition at time 124
 
 __  Current Time: 63____________________
 
@@ -379,7 +379,7 @@ __  Current Time: 63____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 64
+		Next scheduled internal transition at time 126
 
 __  Current Time: 64____________________
 
@@ -391,7 +391,7 @@ __  Current Time: 64____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 65
+		Next scheduled internal transition at time 128
 
 __  Current Time: 66____________________
 
@@ -400,7 +400,7 @@ __  Current Time: 66____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 67
+		Next scheduled internal transition at time 132
 
 __  Current Time: 67____________________
 
@@ -412,7 +412,7 @@ __  Current Time: 67____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 68
+		Next scheduled internal transition at time 134
 
 __  Current Time: 68____________________
 
@@ -422,7 +422,7 @@ __  Current Time: 68____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 69
+		Next scheduled internal transition at time 136
 
 __  Current Time: 69____________________
 
@@ -431,7 +431,7 @@ __  Current Time: 69____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 70
+		Next scheduled internal transition at time 138
 
 __  Current Time: 71____________________
 
@@ -441,7 +441,7 @@ __  Current Time: 71____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 72
+		Next scheduled internal transition at time 142
 
 __  Current Time: 72____________________
 
@@ -450,7 +450,7 @@ __  Current Time: 72____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 73
+		Next scheduled internal transition at time 144
 
 __  Current Time: 73____________________
 
@@ -462,7 +462,7 @@ __  Current Time: 73____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 74
+		Next scheduled internal transition at time 146
 
 __  Current Time: 75____________________
 
@@ -471,7 +471,7 @@ __  Current Time: 75____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 76
+		Next scheduled internal transition at time 150
 
 __  Current Time: 76____________________
 
@@ -483,7 +483,7 @@ __  Current Time: 76____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 77
+		Next scheduled internal transition at time 152
 
 __  Current Time: 77____________________
 
@@ -493,7 +493,7 @@ __  Current Time: 77____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 78
+		Next scheduled internal transition at time 154
 
 __  Current Time: 80____________________
 
@@ -503,7 +503,7 @@ __  Current Time: 80____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 81
+		Next scheduled internal transition at time 160
 
 __  Current Time: 81____________________
 
@@ -512,7 +512,7 @@ __  Current Time: 81____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 82
+		Next scheduled internal transition at time 162
 
 __  Current Time: 82____________________
 
@@ -524,7 +524,7 @@ __  Current Time: 82____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 83
+		Next scheduled internal transition at time 164
 
 __  Current Time: 84____________________
 
@@ -533,7 +533,7 @@ __  Current Time: 84____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 85
+		Next scheduled internal transition at time 168
 
 __  Current Time: 85____________________
 
@@ -545,7 +545,7 @@ __  Current Time: 85____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 86
+		Next scheduled internal transition at time 170
 
 __  Current Time: 86____________________
 
@@ -555,7 +555,7 @@ __  Current Time: 86____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 87
+		Next scheduled internal transition at time 172
 
 __  Current Time: 88____________________
 
@@ -567,7 +567,7 @@ __  Current Time: 88____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 89
+		Next scheduled internal transition at time 176
 
 __  Current Time: 89____________________
 
@@ -577,7 +577,7 @@ __  Current Time: 89____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 90
+		Next scheduled internal transition at time 178
 
 __  Current Time: 90____________________
 
@@ -586,7 +586,7 @@ __  Current Time: 90____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 91
+		Next scheduled internal transition at time 180
 
 __  Current Time: 91____________________
 
@@ -598,7 +598,7 @@ __  Current Time: 91____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 92
+		Next scheduled internal transition at time 182
 
 __  Current Time: 93____________________
 
@@ -607,7 +607,7 @@ __  Current Time: 93____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 94
+		Next scheduled internal transition at time 186
 
 __  Current Time: 94____________________
 
@@ -619,7 +619,7 @@ __  Current Time: 94____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 95
+		Next scheduled internal transition at time 188
 
 __  Current Time: 95____________________
 
@@ -629,7 +629,7 @@ __  Current Time: 95____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 96
+		Next scheduled internal transition at time 190
 
 __  Current Time: 97____________________
 
@@ -641,7 +641,7 @@ __  Current Time: 97____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 98
+		Next scheduled internal transition at time 194
 
 __  Current Time: 98____________________
 
@@ -651,7 +651,7 @@ __  Current Time: 98____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 99
+		Next scheduled internal transition at time 196
 
 __  Current Time: 99____________________
 
@@ -660,7 +660,7 @@ __  Current Time: 99____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 100
+		Next scheduled internal transition at time 198
 
 __  Current Time: 112____________________
 
@@ -672,7 +672,7 @@ __  Current Time: 112____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 113
+		Next scheduled internal transition at time 224
 
 __  Current Time: 114____________________
 
@@ -681,7 +681,7 @@ __  Current Time: 114____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 115
+		Next scheduled internal transition at time 228
 
 __  Current Time: 115____________________
 
@@ -693,7 +693,7 @@ __  Current Time: 115____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 116
+		Next scheduled internal transition at time 230
 
 __  Current Time: 116____________________
 
@@ -703,7 +703,7 @@ __  Current Time: 116____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 117
+		Next scheduled internal transition at time 232
 
 __  Current Time: 118____________________
 
@@ -715,7 +715,7 @@ __  Current Time: 118____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 119
+		Next scheduled internal transition at time 236
 
 __  Current Time: 119____________________
 
@@ -725,7 +725,7 @@ __  Current Time: 119____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 120
+		Next scheduled internal transition at time 238
 
 __  Current Time: 120____________________
 
@@ -734,7 +734,7 @@ __  Current Time: 120____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 121
+		Next scheduled internal transition at time 240
 
 __  Current Time: 123____________________
 
@@ -743,7 +743,7 @@ __  Current Time: 123____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 124
+		Next scheduled internal transition at time 246
 
 __  Current Time: 124____________________
 
@@ -755,7 +755,7 @@ __  Current Time: 124____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 125
+		Next scheduled internal transition at time 248
 
 __  Current Time: 125____________________
 
@@ -765,7 +765,7 @@ __  Current Time: 125____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 126
+		Next scheduled internal transition at time 250
 
 __  Current Time: 127____________________
 
@@ -777,7 +777,7 @@ __  Current Time: 127____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 128
+		Next scheduled internal transition at time 254
 
 __  Current Time: 128____________________
 
@@ -787,7 +787,7 @@ __  Current Time: 128____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 129
+		Next scheduled internal transition at time 256
 
 __  Current Time: 129____________________
 
@@ -796,7 +796,7 @@ __  Current Time: 129____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 130
+		Next scheduled internal transition at time 258
 
 __  Current Time: 131____________________
 
@@ -806,7 +806,7 @@ __  Current Time: 131____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 132
+		Next scheduled internal transition at time 262
 
 __  Current Time: 132____________________
 
@@ -815,7 +815,7 @@ __  Current Time: 132____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 133
+		Next scheduled internal transition at time 264
 
 __  Current Time: 133____________________
 
@@ -827,7 +827,7 @@ __  Current Time: 133____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 134
+		Next scheduled internal transition at time 266
 
 __  Current Time: 134____________________
 
@@ -837,7 +837,7 @@ __  Current Time: 134____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 135
+		Next scheduled internal transition at time 268
 
 __  Current Time: 136____________________
 
@@ -849,7 +849,7 @@ __  Current Time: 136____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 137
+		Next scheduled internal transition at time 272
 
 __  Current Time: 137____________________
 
@@ -859,7 +859,7 @@ __  Current Time: 137____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 138
+		Next scheduled internal transition at time 274
 
 __  Current Time: 138____________________
 
@@ -868,7 +868,7 @@ __  Current Time: 138____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 139
+		Next scheduled internal transition at time 276
 
 __  Current Time: 140____________________
 
@@ -878,7 +878,7 @@ __  Current Time: 140____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 141
+		Next scheduled internal transition at time 280
 
 __  Current Time: 141____________________
 
@@ -887,7 +887,7 @@ __  Current Time: 141____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 142
+		Next scheduled internal transition at time 282
 
 __  Current Time: 142____________________
 
@@ -899,7 +899,7 @@ __  Current Time: 142____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 143
+		Next scheduled internal transition at time 284
 
 __  Current Time: 145____________________
 
@@ -911,7 +911,7 @@ __  Current Time: 145____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 146
+		Next scheduled internal transition at time 290
 
 __  Current Time: 146____________________
 
@@ -921,7 +921,7 @@ __  Current Time: 146____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 147
+		Next scheduled internal transition at time 292
 
 __  Current Time: 147____________________
 
@@ -930,7 +930,7 @@ __  Current Time: 147____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 148
+		Next scheduled internal transition at time 294
 
 __  Current Time: 149____________________
 
@@ -940,7 +940,7 @@ __  Current Time: 149____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 150
+		Next scheduled internal transition at time 298
 
 __  Current Time: 150____________________
 
@@ -949,7 +949,7 @@ __  Current Time: 150____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 151
+		Next scheduled internal transition at time 300
 
 __  Current Time: 151____________________
 
@@ -961,7 +961,7 @@ __  Current Time: 151____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 152
+		Next scheduled internal transition at time 302
 
 __  Current Time: 153____________________
 
@@ -970,7 +970,7 @@ __  Current Time: 153____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 154
+		Next scheduled internal transition at time 306
 
 __  Current Time: 154____________________
 
@@ -982,7 +982,7 @@ __  Current Time: 154____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 155
+		Next scheduled internal transition at time 308
 
 __  Current Time: 167____________________
 
@@ -992,7 +992,7 @@ __  Current Time: 167____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 168
+		Next scheduled internal transition at time 334
 
 __  Current Time: 168____________________
 
@@ -1001,7 +1001,7 @@ __  Current Time: 168____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 169
+		Next scheduled internal transition at time 336
 
 __  Current Time: 170____________________
 
@@ -1011,7 +1011,7 @@ __  Current Time: 170____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 171
+		Next scheduled internal transition at time 340
 
 __  Current Time: 171____________________
 
@@ -1020,7 +1020,7 @@ __  Current Time: 171____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 172
+		Next scheduled internal transition at time 342
 
 __  Current Time: 172____________________
 
@@ -1032,7 +1032,7 @@ __  Current Time: 172____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 173
+		Next scheduled internal transition at time 344
 
 __  Current Time: 174____________________
 
@@ -1041,7 +1041,7 @@ __  Current Time: 174____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 175
+		Next scheduled internal transition at time 348
 
 __  Current Time: 175____________________
 
@@ -1053,7 +1053,7 @@ __  Current Time: 175____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 176
+		Next scheduled internal transition at time 350
 
 __  Current Time: 176____________________
 
@@ -1063,7 +1063,7 @@ __  Current Time: 176____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 177
+		Next scheduled internal transition at time 352
 
 __  Current Time: 179____________________
 
@@ -1073,7 +1073,7 @@ __  Current Time: 179____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 180
+		Next scheduled internal transition at time 358
 
 __  Current Time: 180____________________
 
@@ -1082,7 +1082,7 @@ __  Current Time: 180____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 181
+		Next scheduled internal transition at time 360
 
 __  Current Time: 181____________________
 
@@ -1094,7 +1094,7 @@ __  Current Time: 181____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 182
+		Next scheduled internal transition at time 362
 
 __  Current Time: 183____________________
 
@@ -1103,7 +1103,7 @@ __  Current Time: 183____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 184
+		Next scheduled internal transition at time 366
 
 __  Current Time: 184____________________
 
@@ -1115,7 +1115,7 @@ __  Current Time: 184____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 185
+		Next scheduled internal transition at time 368
 
 __  Current Time: 185____________________
 
@@ -1125,7 +1125,7 @@ __  Current Time: 185____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 186
+		Next scheduled internal transition at time 370
 
 __  Current Time: 187____________________
 
@@ -1137,7 +1137,7 @@ __  Current Time: 187____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 188
+		Next scheduled internal transition at time 374
 
 __  Current Time: 188____________________
 
@@ -1147,7 +1147,7 @@ __  Current Time: 188____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 189
+		Next scheduled internal transition at time 376
 
 __  Current Time: 189____________________
 
@@ -1156,7 +1156,7 @@ __  Current Time: 189____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 190
+		Next scheduled internal transition at time 378
 
 __  Current Time: 190____________________
 
@@ -1168,7 +1168,7 @@ __  Current Time: 190____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 191
+		Next scheduled internal transition at time 380
 
 __  Current Time: 192____________________
 
@@ -1177,7 +1177,7 @@ __  Current Time: 192____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 193
+		Next scheduled internal transition at time 384
 
 __  Current Time: 193____________________
 
@@ -1189,7 +1189,7 @@ __  Current Time: 193____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 194
+		Next scheduled internal transition at time 386
 
 __  Current Time: 194____________________
 
@@ -1199,7 +1199,7 @@ __  Current Time: 194____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 195
+		Next scheduled internal transition at time 388
 
 __  Current Time: 196____________________
 
@@ -1211,7 +1211,7 @@ __  Current Time: 196____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 197
+		Next scheduled internal transition at time 392
 
 __  Current Time: 197____________________
 
@@ -1221,7 +1221,7 @@ __  Current Time: 197____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 198
+		Next scheduled internal transition at time 394
 
 __  Current Time: 198____________________
 
@@ -1230,7 +1230,7 @@ __  Current Time: 198____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 199
+		Next scheduled internal transition at time 396
 
 __  Current Time: 201____________________
 
@@ -1239,7 +1239,7 @@ __  Current Time: 201____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 202
+		Next scheduled internal transition at time 402
 
 __  Current Time: 202____________________
 
@@ -1251,7 +1251,7 @@ __  Current Time: 202____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 203
+		Next scheduled internal transition at time 404
 
 __  Current Time: 203____________________
 
@@ -1261,7 +1261,7 @@ __  Current Time: 203____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 204
+		Next scheduled internal transition at time 406
 
 __  Current Time: 205____________________
 
@@ -1273,7 +1273,7 @@ __  Current Time: 205____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 206
+		Next scheduled internal transition at time 410
 
 __  Current Time: 206____________________
 
@@ -1283,7 +1283,7 @@ __  Current Time: 206____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 207
+		Next scheduled internal transition at time 412
 
 __  Current Time: 207____________________
 
@@ -1292,7 +1292,7 @@ __  Current Time: 207____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 208
+		Next scheduled internal transition at time 414
 
 __  Current Time: 209____________________
 
@@ -1302,7 +1302,7 @@ __  Current Time: 209____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 210
+		Next scheduled internal transition at time 418
 
 __  Current Time: 222____________________
 
@@ -1311,7 +1311,7 @@ __  Current Time: 222____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 223
+		Next scheduled internal transition at time 444
 
 __  Current Time: 223____________________
 
@@ -1323,7 +1323,7 @@ __  Current Time: 223____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 224
+		Next scheduled internal transition at time 446
 
 __  Current Time: 224____________________
 
@@ -1333,7 +1333,7 @@ __  Current Time: 224____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 225
+		Next scheduled internal transition at time 448
 
 __  Current Time: 226____________________
 
@@ -1345,7 +1345,7 @@ __  Current Time: 226____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 227
+		Next scheduled internal transition at time 452
 
 __  Current Time: 227____________________
 
@@ -1355,7 +1355,7 @@ __  Current Time: 227____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 228
+		Next scheduled internal transition at time 454
 
 __  Current Time: 228____________________
 
@@ -1364,7 +1364,7 @@ __  Current Time: 228____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 229
+		Next scheduled internal transition at time 456
 
 __  Current Time: 230____________________
 
@@ -1374,7 +1374,7 @@ __  Current Time: 230____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 231
+		Next scheduled internal transition at time 460
 
 __  Current Time: 231____________________
 
@@ -1383,7 +1383,7 @@ __  Current Time: 231____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 232
+		Next scheduled internal transition at time 462
 
 __  Current Time: 232____________________
 
@@ -1395,7 +1395,7 @@ __  Current Time: 232____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 233
+		Next scheduled internal transition at time 464
 
 __  Current Time: 233____________________
 
@@ -1405,7 +1405,7 @@ __  Current Time: 233____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 234
+		Next scheduled internal transition at time 466
 
 __  Current Time: 235____________________
 
@@ -1417,7 +1417,7 @@ __  Current Time: 235____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 236
+		Next scheduled internal transition at time 470
 
 __  Current Time: 236____________________
 
@@ -1427,7 +1427,7 @@ __  Current Time: 236____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 237
+		Next scheduled internal transition at time 472
 
 __  Current Time: 237____________________
 
@@ -1436,7 +1436,7 @@ __  Current Time: 237____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 238
+		Next scheduled internal transition at time 474
 
 __  Current Time: 239____________________
 
@@ -1446,7 +1446,7 @@ __  Current Time: 239____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 240
+		Next scheduled internal transition at time 478
 
 __  Current Time: 240____________________
 
@@ -1455,7 +1455,7 @@ __  Current Time: 240____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 241
+		Next scheduled internal transition at time 480
 
 __  Current Time: 241____________________
 
@@ -1467,7 +1467,7 @@ __  Current Time: 241____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 242
+		Next scheduled internal transition at time 482
 
 __  Current Time: 244____________________
 
@@ -1479,7 +1479,7 @@ __  Current Time: 244____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 245
+		Next scheduled internal transition at time 488
 
 __  Current Time: 245____________________
 
@@ -1489,7 +1489,7 @@ __  Current Time: 245____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 246
+		Next scheduled internal transition at time 490
 
 __  Current Time: 246____________________
 
@@ -1498,7 +1498,7 @@ __  Current Time: 246____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 247
+		Next scheduled internal transition at time 492
 
 __  Current Time: 248____________________
 
@@ -1508,7 +1508,7 @@ __  Current Time: 248____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 249
+		Next scheduled internal transition at time 496
 
 __  Current Time: 249____________________
 
@@ -1517,7 +1517,7 @@ __  Current Time: 249____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 250
+		Next scheduled internal transition at time 498
 
 __  Current Time: 250____________________
 
@@ -1529,7 +1529,7 @@ __  Current Time: 250____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 251
+		Next scheduled internal transition at time 500
 
 __  Current Time: 252____________________
 
@@ -1538,7 +1538,7 @@ __  Current Time: 252____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 253
+		Next scheduled internal transition at time 504
 
 __  Current Time: 253____________________
 
@@ -1550,7 +1550,7 @@ __  Current Time: 253____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 254
+		Next scheduled internal transition at time 506
 
 __  Current Time: 254____________________
 
@@ -1560,7 +1560,7 @@ __  Current Time: 254____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 255
+		Next scheduled internal transition at time 508
 
 __  Current Time: 255____________________
 
@@ -1569,7 +1569,7 @@ __  Current Time: 255____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 256
+		Next scheduled internal transition at time 510
 
 __  Current Time: 257____________________
 
@@ -1579,7 +1579,7 @@ __  Current Time: 257____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 258
+		Next scheduled internal transition at time 514
 
 __  Current Time: 258____________________
 
@@ -1588,7 +1588,7 @@ __  Current Time: 258____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 259
+		Next scheduled internal transition at time 516
 
 __  Current Time: 259____________________
 
@@ -1600,7 +1600,7 @@ __  Current Time: 259____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 260
+		Next scheduled internal transition at time 518
 
 __  Current Time: 261____________________
 
@@ -1609,7 +1609,7 @@ __  Current Time: 261____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 262
+		Next scheduled internal transition at time 522
 
 __  Current Time: 262____________________
 
@@ -1621,7 +1621,7 @@ __  Current Time: 262____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 263
+		Next scheduled internal transition at time 524
 
 __  Current Time: 263____________________
 
@@ -1631,7 +1631,7 @@ __  Current Time: 263____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 264
+		Next scheduled internal transition at time 526
 
 __  Current Time: 278____________________
 
@@ -1641,7 +1641,7 @@ __  Current Time: 278____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 279
+		Next scheduled internal transition at time 556
 
 __  Current Time: 279____________________
 
@@ -1650,7 +1650,7 @@ __  Current Time: 279____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 280
+		Next scheduled internal transition at time 558
 
 __  Current Time: 280____________________
 
@@ -1662,7 +1662,7 @@ __  Current Time: 280____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 281
+		Next scheduled internal transition at time 560
 
 __  Current Time: 282____________________
 
@@ -1671,7 +1671,7 @@ __  Current Time: 282____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 283
+		Next scheduled internal transition at time 564
 
 __  Current Time: 283____________________
 
@@ -1683,7 +1683,7 @@ __  Current Time: 283____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 284
+		Next scheduled internal transition at time 566
 
 __  Current Time: 284____________________
 
@@ -1693,7 +1693,7 @@ __  Current Time: 284____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 285
+		Next scheduled internal transition at time 568
 
 __  Current Time: 286____________________
 
@@ -1705,7 +1705,7 @@ __  Current Time: 286____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 287
+		Next scheduled internal transition at time 572
 
 __  Current Time: 287____________________
 
@@ -1715,7 +1715,7 @@ __  Current Time: 287____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 288
+		Next scheduled internal transition at time 574
 
 __  Current Time: 288____________________
 
@@ -1724,7 +1724,7 @@ __  Current Time: 288____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 289
+		Next scheduled internal transition at time 576
 
 __  Current Time: 289____________________
 
@@ -1736,7 +1736,7 @@ __  Current Time: 289____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 290
+		Next scheduled internal transition at time 578
 
 __  Current Time: 291____________________
 
@@ -1745,7 +1745,7 @@ __  Current Time: 291____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 292
+		Next scheduled internal transition at time 582
 
 __  Current Time: 292____________________
 
@@ -1757,7 +1757,7 @@ __  Current Time: 292____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 293
+		Next scheduled internal transition at time 584
 
 __  Current Time: 293____________________
 
@@ -1767,7 +1767,7 @@ __  Current Time: 293____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 294
+		Next scheduled internal transition at time 586
 
 __  Current Time: 295____________________
 
@@ -1779,7 +1779,7 @@ __  Current Time: 295____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 296
+		Next scheduled internal transition at time 590
 
 __  Current Time: 296____________________
 
@@ -1789,7 +1789,7 @@ __  Current Time: 296____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 297
+		Next scheduled internal transition at time 592
 
 __  Current Time: 297____________________
 
@@ -1798,7 +1798,7 @@ __  Current Time: 297____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 298
+		Next scheduled internal transition at time 594
 
 __  Current Time: 299____________________
 
@@ -1808,7 +1808,7 @@ __  Current Time: 299____________________
 		Input Port Configuration:
 			port <portIn>:
 			port <portIn2>:
-		Next scheduled internal transition at time 300
+		Next scheduled internal transition at time 598
 
 __  Current Time: 300____________________
 
@@ -1817,4 +1817,4 @@ __  Current Time: 300____________________
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 301
+		Next scheduled internal transition at time 600

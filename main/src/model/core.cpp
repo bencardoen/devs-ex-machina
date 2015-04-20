@@ -98,11 +98,13 @@ void n_model::Core::init()
 	}
 	for (const auto& model : this->m_models) {
 		//trace init
-		m_tracers->tracesInit(model.second, getTime());
-		t_timestamp model_scheduled_time = model.second->timeAdvance();
+		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
+		model.second->setTime(modelTime);
+		t_timestamp model_scheduled_time = model.second->getTimeNext();// model.second->timeAdvance();
 		std::size_t priority = model.second->getPriority();
 		model_scheduled_time.increaseCausality(priority);
 		this->scheduleModel(model.first, model_scheduled_time);
+		m_tracers->tracesInit(model.second, getTime());
 	}
 	// Read a first time setting.
 	if (not this->m_scheduler->empty()) {
@@ -110,9 +112,10 @@ void n_model::Core::init()
 		LOG_INFO("Core initialized to first time : ", this->m_time);
 	}
 	// Make sure models have first time set correctly.
-	for (const auto& model : this->m_models) {
-		model.second->setTime(this->getTime());
-	}
+//	for (const auto& model : this->m_models) {
+//		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime());
+//		model.second->setTime(modelTime);
+//	}
 	// This avoid problems with reverting to before first core time, which breaks the models.
 	this->m_gvt = this->getTime();
 }

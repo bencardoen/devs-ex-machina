@@ -117,6 +117,36 @@ TEST(Controller, cDEVS)
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstest.txt", TESTFOLDER "controller/devstest.corr"), 0);
 }
 
+TEST(Controller, cDEVS_coupled)
+{
+	RecordProperty("description", "Running a simple single core simulation");
+	std::ofstream filestream(TESTFOLDER "controller/devstestcoupled.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
+
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+		t_coreptr c = createObject<Core>();
+		coreMap[0] = c;
+
+		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setClassicDEVS();
+		ctrl.setTerminationTime(t_timestamp(360, 0));
+
+		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl.addModel(m1);
+
+		ctrl.simulate();
+		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
+	};
+
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/devstestcoupled.txt", TESTFOLDER "controller/devstestcoupled.corr"), 0);
+}
+
 TEST(Controller, DSDEVS_connections)
 {
 	RecordProperty("description", "Running a simple single core simulation with DS");

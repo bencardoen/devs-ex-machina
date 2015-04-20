@@ -123,6 +123,12 @@ public:
 	virtual ~AtomicModel()
 	{
 	}
+
+	/**
+	 * @brief Returns the elapsed time set by the model on initialization.
+	 * Elapsed time allows to shift the transitions of a model in time without having to change the TimeAdvance function.
+	 */
+	t_timestamp getTimeElapsed() const;
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

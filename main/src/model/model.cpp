@@ -147,4 +147,9 @@ bool Model::allowDS() const
 	return true;
 }
 
+t_timestamp Model::getTimeNext() const
+{
+	return m_timeNext;
+}
+
 }

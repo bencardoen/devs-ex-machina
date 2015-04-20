@@ -12,7 +12,6 @@ namespace n_examples_coupled {
 TrafficLightMode::TrafficLightMode(std::string state)
 	: State(state)
 {
-
 }
 
 std::string TrafficLightMode::toXML()
@@ -35,7 +34,7 @@ TrafficLight::TrafficLight(std::string name, std::size_t priority)
 {
 	this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
-	m_elapsed = 0;
+	m_elapsed = 2;
 
 	this->addInPort("INTERRUPT");
 	this->addOutPort("OBSERVED");
