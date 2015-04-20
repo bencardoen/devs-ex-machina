@@ -212,5 +212,5 @@ TEST(Controller, pDEVS)
 		EXPECT_TRUE(c1->getTime()>= endTime || c2->getTime()>= endTime);
 	};
 
-	//EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
 }
