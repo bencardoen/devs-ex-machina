@@ -115,7 +115,8 @@ TEST(Core, CoreFlow)
 	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
 	c.init();
 	//c.printSchedulerState();
-	EXPECT_TRUE(c.getTime() == t_timestamp(60));
+	c.syncTime();
+	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
 	auto imminent = c.getImminent();
 	EXPECT_EQ(imminent.size(), 2);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
@@ -149,12 +150,15 @@ TEST(DynamicCore, smallStep)
 	c->getLastImminents(imms);
 	EXPECT_EQ(imms.size(), 0);
 	c->setLive(true);
+	c->syncTime();
 	while(c->isLive()){
 		c->runSmallStep();
 		c->getLastImminents(imms);
 		EXPECT_EQ(imms.size(), 2);
-		EXPECT_EQ(imms[0],modelfrom);
-		EXPECT_EQ(imms[1], modelto);
+		if(imms.size()==2){
+			EXPECT_EQ(imms[0],modelfrom);
+			EXPECT_EQ(imms[1], modelto);
+		}
 	}
 	// This is not how to run a core, but a check of safety blocks.
 	c->setLive(true);
@@ -309,7 +313,6 @@ TEST(Core, multicoresafe)
 	EXPECT_FALSE(coreone->containsModel("mylight"));
 	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
-
 
 enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
 
@@ -497,6 +500,7 @@ TEST(Multicore, GVTfunctions){
 	t_timestamp endtime(2000,0);
 	coreone->setTerminationTime(endtime);
 	coreone->init();
+	coreone->syncTime();
 	EXPECT_EQ(coreone->getTime().getTime(), 58);
 	//coreone->printSchedulerState();
 	coreone->setLive(true);

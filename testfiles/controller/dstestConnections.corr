@@ -1,0 +1,1662 @@
+
+__  Current Time: 0____________________
+
+
+	INITIAL CONDITIONS in model policeman
+		Initial State: idle_at_1
+		Next scheduled internal transition at time 50
+
+	INITIAL CONDITIONS in model trafficLight1
+		Initial State: red
+		Next scheduled internal transition at time 58
+
+	INITIAL CONDITIONS in model trafficLight2
+		Initial State: red
+		Next scheduled internal transition at time 58
+
+__  Current Time: 50____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 150
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 58____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 108
+
+__  Current Time: 108____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 118
+
+__  Current Time: 118____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 178
+
+__  Current Time: 150____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 300
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 210
+
+__  Current Time: 178____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 228
+
+__  Current Time: 210____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 260
+
+__  Current Time: 228____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 238
+
+__  Current Time: 238____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 298
+
+__  Current Time: 260____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 270
+
+__  Current Time: 270____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 330
+
+__  Current Time: 298____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 348
+
+__  Current Time: 300____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 350
+
+__  Current Time: 330____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 380
+
+__  Current Time: 348____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 358
+
+__  Current Time: 350____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 450
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 380____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 390
+
+__  Current Time: 390____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 450
+
+__  Current Time: 450____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 600
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 500
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 510
+
+__  Current Time: 500____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 510
+
+__  Current Time: 510____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 570
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 560
+
+__  Current Time: 560____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 570
+
+__  Current Time: 570____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 620
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 630
+
+__  Current Time: 600____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_1
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 650
+
+__  Current Time: 620____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 630
+
+__  Current Time: 630____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 690
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 680
+
+__  Current Time: 650____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 750
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 680____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 690
+
+__  Current Time: 690____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 750
+
+__  Current Time: 750____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 900
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 810
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 800
+
+__  Current Time: 800____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 810
+
+__  Current Time: 810____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 860
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 870
+
+__  Current Time: 860____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 870
+
+__  Current Time: 870____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 930
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 920
+
+__  Current Time: 900____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 950
+
+__  Current Time: 920____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 930
+
+__  Current Time: 930____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 980
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 990
+
+__  Current Time: 950____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 1050
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 980____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 990
+
+__  Current Time: 990____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1050
+
+__  Current Time: 1050____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 1200
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1100
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 1110
+
+__  Current Time: 1100____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1110
+
+__  Current Time: 1110____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1170
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1160
+
+__  Current Time: 1160____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1170
+
+__  Current Time: 1170____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1220
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1230
+
+__  Current Time: 1200____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_1
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 1250
+
+__  Current Time: 1220____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1230
+
+__  Current Time: 1230____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1290
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1280
+
+__  Current Time: 1250____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 1350
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 1280____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1290
+
+__  Current Time: 1290____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1350
+
+__  Current Time: 1350____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 1500
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 1410
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1400
+
+__  Current Time: 1400____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1410
+
+__  Current Time: 1410____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1460
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1470
+
+__  Current Time: 1460____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1470
+
+__  Current Time: 1470____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1530
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1520
+
+__  Current Time: 1500____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 1550
+
+__  Current Time: 1520____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1530
+
+__  Current Time: 1530____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1580
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1590
+
+__  Current Time: 1550____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 1650
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 1580____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1590
+
+__  Current Time: 1590____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1650
+
+__  Current Time: 1650____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 1800
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1700
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 1710
+
+__  Current Time: 1700____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1710
+
+__  Current Time: 1710____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1770
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1760
+
+__  Current Time: 1760____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1770
+
+__  Current Time: 1770____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1820
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1830
+
+__  Current Time: 1800____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_1
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 1850
+
+__  Current Time: 1820____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1830
+
+__  Current Time: 1830____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1890
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1880
+
+__  Current Time: 1850____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 1950
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 1880____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1890
+
+__  Current Time: 1890____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 1950
+
+__  Current Time: 1950____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 2100
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 2010
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2000
+
+__  Current Time: 2000____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2010
+
+__  Current Time: 2010____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2060
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2070
+
+__  Current Time: 2060____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2070
+
+__  Current Time: 2070____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2130
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2120
+
+__  Current Time: 2100____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 2150
+
+__  Current Time: 2120____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2130
+
+__  Current Time: 2130____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2180
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2190
+
+__  Current Time: 2150____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 2250
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 2180____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2190
+
+__  Current Time: 2190____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2250
+
+__  Current Time: 2250____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 2400
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2300
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 2310
+
+__  Current Time: 2300____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2310
+
+__  Current Time: 2310____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2370
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2360
+
+__  Current Time: 2360____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2370
+
+__  Current Time: 2370____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2420
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2430
+
+__  Current Time: 2400____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_1
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 2450
+
+__  Current Time: 2420____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2430
+
+__  Current Time: 2430____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2490
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2480
+
+__  Current Time: 2450____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 2550
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 2480____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2490
+
+__  Current Time: 2490____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2550
+
+__  Current Time: 2550____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 2700
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 2610
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2600
+
+__  Current Time: 2600____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2610
+
+__  Current Time: 2610____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2660
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2670
+
+__  Current Time: 2660____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2670
+
+__  Current Time: 2670____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2730
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2720
+
+__  Current Time: 2700____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 2750
+
+__  Current Time: 2720____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2730
+
+__  Current Time: 2730____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2780
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2790
+
+__  Current Time: 2750____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 2850
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 2780____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2790
+
+__  Current Time: 2790____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2850
+
+__  Current Time: 2850____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 3000
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2900
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 2910
+
+__  Current Time: 2900____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2910
+
+__  Current Time: 2910____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2970
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2960
+
+__  Current Time: 2960____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 2970
+
+__  Current Time: 2970____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3020
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3030
+
+__  Current Time: 3000____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_1
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 3050
+
+__  Current Time: 3020____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3030
+
+__  Current Time: 3030____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3090
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3080
+
+__  Current Time: 3050____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_1
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 3150
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 3080____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3090
+
+__  Current Time: 3090____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3150
+
+__  Current Time: 3150____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_1_to_2
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 3300
+
+	EXTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 3210
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3200
+
+__  Current Time: 3200____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3210
+
+__  Current Time: 3210____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3260
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3270
+
+__  Current Time: 3260____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3270
+
+__  Current Time: 3270____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3330
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3320
+
+__  Current Time: 3300____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: idle_at_2
+		Output Port Configuration:
+			port <OUT>:
+		Next scheduled internal transition at time 3350
+
+__  Current Time: 3320____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3330
+
+__  Current Time: 3330____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3380
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3390
+
+__  Current Time: 3350____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: working_at_2
+		Output Port Configuration:
+			port <OUT>:
+				toManual
+		Next scheduled internal transition at time 3450
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: manual
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toManual
+		Next scheduled internal transition at time inf
+
+__  Current Time: 3380____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3390
+
+__  Current Time: 3390____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3450
+
+__  Current Time: 3450____________________
+
+
+	INTERNAL TRANSITION in model policeman
+		New State: moving_from_2_to_1
+		Output Port Configuration:
+			port <OUT>:
+				toAutonomous
+		Next scheduled internal transition at time 3600
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3500
+
+	EXTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Input Port Configuration:
+			port <INTERRUPT>:
+				toAutonomous
+		Next scheduled internal transition at time 3510
+
+__  Current Time: 3500____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3510
+
+__  Current Time: 3510____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3570
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3560
+
+__  Current Time: 3560____________________
+
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: yellow
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3570
+
+__  Current Time: 3570____________________
+
+
+	INTERNAL TRANSITION in model trafficLight1
+		New State: green
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3620
+
+	INTERNAL TRANSITION in model trafficLight2
+		New State: red
+		Output Port Configuration:
+			port <OBSERVED>:
+		Next scheduled internal transition at time 3630

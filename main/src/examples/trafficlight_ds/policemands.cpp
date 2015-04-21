@@ -96,7 +96,7 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 	else // nothing happens
 		return std::vector<n_network::t_msgptr>();
 
-	return this->getPort("OUT")->createMessages("message");
+	return this->getPort("OUT")->createMessages(message);
 }
 
 t_stateptr Policeman::setState(std::string s)
@@ -107,6 +107,7 @@ t_stateptr Policeman::setState(std::string s)
 
 bool Policeman::modelTransition(n_model::DSSharedState* shared)
 {
+	LOG_DEBUG("Policeman::parent = ", m_parent.expired());
 	t_stateptr state = this->getState();
 	std::string val = "";
 	if (*state == "moving_from_1_to_2"){

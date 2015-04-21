@@ -99,6 +99,7 @@ void CoupledModel::disconnectPorts(const t_portptr& p1, const t_portptr& p2)
 	//precondition: not simulating or DSDEVS
 	p1->removeOutPort(p2);
 	p2->removeInPort(p1);
+	LOG_DEBUG("CoupledModel::disconnectPorts, control: ", m_control, " ports: ", p1->getFullName(), " ->", p2->getFullName());
 	if(m_control)
 		m_control->dsRemoveConnection(p1, p2);
 }

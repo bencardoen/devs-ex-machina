@@ -65,7 +65,12 @@ public:
 		*ssr << "\n"
 			"\tINITIAL CONDITIONS in model " << adevs->getName() << "\n"
 			"\t\tInitial State: " << state->toString() << "\n"
-		        << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+		        "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
@@ -95,12 +100,17 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getSourcePort() == item.first)// get from which port a message was send
-					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesInternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
@@ -127,12 +137,17 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getDestinationPort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';	// message->toString()?
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesExternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
@@ -158,8 +173,7 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
 			for (const n_network::t_msgptr& message : messages)
-				if (message->getDestinationPort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
 		}
 		*ssr << "\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
@@ -168,12 +182,17 @@ public:
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
 			const std::vector<n_network::t_msgptr>& messages2 = item.second->getSentMessages();
 			for (const n_network::t_msgptr& message : messages2)
-				if (message->getSourcePort() == item.first)
-					*ssr << "\t\t\t\t" << message->toString() << '\n';
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
 		}
-		*ssr << "\t\tNext scheduled internal transition at time " << adevs->getTimeNext().getTime() << "\n";
+	        *ssr << "\t\tNext scheduled internal transition at time ";
+		t_timestamp nextT =  adevs->getTimeNext();
+		if(nextT == t_timestamp::infinity())
+			*ssr << nextT;
+		else *ssr << nextT.getTime();
+		*ssr << '\n';
 
 		t_timestamp time = state->m_timeLast; // get timestamp of the transition
+		LOG_DEBUG("TracesConfluent: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
 		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);

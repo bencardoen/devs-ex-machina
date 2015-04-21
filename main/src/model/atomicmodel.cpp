@@ -9,10 +9,9 @@
 
 namespace n_model {
 
-AtomicModel::AtomicModel(std::string name, std::size_t priority)
-	: Model(name), m_priority(priority)
+AtomicModel::AtomicModel(std::string name, std::size_t)
+	: Model(name), m_priority(nextPriority())
 {
-
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
@@ -27,16 +26,23 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 	for (auto& port : m_iPorts)
 		port.second->clearReceivedMessages();
 
-	// Do the actual external transition
-	this->extTransition(message);
-
 	for (auto& m : message) {
 		std::string destport = m->getDestinationPort();
-		auto it = m_iPorts.find(destport);
+		auto it = m_iPorts.begin();
+		while(it != m_iPorts.end()){
+			if(n_tools::endswith(destport, it->first))
+				break;
+			++it;
+		}
 		// When we find the port, we add the message temporarily to it for the tracer
 		if (it != m_iPorts.end())
 			it->second->addMessage(m, true);
+		else
+			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
 	}
+
+	// Do the actual external transition
+	this->extTransition(message);
 }
 
 std::vector<n_network::t_msgptr> AtomicModel::doOutput()
@@ -50,10 +56,17 @@ std::vector<n_network::t_msgptr> AtomicModel::doOutput()
 
 	for (auto& message : messages) {
 		std::string srcport = message->getSourcePort();
-		auto it = m_oPorts.find(srcport);
+		auto it = m_oPorts.begin();
+		while(it != m_oPorts.end()){
+			if(n_tools::endswith(srcport, it->first))
+				break;
+			++it;
+		}
 		// When we find the port, we add the message temporarily to it for the tracer
 		if (it != m_oPorts.end())
 			it->second->addMessage(message, false);
+		else
+			LOG_ERROR("Failed to add sent message ", message->getPayload(), " to port ", srcport);
 	}
 	// We return the output back to the core
 	return messages;
@@ -130,8 +143,8 @@ std::size_t AtomicModel::getPriority() const
 
 void AtomicModel::setTime(t_timestamp time)
 {
-	this->m_timeLast = time;
-	this->m_timeNext = time + this->timeAdvance();
+	this->m_timeLast = t_timestamp(time.getTime(), m_priority);
+	this->m_timeNext = this->m_timeLast + this->timeAdvance();
 	m_state->m_timeLast = this->m_timeLast;
 	m_state->m_timeNext = this->m_timeNext;
 
