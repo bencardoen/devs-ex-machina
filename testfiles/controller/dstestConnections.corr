@@ -38,6 +38,7 @@ __  Current Time: 58____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 108
 
 __  Current Time: 108____________________
@@ -47,6 +48,7 @@ __  Current Time: 108____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 118
 
 __  Current Time: 118____________________
@@ -56,6 +58,7 @@ __  Current Time: 118____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 178
 
 __  Current Time: 150____________________
@@ -82,6 +85,7 @@ __  Current Time: 178____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 228
 
 __  Current Time: 210____________________
@@ -91,6 +95,7 @@ __  Current Time: 210____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 260
 
 __  Current Time: 228____________________
@@ -100,6 +105,7 @@ __  Current Time: 228____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 238
 
 __  Current Time: 238____________________
@@ -109,6 +115,7 @@ __  Current Time: 238____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 298
 
 __  Current Time: 260____________________
@@ -118,6 +125,7 @@ __  Current Time: 260____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 270
 
 __  Current Time: 270____________________
@@ -127,6 +135,7 @@ __  Current Time: 270____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 330
 
 __  Current Time: 298____________________
@@ -136,6 +145,7 @@ __  Current Time: 298____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 348
 
 __  Current Time: 300____________________
@@ -154,6 +164,7 @@ __  Current Time: 330____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 380
 
 __  Current Time: 348____________________
@@ -163,6 +174,7 @@ __  Current Time: 348____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 358
 
 __  Current Time: 350____________________
@@ -189,6 +201,7 @@ __  Current Time: 380____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 390
 
 __  Current Time: 390____________________
@@ -198,6 +211,7 @@ __  Current Time: 390____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 450
 
 __  Current Time: 450____________________
@@ -214,6 +228,7 @@ __  Current Time: 450____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 500
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -230,6 +245,7 @@ __  Current Time: 500____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 510
 
 __  Current Time: 510____________________
@@ -239,12 +255,14 @@ __  Current Time: 510____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 570
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 560
 
 __  Current Time: 560____________________
@@ -254,6 +272,7 @@ __  Current Time: 560____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 570
 
 __  Current Time: 570____________________
@@ -263,12 +282,14 @@ __  Current Time: 570____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 620
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 630
 
 __  Current Time: 600____________________
@@ -287,6 +308,7 @@ __  Current Time: 620____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 630
 
 __  Current Time: 630____________________
@@ -296,12 +318,14 @@ __  Current Time: 630____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 690
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 680
 
 __  Current Time: 650____________________
@@ -328,6 +352,7 @@ __  Current Time: 680____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 690
 
 __  Current Time: 690____________________
@@ -337,6 +362,7 @@ __  Current Time: 690____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 750
 
 __  Current Time: 750____________________
@@ -360,6 +386,7 @@ __  Current Time: 750____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 800
 
 __  Current Time: 800____________________
@@ -369,6 +396,7 @@ __  Current Time: 800____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 810
 
 __  Current Time: 810____________________
@@ -378,12 +406,14 @@ __  Current Time: 810____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 860
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 870
 
 __  Current Time: 860____________________
@@ -393,6 +423,7 @@ __  Current Time: 860____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 870
 
 __  Current Time: 870____________________
@@ -402,12 +433,14 @@ __  Current Time: 870____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 930
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 920
 
 __  Current Time: 900____________________
@@ -426,6 +459,7 @@ __  Current Time: 920____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 930
 
 __  Current Time: 930____________________
@@ -435,12 +469,14 @@ __  Current Time: 930____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 980
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 990
 
 __  Current Time: 950____________________
@@ -467,6 +503,7 @@ __  Current Time: 980____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 990
 
 __  Current Time: 990____________________
@@ -476,6 +513,7 @@ __  Current Time: 990____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1050
 
 __  Current Time: 1050____________________
@@ -492,6 +530,7 @@ __  Current Time: 1050____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1100
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -508,6 +547,7 @@ __  Current Time: 1100____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1110
 
 __  Current Time: 1110____________________
@@ -517,12 +557,14 @@ __  Current Time: 1110____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1170
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1160
 
 __  Current Time: 1160____________________
@@ -532,6 +574,7 @@ __  Current Time: 1160____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1170
 
 __  Current Time: 1170____________________
@@ -541,12 +584,14 @@ __  Current Time: 1170____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1220
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1230
 
 __  Current Time: 1200____________________
@@ -565,6 +610,7 @@ __  Current Time: 1220____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1230
 
 __  Current Time: 1230____________________
@@ -574,12 +620,14 @@ __  Current Time: 1230____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1290
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1280
 
 __  Current Time: 1250____________________
@@ -606,6 +654,7 @@ __  Current Time: 1280____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1290
 
 __  Current Time: 1290____________________
@@ -615,6 +664,7 @@ __  Current Time: 1290____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1350
 
 __  Current Time: 1350____________________
@@ -638,6 +688,7 @@ __  Current Time: 1350____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1400
 
 __  Current Time: 1400____________________
@@ -647,6 +698,7 @@ __  Current Time: 1400____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1410
 
 __  Current Time: 1410____________________
@@ -656,12 +708,14 @@ __  Current Time: 1410____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1460
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1470
 
 __  Current Time: 1460____________________
@@ -671,6 +725,7 @@ __  Current Time: 1460____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1470
 
 __  Current Time: 1470____________________
@@ -680,12 +735,14 @@ __  Current Time: 1470____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1530
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1520
 
 __  Current Time: 1500____________________
@@ -704,6 +761,7 @@ __  Current Time: 1520____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1530
 
 __  Current Time: 1530____________________
@@ -713,12 +771,14 @@ __  Current Time: 1530____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1580
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1590
 
 __  Current Time: 1550____________________
@@ -745,6 +805,7 @@ __  Current Time: 1580____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1590
 
 __  Current Time: 1590____________________
@@ -754,6 +815,7 @@ __  Current Time: 1590____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1650
 
 __  Current Time: 1650____________________
@@ -770,6 +832,7 @@ __  Current Time: 1650____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1700
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -786,6 +849,7 @@ __  Current Time: 1700____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1710
 
 __  Current Time: 1710____________________
@@ -795,12 +859,14 @@ __  Current Time: 1710____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1770
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1760
 
 __  Current Time: 1760____________________
@@ -810,6 +876,7 @@ __  Current Time: 1760____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1770
 
 __  Current Time: 1770____________________
@@ -819,12 +886,14 @@ __  Current Time: 1770____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1820
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1830
 
 __  Current Time: 1800____________________
@@ -843,6 +912,7 @@ __  Current Time: 1820____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1830
 
 __  Current Time: 1830____________________
@@ -852,12 +922,14 @@ __  Current Time: 1830____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1890
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1880
 
 __  Current Time: 1850____________________
@@ -884,6 +956,7 @@ __  Current Time: 1880____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1890
 
 __  Current Time: 1890____________________
@@ -893,6 +966,7 @@ __  Current Time: 1890____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1950
 
 __  Current Time: 1950____________________
@@ -916,6 +990,7 @@ __  Current Time: 1950____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2000
 
 __  Current Time: 2000____________________
@@ -925,6 +1000,7 @@ __  Current Time: 2000____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2010
 
 __  Current Time: 2010____________________
@@ -934,12 +1010,14 @@ __  Current Time: 2010____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2060
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2070
 
 __  Current Time: 2060____________________
@@ -949,6 +1027,7 @@ __  Current Time: 2060____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2070
 
 __  Current Time: 2070____________________
@@ -958,12 +1037,14 @@ __  Current Time: 2070____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2130
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2120
 
 __  Current Time: 2100____________________
@@ -982,6 +1063,7 @@ __  Current Time: 2120____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2130
 
 __  Current Time: 2130____________________
@@ -991,12 +1073,14 @@ __  Current Time: 2130____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2180
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2190
 
 __  Current Time: 2150____________________
@@ -1023,6 +1107,7 @@ __  Current Time: 2180____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2190
 
 __  Current Time: 2190____________________
@@ -1032,6 +1117,7 @@ __  Current Time: 2190____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2250
 
 __  Current Time: 2250____________________
@@ -1048,6 +1134,7 @@ __  Current Time: 2250____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2300
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -1064,6 +1151,7 @@ __  Current Time: 2300____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2310
 
 __  Current Time: 2310____________________
@@ -1073,12 +1161,14 @@ __  Current Time: 2310____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2370
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2360
 
 __  Current Time: 2360____________________
@@ -1088,6 +1178,7 @@ __  Current Time: 2360____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2370
 
 __  Current Time: 2370____________________
@@ -1097,12 +1188,14 @@ __  Current Time: 2370____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2420
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2430
 
 __  Current Time: 2400____________________
@@ -1121,6 +1214,7 @@ __  Current Time: 2420____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2430
 
 __  Current Time: 2430____________________
@@ -1130,12 +1224,14 @@ __  Current Time: 2430____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2490
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2480
 
 __  Current Time: 2450____________________
@@ -1162,6 +1258,7 @@ __  Current Time: 2480____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2490
 
 __  Current Time: 2490____________________
@@ -1171,6 +1268,7 @@ __  Current Time: 2490____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2550
 
 __  Current Time: 2550____________________
@@ -1194,6 +1292,7 @@ __  Current Time: 2550____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2600
 
 __  Current Time: 2600____________________
@@ -1203,6 +1302,7 @@ __  Current Time: 2600____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2610
 
 __  Current Time: 2610____________________
@@ -1212,12 +1312,14 @@ __  Current Time: 2610____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2660
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2670
 
 __  Current Time: 2660____________________
@@ -1227,6 +1329,7 @@ __  Current Time: 2660____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2670
 
 __  Current Time: 2670____________________
@@ -1236,12 +1339,14 @@ __  Current Time: 2670____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2730
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2720
 
 __  Current Time: 2700____________________
@@ -1260,6 +1365,7 @@ __  Current Time: 2720____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2730
 
 __  Current Time: 2730____________________
@@ -1269,12 +1375,14 @@ __  Current Time: 2730____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2780
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2790
 
 __  Current Time: 2750____________________
@@ -1301,6 +1409,7 @@ __  Current Time: 2780____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2790
 
 __  Current Time: 2790____________________
@@ -1310,6 +1419,7 @@ __  Current Time: 2790____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2850
 
 __  Current Time: 2850____________________
@@ -1326,6 +1436,7 @@ __  Current Time: 2850____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2900
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -1342,6 +1453,7 @@ __  Current Time: 2900____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2910
 
 __  Current Time: 2910____________________
@@ -1351,12 +1463,14 @@ __  Current Time: 2910____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2970
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2960
 
 __  Current Time: 2960____________________
@@ -1366,6 +1480,7 @@ __  Current Time: 2960____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 2970
 
 __  Current Time: 2970____________________
@@ -1375,12 +1490,14 @@ __  Current Time: 2970____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3020
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3030
 
 __  Current Time: 3000____________________
@@ -1399,6 +1516,7 @@ __  Current Time: 3020____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3030
 
 __  Current Time: 3030____________________
@@ -1408,12 +1526,14 @@ __  Current Time: 3030____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3090
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3080
 
 __  Current Time: 3050____________________
@@ -1440,6 +1560,7 @@ __  Current Time: 3080____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3090
 
 __  Current Time: 3090____________________
@@ -1449,6 +1570,7 @@ __  Current Time: 3090____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3150
 
 __  Current Time: 3150____________________
@@ -1472,6 +1594,7 @@ __  Current Time: 3150____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3200
 
 __  Current Time: 3200____________________
@@ -1481,6 +1604,7 @@ __  Current Time: 3200____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3210
 
 __  Current Time: 3210____________________
@@ -1490,12 +1614,14 @@ __  Current Time: 3210____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3260
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3270
 
 __  Current Time: 3260____________________
@@ -1505,6 +1631,7 @@ __  Current Time: 3260____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3270
 
 __  Current Time: 3270____________________
@@ -1514,12 +1641,14 @@ __  Current Time: 3270____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3330
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3320
 
 __  Current Time: 3300____________________
@@ -1538,6 +1667,7 @@ __  Current Time: 3320____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3330
 
 __  Current Time: 3330____________________
@@ -1547,12 +1677,14 @@ __  Current Time: 3330____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3380
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3390
 
 __  Current Time: 3350____________________
@@ -1579,6 +1711,7 @@ __  Current Time: 3380____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3390
 
 __  Current Time: 3390____________________
@@ -1588,6 +1721,7 @@ __  Current Time: 3390____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3450
 
 __  Current Time: 3450____________________
@@ -1604,6 +1738,7 @@ __  Current Time: 3450____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3500
 
 	EXTERNAL TRANSITION in model trafficLight2
@@ -1620,6 +1755,7 @@ __  Current Time: 3500____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3510
 
 __  Current Time: 3510____________________
@@ -1629,12 +1765,14 @@ __  Current Time: 3510____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3570
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3560
 
 __  Current Time: 3560____________________
@@ -1644,6 +1782,7 @@ __  Current Time: 3560____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 3570
 
 __  Current Time: 3570____________________
@@ -1653,10 +1792,12 @@ __  Current Time: 3570____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3620
 
 	INTERNAL TRANSITION in model trafficLight2
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 3630
