@@ -2,7 +2,7 @@
  * atomicmodel.cpp
  *
  *  Created on: Mar 17, 2015
- *      Author: tim
+ *      Author: Tim Stijn
  */
 
 #include "atomicmodel.h"
@@ -54,20 +54,6 @@ std::vector<n_network::t_msgptr> AtomicModel::doOutput()
 	// Do the actual output function
 	auto messages = this->output();
 
-	for (auto& message : messages) {
-		std::string srcport = message->getSourcePort();
-		auto it = m_oPorts.begin();
-		while(it != m_oPorts.end()){
-			if(n_tools::endswith(srcport, it->first))
-				break;
-			++it;
-		}
-		// When we find the port, we add the message temporarily to it for the tracer
-		if (it != m_oPorts.end())
-			it->second->addMessage(message, false);
-		else
-			LOG_ERROR("Failed to add sent message ", message->getPayload(), " to port ", srcport);
-	}
 	// We return the output back to the core
 	return messages;
 }

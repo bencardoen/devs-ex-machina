@@ -1,0 +1,35 @@
+\section{Setup}
+
+After creating the models for your simulation, there are still a few parameters to take care of to get everything up and running.\\
+
+First of these is the \textbf{allocator}, which decides on which simulation core to place which model. We have already included a simple allocator that distributes models evenly, but for more complex behavior it is possible to create one tailored specifically for your simulation purposes by inheriting from the \textsl{Allocator} base class.\\
+
+The next step is to create a \textbf{location table} and a table for the simulation cores. The former stores the location of all models. A \textsl{LocationTable} class is included for this purpose.\\
+The latter needs to be an \textsl{std::unordered\_map{\textless}std::size\_t, t\_coreptr{\textgreater}}. This map will store a pointer to each core which can be accessed using the core's ID.\\
+
+To get output from your simulation, you can select one or more of the included \textbf{tracers}. [...] TODO\\
+
+The following steps differ slightly depending on which type of DEVS you want to run.
+
+\subsection{Classic DEVS}
+\textsc{Classic DEVS} depends on the use of a single \textbf{core} of the \textsl{Core} class. Create a core of this class and add it to the \textsl{unordered\_map} created before.\\
+
+Next, we create the \textbf{controller} of the simulation, using the \textsl{Controller} class. It expects a name, the core table, the allocator, the location table, and the tracers as its arguments. You can now set the simulation mode to CDEVS by using the controller's \textsl{setClassicDEVS} method.
+
+\subsection{Dynamic Structured DEVS}
+Running a \textsc{Dynamic Structured DEVS} is largely similar to \textsc{Classic DEVS}, except a single core of the \textsl{DynamicCore} class has to be used.\\
+Be sure to set the correct simulation type using the controller's \textsl{setDSDEVS} method.
+
+\subsection{Parallel DEVS}
+\textsc{Parallel DEVS} requires an extra \textbf{network} object, of the class \textsl{Network}, and one or more cores of the \textsl{Multicore} class.\\
+Once again, don't forget to set the DEVS type by using the \textsl{setPDEVS} method.
+
+\subsection{Adding models}
+The final step of the setup would be to add any models to the controller using the \textsl{addModel} method. Your simulation is now ready to run!
+
+\section{Control}
+You can choose to let the simulation end at a certain moment by adding a \textbf{termination time} or a \textbf{termination condition}.\\
+The termination time can be set using the controller's \textsl{setTerminationTime} method, the termination condition by using \textsl{setTerminationCondition} and passing a custom \textsl{TerminationFunctor}.\\ %TODO add manual terminationfunctor?
+\\
+Finally, you can start the DEVS using the controller's \textsl{simulate} method.
+%TODO Serializatie: save, load
