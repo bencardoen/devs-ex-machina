@@ -10,6 +10,8 @@
 
 #include "model.h"
 #include "message.h"
+#include "tools/globallog.h"
+#include <assert.h>
 #include <map>
 #include <iostream>
 
@@ -48,7 +50,10 @@ public:
 	 *
 	 * @param message A vector of messagepointers that represent events
 	 */
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) {};
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) {
+		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
+		assert(false);
+	};
 
 	/**
 	 * Perform an external transition, this function will call the user-implemented extTransition
@@ -61,7 +66,10 @@ public:
 	/**
 	 * Perform an internal transition, one of the functions the user has to implement
 	 */
-	virtual void intTransition() {};
+	virtual void intTransition() {
+		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
+		assert(false);
+	};
 
 	/**
 	 * Transitions the model confluently with given messages
@@ -75,14 +83,20 @@ public:
 	 *
 	 * @return Current time advance
 	 */
-	virtual t_timestamp timeAdvance() {}
+	virtual t_timestamp timeAdvance() {
+		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel::timeAdvance()'");
+		assert(false);
+	}
 
 	/**
 	 * Get the current output, one of the functions the user has to implement
 	 *
 	 * @return vector with pointers to all output messages in it
 	 */
-	virtual std::vector<n_network::t_msgptr> output() const {}
+	virtual std::vector<n_network::t_msgptr> output() const {
+		LOG_ERROR("ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
+		assert(false);
+	}
 
 	/**
 	 * Get the current output, this function will call the user-implemented output function

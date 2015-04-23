@@ -10,6 +10,8 @@
 
 #include "timestamp.h"
 #include "archive.h"
+#include "tools/globallog.h"
+#include <assert.h>
 #include "cereal/types/polymorphic.hpp"
 
 namespace n_model {
@@ -38,16 +40,19 @@ public:
 
 	virtual std::string toXML()
 	{
+		LOG_ERROR("STATE: Not implemented: 'std::string n_model::State::toXML()'");
 		return "";
 	}
 
 	virtual std::string toJSON()
 	{
+		LOG_ERROR("STATE: Not implemented: 'std::string n_model::State::toJSON()'");
 		return "";
 	}
 
 	virtual std::string toCell()
 	{
+		LOG_ERROR("STATE: Not implemented: 'std::string n_model::State::toCell()'");
 		return "";
 	}
 
