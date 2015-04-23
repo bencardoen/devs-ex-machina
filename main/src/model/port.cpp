@@ -2,7 +2,7 @@
  * port.cpp
  *
  *  Created on: 9-mrt.-2015
- *      Author: Pieter Tim Matthijs
+ *      Author: Pieter Tim Matthijs Stijn
  */
 
 #include "port.h"
@@ -11,6 +11,7 @@
 #include "cereal/types/vector.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/types/polymorphic.hpp"
+#include "objectfactory.h"
 
 namespace n_model {
 
@@ -157,13 +158,21 @@ n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP,
 std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 {
 	std::vector<n_network::t_msgptr> returnarray;
+	std::string sourcePort = this->getFullName();
+	{
+		std::string str = "";
+		t_zfunc zfunc = nullptr;
+		n_network::t_msgptr msg = n_tools::createObject<n_network::Message>("",
+		        n_network::t_timestamp::infinity(), "", sourcePort, message);
+		m_sentMessages.push_back(msg);
+	}
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
 		for (auto& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
 			std::string model_destination = pair.first->getHostName();
-			std::string sourcePort = this->getFullName();
+//			std::string sourcePort = this->getFullName();
 			std::string destPort = pair.first->getFullName();
 			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 
@@ -173,7 +182,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 	} else {
 		for (auto& pair : m_coupled_outs) {
 			std::string model_destination = pair.first->getHostName();
-			std::string sourcePort = this->getFullName();
+//			std::string sourcePort = this->getFullName();
 			std::string destPort = pair.first->getFullName();
 			for (t_zfunc& zFunction : pair.second) {
 				returnarray.push_back(
