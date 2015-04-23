@@ -7,6 +7,7 @@
 
 #include "coupledmodel.h"
 #include "controller.h"
+#include "cereal/types/vector.hpp"
 
 namespace n_model {
 
@@ -184,6 +185,23 @@ void CoupledModel::setController(n_control::Controller* newControl)
 	m_control = newControl;
 	for(t_modelptr& model: m_components)
 		model->setController(newControl);
+}
+
+void CoupledModel::serialize(n_serialisation::t_oarchive& archive)
+{
+	archive(cereal::virtual_base_class<Model>(this), m_components);
+}
+
+void CoupledModel::serialize(n_serialisation::t_iarchive& archive)
+{
+	archive(cereal::virtual_base_class<Model>(this), m_components);
+}
+
+void CoupledModel::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<CoupledModel>& construct)
+{
+	std::string name;
+	archive(name);
+	construct(name);
 }
 
 }
