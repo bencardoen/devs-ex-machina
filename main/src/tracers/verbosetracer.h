@@ -59,7 +59,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesInit argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a raw object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
 
 		t_stateptr state = adevs->getState();
 		*ssr << "\n"

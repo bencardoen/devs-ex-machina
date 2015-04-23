@@ -7,7 +7,7 @@ First of these is the \textbf{allocator}, which decides on which simulation core
 The next step is to create a \textbf{location table} and a table for the simulation cores. The former stores the location of all models. A \textsl{LocationTable} class is included for this purpose.\\
 The latter needs to be an \textsl{std::unordered\_map{\textless}std::size\_t, t\_coreptr{\textgreater}}. This map will store a pointer to each core which can be accessed using the core's ID.\\
 
-To get output from your simulation, you can select one or more of the included \textbf{tracers}. [...] TODO\\
+To get output from your simulation, you can select one or more of the included \textbf{tracers}. See \ref{sec:Tracing} for more details.\\
 
 The following steps differ slightly depending on which type of DEVS you want to run.
 

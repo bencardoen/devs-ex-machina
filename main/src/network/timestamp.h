@@ -187,8 +187,11 @@ public:
 	}
 };
 
-// In practice, use this typedef.
-typedef Time<std::size_t, std::size_t> t_timestamp;
+} /* namespace n_network */
+//load the typedef from a different file
+#include "forwarddeclare/timestamp.h"
+
+namespace n_network {
 
 /**
  * Convenience function : make a TimeStamp object reflecting the current time.

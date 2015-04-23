@@ -1,9 +1,88 @@
+\lstset{
+    frameround=fttt,
+    language=C++,
+    breaklines=true,
+}
+
 \section{Time}
-\paragraph{Explain default time implementation}
-\paragraph{Point to where the typedef can be changed}
-\paragraph{Explain how users can create their own whacky implementation of the Time class for if the current version does not suit their needs}
+Time is a very important aspect of the simulator. Our implementation allows users to easily change the representation of time in order to fit their needs.
+\paragraph{Custom time object}
+You can change how time is represented by changing the \lstinline{t_timestamp} type definition in the \path{src/forwarddeclare/timestamp.h} header. Please take care that this type implements at least the interface provided by the default \lstinline{Time} class. For more information, take a look at the accompanying documentation.
 
 \section{Tracing}
-\paragraph{Briefly explain where the user can change the tracerset typedef}
-\paragraph{Explain individual tracers}
-\paragraph{Explain how the user can implement their own Tracer or OutputPolicy}
+The tracers generate output during the simulation.
+\label{sec:Tracing}
+\paragraph{The Tracing interface}
+The interface consists of only a handful methods.
+\paragraph{Custom set of tracers}
+If the default set of tracers is not satisfactory, then you can select your own set of tracers. The header \path{tracers.h} in the folder \path{src/forwarddeclare} contains the typedef for the default implementation.
+\begin{lstlisting}
+typedef Tracers<VerboseTracer<CoutWriter>> t_tracerset;
+\end{lstlisting}
+You can select as many tracers as you want by providing more template arguments. The following example sets the simulator to use two tracers. The first tracer will generate the default verbose output and write it to a file. The second tracer is a custom tracer.
+\begin{lstlisting}
+typedef Tracers<VerboseTracer<FileWriter>,
+                MyTracer> t_tracerset;
+\end{lstlisting}
+Note that some tracers might need special initialization prior to use, such as the tracers provided by us that make use of the \lstinline{FileWriter} policy.
+
+\paragraph{Provided Tracers}
+All provided tracers make use of the policy pattern to separate the output generation from sending that output to an output sink. Currently, there is a policy for sending the output directly to standard out (\lstinline{CoutWriter}) or writing it to a file(\lstinline{FileWriter}). Both policies can be found in the \path{src/tracers/policies.h} header. Note that in the case of \lstinline{FileWriter}, the tracer must be explicitly initialized before it can be used. For more implementations, refer to the provided documentation.\\
+Currently, the simulator provides only one tracer class: the \lstinline{VerboseTracer}. This tracer will generate verbose output that is comparable to the verbose output of the Python PDEVS implementation by Jentl Van Tendeloo.
+\paragraph{Implementing a custom tracer}
+\subparagraph{The tracing interface}
+The custom tracer must at least implement the following interface:
+\begin{lstlisting}
+interface Tracer: public TracerBase
+{
+public:
+  /**
+   * @brief Traces state initialization of a model
+   * @param model The model that is initialized
+   * @param time The simulation time of initialization.
+   */
+  void tracesInit(const t_atomicmodelptr& adevs,
+                  t_timestamp time);
+
+  /**
+   * @brief Traces internal state transition
+   * @param adevs The atomic model that just
+   *              performed an internal transition
+   * @precondition The model pointer is not a nullptr
+   */
+  void tracesInternal(const t_atomicmodelptr& adevs,
+                      std::size_t coreid);
+
+  /**
+   * @brief Traces external state transition
+   * @param model The model that just went
+   *              through an external transition
+   */
+  void tracesExternal(const t_atomicmodelptr& adevs,
+                      std::size_t coreid);
+
+  /**
+   * @brief Traces confluent state transition
+   * A confluent state transition is
+   * a simultaneous internal and external transition.
+   * @param model The model that just went
+   *              through a confluent transition
+   */
+  void tracesConfluent(const t_atomicmodelptr& adevs,
+                       std::size_t coreid);
+};
+\end{lstlisting}
+Even though it is not explicitly enforced, it is highly recommended to derive your custom implementation from the \lstinline{TracerBase} class and to allow the use of output policies.\\
+Note that the tracer must not print its output upon generation. To make sure that the output is still generated in the correct order, the tracer must register a \lstinline{TraceMessage}.
+\subparagraph{Registering a trace message}
+The \lstinline{TraceMessage} class is defined in the \path{src/tracers/tracemessage.h} header file. These messages allow the simulator to schedule output generation and purge unwanted messages upon rollback. They contain the following elements:
+\begin{itemize}
+	\item[timestamp] The time upon which this message is created. This time can be retrieved either from the model that is being traced or as a separate parameter.
+	\item[tracerID] Each tracer should have a unique ID. If multiple tracers are used, this ID makes sure that the tracers cannot interfere with eachother. If your tracer derives from \lstinline{TracerBase}, then this ID is automatically assigned to your tracer. It can be accessed via the \lstinline{getID()} member function.
+	\item[execute function] This function is executed when the trace output can be safely sent to an output sink. It is recommended to use \lstinline{std::bind<...>()}. The function must be of type \lstinline{void()}.
+	\item[coreID] Each simulation core has an ID. During the simulation, it can happen that some trace messages must be removed based on which core initiated the trace.
+	\item[delete function] This function is called when the \lstinline{TraceMessage} is destructed. If the tracer must allocate memory on the heap, this function can be used to free that memory.\\*
+		Just like the \emph{execute function}, this function must be of type \lstinline{void()}.
+\end{itemize}
+When the message is created, it can be scheduled with the free function \lstinline{void scheduleMessage(t_tracemessageptr message)}.\\
+Both the \lstinline{TraceMessage} class and the \lstinline{scheduleMessage} function are defined in the \path{src/tracers/tracemessage.h} header. For a more in-depth example, you can always take a look at the implementation of the \lstinline{VerboseTracer} implementation.
