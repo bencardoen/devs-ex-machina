@@ -20,10 +20,13 @@ n_network::t_msgptr ZFunc::operator()(const n_network::t_msgptr& msg)
 
 void ZFunc::serialize(n_serialisation::t_oarchive& archive)
 {
+	archive("");
 }
 
 void ZFunc::serialize(n_serialisation::t_iarchive& archive)
 {
+	std::string x;
+	archive(x);
 }
 
 ZFuncCombo::ZFuncCombo(const t_zfunc& left, const t_zfunc& right):
