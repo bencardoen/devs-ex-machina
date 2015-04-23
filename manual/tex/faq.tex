@@ -7,7 +7,7 @@
 \end{enumerate}
 \subsubsection{Cygwin}
 \begin{enumerate}
-\item std::to\textunderscore string is not supported, do not use it in your own models.
+\item std::to\textunderscore string is not supported, do not use it in your own models. Some old C functions like atoi and stoi are not supported as well.
 \item GTest version 1.7 corrupts the stack if a test fails, use version 1.6 until GTest resolves this.
 \end{enumerate}
 \section{General considerations}

@@ -1,3 +1,51 @@
+\section{States}
+You can can make your own states with almost no limitations. The only requirements for a user's own states are that they should be objects from a type that implements \textsl{n\_model::State}. This class has a few functions that have to be implemented:
+\begin{itemize}
+	\item \textsl{std::string toString()}
+	\item \textsl{std::string toXML()}
+	\item \textsl{std::string toCell()}
+\end{itemize}
+While members in sub-classes can be added without any problems, by default there is a public member \textsl{std::string m\_state} implemented in \textsl{State} that can be used to represent the user's state.
+
 \section{Atomic models}
+Atomic models can be made by implementing a sub-class of \textsl{n\_model::AtomicModel}. The most basic functions to be implemented are:
+\begin{enumerate}
+	\item \textsl{void AtomicModel::extTransition(const std::vector{\textless}n\_network::t\_msgptr{\textgreater} \& inputs)}\\
+		Performs the model's external transition. The input argument is a vector with all messages at a certain point in time.
+	\item \textsl{void AtomicModel::intTransition()}\\
+		Performs the model's internal transition. 
+	\item \textsl{t\_timestamp AtomicModel::timeAdvance()}\\
+		Should return the model's current time advance value; the amount of time after which the following internal transition occurs. This function should not alter the model in any way.
+	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} AtomicModel::output()  const}\\
+		Returns the model's output; all messages that are to be send should be returned via this function. This function should not alter the model in any way.
+\end{enumerate}
+
+The user can access the model's \textbf{state} at any time using the built-in function \textsl{t\_stateptr Model::getState() const}. The acquired state can then be examined. When implementing the functions \textsl{extTransition} and \textsl{intTransition}, you must make use of the built-in function \textsl{void Model::setState(const t\_stateptr\& newState)} to set a new state.\\
+
+\textbf{Timestamps} that the user has to generate, for example in the \textsl{timeAdvance} function, can be easily constructed using the following constructor: \textsl{t\_timestamp(size\_t)}).\\
+
+\textbf{Input and output ports} can be added to a model by following functions:
+\begin{itemize}
+	\item \textsl{t\_portptr Model::addInPort(std::string name)}
+	\item \textsl{t\_portptr Model::addOutPort(std::string name)}
+\end{itemize}
+These functions return a pointer to the port that was added, so you can connect ports easier. More about that later on. \\
+
+When \textbf{sending messages} (\textbf{output function}), there are a few rules you should take into account. The message you want to send can only be a string. This string should be given to the port you want to send it through. The port will then create the actual messages (that are send over the models) and return them to you in a vector. All these messages (from possibly different ports) should be joined in 1 vector and be returned in the output function. The following functions will allow you to do so:
+\begin{itemize}
+	\item \textsl{t\_portptr Model::getPort(std::string name) const}
+	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port::createMessages(std::string message)}
+\end{itemize} 
+Something like this would work: this-{\textgreater}getPort("OUT")-{\textgreater}createMessages(message); \\
+
+\textbf{NOTE} that things like setting initial states, adding ports or setting other variables should be done before the model itself is used in any way. Incomplete models or undefined behaviour may be the result of said incorrect use.
 
 \section{Coupled models}
+Coupled models only require you to implement them as a sub-class of \textsl{n\_model::CoupledModel}.
+
+\textbf{Adding sub-models} requires following function: \textsl{void CoupledModel::addSubModel(const t\_modelptr\& model)}.
+
+\textbf{Creating input and output ports} is done in the same way as the atomic models.
+
+\textbf{Connecting these ports} can be done with the function \textsl{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}. This function connects port \textsl{p1} to port \textsl{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
+It is possible to connect ports from a coupled model to one of it's direct atomic (or coupled) model children.
