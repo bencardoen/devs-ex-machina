@@ -49,3 +49,12 @@ Coupled models only require you to implement them as a sub-class of \\ \textsl{n
 
 \textbf{Connecting these ports} can be done with the function \textsl{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}. This function connects port \textsl{p1} to port \textsl{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
 It is possible to connect ports from a coupled model to one of it's direct atomic (or coupled) model children.
+
+\section{Dynamic Structured DEVS}
+Both atomic models and coupled models can implement the following function:
+\begin{itemize}
+	\item \textsl{bool Model::modelTransition(DSSharedState* shared);}
+\end{itemize}
+The \textsl{shared} parameter gives access to a shared state. This state can be used to organize structural changes from the bottom up. It will not be wiped in between transitions.\\
+The return value indicates whether or not the simulator should look at the parent of the current model for performing Dynamic Structured DEVS. This way, not all models have to be consulted for structural changes.\\
+In the \textsl{modelTransition} function, models can add and remove connections, ports and submodels. Currently, only adding and removing connections is supported.
