@@ -53,6 +53,7 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) {
 		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
 		assert(false);
+		message.capacity();
 	};
 
 	/**
@@ -86,6 +87,7 @@ public:
 	virtual t_timestamp timeAdvance() {
 		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel::timeAdvance()'");
 		assert(false);
+		return t_timestamp();
 	}
 
 	/**
@@ -96,6 +98,7 @@ public:
 	virtual std::vector<n_network::t_msgptr> output() const {
 		LOG_ERROR("ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
 		assert(false);
+		return std::vector<n_network::t_msgptr>();
 	}
 
 	/**
