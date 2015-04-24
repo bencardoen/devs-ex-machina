@@ -1,0 +1,16 @@
+ Performance counter stats for 'build/dxexmachina --gtest_filter=Controller.p*' (100 runs):
+
+       1596.555170      task-clock (msec)         #    1.990 CPUs utilized            ( +-  1.90% )
+             1,920      context-switches          #    0.001 M/sec                    ( +-  2.15% )
+                19      cpu-migrations            #    0.012 K/sec                    ( +-  2.87% )
+            17,622      page-faults               #    0.011 M/sec                    ( +-  1.31% )
+     2,685,171,357      cycles                    #    1.682 GHz                      ( +-  1.91% )
+     1,809,132,371      stalled-cycles-frontend   #   67.37% frontend cycles idle     ( +-  2.09% )
+   <not supported>      stalled-cycles-backend   
+     2,107,374,657      instructions              #    0.78  insns per cycle        
+                                                  #    0.86  stalled cycles per insn  ( +-  1.62% )
+       512,738,885      branches                  #  321.153 M/sec                    ( +-  1.69% )
+         2,705,291      branch-misses             #    0.53% of all branches          ( +-  2.69% )
+
+       0.802452526 seconds time elapsed                                          ( +-  3.55% )
+

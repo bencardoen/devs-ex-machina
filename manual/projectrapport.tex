@@ -141,7 +141,7 @@ This is implemented but removing models is not yet fully tested.
 %TODO Stijn
 \subsection{Parallel}
 \subsubsection{Optimistic}
-Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must taken that they don't deadlock, but don't race either.
+Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
 \subsubsection{Conservative}
 Conservative time synchronization is still under development.
 
@@ -159,12 +159,30 @@ Stijn therefore wrote his own implementation. %TODO Stijn
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
-The first performance results were obtained by running PyPDEVS's dynamic structured example against our own simulator, with a termination time of 3.6 E6. It should be noted that the GTEST overhead is not eliminated here yet. The perf \cite{perf} tool was used to obtain low level statistics with as much detail as possible. Unfortunately perf has very limited use on a virtualized OS. The parallel implementation was not yet feature complete, so although faster could not be fairly compared to PyPDEVS.
+We use perf to get statistically sound benchmarks.
+\subsection{Classic}
+An endtime of 3.6e6 was set, and both examples run against each other.
+\lstinputlisting[]{pycla.txt}
+The following shows a recording of the C++ implementation of the same example.\\
+\lstinputlisting[]{cpcla.txt}
+\subsubsection{Conclusion}
+The C++ port is approximately 12.906 times faster.
+
+\subsection{Dynamic structured}
+An end-time of 3.6e6 was set, and both examples run against each other.
 \lstinputlisting[]{pydyn.txt}
 The following shows a recording of the C++ implementation of the same example.\\
 \lstinputlisting[]{cpdyn.txt}
-This result is still warped due to the startup/shutdown time of GTEST, but allready the C++ port is roughly 6x faster, only page faults and migrations are worse (but being worked on).
+\subsubsection{Conclusion}
+This result is still warped due to the startup/shutdown time of GTEST, but allready the C++ port is roughly 7.05 times faster, only page faults and migrations are worse (but being worked on).
+\subsection{Parallel}
+With GVT not yet active, an endtime of 3.6e6 was used (as before).\lstinputlisting[]{pypar.txt}\
+The following shows a recording of the C++ implementation of the same example.\\
+\lstinputlisting[]{cppar.txt}
+\subsubsection{Conclusion}
+The C++ port is approximately 19.6 times faster.
 
+\section{Further work.}
 Further optimizations included but are not limited to: 
 \begin{enumerate}
 \item Custom memory allocators/pools (boost, ...)
