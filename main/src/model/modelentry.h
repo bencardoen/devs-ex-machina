@@ -72,6 +72,26 @@ public:
 	std::ostream& operator<<(std::ostream& os, const ModelEntry& rhs){
 		return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
 	}
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialisation::t_oarchive& archive)
+	{
+		archive(m_name, m_scheduled_at);
+	}
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialisation::t_iarchive& archive)
+	{
+		archive(m_name, m_scheduled_at);
+	}
 };
 
 }

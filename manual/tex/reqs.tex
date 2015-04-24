@@ -1,0 +1,48 @@
+\section{System requirements}
+\subsubsection{Compiler}
+The project requires a recent version of a standards-compliant C++11 compiler and runtime. The following are compilers/runtimes used to develop the simulator (and therefore guaranteed to work)
+\begin{itemize}
+  \item G++ 4.8.2 + libstdc++
+  \item G++ 4.9.2 + libstdc++
+  \item Clang 3.4.0 + libstdc++
+  \item Clang 3.5.0 + libstdc++
+  \item G++ 4.9.2 on Cygwin $>=$ 1.7
+\end{itemize}
+Especially the C++11 threading support is essential.
+\subsubsection{Dependencies}
+The build system requires CMake $>=$ 2.8, the presence of standard build tools is assumed (make etc.).
+The following are the functional dependencies:
+\begin{itemize}
+  \item Cereal (source included)
+  \item GTest $>=$ 1.6
+  \item Boost heap $>=$ 1.55  
+\end{itemize}
+Boost can be installed on *nix with the following command:\\
+Debian based:\\
+\lstinline!$sudo apt-get install libboost-all-dev!\\
+Red-hat based:\\
+\lstinline!$sudo yum install boost-devel!\\
+\subsubsection{Preparing the build}
+We use thread-sanitizer to verify thread-safety at runtime instrumented by the compiler (g++ and clang). This however requires building the project (and by extension any linked libraries) with position independent flags. For the simulator this is resolved by CMake, however for gtest you'll need to manually build GTest with this extra flag:\\
+In file internal\textunderscore utils.cmake change compile options to append the compile flag -fpie :
+set(cxx\textunderscore base \textunderscore flags "-Wall -Wshadow -fpie")\\
+If you have any non-standard locations where the compiler should search for Boost and/or GTest, place them in the file localpreferences.txt.\\
+SET({GTEST|BOOST}\_ROOT "your path here"). Make sure that for gtest, the listed path contains both the "include" folder and libraries in a dedicated folder "lib". For Boost the path needs to contain the "include" folder with the boost headers.
+\subsubsection{Building}
+On *nix, a build script is provided to drive cmake:\\
+\lstinline!$main/generate_build.sh {Debug|Release} {g++|clang++}!\\
+Alternatively, invoke cmake manually :
+\lstinline!$mkdir build!\\
+\lstinline!$cd build!\\
+\lstinline!$cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1=!\\
+\lstinline!"{-std=c++11|-std=gnu++11}" -DCMAKE_CXX_COMPILER="{clang++|g++}" !
+\lstinline!-DCMAKE_BUILD_TYPE={Release|Debug} ../main!
+\lstinline!$make -j{CPU-CORES}!\\
+\subsubsection{Development}
+The cmake invocation has created an Eclipse CDT project for you to open the simulator code in:
+\begin{itemize}
+  \item Open Eclipse Luna (with CDT plugin)
+  \item File, Import, General
+  \item Select "Existing projects into Workspace"
+  \item navigate to the root folder of the project (containing ./main, ./build)
+\end{itemize}

@@ -368,8 +368,20 @@ private:
 	}
 };
 
-} /*namespace n_tracers*/
+} /* namespace n_tracers*/
 
-#include "fwddecl.h"
+//load the typedef from a different file
+#include "forwarddeclare/tracers.h"
+
+namespace n_tracers{
+
+/**
+ * @brief Default pointer type to the default set of tracers
+ * @see t_tracerset
+ */
+typedef std::shared_ptr<t_tracerset> t_tracersetptr;
+
+} /* namespace n_tracers */
+
 
 #endif /* SRC_TRACING_TRACERS_H_ */
