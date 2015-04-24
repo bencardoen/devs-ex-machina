@@ -27,6 +27,7 @@ We use thread-sanitizer to verify thread-safety at runtime instrumented by the c
 In file internal\textunderscore utils.cmake change compile options to append the compile flag -fpie :
 set(cxx\textunderscore base \textunderscore flags "-Wall -Wshadow -fpie")\\
 If you have any non-standard locations where the compiler should search for Boost and/or GTest, place them in the file localpreferences.txt.\\
+SET({GTEST|BOOST}\_ROOT "your path here"). Make sure that for gtest, the listed path contains both the "include" folder and libraries in a dedicated folder "lib". For Boost the path needs to contain the "include" folder with the boost headers.
 \subsubsection{Building}
 On *nix, a build script is provided to drive cmake:\\
 \lstinline!$main/generate_build.sh {Debug|Release} {g++|clang++}!\\

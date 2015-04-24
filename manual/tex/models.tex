@@ -5,7 +5,12 @@ You can can make your own states with almost no limitations. The only requiremen
 	\item \textsl{std::string toXML()}
 	\item \textsl{std::string toCell()}
 \end{itemize}
+If the user does not override the above functions, this will result in a logged error. Serialization prohibits abstract functions, which enforces this workaround.\\
 While members in sub-classes can be added without any problems, by default there is a public member \textsl{std::string m\_state} implemented in \textsl{State} that can be used to represent the user's state.
+\\ For serialization you have to declare (after class definition) 
+\begin{verbatim}
+CEREAL_REGISTER_TYPE(MyState);
+\end{verbatim}
 
 \section{Atomic models}
 Atomic models can be made by implementing a sub-class of \\ \textsl{n\_model::AtomicModel}. The most basic functions to be implemented are:
@@ -14,11 +19,12 @@ Atomic models can be made by implementing a sub-class of \\ \textsl{n\_model::At
 		Performs the model's external transition. The input argument is a vector with all messages at a certain point in time.
 	\item \textsl{void AtomicModel::intTransition()}\\
 		Performs the model's internal transition. 
-	\item \textsl{t\_timestamp AtomicModel::timeAdvance()}\\
+	\item \textsl{t\_timestamp AtomicModel::timeAdvance() const}\\
 		Should return the model's current time advance value; the amount of time after which the following internal transition occurs. This function should not alter the model in any way.
 	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} AtomicModel::output()  const}\\
 		Returns the model's output; all messages that are to be send should be returned via this function. This function should not alter the model in any way.
 \end{enumerate}
+If these are not overridden, this will result in a logged assertion error.\\
 
 The user can access the model's \textbf{state} at any time using the built-in function \textsl{t\_stateptr Model::getState() const}. The acquired state can then be examined. When implementing the functions \textsl{extTransition} and \textsl{intTransition}, you must make use of the built-in function \textsl{void Model::setState(const t\_stateptr\& newState)} to set a new state.\\
 
@@ -36,7 +42,14 @@ When \textbf{sending messages} (\textbf{output function}), there are a few rules
 	\item \textsl{t\_portptr Model::getPort(std::string name) const}
 	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port:: \\createMessages(std::string message)}
 \end{itemize} 
-Something like this would work: this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages(message); \\
+Something like this would work: this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message"); \\
+
+It's important that a model name is unique over the whole simulation, and portname should be unique per model.\\
+
+For serialization you have to declare (after class definition)
+\begin{verbatim}
+CEREAL_REGISTER_TYPE(MyModel);
+\end{verbatim}
 
 \textbf{NOTE} that things like setting initial states, adding ports or setting other variables should be done before the model itself is used in any way. Incomplete models or undefined behaviour may be the result of said incorrect use.
 
@@ -47,7 +60,7 @@ Coupled models only require you to implement them as a sub-class of \\ \textsl{n
 
 \textbf{Creating input and output ports} is done in the same way as the atomic models.
 
-\textbf{Connecting these ports} can be done with the function \textsl{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}. This function connects port \textsl{p1} to port \textsl{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
+\textbf{Connecting these ports} can be done with the function\\ \textsl{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}.\\ This function connects port \textsl{p1} to port \textsl{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
 It is possible to connect ports from a coupled model to one of it's direct atomic (or coupled) model children.
 
 \section{Dynamic Structured DEVS}
