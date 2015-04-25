@@ -6,9 +6,11 @@
  */
 
 #include <gtest/gtest.h>
+#include "controllerconfig.h"
 #include "network.h"
 #include "objectfactory.h"
 #include "controller.h"
+#include "simpleallocator.h"
 #include "trafficlight.h"
 #include "tracers.h"
 #include "coutredirect.h"
@@ -27,31 +29,6 @@ using namespace n_control;
 using namespace n_model;
 using namespace n_tools;
 using namespace n_examples;
-
-/*
- * Simple, dumb allocator for test use
- * Spreads models evenly
- */
-class SimpleAllocator: public Allocator
-{
-private:
-	size_t m_i;
-	size_t m_cores;
-public:
-	SimpleAllocator(size_t c)
-		: m_i(0), m_cores(c)
-	{
-	}
-	virtual ~SimpleAllocator()
-	{
-	}
-	size_t allocate(const t_atomicmodelptr&)
-	{
-		int i = m_i;
-		m_i = (m_i + 1) % m_cores;
-		return i;
-	}
-};
 
 /*
  * Function to test part of the functionality present in Controller's addModel methods
@@ -104,6 +81,7 @@ TEST(Controller, cDEVS)
 
 		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setClassicDEVS();
+
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
 		t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");

@@ -104,6 +104,7 @@ PyPDEVS uses MPI to exchange messages between kernels, whereas we could use shar
 \end{figure} 
 Early benchmarks showed a repeatable throughput of 5e5 msg/s, with 4 kernels on modest hardware. The problems of (unintentional) out of order receipt and potential loss of messages are a non-issue in this context, since we use FIFO queues and loss of a message would implicate severe system failure (in which case message loss is the lesser problem).\\
 Another advantage of hiding the message exchange behind a shared Network class instance is that, should this be required in the future, the kernel could run on different machines without requiring much redesigning of the system. An RPC implementation would simply have to implement the Network class on both sides.
+\includegraphics[scale=0.2]{network.png}
 
 \section{Tracing}
 The tracing uses template programming, and is largely asynchronous w.r.t. the simulator kernels. This can be seen by the high utilization values when benchmarking the examples.
@@ -116,7 +117,7 @@ The models hide all implementation details for the particular DEVS formalisms, w
 The scheduler from the prototypes was reused, with little to no changes (barring a few bugfixes). An unsynchronized version was implemented for comparison purposes.
 
 \section{Controller}
-%TODO Matthijs
+For the controller, care was taken in making the interface both functional and minimal. The default configuration is quick to set up, and customization is possible should the user require it.
 
 \section{Serialization}
 For serialization we used the Cereal \cite{cereal} header-only framework. We have used separate load and save functions for full flexibility. For each type that occurs in the form of a pointer we implemented a static load and construct function since the object first has to be created before the saved data can be imported. Cereal has a small coupling with the code (models) that has to be written by the user as the user has to register his own classes due to polymorphism.
