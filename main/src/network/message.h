@@ -31,7 +31,7 @@ operator<<(std::ostream& os, const MessageColor& c);
  */
 class Message
 {
-private:
+protected:
 	/**
 	 * Unique model name of target.
 	 */
