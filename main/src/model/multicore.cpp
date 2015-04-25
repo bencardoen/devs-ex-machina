@@ -22,8 +22,8 @@ Multicore::~Multicore()
 }
 
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
-	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
-	        t_timestamp::infinity())
+	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE),
+	m_mcount_vector(cores), m_tred(t_timestamp::infinity())
 {
 }
 
@@ -325,6 +325,10 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 {
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(),"reverting from ", this->getTime(), " to ", totime);
+	if(this->isIdle()){
+		LOG_DEBUG("MCORE:: ", this->getCoreID()," Core going from idle to active ");
+		this->setIdle(false);
+	}
 	// We have the simulator lock
 	// DO NOT lock on msgs, we're called by receive message, which is locked !!
 	while (!m_processed_messages.empty()) {

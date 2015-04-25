@@ -17,6 +17,7 @@ __  Current Time: 58____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 108
 
 __  Current Time: 108____________________
@@ -26,6 +27,7 @@ __  Current Time: 108____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 118
 
 __  Current Time: 118____________________
@@ -35,6 +37,7 @@ __  Current Time: 118____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 178
 
 __  Current Time: 178____________________
@@ -44,6 +47,7 @@ __  Current Time: 178____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 228
 
 __  Current Time: 200____________________
@@ -87,6 +91,7 @@ __  Current Time: 360____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 410
 
 __  Current Time: 410____________________
@@ -96,6 +101,7 @@ __  Current Time: 410____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 420
 
 __  Current Time: 420____________________
@@ -105,6 +111,7 @@ __  Current Time: 420____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 480
 
 __  Current Time: 480____________________
@@ -114,6 +121,7 @@ __  Current Time: 480____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 530
 
 __  Current Time: 500____________________
@@ -157,6 +165,7 @@ __  Current Time: 660____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 710
 
 __  Current Time: 710____________________
@@ -166,6 +175,7 @@ __  Current Time: 710____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 720
 
 __  Current Time: 720____________________
@@ -175,6 +185,7 @@ __  Current Time: 720____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 780
 
 __  Current Time: 780____________________
@@ -184,6 +195,7 @@ __  Current Time: 780____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 830
 
 __  Current Time: 800____________________
@@ -227,6 +239,7 @@ __  Current Time: 960____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1010
 
 __  Current Time: 1010____________________
@@ -236,6 +249,7 @@ __  Current Time: 1010____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1020
 
 __  Current Time: 1020____________________
@@ -245,6 +259,7 @@ __  Current Time: 1020____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1080
 
 __  Current Time: 1080____________________
@@ -254,6 +269,7 @@ __  Current Time: 1080____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1130
 
 __  Current Time: 1100____________________
@@ -297,6 +313,7 @@ __  Current Time: 1260____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1310
 
 __  Current Time: 1310____________________
@@ -306,6 +323,7 @@ __  Current Time: 1310____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1320
 
 __  Current Time: 1320____________________
@@ -315,6 +333,7 @@ __  Current Time: 1320____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1380
 
 __  Current Time: 1380____________________
@@ -324,6 +343,7 @@ __  Current Time: 1380____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1430
 
 __  Current Time: 1400____________________
@@ -367,6 +387,7 @@ __  Current Time: 1560____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1610
 
 __  Current Time: 1610____________________
@@ -376,6 +397,7 @@ __  Current Time: 1610____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1620
 
 __  Current Time: 1620____________________
@@ -385,6 +407,7 @@ __  Current Time: 1620____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1680
 
 __  Current Time: 1680____________________
@@ -394,6 +417,7 @@ __  Current Time: 1680____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1730
 
 __  Current Time: 1700____________________
@@ -437,6 +461,7 @@ __  Current Time: 1860____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1910
 
 __  Current Time: 1910____________________
@@ -446,6 +471,7 @@ __  Current Time: 1910____________________
 		New State: yellow
 		Output Port Configuration:
 			port <OBSERVED>:
+				yellow
 		Next scheduled internal transition at time 1920
 
 __  Current Time: 1920____________________
@@ -455,6 +481,7 @@ __  Current Time: 1920____________________
 		New State: red
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 1980
 
 __  Current Time: 1980____________________
@@ -464,4 +491,5 @@ __  Current Time: 1980____________________
 		New State: green
 		Output Port Configuration:
 			port <OBSERVED>:
+				grey
 		Next scheduled internal transition at time 2030

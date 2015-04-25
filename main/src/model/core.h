@@ -87,6 +87,11 @@ private:
 	n_tracers::t_tracersetptr m_tracers;
 
 	/**
+	 * Indicate if this core is beyond termination, but waiting on others.
+	 */
+	std::atomic<bool> m_idle;
+
+	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
 	 * @post msg has correct destination id field set for network.
@@ -233,6 +238,21 @@ public:
 	 * @synchronized
 	 */
 	bool isLive() const;
+
+	/**
+	 * @return true if a Core has reached a termination condition, and is potentially waiting for
+	 * other cores to finish. != isLive().
+	 */
+	virtual
+	bool isIdle() const;
+
+	/**
+	 * Mark this core as having reached termination condition, but keep it alive (waiting for
+	 * other cores).
+	 */
+	virtual
+	void
+	setIdle(bool idlestate);
 
 	/**
 	 * Start/Stop core.

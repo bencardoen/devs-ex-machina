@@ -116,6 +116,14 @@ private:
 	void
 	waitUntilOK(const t_controlmsg& msg);
 
+
+	/**
+	 * Set the color of msg with this core's color.
+	 */
+	virtual
+	void
+	paintMessage(const t_msgptr& msg)override;
+
 public:
 	Multicore()=delete;
 	/**
@@ -200,7 +208,7 @@ public:
 	 * Sets new gvt.
 	 * This clears all processed messages time < newgvt, all send messages < newgvt
 	 * @pre newgvt >= this->getGVT()
-	 * @locks : acquires simulatorlock, msglock (in order)
+	 * @locks : acquires simulatorlock
 	 */
 	virtual
 	void setGVT(const t_timestamp&)override;
@@ -230,14 +238,6 @@ public:
 	virtual
 	void
 	unlockMessages()override;
-
-	/**
-	 * Set the color of msg with this core's color.
-	 */
-	virtual
-	void
-	paintMessage(const t_msgptr& msg)override;
-
 };
 
 void calculateGVT(/* access to cores,*/ size_t ms, std::atomic<bool>& run);
