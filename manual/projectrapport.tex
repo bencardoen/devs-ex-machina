@@ -169,7 +169,9 @@ Stijn therefore wrote his own implementation. %TODO Stijn
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
-We use perf to get statistically sound benchmarks.
+We use perf to get statistically sound benchmarks. The command run was :
+\lstinline!$perf stat -r {rounds} {command}!\\
+
 \subsection{Classic}
 An endtime of 3.6e6 was set, and both examples run against each other.
 \lstinputlisting[]{pycla.txt}
