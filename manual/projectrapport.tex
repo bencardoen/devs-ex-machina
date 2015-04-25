@@ -6,6 +6,7 @@
 \usepackage{amsfonts}
 \usepackage{listings}
 \usepackage{amssymb}
+\usepackage{hyperref}
 \usepackage[T1]{fontenc}
 \usepackage[scaled]{beramono}
 \newcommand\Small{\fontsize{9}{9.2}\selectfont}
@@ -15,7 +16,7 @@
 \usepackage{graphicx}
 \usepackage[]{algorithm2e}
 
-\title{Project Rapport\\\textsc{DEVS Ex Machina}}
+\title{Project Report\\\textsc{DEVS Ex Machina}}
 \author{Ben Cardoen\\Pieter Lauwers\\Stijn Manhaeve\\Tim Tuijn\\Matthijs Van Os}
 \date{}
 \begin{document}
@@ -71,8 +72,15 @@ The only downside is the synchronized access to the reference count in the share
 
 \chapter{Design}
 \section{Overview}
-We've slightly departed from the PyPDEVS structure, to allow for more encapsulation and decoupling of the core entities. This clear separation of data and responsibilities between classes made the threading part of the 
-project easier (no or minimal shared state).
+We've slightly departed from the PyPDEVS structure, to allow for more encapsulation and decoupling of the core entities. This clear separation of data and responsibilities between classes made the threading part of the project easier (no or minimal shared state). See the \hyperref[simpledesign]{Simple Design figure \ref*{simpledesign}}.\\
+
+
+\begin{figure}[h!]
+	\makebox[\textwidth][c]{\includegraphics[width=1.5\textwidth]{Design.png}}
+	\caption{Simple Design}
+	\label{simpledesign}
+\end{figure}
+
 %TODO include UML overview
 
 
