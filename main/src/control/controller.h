@@ -36,7 +36,15 @@ class Controller
 {
 public:
 	enum SimType {CLASSIC, PDEVS, DSDEVS};
-	enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
+	/**
+	 * Desribes signal passed between threads.
+	 * SHOULDWAIT : thread should at earliest convenience queue on condition variable, then change state to ISWAITING
+	 * ISWAITING : thread is waiting on condition variable
+	 * STOP : main->thread, thread halts as soon as signal is received.
+	 * FREE : main->thread thread can skip condition var
+	 * IDLE : thread->main, thread has reached term condition, but is idle-running.
+	 */
+	enum class ThreadSignal{ISWAITING, SHOULDWAIT, STOP, FREE, IDLE};
 
 private:
 	SimType m_simType;

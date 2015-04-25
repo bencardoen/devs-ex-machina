@@ -26,8 +26,8 @@ void n_model::Core::load(const std::string&)
 }
 
 n_model::Core::Core()
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
-	        false)
+	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()),
+	  m_terminated(false), m_idle(false)
 {
 	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
@@ -266,6 +266,7 @@ void n_model::Core::syncTime()
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
 		m_terminated.store(true);
 		m_live.store(false);
+		this->setIdle(true);
 	}
 }
 
@@ -284,6 +285,16 @@ bool n_model::Core::isLive() const
 	return m_live;
 }
 
+bool n_model::Core::isIdle() const
+{
+	return m_idle;
+}
+
+void n_model::Core::setIdle(bool idlestat){
+	LOG_DEBUG("Core :: ", this->getCoreID(), " setting state to Idle");
+	m_idle.store(idlestat);
+}
+
 void n_model::Core::setLive(bool b)
 {
 	m_live.store(b);
@@ -296,13 +307,18 @@ std::size_t n_model::Core::getCoreID() const
 
 void n_model::Core::runSmallStep()
 {
-	assert(this->m_live && "Attempted to run a simulation step in a dead kernel ?");
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
 
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
 	this->getMessages();	// locked on msgs
+
+	if(this->isIdle()){	// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
+		LOG_DEBUG("Core:: ", this->getCoreID(), " skipping small Step, we're idle (and messages did not alter that");
+		this->unlockSimulatorStep();
+		return;
+	}
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
