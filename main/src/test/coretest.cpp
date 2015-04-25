@@ -548,12 +548,3 @@ TEST(Multicore, GVTfunctions){
 	EXPECT_EQ(coreone->getTime().getTime(), 108);
 }
 
-
-TEST(Multicore, GVT){
-	std::atomic<bool> run(true);
-	std::thread gvt(&n_model::calculateGVT, 500, std::ref(run));
-	for(size_t i = 0; i<10000000; ++i){
-	}
-	run.store(false);
-	gvt.join();
-}
