@@ -405,7 +405,7 @@ TEST(tracing, traceCall) {
 void testFunc(int* ref, int newVal) {
 	*ref = newVal;
 }
-TEST(tracing, DISABLED_tracerMessage) {
+TEST(tracing, tracerMessage) {
 	//test the testFunc function
 	int intvar = 0;
 	EXPECT_EQ(intvar, 0);
