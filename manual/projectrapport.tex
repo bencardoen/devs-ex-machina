@@ -193,6 +193,16 @@ The following shows a recording of the C++ implementation of the same example.\\
 \subsubsection{Conclusion}
 The C++ port is approximately 19.6 times faster.
 
+\section{Logger}
+We have also conducted a small benchmark to compare the raw power of our logger and the proposed g3log.
+We let each logger print several hundred thousand messages to a file. These are the performance statistics:
+\subsubsection{g3log}
+\lstinputlisting[]{g3log.perf}
+\subsubsection{Our own logger}
+\lstinputlisting[]{own.perf}
+\subsubsection{Conclusion}
+While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
+
 \section{Further work.}
 Further optimizations included but are not limited to: 
 \begin{enumerate}

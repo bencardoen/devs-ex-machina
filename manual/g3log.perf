@@ -1,0 +1,25 @@
+# started on Sat Apr 25 17:57:15 2015
+
+
+ Performance counter stats for './build/g3Logger' (20 runs):
+
+       5331.845926      task-clock (msec)         #    2.454 CPUs utilized            ( +-  1.83% )
+            67,607      context-switches          #    0.013 M/sec                    ( +- 11.11% )
+                99      cpu-migrations            #    0.019 K/sec                    ( +-  6.68% )
+             6,630      page-faults               #    0.001 M/sec                    ( +- 13.58% )
+    12,544,699,130      cycles                    #    2.353 GHz                      ( +-  1.61% )
+     7,883,381,136      stalled-cycles-frontend   #   62.84% frontend cycles idle     ( +-  2.17% )
+   <not supported>      stalled-cycles-backend   
+    10,552,506,761      instructions              #    0.84  insns per cycle        
+                                                  #    0.75  stalled cycles per insn  ( +-  0.44% )
+     2,302,644,343      branches                  #  431.866 M/sec                    ( +-  0.39% )
+        14,320,386      branch-misses             #    0.62% of all branches          ( +-  1.68% )
+
+       2.172949009 seconds time elapsed                                               ( +-  1.15% )
+
+
+ Average output stats for './build/g3Logger' (20 runs):
+           300,000      log size (messages)
+        23,260,910      log size (bytes)
+        10,704,766      write speed (B/s)
+           138,061      write speed (msg/s)
