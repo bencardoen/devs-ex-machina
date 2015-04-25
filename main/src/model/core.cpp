@@ -133,7 +133,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 		for (const auto& msg : mailfrom) {
 			msg->setSourceCore(this->getCoreID());
 			paintMessage(msg);
-			msg->setTimeStamp(makeCausalTimeStamp(this->getTime()));	// gives models a chance to differentiate (p-order)
+			msg->setTimeStamp(this->getTime());
 		}
 		this->sortMail(mailfrom);// <-- Locked here on msglock
 	}
@@ -430,6 +430,7 @@ void n_model::Core::removeModel(std::string name)
 
 void n_model::Core::setTime(const t_timestamp& t)
 {
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " setting time from ", m_time , " to ", t);
 	m_time = t;
 }
 

@@ -11,7 +11,6 @@
 #include "message.h"
 #include "msgqueue.h"
 #include <vector>
-#include <array>
 #include "tools/globallog.h"
 
 namespace n_network{
@@ -30,9 +29,10 @@ public:
 
 	Network() = delete;
 
-	Network(size_t cores):m_cores(cores), m_queues(m_cores){
-		LOG_DEBUG("NETWORK: Network constructor with ", cores, " queues.");
-	}
+	/**
+	 * Create a network object with #cores.
+	 */
+	Network(size_t cores);
 
 	/**
 	 * Called by a core pushing a message to the network.
@@ -40,10 +40,7 @@ public:
 	 * @post : msg will be queued for destination.
 	 */
 	void
-	acceptMessage(const t_msgptr& msg){
-		m_queues[msg->getDestinationCore()].push(msg);
-		LOG_DEBUG("NETWORK: Network accepting message");
-	}
+	acceptMessage(const t_msgptr& msg);
 
 	/**
 	 * Called by a core when it is ready to process messages.
@@ -52,15 +49,14 @@ public:
 	 * @pre coreid < cores
 	 */
 	t_messages
-	getMessages(std::size_t coreid){
-		LOG_DEBUG("NETWORK: Network sending msgs to ", coreid);
-		return m_queues[coreid].purge();
-	}
+	getMessages(std::size_t coreid);
 
+	/**
+	 * Check if the network has any pending messages.
+	 * Use this if you don't want to pop pending messages, only check for them.
+	 */
 	bool
-	havePendingMessages(std::size_t coreid)const{
-		return m_queues[coreid].size()!=0;
-	}
+	havePendingMessages(std::size_t coreid)const;
 };
 
 

@@ -117,7 +117,11 @@ TEST(Message, operators){
 	scheduler->unschedule_until(popped, tokentime);
 	EXPECT_EQ(popped.size(), 55);
 	EXPECT_EQ(scheduler->size(), 44);
-	scheduler->clear();
+	popped.clear();
+	token.reset();
+	token = createObject<Message>("", t_timestamp::infinity(), "", "", "");
+	MessageEntry endtime(token);
+	scheduler->unschedule_until(popped, token);
 	EXPECT_EQ(scheduler->size(), 0);
 }
 

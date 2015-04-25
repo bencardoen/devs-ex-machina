@@ -1,4 +1,5 @@
 \documentclass[8pt,a4paper]{report}
+\usepackage{hyperref}
 \usepackage[latin1]{inputenc}
 \usepackage{xcolor}
 \usepackage{textcomp}
@@ -108,7 +109,7 @@ Another advantage of hiding the message exchange behind a shared Network class i
 
 \section{Tracing}
 The tracing uses template programming, and is largely asynchronous w.r.t. the simulator kernels. This can be seen by the high utilization values when benchmarking the examples.
-%TODO Stijn
+The tracing component makes heavy use of template programming. For more detailed information, please refer to \href{run:./tracersReport.pdf}{tracersReport.pdf}.
 
 \section{Models}
 The models hide all implementation details for the particular DEVS formalisms, without limiting the user to extend into any subclassed model of his/her choice. The use can focus on what he/she wants the model to emulate, and not worry about for example locking, allocation etc. We refer to the manual for more information about the creation of these models.
@@ -147,8 +148,7 @@ The single core implementations follow exactly the runtime behaviour shown by th
 \subsection{DirectConnect}
 %TODO Stijn/Matthijs Directconnect : what is rootmodel, only atomics in core.
 \subsection{Dynamic Structured}
-This is implemented but removing models is not yet fully tested.
-%TODO Stijn
+Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
@@ -165,7 +165,23 @@ libstdc++'s std::string implementation appears to be still Copy On Write (despit
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
 \section{Logger}
 The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on Cygwin. 
-Stijn therefore wrote his own implementation. %TODO Stijn
+Stijn therefore wrote his own implementation.\\
+This implementation only covers the most basic needs:
+\begin{itemize}
+	\item asynchronous output
+	\item thread safe
+	\item multiple logging levels currently, the following 4 levels are supported:\\
+		\emph{INFO}, \emph{DEBUG}, \emph{WARNING} and \emph{ERROR}
+	\item levels can be individually switched on/off at compile time
+	\item No logging code is executed whatsoever if the logger is disabled
+	\item log messages contain filename and line number of the log command
+\end{itemize}
+It therefore lacks certain key features such as
+\begin{itemize}
+	\item crash safe
+	\item custom assert that will log an error before shutting down
+\end{itemize}
+Chances are that we will wait with implementing these features until we actually need them.
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
@@ -193,6 +209,16 @@ The following shows a recording of the C++ implementation of the same example.\\
 \lstinputlisting[]{cppar.txt}
 \subsubsection{Conclusion}
 The C++ port is approximately 19.6 times faster.
+
+\section{Logger}
+We have also conducted a small benchmark to compare the raw power of our logger and the proposed g3log.
+We let each logger print several hundred thousand messages to a file. These are the performance statistics:
+\subsubsection{g3log}
+\lstinputlisting[]{g3log.perf}
+\subsubsection{Our own logger}
+\lstinputlisting[]{own.perf}
+\subsubsection{Conclusion}
+While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
 
 \section{Further work.}
 Further optimizations included but are not limited to: 

@@ -26,14 +26,13 @@ public:
 	 * @brief Constructor for the TraceMessage
 	 * @param time The timestamp of the message.
 	 * 		This is the time that the scheduler uses for scheduling the message
-	 * @param tracerID A unique identifier for the tracer that registered this message.
 	 * @param func A function object. This function will be executed when the message is received.
 	 * 		The function must take no arguments and return no result.
 	 * @param takeback [optional, default value: []{}, the empty lambda function] A cleanup function object.
 	 * 		This function is called when the message is destroyed, in order to clean up any memory that can otherwise no longer be accessed
 	 * @precondition The two function objects are valid function pointers. No nullptr allowed!
 	 */
-	TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback = []{});
+	TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback = []{});
 	~TraceMessage();
 
 	/**
@@ -54,7 +53,6 @@ public:
 private:
 	t_messagefunc m_func;		//function to be executed. This function takes no arguments
 	t_messagefunc m_takeBack;	//function for destroying this object
-	const std::size_t m_tracerID;
 };
 
 typedef TraceMessage* t_tracemessageptr;

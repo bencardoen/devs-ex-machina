@@ -78,7 +78,6 @@ Note that the tracer must not print its output upon generation. To make sure tha
 The \lstinline{TraceMessage} class is defined in the \path{src/tracers/tracemessage.h} header file. These messages allow the simulator to schedule output generation and purge unwanted messages upon rollback. They contain the following elements:
 \begin{itemize}
 	\item[timestamp] The time upon which this message is created. This time can be retrieved either from the model that is being traced or as a separate parameter.
-	\item[tracerID] Each tracer should have a unique ID. If multiple tracers are used, this ID makes sure that the tracers cannot interfere with eachother. If your tracer derives from \lstinline{TracerBase}, then this ID is automatically assigned to your tracer. It can be accessed via the \lstinline{getID()} member function.
 	\item[execute function] This function is executed when the trace output can be safely sent to an output sink. It is recommended to use \lstinline{std::bind<...>()}. The function must be of type \lstinline{void()}.
 	\item[coreID] Each simulation core has an ID. During the simulation, it can happen that some trace messages must be removed based on which core initiated the trace.
 	\item[delete function] This function is called when the \lstinline{TraceMessage} is destructed. If the tracer must allocate memory on the heap, this function can be used to free that memory.\\*

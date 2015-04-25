@@ -9,6 +9,4 @@
 
 namespace n_tracers {
 
-std::size_t TracerBase::m_lastid = 0;
-
 } /* namespace n_tracers */

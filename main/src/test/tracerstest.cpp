@@ -418,28 +418,14 @@ TEST(tracing, tracerMessage) {
 
 	//test the message
 	TraceMessage::t_messagefunc boundFunc2 = std::bind(&testFunc, &intvar, 18);
-	TraceMessage msg = TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u);
+	TraceMessage msg = TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u);
 	EXPECT_EQ(intvar, 42);
 	msg.execute();
 	EXPECT_EQ(intvar, 18);
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), 0, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), 1, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), 0, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), 1, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), 0, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), 1, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), 0, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), 1, boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u) > TraceMessage(t_timestamp(11u, 42u), 1, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u) > TraceMessage(t_timestamp(11u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 0, boundFunc2, 0u) > TraceMessage(t_timestamp(11u, 42u), 0, boundFunc2, 0u));
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), 1, boundFunc2, 0u) > TraceMessage(t_timestamp(11u, 42u), 1, boundFunc2, 0u));
+	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
+	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u));
+	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
+	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) > TraceMessage(t_timestamp(11u, 42u), boundFunc2, 0u));
 }
 
 template<class P>

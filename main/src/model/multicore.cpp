@@ -357,14 +357,4 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 	this->revertTracerUntil(totime); 	// Finally, revert trace output
 }
 
-void n_model::calculateGVT(/* access to cores,*/std::size_t ms, std::atomic<bool>& run)
-{
-	while (run.load() == true) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-		/** Make control message
-		 *  Get Core 0, call receiveControlMessage(msg);
-		 *  Need to iterate twice over all cores, from within controller !!
-		 */
-	}
-}
 
