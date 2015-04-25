@@ -2,29 +2,53 @@
 
 After creating the models for your simulation, there are still a few parameters to take care of to get everything up and running.\\
 
-First of these is the \textbf{allocator}, which decides on which simulation core to place which model. We have already included a simple allocator that distributes models evenly, but for more complex behavior it is possible to create one tailored specifically for your simulation purposes by inheriting from the \textsl{Allocator} base class.\\
-
-The next step is to create a \textbf{location table} and a table for the simulation cores. The former stores the location of all models. A \textsl{LocationTable} class is included for this purpose.\\
-The latter needs to be an \textsl{std::unordered\_map{\textless}std::size\_t, t\_coreptr{\textgreater}}. This map will store a pointer to each core which can be accessed using the core's ID.\\
+The first part to take into consideration is the \textbf{allocator}, which decides on which simulation core to place which model. We have already included a simple allocator (called \textsl{SimpleAllocator}) that distributes models evenly, but for more complex behavior it is possible to create one tailored specifically for your simulation purposes by inheriting from the \textsl{Allocator} base class.\\
 
 To get output from your simulation, you can select one or more of the included \textbf{tracers}. See \ref{sec:Tracing} for more details.\\
+\\
+The easiest way to get started is using the included \textsl{ControllerConfig}. This object will take care of a large part of the setup for you, though it is also possible to do everything manually.\\
 
-The following steps differ slightly depending on which type of DEVS you want to run.
+\textsl{ControllerConfig} has a few options to configure, all of them with a certain default value.
+\\\\
+\begin{tabular}{lp{8cm}}
+\textit{name} & The name of your simulation \newline
+				By default this is \texttt{MySimulation}
+\\\\
+\textit{simType} & The type of DEVS you wish to run:
 
-\subsection{Classic DEVS}
-\textsc{Classic DEVS} depends on the use of a single \textbf{core} of the \textsl{Core} class. Create a core of this class and add it to the \textsl{unordered\_map} created before.\\
+	\begin{tabular}{l|l}
+	\textsf{Option} & \textsf{Meaning} \\
+	\texttt{Controller::CLASSIC} & \emph{Classic DEVS} \\
+	\texttt{Controller::DSDEVS} & \emph{Dynamic Structure DEVS} \\
+	\texttt{Controller::PDEVS} & \emph{Parallel DEVS} \\
+	\end{tabular} \newline
+	
+	The default is \emph{Classic DEVS}
+\\\\
+\end{tabular}
+\\
+\begin{tabular}{lp{8cm}}
+\textit{coreAmount} & The amount of cores the simulation will run on \newline
+						\textit{[This option is disregarded if you do not run PDEVS]} \newline
+						By default this is 1
+\\\\
+\textit{saveInterval} & This value decides how often the simulation is saved and the tracing output dumped. A value of 3 would mean that this happens every 3 simulation cycles. \newline
+						The default value is 5
+\\\\
+\textit{allocator} & By default this is the included \textsl{SimpleAllocator}
+\\\\
+\end{tabular}\\
+\\
+After you are done setting the right options, you can generate a \textbf{controller} by using \textsl{ControllerConfig}'s \textsl{createController} method. All further interactions with your simulation are done through this controller.\\
+\\
+As a short example, this configuration would give you a Classic DEVS named \texttt{foosim} that saves every 8 cycles:
+\begin{verbatim}
+ControllerConfig conf = ControllerConfig();
+conf.name = "foosim";
+conf.saveInterval = 8;
 
-Next, we create the \textbf{controller} of the simulation, using the \textsl{Controller} class. It expects a name, the core table, the allocator, the location table, and the tracers as its arguments. You can now set the simulation mode to CDEVS by using the controller's \textsl{setClassicDEVS} method.
-
-\subsection{Dynamic Structured DEVS}
-Running a \textsc{Dynamic Structured DEVS} is largely similar to \textsc{Classic DEVS}, except a single core of the \textsl{DynamicCore} class has to be used.\\
-Be sure to set the correct simulation type using the controller's \textsl{setDSDEVS} method.
-
-\subsection{Parallel DEVS}
-\textsc{Parallel DEVS} requires an extra \textbf{network} object, of the class \textsl{Network}, and one or more cores of the \textsl{Multicore} class.\\
-Once again, don't forget to set the DEVS type by using the \textsl{setPDEVS} method.
-
-\subsection{Adding models}
+auto controller = conf.createController();
+\end{verbatim}
 The final step of the setup would be to add any models to the controller using the \textsl{addModel} method. Your simulation is now ready to run!
 
 \section{Control}
