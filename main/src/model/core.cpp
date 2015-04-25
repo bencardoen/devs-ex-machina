@@ -315,7 +315,7 @@ void n_model::Core::runSmallStep()
 	this->getMessages();	// locked on msgs
 
 	if(this->isIdle()){	// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
-		LOG_DEBUG("Core:: ", this->getCoreID(), " skipping small Step, we're idle (and messages did not alter that");
+		LOG_DEBUG("Core:: ", this->getCoreID(), " skipping small Step, we're idle (and messages did not alter that)");
 		this->unlockSimulatorStep();
 		return;
 	}

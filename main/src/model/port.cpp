@@ -29,6 +29,9 @@ std::string Port::getName() const
 std::string Port::getFullName() const
 {
 	//std::string tmp = m_hostname + "." + m_name;
+	// This is ugly, but required. G++ is too smart and sees through
+	// what I'm trying to do. Append forces a new copy.
+	// note that volatile does not work here.
 	std::string tmp = this->getHostName();
 	tmp.append(".");
 	tmp.append(this->getName());
