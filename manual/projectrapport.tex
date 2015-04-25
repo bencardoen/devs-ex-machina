@@ -119,8 +119,7 @@ The scheduler from the prototypes was reused, with little to no changes (barring
 %TODO Matthijs
 
 \section{Serialization}
-For serialization we used the Cereal \cite{cereal} header only framework.
-%TODO Pieter
+For serialization we used the Cereal \cite{cereal} header-only framework. We have used separate load and save functions for full flexibility. For each type that occurs in the form of a pointer we implemented a static load and construct function since the object first has to be created before the saved data can be imported. Cereal has a small coupling with the code (models) that has to be written by the user as the user has to register his own classes due to polymorphism.
 
 \chapter{Non-functional requirements}
 \section{Correctness}
