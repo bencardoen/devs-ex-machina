@@ -84,7 +84,7 @@ public:
 	 *
 	 * @return Current time advance
 	 */
-	virtual t_timestamp timeAdvance() {
+	virtual t_timestamp timeAdvance() const {
 		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel::timeAdvance()'");
 		assert(false);
 		return t_timestamp();

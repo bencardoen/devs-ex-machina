@@ -155,7 +155,7 @@ TEST(Controller, DSDEVS_connections)
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/dstestConnections.txt", TESTFOLDER "controller/dstestConnections.corr"), 0);
 }
 
-TEST(Controller, DISABLED_pDEVS)
+TEST(Controller, pDEVS)
 {
 	RecordProperty("description", "Running a simple multicore simulation");
 	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");

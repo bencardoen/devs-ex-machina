@@ -1,0 +1,16 @@
+ Performance counter stats for 'python experiment.py' (10 runs):
+
+      20245.409693      task-clock (msec)         #    0.998 CPUs utilized            ( +-  0.18% )
+             2,425      context-switches          #    0.120 K/sec                    ( +-  2.74% )
+                49      cpu-migrations            #    0.002 K/sec                    ( +-  6.61% )
+             1,853      page-faults               #    0.092 K/sec                    ( +-  0.04% )
+    34,252,156,636      cycles                    #    1.692 GHz                      ( +-  0.17% )
+    18,999,556,842      stalled-cycles-frontend   #   55.47% frontend cycles idle     ( +-  0.28% )
+   <not supported>      stalled-cycles-backend   
+    36,150,090,149      instructions              #    1.06  insns per cycle        
+                                                  #    0.53  stalled cycles per insn  ( +-  0.00% )
+     8,270,883,858      branches                  #  408.531 M/sec                    ( +-  0.00% )
+       187,951,764      branch-misses             #    2.27% of all branches          ( +-  0.17% )
+
+      20.288414562 seconds time elapsed                                          ( +-  0.16% )
+

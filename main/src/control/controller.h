@@ -45,9 +45,14 @@ public:
 		PDEVS, 		///< Parallel DEVS
 		DSDEVS 		///< Dynamic Structure DEVS
 	};
-	enum class ThreadSignal
-	{
-		ISWAITING, SHOULDWAIT, ISFINISHED, FREE
+
+	/// @brief Desribes signal passed between threads.
+	enum class ThreadSignal{
+		SHOULDWAIT, 	///< thread should at earliest convenience queue on condition variable, then change state to ISWAITING
+		ISWAITING, 	///< thread is waiting on condition variable
+		STOP, 	///< main->thread, thread halts as soon as signal is received.
+		FREE, 	///< main->thread thread can skip condition var
+		IDLE	///< thread->main, thread has reached term condition, but is idle-running.
 	};
 
 private:
@@ -79,8 +84,9 @@ private:
 	std::vector<std::shared_ptr<std::thread>> m_threads;
 
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores, std::shared_ptr<Allocator> alloc,
-	        std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
+		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
 	virtual ~Controller();
 

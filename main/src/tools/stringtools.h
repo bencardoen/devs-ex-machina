@@ -4,7 +4,8 @@
  *  Created on: 28 Mar 2015
  *      Author: Ben Cardoen
  */
-
+#ifndef STRINGTOOLS_H_
+#define STRINGTOOLS_H_
 #include <string>
 
 namespace n_tools{
@@ -35,3 +36,4 @@ bool endswith(const std::string& full, const std::string& part){
 
 }
 
+#endif // STRINGTOOLS_H_

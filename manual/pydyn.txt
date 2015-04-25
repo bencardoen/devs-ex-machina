@@ -1,16 +1,16 @@
- Performance counter stats for 'python experiment.py' (5 runs):
+ Performance counter stats for 'python experiment.py' (10 runs):
 
-      22598.071090      task-clock (msec)         #    0.992 CPUs utilized            ( +-  0.64% )
-             2,861      context-switches          #    0.127 K/sec                    ( +-  3.55% )
-                60      cpu-migrations            #    0.003 K/sec                    ( +- 11.26% )
-             1,845      page-faults               #    0.082 K/sec                    ( +-  0.04% )
-    57,350,691,652      cycles                    #    2.538 GHz                      ( +-  0.56% )
-    33,468,322,843      stalled-cycles-frontend   #   58.36% frontend cycles idle     ( +-  0.93% )
+      33526.938715      task-clock (msec)         #    0.997 CPUs utilized            ( +-  0.46% )
+             4,318      context-switches          #    0.129 K/sec                    ( +-  1.80% )
+                54      cpu-migrations            #    0.002 K/sec                    ( +- 14.33% )
+             1,847      page-faults               #    0.055 K/sec                    ( +-  0.04% )
+    56,698,712,394      cycles                    #    1.691 GHz                      ( +-  0.45% )
+    32,845,254,626      stalled-cycles-frontend   #   57.93% frontend cycles idle     ( +-  0.74% )
    <not supported>      stalled-cycles-backend   
-    57,085,843,969      instructions              #    1.00  insns per cycle        
-                                                  #    0.59  stalled cycles per insn  ( +-  0.06% )
-    13,015,680,524      branches                  #  575.964 M/sec                    ( +-  0.05% )
-       324,404,570      branch-misses             #    2.49% of all branches          ( +-  0.42% )
+    57,015,451,388      instructions              #    1.01  insns per cycle        
+                                                  #    0.58  stalled cycles per insn  ( +-  0.01% )
+    12,996,863,009      branches                  #  387.654 M/sec                    ( +-  0.00% )
+       323,000,747      branch-misses             #    2.49% of all branches          ( +-  0.46% )
 
-      22.779013036 seconds time elapsed                                          ( +-  0.67% )
+      33.630469290 seconds time elapsed                                          ( +-  0.48% )
 

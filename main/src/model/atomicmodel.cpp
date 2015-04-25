@@ -60,9 +60,13 @@ std::vector<n_network::t_msgptr> AtomicModel::doOutput()
 
 void AtomicModel::setGVT(t_timestamp gvt)
 {
+	if (!m_keepOldStates) {
+		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
+		return;
+	}
 	// Model has no memory of past
 	if (m_oldStates.empty()) {
-		std::cerr << "Model has no memory of past (no old states), no GVT happened!" << std::endl;
+		LOG_ERROR("Model has no memory of past (no old states), no GVT happened!");
 		return;
 	}
 
@@ -97,6 +101,10 @@ void AtomicModel::setGVT(t_timestamp gvt)
 
 t_timestamp AtomicModel::revert(t_timestamp time)
 {
+	if (!m_keepOldStates) {
+		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
+		return t_timestamp::infinity();
+	}
 	auto r_itStates = m_oldStates.rbegin();
 	int index = m_oldStates.size() - 1;
 

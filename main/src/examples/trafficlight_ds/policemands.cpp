@@ -65,7 +65,7 @@ void Policeman::intTransition()
 	return;
 }
 
-t_timestamp Policeman::timeAdvance()
+t_timestamp Policeman::timeAdvance() const
 {
 	t_stateptr state = this->getState();
 	std::string substr = state->m_state.substr(0, 4);

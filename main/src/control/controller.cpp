@@ -280,7 +280,7 @@ void Controller::simPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal;
-	constexpr std::size_t deadlockVal = 1000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
+	constexpr std::size_t deadlockVal = 100000000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -304,52 +304,8 @@ void Controller::simPDEVS()
 		LOG_INFO("CONTROLLER: Started thread #", i);
 	}
 
-	for (std::size_t round = 0; round < deadlockVal; ++round) {
-		bool exit_threads = false;
-		for (size_t j = 0; j < m_cores.size(); ++j) {
-			std::lock_guard<std::mutex> lock(veclock);
-			if (threadsignal[j] == ThreadSignal::ISFINISHED) {
-				LOG_INFO("CONTROLLER: Thread id ", j, " has finished, flagging down the rest.");
-				threadsignal = std::vector<ThreadSignal>(m_cores.size(), ThreadSignal::ISFINISHED);
-				exit_threads = true;
-				break;
-			}
-		}
-		if (exit_threads) {
-			break;
-		}
-
-		bool all_waiting = false;		/// Main : keep looping until all threads are waiting (if requested)
-		while (not all_waiting) {
-			std::lock_guard<std::mutex> lock(veclock);
-			all_waiting = true;
-			for (const auto& tsignal : threadsignal) {
-				if (tsignal == ThreadSignal::SHOULDWAIT) {// FREE is ok, ISWAITING is ok, SHOULDWAIT is
-					all_waiting = false;		// the one that shouldn't be set.
-					break;
-				}
-			}
-		}
-
-		{	/// This section is only threadsafe if you have set all threads to SHOULDWAIT
-			;	// You can/could call traceUntil here.
-		}	/// End threadsafe section
-
-		/// Revive threads, first toggle predicate, then release threads (reverse order will deadlock).
-		{
-			std::lock_guard<std::mutex> lock(veclock);
-			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				if (threadsignal[i] != ThreadSignal::ISFINISHED) {
-					LOG_DEBUG("CONTROLLER : Thread ", i , " set to state free.");
-					threadsignal[i] = ThreadSignal::FREE;
-				} else {
-					LOG_DEBUG("CONTROLLER : seeing finished thread with id ", i);
-				}
-			}
-		}
-		cv.notify_all();	// End of a round, it's possible some threads are already running (spurious),
-					// release all explicitly. Any FREE threads don't even hit the barrier.
-	}
+	/// There's no point in asynchronously checking the threadstate, it goes way too fast to count on,
+	/// it starves the threads from doing any signalling at all.
 
 	for (auto& t : m_threads) {
 		t->join();
@@ -381,7 +337,7 @@ void Controller::simDSDEVS()
 			core->getLastImminents(imminent);
 			doDSDevs(imminent);
 		} else {
-			LOG_DEBUG("CONTROLLER: NO LONGER LIFE");
+			LOG_DEBUG("CONTROLLER: CORE NO LONGER LIVE");
 			break;
 		}
 		if (i % m_saveInterval == 0) {
@@ -460,27 +416,49 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		return not (threadsignal[myid]==Controller::ThreadSignal::ISWAITING);
 	};
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		{	// If another thread has finished, main will flag us down, we need to stop as well.
+		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (threadsignal[myid] == Controller::ThreadSignal::ISFINISHED) {
+			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
 				return;
 			}
 		}
 
-		// Try a simulationstep, if core has terminated, set finished flag, else continue.
-		if (core->isLive()) {
+		if(core->isIdle()){
+			std::lock_guard<std::mutex> signallock(vectorlock);	// Lock whole block, else log makes no sense.
+			// Possible flags = IDLE,STOP,FREE
+			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), "detected IDLE core state, setting flag to IDLE");
+			if(threadsignal[myid] != Controller::ThreadSignal::STOP and threadsignal[myid] != Controller::ThreadSignal::SHOULDWAIT){
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), "threadsignal is not STOP||SHOULDWAIT setting flag to IDLE");
+				threadsignal[myid] = Controller::ThreadSignal::IDLE;
+			}
+			// Find out if all others are IDLE/STOPPED, if so stop working.
+			size_t countidle = 0;
+			for(size_t i = 0; i<threadsignal.size(); ++i){
+				if(threadsignal[i]==Controller::ThreadSignal::IDLE || threadsignal[i]==Controller::ThreadSignal::STOP)
+					++countidle;
+			}
+			if(countidle==threadsignal.size()){
+				LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(), " all threads are stopped or idle, quitting.");
+				return;
+			}
+		}else{
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			if(threadsignal[myid] == Controller::ThreadSignal::IDLE){
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " core state changed from idle to working, unsetting flag from IDLE to FREE");
+				threadsignal[myid] = Controller::ThreadSignal::FREE;	// TODO overwrites old SHOULDWAIT et al.
+			}
+		}
+		if (core->isLive() || core->isIdle()) {
 			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i);
 			core->runSmallStep();
-		} else {
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " is finished, setting flag.");
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			threadsignal[myid] = Controller::ThreadSignal::ISFINISHED;
-			return;
 		}
 
-		// Has Main asked us to wait for the barrier ??
-		bool skip_barrier = false;	// assume it has
+		/// Detect control signals. Better to do this with another threadsignal vector ?
+		/// Possible problem : IDLE overwrites SHOULDWAIT.
+		/// Better solution : threadsignal vector for IDLE,STOP,WORKING
+		///		      controlsignal vector for FREE/SHOULDWAIT/ISWAITING
+		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
@@ -494,12 +472,11 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				skip_barrier = true;	// only now explicitly skip the barrier.
 			}
 		}
-
 		if (skip_barrier) {
 			continue;
 		} else {
 			std::unique_lock<std::mutex> mylock(cvlock);
-			cv.wait(mylock, predicate);				/// Infinite loop : while(!pred) wait().
+			cv.wait(mylock, predicate);
 		}
 		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
 	}

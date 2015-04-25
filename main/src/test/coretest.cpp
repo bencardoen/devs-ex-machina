@@ -162,11 +162,14 @@ TEST(DynamicCore, smallStep)
 	}
 	// This is not how to run a core, but a check of safety blocks.
 	c->setLive(true);
+	c->setIdle(false);
 	c->removeModel("Amodel");
 	EXPECT_EQ(c->containsModel("Amodel"), false);
 	c->removeModel("toBen");
 	EXPECT_EQ(c->containsModel("toBen"), false);
+	c->printSchedulerState();
 	c->runSmallStep();
+	c->printSchedulerState();
 	c->getLastImminents(imms);
 	EXPECT_EQ(imms.size(), 0);
 }

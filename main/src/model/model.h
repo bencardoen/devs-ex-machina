@@ -14,9 +14,11 @@
 #include <deque>
 #include <memory>
 #include <sstream>
+#include "globallog.h"
 #include "port.h"
 #include "state.h"
 #include "dssharedstate.h"
+#include "objectfactory.h"
 
 namespace n_control{
 	class Controller;
@@ -54,6 +56,14 @@ protected:
 	std::deque<n_network::t_msgptr> m_receivedMessages;
 
 	n_control::Controller* m_control;	//@Pieter Deze member moet je niet serializeren.
+
+	/**
+	 * @brief Variable that determines if old states are to be kept or not
+	 * It is sometimes useful to set this variable false if you only want to run your
+	 * AtomicModel single-core.
+	 * @note This is not to be used when simulating coupled models or models in parallel!
+	 */
+	bool m_keepOldStates;
 
 	/**
 	 * Parent node of this model, mainly used for direct connect and DS
@@ -205,6 +215,21 @@ public:
 	 * @brief Gets the next scheduled time.
 	 */
 	t_timestamp getTimeNext() const;
+
+	/**
+	 * @brief Sets the variable that determines if old states are to be kept or not
+	 * It is sometimes useful to set this variable false if you only want to run your
+	 * AtomicModel single-core.
+	 * @note This is not to be used when simulating coupled models or models in parallel!
+	 */
+	void setKeepOldStates(bool b);
+
+	/**
+	 * @brief Gets the variable that determines if old states are to be kept or not
+	 * @return True or False
+	 */
+	bool getKeepOldStates() const;
+
 
 	/**
 	 * Serialize this object to the given archive

@@ -11,6 +11,7 @@
 #include "cereal/types/vector.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/types/polymorphic.hpp"
+#include "stringtools.h"
 #include "objectfactory.h"
 
 namespace n_model {
@@ -22,17 +23,24 @@ Port::Port(std::string name, std::string hostname, bool inputPort)
 
 std::string Port::getName() const
 {
-	return m_name;
+	return n_tools::copyString(m_name);
 }
 
 std::string Port::getFullName() const
 {
-	return m_hostname + "." + m_name;
+	//std::string tmp = m_hostname + "." + m_name;
+	// This is ugly, but required. G++ is too smart and sees through
+	// what I'm trying to do. Append forces a new copy.
+	// note that volatile does not work here.
+	std::string tmp = this->getHostName();
+	tmp.append(".");
+	tmp.append(this->getName());
+	return n_tools::copyString(tmp);
 }
 
 std::string Port::getHostName() const
 {
-	return m_hostname;
+	return n_tools::copyString(m_hostname);
 }
 
 bool Port::isInPort() const
@@ -147,9 +155,9 @@ const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const
 }
 
 n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
-        const std::string msg, t_zfunc& func)
+        const std::string& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = std::make_shared<n_network::Message>(dest,
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
 	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
@@ -173,7 +181,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 			t_zfunc& zFunction = pair.second;
 			std::string model_destination = pair.first->getHostName();
 //			std::string sourcePort = this->getFullName();
-			std::string destPort = pair.first->getFullName();
+			std::string destPort = n_tools::copyString(pair.first->getFullName());
 			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
@@ -183,7 +191,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
 		for (auto& pair : m_coupled_outs) {
 			std::string model_destination = pair.first->getHostName();
 //			std::string sourcePort = this->getFullName();
-			std::string destPort = pair.first->getFullName();
+			std::string destPort = n_tools::copyString(pair.first->getFullName());
 			for (t_zfunc& zFunction : pair.second) {
 				returnarray.push_back(
 				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
