@@ -1,0 +1,140 @@
+\documentclass[12pt]{article}
+\usepackage{authblk}
+\usepackage{listings}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{hyperref}
+\usepackage[section]{placeins}
+
+\newcommand{\inlinecpp}[1]{\lstinline[language=c++]{#1}}
+\lstset{
+  basicstyle=\ttfamily,
+  mathescape
+}
+
+\begin{document}
+\lstset{language=C++}
+\title{The Tracing package\\ \large a more in depth explanation}
+\author{DEVS Ex Machina}
+\date{\today}
+
+
+\maketitle
+This document contains a more in depth explanation of the inner workings of the tracing package. We decided not to add this directly to the report to keep the report clean and concise.\\
+This document is not supposed to be a manual, but rather an explanation of the techniques used in this package.
+\section{package structure}
+The entire tracing package consists roughly of three parts. The first part is is the \inlinecpp{Tracers} class. This class contains a set of tracers and provides a layer of abstraction for managing these tracers. The second part are the individual tracers. Each tracer generates specific output for the events of the simulator. The final part deals with this output. It makes sure that the output is generated in the correct order.
+\part*{Tracers class} 
+\section{Class Structure}
+The class structure can be best described as a recursive inheritance tree. Through the use of variadic template parameters\footnote{variadic template parameters: \href{http://en.wikipedia.org/wiki/Variadic_template}{Wikipedia}, \href{http://www.cplusplus.com/articles/EhvU7k9E/}{cplusplus.com}}, each superclass takes care of one template parameter and inherits from the class that will take care of the rest.\\
+The base case is a class that does not contain a tracer object.\\
+Because the recursive case has more specific template parameters, it gets precedence over the base case.
+\paragraph{example}
+\begin{lstlisting}[language=c++]
+TracersTemplated<A, A, B> test;
+\end{lstlisting}
+The test object now contains 2 tracer objects with type \inlinecpp{A} and one tracer object of type \inlinecpp{B}.\\
+The complete inheritance tree would look like this:
+\begin{lstlisting}
+TracersTemplated<> //base case
+       $\triangle$
+       |
+TracersTemplated<B>
+       $\triangle$
+       |
+TracersTemplated<A, B>
+       $\triangle$
+       |
+TracersTemplated<A, A, B>
+\end{lstlisting}
+The base case defines the operations and values that \inlinecpp{TracersTemplated} should contain regardless of how many tracers are used.\\
+The other classes only add one new tracer object that they own privately.
+
+
+\section{Methods}
+Certain methods deserve special attention because of the way they are implemented.
+\subsection{Constructor}
+The non-default constructor can be used to initialize all the tracers at once. It uses the copy constructor to initialize the tracer members. There is also a default constructor.
+\subsection{getParent}
+The private \inlinecpp{getParent} method returns a reference to the parent class part of the object, effectively granting access to the interface provided by that type. It works by casting the \inlinecpp{this} pointer to the appropriate pointer type and dereferencing it. The use of \inlinecpp{static_cast} over a c-style cast assures type correctness.
+\paragraph{example}
+To continue the example from earlier, \inlinecpp{TracersTemplated<A, A, B>} would return the reference to the \inlinecpp{TracersTemplated<A, B>} part of the object.
+
+\subsection{getByID}
+This function allows direct access to the n\textsuperscript{th} registered tracer.\\*
+Standard C++ doesn't allow function member template specialization for a non-specialized class template\footnote{specialization rules: \href{http://en.cppreference.com/w/cpp/language/template_specialization}{cppreference.com}}, therefore we used a workaround.
+\subsubsection{sfinae}
+The implementation relies heavily on sfinae - Substitution Failure Is Not An Error\footnote{sfinae: \href{http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error}{Wikipedia}}.\\
+Basically, you present the compiler a few options for implementations of a particular function template. Only one of those options should compile correctly with any given template arguments. When the compiler fails to substitute the template arguments in one option, it continues with the other options until it either finds a single suitable option. When no suitable option can be found, the result is a compiler error.\\
+\subsubsection{implementation}
+The implementation offers three very similar implementations of the \inlinecpp{getTracer} function:
+\begin{lstlisting}[language=c++]
+//option 1
+template<std::size_t n>
+typename std::enable_if<n <= sizeof...(TracerElems) && n != 0,
+  typename std::tuple_element<n,
+    std::tuple<T, TracerElems...>>::type>::type&
+getByID()
+{/*...*/}
+
+//option 2
+template<std::size_t n>
+typename std::enable_if<n==0 ,
+  typename std::tuple_element<n,
+    std::tuple<T, TracerElems...>>::type>::type&
+getByID()
+{/*...*/}
+
+//option 3
+template<std::size_t n>
+typename std::enable_if<sizeof...(TracerElems) < n, void*>::type
+getByID() = delete;
+\end{lstlisting}
+The \inlinecpp{std::tuple_element<n, std::tuple<T, TracerElems...>>::type>} denotes the type of the tracer that should be returned and is not really relevant to this explanation.\\
+The \inlinecpp{std::enable_if<Condition, type>} struct defines a typedef \lstinline{type}\lstinline{} if the condition evaluates to true. If the condition evaluates to false, the struct is empty.\\
+Therefore, depending on the value of the template argument \inlinecpp{n}, the return value of one of the three options is defined and the others are not, resulting in a substitution error.\\
+If n is too large, that is, n is larger than or equal to the amount of used tracers, the last option is taken. Because that function is deleted, the compiler\footnote{Only tested with GCC 4.9.2.} generates an error that points to where the function was invoked.\\
+\textbf{Note} that you cannot use the \inlinecpp{>} operator in the \inlinecpp{std::enable_if} condition. The compiler gets confused because it fails to distinguish between the comparison operator and the closing angle bracket of the template.
+
+\section{What about std::tuple?}
+\inlinecpp{std::tuple<...>} already offers a lot of functionality that we implemented ourself. The reason why we chose to reinvent the wheel over using \inlinecpp{std::tuple<...>} is because our implementation makes it very easy to loop over all the registered tracer objects and call one of their functions.\\
+Looping over a \inlinecpp{std::tuple<...>}, while possible\footnote{Looping \lstinline{std::tuple<>}: \href{http://stackoverflow.com/a/6894436}{Stack Overflow}}, involves a lot of boilerplate code for a simple function call.
+
+\part*{Individual tracer}
+A Tracer has to generate output for certain events and send it to some output sink.\\
+Each individual tracer class has the exact same structure. Policy-based programming\footnote{Policy-based programming: \href{http://en.wikipedia.org/wiki/Policy-based_design}{Wikipedia}} is used to separate the output writing logic from the output creation logic. This allows the user to use their own output method without having to rewrite all the existing tracers.\\
+\subsection{Policies}
+An output policy dictates where the generated output will go to. At the moment, we have implemented a policy for writing the output to \inlinecpp{std::cout} and another policy for writing the output to a file.
+\section{Planned changes}
+At the moment, we have only implemented one tracer, the verbose tracer. The other tracers (XML, JSON and CELL) will have a very similar structure. We could just create a single base class and use virtual functions to provide the implementation of the tracer-specific functionality. However, this would defeat the purpose of custom designing the template classes we have already. Another option is to use the Curiously Recurring Template Pattern (CRTP)\footnote{CRTP: \href{http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}{Wikipedia}}.
+\paragraph{Curiously Recurring Template Pattern} This pattern allows a base class to call functionality of a derived class without having to use virtual functions or function overloading. It is in effect a way to deal with this kind of polymorphic behavior at compile time. The compiler knows exactly which functions will be called by the base class and can therefore use optimization techniques that are not always available when using runtime polymorphism.
+
+\part*{Output Scheduling}
+In order to make sure that the output generation is consistent in between runs and doesn't contain any output that is reverted, the tracers don't immediately send the generated output to their output sink.
+\section{Trace Message}
+The tracers put their generated output in a message, much like the messages that the models can send to eachother. They contain the following information:
+\begin{itemize}
+	\item \emph{timestamp} The timestamp of the message dictates the ordering of the messages.
+	\item \emph{execute function} When a trace message is handled, this function is executed. This function should send the output generated by the tracer to the output sink.
+	\item \emph{coreID} Each simulation has a unique core ID. When this core requests a rollback, we can selectively purge only the trace messages that belong to this core. Otherwise, if one core does not participate in the rollback, for example when it did not receive an antimessage, its output is not touched.
+	\item \emph{delete function} In some cases, memory could be allocated on the heap. This function can be used to free that memory. It will be called when the message is destructed, regardless of whether its \emph{execute function} was called.
+\end{itemize}
+Both the \emph{execute function} and the \emph{delete function} are objects of type \inlinecpp{std::function<void()>}. You can use \inlinecpp{std::bind<...>(...)} to create a delegate.
+
+\section{Message handling}
+Unlike in the Python PDEVS implementation, trace messages are not scheduled together with the other messages, but rather in a separate scheduler. The following free functions are defined for managing the messages
+\begin{itemize}
+	\item \inlinecpp{void scheduleMessage(t_tracemessageptr message);}\\*
+			Schedule a single message.
+	\item \inlinecpp{void traceUntil(n_network::t_timestamp time);}\\*
+			Execute all trace messages with a timestamp less than the provided parameter.
+	\item \inlinecpp{void revertTo(n_network::t_timestamp time, std::size_t coreID = std::numeric_limits<std::size_t>::max());}\\*
+			Purges all trace messages from a core that have a timestamp greater than the timestamp \inlinecpp{time}. The default value of the second parameter will indicate that the messages of \emph{all} cores must be removed. The execute function of the trace messages will not be called.\\*
+			\textbf{Note} Removing the messages of a single core is more costly than removing the messages of all cores.
+	\item \inlinecpp{void clearAll();}\\*
+			Clears all remaining trace messages. Their execute function will not be called.
+	\item \inlinecpp{void waitForTracer();}\\*
+			Waits until the tracing thread is finished.
+\end{itemize}
+In the background, \emph{traceUntil} will create a new thread that will perform the actual output. Therefore, rest of the simulation does not have to wait until this job is done. The current implementation can still be optimized further, for example by using a 1 reader/multiple writers approach. We will try to fix this for the beta version.
+
+\end{document}
