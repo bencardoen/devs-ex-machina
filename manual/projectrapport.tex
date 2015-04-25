@@ -148,8 +148,7 @@ The single core implementations follow exactly the runtime behaviour shown by th
 \subsection{DirectConnect}
 %TODO Stijn/Matthijs Directconnect : what is rootmodel, only atomics in core.
 \subsection{Dynamic Structured}
-This is implemented but removing models is not yet fully tested.
-%TODO Stijn
+Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
