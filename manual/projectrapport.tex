@@ -100,8 +100,7 @@ The tracing uses template programming, and is largely asynchronous w.r.t. the si
 %TODO Stijn
 
 \section{Models}
-The models hide all implementation details for the particular DEVS formalisms, without limiting the user to extend into any subclassed model of his/her choice. The use can focus on what he/she wants the model to emulate, and not worry about for example locking, allocation etc.
-%TODO Tim
+The models hide all implementation details for the particular DEVS formalisms, without limiting the user to extend into any subclassed model of his/her choice. The use can focus on what he/she wants the model to emulate, and not worry about for example locking, allocation etc. We refer to the manual for more information about the creation of these models.
 
 \section{Scheduler}
 The scheduler from the prototypes was reused, with little to no changes (barring a few bugfixes). An unsynchronized version was implemented for comparison purposes.
@@ -127,15 +126,16 @@ We met at least once every week (barring the exam period), with each meeting hav
 \subsubsection{Code review}
 Although there was no real formal code review done up to now, we've had several debug sessions reviewing each others code. This means the most critical used sections of the code are allready reasonably well reviewed, albeit not formally.
 \subsubsection{Portability}
-We chose for Cygwin instead of MinGW because std::thread is not supported on MinGW. 
-%TODO Tim gnu++11 and stuff
+We develop on Unix, Windows and MacOSX.
+
+In Windows we chose the Cygwin platform instead of MinGW to compile our project on. This because we make use of the C++11 std::thread objects; MinGW doesn't support POSIX threads. When building the project with GTest on Windows you need to use the -std=gnu++11 flag instead of the standard -std=c++11 flag, because we need the GNU extensions to correctly link everything.
 
 \chapter{Functional requirements}
 \section{DEVS Formalisms}
 \section{Single core}
 The single core implementations follow exactly the runtime behaviour shown by the PyPDEVS simulator. We've chosen to emulate the Select() function with an integer priority value the user can set. This saves 1 virtual function call per transition and can quite easily be optimized by the compiler since it remains constant.
 \subsection{DirectConnect}
-%TODO Directconnect : what is rootmodel, only atomics in core.
+%TODO Stijn/Matthijs Directconnect : what is rootmodel, only atomics in core.
 \subsection{Dynamic Structured}
 This is implemented but removing models is not yet fully tested.
 %TODO Stijn
@@ -154,7 +154,7 @@ G++'s std::string implementation appears to be still Copy On Write (despite 21.4
 \section{Toolchains}
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
 \section{Logger}
-The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on cygwin. 
+The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on Cygwin. 
 Stijn therefore wrote his own implementation. %TODO Stijn
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
