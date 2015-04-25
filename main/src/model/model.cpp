@@ -11,7 +11,7 @@
 namespace n_model {
 
 Model::Model(std::string name)
-	: m_name(name), m_state(nullptr), m_control(nullptr)
+	: m_name(name), m_state(nullptr), m_control(nullptr), m_keepOldStates(true)
 {
 }
 
@@ -45,7 +45,8 @@ void Model::setState(const t_stateptr& newState)
 	if (newState == nullptr)
 		return;
 	m_state = newState;
-	m_oldStates.push_back(m_state);
+	if (m_keepOldStates)
+		m_oldStates.push_back(m_state);
 }
 
 void Model::setParent(const std::shared_ptr<Model>& parent)
@@ -83,7 +84,7 @@ t_portptr Model::addPort(std::string name, bool isIn)
 	else
 		m_oPorts.insert(std::pair<std::string, t_portptr>(name, port));
 
-	if(m_control){
+	if (m_control) {
 		m_control->dsUndoDirectConnect();
 	}
 
@@ -94,10 +95,12 @@ void Model::removePort(t_portptr& port)
 {
 	//remove the port itself
 	assert(allowDS() && "Model::removePort: Dynamic structured DEVS is not allowed in this phase.");
-	if(port->isInPort()) m_iPorts.erase(port->getName());
-	else m_oPorts.erase(port->getName());
+	if (port->isInPort())
+		m_iPorts.erase(port->getName());
+	else
+		m_oPorts.erase(port->getName());
 
-	if(m_control)
+	if (m_control)
 		m_control->dsRemovePort(port);
 }
 
@@ -143,7 +146,7 @@ void Model::setController(n_control::Controller* newControl)
 
 bool Model::allowDS() const
 {
-	if(m_control)
+	if (m_control)
 		return m_control->isInDSPhase();
 	return true;
 }
@@ -151,6 +154,16 @@ bool Model::allowDS() const
 t_timestamp Model::getTimeNext() const
 {
 	return m_timeNext;
+}
+
+bool Model::getKeepOldStates() const
+{
+	return m_keepOldStates;
+}
+
+void Model::setKeepOldStates(bool b)
+{
+	m_keepOldStates = b;
 }
 
 void Model::serialize(n_serialisation::t_oarchive& archive)
