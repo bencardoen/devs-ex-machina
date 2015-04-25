@@ -527,7 +527,7 @@ class TestModel: public n_model::AtomicModel {
 		virtual std::vector<n_network::t_msgptr> output() const {
 			return std::vector<n_network::t_msgptr>();
 		}
-		t_timestamp timeAdvance() {
+		virtual t_timestamp timeAdvance() const {
 			return t_timestamp(getState()->m_timeLast.getTime() + 1, 1);
 		}
 };

@@ -157,7 +157,7 @@ const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const
 n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
         const std::string& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = std::make_shared<n_network::Message>(dest,
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
 	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;

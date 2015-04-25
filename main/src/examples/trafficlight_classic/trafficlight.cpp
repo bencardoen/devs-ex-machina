@@ -57,7 +57,7 @@ void TrafficLight::intTransition()
 	return;
 }
 
-t_timestamp TrafficLight::timeAdvance()
+t_timestamp TrafficLight::timeAdvance() const
 {
 	t_stateptr state = this->getState();
 	if (*state == "red")
