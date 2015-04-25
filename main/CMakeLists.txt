@@ -94,9 +94,9 @@ SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g $
 #       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
-    src/tools/logger.cpp
-    src/tools/coutredirect.cpp
-    src/tools/asynchwriter.cpp
+	src/tools/logger.cpp
+	src/tools/coutredirect.cpp
+	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
 	src/model/coupledmodel.cpp
 	src/model/rootmodel.cpp
@@ -120,6 +120,7 @@ add_executable(${PROJECT_NAME}
 	src/control/locationtable.cpp
 	src/network/message.cpp
 	src/network/controlmessage.cpp
+	src/network/network.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
 	src/tracers/tracerbase.cpp

@@ -1,6 +1,5 @@
 /*
  * v.h
- *
  *  Created on: 10 Apr 2015
  *      Author: Ben Cardoen
  */
@@ -12,6 +11,8 @@ namespace n_model {
 
 /**
  * Thread-shared messagecount vector.
+ * Used in Mattern's algorithm, together with Count vector stores sent/recd messages to
+ * check for transient messages.
  */
 class V
 {

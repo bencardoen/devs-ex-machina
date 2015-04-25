@@ -438,8 +438,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				if(threadsignal[i]==Controller::ThreadSignal::IDLE || threadsignal[i]==Controller::ThreadSignal::STOP)
 					++countidle;
 			}
-			if(countidle==threadsignal.size()){
-				LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(), " all threads are stopped or idle, quitting.");
+			if(countidle==threadsignal.size()){	// TODO need link to network here.
+				LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(), " all other threads are stopped or idle, quitting.");
 				return;
 			}
 		}else{
@@ -458,7 +458,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		/// Possible problem : IDLE overwrites SHOULDWAIT.
 		/// Better solution : threadsignal vector for IDLE,STOP,WORKING
 		///		      controlsignal vector for FREE/SHOULDWAIT/ISWAITING
-		bool skip_barrier = false;
+		bool skip_barrier = true;	// TODO re-enable if control is implemented
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.

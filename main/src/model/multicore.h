@@ -240,8 +240,6 @@ public:
 	unlockMessages()override;
 };
 
-void calculateGVT(/* access to cores,*/ size_t ms, std::atomic<bool>& run);
-
 } /* namespace n_model */
 
 #endif /* SRC_MODEL_MULTICORE_H_ */
