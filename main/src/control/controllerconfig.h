@@ -71,7 +71,7 @@ struct ControllerConfig
 	virtual ~ControllerConfig();
 
 	/**
-	 * Create a Controller using the configuration options of this object
+	 * @brief Create a Controller using the configuration options of this object
 	 */
 	std::shared_ptr<Controller> createController();
 };

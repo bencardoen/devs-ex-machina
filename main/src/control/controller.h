@@ -82,57 +82,57 @@ public:
 	virtual ~Controller();
 
 	/**
-	 * Set an atomic model as the main model using the given allocator
+	 * @brief Set an atomic model as the main model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
 	/**
-	 * Set a coupled model as the main model using the given allocator
+	 * @brief Set a coupled model as the main model using the given allocator
 	 */
 	void addModel(t_coupledmodelptr& coupled);
 
 	/**
-	 * Main loop, starts simulation
+	 * @brief Main loop, starts simulation
 	 */
 	void simulate();
 
 	/**
-	 * Sets the simulation type
+	 * @brief Sets the simulation type
 	 */
 	void setSimType(SimType type);
 
 	/**
-	 * Set simulation to be classic DEVS
+	 * @brief Set simulation to be classic DEVS
 	 */
 	void setClassicDEVS();
 
 	/**
-	 * Set simulation to be Parallel DEVS
+	 * @brief Set simulation to be Parallel DEVS
 	 */
 	void setPDEVS();
 
 	/**
-	 * Set simulation to be Dynamic Structure DEVS
+	 * @brief Set simulation to be Dynamic Structure DEVS
 	 */
 	void setDSDEVS();
 
 	/**
-	 * Set time at which the simulation will be halted
+	 * @brief Set time at which the simulation will be halted
 	 */
 	void setTerminationTime(t_timestamp time);
 
 	/**
-	 * Set condition that can terminate the simulation
+	 * @brief Set condition that can terminate the simulation
 	 */
 	void setTerminationCondition(t_terminationfunctor termination_condition);
 
 	/**
-	 * Set checkpointing interval
+	 * @brief Set checkpointing interval
 	 */
 	void setCheckpointInterval(t_timestamp interv);
 
 	/**
-	 * Start thread for GVT
+	 * @brief Start thread for GVT
 	 */
 	void startGVTThread();
 
@@ -183,37 +183,37 @@ public:
 
 private:
 	/**
-	 * Check if simulation needs to continue
+	 * @brief Check if simulation needs to continue
 	 */
 	bool check();
 
 	/**
-	 * Serialize all cores and models, dump tracer output
+	 * @brief Serialize all cores and models, dump tracer output
 	 */
 	void save(bool traceOnly = false);
 
 	/**
-	 * Simulation setup and loop using regular DEVS
+	 * @brief Simulation setup and loop using regular DEVS
 	 */
 	void simDEVS();
 
 	/**
-	 * Simulation setup and loop using Parallel DEVS
+	 * @brief Simulation setup and loop using Parallel DEVS
 	 */
 	void simPDEVS();
 
 	/**
-	 * Simulation setup and loop using Dynamic Structure DEVS
+	 * @brief Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
 
 	/**
-	 * Removes models from all cores
+	 * @brief Removes models from all cores
 	 */
 	void emptyAllCores();
 
 	/**
-	 * Add an atomic model to a specific core
+	 * @brief Add an atomic model to a specific core
 	 */
 	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
