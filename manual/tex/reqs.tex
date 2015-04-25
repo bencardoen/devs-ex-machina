@@ -46,3 +46,10 @@ The cmake invocation has created an Eclipse CDT project for you to open the simu
   \item Select "Existing projects into Workspace"
   \item navigate to the root folder of the project (containing ./main, ./build)
 \end{itemize}
+
+\subsubsection{Documentation}
+Generating the source documentation is optional and requires Doxygen to be installed. UML and other diagrams will only be created if Graphviz is installed.\\
+After building the source, enter the \textsl{build} folder and enter the command 
+\begin{verbatim}
+$ make doc
+\end{verbatim} This will generate all documentation in the \textsl{doc} folder.

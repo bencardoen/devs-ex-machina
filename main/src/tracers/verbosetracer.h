@@ -74,7 +74,7 @@ public:
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, 0u, takeback);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, 0u, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -113,7 +113,7 @@ public:
 		LOG_DEBUG("TracesInternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -150,7 +150,7 @@ public:
 		LOG_DEBUG("TracesExternal: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}
@@ -195,7 +195,7 @@ public:
 		LOG_DEBUG("TracesConfluent: current time", time);
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
 		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, TracerBase::getID(), fun, coreid, takeback);
+		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
 		//deal with the message
 		scheduleMessage(message);
 	}

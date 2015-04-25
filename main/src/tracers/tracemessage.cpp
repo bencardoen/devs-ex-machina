@@ -16,9 +16,10 @@ using namespace n_tools;
 
 namespace n_tracers {
 
-TraceMessage::TraceMessage(n_network::t_timestamp time, std::size_t tracerID, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback)
-	: Message("", time, "", ""), m_func(func), m_takeBack(takeback), m_tracerID(tracerID)
+TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback)
+	: Message("", time, "", ""), m_func(func), m_takeBack(takeback)
 {
+	m_timestamp.increaseCausality(1u);
 	assert(m_func != nullptr && "TraceMessage::TraceMessage can't accept nullptr as execution function");
 	assert(m_takeBack != nullptr && "TraceMessage::TraceMessage Can't accept nullptr as cleanup function. If you don't need a cleanup function, either provide an empty one or omit the argument.");
 	setSourceCore(coreID);
@@ -37,9 +38,7 @@ void TraceMessage::execute()
 bool TraceMessage::operator <(const TraceMessage& other) const
 {
 	if (this->getTimeStamp() == other.getTimeStamp()){
-		if(this->m_tracerID == other.m_tracerID)
-			LOG_ERROR("TraceMessage::operator< Received two messages with the exact same timestamp and tracer ID");
-		return this->m_tracerID < other.m_tracerID;
+		return this < &other;
 	}
 	return (this->getTimeStamp() < other.getTimeStamp());
 }
@@ -47,9 +46,7 @@ bool TraceMessage::operator <(const TraceMessage& other) const
 bool TraceMessage::operator >(const TraceMessage& other) const
 {
 	if (this->getTimeStamp() == other.getTimeStamp()){
-		if(this->m_tracerID == other.m_tracerID)
-			LOG_ERROR("TraceMessage::operator> Received two messages with the exact same timestamp and tracer ID");
-		return this->m_tracerID > other.m_tracerID;
+		return this > &other;
 	}
 	return (this->getTimeStamp() > other.getTimeStamp());
 }
@@ -143,7 +140,7 @@ void traceUntil(n_network::t_timestamp time)
 {
 	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
+	TraceMessage t(time, []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
 
 	if(tracerFuture.load() != nullptr){
@@ -158,10 +155,10 @@ void traceUntil(n_network::t_timestamp time)
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, std::numeric_limits<std::size_t>::max(), []{}, 0u);
+	TraceMessage t(time.getTime(), []{}, 0u);
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;
-	TraceMessage inf(n_network::t_timestamp::infinity(), std::numeric_limits<std::size_t>::max(), []{}, 0u);
+	TraceMessage inf(n_network::t_timestamp::infinity(), []{}, 0u);
 	scheduler->unschedule_until(messagesLost, &inf);
 	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ", messagesLost.size(), " messages");
 	if(coreID == std::numeric_limits<std::size_t>::max()) {

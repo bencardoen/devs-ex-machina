@@ -115,8 +115,8 @@ add_executable(${PROJECT_NAME}
 	src/examples/trafficlight_ds/policemands.cpp
 	src/examples/trafficlight_ds/trafficsystemds.cpp
 	src/control/allocator.cpp
-	src/control/configuration.cpp
 	src/control/controller.cpp
+	src/control/controllerconfig.cpp
 	src/control/locationtable.cpp
 	src/network/message.cpp
 	src/network/controlmessage.cpp

@@ -15,13 +15,17 @@ typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
 
 namespace n_control {
 
+/**
+ * @brief Decides on which Core to place each Model
+ */
 class Allocator
 {
 public:
 	Allocator();
 
-	/*
-	 * Decide on which core to place a model
+	/**
+	 * @brief Returns on which Core to place a Model
+	 * @param model the AtomicModel to be allocated
 	 */
 	virtual size_t allocate(const n_model::t_atomicmodelptr&) = 0;
 

@@ -1,0 +1,26 @@
+# started on Sat Apr 25 17:56:45 2015
+
+
+ Performance counter stats for './build/ownLogger' (20 runs):
+
+       1110.465450      task-clock (msec)         #    0.943 CPUs utilized            ( +-  3.12% )
+            45,381      context-switches          #    0.041 M/sec                    ( +-  1.82% )
+                36      cpu-migrations            #    0.033 K/sec                    ( +-  8.21% )
+             5,009      page-faults               #    0.005 M/sec                    ( +-  1.85% )
+     2,560,360,455      cycles                    #    2.306 GHz                      ( +-  3.19% )
+     1,401,514,327      stalled-cycles-frontend   #   54.74% frontend cycles idle     ( +-  5.20% )
+   <not supported>      stalled-cycles-backend   
+     2,738,443,945      instructions              #    1.07  insns per cycle        
+                                                  #    0.51  stalled cycles per insn  ( +-  0.28% )
+       534,633,618      branches                  #  481.450 M/sec                    ( +-  0.36% )
+         4,272,406      branch-misses             #    0.80% of all branches          ( +-  2.04% )
+
+       1.177329913 seconds time elapsed                                               ( +-  6.35% )
+
+
+ Average output stats for './build/g3Logger' (20 runs):
+           400,000      log size (messages)
+        20,200,000      log size (bytes)
+        17,157,468      write speed (B/s)
+           339,752      write speed (msg/s)
+
