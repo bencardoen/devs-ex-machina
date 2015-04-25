@@ -74,15 +74,11 @@ The only downside is the synchronized access to the reference count in the share
 \section{Overview}
 We've slightly departed from the PyPDEVS structure, to allow for more encapsulation and decoupling of the core entities. This clear separation of data and responsibilities between classes made the threading part of the project easier (no or minimal shared state). See the \hyperref[simpledesign]{Simple Design figure \ref*{simpledesign}}.\\
 
-
 \begin{figure}[h!]
 	\makebox[\textwidth][c]{\includegraphics[width=1.5\textwidth]{Design.png}}
 	\caption{Simple Design}
 	\label{simpledesign}
 \end{figure}
-
-%TODO include UML overview
-
 
 \section{Translating Dynamic Typing to Static Typing}
 To represent objects that can be at runtime any type chosen by the user, we had 2 options : void* which is highly fragile in use, and impossible to serialize, or std::string(), which can double as an "anytype" by storing a serialized object inside the string, should this be required. \\This leaves the same degree of freedom dynamic typing grants to the user in PyPDEVS, with the added benefit of some checking provided by the compiler. Consider for example a user who stores an object serialized into the payload string of a message object, the compiler can in advance detect if the serializing object is at least serializable. \\ Misuse would either surface during compilation, or at worst could be checked with casting or exceptions. Misuse of void* could result in anything from undefined behaviour to stack corruption.
