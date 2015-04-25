@@ -10,7 +10,7 @@
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: name("MyController"), simType(Controller::CLASSIC), coreAmount(1), saveInterval(5)
+	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), saveInterval(5)
 {
 }
 

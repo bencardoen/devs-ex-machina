@@ -27,7 +27,8 @@ using namespace n_tools;
 namespace n_control {
 
 /**
- * Holds several configuration options to set up a simulation, constructs a Controller.
+ * @brief Holds several configuration options to set up a simulation, constructs a Controller.
+ *
  * If nothing is configured, a default setup is made using:
  * - Classic DEVS
  * - SimpleAllocator
@@ -37,7 +38,7 @@ struct ControllerConfig
 {
 	/**
 	 * The name of the controller
-	 * By default: @c MyController
+	 * By default: @c MySimulation
 	 */
 	std::string name;
 

@@ -15,19 +15,42 @@ namespace n_control {
 
 using n_model::t_atomicmodelptr;
 
+/**
+ * @brief Keeps the location of all Models
+ */
 class LocationTable
 {
 public:
 	LocationTable(std::size_t amountCores);
 	virtual ~LocationTable();
 
+	/**
+	 * @brief Return the location of a Model
+	 */
 	std::size_t operator[](const std::string& modelName);
+
+	/**
+	 * @brief Return the location of a Model
+	 */
 	std::size_t lookupModel(const std::string& modelName);
+
+	/**
+	 * @brief Register the location of a Model
+	 * @param model the Model to be registered
+	 * @param core the ID of the core on which the model is located
+	 */
 	void registerModel(const t_atomicmodelptr model, std::size_t core);
 
 
 private:
+	/**
+	 * How many cores exist in total
+	 */
 	const std::size_t m_amountCores;
+
+	/**
+	 * Stores the location of all Models
+	 */
 	std::unordered_map<std::string, std::size_t> m_locTable;
 };
 

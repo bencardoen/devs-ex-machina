@@ -12,23 +12,29 @@
 
 namespace n_control {
 
-/*
- * Simple, dumb allocator
- * Spreads models evenly
+/**
+ * @brief Simple, dumb allocator that spreads models evenly
  */
 class SimpleAllocator: public Allocator
 {
 private:
 	size_t m_i;
 	size_t m_cores;
+
 public:
 	SimpleAllocator(size_t c)
 		: m_i(0), m_cores(c)
 	{
 	}
+
 	virtual ~SimpleAllocator()
 	{
 	}
+
+	/**
+	 * @brief Returns on which Core to place a Model
+	 * @param model the AtomicModel to be allocated
+	 */
 	size_t allocate(const n_model::t_atomicmodelptr&)
 	{
 		int i = m_i;
@@ -38,6 +44,5 @@ public:
 };
 
 } /* namespace n_control */
-
 
 #endif /* SRC_CONTROL_SIMPLEALLOCATOR_H_ */

@@ -32,10 +32,13 @@ using n_model::t_coreptr;
 using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
 
+/**
+ * @brief Provides control over a simulation
+ */
 class Controller
 {
 public:
-	/// The type of simulation
+	/// @brief The type of simulation
 	enum SimType
 	{
 		CLASSIC, 	///< Classic DEVS
