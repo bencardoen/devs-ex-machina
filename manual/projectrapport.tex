@@ -165,7 +165,23 @@ libstdc++'s std::string implementation appears to be still Copy On Write (despit
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
 \section{Logger}
 The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on Cygwin. 
-Stijn therefore wrote his own implementation. %TODO Stijn
+Stijn therefore wrote his own implementation.\\
+This implementation only covers the most basic needs:
+\begin{itemize}
+	\item asynchronous output
+	\item thread safe
+	\item multiple logging levels currently, the following 4 levels are supported:\\
+		\emph{INFO}, \emph{DEBUG}, \emph{WARNING} and \emph{ERROR}
+	\item levels can be individually switched on/off at compile time
+	\item No logging code is executed whatsoever if the logger is disabled
+	\item log messages contain filename and line number of the log command
+\end{itemize}
+It therefore lacks certain key features such as
+\begin{itemize}
+	\item crash safe
+	\item custom assert that will log an error before shutting down
+\end{itemize}
+Chances are that we will wait with implementing these features until we actually need them.
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
