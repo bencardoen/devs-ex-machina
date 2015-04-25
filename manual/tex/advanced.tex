@@ -10,10 +10,8 @@ Time is a very important aspect of the simulator. Our implementation allows user
 You can change how time is represented by changing the \lstinline{t_timestamp} type definition in the \path{src/forwarddeclare/timestamp.h} header. Please take care that this type implements at least the interface provided by the default \lstinline{Time} class. For more information, take a look at the accompanying documentation.
 
 \section{Tracing}
-The tracers generate output during the simulation.
 \label{sec:Tracing}
-\paragraph{The Tracing interface}
-The interface consists of only a handful methods.
+The tracers generate output during the simulation. The default set of tracers will print verbose output to the standard output stream \lstinline{std::cout}.
 \paragraph{Custom set of tracers}
 If the default set of tracers is not satisfactory, then you can select your own set of tracers. The header \path{tracers.h} in the folder \path{src/forwarddeclare} contains the typedef for the default implementation.
 \begin{lstlisting}
