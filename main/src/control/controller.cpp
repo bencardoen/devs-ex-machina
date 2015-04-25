@@ -174,6 +174,11 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
+void Controller::setSimType(SimType type)
+{
+	m_simType = type;
+}
+
 void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
@@ -425,11 +430,6 @@ void Controller::setCheckpointInterval(t_timestamp interv)
 void Controller::startGVTThread()
 {
 	throw std::logic_error("Controller : startGVTThread not implemented");
-}
-
-void Controller::waitFinish(size_t)
-{
-	throw std::logic_error("Controller : waitFinish not implemented");
 }
 
 bool Controller::check()

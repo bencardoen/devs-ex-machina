@@ -35,8 +35,17 @@ using n_model::t_coupledmodelptr;
 class Controller
 {
 public:
-	enum SimType {CLASSIC, PDEVS, DSDEVS};
-	enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
+	/// The type of simulation
+	enum SimType
+	{
+		CLASSIC, 	///< Classic DEVS
+		PDEVS, 		///< Parallel DEVS
+		DSDEVS 		///< Dynamic Structure DEVS
+	};
+	enum class ThreadSignal
+	{
+		ISWAITING, SHOULDWAIT, ISFINISHED, FREE
+	};
 
 private:
 	SimType m_simType;
@@ -67,66 +76,65 @@ private:
 	std::vector<std::shared_ptr<std::thread>> m_threads;
 
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
-		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores, std::shared_ptr<Allocator> alloc,
+	        std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
 	virtual ~Controller();
 
-	/*
+	/**
 	 * Set an atomic model as the main model using the given allocator
 	 */
 	void addModel(t_atomicmodelptr& atomic);
 
-	/*
+	/**
 	 * Set a coupled model as the main model using the given allocator
 	 */
 	void addModel(t_coupledmodelptr& coupled);
 
-	/*
+	/**
 	 * Main loop, starts simulation
 	 */
 	void simulate();
 
-	/*
+	/**
+	 * Sets the simulation type
+	 */
+	void setSimType(SimType type);
+
+	/**
 	 * Set simulation to be classic DEVS
 	 */
 	void setClassicDEVS();
 
-	/*
+	/**
 	 * Set simulation to be Parallel DEVS
 	 */
 	void setPDEVS();
 
-	/*
+	/**
 	 * Set simulation to be Dynamic Structure DEVS
 	 */
 	void setDSDEVS();
 
-	/*
+	/**
 	 * Set time at which the simulation will be halted
 	 */
 	void setTerminationTime(t_timestamp time);
 
-	/*
+	/**
 	 * Set condition that can terminate the simulation
 	 */
 	void setTerminationCondition(t_terminationfunctor termination_condition);
 
-	/*
+	/**
 	 * Set checkpointing interval
 	 */
 	void setCheckpointInterval(t_timestamp interv);
 
-	/*
+	/**
 	 * Start thread for GVT
 	 */
 	void startGVTThread();
-
-	/*
-	 * Waits until all cores are finished
-	 */
-	void waitFinish(size_t runningCores);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
@@ -146,7 +154,7 @@ public:
 	 * @param from The starting port of the connection
 	 * @param to The destination port of the connection
 	 */
-	void dsRemoveConnection(const n_model::t_portptr& from,const n_model::t_portptr& to);
+	void dsRemoveConnection(const n_model::t_portptr& from, const n_model::t_portptr& to);
 	/**
 	 * @brief Remove a port during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
@@ -174,37 +182,37 @@ public:
 	bool isInDSPhase() const;
 
 private:
-	/*
+	/**
 	 * Check if simulation needs to continue
 	 */
 	bool check();
 
-	/*
+	/**
 	 * Serialize all cores and models, dump tracer output
 	 */
 	void save(bool traceOnly = false);
 
-	/*
+	/**
 	 * Simulation setup and loop using regular DEVS
 	 */
 	void simDEVS();
 
-	/*
+	/**
 	 * Simulation setup and loop using Parallel DEVS
 	 */
 	void simPDEVS();
 
-	/*
+	/**
 	 * Simulation setup and loop using Dynamic Structure DEVS
 	 */
 	void simDSDEVS();
 
-	/*
+	/**
 	 * Removes models from all cores
 	 */
 	void emptyAllCores();
 
-	/*
+	/**
 	 * Add an atomic model to a specific core
 	 */
 	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
@@ -213,8 +221,8 @@ private:
 };
 
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-	        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-	        const t_coreptr& core, size_t saveInterval);
+        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+        const t_coreptr& core, size_t saveInterval);
 
 } /* namespace n_control */
 

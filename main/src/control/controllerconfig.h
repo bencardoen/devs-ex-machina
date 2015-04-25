@@ -35,11 +35,36 @@ namespace n_control {
  */
 struct ControllerConfig
 {
+	/**
+	 * The name of the controller
+	 * By default: @c MyController
+	 */
 	std::string name;
+
+	/**
+	 * The type of simulation
+	 * See Controller::SimType
+	 * By default: @c CLASSIC
+	 */
 	Controller::SimType simType;
+
+	/**
+	 * The amount of cores the simulation will run on
+	 * By default: @c 1
+	 * @attention : This parameter will be disregarded completely if you do not set the simlation type to PDEVS
+	 */
 	size_t coreAmount;
-	t_timestamp checkpointInterval;
+
+	/**
+	 * How many times the simulation will go over the list of cores before tracing and saving everything
+	 * By default: @c 5
+	 */
 	size_t saveInterval;
+
+	/**
+	 * The component that will decide on which core to place each model
+	 * By default: @c SimpleAllocator
+	 */
 	std::shared_ptr<Allocator> allocator;
 
 	ControllerConfig();

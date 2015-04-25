@@ -44,7 +44,11 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		break;
 	}
 
-	return createObject<Controller>(name, coreMap, allocator, locTab, tracers, saveInterval);
+	auto ctrl = createObject<Controller>(name, coreMap, allocator, locTab, tracers, saveInterval);
+
+	ctrl->setSimType(simType);
+
+	return ctrl;
 }
 
 } /* namespace n_control */
