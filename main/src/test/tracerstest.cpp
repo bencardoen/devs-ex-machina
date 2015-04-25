@@ -405,7 +405,7 @@ TEST(tracing, traceCall) {
 void testFunc(int* ref, int newVal) {
 	*ref = newVal;
 }
-TEST(tracing, DISABLED_tracerMessage) {
+TEST(tracing, tracerMessage) {
 	//test the testFunc function
 	int intvar = 0;
 	EXPECT_EQ(intvar, 0);
@@ -422,7 +422,7 @@ TEST(tracing, DISABLED_tracerMessage) {
 	EXPECT_EQ(intvar, 42);
 	msg.execute();
 	EXPECT_EQ(intvar, 18);
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
+	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 1u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
