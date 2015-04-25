@@ -76,7 +76,7 @@ t_portptr Model::addPort(std::string name, bool isIn)
 		n = ss.str();
 	}
 
-	t_portptr port(new Port(name, this->m_name, isIn));
+	t_portptr port(n_tools::createObject<Port>(name, this->m_name, isIn));
 
 	if (isIn)
 		m_iPorts.insert(std::pair<std::string, t_portptr>(name, port));

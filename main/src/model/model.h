@@ -17,6 +17,7 @@
 #include "port.h"
 #include "state.h"
 #include "dssharedstate.h"
+#include "objectfactory.h"
 
 namespace n_control{
 	class Controller;

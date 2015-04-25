@@ -15,6 +15,7 @@
 #include "zfunc.h"
 #include "globallog.h"
 #include "archive.h"
+#include "objectfactory.h"
 
 namespace n_model {
 
