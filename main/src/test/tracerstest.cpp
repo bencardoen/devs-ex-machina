@@ -422,7 +422,6 @@ TEST(tracing, tracerMessage) {
 	EXPECT_EQ(intvar, 42);
 	msg.execute();
 	EXPECT_EQ(intvar, 18);
-	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 1u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u) > TraceMessage(t_timestamp(12u, 41u), boundFunc2, 0u));
 	EXPECT_TRUE(TraceMessage(t_timestamp(11u, 42u), boundFunc2, 0u) < TraceMessage(t_timestamp(12u, 42u), boundFunc2, 0u));
