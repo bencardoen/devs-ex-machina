@@ -105,7 +105,6 @@ PyPDEVS uses MPI to exchange messages between kernels, whereas we could use shar
 \end{figure} 
 Early benchmarks showed a repeatable throughput of 5e5 msg/s, with 4 kernels on modest hardware. The problems of (unintentional) out of order receipt and potential loss of messages are a non-issue in this context, since we use FIFO queues and loss of a message would implicate severe system failure (in which case message loss is the lesser problem).\\
 Another advantage of hiding the message exchange behind a shared Network class instance is that, should this be required in the future, the kernel could run on different machines without requiring much redesigning of the system. An RPC implementation would simply have to implement the Network class on both sides.
-\includegraphics[scale=0.2]{network.png}
 
 \section{Tracing}
 The tracing uses template programming, and is largely asynchronous w.r.t. the simulator kernels. This can be seen by the high utilization values when benchmarking the examples.
