@@ -149,6 +149,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	if(atomic){
 		//it is an atomic model. Just remove this one from the core and the root devs
 		m_cores.begin()->second->addModel(atomic);
+		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
 		return;
 	}
@@ -200,6 +201,10 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 	for(t_atomicmodelptr& model : m_root->getComponents()){
 		size_t coreID = m_allocator->allocate(model);
 		addModel(model, coreID);
+		if(m_simType != SimType::PDEVS)
+			model->setKeepOldStates(false);
+		else
+			model->setKeepOldStates(true);
 		LOG_DEBUG("Controller::addModel added model with name ", model->getName());
 	}
 	if(m_simType == SimType::DSDEVS)
