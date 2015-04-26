@@ -123,7 +123,6 @@ add_executable(${PROJECT_NAME}
 	src/network/network.cpp
 	src/tracers/policies.cpp
 	src/tracers/tracemessage.cpp
-	src/tracers/tracerbase.cpp
 	src/test/toolstest.cpp
 	src/test/coretest.cpp
 	src/test/tracerstest.cpp

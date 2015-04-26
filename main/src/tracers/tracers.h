@@ -50,7 +50,7 @@ public:
 	/**
 	 * @brief Returns the amount of registered tracers.
 	 */
-	std::size_t getSize() const
+	inline std::size_t getSize() const
 	{
 		return 0;
 	}
@@ -59,7 +59,7 @@ public:
 	 * @brief Returns whether any tracers are registered.
 	 * @note Disabled tracers still count.
 	 */
-	bool hasTracers() const
+	inline bool hasTracers() const
 	{
 		return false;
 	}
@@ -88,34 +88,34 @@ public:
 	 * @param time The simulation time when the change was performed
 	 * @warning This functionality is currently NOT supported. If you do use it, compilation will fail.
 	 */
-	void tracesUser(t_timestamp time) = delete;
+	inline void tracesUser(t_timestamp time) = delete;
 	/**
 	 * @brief Traces state initialization of a model
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	void tracesInit(const t_atomicmodelptr&, t_timestamp)
+	inline void tracesInit(const t_atomicmodelptr&, t_timestamp)
 	{
 	}
 	/**
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
+	inline void tracesInternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
+	inline void tracesExternal(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr&, std::size_t /*coreid*/)
+	inline void tracesConfluent(const t_atomicmodelptr&, std::size_t /*coreid*/)
 	{
 	}
 
@@ -123,9 +123,24 @@ public:
 	 * @brief Stops all tracers
 	 * @note Each tracer has to be restarted individually.
 	 */
-	void stopTracers()
+	inline void stopTracers()
 	{
 	}
+
+
+	/**
+	 * @brief Traces the  start of the output
+	 * Certain tracers can use this to generate a header or similar
+	 */
+	inline void startTrace()
+	{}
+
+	/**
+	 * @brief Finishes the trace output
+	 * Certain tracers can use this to generate a footer or similar
+	 */
+	inline void finishTrace()
+	{}
 };
 
 //recursive case; take one type from the pack and continue with the rest.
@@ -166,7 +181,7 @@ public:
 	/**
 	 * @brief Returns the amount of registered tracers.
 	 */
-	std::size_t getSize() const
+	inline std::size_t getSize() const
 	{
 		return (sizeof...(TracerElems) + 1);
 	}
@@ -175,7 +190,7 @@ public:
 	 * @brief Returns whether any tracers are registered.
 	 * @note Disabled tracers still count.
 	 */
-	bool hasTracers() const
+	inline bool hasTracers() const
 	{
 		return true;
 	}
@@ -184,7 +199,7 @@ public:
 	 * @brief Gets a const reference to the first tracer in line.
 	 * @return The very first tracer in this collection of tracers.
 	 */
-	const T& getTracer() const
+	inline const T& getTracer() const
 	{
 		return m_elem;
 	}
@@ -193,7 +208,7 @@ public:
 	 * @brief Gets a reference to the first tracer in line.
 	 * @return The very first tracer in this collection of tracers.
 	 */
-	T& getTracer()
+	inline T& getTracer()
 	{
 		return m_elem;
 	}
@@ -301,13 +316,13 @@ public:
 	 * @param time The simulation time when the change was performed
 	 * @warning This functionality is currently NOT supported. If you do use it, compilation will fail.
 	 */
-	void tracesUser(t_timestamp time) = delete;
+	inline void tracesUser(t_timestamp time) = delete;
 	/**
 	 * @brief Traces state initialization of a model
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	void tracesInit(const t_atomicmodelptr& model, t_timestamp time)
+	inline void tracesInit(const t_atomicmodelptr& model, t_timestamp time)
 	{
 		m_elem.tracesInit(model, time);
 		getNext().tracesInit(model, time);
@@ -316,7 +331,7 @@ public:
 	 * @brief Traces internal state transition
 	 * @param model The model that just went through an internal transition
 	 */
-	void tracesInternal(const t_atomicmodelptr& model, std::size_t coreid)
+	inline void tracesInternal(const t_atomicmodelptr& model, std::size_t coreid)
 	{
 		m_elem.tracesInternal(model, coreid);
 		getNext().tracesInternal(model, coreid);
@@ -325,7 +340,7 @@ public:
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr& model, std::size_t coreid)
+	inline void tracesExternal(const t_atomicmodelptr& model, std::size_t coreid)
 	{
 		m_elem.tracesExternal(model, coreid);
 		getNext().tracesExternal(model, coreid);
@@ -334,7 +349,7 @@ public:
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr& model, std::size_t coreid)
+	inline void tracesConfluent(const t_atomicmodelptr& model, std::size_t coreid)
 	{
 		m_elem.tracesConfluent(model, coreid);
 		getNext().tracesConfluent(model, coreid);
@@ -344,11 +359,31 @@ public:
 	 * @brief Stops all tracers
 	 * @note Each tracer has to be restarted individually.
 	 */
-	void stopTracers()
+	inline void stopTracers()
 	{
 		m_elem.stopTracer();
 		getNext().stopTracers();
 	}
+
+
+	/**
+	 * @brief Traces the  start of the output
+	 * Certain tracers can use this to generate a header or similar
+	 */
+	inline void startTrace()
+	{
+		m_elem.startTrace();
+		getNext().startTrace();
+	}
+
+	/**
+	 * @brief Finishes the trace output
+	 * Certain tracers can use this to generate a footer or similar
+	 */
+	inline void finishTrace()
+	{
+		m_elem.finishTrace();
+		getNext().finishTrace();}
 private:
 	T m_elem;
 

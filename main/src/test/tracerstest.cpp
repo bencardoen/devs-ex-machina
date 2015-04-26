@@ -526,6 +526,7 @@ TEST(tracing, tracer##tracerclass){\
 		tracerclass<FileWriter> tracer;\
 		n_model::t_atomicmodelptr model = std::make_shared<TestModel>();\
 		tracer.initialize(outputFolder STRINGIFY( tracerclass ) "_out.txt");\
+		tracer.startTrace();\
 		tracer.tracesInit(model, t_timestamp(12, 1));\
 		tracer.tracesInternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(13));\
@@ -553,6 +554,7 @@ TEST(tracing, tracer##tracerclass){\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
 		n_tracers::clearAll();\
 		n_tracers::waitForTracer();\
+		tracer.finishTrace();\
 	}\
 	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY( tracerclass ) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
 }

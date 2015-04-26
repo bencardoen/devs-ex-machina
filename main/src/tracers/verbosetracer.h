@@ -19,7 +19,7 @@ namespace n_tracers{
 using namespace n_network;
 
 template<typename OutputPolicy>
-class VerboseTracer: public OutputPolicy, public TracerBase
+class VerboseTracer: public OutputPolicy, public TracerBase<VerboseTracer<OutputPolicy>>
 {
 private:
 	/**
@@ -29,6 +29,26 @@ private:
 	typedef VerboseTracer<OutputPolicy> t_derived;
 
 	t_timestamp m_prevTime;
+
+	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
+			*ssr << "\t\t\tport <" << item.first << ">:\n";
+			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+			for (const n_network::t_msgptr& message : messages)
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
+		}
+	}
+
+	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
+		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
+			*ssr << "\t\t\tport <" << item.first << ">:\n";
+			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
+			for (const n_network::t_msgptr& message : messages)
+				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
+		}
+	}
 
 public:
 	VerboseTracer(): m_prevTime(0, std::numeric_limits<t_timestamp::t_causal>::max())
@@ -46,21 +66,13 @@ public:
 		}
 		OutputPolicy::print(ssr->str());	//print using the policy
 	}
-
-	void takeBack(std::ostringstream* ssr){
-		delete ssr;
-	}
 	/**
 	 * @brief Traces state initialization of a model
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	void tracesInit(const t_atomicmodelptr& adevs, t_timestamp time)
+	inline void tracesInitImpl(const t_atomicmodelptr& adevs, t_timestamp, std::ostringstream* ssr)
 	{
-		assert(adevs != nullptr && "VerboseTracer::tracesInit argument cannot be a nullptr.");
-
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
-
 		t_stateptr state = adevs->getState();
 		*ssr << "\n"
 			"\tINITIAL CONDITIONS in model " << adevs->getName() << "\n"
@@ -71,12 +83,6 @@ public:
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
-
-		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, 0u, takeback);
-		//deal with the message
-		scheduleMessage(message);
 	}
 
 	/**
@@ -84,121 +90,83 @@ public:
 	 * @param adevs The atomic model that just performed an internal transition
 	 * @precondition The model pointer is not a nullptr
 	 */
-	void tracesInternal(const t_atomicmodelptr& adevs, std::size_t coreid)
+	inline void tracesInternalImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		assert(adevs != nullptr && "VerboseTracer::tracesInternal argument cannot be a nullptr.");
-
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
-
 		t_stateptr state = adevs->getState();
 		*ssr << "\n"
 			"\tINTERNAL TRANSITION in model " << adevs->getName() << "\n"
 			"\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
-		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
-		}
+
+		printOutgoing(adevs, ssr);
+
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
 		if(nextT == t_timestamp::infinity())
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
-
-		t_timestamp time = state->m_timeLast; // get timestamp of the transition
-		LOG_DEBUG("TracesInternal: current time", time);
-		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
-		//deal with the message
-		scheduleMessage(message);
 	}
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
 	 */
-	void tracesExternal(const t_atomicmodelptr& adevs, std::size_t coreid)
+	inline void tracesExternalImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		assert(adevs != nullptr && "VerboseTracer::tracesExternal argument cannot be a nullptr.");
-
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
-
 		t_stateptr state = adevs->getState();
 		*ssr << "\n"
 			"\tEXTERNAL TRANSITION in model " << adevs->getName() << "\n"
 			"\t\tNew State: " << state->toString() << "\n"
 			"\t\tInput Port Configuration:\n";
-		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
-		}
+
+		printIncoming(adevs, ssr);
+
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
 		if(nextT == t_timestamp::infinity())
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
-
-		t_timestamp time = state->m_timeLast; // get timestamp of the transition
-		LOG_DEBUG("TracesExternal: current time", time);
-		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
-		//deal with the message
-		scheduleMessage(message);
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
 	 */
-	void tracesConfluent(const t_atomicmodelptr& adevs, std::size_t coreid)
+	inline void tracesConfluentImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		assert(adevs != nullptr && "VerboseTracer::tracesConfluent argument cannot be a nullptr.");
-
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
-
 		t_stateptr state = adevs->getState();
 		*ssr << "\n"
 			"\tCONFLUENT TRANSITION in model " << adevs->getName() << "\n"
 			"\t\tInput Port Configuration:\n";
-		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
-		}
+
+		printIncoming(adevs, ssr);
+
 		*ssr << "\t\tNew State: " << state->toString() << "\n"
 			"\t\tOutput Port Configuration:\n";
-		const std::map<std::string, t_portptr>& ports2 = adevs->getOPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports2) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
-			const std::vector<n_network::t_msgptr>& messages2 = item.second->getSentMessages();
-			for (const n_network::t_msgptr& message : messages2)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';
-		}
+
+		printOutgoing(adevs, ssr);
+
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
 		if(nextT == t_timestamp::infinity())
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
-
-		t_timestamp time = state->m_timeLast; // get timestamp of the transition
-		LOG_DEBUG("TracesConfluent: current time", time);
-		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, ssr);
-		std::function<void()> takeback = std::bind(&t_derived::takeBack, this, ssr);
-		t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid, takeback);
-		//deal with the message
-		scheduleMessage(message);
 	}
+
+	/**
+	 * @brief Traces the  start of the output
+	 * Certain tracers can use this to generate a header or similar
+	 */
+	inline void startTrace()
+	{}
+
+	/**
+	 * @brief Finishes the trace output
+	 * Certain tracers can use this to generate a footer or similar
+	 */
+	inline void finishTrace()
+	{}
 };
 
 } /* namespace n_tracers */

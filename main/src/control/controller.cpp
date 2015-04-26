@@ -225,6 +225,8 @@ void Controller::simulate()
 		return;
 	}
 
+	m_tracers->startTrace();
+
 	m_isSimulating = true;
 
 	// run simulation
@@ -246,6 +248,7 @@ void Controller::simulate()
 	n_tracers::traceUntil(t_timestamp::infinity());
 	n_tracers::clearAll();
 	n_tracers::waitForTracer();
+	m_tracers->finishTrace();
 
 	m_isSimulating = false;
 }
