@@ -60,8 +60,9 @@ n_tracers::FileWriter::FileWriter()
 }
 
 n_tracers::FileWriter::FileWriter(FileWriter&& other)
-	: m_stream(std::move(other.m_stream)), m_disabled(std::move(other.m_disabled)), m_filename(
-	        std::move(other.m_filename))
+	: m_stream(std::move(other.m_stream)),
+	  m_disabled(std::move(other.m_disabled)),
+	  m_filename(std::move(other.m_filename))
 {
 }
 

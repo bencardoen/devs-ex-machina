@@ -34,7 +34,8 @@ private:
 
 	t_timestamp m_prevTime;
 
-	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
+	{
 		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
@@ -44,7 +45,8 @@ private:
 		}
 	}
 
-	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
+	{
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
 			*ssr << "\t\t\tport <" << item.first << ">:\n";
@@ -163,14 +165,16 @@ public:
 	 * Certain tracers can use this to generate a header or similar
 	 */
 	inline void startTrace()
-	{}
+	{
+	}
 
 	/**
 	 * @brief Finishes the trace output
 	 * Certain tracers can use this to generate a footer or similar
 	 */
 	inline void finishTrace()
-	{}
+	{
+	}
 };
 
 } /* namespace n_tracers */

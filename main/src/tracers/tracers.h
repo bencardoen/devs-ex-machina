@@ -133,14 +133,16 @@ public:
 	 * Certain tracers can use this to generate a header or similar
 	 */
 	inline void startTrace()
-	{}
+	{
+	}
 
 	/**
 	 * @brief Finishes the trace output
 	 * Certain tracers can use this to generate a footer or similar
 	 */
 	inline void finishTrace()
-	{}
+	{
+	}
 };
 
 //recursive case; take one type from the pack and continue with the rest.
@@ -383,7 +385,8 @@ public:
 	inline void finishTrace()
 	{
 		m_elem.finishTrace();
-		getNext().finishTrace();}
+		getNext().finishTrace();
+	}
 private:
 	T m_elem;
 

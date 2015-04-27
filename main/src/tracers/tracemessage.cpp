@@ -56,22 +56,26 @@ t_tracemessageptr TraceMessageEntry::getPointer() const
 	return m_pointer;
 }
 
-TraceMessageEntry::TraceMessageEntry(t_tracemessageptr ptr)
+TraceMessageEntry::TraceMessageEntry(const t_tracemessageptr& ptr)
 	: m_pointer(ptr)
 {
 }
+
 TraceMessage& TraceMessageEntry::operator*()
 {
 	return *m_pointer;
 }
+
 const TraceMessage& TraceMessageEntry::operator*() const
 {
 	return *m_pointer;
 }
+
 TraceMessage* TraceMessageEntry::operator->()
 {
 	return m_pointer;
 }
+
 const TraceMessage* TraceMessageEntry::operator->() const
 {
 	return m_pointer;
@@ -121,7 +125,7 @@ void scheduleMessage(t_tracemessageptr message)
 void waitForTracer()
 {
 	std::lock_guard<std::mutex> guard(mu);
-	if(tracerFuture.load() != nullptr){
+	if (tracerFuture.load() != nullptr) {
 		tracerFuture.load()->wait();
 		delete tracerFuture.load();
 		tracerFuture.store(nullptr);
@@ -140,10 +144,10 @@ void traceUntil(n_network::t_timestamp time)
 {
 	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time, []{}, 0u);
+	TraceMessage t(time, [] {}, 0u);
 	scheduler->unschedule_until(messages, &t);
 
-	if(tracerFuture.load() != nullptr){
+	if (tracerFuture.load() != nullptr) {
 		tracerFuture.load()->wait();
 		delete tracerFuture.load();
 		tracerFuture.store(nullptr);
@@ -155,19 +159,21 @@ void traceUntil(n_network::t_timestamp time)
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time.getTime(), []{}, 0u);
+	TraceMessage t(time.getTime(), [] {}, 0u);
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;
-	TraceMessage inf(n_network::t_timestamp::infinity(), []{}, 0u);
+	TraceMessage inf(n_network::t_timestamp::infinity(), [] {}, 0u);
 	scheduler->unschedule_until(messagesLost, &inf);
-	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ", messagesLost.size(), " messages");
-	if(coreID == std::numeric_limits<std::size_t>::max()) {
-		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(), " messages");
-		for(const TraceMessageEntry& mess : messagesLost)
+	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ",
+	        messagesLost.size(), " messages");
+	if (coreID == std::numeric_limits<std::size_t>::max()) {
+		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(),
+		        " messages");
+		for (const TraceMessageEntry& mess : messagesLost)
 			n_tools::takeBack(mess.getPointer());
 	} else {
-		for(const TraceMessageEntry& mess : messagesLost){
-			if(mess->getSourceCore() != coreID)
+		for (const TraceMessageEntry& mess : messagesLost) {
+			if (mess->getSourceCore() != coreID)
 				scheduler->push_back(mess);
 			else
 				n_tools::takeBack(mess.getPointer());

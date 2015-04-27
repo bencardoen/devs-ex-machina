@@ -34,7 +34,8 @@ private:
 	 */
 	typedef XmlTracer<OutputPolicy> t_derived;
 
-	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
+	{
 		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
 			*ssr << "<port name=\"" << item.first << "\" category=\"I\">\n";
@@ -45,7 +46,8 @@ private:
 		}
 	}
 
-	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
+	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
+	{
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
 			*ssr << "<port name=\"" << item.first << "\" category=\"O\">\n";
