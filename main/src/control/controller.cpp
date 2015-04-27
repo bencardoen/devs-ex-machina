@@ -442,10 +442,16 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				        || threadsignal[i] == Controller::ThreadSignal::STOP)
 					++countidle;
 			}
-			if (countidle == threadsignal.size()) {	// TODO need link to network here.
-				LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-				        " all other threads are stopped or idle, quitting.");
-				return;
+			if (countidle == threadsignal.size()) {
+				if(not core->existTransientMessage()){
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+						" all other threads are stopped or idle, network is idle, quitting.");
+					return;
+				}
+				else{
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+						" all other threads are stopped or idle, network reports transients, idling.");
+				}
 			}
 		} else {
 			std::lock_guard<std::mutex> signallock(vectorlock);

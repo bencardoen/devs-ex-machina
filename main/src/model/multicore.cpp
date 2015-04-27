@@ -363,3 +363,10 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 	this->revertTracerUntil(totime); 	// Finally, revert trace output
 }
 
+
+bool n_model::Multicore::existTransientMessage(){
+	bool b = this->m_network->networkHasMessages();
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " network has messages ?=", b);
+	return b;
+}
+

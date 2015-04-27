@@ -531,8 +531,19 @@ public:
 	void
 	paintMessage(const t_msgptr&){;}
 
+	/**
+	 * Write current Core state to logfile.
+	 */
 	void
 	logCoreState();
+
+	/**
+	 * Return true if the network reports there are still messages going around.
+	 * @attention: assert(false) in single core.
+	 */
+	virtual
+	bool
+	existTransientMessage();
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

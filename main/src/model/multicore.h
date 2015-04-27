@@ -238,6 +238,9 @@ public:
 	virtual
 	void
 	unlockMessages()override;
+
+	bool
+	existTransientMessage()override;
 };
 
 } /* namespace n_model */

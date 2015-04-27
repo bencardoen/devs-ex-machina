@@ -596,3 +596,10 @@ void n_model::Core::logCoreState()
 	LOG_DEBUG("Core: ", this->getCoreID(), " time= ", this->getTime(), " gvt=", this->getGVT(), " live=",
 	        this->isLive(), " idle=", this->isIdle(), " terminated=", this->terminated());
 }
+
+
+bool
+n_model::Core::existTransientMessage(){
+	LOG_ERROR("Core: ", this->getCoreID(), " existTransientMessage called on single core.");
+	assert(false);
+}
