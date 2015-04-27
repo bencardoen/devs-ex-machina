@@ -13,6 +13,7 @@
 #include "policies.h"
 #include "verbosetracer.h"
 #include "xmltracer.h"
+#include "jsontracer.h"
 #include "compare.h"
 #include "macros.h"
 #include "coutredirect.h"
@@ -490,7 +491,7 @@ class TestState: public n_model::State {
 		}
 		;
 		virtual std::string toJSON() {
-			return "{state=\"JSON!\"}";
+			return "{\"state\":\"JSON!\"}";
 		}
 		;
 		virtual std::string toCell() {
@@ -567,6 +568,8 @@ TEST(tracing, tracer##tracerclass){\
 SINGLETRACERTEST(TESTFOLDERTRACE, VerboseTracer)
 
 SINGLETRACERTEST(TESTFOLDERTRACE, XmlTracer)
+
+SINGLETRACERTEST(TESTFOLDERTRACE, JsonTracer)
 
 TEST(tracing, messageManagement){
 	{

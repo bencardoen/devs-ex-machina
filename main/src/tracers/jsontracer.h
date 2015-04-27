@@ -1,12 +1,12 @@
 /*
- * xmltracer.h
+ * jsontracer.h
  *
- *  Created on: Apr 26, 2015
+ *  Created on: Apr 27, 2015
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#ifndef SRC_TRACERS_XMLTRACER_H_
-#define SRC_TRACERS_XMLTRACER_H_
+#ifndef SRC_TRACERS_JSONTRACER_H_
+#define SRC_TRACERS_JSONTRACER_H_
 
 #include "timestamp.h"
 #include "tracemessage.h"
@@ -21,50 +21,64 @@ using namespace n_network;
 /**
  * @brief Tracer that will generate xml output.
  * @tparam OutputPolicy A policy that dictates what should happen with the output
- *
- * The generated xml will have the structure expected by the DEVS Trace Plotter by Hongyan (Bill) Song
+ * @note The structure of the trace output is based on the xml structure.
+ * 	 If a standardized structure already exists, please either send us a mail or fix this issue here
  */
 template<typename OutputPolicy>
-class XmlTracer: public OutputPolicy, public TracerBase<XmlTracer<OutputPolicy>>
+class JsonTracer: public OutputPolicy, public TracerBase<JsonTracer<OutputPolicy>>
 {
 private:
+	char m_comma = ' ';
 	/**
 	 * @brief Typedef for this class.
 	 * In order to get the function pointers to functions defined in this class, use `&Derived::my_func`.
 	 */
-	typedef XmlTracer<OutputPolicy> t_derived;
+	typedef JsonTracer<OutputPolicy> t_derived;
 
 	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
 		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+		char comma1 = ' ';
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "<port name=\"" << item.first << "\" category=\"I\">\n";
+			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"I\",\n"
+				"\"messages\":[";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "<message>" << message->getPayload() << "</message>\n";
-			*ssr << "</port>\n";
+			char comma2 = ' ';
+			for (const n_network::t_msgptr& message : messages){
+				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";
+				comma2 = ',';
+			}
+			*ssr << "]}";
+			comma1 = ',';
 		}
 	}
 
 	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr){
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
+		char comma1 = ' ';
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "<port name=\"" << item.first << "\" category=\"O\">\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "<message>" << message->getPayload() << "</message>\n";
-			*ssr << "</port>\n";
+			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"O\",\n"
+				"\"messages\":[";
+			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+			char comma2 = ' ';
+			for (const n_network::t_msgptr& message : messages){
+				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";
+				comma2 = ',';
+			}
+			*ssr << "]}";
+			comma1 = ',';
 		}
 	}
 
 public:
-	XmlTracer() = default;
+	JsonTracer() = default;
 	/**
 	 * @brief Performs the actual tracing. Once this function is called, there is no going back.
 	 */
 	void doTrace(t_timestamp, std::ostringstream* ssr)
 	{
 		assert(ssr != nullptr);
-		OutputPolicy::print(ssr->str());	//print using the policy
+		OutputPolicy::print(m_comma, ssr->str());	//print using the policy
+		m_comma = ',';
 	}
 	/**
 	 * @brief Traces state initialization of a model
@@ -74,16 +88,16 @@ public:
 	inline void tracesInitImpl(const t_atomicmodelptr& adevs, t_timestamp nextT, std::ostringstream* ssr)
 	{
 		t_stateptr state = adevs->getState();
-		*ssr << "<event>\n"
-			"<model>" << adevs->getName() << "</model>\n"
-			"<time>";
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << "</time>\n"
-			"<kind>" "EX" "</kind>\n"
-			"<state>" << state->toXML() << "<![CDATA[" << state->toString() << "]]>\n</state>\n"
-			"</event>\n";
+		*ssr << ",\n"
+			"\"kind\":\"" "EX" "\",\n"
+			"\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 
 	/**
@@ -95,17 +109,18 @@ public:
 	{
 		t_stateptr state = adevs->getState();
 		t_timestamp nextT =  adevs->getTimeNext();
-		*ssr << "<event>\n"
-			"<model>" << adevs->getName() << "</model>\n"
-			"<time>";
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << "</time>\n"
-			"<kind>" "IN" "</kind>\n";
+		*ssr << ",\n"
+			"\"kind\":\"" "IN" "\",\n"
+			"\"ports\":[";
 		printOutgoing(adevs, ssr);
-		*ssr << "<state>" << state->toXML() << "<![CDATA[" << state->toString() << "]]>\n</state>\n"
-			"</event>\n";
+		*ssr << "],\n\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 	/**
 	 * @brief Traces external state transition
@@ -115,17 +130,18 @@ public:
 	{
 		t_stateptr state = adevs->getState();
 		t_timestamp nextT =  adevs->getTimeNext();
-		*ssr << "<event>\n"
-			"<model>" << adevs->getName() << "</model>\n"
-			"<time>";
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << "</time>\n"
-			"<kind>" "EX" "</kind>\n";
+		*ssr << ",\n"
+			"\"kind\":\"" "EX" "\",\n"
+			"\"ports\":[";
 		printIncoming(adevs, ssr);
-		*ssr << "<state>" << state->toXML() << "<![CDATA[" << state->toString() << "]]>\n</state>\n"
-			"</event>\n";
+		*ssr << "],\n\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
@@ -134,6 +150,7 @@ public:
 	inline void tracesConfluentImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
 		tracesExternalImpl(adevs, ssr);
+		*ssr << ',';
 		tracesInternalImpl(adevs, ssr);
 	}
 
@@ -143,7 +160,7 @@ public:
 	 */
 	inline void startTrace()
 	{
-		OutputPolicy::print("<?xml version=\"1.0\"?>\n<trace>\n");
+		OutputPolicy::print("{\"events\":[\n");
 	}
 
 	/**
@@ -152,11 +169,11 @@ public:
 	 */
 	inline void finishTrace()
 	{
-		OutputPolicy::print("</trace>");
+		OutputPolicy::print("\n]}");
 	}
 };
 
 } /* namespace n_tracers */
 
 
-#endif /* SRC_TRACERS_XMLTRACER_H_ */
+#endif /* SRC_TRACERS_JSONTRACER_H_ */
