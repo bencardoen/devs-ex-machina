@@ -875,3 +875,63 @@ TEST(Multicore, revertstress){
 
 	}
 }
+
+
+TEST(Multicore, GVT){
+	RecordProperty("description", "Manuall run GVT.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	tracers->startTrace();
+	// c1: has policeman
+	// c2: has trafficlight
+
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();	// C2 @108
+	c1->runSmallStep();	// C1
+	c1->logCoreState(); 	// C1 @200, GVT = 108.
+	std::atomic<bool> rungvt(true);
+	n_control::runGVT(ctrl, rungvt);
+	EXPECT_EQ(c1->getGVT().getTime(), 108);
+	EXPECT_EQ(c1->getGVT(), c2->getGVT());
+	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
+	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	}
+
+}

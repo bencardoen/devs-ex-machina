@@ -608,3 +608,14 @@ std::size_t
 n_model::Core::getZombieRounds(){
 	return m_zombie_rounds;
 }
+
+MessageColor
+n_model::Core::getColor(){
+	assert(false);
+	return MessageColor::WHITE;
+}
+
+void
+n_model::Core::setColor(MessageColor){
+	assert(false);
+}

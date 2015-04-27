@@ -126,7 +126,7 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->unlockMessages();
 }
 
-void Multicore::waitUntilOK(const t_controlmsg& msg)
+void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 {
 	// We don't have to get the count from the message each time,
 	// because the control message doesn't change, it stays in this core
@@ -136,19 +136,25 @@ void Multicore::waitUntilOK(const t_controlmsg& msg)
 	int msgcount = msg->getCountVector()[this->getCoreID()];
 	while (true) {
 		std::lock_guard<std::mutex> lock(m_vlock);
+		if(rungvt == false){
+			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
+			return;
+		}
 		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0)
 			break; // Lock is released, all white messages are received!
 	}
 }
 
-void Multicore::receiveControl(const t_controlmsg& msg, bool first)
+void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<bool>& rungvt)
 {	// TODO Beautify!!
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
-
+	if(rungvt==false){
+		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
+		return;
+	}
 	if (this->getCoreID() == 0 && first) {
 		LOG_INFO("MCore:: ", this->getCoreID(), " received first control message, starting first round");
-
 		// If this processor is Pinit and is the first to be called in the GVT calculation
 		// Might want to put this in a different function?
 		this->m_color = MessageColor::RED;
@@ -181,7 +187,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 		// approximation is found.
 
 		// Wait until we have received all messages
-		this->waitUntilOK(msg);
+		this->waitUntilOK(msg, rungvt);
 		// If all items in count vectors are zero
 		if (msg->countIsZero()) {
 			LOG_INFO("MCore:: ", this->getCoreID(), " process init received control message, found GVT!");
@@ -226,7 +232,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 			this->m_color = MessageColor::RED;	// LOCK
 		}
 		// We wait until we have received all messages
-		waitUntilOK(msg);
+		waitUntilOK(msg, rungvt);
 
 		LOG_INFO("MCore:: ", this->getCoreID(), "process received control message");
 
@@ -296,7 +302,7 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 		modelentry.second->setGVT(newgvt);
 	}
 
-	this->m_color = MessageColor::WHITE;
+	this->setColor(MessageColor::WHITE);
 	LOG_INFO("Mcore:: ", this->getCoreID(), " painted core back to white, for next gvt calculation");
 	this->unlockSimulatorStep();
 }
@@ -374,3 +380,14 @@ bool n_model::Multicore::existTransientMessage(){
 	return b;
 }
 
+void
+n_model::Multicore::setColor(MessageColor mc){
+	std::lock_guard<std::mutex> lock(m_colorlock);
+	this->m_color = mc;
+}
+
+MessageColor
+n_model::Multicore::getColor(){
+	std::lock_guard<std::mutex> lock(m_colorlock);
+	return m_color;
+}

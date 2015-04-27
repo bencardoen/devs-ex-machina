@@ -56,6 +56,11 @@ private:
 	std::mutex			m_locallock;
 
 	/**
+	 * Synchronize access to color.
+	 */
+	std::mutex			m_colorlock;
+
+	/**
 	 * Message lock. Excludes access to [sent|processed|pending]
 	 */
 	std::mutex			m_msglock;
@@ -114,7 +119,7 @@ private:
 	 * @param msg the received control message
 	 */
 	void
-	waitUntilOK(const t_controlmsg& msg);
+	waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt);
 
 
 	/**
@@ -159,9 +164,10 @@ public:
 
 	/**
 	 * Get the current color this core is in (Mattern's)
+	 *
 	 */
 	MessageColor
-	getColor()const{return m_color;}
+	getColor()override;
 
 	/**
 	 * Revert from current time to totime.
@@ -177,7 +183,7 @@ public:
 	 * Set core color. (Mattern's)
 	 */
 	void
-	setColor(MessageColor c){m_color = c;}
+	setColor(MessageColor c)override;
 
 	/**
 	 * Sort incoming mail into time based scheduler.
@@ -190,7 +196,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg&, bool first=false)override;
+	receiveControl(const t_controlmsg&, bool first, std::atomic<bool>& rungvt)override;
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)

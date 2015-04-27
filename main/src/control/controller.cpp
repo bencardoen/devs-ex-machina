@@ -12,10 +12,10 @@ namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
         std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
-        size_t saveInterval)
-	: m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(false), m_checkTermCond(
-	        false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(alloc), m_tracers(
-	        tracers), m_dsPhase(false)
+        size_t saveInterval):
+        	m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name),
+        	m_checkTermTime(false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores),
+        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -296,11 +296,13 @@ void Controller::simPDEVS()
 		threadsignal.push_back(ThreadSignal::FREE);
 	}
 
+	std::atomic<bool> rungvt;
+
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
 		        n_tools::createObject<std::thread>(cvworker, std::ref(cv), std::ref(cvlock), i,
 		                std::ref(threadsignal), std::ref(veclock), deadlockVal, std::cref(m_cores[i]),
-		                m_saveInterval));
+		                m_saveInterval, std::ref(rungvt)));
 		LOG_INFO("CONTROLLER: Started thread #", i);
 	}
 
@@ -408,7 +410,7 @@ void Controller::emptyAllCores()
 // TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t /*saveInterval*/)
+        const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
@@ -417,9 +419,11 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	};
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
+			/// If a thread stops, it has to signal it's intention to the GVT algorithm.
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
+				rungvt.store(false);
 				return;
 			}
 		}
@@ -443,22 +447,22 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 					++countidle;
 			}
 			if (countidle == threadsignal.size()) {
-				if(not core->existTransientMessage()){
+				if (not core->existTransientMessage()) {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-						" all other threads are stopped or idle, network is idle, quitting.");
+					        " all other threads are stopped or idle, network is idle, quitting.");
+					rungvt.store(false);	// Signal gvt calculation.
 					return;
-				}
-				else{
+				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-						" all other threads are stopped or idle, network reports transients, idling.");
+					        " all other threads are stopped or idle, network reports transients, idling.");
 				}
 			}
-		} else {
+		} else {	// Else no longer IDLE
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::IDLE) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				threadsignal[myid] = Controller::ThreadSignal::FREE;// TODO overwrites old SHOULDWAIT et al.
+				threadsignal[myid] = Controller::ThreadSignal::FREE;
 			}
 		}
 		if (core->isLive() || core->isIdle()) {
@@ -466,7 +470,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		bool skip_barrier = true;	// TODO re-enable if control is implemented
+		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
@@ -489,6 +493,54 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			cv.wait(mylock, predicate);
 		}
 		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
+	}
+}
+
+void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
+{
+	if(not gvtsafe){
+		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
+		return;
+	}
+	const std::size_t corecount = cont.m_cores.size();
+	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
+	        t_timestamp::infinity());
+	// Make sure the cores are in a valid state. In theory setGVT does this, but it's possible it's interrupted/failed.
+	for (size_t i = 0; i < corecount; ++i) {
+		const t_coreptr& core = cont.m_cores[i];
+		core->setColor(MessageColor::WHITE);	// Synced, but only on color.
+	}
+
+	for (size_t i = 0; i < corecount; ++i) {
+		cont.m_cores[i]->receiveControl(cmsg, (i == 0), gvtsafe);
+		if(gvtsafe == false){
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
+	}
+	/// First round done, let Pinit check if we have found a gvt.
+	t_coreptr first = cont.m_cores[0];
+	first->receiveControl(cmsg, false, gvtsafe);
+
+	if (cmsg->isGvtFound()) {
+		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
+		for (const auto& ucore : cont.m_cores)
+			ucore.second->setGVT(cmsg->getGvt());
+	} else {
+		if(gvtsafe == false){
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
+		/// Need a second round, pinit is done already.
+		for (std::size_t j = 1; j < corecount; ++j) {
+			cont.m_cores[j]->receiveControl(cmsg, false, gvtsafe);
+		}
+		if (cmsg->isGvtFound()) {
+			for (const auto& ucore : cont.m_cores)
+				ucore.second->setGVT(cmsg->getGvt());
+		} else {
+			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+		}
 	}
 }
 

@@ -526,7 +526,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/){
+	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/, std::atomic<bool>& /*rungvt*/){
 		assert(false);
 	}
 
@@ -563,6 +563,14 @@ public:
 	 */
 	std::size_t
 	getZombieRounds();
+
+	virtual
+	MessageColor
+	getColor();
+
+	virtual
+	void
+	setColor(MessageColor mc);
 };
 
 typedef std::shared_ptr<Core> t_coreptr;
