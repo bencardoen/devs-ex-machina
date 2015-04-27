@@ -28,7 +28,9 @@ public:
 	std::string toXML() override;
 	std::string toJSON() override;
 	std::string toCell() override;
-	~PolicemanMode() {}
+	~PolicemanMode()
+	{
+	}
 };
 
 class Policeman: public AtomicModel
@@ -36,7 +38,9 @@ class Policeman: public AtomicModel
 public:
 	Policeman() = delete;
 	Policeman(std::string, std::size_t priority = 0);
-	~Policeman() {}
+	~Policeman()
+	{
+	}
 
 	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	void intTransition() override;
@@ -52,8 +56,5 @@ public:
 };
 
 }
-
-
-
 
 #endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_ */

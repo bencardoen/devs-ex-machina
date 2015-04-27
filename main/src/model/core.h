@@ -429,6 +429,9 @@ public:
 	bool
 	terminated() const;
 
+	void
+	setTerminated(bool b);
+
 	/**
 	 * Set the the termination function.
 	 */
@@ -527,6 +530,9 @@ public:
 	virtual
 	void
 	paintMessage(const t_msgptr&){;}
+
+	void
+	logCoreState();
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

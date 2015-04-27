@@ -15,6 +15,15 @@
 #include "trafficlight.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
+#include "controller.h"
+#include "simpleallocator.h"
+#include "tracers.h"
+#include "coutredirect.h"
+#include "trafficsystemc.h"
+#include "controllerconfig.h"
+#include "controller.h"
+#include "compare.h"
+#include <sstream>
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -546,5 +555,85 @@ TEST(Multicore, GVTfunctions){
 	EXPECT_EQ(coreone->getTime().getTime(), 63);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108);
+}
+
+
+TEST(Multicore, revertidle){
+	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
+	{
+	//CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	//c2->printSchedulerState();
+
+	tracers->startTrace();
+
+	c1->runSmallStep();
+	c1->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();
+
+	c1->runSmallStep();
+	c1->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();
+
+	c1->runSmallStep();
+	c1->logCoreState();		// Cop is terminated @time 500, idle=true, live=false
+	c2->runSmallStep();
+	c2->logCoreState();		// Trafficlight is at 118::8, queued message from cop @200, @300
+
+	// Test that a Core can go from idle to live again without corrupting.
+	c1->revert(t_timestamp(201,42));
+	// Expecting time = 201,42, revert of model 1x antimessage @300.
+	EXPECT_EQ(c1->getTime().getTime(), 201);
+	c1->logCoreState();
+	c1->runSmallStep();	// no imminents, no messages, adv time to 300::1	// 1 only if single test is run
+	EXPECT_EQ(c1->getTime().getTime(), 300);
+	c1->logCoreState();
+	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
+	c1->logCoreState();
+	EXPECT_TRUE(c1->isIdle() && !c1->isLive() && c1->terminated());
+	c1->runSmallStep();	// idle, does nothing.
+
+//	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::clearAll();
+	n_tracers::waitForTracer();
+	tracers->finishTrace();
+
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	};
+
 }
 

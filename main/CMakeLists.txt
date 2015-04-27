@@ -77,7 +77,7 @@ SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg")
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC -march=native -g ${flagstdc11} ")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC -march=native -g ${flagstdc11} ")
 
 ###############################################################################
 

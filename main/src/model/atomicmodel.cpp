@@ -29,8 +29,8 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 	for (auto& m : message) {
 		std::string destport = m->getDestinationPort();
 		auto it = m_iPorts.begin();
-		while(it != m_iPorts.end()){
-			if(n_tools::endswith(destport, it->first))
+		while (it != m_iPorts.end()) {
+			if (n_tools::endswith(destport, it->first))
 				break;
 			++it;
 		}
@@ -125,7 +125,7 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	this->m_state = state;
 
 	// We return the m_timeNext of our current state
-	LOG_DEBUG("AMODEL:: revert for totime ", time , " returning ", this->m_timeNext);
+	LOG_DEBUG("AMODEL:: revert for totime ", time, " returning ", this->m_timeNext);
 	return this->m_timeNext;
 
 }
