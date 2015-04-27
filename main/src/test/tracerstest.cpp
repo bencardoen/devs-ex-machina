@@ -482,7 +482,11 @@ class TestState: public n_model::State {
 		}
 
 		virtual std::string toXML() {
-			return "<fancy xml=\"true\">state</fancy>";
+			return "<attribute category=\"P\">"
+				"<name>isXml</name>"
+				"<type>String</type>"
+				"<value>indeed!</value>"
+				"</attribute>";
 		}
 		;
 		virtual std::string toJSON() {
