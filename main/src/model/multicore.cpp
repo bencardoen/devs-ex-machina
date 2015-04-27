@@ -117,7 +117,11 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->lockMessages();
 	for (const auto & message : messages) {
 		assert(message->getDestinationCore() == this->getCoreID());
-		this->receiveMessage(message);
+		if(this->containsModel(message->getDestinationModel())){
+			this->receiveMessage(message);
+		}else{
+			LOG_ERROR("MCORE:: ", this->getCoreID(), " received message for model not in core\n", message->toString());
+		}
 	}
 	this->unlockMessages();
 }

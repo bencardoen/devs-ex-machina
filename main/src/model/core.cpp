@@ -81,19 +81,16 @@ bool n_model::Core::containsModel(const std::string& mname) const
 
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
-	/// This code can crash hard if you try to schedule a model that is already scheduled.
-	/// Time corruption can xxxx up the core as well, without an error, hence all the checks.
-	/// E.g.:  "A" @ 10::1, scheduleModel("A", 10::2) <-- makes no sense, derails Core.
-	/// In the above, we correct to A@10::1 and crash hard.
 	if (this->m_models.find(name) != this->m_models.end()) {
-		LOG_DEBUG("Core : ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
+		LOG_DEBUG("CORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
 		size_t offset = this->m_models[name]->getPriority();
 		t_timestamp newt(t.getTime(), offset);
 		ModelEntry entry(name, newt);
-		LOG_DEBUG("Core : ", this->getCoreID(), " rescheduling : ", name, "@", newt);
+		LOG_DEBUG("CORE :: ", this->getCoreID(), " rescheduling : ", name, "@", newt);
 		if (this->m_scheduler->contains(entry)) {
-			LOG_ERROR("Core::scheduleModel Tried to schedule a model that is already scheduled: ", name,
-			        " at t=", newt);
+			LOG_INFO("CORE:: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", name,
+			" at t=", newt, " replacing.");
+			this->m_scheduler->erase(entry);			// Needed for revert, scheduled entry may be wrong.
 		}
 		this->m_scheduler->push_back(entry);	// assert fail possible if if clause is hit. Do not move to else!
 	} else {
@@ -113,7 +110,6 @@ void n_model::Core::init()
 		LOG_DEBUG("Core :", this->getCoreID(), " has ", model.first);
 	}
 	for (const auto& model : this->m_models) {
-		//trace init
 		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
 		model.second->setTime(modelTime);	// DO NOT use priority, model does this already
 		t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
@@ -175,14 +171,20 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
-		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
+		// Erase scheduled entry. If external changes ta -> oo, we won't need it anymore.
+		// Else if ta->oo, the scheduled entry will be incorrect, reschedule will not fix this (not called).
+		// Else if ta = same/something else, we'll reschedule it. O(1).
+		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
 		t_timestamp queried = model->timeAdvance();// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
-			LOG_INFO("Core: ", this->getCoreID(), " Model ", model->getName(),
-			        " changed ta value from infinity to ", queried, " rescheduling.");
+			LOG_INFO("CORE: ", this->getCoreID(), " Model ", model->getName(),
+				" changed ta value to ", queried, " rescheduling.");
 			imminents.insert(model->getName());
+		}else{
+			LOG_INFO("CORE: ", this->getCoreID(), " Model ", model->getName(),
+				" changed ta value to infinity, no longer scheduling.");
 		}
 	}
 }
@@ -248,28 +250,25 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
-	/**
-	 * Find out what is less, message time or next firing time, and update core with that value.
-	 */
-	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
-	LOG_DEBUG("CORE ", this->getCoreID(), " first messagetime = ", firstmessagetime);
 	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
 		nextfired = this->m_scheduler->top().getTime();
-	} else {
-		LOG_WARNING("CORE:: ", this->getCoreID(), "Core has no scheduled models.");
 	}
+	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
+	LOG_DEBUG("CORE ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime);
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (newtime == t_timestamp::infinity()) {
-		LOG_ERROR("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models)");
-		this->logCoreState();
+		LOG_WARNING("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models), marking as zombie");
+		this->m_zombie_rounds.fetch_add(1);
 		return;
 	}
 	if (this->getTime() > newtime) {
 		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
 		assert(false);	// crash hard.
 	}
+	// Here we a valid new time.
 	this->setTime(newtime);
+	this->m_zombie_rounds.store(0);					// reset zombie state.
 
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
@@ -333,24 +332,25 @@ void n_model::Core::runSmallStep()
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
+
 	// Get all produced messages, and route them.
-	this->collectOutput(imminent);	// locked on msgs
+	this->collectOutput(imminent);			// locked on msgs
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
 
-	// From all pending messages, get those with time <= now and sort them.
+	// Get msg < timenow, sort them for ext/conf.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
-	this->getPendingMail(mailbag);	// locked on msgs
+	this->getPendingMail(mailbag);			// locked on msgs
 
 	// Transition depending on state.
-	this->transition(imminent, mailbag);
+	this->transition(imminent, mailbag);		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(imminent);
 
 	// Forward time to next message/firing.
-	this->syncTime();		// locked on msgs
+	this->syncTime();				// locked on msgs
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
@@ -602,4 +602,9 @@ bool
 n_model::Core::existTransientMessage(){
 	LOG_ERROR("Core: ", this->getCoreID(), " existTransientMessage called on single core.");
 	assert(false);
+}
+
+std::size_t
+n_model::Core::getZombieRounds(){
+	return m_zombie_rounds;
 }

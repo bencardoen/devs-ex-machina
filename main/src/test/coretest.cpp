@@ -279,6 +279,7 @@ void core_worker(const t_coreptr& core)
 
 TEST(Core, multicoresafe)
 {
+	RecordProperty("description", "Multicore threading model basic");
 	using n_network::Network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
@@ -385,6 +386,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 TEST(Core, threading)
 {
+	RecordProperty("description", "Multicore threading + signalling. Prototype now in use in controller.");
 	using namespace n_network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
@@ -496,7 +498,8 @@ TEST(Core, threading)
 	EXPECT_TRUE(coreone->getTime()>= endtime || coretwo->getTime()>= endtime);
 }
 
-TEST(Multicore, GVTfunctions){
+TEST(Multicore, revert){
+	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
@@ -542,9 +545,6 @@ TEST(Multicore, GVTfunctions){
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
 
-
-	//coreone->printSchedulerState();
-
 	EXPECT_EQ(coreone->getTime(), 62);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
@@ -559,9 +559,10 @@ TEST(Multicore, GVTfunctions){
 
 
 TEST(Multicore, revertidle){
-	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
+	RecordProperty("description", "Revert: test if a core can go from idle/terminated back to working.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
-	//CoutRedirect myRedirect(filestream);
+	CoutRedirect myRedirect(filestream);
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
@@ -626,7 +627,7 @@ TEST(Multicore, revertidle){
 	EXPECT_TRUE(c1->isIdle() && !c1->isLive() && c1->terminated());
 	c1->runSmallStep();	// idle, does nothing.
 
-//	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::traceUntil(t_timestamp::infinity());
 	n_tracers::clearAll();
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
@@ -637,3 +638,240 @@ TEST(Multicore, revertidle){
 
 }
 
+TEST(Multicore, revertedgecases){
+	RecordProperty("description", "Revert : test revert in scenario.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	//c2->printSchedulerState();
+
+	tracers->startTrace();
+
+	// c1: has policeman
+	// c2: has trafficlight
+
+	c2->runSmallStep();
+	c2->runSmallStep();
+	c2->runSmallStep();
+	c2->runSmallStep();
+	c2->runSmallStep();
+	c2->logCoreState();	// C2 is at 228, previous state 178:2
+	c1->runSmallStep();	// C1 is now at 200
+	c1->logCoreState();
+	c1->runSmallStep();	// C1 : sends message to C2, triggering revert.
+	c1->logCoreState();
+	/// Revert is triggered, light is rescheduled @228, but then wiped (correctly).
+	c2->runSmallStep();	// C2 : time is 200:1 (reverted), no scheduled models @200
+	c2->logCoreState();
+	/// c2 remains in zombiestate
+	c2->runSmallStep();
+	c2->logCoreState();
+	EXPECT_EQ(c2->getZombieRounds(), 2);
+	c1->runSmallStep();	// C1 time:300->500, send message to light, state idle
+	c1->logCoreState();
+	EXPECT_EQ(c1->getTime().getTime(), 500);
+	c2->runSmallStep();	// C2 receives msg, does nothing (nothing to do @200), advances to 300
+	c2->logCoreState();
+	EXPECT_EQ(c2->getTime().getTime(), 300);
+	EXPECT_EQ(c2->getZombieRounds(), 0);
+	c2->runSmallStep();	// C2 finally awakens, light receives message, core terminates @360.
+	c2->logCoreState();
+
+	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::clearAll();
+	n_tracers::waitForTracer();
+	tracers->finishTrace();
+
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	};
+
+}
+
+TEST(Multicore, revertoffbyone){
+	RecordProperty("description", "Test revert in beginstate.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	//c2->printSchedulerState();
+
+	tracers->startTrace();
+
+	// c1: has policeman
+	// c2: has trafficlight
+
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
+	EXPECT_EQ(c2->getTime().getTime(), 57);
+	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
+	EXPECT_EQ(c2->getTime().getTime(), 58);
+	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
+	EXPECT_EQ(c2->getTime().getTime(), 108);
+	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
+	/// 108::0 < 108::2, forces revert.
+	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	msg->setSourceCore(0);
+	msg->setDestinationCore(1);
+	msg->paint(MessageColor::WHITE);
+	network->acceptMessage(msg);
+	c2->runSmallStep();
+	c2->logCoreState();
+	EXPECT_EQ(c2->getTime().getTime(),108 );// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 1);	// so zombie round = 1;
+
+
+	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::clearAll();
+	n_tracers::waitForTracer();
+	tracers->finishTrace();
+
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	}
+}
+
+
+TEST(Multicore, revertstress){
+	RecordProperty("description", "Try to break revert by doing illogical tests.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	tracers->startTrace();
+	// c1: has policeman
+	// c2: has trafficlight
+
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
+	EXPECT_EQ(c2->getTime().getTime(), 57);
+	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
+	EXPECT_EQ(c2->getTime().getTime(), 58);
+	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
+	EXPECT_EQ(c2->getTime().getTime(), 108);
+	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
+	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	msg->setSourceCore(0);
+	msg->setDestinationCore(1);
+	msg->paint(MessageColor::WHITE);
+	network->acceptMessage(msg);
+	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	msglater->setSourceCore(0);
+	msglater->setDestinationCore(1);
+	msglater->paint(MessageColor::WHITE);
+	network->acceptMessage(msglater);
+	c2->runSmallStep();
+	c2->logCoreState();
+	EXPECT_EQ(c2->getTime().getTime(),101 );// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 0);	// but still have another message to handle @ 101.
+
+
+	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::clearAll();
+	n_tracers::waitForTracer();
+	tracers->finishTrace();
+
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	}
+}

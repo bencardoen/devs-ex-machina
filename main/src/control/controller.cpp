@@ -466,10 +466,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		/// Detect control signals. Better to do this with another threadsignal vector ?
-		/// Possible problem : IDLE overwrites SHOULDWAIT.
-		/// Better solution : threadsignal vector for IDLE,STOP,WORKING
-		///		      controlsignal vector for FREE/SHOULDWAIT/ISWAITING
 		bool skip_barrier = true;	// TODO re-enable if control is implemented
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
