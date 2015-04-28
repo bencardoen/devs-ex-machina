@@ -1,0 +1,101 @@
+{"events":[
+ {
+"model":"TestModel",
+"time":0,
+"kind":"IN",
+"ports":[ { "name":"MyVerySpecialOutput", "category":"O",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":12,
+"kind":"EX",
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":27,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":29,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":29,
+"kind":"IN",
+"ports":[ { "name":"MyVerySpecialOutput", "category":"O",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":29,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":16,
+"kind":"EX",
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":33,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":33,
+"kind":"IN",
+"ports":[ { "name":"MyVerySpecialOutput", "category":"O",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":35,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":37,
+"kind":"EX",
+"ports":[ { "name":"portIn", "category":"I",
+"messages":[]},{ "name":"portIn2", "category":"I",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+,{
+"model":"TestModel",
+"time":37,
+"kind":"IN",
+"ports":[ { "name":"MyVerySpecialOutput", "category":"O",
+"messages":[]}],
+"state":{"object":{"state":"JSON!"}, "text":"This is a test state"}
+}
+
+]}

@@ -1,12 +1,12 @@
 /*
- * verbosetracer.h
+ * jsontracer.h
  *
- *  Created on: Mar 19, 2015
+ *  Created on: Apr 27, 2015
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#ifndef SRC_TRACERS_VERBOSETRACER_H_
-#define SRC_TRACERS_VERBOSETRACER_H_
+#ifndef SRC_TRACERS_JSONTRACER_H_
+#define SRC_TRACERS_JSONTRACER_H_
 
 #include "timestamp.h"
 #include "tracemessage.h"
@@ -19,76 +19,87 @@ namespace n_tracers{
 using namespace n_network;
 
 /**
- * @brief Tracer that will generate verbose output.
+ * @brief Tracer that will generate xml output.
  * @tparam OutputPolicy A policy that dictates what should happen with the output
+ * @note The structure of the trace output is based on the xml structure.
+ * 	 If a standardized structure already exists, please either send us a mail or fix this issue here
  */
 template<typename OutputPolicy>
-class VerboseTracer: public OutputPolicy, public TracerBase<VerboseTracer<OutputPolicy>>
+class JsonTracer: public OutputPolicy, public TracerBase<JsonTracer<OutputPolicy>>
 {
 private:
+	char m_comma = ' ';
 	/**
 	 * @brief Typedef for this class.
 	 * In order to get the function pointers to functions defined in this class, use `&Derived::my_func`.
 	 */
-	typedef VerboseTracer<OutputPolicy> t_derived;
-
-	t_timestamp m_prevTime;
+	typedef JsonTracer<OutputPolicy> t_derived;
 
 	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
 		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+		char comma1 = ' ';
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
+			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"I\",\n"
+				"\"messages\":[";
 			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
+			char comma2 = ' ';
+			for (const n_network::t_msgptr& message : messages) {
+				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";
+				comma2 = ',';
+			}
+			*ssr << "]}";
+			comma1 = ',';
 		}
 	}
 
 	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
 		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
+		char comma1 = ' ';
 		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "\t\t\tport <" << item.first << ">:\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
-			for (const n_network::t_msgptr& message : messages)
-				*ssr << "\t\t\t\t" << message->getPayload() << '\n';	// message->toString()?
+			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"O\",\n"
+				"\"messages\":[";
+			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+			char comma2 = ' ';
+			for (const n_network::t_msgptr& message : messages) {
+				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";
+				comma2 = ',';
+			}
+			*ssr << "]}";
+			comma1 = ',';
 		}
 	}
 
 public:
-	VerboseTracer(): m_prevTime(0, std::numeric_limits<t_timestamp::t_causal>::max())
-	{
-	}
+	JsonTracer() = default;
 	/**
 	 * @brief Performs the actual tracing. Once this function is called, there is no going back.
 	 */
-	void doTrace(t_timestamp time, std::ostringstream* ssr)
+	void doTrace(t_timestamp, std::ostringstream* ssr)
 	{
 		assert(ssr != nullptr);
-		if (time.getTime() > m_prevTime.getTime() || m_prevTime == t_timestamp(0, std::numeric_limits<t_timestamp::t_causal>::max())) {
-			OutputPolicy::print("\n__  Current Time: ", time.getTime(), "____________________\n\n");//do not print causality
-			m_prevTime = time;
-		}
-		OutputPolicy::print(ssr->str());	//print using the policy
+		OutputPolicy::print(m_comma, ssr->str());	//print using the policy
+		m_comma = ',';
 	}
 	/**
 	 * @brief Traces state initialization of a model
 	 * @param model The model that is initialized
 	 * @param time The simulation time of initialization.
 	 */
-	inline void tracesInitImpl(const t_atomicmodelptr& adevs, t_timestamp, std::ostringstream* ssr)
+	inline void tracesInitImpl(const t_atomicmodelptr& adevs, t_timestamp nextT, std::ostringstream* ssr)
 	{
 		t_stateptr state = adevs->getState();
-		*ssr << "\n"
-			"\tINITIAL CONDITIONS in model " << adevs->getName() << "\n"
-			"\t\tInitial State: " << state->toString() << "\n"
-		        "\t\tNext scheduled internal transition at time ";
-		t_timestamp nextT =  adevs->getTimeNext();
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << '\n';
+		*ssr << ",\n"
+			"\"kind\":\"" "EX" "\",\n"
+			"\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 
 	/**
@@ -99,19 +110,19 @@ public:
 	inline void tracesInternalImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
 		t_stateptr state = adevs->getState();
-		*ssr << "\n"
-			"\tINTERNAL TRANSITION in model " << adevs->getName() << "\n"
-			"\t\tNew State: " << state->toString() << "\n"
-			"\t\tOutput Port Configuration:\n";
-
-		printOutgoing(adevs, ssr);
-
-	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << '\n';
+		*ssr << ",\n"
+			"\"kind\":\"" "IN" "\",\n"
+			"\"ports\":[";
+		printOutgoing(adevs, ssr);
+		*ssr << "],\n\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 	/**
 	 * @brief Traces external state transition
@@ -120,19 +131,19 @@ public:
 	inline void tracesExternalImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
 		t_stateptr state = adevs->getState();
-		*ssr << "\n"
-			"\tEXTERNAL TRANSITION in model " << adevs->getName() << "\n"
-			"\t\tNew State: " << state->toString() << "\n"
-			"\t\tInput Port Configuration:\n";
-
-		printIncoming(adevs, ssr);
-
-	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
+		*ssr << "{\n"
+			"\"model\":\"" << adevs->getName() << "\",\n"
+			"\"time\":";
 		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
+			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
-		*ssr << '\n';
+		*ssr << ",\n"
+			"\"kind\":\"" "EX" "\",\n"
+			"\"ports\":[";
+		printIncoming(adevs, ssr);
+		*ssr << "],\n\"state\":{\"object\":" << state->toJSON() << ", \"text\":\"" << state->toString() << "\"}\n"
+			"}\n";
 	}
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
@@ -140,24 +151,9 @@ public:
 	 */
 	inline void tracesConfluentImpl(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		t_stateptr state = adevs->getState();
-		*ssr << "\n"
-			"\tCONFLUENT TRANSITION in model " << adevs->getName() << "\n"
-			"\t\tInput Port Configuration:\n";
-
-		printIncoming(adevs, ssr);
-
-		*ssr << "\t\tNew State: " << state->toString() << "\n"
-			"\t\tOutput Port Configuration:\n";
-
-		printOutgoing(adevs, ssr);
-
-	        *ssr << "\t\tNext scheduled internal transition at time ";
-		t_timestamp nextT =  adevs->getTimeNext();
-		if(nextT == t_timestamp::infinity())
-			*ssr << nextT;
-		else *ssr << nextT.getTime();
-		*ssr << '\n';
+		tracesExternalImpl(adevs, ssr);
+		*ssr << ',';
+		tracesInternalImpl(adevs, ssr);
 	}
 
 	/**
@@ -166,6 +162,7 @@ public:
 	 */
 	inline void startTrace()
 	{
+		OutputPolicy::print("{\"events\":[\n");
 	}
 
 	/**
@@ -174,10 +171,11 @@ public:
 	 */
 	inline void finishTrace()
 	{
+		OutputPolicy::print("\n]}");
 	}
 };
 
 } /* namespace n_tracers */
 
 
-#endif /* SRC_TRACERS_VERBOSETRACER_H_ */
+#endif /* SRC_TRACERS_JSONTRACER_H_ */

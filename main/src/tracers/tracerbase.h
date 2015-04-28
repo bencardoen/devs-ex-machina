@@ -41,7 +41,8 @@ public:
 	/**
 	 * @brief Cleans up any remaining data used for a particular trace message
 	 */
-	void takeBack(std::ostringstream* ssr){
+	void takeBack(std::ostringstream* ssr)
+	{
 		delete ssr;
 	}
 
@@ -54,7 +55,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesInit argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>(); //we don't need a shared object
 
 		static_cast<Derived*>(this)->tracesInitImpl(adevs, time, ssr);
 
@@ -74,7 +75,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesInternal argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>(); //we don't need a shared object
 
 		static_cast<Derived*>(this)->tracesInternalImpl(adevs, ssr);
 
@@ -88,7 +89,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesExternal argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>(); //we don't need a shared object
 
 		static_cast<Derived*>(this)->tracesExternalImpl(adevs, ssr);
 
@@ -102,7 +103,7 @@ public:
 	{
 		assert(adevs != nullptr && "VerboseTracer::tracesConfluent argument cannot be a nullptr.");
 
-		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>();//we don't need a shared object
+		std::ostringstream* ssr = n_tools::createRawObject<std::ostringstream>(); //we don't need a shared object
 
 		static_cast<Derived*>(this)->tracesConfluentImpl(adevs, ssr);
 
