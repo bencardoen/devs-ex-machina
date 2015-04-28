@@ -109,7 +109,6 @@ std::ostream& operator<<(std::ostream& out, LoggingLevel level);
 
 } /* namespace n_tools */
 
-//you can define the log level here. if you want to
-#define LOG_LEVEL 15
+#include "forwarddeclare/logger.h"
 
 #endif /* SRC_TOOLS_LOGGER_H_ */
