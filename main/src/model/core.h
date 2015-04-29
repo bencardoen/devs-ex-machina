@@ -92,6 +92,13 @@ private:
 	std::atomic<bool> m_idle;
 
 	/**
+	 * If a core keeps getting stuck, define here how many rounds this allowed to happen.
+	 * @attention : A round == zombiestate if time does not advance, but this does (obviously) not
+	 * apply if the core is idling (ie beyond termtime/fun).
+	 */
+	std::atomic<std::size_t> m_zombie_rounds;
+
+	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
 	 * @post msg has correct destination id field set for network.
@@ -130,7 +137,10 @@ private:
 
 	/**
 	 * Schedule model.name @ time t.
-	 * @pre Cannot be called without removing a previous scheduled entry.
+	 * @pre name is a model in this core.
+	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
+	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
+	 * can still be wrong. (see coretest.cpp revertedgecases).
 	 */
 	void
 	scheduleModel(std::string name, t_timestamp t);
@@ -299,18 +309,22 @@ public:
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received message).
+	 * @attention : changes local state : idle, live, terminated, time. It's possible time does not
+	 * advance at all, this is allowed.
 	 */
 	void
 	syncTime();
 
 	/**
-	 * Allow multicore implementation to directly modify time. (GVT etc)
+	 * Set current time to new value.
+	 * @todo Move to protected/friend
 	 */
 	void
 	setTime(const t_timestamp&);
 
 	/**
 	 * Run a single DEVS simulation step:
+	 * 	- get Messages (networked, possibly revert)
 	 * 	- collect output
 	 * 	- route messages (networked or not)
 	 * 	- transition
@@ -318,15 +332,13 @@ public:
 	 * 	- reschedule fired models
 	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
-	 * @return Models who have transitioned (internal or confluent)
-	 * @attention null return value for superclass.
 	 */
 	virtual
 	void
 	runSmallStep();
 
 	/**
-	 * Collect output from all models, sort them in the mailbag by destination name.
+	 * Collect output from imminent models, sort them in the mailbag by destination name.
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
@@ -334,6 +346,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
+	 * @attention assert(false) in single core, we can't use abstract functions.
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -342,7 +355,7 @@ public:
 
 	/**
 	 * Pull messages from network, and sort them into parameter by destination name.
-	 * Base class = noop.
+	 * Base class = noop, profiling indicates this has no cost whatsoever.
 	 */
 	virtual void getMessages()
 	{
@@ -429,6 +442,9 @@ public:
 	bool
 	terminated() const;
 
+	void
+	setTerminated(bool b);
+
 	/**
 	 * Set the the termination function.
 	 */
@@ -510,7 +526,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/){
+	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/, std::atomic<bool>& /*rungvt*/){
 		assert(false);
 	}
 
@@ -527,6 +543,34 @@ public:
 	virtual
 	void
 	paintMessage(const t_msgptr&){;}
+
+	/**
+	 * Write current Core state to logfile.
+	 */
+	void
+	logCoreState();
+
+	/**
+	 * Return true if the network reports there are still messages going around.
+	 * @attention: assert(false) in single core.
+	 */
+	virtual
+	bool
+	existTransientMessage();
+
+	/**
+	 * @return nr of simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
+	 */
+	std::size_t
+	getZombieRounds();
+
+	virtual
+	MessageColor
+	getColor();
+
+	virtual
+	void
+	setColor(MessageColor mc);
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

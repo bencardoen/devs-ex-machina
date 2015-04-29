@@ -60,8 +60,8 @@ bool SynchronizedScheduler<X, R>::isLockable() const {
 template<typename X, typename R>
 void SynchronizedScheduler<X, R>::clear() {
 	std::lock_guard<std::mutex> lock(m_lock);
+	m_hashtable.clear();
 	m_storage.clear();
-	m_hashtable.clear();// TODO Ensure both or none are executed. Not sure if this is possible.
 }
 
 template<typename X, typename R>

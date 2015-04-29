@@ -24,6 +24,7 @@ class Network{
 private:
 	size_t	m_cores;
 	std::vector<Msgqueue<t_msgptr>> m_queues;
+	std::atomic<bool> m_counting;
 public:
 	typedef std::vector<t_msgptr> t_messages;
 
@@ -57,6 +58,16 @@ public:
 	 */
 	bool
 	havePendingMessages(std::size_t coreid)const;
+
+	/**
+	 * Report if there are still transient messages in the network.
+	 * @attention : expensive check.
+	 * This function has to walk the (changing) queues and request non-zero size.
+	 * If we are checking queue #4, and then a message comes in at #3 (empty when we checked),
+	 * our result could be wrong. We therefore check if a trigger in accept is set.
+	 * @return true if there are transient message from time of call to time of return.
+	 */
+	bool networkHasMessages();
 };
 
 

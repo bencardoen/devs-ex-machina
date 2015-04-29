@@ -79,7 +79,8 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 		message = "toManual";
 	else if (*state == "working")
 		message = "toAutonomous";
-	else // nothing happens
+	else
+		// nothing happens
 		return std::vector<n_network::t_msgptr>();
 
 	return this->getPort("OUT")->createMessages(message);

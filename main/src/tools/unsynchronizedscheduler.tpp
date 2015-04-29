@@ -53,8 +53,8 @@ bool UnSynchronizedScheduler<X, R>::isLockable() const {
 
 template<typename X, typename R>
 void UnSynchronizedScheduler<X, R>::clear() {
+	m_hashtable.clear();
 	m_storage.clear();
-	m_hashtable.clear();// TODO Ensure both or none are executed. Not sure if this is possible.
 }
 
 template<typename X, typename R>

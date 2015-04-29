@@ -22,8 +22,8 @@ Multicore::~Multicore()
 }
 
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
-	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE),
-	m_mcount_vector(cores), m_tred(t_timestamp::infinity())
+	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
+	        t_timestamp::infinity())
 {
 }
 
@@ -32,7 +32,7 @@ void Multicore::sendMessage(const t_msgptr& msg)
 	// We're locked on msglock.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
-	LOG_DEBUG("MCore:: ", this->getCoreID()," sending message ", msg->toString());
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
 	this->countMessage(msg);					// Make sure Mattern is notified
@@ -48,7 +48,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
-	LOG_DEBUG("MCore:: ", this->getCoreID()," sending antimessage : ", amsg->toString());
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
 	this->m_network->acceptMessage(amsg);
 	this->countMessage(amsg);					// Make sure Mattern is notified
 }
@@ -65,13 +65,14 @@ void Multicore::handleAntiMessage(const t_msgptr& msg)
 	if (this->m_received_messages->contains(MessageEntry(msg))) {
 		this->m_received_messages->erase(MessageEntry(msg));
 	} else {
-		LOG_ERROR("MCore:: ", this->getCoreID()," received antimessage without corresponding message", msg->toString());
+		LOG_ERROR("MCore:: ", this->getCoreID(), " received antimessage without corresponding message",
+		        msg->toString());
 	}
 }
 
 void Multicore::markMessageStored(const t_msgptr& msg)
 {
-	LOG_DEBUG("MCore:: ", this->getCoreID()," storing sent message", msg->toString());
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
 }
 
@@ -116,12 +117,16 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->lockMessages();
 	for (const auto & message : messages) {
 		assert(message->getDestinationCore() == this->getCoreID());
-		this->receiveMessage(message);
+		if(this->containsModel(message->getDestinationModel())){
+			this->receiveMessage(message);
+		}else{
+			LOG_ERROR("MCORE:: ", this->getCoreID(), " received message for model not in core\n", message->toString());
+		}
 	}
 	this->unlockMessages();
 }
 
-void Multicore::waitUntilOK(const t_controlmsg& msg)
+void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 {
 	// We don't have to get the count from the message each time,
 	// because the control message doesn't change, it stays in this core
@@ -131,19 +136,25 @@ void Multicore::waitUntilOK(const t_controlmsg& msg)
 	int msgcount = msg->getCountVector()[this->getCoreID()];
 	while (true) {
 		std::lock_guard<std::mutex> lock(m_vlock);
+		if(rungvt == false){
+			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
+			return;
+		}
 		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0)
 			break; // Lock is released, all white messages are received!
 	}
 }
 
-void Multicore::receiveControl(const t_controlmsg& msg, bool first)
+void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<bool>& rungvt)
 {	// TODO Beautify!!
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
-
+	if(rungvt==false){
+		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
+		return;
+	}
 	if (this->getCoreID() == 0 && first) {
-		LOG_INFO("MCore:: ", this->getCoreID()," received first control message, starting first round");
-
+		LOG_INFO("MCore:: ", this->getCoreID(), " received first control message, starting first round");
 		// If this processor is Pinit and is the first to be called in the GVT calculation
 		// Might want to put this in a different function?
 		this->m_color = MessageColor::RED;
@@ -176,10 +187,10 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 		// approximation is found.
 
 		// Wait until we have received all messages
-		this->waitUntilOK(msg);
+		this->waitUntilOK(msg, rungvt);
 		// If all items in count vectors are zero
 		if (msg->countIsZero()) {
-			LOG_INFO("MCore:: ", this->getCoreID()," process init received control message, found GVT!");
+			LOG_INFO("MCore:: ", this->getCoreID(), " process init received control message, found GVT!");
 
 			// We found GVT!
 			t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
@@ -190,7 +201,8 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 			return;
 		} else {
 			// if 3d round? exit?
-			LOG_INFO("MCore:: ", this->getCoreID()," process init received control message, starting 2nd round");
+			LOG_INFO("MCore:: ", this->getCoreID(),
+			        " process init received control message, starting 2nd round");
 
 			// We start a second round
 			msg->setTmin(this->getTime());
@@ -220,9 +232,9 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 			this->m_color = MessageColor::RED;	// LOCK
 		}
 		// We wait until we have received all messages
-		waitUntilOK(msg);
+		waitUntilOK(msg, rungvt);
 
-		LOG_INFO("MCore:: ", this->getCoreID(),"process received control message");
+		LOG_INFO("MCore:: ", this->getCoreID(), "process received control message");
 
 		// Equivalent to sending message, controlmessage is passed to next core.
 		t_timestamp msg_tmin = msg->getTmin();
@@ -247,7 +259,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first)
 void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
 {
 	for (const auto& msg : messages) {
-		LOG_DEBUG("MCore : ", this->getCoreID()," storing processed msg", msg->toString());
+		LOG_DEBUG("MCore : ", this->getCoreID(), " storing processed msg", msg->toString());
 		this->m_processed_messages.push_back(msg);
 	}
 }
@@ -255,8 +267,9 @@ void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
 void Multicore::setGVT(const t_timestamp& newgvt)
 {
 	Core::setGVT(newgvt);
-	if(newgvt < this->getGVT() or newgvt==t_timestamp::infinity()){
-		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ", this->getGVT());
+	if (newgvt < this->getGVT() or newgvt == t_timestamp::infinity()) {
+		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
+		        this->getGVT());
 		return;
 	}
 	this->lockSimulatorStep();
@@ -268,10 +281,10 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 			break;
 		}
 	}
-	LOG_DEBUG("MCore:: ", this->getCoreID(),"setgvt found ", distance(m_processed_messages.begin(), iter),
+	LOG_DEBUG("MCore:: ", this->getCoreID(), "setgvt found ", distance(m_processed_messages.begin(), iter),
 	        " processed messages to erase.");
 	m_processed_messages.erase(m_processed_messages.begin(), iter);		//erase[......GVT x)
-	LOG_DEBUG("MCore:: ", this->getCoreID(),"processed messages now contains :: ", m_processed_messages.size());
+	LOG_DEBUG("MCore:: ", this->getCoreID(), "processed messages now contains :: ", m_processed_messages.size());
 
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {
@@ -280,16 +293,17 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 		}
 	}
 
-	LOG_DEBUG("MCore:: ", this->getCoreID(), " found ", distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " found ", distance(m_sent_messages.begin(), senditer),
+	        " sent messages to erase.");
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
-	LOG_DEBUG("MCore:: ", this->getCoreID()," sent messages now contains :: ", m_sent_messages.size());
+	LOG_DEBUG("MCore:: ", this->getCoreID(), " sent messages now contains :: ", m_sent_messages.size());
 
-	for(const auto& modelentry : this->m_models){
+	for (const auto& modelentry : this->m_models) {
 		modelentry.second->setGVT(newgvt);
 	}
 
-	this->m_color = MessageColor::WHITE;
-	LOG_INFO("Mcore:: ", this->getCoreID()," painted core back to white, for next gvt calculation");
+	this->setColor(MessageColor::WHITE);
+	LOG_INFO("Mcore:: ", this->getCoreID(), " painted core back to white, for next gvt calculation");
 	this->unlockSimulatorStep();
 }
 
@@ -302,39 +316,41 @@ void n_model::Multicore::lockSimulatorStep()
 
 void n_model::Multicore::unlockSimulatorStep()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"trying to unlock simulator core", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "trying to unlock simulator core", this->getCoreID());
 	this->m_locallock.unlock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"simulator core unlocked", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "simulator core unlocked", this->getCoreID());
 }
 
 void n_model::Multicore::lockMessages()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msgs locking ... ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msgs locking ... ", this->getCoreID());
 	m_msglock.lock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msgs locked ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msgs locked ", this->getCoreID());
 }
 
 void n_model::Multicore::unlockMessages()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msg unlocking ...");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msg unlocking ...");
 	m_msglock.unlock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"sim msg unlocked");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msg unlocked");
 }
 
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
 	assert(totime >= this->getGVT());
-	LOG_DEBUG("MCORE:: ", this->getCoreID(),"reverting from ", this->getTime(), " to ", totime);
-	if(this->isIdle()){
-		LOG_DEBUG("MCORE:: ", this->getCoreID()," Core going from idle to active ");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), "reverting from ", this->getTime(), " to ", totime);
+	if (this->isIdle()) {
+		LOG_DEBUG("MCORE:: ", this->getCoreID(), " Core going from idle to active ");
 		this->setIdle(false);
+		this->setLive(true);
+		this->setTerminated(false);	// May or may not be true, but needs to be reavaluated by simStep.
 	}
 	// We have the simulator lock
 	// DO NOT lock on msgs, we're called by receive message, which is locked !!
 	while (!m_processed_messages.empty()) {
 		auto msg = m_processed_messages.back();
 		if (msg->getTimeStamp() > totime) {
-			LOG_DEBUG("MCORE:: repushing processed message ", msg->toString());
+			LOG_DEBUG("MCORE:: ", this->getCoreID(), " repushing processed message ", msg->toString());
 			m_processed_messages.pop_back();
 			this->queuePendingMessage(msg);
 		} else {
@@ -346,7 +362,7 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 		auto msg = m_sent_messages.back();
 		if (msg->getTimeStamp() > totime) {
 			m_sent_messages.pop_back();
-			LOG_DEBUG("MCORE:: ", this->getCoreID()," popping sent message ", msg->toString());
+			LOG_DEBUG("MCORE:: ", this->getCoreID(), " popping sent message ", msg->toString());
 			this->sendAntiMessage(msg);
 		} else {
 			break;
@@ -358,3 +374,20 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 }
 
 
+bool n_model::Multicore::existTransientMessage(){
+	bool b = this->m_network->networkHasMessages();
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " network has messages ?=", b);
+	return b;
+}
+
+void
+n_model::Multicore::setColor(MessageColor mc){
+	std::lock_guard<std::mutex> lock(m_colorlock);
+	this->m_color = mc;
+}
+
+MessageColor
+n_model::Multicore::getColor(){
+	std::lock_guard<std::mutex> lock(m_colorlock);
+	return m_color;
+}

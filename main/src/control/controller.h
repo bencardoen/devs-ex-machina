@@ -227,11 +227,19 @@ private:
 	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
 
 //	void threadGVT(n_network::Time freq);
+
+	friend
+	void runGVT(Controller&, std::atomic<bool>& rungvt);
 };
+
+/**
+ * Find GVT using Mattern's algorithm.
+ */
+void runGVT(Controller&, std::atomic<bool>& rungvt);
 
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t saveInterval);
+        const t_coreptr& core, size_t saveInterval, std::atomic<bool>& rungvt);
 
 } /* namespace n_control */
 

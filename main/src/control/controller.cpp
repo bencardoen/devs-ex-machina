@@ -12,19 +12,10 @@ namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
         std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
-        size_t saveInterval)
-	: m_simType(CLASSIC),
-	  m_hasMainModel(false),
-	  m_isSimulating(false),
-	  m_name(name),
-	  m_checkTermTime(false),
-	  m_checkTermCond(false),
-	  m_saveInterval(saveInterval),
-	  m_cores(cores),
-	  m_locTab(locTab),
-	  m_allocator(alloc),
-	  m_tracers(tracers),
-	  m_dsPhase(false)
+        size_t saveInterval):
+        	m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name),
+        	m_checkTermTime(false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores),
+        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -37,7 +28,7 @@ void Controller::save(bool traceOnly)
 {
 	switch (m_simType) {
 	case CLASSIC:
-	case DSDEVS:{
+	case DSDEVS: {
 		if (!traceOnly) {
 			throw std::logic_error("Controller : serialization for CLASSIC not implemented");
 		}
@@ -63,14 +54,14 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	size_t coreID = m_allocator->allocate(atomic);
 	addModel(atomic, coreID);
 
-	if(m_simType == SimType::DSDEVS)
+	if (m_simType == SimType::DSDEVS)
 		atomic->setController(this);
 	m_hasMainModel = true;
 }
 
 void Controller::doDirectConnect()
 {
-	if(m_coupledOrigin){
+	if (m_coupledOrigin) {
 		m_root->directConnect(m_coupledOrigin);
 	} else
 		LOG_DEBUG("doDirectConnect no coupled origin!");
@@ -84,7 +75,7 @@ void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
 	for (t_atomicmodelptr& model : imminent) {
 		if (model->modelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
-			if(model->getParent().expired())
+			if (model->getParent().expired())
 				continue;
 			t_modelptr parent = model->getParent().lock();
 			if (parent)
@@ -101,7 +92,7 @@ void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
 				continue; // no need to continue
 			// if nothing happened .
 			// keep a reference to the parent of this model
-			if(top->getParent().expired())
+			if (top->getParent().expired())
 				continue;
 			t_modelptr parent = top->getParent().lock();
 			if (parent)
@@ -138,17 +129,18 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	dsUndoDirectConnect();
 	//recursively add submodels, if necessary
 	t_coupledmodelptr coupled = std::dynamic_pointer_cast<CoupledModel>(model);
-	if(coupled){
+	if (coupled) {
 		//it is a coupled model, remove all its children
 		std::vector<t_modelptr> comp = coupled->getComponents();
-		for(t_modelptr& sub:comp)
+		for (t_modelptr& sub : comp)
 			dsScheduleModel(sub);
 		return;
 	}
 	t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(model);
-	if(atomic){
+	if (atomic) {
 		//it is an atomic model. Just remove this one from the core and the root devs
 		m_cores.begin()->second->addModel(atomic);
+		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
 		return;
 	}
@@ -197,12 +189,16 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 	m_coupledOrigin = coupled;
 	m_root->directConnect(coupled);
 
-	for(t_atomicmodelptr& model : m_root->getComponents()){
+	for (t_atomicmodelptr& model : m_root->getComponents()) {
 		size_t coreID = m_allocator->allocate(model);
 		addModel(model, coreID);
+		if (m_simType != SimType::PDEVS)
+			model->setKeepOldStates(false);
+		else
+			model->setKeepOldStates(true);
 		LOG_DEBUG("Controller::addModel added model with name ", model->getName());
 	}
-	if(m_simType == SimType::DSDEVS)
+	if (m_simType == SimType::DSDEVS)
 		coupled->setController(this);
 	m_hasMainModel = true;
 }
@@ -220,10 +216,12 @@ void Controller::simulate()
 		return;
 	}
 
+	m_tracers->startTrace();
+
 	m_isSimulating = true;
 
 	// run simulation
-	switch(m_simType) {
+	switch (m_simType) {
 	case CLASSIC:
 		simDEVS();
 		break;
@@ -241,6 +239,7 @@ void Controller::simulate()
 	n_tracers::traceUntil(t_timestamp::infinity());
 	n_tracers::clearAll();
 	n_tracers::waitForTracer();
+	m_tracers->finishTrace();
 
 	m_isSimulating = false;
 }
@@ -280,7 +279,7 @@ void Controller::simPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal;
-	constexpr std::size_t deadlockVal = 100000000;	// Safety, if main thread ever reaches this value, consider it a deadlock.
+	constexpr std::size_t deadlockVal = 100000000;// Safety, if main thread ever reaches this value, consider it a deadlock.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -297,10 +296,13 @@ void Controller::simPDEVS()
 		threadsignal.push_back(ThreadSignal::FREE);
 	}
 
+	std::atomic<bool> rungvt;
+
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        n_tools::createObject<std::thread>(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), deadlockVal, std::cref(m_cores[i]), m_saveInterval));
+		        n_tools::createObject<std::thread>(cvworker, std::ref(cv), std::ref(cvlock), i,
+		                std::ref(threadsignal), std::ref(veclock), deadlockVal, std::cref(m_cores[i]),
+		                m_saveInterval, std::ref(rungvt)));
 		LOG_INFO("CONTROLLER: Started thread #", i);
 	}
 
@@ -327,11 +329,11 @@ void Controller::simDSDEVS()
 
 	std::vector<n_model::t_atomicmodelptr> imminent;
 	std::size_t i = 0;
-	while(!core->terminated()) {
+	while (!core->terminated()) {
 		++i;
 		imminent.clear();
 		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, " at time ", core->getTime());
-		if(core->isLive()){
+		if (core->isLive()) {
 			LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
 			core->runSmallStep();
 			core->getLastImminents(imminent);
@@ -408,7 +410,7 @@ void Controller::emptyAllCores()
 // TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t /*saveInterval*/)
+        const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
@@ -417,36 +419,50 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	};
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
+			/// If a thread stops, it has to signal it's intention to the GVT algorithm.
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
+				rungvt.store(false);
 				return;
 			}
 		}
 
-		if(core->isIdle()){
-			std::lock_guard<std::mutex> signallock(vectorlock);	// Lock whole block, else log makes no sense.
+		if (core->isIdle()) {
+			std::lock_guard<std::mutex> signallock(vectorlock);// Lock whole block, else log makes no sense.
 			// Possible flags = IDLE,STOP,FREE
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), "detected IDLE core state, setting flag to IDLE");
-			if(threadsignal[myid] != Controller::ThreadSignal::STOP and threadsignal[myid] != Controller::ThreadSignal::SHOULDWAIT){
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), "threadsignal is not STOP||SHOULDWAIT setting flag to IDLE");
+			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+			        "detected IDLE core state, setting flag to IDLE");
+			if (threadsignal[myid] != Controller::ThreadSignal::STOP
+			        and threadsignal[myid] != Controller::ThreadSignal::SHOULDWAIT) {
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+				        "threadsignal is not STOP||SHOULDWAIT setting flag to IDLE");
 				threadsignal[myid] = Controller::ThreadSignal::IDLE;
 			}
 			// Find out if all others are IDLE/STOPPED, if so stop working.
 			size_t countidle = 0;
-			for(size_t i = 0; i<threadsignal.size(); ++i){
-				if(threadsignal[i]==Controller::ThreadSignal::IDLE || threadsignal[i]==Controller::ThreadSignal::STOP)
+			for (size_t i = 0; i < threadsignal.size(); ++i) {
+				if (threadsignal[i] == Controller::ThreadSignal::IDLE
+				        || threadsignal[i] == Controller::ThreadSignal::STOP)
 					++countidle;
 			}
-			if(countidle==threadsignal.size()){	// TODO need link to network here.
-				LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(), " all other threads are stopped or idle, quitting.");
-				return;
+			if (countidle == threadsignal.size()) {
+				if (not core->existTransientMessage()) {
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+					        " all other threads are stopped or idle, network is idle, quitting.");
+					rungvt.store(false);	// Signal gvt calculation.
+					return;
+				} else {
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+					        " all other threads are stopped or idle, network reports transients, idling.");
+				}
 			}
-		}else{
+		} else {	// Else no longer IDLE
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if(threadsignal[myid] == Controller::ThreadSignal::IDLE){
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				threadsignal[myid] = Controller::ThreadSignal::FREE;	// TODO overwrites old SHOULDWAIT et al.
+			if (threadsignal[myid] == Controller::ThreadSignal::IDLE) {
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
+				threadsignal[myid] = Controller::ThreadSignal::FREE;
 			}
 		}
 		if (core->isLive() || core->isIdle()) {
@@ -454,21 +470,19 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		/// Detect control signals. Better to do this with another threadsignal vector ?
-		/// Possible problem : IDLE overwrites SHOULDWAIT.
-		/// Better solution : threadsignal vector for IDLE,STOP,WORKING
-		///		      controlsignal vector for FREE/SHOULDWAIT/ISWAITING
-		bool skip_barrier = true;	// TODO re-enable if control is implemented
+		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
 			if (threadsignal[myid] == Controller::ThreadSignal::SHOULDWAIT) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " switching flag to WAITING");
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+				        " switching flag to WAITING");
 				threadsignal[myid] = Controller::ThreadSignal::ISWAITING;
 			}
 			// Case 2 : We can skip the barrier ahead.
 			if (threadsignal[myid] == Controller::ThreadSignal::FREE) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " skipping barrier, FREE is set.");
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+				        " skipping barrier, FREE is set.");
 				skip_barrier = true;	// only now explicitly skip the barrier.
 			}
 		}
@@ -479,6 +493,54 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			cv.wait(mylock, predicate);
 		}
 		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
+	}
+}
+
+void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
+{
+	if(not gvtsafe){
+		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
+		return;
+	}
+	const std::size_t corecount = cont.m_cores.size();
+	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
+	        t_timestamp::infinity());
+	// Make sure the cores are in a valid state. In theory setGVT does this, but it's possible it's interrupted/failed.
+	for (size_t i = 0; i < corecount; ++i) {
+		const t_coreptr& core = cont.m_cores[i];
+		core->setColor(MessageColor::WHITE);	// Synced, but only on color.
+	}
+
+	for (size_t i = 0; i < corecount; ++i) {
+		cont.m_cores[i]->receiveControl(cmsg, (i == 0), gvtsafe);
+		if(gvtsafe == false){
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
+	}
+	/// First round done, let Pinit check if we have found a gvt.
+	t_coreptr first = cont.m_cores[0];
+	first->receiveControl(cmsg, false, gvtsafe);
+
+	if (cmsg->isGvtFound()) {
+		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
+		for (const auto& ucore : cont.m_cores)
+			ucore.second->setGVT(cmsg->getGvt());
+	} else {
+		if(gvtsafe == false){
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
+		/// Need a second round, pinit is done already.
+		for (std::size_t j = 1; j < corecount; ++j) {
+			cont.m_cores[j]->receiveControl(cmsg, false, gvtsafe);
+		}
+		if (cmsg->isGvtFound()) {
+			for (const auto& ucore : cont.m_cores)
+				ucore.second->setGVT(cmsg->getGvt());
+		} else {
+			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+		}
 	}
 }
 

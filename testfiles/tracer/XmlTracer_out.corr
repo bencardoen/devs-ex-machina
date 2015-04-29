@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<trace>
+<event>
+<model>TestModel</model>
+<time>0</time>
+<kind>IN</kind>
+<port name="MyVerySpecialOutput" category="O">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>12</time>
+<kind>EX</kind>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>27</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>29</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>29</time>
+<kind>IN</kind>
+<port name="MyVerySpecialOutput" category="O">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>29</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>16</time>
+<kind>EX</kind>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>33</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>33</time>
+<kind>IN</kind>
+<port name="MyVerySpecialOutput" category="O">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>35</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>37</time>
+<kind>EX</kind>
+<port name="portIn" category="I">
+</port>
+<port name="portIn2" category="I">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+<event>
+<model>TestModel</model>
+<time>37</time>
+<kind>IN</kind>
+<port name="MyVerySpecialOutput" category="O">
+</port>
+<state><attribute category="P"><name>isXml</name><type>String</type><value>indeed!</value></attribute><![CDATA[This is a test state]]>
+</state>
+</event>
+</trace>

@@ -12,6 +12,8 @@
 #include "tracemessage.h"
 #include "policies.h"
 #include "verbosetracer.h"
+#include "xmltracer.h"
+#include "jsontracer.h"
 #include "compare.h"
 #include "macros.h"
 #include "coutredirect.h"
@@ -481,11 +483,15 @@ class TestState: public n_model::State {
 		}
 
 		virtual std::string toXML() {
-			return toString();
+			return "<attribute category=\"P\">"
+				"<name>isXml</name>"
+				"<type>String</type>"
+				"<value>indeed!</value>"
+				"</attribute>";
 		}
 		;
 		virtual std::string toJSON() {
-			return toString();
+			return "{\"state\":\"JSON!\"}";
 		}
 		;
 		virtual std::string toCell() {
@@ -526,6 +532,7 @@ TEST(tracing, tracer##tracerclass){\
 		tracerclass<FileWriter> tracer;\
 		n_model::t_atomicmodelptr model = std::make_shared<TestModel>();\
 		tracer.initialize(outputFolder STRINGIFY( tracerclass ) "_out.txt");\
+		tracer.startTrace();\
 		tracer.tracesInit(model, t_timestamp(12, 1));\
 		tracer.tracesInternal(model, 0u);\
 		model->setState(std::make_shared<TestState>(13));\
@@ -553,11 +560,16 @@ TEST(tracing, tracer##tracerclass){\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
 		n_tracers::clearAll();\
 		n_tracers::waitForTracer();\
+		tracer.finishTrace();\
 	}\
 	EXPECT_EQ(n_misc::filecmp(outputFolder STRINGIFY( tracerclass ) "_out.txt", outputFolder STRINGIFY(tracerclass) "_out.corr"), 0);\
 }
 
 SINGLETRACERTEST(TESTFOLDERTRACE, VerboseTracer)
+
+SINGLETRACERTEST(TESTFOLDERTRACE, XmlTracer)
+
+SINGLETRACERTEST(TESTFOLDERTRACE, JsonTracer)
 
 TEST(tracing, messageManagement){
 	{
@@ -584,45 +596,3 @@ TEST(tracing, messageManagement){
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "msgmngmnt.txt", TESTFOLDERTRACE "msgmngmnt.corr"), 0);\
 
 }
-/*
- TEST(tracing, verboseTracer){
- VerboseTracer<FileWriter> tracer;
- ContainerAdapter<std::vector<TraceMessage*>> messages;
-
- EXPECT_EQ(tracer.isInitialized(), false);
- EXPECT_NO_THROW(tracer.initialize("test/files/verboseOut1.txt"));
- EXPECT_EQ(tracer.isInitialized(), true);
- tracer.traceInternal(2u, &messages);
- EXPECT_EQ(messages.size(), 1u);
- EXPECT_EQ(messages[0]->getScheduledTime(), 2u);
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_0.txt"), 0);
- messages[0]->execute();
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_1.txt"), 0);
- tracer.traceInternal(4u, &messages);
- EXPECT_EQ(messages.size(), 2u);
- EXPECT_EQ(messages[0]->getScheduledTime(), 2u);
- EXPECT_EQ(messages[1]->getScheduledTime(), 4u);
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_1.txt"), 0);
- messages[1]->execute();
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_2.txt"), 0);
-
- //test appending
- VerboseTracer<FileWriter> tracer2;
- EXPECT_EQ(tracer2.isInitialized(), false);
- EXPECT_NO_THROW(tracer2.initialize("test/files/verboseOut1.txt", true));
- EXPECT_EQ(tracer2.isInitialized(), true);
- tracer2.traceInternal(42u, &messages);
- EXPECT_EQ(messages.size(), 3u);
- EXPECT_EQ(messages[0]->getScheduledTime(), 2u);
- EXPECT_EQ(messages[1]->getScheduledTime(), 4u);
- EXPECT_EQ(messages[2]->getScheduledTime(), 42u);
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_2.txt"), 0);
- messages[2]->execute();
- EXPECT_EQ(filecmp("test/files/verboseOut1.txt", "test/files/corr_verboseOut1_3.txt"), 0);
-
- //delete the created messages.
- //This is another thing we'll have to talk about: who and how do the messages gat deleted. `std::shared_ptr`?
- for(TraceMessage* m:messages)
- delete m;
- }
- */

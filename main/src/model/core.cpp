@@ -26,8 +26,8 @@ void n_model::Core::load(const std::string&)
 }
 
 n_model::Core::Core()
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()),
-	  m_terminated(false), m_idle(false)
+	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
+	        false), m_idle(false)
 {
 	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, true);
@@ -82,40 +82,43 @@ bool n_model::Core::containsModel(const std::string& mname) const
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
 	if (this->m_models.find(name) != this->m_models.end()) {
-		LOG_DEBUG("Core : rescheduling : ",name ,"@" ,t);
-		ModelEntry entry(name, t);
-		if(this->m_scheduler->contains(entry)){
-//			this->m_scheduler->erase(entry);
-			LOG_ERROR("Core::scheduleModel Tried to schedule a model that is already scheduled: ", name, " at t=", t);
-		}// else
-			this->m_scheduler->push_back(entry);
+		LOG_DEBUG("CORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
+		size_t offset = this->m_models[name]->getPriority();
+		t_timestamp newt(t.getTime(), offset);
+		ModelEntry entry(name, newt);
+		LOG_DEBUG("CORE :: ", this->getCoreID(), " rescheduling : ", name, "@", newt);
+		if (this->m_scheduler->contains(entry)) {
+			LOG_INFO("CORE:: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", name,
+			" at t=", newt, " replacing.");
+			this->m_scheduler->erase(entry);			// Needed for revert, scheduled entry may be wrong.
+		}
+		this->m_scheduler->push_back(entry);	// assert fail possible if if clause is hit. Do not move to else!
 	} else {
-		std::cerr << "Model with name " + name + " not in core, can't reschedule." << std::endl;
+		LOG_ERROR("CORE :: ", this->getCoreID(), " !!LOGIC ERROR!! Model with name "
+			, name, " not in core, can't reschedule.");
 	}
 }
 
 void n_model::Core::init()
 {
-	if(this->m_scheduler->size() != 0){
-		LOG_ERROR("CORE:: scheduler is not empty on call to init(), are you calling it multiple times ? Hint: don't!!");
+	if (this->m_scheduler->size() != 0) {
+		LOG_ERROR(
+		        "CORE:: scheduler is not empty on call to init(), are you calling it multiple times ? Hint: don't!!");
 		return;
 	}
-	for(const auto& model : this->m_models){
+	for (const auto& model : this->m_models) {
 		LOG_DEBUG("Core :", this->getCoreID(), " has ", model.first);
 	}
 	for (const auto& model : this->m_models) {
-		//trace init
-		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(), model.second->getPriority());
-		model.second->setTime(modelTime);
-		t_timestamp model_scheduled_time = model.second->getTimeNext();// model.second->timeAdvance();
-		std::size_t priority = model.second->getPriority();
-		model_scheduled_time.increaseCausality(priority);
+		t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
+		model.second->setTime(modelTime);	// DO NOT use priority, model does this already
+		t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
 		this->scheduleModel(model.first, model_scheduled_time);
 		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
 	}
 	// This avoid problems with reverting to before first core time, which breaks the models.
 	// [60,110]
-	this->m_gvt = this->getTime();
+	this->m_gvt = (this->getTime().getTime(), 0);
 }
 
 void n_model::Core::collectOutput(std::set<std::string>& imminents)
@@ -124,8 +127,8 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 	 * For each imminent model, collect output.
 	 * Then sort that output by destination (for the transition functions)
 	 */
-	LOG_DEBUG("CORE: ",this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
-	for(const auto& modelname : imminents){
+	LOG_DEBUG("CORE: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
+	for (const auto& modelname : imminents) {
 		const auto& model = m_models[modelname];
 		auto mailfrom = model->doOutput();
 		LOG_DEBUG("CORE:", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
@@ -135,7 +138,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());
 		}
-		this->sortMail(mailfrom);// <-- Locked here on msglock
+		this->sortMail(mailfrom);	// <-- Locked here on msglock
 	}
 }
 
@@ -144,21 +147,22 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 {
 	// Imminents : need at least internal transition
 	// Mail : models with pending messages (ext or confluent)
-	LOG_DEBUG("CORE: ", this->getCoreID(), " Transitioning with ", imminents.size(), " imminents, and ", mail.size(),
-	        " models to deliver mail to.");
+	LOG_DEBUG("CORE: ", this->getCoreID(), " Transitioning with ", imminents.size(), " imminents, and ",
+	        mail.size(), " models to deliver mail to.");
+	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (const auto& imminent : imminents) {
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
-			urgent->setTime(this->getTime());
+			urgent->setTime(noncausaltime);
 			this->traceInt(urgent);
 		} else {
 			urgent->confTransition(found->second);		// Confluent
-			urgent->setTime(this->getTime());
+			urgent->setTime(noncausaltime);
 			this->traceConf(urgent);
 			this->markProcessed(found->second);		// Store message as processed for timewarp.
-			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
+			std::size_t erased = mail.erase(imminent); // Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
 	}
@@ -166,15 +170,21 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->doExtTransition(remaining.second);
-		model->setTime(this->getTime());
-		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));	// time does not matter here
+		model->setTime(noncausaltime);
+		// Erase scheduled entry. If external changes ta -> oo, we won't need it anymore.
+		// Else if ta->oo, the scheduled entry will be incorrect, reschedule will not fix this (not called).
+		// Else if ta = same/something else, we'll reschedule it. O(1).
+		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));
 		this->traceExt(model);
 		this->markProcessed(remaining.second);
-		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
+		t_timestamp queried = model->timeAdvance();// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
-			LOG_INFO("Core: ", this->getCoreID(), " Model ", model->getName(), " changed ta value from infinity to ", queried,
-			        " rescheduling.");
+			LOG_INFO("CORE: ", this->getCoreID(), " Model ", model->getName(),
+				" changed ta value to ", queried, " rescheduling.");
 			imminents.insert(model->getName());
+		}else{
+			LOG_INFO("CORE: ", this->getCoreID(), " Model ", model->getName(),
+				" changed ta value to infinity, no longer scheduling.");
 		}
 	}
 }
@@ -200,19 +210,20 @@ void n_model::Core::printSchedulerState()
 
 std::set<std::string> n_model::Core::getImminent()
 {
-	LOG_DEBUG("CORE: Retrieving imminent models ", this->getCoreID());
+	LOG_DEBUG("CORE: ", this->getCoreID(), " Retrieving imminent models ");
 	std::set<std::string> imminent;
 	std::vector<ModelEntry> bag;
 	t_timestamp maxtime = n_network::makeLatest(this->m_time);
 	ModelEntry mark("", maxtime);
 	this->m_scheduler->unschedule_until(bag, mark);
 	if (bag.size() == 0) {
-		LOG_WARNING("CORE: No imminent models ?? ", this->getCoreID());
+		LOG_WARNING("CORE: ", this->getCoreID(), " No imminent models ?? ");
 	}
 	for (const auto& entry : bag) {
 		bool inserted = imminent.insert(entry.getName()).second;
 		assert(inserted && "Logic fail in Core get Imminent.");
 	}
+	LOG_DEBUG("CORE: ", this->getCoreID(), " Have ", imminent.size(), " imminents ");
 	return imminent;
 }
 
@@ -228,9 +239,8 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 		t_timestamp ta = model->timeAdvance();// Timeadvance if infinity == model indicates it does not want scheduling.
 		if (ta != t_timestamp::infinity()) {
 			t_timestamp next = ta + this->m_time;
-			size_t prior = model->getPriority();// Simulate select function for models firing simultaneously by changing causality vals.
-			next.increaseCausality(prior);
-			LOG_DEBUG("CORE: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta, " rescheduled @ ", next);
+			LOG_DEBUG("CORE: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
+			        " rescheduled @ ", next);
 			this->scheduleModel(old, next);
 		} else {
 			LOG_INFO("CORE: Core:: ", model->getName(), " is no longer scheduled (infinity) ");
@@ -240,32 +250,30 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
-	/**
-	 * Find out what is less, message time or next firing time, and update core with that value.
-	 */
-	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
-	LOG_DEBUG("CORE ", this->getCoreID(), " first messagetime = ", firstmessagetime);
 	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
 		nextfired = this->m_scheduler->top().getTime();
-	} else {
-		LOG_WARNING("CORE:: ", this->getCoreID(), "Core has no scheduled models.");
 	}
+	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
+	LOG_DEBUG("CORE ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime);
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
-	if(newtime == t_timestamp::infinity()){
-		LOG_ERROR("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models");
+	if (newtime == t_timestamp::infinity()) {
+		LOG_WARNING("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models), marking as zombie");
+		this->m_zombie_rounds.fetch_add(1);
 		return;
 	}
 	if (this->getTime() > newtime) {
 		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
 		assert(false);	// crash hard.
 	}
+	// Here we a valid new time.
 	this->setTime(newtime);
+	this->m_zombie_rounds.store(0);					// reset zombie state.
 
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
-		m_terminated.store(true);
-		m_live.store(false);
+		this->setTerminated(true);
+		this->setLive(false);
 		this->setIdle(true);
 	}
 }
@@ -290,8 +298,9 @@ bool n_model::Core::isIdle() const
 	return m_idle;
 }
 
-void n_model::Core::setIdle(bool idlestat){
-	LOG_DEBUG("Core :: ", this->getCoreID(), " setting state to Idle");
+void n_model::Core::setIdle(bool idlestat)
+{
+	LOG_DEBUG("Core :: ", this->getCoreID(), " setting state to idle=", idlestat);
 	m_idle.store(idlestat);
 }
 
@@ -314,32 +323,34 @@ void n_model::Core::runSmallStep()
 	// This step can trigger a revert, which is why its before getImminent
 	this->getMessages();	// locked on msgs
 
-	if(this->isIdle()){	// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
-		LOG_DEBUG("Core:: ", this->getCoreID(), " skipping small Step, we're idle (and messages did not alter that)");
+	if (this->isIdle()) {// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
+		LOG_DEBUG("Core:: ", this->getCoreID(),
+		        " skipping small Step, we're idle (and messages did not alter that)");
 		this->unlockSimulatorStep();
 		return;
 	}
 
 	// Query imminent models (who are about to fire transition)
 	auto imminent = this->getImminent();
+
 	// Get all produced messages, and route them.
-	this->collectOutput(imminent);	// locked on msgs
+	this->collectOutput(imminent);			// locked on msgs
 
 	// Give DynStructured Devs a chance to store imminent models.
 	this->signalImminent(imminent);
 
-	// From all pending messages, get those with time <= now and sort them.
+	// Get msg < timenow, sort them for ext/conf.
 	std::unordered_map<std::string, std::vector<t_msgptr>> mailbag;
-	this->getPendingMail(mailbag);	// locked on msgs
+	this->getPendingMail(mailbag);			// locked on msgs
 
 	// Transition depending on state.
-	this->transition(imminent, mailbag);
+	this->transition(imminent, mailbag);		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(imminent);
 
 	// Forward time to next message/firing.
-	this->syncTime();		// locked on msgs
+	this->syncTime();				// locked on msgs
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
@@ -391,6 +402,11 @@ bool n_model::Core::terminated() const
 	return m_terminated;
 }
 
+void n_model::Core::setTerminated(bool b)
+{
+	m_terminated.store(b);
+}
+
 void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
 {
 	this->m_termination_function = fun;
@@ -403,8 +419,9 @@ void n_model::Core::checkTerminationFunction()
 		for (const auto& model : m_models) {
 			if ((*m_termination_function)(model.second)) {
 				LOG_DEBUG("CORE: Termination function evaluated to true for model ", model.first);
-				this->m_live.store(false);
-				this->m_terminated.store(true);
+				this->setLive(false);
+				this->setIdle(true);
+				this->setTerminated(true);
 				return;
 			}
 		}
@@ -415,22 +432,21 @@ void n_model::Core::checkTerminationFunction()
 
 void n_model::Core::removeModel(std::string name)
 {
-	if(this->containsModel(name)){
+	if (this->containsModel(name)) {
 		std::size_t erased = this->m_models.erase(name);
-		assert(erased >0 && "Failed to erase model ??");
+		assert(erased > 0 && "Failed to erase model ??");
 		ModelEntry target(name, t_timestamp(0, 0));
 		this->m_scheduler->erase(target);
 		LOG_INFO("Core :: ", this->getCoreID(), " removed model : ", name);
 		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
-	}
-	else{
+	} else {
 		LOG_WARNING("Core :: you've asked to remove model with name ", name, " which is not in this core.");
 	}
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
 {
-	LOG_DEBUG("CORE:: ", this->getCoreID(), " setting time from ", m_time , " to ", t);
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " setting time from ", m_time, " to ", t);
 	m_time = t;
 }
 
@@ -458,22 +474,24 @@ void n_model::Core::clearModels()
 	this->m_gvt = t_timestamp(0, 0);
 }
 
-void n_model::Core::queuePendingMessage(const t_msgptr& msg){
+void n_model::Core::queuePendingMessage(const t_msgptr& msg)
+{
 	MessageEntry entry(msg);
 	this->m_received_messages->push_back(entry);
 }
 
-void
-n_model::Core::rescheduleAll(const t_timestamp& totime){
+void n_model::Core::rescheduleAll(const t_timestamp& totime)
+{
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for(const auto& modelentry : m_models){
+	for (const auto& modelentry : m_models) {
 		t_timestamp modellast = modelentry.second->revert(totime);
 		// Bug lived here : Do not set time on model.
-		if(modellast != t_timestamp::infinity()){
+		if (modellast != t_timestamp::infinity()) {
 			this->scheduleModel(modelentry.first, modellast);
-		}else{
-			LOG_DEBUG("MCore:: model did not give a new time for rescheduling after revert", modelentry.second->getName());
+		} else {
+			LOG_WARNING("MCore:: model did not give a new time for rescheduling after revert",
+			        modelentry.second->getName());
 		}
 	}
 }
@@ -482,16 +500,17 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
 	LOG_DEBUG("CORE:: ", this->getCoreID(), " receiving message", msg->toString());
 	t_timestamp msgtime = msg->getTimeStamp();
-	if(msg->isAntiMessage()){
+	if (msg->isAntiMessage()) {
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
-	}else{
+	} else {
 		// Don't store antimessages, we're partially ordered, there is no way a sent messages can be hopped over in a FIFO by its antimessage.
-		this->m_received_messages->push_back(MessageEntry(msg));
+		this->queuePendingMessage(msg);
 	}
 
 	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
 	if (msgtime < this->getTime()) {
-		LOG_INFO("Core:: ", this->getCoreID(), " received message time < than now : " , this->getTime(), " msg follows: ", msg->toString());
+		LOG_INFO("Core:: ", this->getCoreID(), " received message time < than now : ", this->getTime(),
+		        " msg follows: ", msg->toString());
 		this->revert(msg->getTimeStamp());
 	}
 }
@@ -535,7 +554,8 @@ t_timestamp n_model::Core::getFirstMessageTime()
 			this->unlockMessages();	// second exit path, don't forget to unlock.
 			return first.getMessage()->getTimeStamp();
 		} else {
-			LOG_DEBUG("Core : ", this->getCoreID(), " removing message from msgqueue with destination ", modeldest);
+			LOG_DEBUG("Core : ", this->getCoreID(), " removing message from msgqueue with destination ",
+			        modeldest);
 			this->m_received_messages->pop();
 		}
 	}
@@ -544,17 +564,18 @@ t_timestamp n_model::Core::getFirstMessageTime()
 	return mintime;
 }
 
-void
-n_model::Core::setGVT(const t_timestamp& newgvt){
-	if(newgvt == t_timestamp::infinity()){
-		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to infinity.");
+void n_model::Core::setGVT(const t_timestamp& newgvt)
+{
+	if (newgvt == t_timestamp::infinity()) {
+		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}
-	if(newgvt < this->getGVT()){
-		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ", this->getGVT());
+	if (newgvt < this->getGVT()) {
+		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
+		        this->getGVT(), " ignoring ");
 		return;
 	}
-	LOG_DEBUG("Core: " , this->getCoreID(), " Setting gvt from ::" , this->getGVT(), " to ", newgvt);
+	LOG_DEBUG("Core: ", this->getCoreID(), " Setting gvt from ::", this->getGVT(), " to ", newgvt);
 	this->m_gvt = newgvt;
 }
 
@@ -565,6 +586,36 @@ void n_model::Core::printPendingMessages()
 	this->unlockMessages();
 }
 
-void n_model::Core::revertTracerUntil(const t_timestamp& totime){
+void n_model::Core::revertTracerUntil(const t_timestamp& totime)
+{
 	n_tracers::revertTo(totime, this->getCoreID());
+}
+
+void n_model::Core::logCoreState()
+{
+	LOG_DEBUG("Core: ", this->getCoreID(), " time= ", this->getTime(), " gvt=", this->getGVT(), " live=",
+	        this->isLive(), " idle=", this->isIdle(), " terminated=", this->terminated());
+}
+
+
+bool
+n_model::Core::existTransientMessage(){
+	LOG_ERROR("Core: ", this->getCoreID(), " existTransientMessage called on single core.");
+	assert(false);
+}
+
+std::size_t
+n_model::Core::getZombieRounds(){
+	return m_zombie_rounds;
+}
+
+MessageColor
+n_model::Core::getColor(){
+	assert(false);
+	return MessageColor::WHITE;
+}
+
+void
+n_model::Core::setColor(MessageColor){
+	assert(false);
 }
