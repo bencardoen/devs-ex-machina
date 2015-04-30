@@ -78,6 +78,13 @@ private:
 	t_timestamp			m_tred;
 
 	/**
+	 * Protect access to Time.
+	 * @attention Needed for GVT (among other things).
+	 */
+	std::mutex 			m_timelock;
+
+
+	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
@@ -247,6 +254,21 @@ public:
 
 	bool
 	existTransientMessage()override;
+
+	/**
+	 * Set current time to new value.
+	 * @synchronized
+	 */
+	void
+	setTime(const t_timestamp&)override;
+
+	/**
+	 * Get Current simulation time.
+	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
+	 * @note The causal field is to be disregarded, it is not relevant here.
+	 * @synchronized
+	 */
+	t_timestamp getTime()override;
 };
 
 } /* namespace n_model */

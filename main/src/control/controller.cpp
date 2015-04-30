@@ -17,7 +17,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
         size_t saveInterval):
         	m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name),
         	m_checkTermTime(false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores),
-        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false)
+        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false),m_sleep_gvt_thread(85)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -305,7 +305,7 @@ void Controller::simPDEVS()
 		        n_tools::createObject<std::thread>(cvworker, std::ref(cv), std::ref(cvlock), i,
 		                std::ref(threadsignal), std::ref(veclock), deadlockVal, std::cref(m_cores[i]),
 		                m_saveInterval, std::ref(rungvt)));
-		LOG_INFO("CONTROLLER: Started thread #", i);
+		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
 	this->startGVTThread(rungvt);	// Thread is joined inside function.
@@ -390,9 +390,28 @@ void Controller::setCheckpointInterval(t_timestamp interv)
 
 void Controller::startGVTThread(std::atomic<bool>& runbool)
 {
-	LOG_INFO("Controller:: started GVT thread");
+	constexpr std::size_t infguard=100;
+	std::size_t i = 0;
+	std::chrono::milliseconds ms{5};	// Wait before running gvt, this prevents an obvious gvt of zero.
+	std::this_thread::sleep_for(ms);
+	LOG_INFO("Controller:: starting GVT thread");
 	std::thread runonce(&runGVT, std::ref(*this), std::ref(runbool));
 	runonce.join();
+	std::chrono::milliseconds sleep{m_sleep_gvt_thread};	// Wait before running gvt, this prevents an obvious gvt of zero.
+	std::this_thread::sleep_for(sleep);
+	LOG_INFO("Controller:: joined GVT thread");
+	while(runbool.load()==true){
+		if(infguard < ++i){
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations.");
+			runbool.store(false);
+			break;// No join, have not started thread.
+		}
+		std::chrono::milliseconds ms{this->getGVTInterval()};	// Wait before running gvt, this prevents an obvious gvt of zero.
+		std::this_thread::sleep_for(ms);
+		LOG_INFO("Controller:: starting GVT thread");
+		std::thread runnxt(&runGVT, std::ref(*this), std::ref(runbool));
+		runnxt.join();
+	}
 	LOG_INFO("Controller:: GVT thread joined.");
 }
 
@@ -413,6 +432,17 @@ void Controller::emptyAllCores()
 	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }
 
+
+void Controller::setGVTInterval(std::size_t ms){
+	this->m_sleep_gvt_thread.store(ms);
+}
+
+std::size_t Controller::getGVTInterval(){
+	return this->m_sleep_gvt_thread;
+}
+
+
+///// END class Controller Begin friend functions
 // TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
@@ -427,36 +457,36 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
-				rungvt.store(false);		// Interrupt GVT thread
+				rungvt.store(false);
 				return;
 			}
 		}
 
 		if (core->isIdle()) {
-			std::lock_guard<std::mutex> signallock(vectorlock);// Lock whole block, else log makes no sense.
-			// Possible flags = IDLE,STOP,FREE
-			if (threadsignal[myid] != Controller::ThreadSignal::STOP
-			        and threadsignal[myid] != Controller::ThreadSignal::SHOULDWAIT) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        "threadsignal is not STOP||SHOULDWAIT setting flag to IDLE");
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			if (threadsignal[myid] == Controller::ThreadSignal::STOP
+			        or threadsignal[myid] == Controller::ThreadSignal::SHOULDWAIT) {
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 				threadsignal[myid] = Controller::ThreadSignal::IDLE;
-			}
-			// Find out if all others are IDLE/STOPPED, if so stop working.
-			size_t countidle = 0;
-			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				if (threadsignal[i] == Controller::ThreadSignal::IDLE
-				        || threadsignal[i] == Controller::ThreadSignal::STOP)
-					++countidle;
-			}
-			if (countidle == threadsignal.size()) {
-				if (not core->existTransientMessage()) {
-					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network is idle, quitting.");
-					rungvt.store(false);	// Signal gvt calculation.
-					return;
-				} else {
-					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network reports transients, idling.");
+			}else{
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
+				threadsignal[myid] = Controller::ThreadSignal::IDLE;
+				size_t countidle = 0;
+				for (size_t i = 0; i < threadsignal.size(); ++i) {
+					if (threadsignal[i] == Controller::ThreadSignal::IDLE
+						|| threadsignal[i] == Controller::ThreadSignal::STOP)
+						++countidle;
+				}
+				if (countidle == threadsignal.size()) {			// All threads are idle/stopped, stop this tread as well.
+					if (not core->existTransientMessage()) {
+						LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+							" all other threads are stopped or idle, network is idle, quitting.");
+						rungvt.store(false);
+						return;
+					} else {
+						LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+							" all other threads are stopped or idle, network reports transients, idling.");
+					}
 				}
 			}
 		} else {	// Else no longer IDLE
@@ -499,8 +529,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 {
-	std::chrono::milliseconds ms{5};	// Wait before running gvt.
-	std::this_thread::sleep_for(ms);
 	if(not gvtsafe){
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;
@@ -508,11 +536,6 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 	const std::size_t corecount = cont.m_cores.size();
 	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
 	        t_timestamp::infinity());
-	// Make sure the cores are in a valid state. In theory setGVT does this, but it's possible it's interrupted/failed.
-	for (size_t i = 0; i < corecount; ++i) {
-		const t_coreptr& core = cont.m_cores[i];
-		core->setColor(MessageColor::WHITE);	// Synced, but only on color.
-	}
 
 	for (size_t i = 0; i < corecount; ++i) {
 		cont.m_cores[i]->receiveControl(cmsg, (i == 0), gvtsafe);
@@ -543,6 +566,7 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 				ucore.second->setGVT(cmsg->getGvt());
 		} else {
 			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+			// TODO check/reset core state, or crash hard.
 		}
 	}
 }

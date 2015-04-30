@@ -278,7 +278,7 @@ void n_model::Core::syncTime()
 	}
 }
 
-n_network::t_timestamp n_model::Core::getTime() const
+n_network::t_timestamp n_model::Core::getTime()
 {
 	return this->m_time;
 }

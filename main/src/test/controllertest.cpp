@@ -79,7 +79,7 @@ TEST(Controller, cDEVS)
 		t_coreptr c = createObject<Core>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setClassicDEVS();
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
@@ -110,7 +110,7 @@ TEST(Controller, cDEVS_coupled)
 		t_coreptr c = createObject<Core>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setClassicDEVS();
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -142,7 +142,7 @@ TEST(Controller, DSDEVS_connections)
 		t_coreptr c = createObject<DynamicCore>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setDSDEVS();
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
@@ -179,7 +179,7 @@ TEST(Controller, pDEVS)
 
 		t_timestamp endTime(2000, 0);
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setPDEVS();
 		ctrl.setTerminationTime(endTime);
 

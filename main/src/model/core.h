@@ -58,7 +58,6 @@ private:
 	 * @synchronized
 	 */
 	std::atomic<bool> m_live;
-
 	/**
 	 * Stores the model(entries) in ascending (urgent first) scheduled time.
 	 */
@@ -316,13 +315,6 @@ public:
 	syncTime();
 
 	/**
-	 * Set current time to new value.
-	 * @todo Move to protected/friend
-	 */
-	void
-	setTime(const t_timestamp&);
-
-	/**
 	 * Run a single DEVS simulation step:
 	 * 	- get Messages (networked, possibly revert)
 	 * 	- collect output
@@ -363,11 +355,20 @@ public:
 	}
 
 	/**
+	 * Set current time to new value.
+	 * @attention virtual to allow superclass lockless (very frequently called), subclass locked if required.
+	 */
+	virtual
+	void
+	setTime(const t_timestamp&);
+
+	/**
 	 * Get Current simulation time.
 	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
 	 * @note The causal field is to be disregarded, it is not relevant here.
 	 */
-	t_timestamp getTime() const;
+	virtual
+	t_timestamp getTime();
 
 	/**
 	 * Retrieve GVT. Only makes sense for a multi core.

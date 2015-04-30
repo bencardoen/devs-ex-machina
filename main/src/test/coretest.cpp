@@ -577,7 +577,7 @@ TEST(Multicore, revertidle){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -657,7 +657,7 @@ TEST(Multicore, revertedgecases){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -739,7 +739,7 @@ TEST(Multicore, revertoffbyone){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -817,7 +817,7 @@ TEST(Multicore, revertstress){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -896,7 +896,7 @@ TEST(Multicore, GVT){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 

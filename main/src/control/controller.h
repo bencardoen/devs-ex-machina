@@ -79,12 +79,25 @@ private:
 	DSSharedState m_sharedState;
 	bool m_dsPhase;
 
-	void doDirectConnect();
-	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
 	std::vector<std::shared_ptr<std::thread>> m_threads;
 
+	void doDirectConnect();
+	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
+
+	/**
+	 * Interval time (in milliseconds) during which consecutive gvt calculations are performed.
+	 * A GVT thread will run [5ms |run| interval | interval | ... ].
+	 * @attention : The OS will schedule at least interval sleep time, but more is ofcourse possible.
+	 * @synchronized
+	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
+	 */
+	std::atomic<std::size_t> m_sleep_gvt_thread;
+
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+	/**
+	 * @param
+	 */
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,		// TODO don't copy, use &
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
 		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
@@ -142,12 +155,13 @@ public:
 
 	/**
 	 * @brief Start thread for GVT
+	 * @param interrupt Synchronized flag shared between Controller and Core(s). False stops the GVT calculation
+	 * as clean as possible, and prevents rerunning it. It should be set only if a Core has stopped simulating.
 	 */
-	void startGVTThread(std::atomic<bool>&);
+	void startGVTThread(std::atomic<bool>& interrupt);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
-//	void GVTdone();
 //	void checkForTemporaryIrreversible();
 
 	/**
@@ -189,6 +203,17 @@ public:
 	 * @return Whether or not the simulator is currently performing Dynamic Structured DEVS
 	 */
 	bool isInDSPhase() const;
+
+	/**
+	 * Update the GVT interval with a new value.
+	 */
+	void setGVTInterval(std::size_t ms);
+
+	/**
+	 * Return the current GVT threading interval.
+	 */
+	std::size_t
+	getGVTInterval();
 
 private:
 	/**

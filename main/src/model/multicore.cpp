@@ -396,3 +396,15 @@ n_model::Multicore::getColor(){
 	std::lock_guard<std::mutex> lock(m_colorlock);
 	return m_color;
 }
+
+void
+n_model::Multicore::setTime(const t_timestamp& newtime){
+	std::lock_guard<std::mutex> lock(m_timelock);
+	Core::setTime(newtime);
+}
+
+t_timestamp
+n_model::Multicore::getTime(){
+	std::lock_guard<std::mutex> lock(m_timelock);
+	return Core::getTime();
+}
