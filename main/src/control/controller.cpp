@@ -7,6 +7,8 @@
 
 #include "controller.h"
 #include <deque>
+#include <thread>
+#include <chrono>
 
 namespace n_control {
 
@@ -279,7 +281,7 @@ void Controller::simPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<ThreadSignal> threadsignal;
-	constexpr std::size_t deadlockVal = 100000000;// Safety, if main thread ever reaches this value, consider it a deadlock.
+	constexpr std::size_t deadlockVal = 1000000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -296,7 +298,7 @@ void Controller::simPDEVS()
 		threadsignal.push_back(ThreadSignal::FREE);
 	}
 
-	std::atomic<bool> rungvt;
+	std::atomic<bool> rungvt(true);
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
@@ -306,6 +308,7 @@ void Controller::simPDEVS()
 		LOG_INFO("CONTROLLER: Started thread #", i);
 	}
 
+	this->startGVTThread(rungvt);	// Thread is joined inside function.
 	/// There's no point in asynchronously checking the threadstate, it goes way too fast to count on,
 	/// it starves the threads from doing any signalling at all.
 
@@ -385,9 +388,12 @@ void Controller::setCheckpointInterval(t_timestamp interv)
 	m_checkpointInterval = interv;
 }
 
-void Controller::startGVTThread()
+void Controller::startGVTThread(std::atomic<bool>& runbool)
 {
-	throw std::logic_error("Controller : startGVTThread not implemented");
+	LOG_INFO("Controller:: started GVT thread");
+	std::thread runonce(&runGVT, std::ref(*this), std::ref(runbool));
+	runonce.join();
+	LOG_INFO("Controller:: GVT thread joined.");
 }
 
 bool Controller::check()
@@ -412,6 +418,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
         const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
+	constexpr size_t KILL_ZOMBIE = 20;
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex > lv(vectorlock);
@@ -419,8 +426,11 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	};
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
-			/// If a thread stops, it has to signal it's intention to the GVT algorithm.
 			std::lock_guard<std::mutex> signallock(vectorlock);
+			if(core->getZombieRounds()>KILL_ZOMBIE){
+				LOG_INFO("CVWORKER : core has exceeded zombie treshold, quitting.");
+				threadsignal[myid]=Controller::ThreadSignal::STOP;
+			}
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
 				rungvt.store(false);
@@ -431,8 +441,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		if (core->isIdle()) {
 			std::lock_guard<std::mutex> signallock(vectorlock);// Lock whole block, else log makes no sense.
 			// Possible flags = IDLE,STOP,FREE
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-			        "detected IDLE core state, setting flag to IDLE");
 			if (threadsignal[myid] != Controller::ThreadSignal::STOP
 			        and threadsignal[myid] != Controller::ThreadSignal::SHOULDWAIT) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
@@ -470,7 +478,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		bool skip_barrier = false;
+		bool skip_barrier = true;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
@@ -492,12 +500,13 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			std::unique_lock<std::mutex> mylock(cvlock);
 			cv.wait(mylock, predicate);
 		}
-		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
 	}
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 {
+	//std::chrono::milliseconds ms{1};	// Wait before running gvt.
+	//std::this_thread::sleep_for(ms);
 	if(not gvtsafe){
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;

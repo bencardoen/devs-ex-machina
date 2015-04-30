@@ -143,7 +143,7 @@ public:
 	/**
 	 * @brief Start thread for GVT
 	 */
-	void startGVTThread();
+	void startGVTThread(std::atomic<bool>&);
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;

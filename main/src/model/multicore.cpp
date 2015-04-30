@@ -140,8 +140,10 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
 			return;
 		}
-		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0)
+		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0){
+			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
 			break; // Lock is released, all white messages are received!
+		}
 	}
 }
 
@@ -154,10 +156,10 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		return;
 	}
 	if (this->getCoreID() == 0 && first) {
-		LOG_INFO("MCore:: ", this->getCoreID(), " received first control message, starting first round");
+		LOG_INFO("MCore:: ", this->getCoreID(), " GVT received first control message, starting first round");
 		// If this processor is Pinit and is the first to be called in the GVT calculation
 		// Might want to put this in a different function?
-		this->m_color = MessageColor::RED;
+		this->setColor(MessageColor::RED);	// Locked
 		this->m_tredlock.lock();
 		this->m_tred = t_timestamp::infinity();
 		this->m_tredlock.unlock();
@@ -223,13 +225,13 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 
 	} else {
 		// ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
-		if (this->getColor() == MessageColor::WHITE) {
+		if (this->getColor() == MessageColor::WHITE) {	// Locked
 			// Probably not necessary, because messages can't be white during GVT calculation
 			// when red messages are present, better safe than sorry though
 			this->m_tredlock.lock();
 			this->m_tred = t_timestamp::infinity();	// LOCK
 			this->m_tredlock.unlock();
-			this->m_color = MessageColor::RED;	// LOCK
+			this->setColor(MessageColor::RED);
 		}
 		// We wait until we have received all messages
 		waitUntilOK(msg, rungvt);
