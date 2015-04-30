@@ -418,7 +418,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
         const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
-	constexpr size_t KILL_ZOMBIE = 20;
+	//constexpr size_t KILL_ZOMBIE = 20;
 	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex > lv(vectorlock);
@@ -427,10 +427,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if(core->getZombieRounds()>KILL_ZOMBIE){
-				LOG_INFO("CVWORKER : core has exceeded zombie treshold, quitting.");
-				threadsignal[myid]=Controller::ThreadSignal::STOP;
-			}
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
 				rungvt.store(false);
