@@ -418,18 +418,16 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
         const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
-	//constexpr size_t KILL_ZOMBIE = 20;
-	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
+	//constexpr size_t KILL_ZOMBIE = 20;	// Fails in Jenkins.
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex > lv(vectorlock);
-		return not (threadsignal[myid]==Controller::ThreadSignal::ISWAITING);
-	};
+		return not (threadsignal[myid]==Controller::ThreadSignal::ISWAITING);};
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
 				core->setLive(false);
-				rungvt.store(false);
+				rungvt.store(false);		// Interrupt GVT thread
 				return;
 			}
 		}
@@ -474,7 +472,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		bool skip_barrier = true;
+		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
@@ -501,8 +499,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 {
-	//std::chrono::milliseconds ms{1};	// Wait before running gvt.
-	//std::this_thread::sleep_for(ms);
+	std::chrono::milliseconds ms{5};	// Wait before running gvt.
+	std::this_thread::sleep_for(ms);
 	if(not gvtsafe){
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;

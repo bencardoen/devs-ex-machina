@@ -95,13 +95,15 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	Core::receiveMessage(msg);	// Trigger antimessage handling etc (and possibly revert)
 
 	// If we receive a message from our own, we don't want that to be counted in the V vector
-	if (msg->getDestinationCore() == this->getCoreID())
+	if (msg->getSourceCore() == this->getCoreID()){
+		LOG_ERROR("MCore :: ", this->getCoreID(), " got message with Source == my id ?? ", msg->toString());
 		return;
+	}
 
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	std::lock_guard<std::mutex> lock(this->m_vlock);
 	if (msg->getColor() == MessageColor::WHITE) {
-		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1; // Fails if core id is not properly set by controller.
+		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
 	}
 }
 
@@ -140,7 +142,8 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
 			return;
 		}
-		if (this->m_mcount_vector.getVector()[this->getCoreID()] + msgcount <= 0){
+		int v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
+		if (v_value + msgcount <= 0){
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
 			break; // Lock is released, all white messages are received!
 		}
