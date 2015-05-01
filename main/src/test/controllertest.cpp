@@ -88,7 +88,7 @@ TEST(Controller, cDEVS)
 		ctrl.addModel(m1);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
@@ -118,7 +118,7 @@ TEST(Controller, cDEVS_coupled)
 		ctrl.addModel(m1);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
@@ -150,7 +150,7 @@ TEST(Controller, DSDEVS_connections)
 		ctrl.addModel(m);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(3600, 0));
 	};
 

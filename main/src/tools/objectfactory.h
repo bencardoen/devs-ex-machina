@@ -2,7 +2,7 @@
  * objectFactory.h
  *
  *  Created on: 7 Mar 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen -- Stijn Manhaeve
  *      Using the following url as help : http://eli.thegreenplace.net/2014/variadic-templates-in-c/
  */
 #include <memory>
@@ -19,6 +19,7 @@ template<typename T, typename ... Args>
 std::shared_ptr<T> createObject(Args&&... args)
 {
 	return std::make_shared<T>(std::forward<Args>(args)...);
+	//return std::allocate_shared<T>(boost::pool_allocator<T>(), std::forward<Args>(args)...);
 }
 
 /**

@@ -20,7 +20,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
         size_t saveInterval):
         	m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name),
         	m_checkTermTime(false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores),
-        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false),m_sleep_gvt_thread(85)
+        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false),m_sleep_gvt_thread(85),m_rungvt(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -301,22 +301,24 @@ void Controller::simPDEVS()
 		threadsignal.push_back(n_threadflags::FREE);
 	}
 
-	std::atomic<bool> rungvt(true);
+	this->m_rungvt.store(true);
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        n_tools::createObject<std::thread>(cvworker, std::ref(cv), std::ref(cvlock), i,
-		                std::ref(threadsignal), std::ref(veclock), deadlockVal, std::cref(m_cores[i]),
-		                m_saveInterval, std::ref(rungvt)));
+			std::thread(
+				cvworker,
+					std::ref(cv), std::ref(cvlock), i,
+					std::ref(threadsignal), std::ref(veclock), deadlockVal,
+					std::ref(*this)
+							)
+		        	);
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
-	this->startGVTThread(rungvt);	/// Starts and joins GVT threads.
-	/// There's no point in asynchronously checking the threadstate, it goes way too fast to count on,
-	/// it starves the threads from doing any signalling at all.
+	this->startGVTThread();	/// Starts and joins GVT threads.
 
 	for (auto& t : m_threads) {
-		t->join();
+		t.join();
 	}
 }
 
@@ -335,7 +337,7 @@ void Controller::simDSDEVS()
 
 	std::vector<n_model::t_atomicmodelptr> imminent;
 	std::size_t i = 0;
-	while (!core->terminated()) {
+	while (core->isLive()) {
 		++i;
 		imminent.clear();
 		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, " at time ", core->getTime());
@@ -391,28 +393,28 @@ void Controller::setCheckpointInterval(t_timestamp interv)
 	m_checkpointInterval = interv;
 }
 
-void Controller::startGVTThread(std::atomic<bool>& runbool)
+void Controller::startGVTThread()
 {
 	constexpr std::size_t infguard=100;
 	std::size_t i = 0;
 	std::chrono::milliseconds ms{5};	// Wait before running gvt, this prevents an obvious gvt of zero.
 	std::this_thread::sleep_for(ms);
 	LOG_INFO("Controller:: starting GVT thread");
-	std::thread runonce(&runGVT, std::ref(*this), std::ref(runbool));
+	std::thread runonce(&runGVT, std::ref(*this), std::ref(m_rungvt));
 	runonce.join();
 	std::chrono::milliseconds sleep{m_sleep_gvt_thread};	// Wait before running gvt, this prevents an obvious gvt of zero.
 	std::this_thread::sleep_for(sleep);
 	LOG_INFO("Controller:: joined GVT thread");
-	while(runbool.load()==true){
+	while(m_rungvt.load()==true){
 		if(infguard < ++i){
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations.");
-			runbool.store(false);
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
+			m_rungvt.store(false);
 			break;// No join, have not started thread.
 		}
 		std::chrono::milliseconds ms{this->getGVTInterval()};	// Wait before running gvt, this prevents an obvious gvt of zero.
 		std::this_thread::sleep_for(ms);
 		LOG_INFO("Controller:: starting GVT thread");
-		std::thread runnxt(&runGVT, std::ref(*this), std::ref(runbool));
+		std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
 		runnxt.join();
 	}
 	LOG_INFO("Controller:: GVT thread joined.");
@@ -421,7 +423,7 @@ void Controller::startGVTThread(std::atomic<bool>& runbool)
 bool Controller::check()
 {
 	for (auto core : m_cores) {
-		if (!core.second->terminated())
+		if (core.second->isLive())
 			return true;
 	}
 	return false;
@@ -445,22 +447,36 @@ std::size_t Controller::getGVTInterval(){
 }
 
 
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
+void Controller::distributeTerminationTime(t_timestamp ntime){
+	for(const auto& core : m_cores){
+		core.second->setTerminationTime(ntime);
+	}
+}
+
+
+void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
+		std::vector<std::size_t>& threadsignal, std::mutex& vectorlock,
+		std::size_t turns,Controller& ctrl)
 {
-	//constexpr size_t KILL_ZOMBIE = 20;	// Fails in Jenkins.
+	auto core = ctrl.m_cores[myid];
+	constexpr size_t KILL_ZOMBIE = 50;	// @see Core::m_zombie_rounds
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex> lv(vectorlock);
 		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
 	};
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
+		if(core->getZombieRounds()>KILL_ZOMBIE){
+			std::lock_guard<std::mutex> signallock(vectorlock);
+			LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, killing.");
+			set_flag(threadsignal[myid], n_threadflags::STOP);
+		}
+
 		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if( flag_is_set(threadsignal[myid], n_threadflags::STOP) ){
 				core->setLive(false);
-				rungvt.store(false);
+				ctrl.m_rungvt.store(false);
 				return;
 			}
 		}
@@ -469,6 +485,11 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 			set_flag(threadsignal[myid], n_threadflags::IDLE);
+
+			if(core->terminatedByFunctor()){
+				ctrl.distributeTerminationTime(core->getTime());
+			}
+
 			size_t countidle = 0;
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
 				const std::size_t& flag = threadsignal[i];
@@ -479,7 +500,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				if (not core->existTransientMessage()) {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 						" all other threads are stopped or idle, network is idle, quitting.");
-					rungvt.store(false);
+					ctrl.m_rungvt.store(false);
 					set_flag(threadsignal[myid], n_threadflags::STOP);
 					return;
 				} else {
@@ -493,6 +514,9 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
 				unset_flag(threadsignal[myid], n_threadflags::IDLE);
+				if(core->getTerminationTime() != ctrl.m_terminationTime){		// Core possibly idle due to term functor
+					ctrl.distributeTerminationTime(ctrl.m_terminationTime);		// but revert can invalidate that, need
+				}									// to reset all termtimes. (cascade!)
 			}
 		}
 		if (core->isLive() or core->isIdle()) {

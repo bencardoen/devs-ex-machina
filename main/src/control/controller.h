@@ -70,10 +70,18 @@ private:
 	DSSharedState m_sharedState;
 	bool m_dsPhase;
 
-	std::vector<std::shared_ptr<std::thread>> m_threads;
+	std::vector<std::thread> m_threads;
 
 	void doDirectConnect();
 	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
+
+	/**
+	 * If a core triggers a termination functor, it will pass its current time to
+	 * the controller as the new termination time for the other cores.
+	 * Example scenario: C1: triggers f() @ 101, C2 is @ 200. C2 will keep simulating (f()) need
+	 * not evaluate to true on C2.
+	 */
+	void distributeTerminationTime(t_timestamp);
 
 	/**
 	 * Interval time (in milliseconds) during which consecutive gvt calculations are performed.
@@ -83,6 +91,13 @@ private:
 	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
 	 */
 	std::atomic<std::size_t> m_sleep_gvt_thread;
+
+	/**
+	 * Shared memory flag. Used to signal between threads simulating Cores and
+	 * the GVT thread wether or not the last should continue.
+	 * False means interrupt at earliest possible time to do so cleanly.
+	 */
+	std::atomic<bool> 	m_rungvt;
 
 public:
 	/**
@@ -146,10 +161,8 @@ public:
 
 	/**
 	 * @brief Start thread for GVT
-	 * @param interrupt Synchronized flag shared between Controller and Core(s). False stops the GVT calculation
-	 * as clean as possible, and prevents rerunning it. It should be set only if a Core has stopped simulating.
 	 */
-	void startGVTThread(std::atomic<bool>& interrupt);
+	void startGVTThread();
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
@@ -246,6 +259,11 @@ private:
 
 	friend
 	void runGVT(Controller&, std::atomic<bool>& rungvt);
+
+	friend
+	void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
+	        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+	        Controller&);
 };
 
 /**
@@ -262,12 +280,11 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
  * @param threadsignal : stores thread signalling flags
  * @param vectorlock : lock threadsignal
  * @param turns : infinite loop cutoff value.
- * @param core : Core to run thread on.
  * @param rungvt : interrupt variable controlling GVT thread.
  */
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t saveInterval, std::atomic<bool>& rungvt);
+        Controller&);
 
 } /* namespace n_control */
 

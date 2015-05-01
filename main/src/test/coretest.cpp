@@ -211,14 +211,12 @@ TEST(Core, terminationfunction)
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
 	c->setLive(true);
-	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive() == true);
 
 	// Run simulation.
 	c->runSmallStep();
 	t_timestamp coretimeafter = c->getTime();
 	EXPECT_TRUE(coretimebefore < coretimeafter);
-	EXPECT_TRUE(c->terminated() == true);
 	EXPECT_TRUE(c->isLive() == false);
 	c->removeModel("Amodel");
 }
@@ -240,7 +238,6 @@ TEST(Core, Messaging)
 	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	t_timestamp coretimebefore = c->getTime();
 	c->setLive(true);
-	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive() == true);
 	t_timestamp timemessagelight(57,0);
 	t_timestamp timemessagecop(57,1);
@@ -559,7 +556,7 @@ TEST(Multicore, revertidle){
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
-	EXPECT_TRUE(c1->isIdle() && !c1->isLive() && c1->terminated());
+	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
 
 	n_tracers::traceUntil(t_timestamp::infinity());

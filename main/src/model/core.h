@@ -93,6 +93,9 @@ private:
 	 */
 	std::atomic<std::size_t> m_zombie_rounds;
 
+
+	std::atomic<bool> m_terminated_functor;
+
 	/**
 	 * Check if dest model is local, if not:
 	 * Looks up message in lookuptable, set coreid.
@@ -417,21 +420,17 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
+	virtual
 	void
 	setTerminationTime(t_timestamp endtime);
 
+	virtual
 	t_timestamp
-	getTerminationTime() const;
+	getTerminationTime();
 
-	/**
-	 * @returns true when either termination condition is met.
-	 * @attention : implies isLive == false.
-	 */
-	bool
-	terminated() const;
+	bool terminatedByFunctor()const;
 
-	void
-	setTerminated(bool b);
+	void setTerminatedByFunctor(bool b);
 
 	/**
 	 * Set the the termination function.
@@ -547,7 +546,7 @@ public:
 	existTransientMessage();
 
 	/**
-	 * @return nr of simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
+	 * @return nr of consecutive simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
 	 */
 	std::size_t
 	getZombieRounds();

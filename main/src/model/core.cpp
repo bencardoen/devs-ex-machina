@@ -27,7 +27,7 @@ void n_model::Core::load(const std::string&)
 
 n_model::Core::Core()
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
-	        false), m_idle(false)
+	        false), m_idle(false), m_zombie_rounds(0), m_terminated_functor(false)
 {
 	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
 	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
@@ -249,12 +249,12 @@ void n_model::Core::syncTime()
 	LOG_DEBUG("CORE ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime);
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (newtime == t_timestamp::infinity()) {
-		LOG_WARNING("CORE:: ", this->getCoreID(), "Core has no new time (no msgs, no scheduled models), marking as zombie");
+		LOG_WARNING("CORE:: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		this->m_zombie_rounds.fetch_add(1);
 		return;
 	}
 	if (this->getTime() > newtime) {
-		LOG_ERROR("CORE:: Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
+		LOG_ERROR("CORE:: ", this->getCoreID() ," Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
 		assert(false);	// crash hard.
 	}
 	// Here we a valid new time.
@@ -263,7 +263,6 @@ void n_model::Core::syncTime()
 
 	if (this->m_time >= this->m_termtime) {
 		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
-		this->setTerminated(true);
 		this->setLive(false);
 		this->setIdle(true);
 	}
@@ -380,21 +379,13 @@ void n_model::Core::traceConf(const t_atomicmodelptr& model)
 void n_model::Core::setTerminationTime(t_timestamp endtime)
 {
 	this->m_termtime = endtime;
+	/// TODO !NOT! if endtime < this->getTime() revert
+	/// I'm not sure this is safe.
 }
 
-n_network::t_timestamp n_model::Core::getTerminationTime() const
+n_network::t_timestamp n_model::Core::getTerminationTime()
 {
 	return m_termtime;
-}
-
-bool n_model::Core::terminated() const
-{
-	return m_terminated;
-}
-
-void n_model::Core::setTerminated(bool b)
-{
-	m_terminated.store(b);
 }
 
 void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
@@ -411,7 +402,8 @@ void n_model::Core::checkTerminationFunction()
 				LOG_DEBUG("CORE: ", this->getCoreID(), " Termination function evaluated to true for model ", model.first);
 				this->setLive(false);
 				this->setIdle(true);
-				this->setTerminated(true);
+				this->setTerminationTime(this->getTime());
+				this->m_terminated_functor.store(true);
 				return;
 			}
 		}
@@ -584,7 +576,7 @@ void n_model::Core::revertTracerUntil(const t_timestamp& totime)
 void n_model::Core::logCoreState()
 {
 	LOG_DEBUG("Core: ", this->getCoreID(), " time= ", this->getTime(), " gvt=", this->getGVT(), " live=",
-	        this->isLive(), " idle=", this->isIdle(), " terminated=", this->terminated());
+	        this->isLive(), " idle=", this->isIdle());
 }
 
 
@@ -597,6 +589,16 @@ n_model::Core::existTransientMessage(){
 std::size_t
 n_model::Core::getZombieRounds(){
 	return m_zombie_rounds;
+}
+
+bool
+n_model::Core::terminatedByFunctor()const{
+	return m_terminated_functor;
+}
+
+void
+n_model::Core::setTerminatedByFunctor(bool b){
+	this->m_terminated_functor.store(b);
 }
 
 MessageColor

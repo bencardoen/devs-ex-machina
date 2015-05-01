@@ -274,6 +274,12 @@ public:
 	 * @synchronized
 	 */
 	t_timestamp getTime()override;
+
+	void
+	setTerminationTime(t_timestamp)override;
+
+	t_timestamp
+	getTerminationTime()override;
 };
 
 } /* namespace n_model */

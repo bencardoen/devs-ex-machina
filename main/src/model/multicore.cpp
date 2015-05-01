@@ -342,7 +342,7 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 		LOG_DEBUG("MCORE:: ", this->getCoreID(), " Core going from idle to active ");
 		this->setIdle(false);
 		this->setLive(true);
-		this->setTerminated(false);	// May or may not be true, but needs to be reavaluated by simStep.
+		this->setTerminatedByFunctor(false);
 	}
 	// We have the simulator lock
 	// DO NOT lock on msgs, we're called by receive message, which is locked !!
@@ -413,4 +413,16 @@ void
 n_model::Multicore::setTred(t_timestamp val){
 	std::lock_guard<std::mutex> lock(m_tredlock);
 	this->m_tred = val;
+}
+
+void n_model::Multicore::setTerminationTime(t_timestamp endtime)
+{
+	std::lock_guard<std::mutex> lock(m_timelock);
+	Core::setTerminationTime(endtime);
+}
+
+n_network::t_timestamp n_model::Multicore::getTerminationTime()
+{
+	std::lock_guard<std::mutex> lock(m_timelock);
+	return Core::getTerminationTime();
 }
