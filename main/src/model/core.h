@@ -33,13 +33,13 @@ typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
  * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
+ * A Core only operates on atomic models, the translation from coupled to atomic (leaves) is done by Controller.
  */
 class Core
 {
 private:
 	/**
 	 * Current simulation time
-	 * Loosely corresponds with Yentl's 'clock'
 	 */
 	t_timestamp m_time;
 
@@ -169,7 +169,6 @@ protected:
 
 	/**
 	 * Subclass hook. Is called after imminents are collected.
-	 * Superclass does nothing.
 	 */
 	virtual
 	void
@@ -231,7 +230,6 @@ public:
 	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
-	 * @attention does not change anything in scheduled order.
 	 */
 	t_atomicmodelptr
 	getModel(const std::string& name);
@@ -249,8 +247,8 @@ public:
 	bool isLive() const;
 
 	/**
-	 * @return true if a Core has reached a termination condition, and is potentially waiting for
-	 * other cores to finish. != isLive().
+	 * @return true if a Core has reached a termination condition, and is waiting for
+	 * other cores to finish. A Core can still be reactivated (isLive()==true) from this state.
 	 */
 	virtual
 	bool isIdle() const;
@@ -275,16 +273,13 @@ public:
 	std::size_t getCoreID() const;
 
 	/**
-	 * Run at startup, populate the scheduler with the model's advance() results.
-	 * Sets earliests possible time for all models.
-	 * @attention : run this once and once only. Multiple runs can trigger asserts, which will hang the
-	 * process in multithreaded setting.
+	 * Run at startup, populate the scheduler with the model's timeadvance() +- elapsed.
+	 * @attention : run this once and once only.
 	 */
 	void init();
 
 	/**
 	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
-	 * @attention : pops all imminent models, they need to be rescheduled (or will be lost forever).
 	 */
 	std::set<std::string>
 	getImminent();
@@ -301,13 +296,13 @@ public:
 	}
 
 	/**
-	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
+	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time. The core time will advance to min(first transition, earliest received message).
+	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
 	 * @attention : changes local state : idle, live, terminated, time. It's possible time does not
 	 * advance at all, this is allowed.
 	 */
@@ -316,12 +311,12 @@ public:
 
 	/**
 	 * Run a single DEVS simulation step:
-	 * 	- get Messages (networked, possibly revert)
-	 * 	- collect output
+	 * 	- getMessages (from network, since this can invoke revert it needs to be done before the other steps)
+	 * 	- collect output from imminent models
 	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
-	 * 	- reschedule fired models
+	 * 	- reschedule models if needed.
 	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
 	 */
@@ -338,7 +333,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions.
+	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -346,8 +341,8 @@ public:
 	}
 
 	/**
-	 * Pull messages from network, and sort them into parameter by destination name.
-	 * Base class = noop, profiling indicates this has no cost whatsoever.
+	 * Pull messages from network.
+	 * @see Multicore#getMessages()
 	 */
 	virtual void getMessages()
 	{
@@ -356,7 +351,8 @@ public:
 
 	/**
 	 * Set current time to new value.
-	 * @attention virtual to allow superclass lockless (very frequently called), subclass locked if required.
+	 * @attention : virtual so that users of Core can call this without locking cost, but a Multicore instance
+	 * can invoke locking before calling this method.
 	 */
 	virtual
 	void
@@ -377,14 +373,13 @@ public:
 
 	/**
 	 * Set current GVT
-	 * @lock simulator, messages in multicore.
 	 */
 	virtual void
 	setGVT(const t_timestamp& newgvt);
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @param imminent modelnames with firing time == to current time
+	 * @param imminent modelnames with firing time <= to current time
 	 * @param mail collected from local/network by collectOutput/getMessages
 	 */
 	virtual
@@ -426,10 +421,6 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
-	/**
-	 * If the current simulation time >= endtime, halt.
-	 * This is checked after all transitions have happened.
-	 */
 	void
 	setTerminationTime(t_timestamp endtime);
 
@@ -546,7 +537,7 @@ public:
 	paintMessage(const t_msgptr&){;}
 
 	/**
-	 * Write current Core state to logfile.
+	 * Write current Core state to log.
 	 */
 	void
 	logCoreState();

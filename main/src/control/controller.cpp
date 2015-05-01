@@ -466,8 +466,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			std::lock_guard<std::mutex> signallock(vectorlock);
 			if (threadsignal[myid] == Controller::ThreadSignal::STOP
 			        or threadsignal[myid] == Controller::ThreadSignal::SHOULDWAIT) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
-				threadsignal[myid] = Controller::ThreadSignal::IDLE;
+				// TODO remove if bitset is integrated.
 			}else{
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 				threadsignal[myid] = Controller::ThreadSignal::IDLE;

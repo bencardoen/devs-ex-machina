@@ -568,7 +568,7 @@ TEST(Multicore, revertidle){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -648,7 +648,7 @@ TEST(Multicore, revertedgecases){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -730,7 +730,7 @@ TEST(Multicore, revertoffbyone){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -808,7 +808,7 @@ TEST(Multicore, revertstress){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -878,7 +878,7 @@ TEST(Multicore, revertstress){
 
 
 TEST(Multicore, GVT){
-	RecordProperty("description", "Manuall run GVT.");
+	RecordProperty("description", "Manually run GVT.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
 	CoutRedirect myRedirect(filestream);
@@ -887,7 +887,7 @@ TEST(Multicore, GVT){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);

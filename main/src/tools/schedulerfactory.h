@@ -16,8 +16,24 @@ namespace n_tools {
  */
 enum class Storage
 {
-	FIBONACCI, BINOMIAL
+	/** Node based, with amortized complexity for push_back(), can be faster than binomial.*/
+	FIBONACCI,
+	/** Node based, O(log n) for all operations.*/
+	BINOMIAL,
+	/** Complexity is not yet proven, but 'tends' to be faster. Node-based. */
+	PAIRING,
+	/** Self adjusting node based heap. Fast merge (not exposed). */
+	SKEW,
+	/** Arity value determines nr of children in non-leaf node. Uses list
+	 *  as internal storage in contrast to node based heaps.
+	 *  @ATTENTION: do not use with -D_GLIBCXX_DEBUG, triggers a false eror on safe_iterator. (verified with valgrind)
+	 */
+	D_ARY
 };
+
+/*! \var Test::TEnum Test::Val1
+ * The description of the first enum value.
+ */
 
 
 /**

@@ -170,7 +170,7 @@ TEST(Controller, pDEVS)
 		t_networkptr network = createObject<Network>(2);
 		std::unordered_map<std::size_t, t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);

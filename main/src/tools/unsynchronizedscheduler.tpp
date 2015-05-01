@@ -66,7 +66,7 @@ void UnSynchronizedScheduler<X, R>::unschedule_until(std::vector<R>& container,
 			return;
 		m_storage.pop();
 		m_hashtable.erase(element);
-		container.push_back(element);// TODO if push_back fails, the element is lost forever (neither in container, nor in scheduler.
+		container.push_back(element);
 	}
 }
 
@@ -80,7 +80,7 @@ bool UnSynchronizedScheduler<X, R>::erase(const R& elem) {
 	auto found = m_hashtable.find(elem);
 	if (found != m_hashtable.end()) {
 		auto handle = found->second;// The actual type of the handle is a typedef listed in the header file.
-		m_storage.erase(handle);// TODO These two calls need to be executed both or not at all.
+		m_storage.erase(handle);
 		m_hashtable.erase(elem);
 		return true;
 	} else {
