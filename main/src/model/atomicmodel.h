@@ -9,11 +9,9 @@
 #define ATOMICMODEL_H_
 
 #include "model.h"
-#include "message.h"
-#include "tools/globallog.h"
+#include "message.h"	// include globallog
 #include <assert.h>
 #include <map>
-#include <iostream>
 
 namespace n_model {
 class AtomicModel: public Model

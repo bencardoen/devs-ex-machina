@@ -2,7 +2,7 @@
  * Multicore.h
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen -- Tim Tuijn
  */
 
 #ifndef SRC_MODEL_MULTICORE_H_
@@ -10,9 +10,6 @@
 
 #include "core.h"
 #include "locationtable.h"
-#include "message.h"
-#include <deque>
-#include <algorithm>
 #include "v.h"
 using n_network::MessageColor;
 
@@ -83,6 +80,8 @@ private:
 	 */
 	std::mutex 			m_timelock;
 
+	// TODO re-enable cvar if we can actually use it
+	//std::condition_variable	m_wake_on_msg;
 
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
@@ -135,6 +134,12 @@ private:
 	virtual
 	void
 	paintMessage(const t_msgptr& msg)override;
+
+	void
+	setTred(t_timestamp);
+
+	t_timestamp
+	getTred();
 
 public:
 	Multicore()=delete;

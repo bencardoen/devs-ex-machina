@@ -2,11 +2,8 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include "timestamp.h"
 #include "network.h"
-#include "atomicmodel.h"
-#include "scheduler.h"
-#include "terminationfunction.h"
+#include "terminationfunction.h"		// include atomicmodel
 #include "schedulerfactory.h"
 #include "modelentry.h"
 #include "messageentry.h"
@@ -23,8 +20,6 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 
 
-//typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
-
 /**
  * Typedefs used by core.
  */
@@ -32,8 +27,9 @@ typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
- * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
+ * @brief A Core is a node in a Devs simulator. It manages (multiple) atomic models and drives their transitions.
  * A Core only operates on atomic models, the translation from coupled to atomic (leaves) is done by Controller.
+ * The Core is responsible for timewarp, messaging, time and scheduling of models.
  */
 class Core
 {

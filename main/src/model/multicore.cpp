@@ -104,6 +104,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	std::lock_guard<std::mutex> lock(this->m_vlock);
 	if (msg->getColor() == MessageColor::WHITE) {
 		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
+		//this->m_wake_on_msg.notify_all();
 	}
 }
 
@@ -136,6 +137,8 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 	// still being received by another thread in this core, this is why
 	// we lock the V vector
 	int msgcount = msg->getCountVector()[this->getCoreID()];
+	std::mutex cvlock;
+	std::unique_lock<std::mutex> ucvlock(cvlock);
 	while (true) {
 		std::lock_guard<std::mutex> lock(m_vlock);
 		if(rungvt == false){
@@ -147,6 +150,9 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
 			break; // Lock is released, all white messages are received!
 		}
+		//m_vlock.unlock();		// Allow others to change v-vector.
+		//this->m_wake_on_msg.wait(ucvlock);
+		//assert(false);
 	}
 }
 
@@ -162,10 +168,8 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		LOG_INFO("MCore:: ", this->getCoreID(), " GVT received first control message, starting first round");
 		// If this processor is Pinit and is the first to be called in the GVT calculation
 		// Might want to put this in a different function?
-		this->setColor(MessageColor::RED);	// Locked
-		this->m_tredlock.lock();
-		this->m_tred = t_timestamp::infinity();
-		this->m_tredlock.unlock();
+		this->setColor(MessageColor::RED);
+		this->setTred(t_timestamp::infinity());
 
 		msg->setTmin(this->getTime());
 		msg->setTred(t_timestamp::infinity());
@@ -179,7 +183,6 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 			count[i] += this->m_mcount_vector.getVector()[i];
 			this->m_mcount_vector.getVector()[i] = 0;
 		}
-
 		// Send message to next process in ring
 		return;
 
@@ -211,17 +214,13 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 
 			// We start a second round
 			msg->setTmin(this->getTime());
-			this->m_tredlock.lock();
-			msg->setTred(std::min(msg->getTred(), this->m_tred));
-			this->m_tredlock.unlock();
+			msg->setTred(std::min(msg->getTred(), this->getTred()));
 			t_count& count = msg->getCountVector();
-			// Lock because we will change our V vector
 			std::lock_guard<std::mutex> lock(this->m_vlock);
 			for (size_t i = 0; i < count.size(); ++i) {
 				count[i] += this->m_mcount_vector.getVector()[i];
 				this->m_mcount_vector.getVector()[i] = 0;
 			}
-
 			// Send message to next process in ring
 			return;
 		}
@@ -231,25 +230,20 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		if (this->getColor() == MessageColor::WHITE) {	// Locked
 			// Probably not necessary, because messages can't be white during GVT calculation
 			// when red messages are present, better safe than sorry though
-			this->m_tredlock.lock();
-			this->m_tred = t_timestamp::infinity();	// LOCK
-			this->m_tredlock.unlock();
+			this->setTred(t_timestamp::infinity());
 			this->setColor(MessageColor::RED);
 		}
 		// We wait until we have received all messages
 		waitUntilOK(msg, rungvt);
 
-		LOG_INFO("MCore:: ", this->getCoreID(), "process received control message");
+		LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
 
 		// Equivalent to sending message, controlmessage is passed to next core.
 		t_timestamp msg_tmin = msg->getTmin();
 		t_timestamp msg_tred = msg->getTred();
 		msg->setTmin(std::min(msg_tmin, this->getTime()));
-		this->m_tredlock.lock();
-		msg->setTred(std::min(msg_tred, this->m_tred));
-		this->m_tredlock.unlock();
+		msg->setTred(std::min(msg_tred, this->getTred()));
 		t_count& Count = msg->getCountVector();
-		// Lock because we will change our V vector
 		std::lock_guard<std::mutex> lock(this->m_vlock);
 		for (size_t i = 0; i < Count.size(); ++i) {
 			Count[i] += this->m_mcount_vector.getVector()[i];
@@ -328,22 +322,22 @@ void n_model::Multicore::unlockSimulatorStep()
 
 void n_model::Multicore::lockMessages()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msgs locking ... ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locking ... ", this->getCoreID());
 	m_msglock.lock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msgs locked ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locked ", this->getCoreID());
 }
 
 void n_model::Multicore::unlockMessages()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msg unlocking ...");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msg unlocking ...");
 	m_msglock.unlock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "sim msg unlocked");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msg unlocked");
 }
 
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
 	assert(totime >= this->getGVT());
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "reverting from ", this->getTime(), " to ", totime);
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {
 		LOG_DEBUG("MCORE:: ", this->getCoreID(), " Core going from idle to active ");
 		this->setIdle(false);
@@ -407,4 +401,16 @@ t_timestamp
 n_model::Multicore::getTime(){
 	std::lock_guard<std::mutex> lock(m_timelock);
 	return Core::getTime();
+}
+
+t_timestamp
+n_model::Multicore::getTred(){
+	std::lock_guard<std::mutex> lock(m_tredlock);
+	return this->m_tred;
+}
+
+void
+n_model::Multicore::setTred(t_timestamp val){
+	std::lock_guard<std::mutex> lock(m_tredlock);
+	this->m_tred = val;
 }

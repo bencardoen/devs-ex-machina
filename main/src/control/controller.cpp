@@ -6,9 +6,12 @@
  */
 
 #include "controller.h"
+#include "flags.h"
 #include <deque>
 #include <thread>
 #include <chrono>
+
+using namespace n_tools;
 
 namespace n_control {
 
@@ -280,7 +283,7 @@ void Controller::simPDEVS()
 	std::mutex cvlock;
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
-	std::vector<ThreadSignal> threadsignal;
+	std::vector<std::size_t> threadsignal;
 	constexpr std::size_t deadlockVal = 1000000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
@@ -295,7 +298,7 @@ void Controller::simPDEVS()
 
 		core.second->setLive(true);
 
-		threadsignal.push_back(ThreadSignal::FREE);
+		threadsignal.push_back(n_threadflags::FREE);
 	}
 
 	std::atomic<bool> rungvt(true);
@@ -308,7 +311,7 @@ void Controller::simPDEVS()
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
-	this->startGVTThread(rungvt);	// Thread is joined inside function.
+	this->startGVTThread(rungvt);	/// Starts and joins GVT threads.
 	/// There's no point in asynchronously checking the threadstate, it goes way too fast to count on,
 	/// it starves the threads from doing any signalling at all.
 
@@ -442,20 +445,20 @@ std::size_t Controller::getGVTInterval(){
 }
 
 
-///// END class Controller Begin friend functions
-// TODO integrate cvworker better with Controller
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
         const t_coreptr& core, size_t /*saveInterval*/, std::atomic<bool>& rungvt)
 {
 	//constexpr size_t KILL_ZOMBIE = 20;	// Fails in Jenkins.
 	auto predicate = [&]()->bool {
-		std::lock_guard<std::mutex > lv(vectorlock);
-		return not (threadsignal[myid]==Controller::ThreadSignal::ISWAITING);};
+		std::lock_guard<std::mutex> lv(vectorlock);
+		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
+	};
+
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (threadsignal[myid] == Controller::ThreadSignal::STOP) {
+			if( flag_is_set(threadsignal[myid], n_threadflags::STOP) ){
 				core->setLive(false);
 				rungvt.store(false);
 				return;
@@ -464,39 +467,35 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 		if (core->isIdle()) {
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (threadsignal[myid] == Controller::ThreadSignal::STOP
-			        or threadsignal[myid] == Controller::ThreadSignal::SHOULDWAIT) {
-				// TODO remove if bitset is integrated.
-			}else{
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
-				threadsignal[myid] = Controller::ThreadSignal::IDLE;
-				size_t countidle = 0;
-				for (size_t i = 0; i < threadsignal.size(); ++i) {
-					if (threadsignal[i] == Controller::ThreadSignal::IDLE
-						|| threadsignal[i] == Controller::ThreadSignal::STOP)
-						++countidle;
-				}
-				if (countidle == threadsignal.size()) {			// All threads are idle/stopped, stop this tread as well.
-					if (not core->existTransientMessage()) {
-						LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-							" all other threads are stopped or idle, network is idle, quitting.");
-						rungvt.store(false);
-						return;
-					} else {
-						LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-							" all other threads are stopped or idle, network reports transients, idling.");
-					}
+			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
+			set_flag(threadsignal[myid], n_threadflags::IDLE);
+			size_t countidle = 0;
+			for (size_t i = 0; i < threadsignal.size(); ++i) {
+				const std::size_t& flag = threadsignal[i];
+				if(flag_is_set(flag, n_threadflags::IDLE) or flag_is_set(flag, n_threadflags::STOP))
+					++countidle;
+			}
+			if (countidle == threadsignal.size()) {			// All threads are idle/stopped, stop this tread as well.
+				if (not core->existTransientMessage()) {
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+						" all other threads are stopped or idle, network is idle, quitting.");
+					rungvt.store(false);
+					set_flag(threadsignal[myid], n_threadflags::STOP);
+					return;
+				} else {
+					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+						" all other threads are stopped or idle, network reports transients, idling.");
 				}
 			}
-		} else {	// Else no longer IDLE
+		} else {
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (threadsignal[myid] == Controller::ThreadSignal::IDLE) {
+			if ( flag_is_set(threadsignal[myid], n_threadflags::IDLE) ) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				threadsignal[myid] = Controller::ThreadSignal::FREE;
+				unset_flag(threadsignal[myid], n_threadflags::IDLE);
 			}
 		}
-		if (core->isLive() || core->isIdle()) {
+		if (core->isLive() or core->isIdle()) {
 			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i);
 			core->runSmallStep();
 		}
@@ -504,22 +503,15 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
-			if (threadsignal[myid] == Controller::ThreadSignal::SHOULDWAIT) {
+			if (not flag_is_set(threadsignal[myid], n_threadflags::FREE)){
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " switching flag to WAITING");
-				threadsignal[myid] = Controller::ThreadSignal::ISWAITING;
-			}
-			// Case 2 : We can skip the barrier ahead.
-			if (threadsignal[myid] == Controller::ThreadSignal::FREE) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        " skipping barrier, FREE is set.");
-				skip_barrier = true;	// only now explicitly skip the barrier.
+				set_flag(threadsignal[myid], n_threadflags::ISWAITING);
+			}else{	// Don't log, this can easily go into 100MB logs if anything at all goes wrong in the sim.
+				skip_barrier = true;
 			}
 		}
-		if (skip_barrier) {
-			continue;
-		} else {
+		if (not skip_barrier) {
 			std::unique_lock<std::mutex> mylock(cvlock);
 			cv.wait(mylock, predicate);
 		}
@@ -556,10 +548,8 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
-		/// Need a second round, pinit is done already.
-		for (std::size_t j = 1; j < corecount; ++j) {
+		for (std::size_t j = 1; j < corecount; ++j)
 			cont.m_cores[j]->receiveControl(cmsg, false, gvtsafe);
-		}
 		if (cmsg->isGvtFound()) {
 			for (const auto& ucore : cont.m_cores)
 				ucore.second->setGVT(cmsg->getGvt());

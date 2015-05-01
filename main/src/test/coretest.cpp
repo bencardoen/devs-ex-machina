@@ -7,11 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "timestamp.h"
-#include "network.h"
 #include "objectfactory.h"
-#include "core.h"
-#include "multicore.h"
-#include "dynamiccore.h"
 #include "trafficlight.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
@@ -27,7 +23,6 @@
 #include <unordered_set>
 #include <thread>
 #include <sstream>
-#include <vector>
 #include <chrono>
 
 using namespace n_model;
@@ -265,66 +260,6 @@ TEST(Core, Messaging)
 	c->getPendingMail(mailbag);
 	EXPECT_EQ(mailbag["mylight"][0], msgtolight);
 	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
-}
-
-void core_worker(const t_coreptr& core)
-{
-	core->setLive(true);
-	core->init();
-
-	while (core->isLive()) {
-		core->runSmallStep();
-	}
-}
-
-TEST(Core, multicoresafe)
-{
-	RecordProperty("description", "Multicore threading model basic");
-	using n_network::Network;
-	using n_control::t_location_tableptr;
-	using n_control::LocationTable;
-	t_networkptr network = createObject<Network>(2);
-	t_location_tableptr loctable = createObject<LocationTable>(2);
-	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable, 2);
-	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable, 2);
-	coretwo->setTracers(tracers);
-	std::vector<t_coreptr> coreptrs;
-	coreptrs.push_back(coreone);
-	coreptrs.push_back(coretwo);
-	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
-	auto tc2model = createObject<COUPLED_TRAFFICLIGHT>("myotherlight", 0);
-	coreone->addModel(tcmodel);
-	EXPECT_TRUE(coreone->containsModel("mylight"));
-	coreone->setTerminationTime(t_timestamp(20000, 0));
-	coretwo->addModel(tc2model);
-	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
-	coretwo->setTerminationTime(t_timestamp(20000, 0));
-	//const size_t cores = std::thread::hardware_concurrency();
-	const size_t threadcount = 2;
-	if (threadcount <= 1) {
-		LOG_WARNING("Skipping test, no threads!");
-		return;
-	}
-	std::vector<std::thread> workers;
-	for (size_t i = 0; i < threadcount; ++i) {
-		workers.push_back(std::thread(core_worker, std::cref(coreptrs[i])));
-	}
-	for (auto& worker : workers) {
-		worker.join();
-	}
-	coreone->signalTracersFlush();
-	coretwo->signalTracersFlush();
-	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
-	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
-	EXPECT_TRUE(not coreone->isLive());
-	EXPECT_TRUE(not coretwo->isLive());
-	coreone->clearModels();
-	coretwo->clearModels();
-	EXPECT_FALSE(coreone->containsModel("mylight"));
-	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
 
 enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};

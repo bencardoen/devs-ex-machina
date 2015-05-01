@@ -44,7 +44,7 @@ public:
 	 * create states using a string
 	 */
 	using AtomicModel::setState;
-	t_stateptr setState(std::string);
+	t_stateptr setState(const std::string&);
 };
 
 }

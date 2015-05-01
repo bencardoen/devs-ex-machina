@@ -46,15 +46,6 @@ public:
 		DSDEVS 		///< Dynamic Structure DEVS
 	};
 
-	/// @brief Desribes signal passed between threads.
-	enum class ThreadSignal{
-		SHOULDWAIT, 	///< thread should at earliest convenience queue on condition variable, then change state to ISWAITING
-		ISWAITING, 	///< thread is waiting on condition variable
-		STOP, 	///< main->thread, thread halts as soon as signal is received.
-		FREE, 	///< main->thread thread can skip condition var
-		IDLE	///< thread->main, thread has reached term condition, but is idle-running.
-	};
-
 private:
 	SimType m_simType;
 	bool m_hasMainModel;
@@ -259,11 +250,23 @@ private:
 
 /**
  * Find GVT using Mattern's algorithm.
+ * @param rungvt : thread interrupt flag.
  */
 void runGVT(Controller&, std::atomic<bool>& rungvt);
 
+/**
+ * Worker function. Runs a Core and communicates with other threads and GVT thread.
+ * @param cv Queues working threads if main asks them to.
+ * @param cvlock lock needed for cv
+ * @param myid unique identifier, for logging it is best this is equal to coreid
+ * @param threadsignal : stores thread signalling flags
+ * @param vectorlock : lock threadsignal
+ * @param turns : infinite loop cutoff value.
+ * @param core : Core to run thread on.
+ * @param rungvt : interrupt variable controlling GVT thread.
+ */
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
         const t_coreptr& core, size_t saveInterval, std::atomic<bool>& rungvt);
 
 } /* namespace n_control */
