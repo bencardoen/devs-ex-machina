@@ -2,7 +2,7 @@
  * state.h
  *
  *  Created on: 9-mrt.-2015
- *      Author: Pieter, Tim
+ *      Author: Pieter, Tim, Stijn
  */
 
 #ifndef STATE_H_
@@ -30,6 +30,8 @@ public:
 	{
 		m_state = state;
 	}
+
+	State() = default;
 
 	void setNull();
 

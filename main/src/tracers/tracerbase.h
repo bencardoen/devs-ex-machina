@@ -69,6 +69,7 @@ public:
 	/**
 	 * @brief Traces internal state transition
 	 * @param adevs The atomic model that just performed an internal transition
+	 * @param coreid The ID of the core requesting the trace.
 	 * @precondition The model pointer is not a nullptr
 	 */
 	void tracesInternal(const t_atomicmodelptr& adevs, std::size_t coreid)
@@ -84,6 +85,7 @@ public:
 	/**
 	 * @brief Traces external state transition
 	 * @param model The model that just went through an external transition
+	 * @param coreid The ID of the core requesting the trace.
 	 */
 	void tracesExternal(const t_atomicmodelptr& adevs, std::size_t coreid)
 	{
@@ -98,6 +100,7 @@ public:
 	/**
 	 * @brief Traces confluent state transition (simultaneous internal and external transition)
 	 * @param model The model that just went through a confluent transition
+	 * @param coreid The ID of the core requesting the trace.
 	 */
 	void tracesConfluent(const t_atomicmodelptr& adevs, std::size_t coreid)
 	{

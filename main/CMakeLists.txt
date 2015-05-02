@@ -98,6 +98,7 @@ add_executable(${PROJECT_NAME}
 	src/tools/coutredirect.cpp
 	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
+	src/model/cellmodel.cpp
 	src/model/coupledmodel.cpp
 	src/model/rootmodel.cpp
 	src/model/model.cpp
@@ -114,6 +115,9 @@ add_executable(${PROJECT_NAME}
 	src/examples/trafficlight_ds/trafficlightds.cpp
 	src/examples/trafficlight_ds/policemands.cpp
 	src/examples/trafficlight_ds/trafficsystemds.cpp
+	src/examples/forestfire/constants.cpp
+	src/examples/forestfire/firecell.cpp
+	src/examples/forestfire/firecellstate.cpp
 	src/control/allocator.cpp
 	src/control/controller.cpp
 	src/control/controllerconfig.cpp
