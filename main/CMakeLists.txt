@@ -118,6 +118,8 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/constants.cpp
 	src/examples/forestfire/firecell.cpp
 	src/examples/forestfire/firecellstate.cpp
+	src/examples/forestfire/firegenerator.cpp
+	src/examples/forestfire/firespread.cpp
 	src/control/allocator.cpp
 	src/control/controller.cpp
 	src/control/controllerconfig.cpp
