@@ -17,7 +17,7 @@ n_examples::FireCellState::FireCellState(double temp):
 	m_temperature(temp),
 	m_igniteTime(std::numeric_limits<std::size_t>::max()),
 	m_phase(FirePhase::INACTIVE),
-	m_surroundingTemp({T_AMBIENT, T_AMBIENT, T_AMBIENT, T_AMBIENT}),
+	m_surroundingTemp({{T_AMBIENT, T_AMBIENT, T_AMBIENT, T_AMBIENT}}),
 	m_oldTemp(temp)
 {
 }

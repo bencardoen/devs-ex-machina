@@ -5,7 +5,7 @@
  *      Author: lttlemoi
  */
 
-#include <examples/forestfire/firecell.h>
+#include "firecell.h"
 #include "objectfactory.h"
 #include <cmath>
 
@@ -20,11 +20,11 @@ std::string cellName(n_model::t_point pos)
 
 FireCell::FireCell(n_model::t_point pos):
 	CellAtomicModel(cellName(pos), pos),
-	m_myIports({this->addInPort("in_N"),
+	m_myIports({{this->addInPort("in_N"),
 		  this->addInPort("in_E"),
 		  this->addInPort("in_S"),
 		  this->addInPort("in_W"),
-		  this->addInPort("in_G")}),
+		  this->addInPort("in_G")}}),
 	m_myOport(this->addOutPort("out_T"))
 {
 	setState(n_tools::createObject<FireCellState>());
