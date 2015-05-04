@@ -7,11 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "timestamp.h"
-#include "network.h"
 #include "objectfactory.h"
-#include "core.h"
-#include "multicore.h"
-#include "dynamiccore.h"
 #include "trafficlight.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
@@ -27,7 +23,6 @@
 #include <unordered_set>
 #include <thread>
 #include <sstream>
-#include <vector>
 #include <chrono>
 
 using namespace n_model;
@@ -216,14 +211,12 @@ TEST(Core, terminationfunction)
 	t_timestamp coretimebefore = c->getTime();
 	// Switch 'on' Core.
 	c->setLive(true);
-	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive() == true);
 
 	// Run simulation.
 	c->runSmallStep();
 	t_timestamp coretimeafter = c->getTime();
 	EXPECT_TRUE(coretimebefore < coretimeafter);
-	EXPECT_TRUE(c->terminated() == true);
 	EXPECT_TRUE(c->isLive() == false);
 	c->removeModel("Amodel");
 }
@@ -245,7 +238,6 @@ TEST(Core, Messaging)
 	EXPECT_EQ(finaltime, t_timestamp::infinity());
 	t_timestamp coretimebefore = c->getTime();
 	c->setLive(true);
-	EXPECT_TRUE(c->terminated() == false);
 	EXPECT_TRUE(c->isLive() == true);
 	t_timestamp timemessagelight(57,0);
 	t_timestamp timemessagecop(57,1);
@@ -265,66 +257,6 @@ TEST(Core, Messaging)
 	c->getPendingMail(mailbag);
 	EXPECT_EQ(mailbag["mylight"][0], msgtolight);
 	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
-}
-
-void core_worker(const t_coreptr& core)
-{
-	core->setLive(true);
-	core->init();
-
-	while (core->isLive()) {
-		core->runSmallStep();
-	}
-}
-
-TEST(Core, multicoresafe)
-{
-	RecordProperty("description", "Multicore threading model basic");
-	using n_network::Network;
-	using n_control::t_location_tableptr;
-	using n_control::LocationTable;
-	t_networkptr network = createObject<Network>(2);
-	t_location_tableptr loctable = createObject<LocationTable>(2);
-	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 1, loctable, 2);
-	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 0, loctable, 2);
-	coretwo->setTracers(tracers);
-	std::vector<t_coreptr> coreptrs;
-	coreptrs.push_back(coreone);
-	coreptrs.push_back(coretwo);
-	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
-	auto tc2model = createObject<COUPLED_TRAFFICLIGHT>("myotherlight", 0);
-	coreone->addModel(tcmodel);
-	EXPECT_TRUE(coreone->containsModel("mylight"));
-	coreone->setTerminationTime(t_timestamp(20000, 0));
-	coretwo->addModel(tc2model);
-	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
-	coretwo->setTerminationTime(t_timestamp(20000, 0));
-	//const size_t cores = std::thread::hardware_concurrency();
-	const size_t threadcount = 2;
-	if (threadcount <= 1) {
-		LOG_WARNING("Skipping test, no threads!");
-		return;
-	}
-	std::vector<std::thread> workers;
-	for (size_t i = 0; i < threadcount; ++i) {
-		workers.push_back(std::thread(core_worker, std::cref(coreptrs[i])));
-	}
-	for (auto& worker : workers) {
-		worker.join();
-	}
-	coreone->signalTracersFlush();
-	coretwo->signalTracersFlush();
-	EXPECT_TRUE(coreone->getTime() >= coreone->getTerminationTime());
-	EXPECT_TRUE(coretwo->getTime() >= coretwo->getTerminationTime());
-	EXPECT_TRUE(not coreone->isLive());
-	EXPECT_TRUE(not coretwo->isLive());
-	coreone->clearModels();
-	coretwo->clearModels();
-	EXPECT_FALSE(coreone->containsModel("mylight"));
-	EXPECT_FALSE(coretwo->containsModel("myotherlight"));
 }
 
 enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
@@ -568,7 +500,7 @@ TEST(Multicore, revertidle){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -577,7 +509,7 @@ TEST(Multicore, revertidle){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -624,7 +556,7 @@ TEST(Multicore, revertidle){
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
-	EXPECT_TRUE(c1->isIdle() && !c1->isLive() && c1->terminated());
+	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -648,7 +580,7 @@ TEST(Multicore, revertedgecases){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -657,7 +589,7 @@ TEST(Multicore, revertedgecases){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -730,7 +662,7 @@ TEST(Multicore, revertoffbyone){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -739,7 +671,7 @@ TEST(Multicore, revertoffbyone){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -808,7 +740,7 @@ TEST(Multicore, revertstress){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -817,7 +749,7 @@ TEST(Multicore, revertstress){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 
@@ -878,7 +810,7 @@ TEST(Multicore, revertstress){
 
 
 TEST(Multicore, GVT){
-	RecordProperty("description", "Manuall run GVT.");
+	RecordProperty("description", "Manually run GVT.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
 	CoutRedirect myRedirect(filestream);
@@ -887,7 +819,7 @@ TEST(Multicore, GVT){
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -896,7 +828,7 @@ TEST(Multicore, GVT){
 
 	t_timestamp endTime(360, 0);
 
-	n_control::Controller ctrl = n_control::Controller("testController", coreMap, allocator, locTab, tracers);
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 	ctrl.setPDEVS();
 	ctrl.setTerminationTime(endTime);
 

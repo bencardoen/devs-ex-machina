@@ -8,17 +8,14 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
-#include <string>
 #include <map>
 #include <vector>
 #include <deque>
 #include <memory>
 #include <sstream>
-#include "globallog.h"
-#include "port.h"
+#include "port.h"		//include glog, ofactory
 #include "state.h"
-#include "dssharedstate.h"
-#include "objectfactory.h"
+#include "dssharedstate.h"	//include string
 
 namespace n_control{
 	class Controller;

@@ -33,7 +33,7 @@ std::string PolicemanMode::toCell()
 Policeman::Policeman(std::string name, std::size_t priority)
 	: AtomicModel(name, priority)
 {
-	this->setState(std::make_shared<PolicemanMode>("idle"));
+	this->setState(n_tools::createObject<PolicemanMode>("idle"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
 	this->addOutPort("OUT");
@@ -88,7 +88,7 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 
 t_stateptr Policeman::setState(std::string s)
 {
-	this->Model::setState(std::make_shared<PolicemanMode>(s));
+	this->Model::setState(n_tools::createObject<PolicemanMode>(s));
 	return this->getState();
 }
 

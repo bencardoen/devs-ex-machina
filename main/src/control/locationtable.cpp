@@ -33,6 +33,7 @@ std::size_t LocationTable::lookupModel(const std::string& modelName)
 
 void LocationTable::registerModel(const t_atomicmodelptr model, std::size_t core)
 {
+	assert(core < this->m_amountCores && "Invalid core ID");
 	m_locTable.insert(std::pair<std::string, std::size_t>(model->getName(), core));
 }
 

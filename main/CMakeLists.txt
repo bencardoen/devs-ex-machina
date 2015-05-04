@@ -63,15 +63,15 @@ endif()
 ### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
 ### and iterator past the end mistakes.
 ## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
-
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -Wall -Wextra -pedantic -D_GLIBCXX_DEBUG -fPIE ")
+#-D_GLIBCXX_DEBUG
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" ) ## Use these if hunting obscure bugs :  -fsanitize=undefined -ftrapv -fsanitize=integer (you will end up in boost, stl !!)
 endif()
 
 ### Profiling -- Clang and G++ ###############################################
-SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg")
+SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
 
 ### Release build - All compilers#############################################
 # Only use this for production code
@@ -107,6 +107,7 @@ add_executable(${PROJECT_NAME}
 	src/model/core.cpp
 	src/model/dynamiccore.cpp
 	src/model/multicore.cpp
+	src/model/conservativecore.cpp
 	src/model/zfunc.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
 	src/examples/trafficlight_coupled/trafficlightc.cpp

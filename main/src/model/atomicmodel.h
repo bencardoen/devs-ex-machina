@@ -9,17 +9,16 @@
 #define ATOMICMODEL_H_
 
 #include "model.h"
-#include "message.h"
-#include "tools/globallog.h"
+#include "message.h"	// include globallog
 #include <assert.h>
 #include <map>
-#include <iostream>
 
 namespace n_model {
 class AtomicModel: public Model
 {
 private:
-	static size_t nextPriority(){
+	static size_t nextPriority()
+	{
 		static size_t initprior = 0;
 		return ++initprior;
 	}
@@ -50,11 +49,14 @@ public:
 	 *
 	 * @param message A vector of messagepointers that represent events
 	 */
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) {
-		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message)
+	{
+		LOG_ERROR(
+		        "ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
 		assert(false);
 		message.capacity();
-	};
+	}
+	;
 
 	/**
 	 * Perform an external transition, this function will call the user-implemented extTransition
@@ -67,10 +69,12 @@ public:
 	/**
 	 * Perform an internal transition, one of the functions the user has to implement
 	 */
-	virtual void intTransition() {
+	virtual void intTransition()
+	{
 		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
 		assert(false);
-	};
+	}
+	;
 
 	/**
 	 * Transitions the model confluently with given messages
@@ -84,10 +88,24 @@ public:
 	 *
 	 * @return Current time advance
 	 */
-	virtual t_timestamp timeAdvance() const {
+	virtual t_timestamp timeAdvance() const
+	{
 		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel::timeAdvance()'");
 		assert(false);
 		return t_timestamp();
+	}
+
+	/**
+	 * Get the current lookahead value, one of the functions the user has to implement
+	 * if he wants to make use of Parallel DEVS with conservative time synchronization
+	 *
+	 * @return Current lookahead value
+	 */
+	virtual t_timestamp lookAhead() const
+	{
+		LOG_WARNING(
+		        "ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel::lookahead()'");
+		return t_timestamp(0);
 	}
 
 	/**
@@ -95,8 +113,10 @@ public:
 	 *
 	 * @return vector with pointers to all output messages in it
 	 */
-	virtual std::vector<n_network::t_msgptr> output() const {
-		LOG_ERROR("ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
+	virtual std::vector<n_network::t_msgptr> output() const
+	{
+		LOG_ERROR(
+		        "ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
 		assert(false);
 		return std::vector<n_network::t_msgptr>();
 	}

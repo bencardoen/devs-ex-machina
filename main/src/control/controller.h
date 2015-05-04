@@ -46,15 +46,6 @@ public:
 		DSDEVS 		///< Dynamic Structure DEVS
 	};
 
-	/// @brief Desribes signal passed between threads.
-	enum class ThreadSignal{
-		SHOULDWAIT, 	///< thread should at earliest convenience queue on condition variable, then change state to ISWAITING
-		ISWAITING, 	///< thread is waiting on condition variable
-		STOP, 	///< main->thread, thread halts as soon as signal is received.
-		FREE, 	///< main->thread thread can skip condition var
-		IDLE	///< thread->main, thread has reached term condition, but is idle-running.
-	};
-
 private:
 	SimType m_simType;
 	bool m_hasMainModel;
@@ -79,12 +70,40 @@ private:
 	DSSharedState m_sharedState;
 	bool m_dsPhase;
 
+	std::vector<std::thread> m_threads;
+
 	void doDirectConnect();
 	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
-	std::vector<std::shared_ptr<std::thread>> m_threads;
+
+	/**
+	 * If a core triggers a termination functor, it will pass its current time to
+	 * the controller as the new termination time for the other cores.
+	 * Example scenario: C1: triggers f() @ 101, C2 is @ 200. C2 will keep simulating (f()) need
+	 * not evaluate to true on C2.
+	 */
+	void distributeTerminationTime(t_timestamp);
+
+	/**
+	 * Interval time (in milliseconds) during which consecutive gvt calculations are performed.
+	 * A GVT thread will run [5ms |run| interval | interval | ... ].
+	 * @attention : The OS will schedule at least interval sleep time, but more is ofcourse possible.
+	 * @synchronized
+	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
+	 */
+	std::atomic<std::size_t> m_sleep_gvt_thread;
+
+	/**
+	 * Shared memory flag. Used to signal between threads simulating Cores and
+	 * the GVT thread wether or not the last should continue.
+	 * False means interrupt at earliest possible time to do so cleanly.
+	 */
+	std::atomic<bool> 	m_rungvt;
 
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
+	/**
+	 * @param
+	 */
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,		// TODO don't copy, use &
 		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
 		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
 
@@ -147,7 +166,6 @@ public:
 
 //	void save(std::string filepath, std::string filename) = delete;
 //	void load(std::string filepath, std::string filename) = delete;
-//	void GVTdone();
 //	void checkForTemporaryIrreversible();
 
 	/**
@@ -190,6 +208,17 @@ public:
 	 */
 	bool isInDSPhase() const;
 
+	/**
+	 * Update the GVT interval with a new value.
+	 */
+	void setGVTInterval(std::size_t ms);
+
+	/**
+	 * Return the current GVT threading interval.
+	 */
+	std::size_t
+	getGVTInterval();
+
 private:
 	/**
 	 * @brief Check if simulation needs to continue
@@ -230,16 +259,32 @@ private:
 
 	friend
 	void runGVT(Controller&, std::atomic<bool>& rungvt);
+
+	friend
+	void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
+	        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+	        Controller&);
 };
 
 /**
  * Find GVT using Mattern's algorithm.
+ * @param rungvt : thread interrupt flag.
  */
 void runGVT(Controller&, std::atomic<bool>& rungvt);
 
+/**
+ * Worker function. Runs a Core and communicates with other threads and GVT thread.
+ * @param cv Queues working threads if main asks them to.
+ * @param cvlock lock needed for cv
+ * @param myid unique identifier, for logging it is best this is equal to coreid
+ * @param threadsignal : stores thread signalling flags
+ * @param vectorlock : lock threadsignal
+ * @param turns : infinite loop cutoff value.
+ * @param rungvt : interrupt variable controlling GVT thread.
+ */
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-        std::vector<Controller::ThreadSignal>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        const t_coreptr& core, size_t saveInterval, std::atomic<bool>& rungvt);
+        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
+        Controller&);
 
 } /* namespace n_control */
 
