@@ -27,6 +27,7 @@ FireCell::FireCell(n_model::t_point pos):
 		  this->addInPort("in_G")}),
 	m_myOport(this->addOutPort("out_T"))
 {
+	setState(n_tools::createObject<FireCellState>());
 	/*
 	self.inports = [self.addInPort("in_N"), self.addInPort("in_E"), self.addInPort("in_S"), self.addInPort("in_W"), self.addInPort("in_G")]
         self.outport = self.addOutPort("out_T")

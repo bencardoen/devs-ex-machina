@@ -32,6 +32,8 @@ public:
 	std::vector<n_network::t_msgptr> output() const override;
 };
 
+typedef std::shared_ptr<FireCell> t_firecellptr;
+
 } /* namespace n_examples */
 
 #endif /* SRC_EXAMPLES_FORESTFIRE_FIRECELL_H_ */

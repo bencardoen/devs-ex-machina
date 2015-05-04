@@ -28,7 +28,7 @@ private:
 
 	double getSurroundingTemp() const;
 public:
-	FireCellState(double temp);
+	FireCellState(double temp = T_AMBIENT);
 
 	std::string toString() override;
 

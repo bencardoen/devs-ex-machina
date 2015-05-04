@@ -6,6 +6,7 @@
  */
 
 #include "constants.h"
+#include <cassert>
 
 namespace n_examples{
 
@@ -30,6 +31,9 @@ std::string to_string(FirePhase phase)
 		return "burning";
 	case FirePhase::BURNED:
 		return "burned";
+	default:
+		assert(false && "to_string(FirePhase) somehow managed to create a non-existing phase.");
+		return "";
 	}
 }
 
