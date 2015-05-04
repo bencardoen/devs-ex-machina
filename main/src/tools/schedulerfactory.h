@@ -28,7 +28,11 @@ enum class Storage
 	 *  as internal storage in contrast to node based heaps.
 	 *  @ATTENTION: do not use with -D_GLIBCXX_DEBUG, triggers a false eror on safe_iterator. (verified with valgrind)
 	 */
-	D_ARY
+	D_ARY,
+	/**
+	 * List based scheduler.
+	 */
+	LIST
 };
 
 /*! \var Test::TEnum Test::Val1

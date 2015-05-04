@@ -8,6 +8,7 @@
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/heap/skew_heap.hpp>
 #include <boost/heap/d_ary_heap.hpp>
+#include "listscheduler.h"
 
 namespace n_tools {
 
@@ -40,6 +41,11 @@ typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(con
 		if(synchronized)
 			return t_Scheduler(new SynchronizedScheduler<boost::heap::d_ary_heap<X, boost::heap::arity<8>, boost::heap::mutable_<true>>, X>);
 		return t_Scheduler(new UnSynchronizedScheduler<boost::heap::d_ary_heap<X, boost::heap::arity<8>, boost::heap::mutable_<true>>, X>);
+	}
+	case Storage::LIST:{
+		if(synchronized)
+			return t_Scheduler(new SyncedListscheduler<X>);
+		return t_Scheduler(new Listscheduler<X>);
 	}
 	default:
 		assert(false && "No such storage type");

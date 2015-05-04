@@ -12,6 +12,7 @@
 #include <chrono>
 #include "globallog.h"
 #include "coutredirect.h"
+#include "listscheduler.h"
 #include "flags.h"
 
 using std::cout;
@@ -253,7 +254,7 @@ class UnSyncedSchedulerTest: public ::testing::Test
 public:
 	UnSyncedSchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, false);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::LIST, false);
 	}
 
 	void SetUp()
@@ -390,3 +391,5 @@ TEST(Flags, basic){
 	EXPECT_TRUE(!n_tools::flag_is_set(value, IDLE));
 	EXPECT_TRUE(!n_tools::flag_is_set(value, STOP));
 }
+
+
