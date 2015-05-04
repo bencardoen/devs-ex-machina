@@ -93,7 +93,7 @@ void n_tracers::MultiFileWriter::closeFile()
 }
 
 n_tracers::MultiFileWriter::MultiFileWriter()
-	: m_stream(nullptr), m_disabled(false), m_fileCount(0)
+	: m_disabled(false), m_fileCount(0)
 {
 }
 
