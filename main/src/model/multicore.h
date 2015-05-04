@@ -140,6 +140,8 @@ private:
 
 	t_timestamp
 	getTred();
+protected:
+	std::size_t 	m_cores;
 
 public:
 	Multicore()=delete;

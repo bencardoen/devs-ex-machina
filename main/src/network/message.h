@@ -20,7 +20,10 @@ namespace n_network {
 /**
  * Denote cut-type in gvt synchronization.
  */
-enum MessageColor {WHITE=0, RED=1};
+enum MessageColor
+{
+	WHITE = 0, RED = 1
+};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
@@ -69,7 +72,10 @@ protected:
 	 */
 	MessageColor m_color;
 
-	bool  m_antimessage;
+	/**
+	 * Is message an annihilator of the original ?
+	 */
+	bool m_antimessage;
 
 public:
 	/**
@@ -89,9 +95,15 @@ public:
 		return m_destination_core;
 	}
 
-	void setAntiMessage(bool b){m_antimessage = b;}
+	void setAntiMessage(bool b)
+	{
+		m_antimessage = b;
+	}
 
-	bool isAntiMessage(){return m_antimessage;}
+	bool isAntiMessage() const
+	{
+		return m_antimessage;
+	}
 
 	void setDestinationCore(std::size_t dest)
 	{
@@ -145,13 +157,13 @@ public:
 		;
 	}
 
-	MessageColor
-	getColor()const {
+	MessageColor getColor() const
+	{
 		return m_color;
 	}
 
-	void
-	paint(MessageColor newcolor){
+	void paint(MessageColor newcolor)
+	{
 		this->m_color = newcolor;
 	}
 
@@ -190,19 +202,7 @@ public:
  */
 typedef std::shared_ptr<Message> t_msgptr;
 
-/**
- * Comparison object to allow storing msgptrs in min heap queues.
- * @deprecated
- */
-struct compare_msgptr{
-	bool operator()( const std::shared_ptr<Message>& left, const std::shared_ptr<Message>& right ) const {
-		return (left->getTimeStamp() > right->getTimeStamp());
-	}
-};
-
 } // end namespace n_network
-
-
 
 namespace std {
 template<>
@@ -214,12 +214,12 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel() << message.getTimeStamp();
+		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel()
+		        << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);
 	}
 };
 }	// end namespace std
-
 
 #endif /* SRC_NETWORK_MESSAGE_H_ */

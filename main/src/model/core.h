@@ -54,10 +54,6 @@ private:
 	 * @synchronized
 	 */
 	std::atomic<bool> m_live;
-	/**
-	 * Stores the model(entries) in ascending (urgent first) scheduled time.
-	 */
-	t_scheduler m_scheduler;
 
 	/**
 	 * Termination time, if set.
@@ -93,7 +89,11 @@ private:
 	 */
 	std::atomic<std::size_t> m_zombie_rounds;
 
-
+	/**
+	 * Marks if this core has triggered a terminated functor. This distinction is required
+	 * for timewarp, and for the controller to redistribute the current time at wich the
+	 * functor triggered as a new termination time (which in turn can be undone ...)
+	 */
 	std::atomic<bool> m_terminated_functor;
 
 	/**
@@ -144,6 +144,12 @@ private:
 	scheduleModel(std::string name, t_timestamp t);
 
 protected:
+	/**
+	* Stores the model(entries) in ascending (urgent first) scheduled time.
+	*/
+	t_scheduler m_scheduler;
+
+
 	/**
 	 * Model storage.
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
@@ -305,6 +311,7 @@ public:
 	 * @attention : changes local state : idle, live, terminated, time. It's possible time does not
 	 * advance at all, this is allowed.
 	 */
+	virtual
 	void
 	syncTime();
 
@@ -351,7 +358,9 @@ public:
 	/**
 	 * Set current time to new value.
 	 * @attention : virtual so that users of Core can call this without locking cost, but a Multicore instance
-	 * can invoke locking before calling this method.
+	 * can invoke locking before calling this method. Equally important, Conservate Core will correct any attempt
+	 * to advance time beyond EIT.
+	 * @see Multicore, Conservativecore
 	 */
 	virtual
 	void

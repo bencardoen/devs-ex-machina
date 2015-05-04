@@ -258,11 +258,12 @@ void n_model::Core::syncTime()
 		assert(false);	// crash hard.
 	}
 	// Here we a valid new time.
-	this->setTime(newtime);
+	this->setTime(newtime);						// It's possible this stalls time if eit == old time
+									// but that is a deadlock, not a zombie state.
 	this->m_zombie_rounds.store(0);					// reset zombie state.
 
-	if (this->m_time >= this->m_termtime) {
-		LOG_DEBUG("CORE: Reached termination time :: now: ", m_time, " >= ", m_termtime);
+	if (this->getTime() >= this->getTerminationTime()) {
+		LOG_DEBUG("CORE: Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
 		this->setLive(false);
 		this->setIdle(true);
 	}
