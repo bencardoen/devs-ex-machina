@@ -44,3 +44,8 @@ double n_examples::FireCellState::getSurroundingTemp() const
 {
 	return m_surroundingTemp[0] + m_surroundingTemp[1] + m_surroundingTemp[2] + m_surroundingTemp[3];
 }
+
+void n_examples::FireCellState::setTemp(double t)
+{
+	m_temperature = t;
+}

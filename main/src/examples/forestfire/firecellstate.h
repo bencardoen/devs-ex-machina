@@ -34,6 +34,12 @@ public:
 
 	std::string toCell() override;
 
+	/**
+	 * @brief Sets the temperature
+	 * @param t the new temperature
+	 */
+	void setTemp(double t);
+
 	//TODO @Pieter serialize FireCell
 };
 
