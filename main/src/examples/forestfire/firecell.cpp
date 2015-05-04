@@ -184,7 +184,7 @@ std::vector<n_network::t_msgptr> FireCell::output() const
 //			msg[i] = msgContent[i];
 		return m_myOport->createMessages(msg);
 	}
-	return {};
+	return std::vector<n_network::t_msgptr>();
 }
 
 } /* namespace n_examples */
