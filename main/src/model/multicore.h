@@ -2,7 +2,7 @@
  * Multicore.h
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen -- Tim Tuijn
  */
 
 #ifndef SRC_MODEL_MULTICORE_H_
@@ -10,9 +10,6 @@
 
 #include "core.h"
 #include "locationtable.h"
-#include "message.h"
-#include <deque>
-#include <algorithm>
 #include "v.h"
 using n_network::MessageColor;
 
@@ -78,6 +75,15 @@ private:
 	t_timestamp			m_tred;
 
 	/**
+	 * Protect access to Time.
+	 * @attention Needed for GVT (among other things).
+	 */
+	std::mutex 			m_timelock;
+
+	// TODO re-enable cvar if we can actually use it
+	//std::condition_variable	m_wake_on_msg;
+
+	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
@@ -128,6 +134,14 @@ private:
 	virtual
 	void
 	paintMessage(const t_msgptr& msg)override;
+
+	void
+	setTred(t_timestamp);
+
+	t_timestamp
+	getTred();
+protected:
+	std::size_t 	m_cores;
 
 public:
 	Multicore()=delete;
@@ -247,6 +261,27 @@ public:
 
 	bool
 	existTransientMessage()override;
+
+	/**
+	 * Set current time to new value.
+	 * @synchronized
+	 */
+	void
+	setTime(const t_timestamp&)override;
+
+	/**
+	 * Get Current simulation time.
+	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
+	 * @note The causal field is to be disregarded, it is not relevant here.
+	 * @synchronized
+	 */
+	t_timestamp getTime()override;
+
+	void
+	setTerminationTime(t_timestamp)override;
+
+	t_timestamp
+	getTerminationTime()override;
 };
 
 } /* namespace n_model */

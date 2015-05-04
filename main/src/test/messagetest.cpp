@@ -54,27 +54,6 @@ TEST(Message, operators){
 	 */
 	std::shared_ptr<Message> msgbefore = createObject<Message>("TargetModel", t_timestamp(1,0), "TargetPort", "SourcePort", " cargo ");
 	std::shared_ptr<Message> msgafter = createObject<Message>("TargetModel", t_timestamp(1,1), "TargetPort", "SourcePort", " cargo ");
-	compare_msgptr functor;
-	EXPECT_FALSE(functor(msgbefore, msgafter));
-	EXPECT_TRUE(functor(msgafter, msgbefore));
-	EXPECT_FALSE(functor(msgbefore, msgbefore));
-	std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> myqueue;
-	myqueue.push(msgbefore);
-	myqueue.push(msgafter);
-	EXPECT_TRUE(myqueue.size()==2);
-	EXPECT_FALSE(myqueue.top() == msgafter);
-	myqueue.push(msgbefore);
-	EXPECT_TRUE(myqueue.size()==3);
-	EXPECT_TRUE(myqueue.top() == msgbefore);
-	auto first = myqueue.top();
-	myqueue.pop();
-	EXPECT_TRUE(first == msgbefore);
-	auto tied = myqueue.top();
-	myqueue.pop();
-	EXPECT_TRUE(tied == msgbefore);
-	auto last = myqueue.top();
-	myqueue.pop();
-	EXPECT_TRUE(last == msgafter);
 	std::size_t msghashbefore = std::hash<Message>()(*msgbefore);
 	std::size_t msghashafter = std::hash<Message>()(*msgafter);
 	EXPECT_TRUE(msghashbefore != msghashafter);

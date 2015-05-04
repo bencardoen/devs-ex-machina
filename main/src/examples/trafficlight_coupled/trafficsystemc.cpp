@@ -11,8 +11,8 @@ namespace n_examples_coupled {
 
 
 TrafficSystem::TrafficSystem(std::string name) : CoupledModel(name) {
-	t_atomicmodelptr policeman = std::make_shared<Policeman>("policeman");
-	t_atomicmodelptr trafficlight = std::make_shared<TrafficLight>("trafficLight");
+	t_atomicmodelptr policeman = n_tools::createObject<Policeman>("policeman");
+	t_atomicmodelptr trafficlight = n_tools::createObject<TrafficLight>("trafficLight");
 
 	this->addSubModel(policeman);
 	this->addSubModel(trafficlight);

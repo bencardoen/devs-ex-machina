@@ -14,9 +14,11 @@
 #include "verbosetracer.h"
 #include "xmltracer.h"
 #include "jsontracer.h"
+#include "celltracer.h"
 #include "compare.h"
 #include "macros.h"
 #include "coutredirect.h"
+#include "examples/forestfire/firecell.h"
 
 
 using namespace n_tracers;
@@ -473,6 +475,19 @@ TEST(tracing, policies) {
 	}
 	EXPECT_EQ(newCoutTarget.str(), "This is an integer: 5\nThis is MOAR text!");
 
+	{
+		PolicyTester<MultiFileWriter> multiOut;
+		multiOut.initialize(TESTFOLDERTRACE"multifilewrite", ".txt");
+		for(std::size_t i = 0; i < 3; ++i){
+			multiOut.startNewFile();
+			multiOut.printTest("This is the ", i+1, "th file we wrote!");
+			multiOut.closeFile();
+		}
+	}
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_0.txt", TESTFOLDERTRACE"multifilewrite_0.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_1.txt", TESTFOLDERTRACE"multifilewrite_1.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_2.txt", TESTFOLDERTRACE"multifilewrite_2.corr"), 0);
+
 }
 
 class TestState: public n_model::State {
@@ -570,6 +585,63 @@ SINGLETRACERTEST(TESTFOLDERTRACE, VerboseTracer)
 SINGLETRACERTEST(TESTFOLDERTRACE, XmlTracer)
 
 SINGLETRACERTEST(TESTFOLDERTRACE, JsonTracer)
+
+TEST(tracing, tracerCellTracer){
+	{
+		CellTracer<n_tracers::FileWriter, 5u, 5u> tracer1;
+		CellTracer<n_tracers::MultiFileWriter, 5u, 5u> tracer2;
+		tracer1.initialize(TESTFOLDERTRACE"CellTracer_out1.txt");
+		tracer2.initialize(TESTFOLDERTRACE"CellTracer_out2", ".txt");
+		n_examples::t_firecellptr fireCell = n_tools::createObject<n_examples::FireCell>(n_model::t_point(0u, 0u));
+		n_model::t_atomicmodelptr fireAtomic = std::dynamic_pointer_cast<n_model::AtomicModel>(fireCell);
+		double data = 1.0;
+		for(std::size_t x = 0u; x < 5u; ++x){
+			for(std::size_t y = 0u; y < 5u; ++y){
+				++data;
+				fireCell->setPoint(n_model::t_point(x, y));
+				n_examples::t_firecellstateptr ptr = std::dynamic_pointer_cast<n_examples::FireCellState>(fireCell->getState());
+				ptr->setTemp(data);
+				ptr->m_timeLast = n_network::t_timestamp(0);
+				tracer1.tracesInit(fireAtomic, n_network::t_timestamp(0));
+				tracer2.tracesInit(fireAtomic, n_network::t_timestamp(0));
+			}
+		}
+		std::size_t i = 1;
+		for(std::size_t k = 0u; k < 4u; ++k){
+			for(std::size_t x = 0u; x < 5u; ++x){
+				++i;
+				if(!(x%((k+2)%4+1))){
+					for(std::size_t y = 0u; y < 5u; ++y){
+						++data;
+						fireCell->setPoint(n_model::t_point(x, y));
+						n_examples::t_firecellstateptr ptr = std::dynamic_pointer_cast<n_examples::FireCellState>(fireCell->getState());
+						ptr->setTemp(data);
+						ptr->m_timeLast = n_network::t_timestamp(k+1);
+						if(i%3 == 0){
+							tracer1.tracesInternal(fireAtomic, 0);
+							tracer2.tracesInternal(fireAtomic, 0);
+						} else if(i%3 == 1){
+							tracer1.tracesExternal(fireAtomic, 0);
+							tracer2.tracesExternal(fireAtomic, 0);
+						} else if(i%3 == 2){
+							tracer1.tracesConfluent(fireAtomic, 0);
+							tracer2.tracesConfluent(fireAtomic, 0);
+						}
+					}
+				}
+			}
+		}
+		n_tracers::traceUntil(t_timestamp::infinity());
+		n_tracers::clearAll();
+		n_tracers::waitForTracer();
+		tracer1.finishTrace();
+	}
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out1.txt", TESTFOLDERTRACE "CellTracer_out1.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out2_0.txt", TESTFOLDERTRACE "CellTracer_out2_0.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out2_1.txt", TESTFOLDERTRACE "CellTracer_out2_1.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out2_2.txt", TESTFOLDERTRACE "CellTracer_out2_2.corr"), 0);
+
+}
 
 TEST(tracing, messageManagement){
 	{

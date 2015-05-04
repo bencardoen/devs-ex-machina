@@ -32,7 +32,7 @@ std::string TrafficLightMode::toCell()
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
 	: AtomicModel(name, priority)
 {
-	this->setState(std::make_shared<TrafficLightMode>("red"));
+	this->setState(n_tools::createObject<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 2;
 
@@ -110,7 +110,7 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 
 t_stateptr TrafficLight::setState(std::string s)
 {
-	this->Model::setState(std::make_shared<TrafficLightMode>(s));
+	this->Model::setState(n_tools::createObject<TrafficLightMode>(s));
 	return this->getState();
 }
 

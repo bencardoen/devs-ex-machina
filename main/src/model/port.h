@@ -2,7 +2,7 @@
  * port.h
  *
  *  Created on: 9-mrt.-2015
- *      Author: Pieter
+ *      Author: Pieter, Stijn
  */
 
 #ifndef PORT_H_
@@ -146,6 +146,20 @@ public:
 	 * @param message The payload of the message that is to be sent
 	 */
 	std::vector<n_network::t_msgptr> createMessages(std::string message);
+
+	/**
+	 * @brief Creates messages with a given payload and stores them in a container
+	 * These messages are addressed to all out-ports that are currently connected
+	 * Zfunctions that apply will be called on the messages
+	 *
+	 * @param message The payload of the message that is to be sent
+	 * @param container A reference to the container in which the messages will be stored
+	 *
+	 * @return For convenience, the argument passed as the container parameter is returned.
+	 *
+	 * @note These out-ports can differ if you are using direct connect
+	 */
+	std::vector<n_network::t_msgptr> createMessages(std::string message, std::vector<n_network::t_msgptr>& container);
 
 	const std::vector<t_portptr>& getIns() const;
 	const std::map<t_portptr, t_zfunc>& getOuts() const;

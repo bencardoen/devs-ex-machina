@@ -2,11 +2,8 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include "timestamp.h"
 #include "network.h"
-#include "atomicmodel.h"
-#include "scheduler.h"
-#include "terminationfunction.h"
+#include "terminationfunction.h"		// include atomicmodel
 #include "schedulerfactory.h"
 #include "modelentry.h"
 #include "messageentry.h"
@@ -23,8 +20,6 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 
 
-//typedef std::priority_queue<t_msgptr, std::deque<t_msgptr>, compare_msgptr> t_msgqueue;
-
 /**
  * Typedefs used by core.
  */
@@ -32,14 +27,15 @@ typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 /**
- * A Core is a node in a parallel devs simulator. It manages (multiple) atomic models and drives their transitions.
+ * @brief A Core is a node in a Devs simulator. It manages (multiple) atomic models and drives their transitions.
+ * A Core only operates on atomic models, the translation from coupled to atomic (leaves) is done by Controller.
+ * The Core is responsible for timewarp, messaging, time and scheduling of models.
  */
 class Core
 {
 private:
 	/**
 	 * Current simulation time
-	 * Loosely corresponds with Yentl's 'clock'
 	 */
 	t_timestamp m_time;
 
@@ -58,11 +54,6 @@ private:
 	 * @synchronized
 	 */
 	std::atomic<bool> m_live;
-
-	/**
-	 * Stores the model(entries) in ascending (urgent first) scheduled time.
-	 */
-	t_scheduler m_scheduler;
 
 	/**
 	 * Termination time, if set.
@@ -97,6 +88,13 @@ private:
 	 * apply if the core is idling (ie beyond termtime/fun).
 	 */
 	std::atomic<std::size_t> m_zombie_rounds;
+
+	/**
+	 * Marks if this core has triggered a terminated functor. This distinction is required
+	 * for timewarp, and for the controller to redistribute the current time at wich the
+	 * functor triggered as a new termination time (which in turn can be undone ...)
+	 */
+	std::atomic<bool> m_terminated_functor;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -147,6 +145,12 @@ private:
 
 protected:
 	/**
+	* Stores the model(entries) in ascending (urgent first) scheduled time.
+	*/
+	t_scheduler m_scheduler;
+
+
+	/**
 	 * Model storage.
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
 	 */
@@ -170,7 +174,6 @@ protected:
 
 	/**
 	 * Subclass hook. Is called after imminents are collected.
-	 * Superclass does nothing.
 	 */
 	virtual
 	void
@@ -232,7 +235,6 @@ public:
 	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
-	 * @attention does not change anything in scheduled order.
 	 */
 	t_atomicmodelptr
 	getModel(const std::string& name);
@@ -250,8 +252,8 @@ public:
 	bool isLive() const;
 
 	/**
-	 * @return true if a Core has reached a termination condition, and is potentially waiting for
-	 * other cores to finish. != isLive().
+	 * @return true if a Core has reached a termination condition, and is waiting for
+	 * other cores to finish. A Core can still be reactivated (isLive()==true) from this state.
 	 */
 	virtual
 	bool isIdle() const;
@@ -276,16 +278,13 @@ public:
 	std::size_t getCoreID() const;
 
 	/**
-	 * Run at startup, populate the scheduler with the model's advance() results.
-	 * Sets earliests possible time for all models.
-	 * @attention : run this once and once only. Multiple runs can trigger asserts, which will hang the
-	 * process in multithreaded setting.
+	 * Run at startup, populate the scheduler with the model's timeadvance() +- elapsed.
+	 * @attention : run this once and once only.
 	 */
 	void init();
 
 	/**
 	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
-	 * @attention : pops all imminent models, they need to be rescheduled (or will be lost forever).
 	 */
 	std::set<std::string>
 	getImminent();
@@ -302,34 +301,28 @@ public:
 	}
 
 	/**
-	 * Asks for each unscheduled model a new firing time and places items on the scheduler.
+	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
 	rescheduleImminent(const std::set<std::string>&);
 
 	/**
-	 * Updates local time. The core time will advance to min(first transition, earliest received message).
+	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
 	 * @attention : changes local state : idle, live, terminated, time. It's possible time does not
 	 * advance at all, this is allowed.
 	 */
+	virtual
 	void
 	syncTime();
 
 	/**
-	 * Set current time to new value.
-	 * @todo Move to protected/friend
-	 */
-	void
-	setTime(const t_timestamp&);
-
-	/**
 	 * Run a single DEVS simulation step:
-	 * 	- get Messages (networked, possibly revert)
-	 * 	- collect output
+	 * 	- getMessages (from network, since this can invoke revert it needs to be done before the other steps)
+	 * 	- collect output from imminent models
 	 * 	- route messages (networked or not)
 	 * 	- transition
 	 * 	- trace
-	 * 	- reschedule fired models
+	 * 	- reschedule models if needed.
 	 * 	- update core time to furthest point possible
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
 	 */
@@ -346,7 +339,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions.
+	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -354,8 +347,8 @@ public:
 	}
 
 	/**
-	 * Pull messages from network, and sort them into parameter by destination name.
-	 * Base class = noop, profiling indicates this has no cost whatsoever.
+	 * Pull messages from network.
+	 * @see Multicore#getMessages()
 	 */
 	virtual void getMessages()
 	{
@@ -363,11 +356,23 @@ public:
 	}
 
 	/**
+	 * Set current time to new value.
+	 * @attention : virtual so that users of Core can call this without locking cost, but a Multicore instance
+	 * can invoke locking before calling this method. Equally important, Conservate Core will correct any attempt
+	 * to advance time beyond EIT.
+	 * @see Multicore, Conservativecore
+	 */
+	virtual
+	void
+	setTime(const t_timestamp&);
+
+	/**
 	 * Get Current simulation time.
 	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
 	 * @note The causal field is to be disregarded, it is not relevant here.
 	 */
-	t_timestamp getTime() const;
+	virtual
+	t_timestamp getTime();
 
 	/**
 	 * Retrieve GVT. Only makes sense for a multi core.
@@ -376,14 +381,13 @@ public:
 
 	/**
 	 * Set current GVT
-	 * @lock simulator, messages in multicore.
 	 */
 	virtual void
 	setGVT(const t_timestamp& newgvt);
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @param imminent modelnames with firing time == to current time
+	 * @param imminent modelnames with firing time <= to current time
 	 * @param mail collected from local/network by collectOutput/getMessages
 	 */
 	virtual
@@ -425,25 +429,17 @@ public:
 	void
 	traceConf(const t_atomicmodelptr&);
 
-	/**
-	 * If the current simulation time >= endtime, halt.
-	 * This is checked after all transitions have happened.
-	 */
+	virtual
 	void
 	setTerminationTime(t_timestamp endtime);
 
+	virtual
 	t_timestamp
-	getTerminationTime() const;
+	getTerminationTime();
 
-	/**
-	 * @returns true when either termination condition is met.
-	 * @attention : implies isLive == false.
-	 */
-	bool
-	terminated() const;
+	bool terminatedByFunctor()const;
 
-	void
-	setTerminated(bool b);
+	void setTerminatedByFunctor(bool b);
 
 	/**
 	 * Set the the termination function.
@@ -545,7 +541,7 @@ public:
 	paintMessage(const t_msgptr&){;}
 
 	/**
-	 * Write current Core state to logfile.
+	 * Write current Core state to log.
 	 */
 	void
 	logCoreState();
@@ -559,7 +555,7 @@ public:
 	existTransientMessage();
 
 	/**
-	 * @return nr of simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
+	 * @return nr of consecutive simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
 	 */
 	std::size_t
 	getZombieRounds();

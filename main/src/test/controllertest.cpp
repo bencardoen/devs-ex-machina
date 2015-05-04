@@ -79,7 +79,7 @@ TEST(Controller, cDEVS)
 		t_coreptr c = createObject<Core>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setClassicDEVS();
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
@@ -88,7 +88,7 @@ TEST(Controller, cDEVS)
 		ctrl.addModel(m1);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
@@ -110,7 +110,7 @@ TEST(Controller, cDEVS_coupled)
 		t_coreptr c = createObject<Core>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setClassicDEVS();
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -118,7 +118,7 @@ TEST(Controller, cDEVS_coupled)
 		ctrl.addModel(m1);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(360, 0));
 	};
 
@@ -142,7 +142,7 @@ TEST(Controller, DSDEVS_connections)
 		t_coreptr c = createObject<DynamicCore>();
 		coreMap[0] = c;
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setDSDEVS();
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
@@ -150,7 +150,7 @@ TEST(Controller, DSDEVS_connections)
 		ctrl.addModel(m);
 
 		ctrl.simulate();
-		EXPECT_TRUE(c->terminated() == true);
+		EXPECT_TRUE(c->isLive() == false);
 		EXPECT_TRUE(c->getTime() >= t_timestamp(3600, 0));
 	};
 
@@ -170,7 +170,7 @@ TEST(Controller, pDEVS)
 		t_networkptr network = createObject<Network>(2);
 		std::unordered_map<std::size_t, t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
 		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
@@ -179,7 +179,7 @@ TEST(Controller, pDEVS)
 
 		t_timestamp endTime(2000, 0);
 
-		Controller ctrl = Controller("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
 		ctrl.setPDEVS();
 		ctrl.setTerminationTime(endTime);
 

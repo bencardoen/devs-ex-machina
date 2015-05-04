@@ -12,6 +12,8 @@
 #include <chrono>
 #include "globallog.h"
 #include "coutredirect.h"
+#include "listscheduler.h"
+#include "flags.h"
 
 using std::cout;
 using std::endl;
@@ -252,7 +254,7 @@ class UnSyncedSchedulerTest: public ::testing::Test
 public:
 	UnSyncedSchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, false);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::LIST, false);
 	}
 
 	void SetUp()
@@ -360,3 +362,34 @@ TEST(CoutRedirectTest, main_test){
 	EXPECT_EQ(ssr2.str(), "This is written to ssr2.");
 	EXPECT_EQ(ssr3.str(), "This is written to ssr3, nested within ssr1.");
 }
+
+
+TEST(Flags, basic){
+	std::size_t FREE = 1;
+	std::size_t ISWAITING = 2;
+	std::size_t IDLE = 4;
+	std::size_t STOP = 8;
+	std::size_t value = 0;
+	EXPECT_TRUE(!n_tools::flag_is_set(value, FREE));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, ISWAITING));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, IDLE));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, STOP));
+	n_tools::set_flag(value, FREE);
+	n_tools::set_flag(value, ISWAITING);
+	n_tools::set_flag(value, IDLE);
+	n_tools::set_flag(value, STOP);
+	EXPECT_TRUE(n_tools::flag_is_set(value, FREE));
+	EXPECT_TRUE(n_tools::flag_is_set(value, ISWAITING));
+	EXPECT_TRUE(n_tools::flag_is_set(value, IDLE));
+	EXPECT_TRUE(n_tools::flag_is_set(value, STOP));
+	n_tools::unset_flag(value, FREE);
+	n_tools::unset_flag(value, ISWAITING);
+	n_tools::unset_flag(value, IDLE);
+	n_tools::unset_flag(value, STOP);
+	EXPECT_TRUE(!n_tools::flag_is_set(value, FREE));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, ISWAITING));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, IDLE));
+	EXPECT_TRUE(!n_tools::flag_is_set(value, STOP));
+}
+
+

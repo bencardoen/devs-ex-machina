@@ -38,6 +38,7 @@ public:
 	 * @brief Register the location of a Model
 	 * @param model the Model to be registered
 	 * @param core the ID of the core on which the model is located
+	 * @pre core < m_amountCores (assert)
 	 */
 	void registerModel(const t_atomicmodelptr model, std::size_t core);
 
