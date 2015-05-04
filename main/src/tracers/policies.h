@@ -141,6 +141,16 @@ public:
 	 */
 	bool isInitialized() const;
 
+	/**
+	 * @brief Starts a new file
+	 */
+	void startNewFile();
+
+	/**
+	 * @brief Closes the currently opened file
+	 */
+	void closeFile();
+
 protected:
 	~MultiFileWriter();
 	MultiFileWriter();
@@ -164,27 +174,6 @@ protected:
 		if (m_disabled)
 			return;		//this way, the check is not performed for each argument
 		printImpl(args...);
-	}
-
-	/**
-	 * @brief Starts a new file
-	 */
-	void startNewFile(){
-		assert(isInitialized());
-		if (m_disabled)
-			return;		//this way, the check is not performed for each argument
-		//open a new file
-		m_stream.close();
-		std::ostringstream ssr(m_filename);
-		ssr << '_' << (m_fileCount++) << m_fileExtend;
-		m_stream.open(ssr.str());
-	}
-
-	/**
-	 * @brief Closes the currently opened file
-	 */
-	void closeFile(){
-		m_stream.close();
 	}
 
 private:

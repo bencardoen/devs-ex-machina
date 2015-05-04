@@ -473,6 +473,19 @@ TEST(tracing, policies) {
 	}
 	EXPECT_EQ(newCoutTarget.str(), "This is an integer: 5\nThis is MOAR text!");
 
+	{
+		PolicyTester<MultiFileWriter> multiOut;
+		multiOut.initialize(TESTFOLDERTRACE"multifilewrite", ".txt");
+		for(std::size_t i = 0; i < 3; ++i){
+			multiOut.startNewFile();
+			multiOut.printTest("This is the ", i+1, "th file we wrote!");
+			multiOut.closeFile();
+		}
+	}
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_0.txt", TESTFOLDERTRACE"multifilewrite_0.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_1.txt", TESTFOLDERTRACE"multifilewrite_1.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"multifilewrite_2.txt", TESTFOLDERTRACE"multifilewrite_2.corr"), 0);
+
 }
 
 class TestState: public n_model::State {

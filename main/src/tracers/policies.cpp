@@ -6,6 +6,7 @@
  */
 
 #include "policies.h"
+#include "globallog.h"
 
 void n_tracers::FileWriter::initialize(const std::string& fileName, bool append)
 {
@@ -70,6 +71,25 @@ n_tracers::FileWriter::FileWriter(FileWriter&& other)
 
 n_tracers::MultiFileWriter::~MultiFileWriter()
 {
+}
+
+void n_tracers::MultiFileWriter::startNewFile()
+{
+	assert(isInitialized());
+	if (m_disabled)
+		return;		//this way, the check is not performed for each argument
+	//open a new file
+	if(m_stream.is_open())
+		m_stream.close();
+	std::ostringstream ssr;
+	ssr << m_filename << '_' << (m_fileCount++) << m_fileExtend;
+	LOG_DEBUG("opening new file: ", ssr.str());
+	m_stream.open(ssr.str());
+}
+
+void n_tracers::MultiFileWriter::closeFile()
+{
+	m_stream.close();
 }
 
 n_tracers::MultiFileWriter::MultiFileWriter()
