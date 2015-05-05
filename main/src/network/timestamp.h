@@ -161,7 +161,7 @@ public:
 	 */
 	friend Time operator+(const Time& lhs, const Time& rhs)
 	{
-		if(rhs == infinity())
+		if(rhs == infinity() || lhs == infinity())
 			return infinity();
 		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
