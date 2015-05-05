@@ -16,6 +16,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <atomic>
 
 namespace n_tools {
 template<typename T, typename C = std::deque<T> >

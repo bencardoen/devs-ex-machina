@@ -12,6 +12,7 @@
 #include "message.h"	// include globallog
 #include <assert.h>
 #include <map>
+#include "globallog.h"
 
 namespace n_model {
 class AtomicModel: public Model
@@ -194,6 +195,6 @@ public:
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
-}
+}	// end namespace
 
 #endif /* ATOMICMODEL_H_ */
