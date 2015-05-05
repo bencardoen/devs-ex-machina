@@ -9,6 +9,7 @@
 #include "messageentry.h"
 #include "controlmessage.h"
 #include "tracers.h"
+#include <set>
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_

@@ -13,6 +13,7 @@
 #include <memory>
 #include <thread>
 #include <unordered_map>
+#include <condition_variable>
 #include "timestamp.h"
 #include "atomicmodel.h"
 #include "coupledmodel.h"

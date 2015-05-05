@@ -10,23 +10,24 @@
 //set some macros, if they aren't defined already when compiling
 //termination time
 #ifndef BENCH_FIRE_MAXTIME
-#define BENCH_FIRE_MAXTIME 10000
+#define BENCH_FIRE_MAXTIME 10
 #endif
 
 //x size of the simulated grid
 #ifndef BENCH_FIRE_SIZEX
-#define BENCH_FIRE_SIZEX 50
+#define BENCH_FIRE_SIZEX 5
 #endif
 
 //y size of the simulated grid
 #ifndef BENCH_FIRE_SIZEY
-#define BENCH_FIRE_SIZEY 50
+#define BENCH_FIRE_SIZEY 5
 #endif
 
 #include "controller.h"
 #include "examples/forestfire/firespread.h"
 #include "objectfactory.h"
 #include "simpleallocator.h"
+#include "multicore.h"
 
 int main(int, char**)
 {

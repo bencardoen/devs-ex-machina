@@ -68,8 +68,9 @@ void Controller::doDirectConnect()
 {
 	if (m_coupledOrigin) {
 		m_root->directConnect(m_coupledOrigin);
-	} else
+	} else {
 		LOG_DEBUG("doDirectConnect no coupled origin!");
+	}
 }
 
 void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
@@ -270,8 +271,9 @@ void Controller::simDEVS()
 		if (core->isLive()) {
 			LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
 			core->runSmallStep();
-		} else
+		} else {
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
+		}
 		if (i % m_saveInterval == 0) {
 			save(true); // TODO remove boolean when serialization implemented
 		}

@@ -99,6 +99,7 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 
 	if(newState->m_phase == FirePhase::INACTIVE)
 		newState->m_phase = FirePhase::UNBURNED;
+	setState(newState);
 }
 
 void FireCell::intTransition()
@@ -149,6 +150,8 @@ void FireCell::intTransition()
 		newState->m_igniteTime = state.m_timeLast.getTime() * TIMESTEP;
 	newState->m_phase = newPhase;
 	newState->m_temperature = newTemp;
+
+	std::cerr << newState->toString() << "\n";
 
 	setState(newState);
 }

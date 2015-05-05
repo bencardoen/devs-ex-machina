@@ -37,8 +37,9 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 		// When we find the port, we add the message temporarily to it for the tracer
 		if (it != m_iPorts.end())
 			it->second->addMessage(m, true);
-		else
+		else {
 			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
+		}
 	}
 
 	// Do the actual external transition

@@ -43,20 +43,21 @@ FireSpread::FireSpread(std::size_t sizeX, std::size_t sizeY):
 	 */
 	std::size_t cx = sizeX/2;
 	std::size_t cy = sizeY/2;
+
 	for(std::size_t level = 0; level < RADIUS; ++level){
 		std::size_t y = level;
 		n_model::t_portptr& genOut = generator->getOutputs()[level];
-		for(std::size_t x = 0; x < 2*level+1; ++x){
-			n_model::t_portptr& cellIn = cells[cx+x-level][cy+y]->getIPorts().at("in_G");
+		for(std::size_t x = cx-level; x < cx+level+1; ++x){
+			n_model::t_portptr& cellIn = cells[x][cy+y]->getIPorts().at("in_G");
 			connectPorts(genOut, cellIn);
-			cellIn = cells[cx+x-level][cy-y]->getIPorts().at("in_G");
+			cellIn = cells[x][cy-y]->getIPorts().at("in_G");
 			connectPorts(genOut, cellIn);
 		}
 		std::size_t x = level;
-		for(y = 0; y < 2*level-1; ++y){
-			n_model::t_portptr& cellIn = cells[cx+x][cy+y-level+1]->getIPorts().at("in_G");
+		for(y = cy - level + 1; y < cy + level; ++y){
+			n_model::t_portptr& cellIn = cells[cx+x][y]->getIPorts().at("in_G");
 			connectPorts(genOut, cellIn);
-			cellIn = cells[cx-x][cy-+y-level+1]->getIPorts().at("in_G");
+			cellIn = cells[cx-x][y]->getIPorts().at("in_G");
 			connectPorts(genOut, cellIn);
 		}
 	}
@@ -80,15 +81,15 @@ FireSpread::FireSpread(std::size_t sizeX, std::size_t sizeY):
 				n_model::t_portptr& pIn = cells[x-1][y]->getIPorts()["in_S"];
 				connectPorts(pOut, pIn);
 			}
-			if(x != sizeX-1){
+			if(y != sizeY-1){
 				n_model::t_portptr& pIn = cells[x][y+1]->getIPorts()["in_E"];
 				connectPorts(pOut, pIn);
 			}
-			if(y){
+			if(x != sizeX-1){
 				n_model::t_portptr& pIn = cells[x+1][y]->getIPorts()["in_W"];
 				connectPorts(pOut, pIn);
 			}
-			if(y != sizeY-1){
+			if(y){
 				n_model::t_portptr& pIn = cells[x][y-1]->getIPorts()["in_N"];
 				connectPorts(pOut, pIn);
 			}

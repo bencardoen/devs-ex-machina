@@ -11,19 +11,20 @@
 #ifdef LOG_LEVEL
 #if LOG_LEVEL == 0
 #define LOGGING false
+#else
+#define LOGGING true
 #endif
+#else
+#define LOGGING true
 #endif
+
+
 
 #include "macros.h"
 #include <cstring>
-#if LOGGING==true
-#pragma message("LOGGING==true")
+#if LOGGING != false
 #include "logger.h"
-#else
-#pragma message("LOGGING==false")
 #endif
-
-azorugazlir;
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL 15	//default logging level

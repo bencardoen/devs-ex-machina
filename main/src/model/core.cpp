@@ -176,7 +176,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			LOG_DEBUG("CORE: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
 			imminents.insert(model->getName());
-		}else{
+		} else {
 			LOG_DEBUG("CORE: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to infinity, no longer scheduling.");
 		}
