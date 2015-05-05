@@ -8,6 +8,7 @@
 #include <examples/forestfire/firecellstate.h>
 #include <limits>
 #include <sstream>
+#include <iomanip>
 
 namespace n_examples {
 
@@ -35,7 +36,8 @@ std::string n_examples::FireCellState::toCell()
 	return std::to_string(m_temperature);
 #else
 	std::stringstream ssr;
-	ssr << m_temperature;
+	ssr.precision(6);
+	ssr << std::fixed << m_temperature;
 	return ssr.str();
 #endif
 }
