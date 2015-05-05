@@ -196,3 +196,25 @@ TEST(Controller, pDEVS)
 
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/pdevstest.txt", TESTFOLDER "controller/pdevstest.corr"), 0);
 }
+
+TEST(Controller, ControllerConfig)
+{
+	RecordProperty("description", "Setting up a simulation using the ControllerConfig object");
+
+	ControllerConfig conf;
+	conf.name = "SimpleSim";
+	conf.saveInterval = 30;
+
+	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(360, 0);
+		ctrl->setTerminationTime(endTime);
+
+		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl->addModel(m1);
+
+		ctrl->simulate();
+	}
+}
