@@ -55,8 +55,6 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
  *	eot = std::max(eot, candidate)
  *	m_distributed_eot.set(this->getCoreID(), eot);
  *
- * @note : this happens 'after' updateEIT(), first we get messages from network, then we simulate.
- * since this is a circular motion, it really does not matter.
  */
 void Conservativecore::updateEOT()
 {
@@ -68,9 +66,10 @@ void Conservativecore::updateEOT()
 		t_timestamp lookahead_min = t_timestamp::infinity();
 		for (const auto& entry : m_models) {
 			t_timestamp la = entry.second->lookAhead();
-			if (la.getTime() != 0) {
+			if (la.getTime() != 0) {	// TODO Tim check if edge case is correct.
 				lookahead_min = std::min(lookahead_min, la);
 			} else {
+				lookahead_min = std::min(lookahead_min, la);
 				LOG_WARNING("CCore:: ", this->getCoreID(), " model ", entry.first,
 				        " gave 0 as lookahead, ignoring.");
 			}

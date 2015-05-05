@@ -8,10 +8,14 @@
 #ifndef SRC_CONTROL_ALLOCATOR_H_
 #define SRC_CONTROL_ALLOCATOR_H_
 
+#include <memory>
+#include "atomicmodel.h"
+
+/*
 namespace n_model {
 class AtomicModel;
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
-}
+}*/
 
 namespace n_control {
 

@@ -7,6 +7,7 @@
 
 #include "policies.h"
 #include "globallog.h"
+#include <sstream>
 
 void n_tracers::FileWriter::initialize(const std::string& fileName, bool append)
 {
