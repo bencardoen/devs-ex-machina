@@ -143,7 +143,44 @@ add_executable(${PROJECT_NAME}
 	src/test/cerealtest.cpp
  	src/main.cpp
  	)
+add_executable(${PROJECT_NAME}_benchfire
+	src/tools/logger.cpp
+	src/tools/coutredirect.cpp
+	src/tools/asynchwriter.cpp
+	src/model/atomicmodel.cpp
+	src/model/cellmodel.cpp
+	src/model/coupledmodel.cpp
+	src/model/rootmodel.cpp
+	src/model/model.cpp
+	src/model/state.cpp
+	src/model/port.cpp
+	src/model/core.cpp
+	src/model/dynamiccore.cpp
+	src/model/multicore.cpp
+	src/model/conservativecore.cpp
+	src/model/zfunc.cpp
+	src/examples/forestfire/constants.cpp
+	src/examples/forestfire/firecell.cpp
+	src/examples/forestfire/firecellstate.cpp
+	src/examples/forestfire/firegenerator.cpp
+	src/examples/forestfire/firespread.cpp
+	src/control/allocator.cpp
+	src/control/controller.cpp
+	src/control/controllerconfig.cpp
+	src/control/locationtable.cpp
+	src/network/message.cpp
+	src/network/controlmessage.cpp
+	src/network/network.cpp
+	src/tracers/policies.cpp
+	src/tracers/tracemessage.cpp
+
+ 	src/mainbenchfire.cpp
+ 	)
 ###############################################################################
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
+					COMPILE_FLAGS "-DLOG_LEVEL=0 -o3 -flto"
+					)
 
 ### INCLUDE PATHS ############################################################
 include_directories(${Boost_INCLUDE_DIRS})             # Boost
@@ -177,6 +214,7 @@ endif()
 
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 ###############################################################################
 
 ### Cotire ###
