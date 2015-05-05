@@ -7,9 +7,23 @@
 #ifndef SRC_TOOLS_GLOBALLOG_H_
 #define SRC_TOOLS_GLOBALLOG_H_
 #define LOG_USEGLOBAL
-#include "logger.h"
+
+#ifdef LOG_LEVEL
+#if LOG_LEVEL == 0
+#define LOGGING false
+#endif
+#endif
+
 #include "macros.h"
 #include <cstring>
+#if LOGGING==true
+#pragma message("LOGGING==true")
+#include "logger.h"
+#else
+#pragma message("LOGGING==false")
+#endif
+
+azorugazlir;
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL 15	//default logging level
