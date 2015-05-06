@@ -205,7 +205,7 @@ TEST(Controller, ControllerConfig)
 	conf.name = "SimpleSim";
 	conf.saveInterval = 30;
 
-	std::ofstream filestream(TESTFOLDER "controller/pdevstest.txt");
+	std::ofstream filestream(TESTFOLDER "controller/configtest.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
