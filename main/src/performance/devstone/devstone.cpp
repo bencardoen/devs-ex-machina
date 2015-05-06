@@ -120,8 +120,8 @@ ProcessorState& Processor::procstate()
 
 Generator::Generator() : n_model::AtomicModel("Generator")
 {
-	m_state = n_tools::createObject<n_model::State>("gen_event1");
 	addOutPort("out_event1");
+	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }
 
 Generator::~Generator()
@@ -135,12 +135,12 @@ n_model::t_timestamp Generator::timeAdvance() const
 
 void Generator::intTransition()
 {
-	// *tumbleweed*
+	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }
 
 std::vector<n_network::t_msgptr> Generator::output() const
 {
-	auto msg = getPort("out_event1")->createMessages(std::to_string(1));
+	auto msg = getPort("out_event1")->createMessages(n_tools::inttostring(1));
 	return msg;
 }
 
@@ -149,7 +149,7 @@ std::vector<n_network::t_msgptr> Generator::output() const
  */
 
 CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
-	: CoupledModel("Coupled" + std::to_string(depth))
+	: CoupledModel("Coupled" + n_tools::inttostring(depth))
 {
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
@@ -163,7 +163,7 @@ CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
 		n_model::t_atomicmodelptr prev;
 		for (uint i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-			        "Processor" + std::to_string(depth) + "_" + std::to_string(i), randomta);
+			        "Processor" + n_tools::inttostring(depth) + "_" + n_tools::inttostring(i), randomta);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -178,7 +178,7 @@ CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
 		n_model::t_atomicmodelptr prev;
 		for (uint i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-			        "Processor" + std::to_string(depth) + "_" + std::to_string(i), randomta);
+			        "Processor" + n_tools::inttostring(depth) + "_" + n_tools::inttostring(i), randomta);
 			addSubModel(proc);
 
 			if (i == 0) {

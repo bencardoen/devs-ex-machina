@@ -14,6 +14,7 @@
 #include "atomicmodel.h"
 #include "coupledmodel.h"
 #include "objectfactory.h"
+#include "stringtools.h"
 
 namespace n_devstone {
 

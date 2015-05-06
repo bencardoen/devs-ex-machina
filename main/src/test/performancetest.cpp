@@ -22,20 +22,19 @@ TEST(Performance, DEVStone)
 
 	ControllerConfig conf;
 	conf.name = "DEVStone";
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
-	conf.saveInterval = 30;
+	conf.saveInterval = 1;
 
-//	std::ofstream filestream("testfiles/performance/devstone.txt");
-//	{
-//		CoutRedirect myRedirect(filestream);
+	std::ofstream filestream("testfiles/performance/devstone.txt");
+	{
+		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
-		t_timestamp endTime(2000, 0);
+		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = createObject<DEVStone>(1, 1, false);
+		// Create a DEVStone simulation with width 1 and depth 1
+		t_coupledmodelptr d = createObject<DEVStone>(1, 1, false); // TODO change width once scheduler problem is solved
 		ctrl->addModel(d);
 
 		ctrl->simulate();
-//	}
+	}
 }
