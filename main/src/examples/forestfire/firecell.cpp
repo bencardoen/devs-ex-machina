@@ -180,14 +180,19 @@ std::vector<n_network::t_msgptr> FireCell::output() const
             return {}
 	 */
 	const FireCellState& state = fcstate();
+	std::vector<n_network::t_msgptr> container;
+
 	if(std::abs(state.m_temperature - state.m_oldTemp) > TMP_DIFF) {
 		std::string msg(reinterpret_cast<const char*>(&(state.m_temperature)), sizeof(double));
 //		const char* msgContent = reinterpret_cast<const char*>(&(state.m_temperature));
 //		for(std::size_t i = 0; i < sizeof(double); ++i)
 //			msg[i] = msgContent[i];
-		return m_myOport->createMessages(msg);
+		m_myOport->createMessages(msg, container);
 	}
-	return std::vector<n_network::t_msgptr>();
+	for(n_network::t_msgptr& ptr: container){
+		LOG_DEBUG("created message: ", ptr->toString());
+	}
+	return container;
 }
 
 } /* namespace n_examples */
