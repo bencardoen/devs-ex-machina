@@ -83,6 +83,10 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
 	if (this->m_models.find(name) != this->m_models.end()) {
 		LOG_DEBUG("CORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
+		if(t.getTime() == t_timestamp::infinity().getTime()){
+			LOG_INFO("CORE :: ", this->getCoreID(), " refusing to schedule ", name , "@", t);
+			return;
+		}
 		size_t offset = this->m_models[name]->getPriority();
 		t_timestamp newt(t.getTime(), offset);
 		ModelEntry entry(name, newt);
@@ -129,7 +133,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 		const auto& model = m_models[modelname];
 		auto mailfrom = model->doOutput();
 		LOG_DEBUG("CORE:", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
-		// Set timetstamp, source and color (info model does not have).
+		// Set timestamp, source and color (info model does not have).
 		for (const auto& msg : mailfrom) {
 			msg->setSourceCore(this->getCoreID());
 			paintMessage(msg);
@@ -460,7 +464,11 @@ void n_model::Core::clearModels()
 void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 {
 	MessageEntry entry(msg);
-	this->m_received_messages->push_back(entry);
+	if(not this->m_received_messages->contains(entry)){
+		this->m_received_messages->push_back(entry);
+	}else{
+		LOG_ERROR("Core :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+	}
 }
 
 void n_model::Core::rescheduleAll(const t_timestamp& totime)
@@ -482,16 +490,15 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
 	LOG_DEBUG("CORE:: ", this->getCoreID(), " receiving message", msg->toString());
-	t_timestamp msgtime = msg->getTimeStamp();
 	if (msg->isAntiMessage()) {
+		LOG_DEBUG("CORE:: ", this->getCoreID(), " got antimessage, not queuing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
 		// Don't store antimessages, we're partially ordered, there is no way a sent messages can be hopped over in a FIFO by its antimessage.
 		this->queuePendingMessage(msg);
 	}
-
 	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
-	if (msgtime < this->getTime()) {
+	if (msg->getTimeStamp() < this->getTime()) {
 		LOG_INFO("Core:: ", this->getCoreID(), " received message time < than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
 		this->revert(msg->getTimeStamp());
@@ -564,9 +571,7 @@ void n_model::Core::setGVT(const t_timestamp& newgvt)
 
 void n_model::Core::printPendingMessages()
 {
-	this->lockMessages();
 	this->m_received_messages->printScheduler();
-	this->unlockMessages();
 }
 
 void n_model::Core::revertTracerUntil(const t_timestamp& totime)
