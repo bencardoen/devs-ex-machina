@@ -8,15 +8,14 @@
 #define STRINGTOOLS_H_
 #include <string>
 
-namespace n_tools{
-
+namespace n_tools {
 
 /**
  * Std::string has race errors (COW implementation is not thread safe)
  * Avoid any race by explicitly forcing a string data copy (which is threadsafe).
  */
-inline
-std::string copyString(const std::string& input){
+inline std::string copyString(const std::string& input)
+{
 	return std::string(input.data(), input.size());
 }
 
@@ -26,12 +25,33 @@ std::string copyString(const std::string& input){
  * @param part The possible suffix of full
  */
 inline
-bool endswith(const std::string& full, const std::string& part){
+bool endswith(const std::string& full, const std::string& part)
+{
 	if (full.length() >= part.length()) {
-	return (0 == full.compare (full.length() - part.length(), part.length(), part));
-    } else {
-	return false;
-    }
+		return (0
+				== full.compare(full.length() - part.length(), part.length(),
+						part));
+	} else {
+		return false;
+	}
+}
+
+/**
+ * @brief Convert integer to string (Windows friendly)
+ * @param i Integer to be converted
+ * @return Returned string
+ */
+inline std::string inttostring(int i)
+{
+	if (i == 0)
+		return "0";
+	std::string number = "";
+	while (i != 0) {
+		char c = (i % 10) + 48; // Black magic with Ascii
+		i /= 10;
+		number.insert(0, 1, c);
+	}
+	return number;
 }
 
 }
