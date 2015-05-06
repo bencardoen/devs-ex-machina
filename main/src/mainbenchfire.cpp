@@ -29,6 +29,8 @@
 #include "simpleallocator.h"
 #include "multicore.h"
 
+LOG_INIT("firebench.log")
+
 int main(int, char**)
 {
 	auto tracers = n_tools::createObject<n_tracers::t_tracerset>();

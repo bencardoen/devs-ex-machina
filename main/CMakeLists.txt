@@ -95,6 +95,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC -march=native -g ${flagstdc11} ")
 
 add_executable(${PROJECT_NAME}
 	src/tools/logger.cpp
+	src/tools/globallog.cpp
 	src/tools/coutredirect.cpp
 	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
@@ -144,7 +145,10 @@ add_executable(${PROJECT_NAME}
  	src/main.cpp
  	)
 add_executable(${PROJECT_NAME}_benchfire
+	src/tools/logger.cpp
+	src/tools/globallog.cpp
 	src/tools/coutredirect.cpp
+	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
 	src/model/cellmodel.cpp
 	src/model/coupledmodel.cpp
@@ -177,7 +181,7 @@ add_executable(${PROJECT_NAME}_benchfire
 ###############################################################################
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
-					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=0 "#-o3"# -flto"
+					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15 "#-o3"# -flto"
 					)
 
 ### INCLUDE PATHS ############################################################
