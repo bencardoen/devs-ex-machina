@@ -46,10 +46,12 @@ public:
 
 	virtual void push_back(const T& element) override
 	{
+		if(m_hashtable.find(element) != m_hashtable.end() ){
+			throw std::logic_error("Error, scheduler already contains item");
+		}
 		auto handle = m_storage.insert(m_storage.end(), element);
 		auto result = m_hashtable.insert(std::make_pair(element, handle));
 		m_storage.sort();
-		assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
 	}
 
 	virtual size_t size() const override
