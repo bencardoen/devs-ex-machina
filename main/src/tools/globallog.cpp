@@ -12,12 +12,31 @@
 namespace n_tools {
 namespace n_globalLog {
 
+const char* sig2str(int sig){
+	switch(sig){
+	case SIGTERM:
+		return "SIGTERM";
+	case SIGSEGV:
+		return "SIGSEGV";
+	case SIGINT:
+		return "SIGINT";
+	case SIGILL:
+		return "SIGILL";
+	case SIGABRT:
+		return "SIGABRT";
+	case SIGFPE:
+		return "SIGFPE";
+	default:
+		return "unknown signal";
+	}
+}
+
 /**
  * @brief Custom signal handler for when stuff goes wrong
  * The handler will (hopefully) log a message and flush the logger
  */
 void signalHandler(int sig){
-	LOG_ERROR("Critical failure: aborted with signal ", sig);
+	LOG_ERROR("Critical failure: aborted with signal ", sig, " (", sig2str(sig), ')');
 	LOG_FLUSH;
 }
 
