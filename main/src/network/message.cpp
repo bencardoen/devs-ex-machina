@@ -78,16 +78,6 @@ void n_network::Message::serialize(n_serialization::t_oarchive& archive)
 			m_destination_core, m_source_core, m_color, m_antimessage);
 }
 
-void n_network::Message::serialize(n_serialization::t_iarchive& archive)
-{
-	std::string destination_model;
-	std::string destination_port;
-	std::string source_port;
-	std::string payload;
-	archive(m_timestamp, destination_model, destination_port, source_port, payload,
-			m_destination_core, m_source_core, m_color, m_antimessage);
-}
-
 void n_network::Message::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Message>& construct)
 {
 	std::string destination_model;
