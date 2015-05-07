@@ -13,9 +13,11 @@ namespace n_tools {
 template<typename X, typename R>
 void SynchronizedScheduler<X, R>::push_back(const R& item) {
 	std::lock_guard<std::mutex> lock(m_lock);
+	if(m_hashtable.find(item)!=m_hashtable.end()){
+		throw std::logic_error("Error, scheduler already contains item");
+	}
 	t_handle handle = m_storage.push(item);
 	m_hashtable.insert(std::make_pair(item, handle));
-	assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
 }
 
 template<typename X, typename R>
@@ -41,8 +43,10 @@ R SynchronizedScheduler<X, R>::pop() {
 	}
 	R top_el = m_storage.top();
 	size_t erased = m_hashtable.erase(top_el);
-	assert(erased == 1 && "Hashtable && heap out of sync.");
 	m_storage.pop();
+	if(erased != 1){
+		throw std::logic_error("Failed erasing top of scheduler.");
+	}
 	return top_el;
 }
 

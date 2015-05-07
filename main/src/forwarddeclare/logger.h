@@ -9,9 +9,10 @@
 #define SRC_FORWARDDECLARE_LOGGER_H_
 
 
+#ifndef LOG_LEVEL
 //you can define the log level here. if you want to
 #define LOG_LEVEL 15
-
+#endif
 
 
 #endif /* SRC_FORWARDDECLARE_LOGGER_H_ */
