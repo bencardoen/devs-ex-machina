@@ -237,19 +237,23 @@ const std::vector<n_network::t_msgptr>& Port::getReceivedMessages() const
 	return m_receivedMessages;
 }
 
-void Port::serialize(n_serialisation::t_oarchive& archive)
+void Port::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
-			m_coupled_outs, m_coupled_ins, m_usingDirectConnect);
+			m_coupled_outs, m_coupled_ins,
+			m_sentMessages, m_receivedMessages,
+			m_usingDirectConnect);
 }
 
-void Port::serialize(n_serialisation::t_iarchive& archive)
+void Port::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
-			m_coupled_outs, m_coupled_ins, m_usingDirectConnect);
+			m_coupled_outs, m_coupled_ins,
+			m_sentMessages, m_receivedMessages,
+			m_usingDirectConnect);
 }
 
-void Port::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<Port>& construct )
+void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )
 {
 	std::string name;
 	std::string hostname;

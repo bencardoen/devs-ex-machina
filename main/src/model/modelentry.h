@@ -78,7 +78,7 @@ public:
 	 *
 	 * @param archive A container for the desired output stream
 	 */
-	void serialize(n_serialisation::t_oarchive& archive)
+	void serialize(n_serialization::t_oarchive& archive)
 	{
 		archive(m_name, m_scheduled_at);
 	}
@@ -88,7 +88,7 @@ public:
 	 *
 	 * @param archive A container for the desired input stream
 	 */
-	void serialize(n_serialisation::t_iarchive& archive)
+	void serialize(n_serialization::t_iarchive& archive)
 	{
 		archive(m_name, m_scheduled_at);
 	}

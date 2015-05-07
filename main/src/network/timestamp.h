@@ -8,7 +8,7 @@
 #ifndef SRC_NETWORK_TIMESTAMP_H_
 #define SRC_NETWORK_TIMESTAMP_H_
 
-#include "archive.h"
+#include <serialization/archive.h>
 #include <chrono>
 #include <mutex>
 #include <cmath>
@@ -171,7 +171,7 @@ public:
 	 *
 	 * @param archive A container for the desired output stream
 	 */
-	void serialize(n_serialisation::t_oarchive& archive)
+	void serialize(n_serialization::t_oarchive& archive)
 	{
 		archive(m_timestamp, m_causal);
 	}
@@ -181,7 +181,7 @@ public:
 	 *
 	 * @param archive A container for the desired input stream
 	 */
-	void serialize(n_serialisation::t_iarchive& archive)
+	void serialize(n_serialization::t_iarchive& archive)
 	{
 		archive(m_timestamp, m_causal);
 	}
