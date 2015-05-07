@@ -95,8 +95,8 @@ TEST(Cereal, Message)
 {
 	std::stringstream ss;
 
-	Message m1 ("test", 0, "dest", "source");
-	Message m2 ("err", 1, "err", "err");
+	t_msgptr m1 = std::make_shared<n_network::Message>("test", 0, "dest", "source");
+	t_msgptr m2 = std::make_shared<n_network::Message>("err", 1, "err", "err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);
@@ -104,7 +104,23 @@ TEST(Cereal, Message)
 	oarchive(m1);
 	iarchive(m2);
 
-	//EXPECT_TRUE(m1 == m2);
+	EXPECT_TRUE(*m1 == *m2);
+}
+
+TEST(Cereal, TimeStamp)
+{
+	std::stringstream ss;
+
+	t_timestamp t1 = t_timestamp(2);
+	t_timestamp t2 = t_timestamp();
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(t1);
+	iarchive(t2);
+
+	EXPECT_EQ(t1, t2);
 }
 
 TEST(Cereal, State)

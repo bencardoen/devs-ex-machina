@@ -25,6 +25,14 @@ private:
 	}
 	using Model::m_control;	//change access to private
 
+	/**
+	 * Core number the model wants to be on when using parallel simulation.
+	 * Often used when using parallel simulation
+	 * Is particularly useful when defining your models for conservative parallel optimizations
+	 * Default value is -1. This value indicates no core is preferred
+	 */
+	int m_corenumber;
+
 protected:
 	// lower number -> higher priority
 	std::size_t m_priority;
@@ -44,6 +52,18 @@ public:
 	 * @param priority The priority of the model
 	 */
 	AtomicModel(std::string name, std::size_t priority = 0);
+
+	/**
+	 * Constructor for AtomicModel
+	 *
+	 * Note that 0 is the highest priority. The higher the number,
+	 * the lower the priority.
+	 *
+	 * @param name The name of the model
+	 * @param corenumber The core number that the model wants to be on
+	 * @param priority The priority of the model
+	 */
+	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
 
 	/**
 	 * Perform an external transition, one of the functions the user has to implement
@@ -161,6 +181,22 @@ public:
 	 */
 	void setTime(t_timestamp time);
 
+
+	/**
+	 * Gets the corenumber this model wants to be on
+	 *
+	 * @return Corenumber
+	 */
+	int getCorenumber() const;
+
+	/**
+	 * Sets the corenumber this model wants to be on
+	 * This is a guideline, when choosing an illegal core, a different one will be appointed to this model
+	 *
+	 * @param corenumber The core number this model wants to be on
+	 */
+	void setCorenumber(int corenumber);
+
 	virtual ~AtomicModel()
 	{
 	}
@@ -176,14 +212,14 @@ public:
 	 *
 	 * @param archive A container for the desired output stream
 	 */
-	void serialize(n_serialisation::t_oarchive& archive);
+	void serialize(n_serialization::t_oarchive& archive);
 
 	/**
 	 * Unserialize this object to the given archive
 	 *
 	 * @param archive A container for the desired input stream
 	 */
-	void serialize(n_serialisation::t_iarchive& archive);
+	void serialize(n_serialization::t_iarchive& archive);
 
 	/**
 	 * Helper function for unserializing smart pointers to an object of this class.
@@ -191,7 +227,7 @@ public:
 	 * @param archive A container for the desired input stream
 	 * @param construct A helper struct for constructing the original object
 	 */
-	static void load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

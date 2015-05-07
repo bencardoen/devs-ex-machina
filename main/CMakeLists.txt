@@ -191,7 +191,7 @@ MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
 				include
-				src/serialisation
+				src/serialization
 				src/test 
 				src/tools
 				src/model

@@ -187,17 +187,17 @@ void CoupledModel::setController(n_control::Controller* newControl)
 		model->setController(newControl);
 }
 
-void CoupledModel::serialize(n_serialisation::t_oarchive& archive)
+void CoupledModel::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>(this), m_components);
 }
 
-void CoupledModel::serialize(n_serialisation::t_iarchive& archive)
+void CoupledModel::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>(this), m_components);
 }
 
-void CoupledModel::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<CoupledModel>& construct)
+void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct)
 {
 	std::string name;
 	archive(name);
