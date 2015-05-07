@@ -21,12 +21,12 @@ bool operator==(const std::string lhs, const State& rhs)
 
 void State::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_state);
+	archive(m_state, m_timeLast, m_timeNext);
 }
 
 void State::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_state);
+	archive(m_state, m_timeLast, m_timeNext);
 }
 
 void State::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct)

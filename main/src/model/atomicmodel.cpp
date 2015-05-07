@@ -160,12 +160,12 @@ t_timestamp AtomicModel::getTimeElapsed() const
 
 void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_priority, cereal::virtual_base_class<Model>(this));
+	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
 void AtomicModel::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_priority, cereal::virtual_base_class<Model>(this));
+	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
 void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)

@@ -107,6 +107,22 @@ TEST(Cereal, Message)
 	EXPECT_TRUE(*m1 == *m2);
 }
 
+TEST(Cereal, TimeStamp)
+{
+	std::stringstream ss;
+
+	t_timestamp t1 = t_timestamp(2);
+	t_timestamp t2 = t_timestamp();
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(t1);
+	iarchive(t2);
+
+	EXPECT_EQ(t1, t2);
+}
+
 TEST(Cereal, State)
 {
 	std::stringstream ss;

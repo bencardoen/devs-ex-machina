@@ -7,6 +7,10 @@
 
 #include "model.h"
 #include "controller.h"
+#include "cereal/types/string.hpp"
+#include "cereal/types/vector.hpp"
+#include "cereal/types/map.hpp"
+#include "cereal/types/deque.hpp"
 
 namespace n_model {
 
@@ -168,12 +172,16 @@ void Model::setKeepOldStates(bool b)
 
 void Model::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_name, m_timeLast, m_timeNext, m_state);
+	archive(m_name, m_timeLast, m_timeNext, m_state, m_oldStates,
+			m_iPorts, m_oPorts, m_sendMessages, m_receivedMessages,
+			m_keepOldStates, m_parent);
 }
 
 void Model::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_name, m_timeLast, m_timeNext, m_state);
+	archive(m_name, m_timeLast, m_timeNext, m_state, m_oldStates,
+			m_iPorts, m_oPorts, m_sendMessages, m_receivedMessages,
+			m_keepOldStates, m_parent);
 }
 
 void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Model>& construct)
