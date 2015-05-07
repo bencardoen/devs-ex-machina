@@ -212,14 +212,14 @@ public:
 	 *
 	 * @param archive A container for the desired output stream
 	 */
-	void serialize(n_serialisation::t_oarchive& archive);
+	void serialize(n_serialization::t_oarchive& archive);
 
 	/**
 	 * Unserialize this object to the given archive
 	 *
 	 * @param archive A container for the desired input stream
 	 */
-	void serialize(n_serialisation::t_iarchive& archive);
+	void serialize(n_serialization::t_iarchive& archive);
 
 	/**
 	 * Helper function for unserializing smart pointers to an object of this class.
@@ -227,7 +227,7 @@ public:
 	 * @param archive A container for the desired input stream
 	 * @param construct A helper struct for constructing the original object
 	 */
-	static void load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
 };
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;

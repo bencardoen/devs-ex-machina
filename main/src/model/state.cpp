@@ -19,17 +19,17 @@ bool operator==(const std::string lhs, const State& rhs)
 	return rhs == lhs;
 }
 
-void State::serialize(n_serialisation::t_oarchive& archive)
+void State::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_state);
 }
 
-void State::serialize(n_serialisation::t_iarchive& archive)
+void State::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(m_state);
 }
 
-void State::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<State>& construct)
+void State::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct)
 {
 	std::string state;
 	archive(state);

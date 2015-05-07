@@ -10,7 +10,7 @@
 
 #include "cereal/archives/binary.hpp"
 
-namespace n_serialisation {
+namespace n_serialization {
 
 typedef cereal::BinaryOutputArchive t_oarchive;
 typedef cereal::BinaryInputArchive t_iarchive;

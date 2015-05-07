@@ -158,17 +158,17 @@ t_timestamp AtomicModel::getTimeElapsed() const
 	return m_elapsed;
 }
 
-void AtomicModel::serialize(n_serialisation::t_oarchive& archive)
+void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_priority, cereal::virtual_base_class<Model>(this));
 }
 
-void AtomicModel::serialize(n_serialisation::t_iarchive& archive)
+void AtomicModel::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(m_priority, cereal::virtual_base_class<Model>(this));
 }
 
-void AtomicModel::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
+void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
 {
 	std::string name;
 	std::size_t priority;
