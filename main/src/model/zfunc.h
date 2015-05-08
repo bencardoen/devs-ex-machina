@@ -8,8 +8,8 @@
 #ifndef SRC_MODEL_ZFUNC_H_
 #define SRC_MODEL_ZFUNC_H_
 
+#include <serialization/archive.h>
 #include "message.h"
-#include "archive.h"
 #include "cereal/types/polymorphic.hpp"
 
 namespace n_model {
@@ -28,14 +28,14 @@ public:
 	 *
 	 * @param archive A container for the desired output stream
 	 */
-	virtual void serialize(n_serialisation::t_oarchive& archive);
+	virtual void serialize(n_serialization::t_oarchive& archive);
 
 	/**
 	 * Unserialize this object to the given archive
 	 *
 	 * @param archive A container for the desired input stream
 	 */
-	virtual void serialize(n_serialisation::t_iarchive& archive);
+	virtual void serialize(n_serialization::t_iarchive& archive);
 };
 
 typedef std::shared_ptr<ZFunc> t_zfunc;
