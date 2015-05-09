@@ -195,7 +195,8 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 		if (not this->isMessageLocal(message)) {
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
-			this->receiveMessage(message);
+			// Have local message. No antimessage / revert possible
+			this->queuePendingMessage(message);
 		}
 	}
 	this->unlockMessages();
@@ -463,11 +464,12 @@ void n_model::Core::clearModels()
 
 void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 {
+	LOG_DEBUG("Core :: ", this->getCoreID(), " Queueing message for processing ::\n", msg);
 	MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
-		LOG_ERROR("Core :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		LOG_ERROR("Core :: ", this->getCoreID(), " QPending messages already contains msg, ignoring \n", msg->toString());
 	}
 }
 

@@ -469,9 +469,14 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		if(core->getZombieRounds()>KILL_ZOMBIE){
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, killing.");
-			set_flag(threadsignal[myid], n_threadflags::STOP);
+			if(not core->existTransientMessage()){
+				std::lock_guard<std::mutex> signallock(vectorlock);
+				LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, setting flag to STOP.");
+				set_flag(threadsignal[myid], n_threadflags::STOP);
+			}else{
+				LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, but there are still messages in network :: trying to yield.");
+				std::this_thread::yield();
+			}
 		}
 
 		{	/// Intercept a direct order to stop myself.
