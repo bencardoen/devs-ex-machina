@@ -122,6 +122,7 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/firecellstate.cpp
 	src/examples/forestfire/firegenerator.cpp
 	src/examples/forestfire/firespread.cpp
+	src/performance/devstone/devstone.cpp
 	src/control/allocator.cpp
 	src/control/controller.cpp
 	src/control/controllerconfig.cpp
@@ -142,6 +143,7 @@ add_executable(${PROJECT_NAME}
 	src/test/controllertest.cpp
 	src/test/messagetest.cpp
 	src/test/cerealtest.cpp
+	src/test/performancetest.cpp
  	src/main.cpp
  	)
 add_executable(${PROJECT_NAME}_benchfire
@@ -191,11 +193,12 @@ MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
 include_directories(	src 
 				include
-				src/serialisation
+				src/serialization
 				src/test 
 				src/tools
 				src/model
 				src/tracers
+				src/performance/devstone
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
 				src/examples/trafficlight_ds

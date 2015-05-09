@@ -10,7 +10,12 @@
 namespace n_model {
 
 AtomicModel::AtomicModel(std::string name, std::size_t)
-	: Model(name), m_priority(nextPriority())
+	: Model(name), m_corenumber(-1),m_priority(nextPriority())
+{
+}
+
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
 {
 }
 
@@ -110,6 +115,8 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	int index = m_oldStates.size() - 1;
 
 	// We walk over all old states in reverse, and keep track of the index
+	LOG_ERROR("Model has no old states to revert to!");
+	assert(!m_oldStates.empty() && "No states to revert to.");
 	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
@@ -154,22 +161,32 @@ t_timestamp AtomicModel::getTimeElapsed() const
 	return m_elapsed;
 }
 
-void AtomicModel::serialize(n_serialisation::t_oarchive& archive)
+void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_priority, cereal::virtual_base_class<Model>(this));
+	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
-void AtomicModel::serialize(n_serialisation::t_iarchive& archive)
+void AtomicModel::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_priority, cereal::virtual_base_class<Model>(this));
+	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
-void AtomicModel::load_and_construct(n_serialisation::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
+void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
 {
 	std::string name;
 	std::size_t priority;
 	archive(name, priority);
 	construct(name, priority);
+}
+
+int AtomicModel::getCorenumber() const
+{
+	return m_corenumber;
+}
+
+void AtomicModel::setCorenumber(int corenumber)
+{
+	m_corenumber = corenumber;
 }
 
 }

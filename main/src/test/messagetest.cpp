@@ -11,6 +11,7 @@
 #include "unordered_map"
 #include "objectfactory.h"
 #include "globallog.h"
+#include "gtest/gtest.h"
 #include <queue>
 
 using namespace n_tools;
@@ -77,7 +78,7 @@ TEST(Message, operators){
 	EXPECT_EQ(myset.insert(copy).second, false);
 	EXPECT_EQ(myset.insert(assigned).second, false);
 	EXPECT_EQ(myset.insert(msgafter).second, true);
-	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	EXPECT_FALSE(scheduler->isLockable());
 	for(size_t i = 0; i<100; ++i){
 		std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(i,0), "TargetPort", "SourcePort", " cargo ");
@@ -105,7 +106,7 @@ TEST(Message, operators){
 }
 
 TEST(Message, Antimessage){
-	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(55,0), "TargetPort", "SourcePort", " cargo ");
 	msg->setDestinationCore(1);
 	msg->setSourceCore(0);

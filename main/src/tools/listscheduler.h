@@ -46,10 +46,13 @@ public:
 
 	virtual void push_back(const T& element) override
 	{
+		if(m_hashtable.find(element) != m_hashtable.end() ){
+			throw std::logic_error("Error, scheduler already contains item");
+		}
 		auto handle = m_storage.insert(m_storage.end(), element);
 		auto result = m_hashtable.insert(std::make_pair(element, handle));
 		m_storage.sort();
-		assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
+		testInvariant();
 	}
 
 	virtual size_t size() const override
@@ -87,8 +90,8 @@ public:
 		}
 		T top_el = m_storage.back();
 		m_storage.pop_back();
-		size_t erased = m_hashtable.erase(top_el);
-		assert(erased == 1 && "Hashtable && heap out of sync.");
+		m_hashtable.erase(top_el);
+		testInvariant();
 		return top_el;
 	}
 
@@ -107,12 +110,15 @@ public:
 	{
 		while (not m_storage.empty()) {
 			const T element = m_storage.back();
-			if (element < time)
+			if (element < time){
+				testInvariant();
 				return;
+			}
 			m_storage.pop_back();
 			m_hashtable.erase(element);
 			container.push_back(element);
 		}
+		testInvariant();
 	}
 
 	virtual
@@ -135,9 +141,10 @@ public:
 			auto handle = m_hashtable[elem];
 			m_hashtable.erase(elem);
 			m_storage.erase(handle);
-			assert(m_storage.size() == m_hashtable.size() && "erasure discrepancy");
+			testInvariant();
 			return true;
 		} else {
+			testInvariant();
 			return false;
 		}
 	}
@@ -147,6 +154,19 @@ public:
 	{
 		for (const auto& elem : m_storage) {
 			std::cout << elem << std::endl;
+		}
+	}
+
+	virtual
+	void testInvariant() override{
+		if(m_storage.size() != m_hashtable.size()){
+			std::stringstream ss;
+			ss << "Invariant Scheduler failed :: \n";
+			ss << "Current size of hashmap == ";
+			ss << m_hashtable.size();
+			ss << " != current size of heap :: ";
+			ss << m_storage.size();
+			throw std::logic_error(ss.str());
 		}
 	}
 };
@@ -272,6 +292,13 @@ public:
 	{
 		std::lock_guard<std::mutex> lock(m_lock);
 		Listscheduler<T>::printScheduler();
+	}
+
+	virtual
+	void testInvariant()override
+	{
+		std::lock_guard<std::mutex> lock(m_lock);
+		Listscheduler<T>::testInvariant();
 	}
 };
 

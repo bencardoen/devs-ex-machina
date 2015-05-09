@@ -131,6 +131,10 @@ public:
 	void
 	printScheduler()override;
 
+	virtual
+	void
+	testInvariant()override;
+
 };
 
 }

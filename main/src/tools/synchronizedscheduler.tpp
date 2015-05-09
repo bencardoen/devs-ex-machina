@@ -13,9 +13,12 @@ namespace n_tools {
 template<typename X, typename R>
 void SynchronizedScheduler<X, R>::push_back(const R& item) {
 	std::lock_guard<std::mutex> lock(m_lock);
+	if(m_hashtable.find(item)!=m_hashtable.end()){
+		throw std::logic_error("Error, scheduler already contains item");
+	}
 	t_handle handle = m_storage.push(item);
 	m_hashtable.insert(std::make_pair(item, handle));
-	assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
+	testInvariant();
 }
 
 template<typename X, typename R>
@@ -40,9 +43,9 @@ R SynchronizedScheduler<X, R>::pop() {
 		throw std::out_of_range("No elements in scheduler to pop.");
 	}
 	R top_el = m_storage.top();
-	size_t erased = m_hashtable.erase(top_el);
-	assert(erased == 1 && "Hashtable && heap out of sync.");
+	m_hashtable.erase(top_el);
 	m_storage.pop();
+	testInvariant();
 	return top_el;
 }
 
@@ -62,6 +65,7 @@ void SynchronizedScheduler<X, R>::clear() {
 	std::lock_guard<std::mutex> lock(m_lock);
 	m_hashtable.clear();
 	m_storage.clear();
+	testInvariant();
 }
 
 template<typename X, typename R>
@@ -73,12 +77,15 @@ void SynchronizedScheduler<X, R>::unschedule_until(std::vector<R>& container,
 	std::lock_guard<std::mutex> lock(m_lock);
 	while (not m_storage.empty()) {
 		const R element = m_storage.top(); // Note: using const & here gives false threading errors, a copy is required anyway.
-		if (element < time)
+		if (element < time){
+			testInvariant();
 			return;
+		}
 		m_storage.pop();
 		m_hashtable.erase(element);
 		container.push_back(element); // TODO if push_back fails, the element is lost forever (neither in container, nor in scheduler.
 	}
+	testInvariant();
 }
 
 template<typename X, typename R>
@@ -93,10 +100,12 @@ bool SynchronizedScheduler<X, R>::erase(const R& elem) {
 	auto found = m_hashtable.find(elem);
 	if (found != m_hashtable.end()) {
 		auto handle = found->second;// The actual type of the handle is a typedef listed in the header file.
-		m_storage.erase(handle);// TODO These two calls need to be executed both or not at all.
+		m_storage.erase(handle);
 		m_hashtable.erase(elem);
+		testInvariant();
 		return true;
 	} else {
+		testInvariant();
 		return false;
 	}
 }
@@ -108,6 +117,13 @@ void SynchronizedScheduler<X, R>::printScheduler()  {
 	for(;iter != m_storage.ordered_end(); ++iter){
 		R stored = *iter;
 		std::cout << stored << std::endl;
+	}
+}
+
+template<typename X, typename R>
+void SynchronizedScheduler<X, R>::testInvariant(){
+	if(m_storage.size() != m_hashtable.size()){
+		throw std::logic_error("Invariant of scheduler violated, sizes of heap and map do not match!!");
 	}
 }
 
