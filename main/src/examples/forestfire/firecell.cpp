@@ -67,7 +67,7 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 	for(const n_network::t_msgptr& msg: message){
 		if(msg->getDestinationPort() == m_myIports[4]->getFullName()){
 			wasFromGenerator = true;
-			newState->m_temperature = *reinterpret_cast<const double*>(msg->getPayload().c_str());
+			newState->m_temperature = std::dynamic_pointer_cast<n_network::SpecializedMessage<double>>(msg)->getData();
 			newState->m_phase = getNext(state.m_phase, newState->m_temperature);
 			if(newState->m_phase == FirePhase::BURNING)
 				newState->m_igniteTime = state.m_timeLast.getTime() * TIMESTEP;
@@ -76,7 +76,7 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 
 	if(!wasFromGenerator){
 		for(const n_network::t_msgptr& msg: message){
-			double msgTemp = *reinterpret_cast<const double*>(msg->getPayload().c_str());
+			double msgTemp = std::dynamic_pointer_cast<n_network::SpecializedMessage<double>>(msg)->getData();
 			switch(msg->getDestinationPort().back()){
 			case 'N':
 				newState->m_surroundingTemp[0] = msgTemp;
@@ -151,6 +151,8 @@ void FireCell::intTransition()
 	newState->m_phase = newPhase;
 	newState->m_temperature = newTemp;
 
+	std::cerr << newState->toString() << "\n";
+
 	setState(newState);
 }
 
@@ -178,19 +180,10 @@ std::vector<n_network::t_msgptr> FireCell::output() const
             return {}
 	 */
 	const FireCellState& state = fcstate();
-	std::vector<n_network::t_msgptr> container;
-
 	if(std::abs(state.m_temperature - state.m_oldTemp) > TMP_DIFF) {
-		std::string msg(reinterpret_cast<const char*>(&(state.m_temperature)), sizeof(double));
-//		const char* msgContent = reinterpret_cast<const char*>(&(state.m_temperature));
-//		for(std::size_t i = 0; i < sizeof(double); ++i)
-//			msg[i] = msgContent[i];
-		m_myOport->createMessages(msg, container);
+		return m_myOport->createMessages<double>(state.m_temperature);
 	}
-	for(n_network::t_msgptr& ptr: container){
-		LOG_DEBUG("created message: ", ptr->toString());
-	}
-	return container;
+	return std::vector<n_network::t_msgptr>();
 }
 
 } /* namespace n_examples */

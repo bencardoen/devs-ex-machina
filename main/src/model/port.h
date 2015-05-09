@@ -145,7 +145,13 @@ public:
 	 *
 	 * @param message The payload of the message that is to be sent
 	 */
-	std::vector<n_network::t_msgptr> createMessages(std::string message);
+	template<typename DataType = std::string>
+	std::vector<n_network::t_msgptr> createMessages(const DataType& message)
+	{
+		std::vector<n_network::t_msgptr> container;
+		createMessages<DataType>(message, container);
+		return container;
+	}
 
 	/**
 	 * @brief Creates messages with a given payload and stores them in a container
@@ -159,7 +165,8 @@ public:
 	 *
 	 * @note These out-ports can differ if you are using direct connect
 	 */
-	std::vector<n_network::t_msgptr> createMessages(std::string message, std::vector<n_network::t_msgptr>& container);
+	template<typename DataType = std::string>
+	std::vector<n_network::t_msgptr> createMessages(const DataType& message, std::vector<n_network::t_msgptr>& container);
 
 	const std::vector<t_portptr>& getIns() const;
 	const std::map<t_portptr, t_zfunc>& getOuts() const;
@@ -222,6 +229,78 @@ public:
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
 };
+
+
+template<typename DataType>
+std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
+        std::vector<n_network::t_msgptr>& container)
+{
+	std::string sourcePort = this->getFullName();
+	{
+		std::string str = "";
+		t_zfunc zfunc = n_tools::createObject<ZFunc>();
+		n_network::t_msgptr msg = createMsg("", "", sourcePort, message, zfunc);
+//			n_tools::createObject<n_network::Message>("",
+//			        n_network::t_timestamp::infinity(), "", sourcePort, message);
+		m_sentMessages.push_back(msg);
+	}
+
+	// We want to iterate over the correct ports (whether we use direct connect or not)
+	if (!m_usingDirectConnect) {
+		for (auto& pair : m_outs) {
+			t_zfunc& zFunction = pair.second;
+			std::string model_destination = pair.first->getHostName();
+			//			std::string sourcePort = this->getFullName();
+			std::string destPort = n_tools::copyString(pair.first->getFullName());
+			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
+
+			// We now know everything, we create the message, apply the zFunction and push it on the vector
+			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
+		}
+	} else {
+		for (auto& pair : m_coupled_outs) {
+			std::string model_destination = pair.first->getHostName();
+			//			std::string sourcePort = this->getFullName();
+			std::string destPort = n_tools::copyString(pair.first->getFullName());
+			for (t_zfunc& zFunction : pair.second) {
+				container.push_back(
+				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
+			}
+		}
+	}
+	return container;
+}
+
+/**
+ * @brief Creates a single message
+ * @param dest The name of the destination model
+ * @param destP The full name of the destination port
+ * @param sourceP The full name of the source port
+ * @param msg The data send with this message
+ * @param func The ZFunction that must be applied on this message
+ */
+template<typename DataType>
+n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+        const DataType& msg, t_zfunc& func)
+{
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(dest,
+	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	messagetobesend = (*func)(messagetobesend);
+	return messagetobesend;
+}
+
+/**
+ * @brief Creates a single message.
+ * Specialization of Port::createMsg for pure string messages
+ * @param dest The name of the destination model
+ * @param destP The full name of the destination port
+ * @param sourceP The full name of the source port
+ * @param msg The string data send with this message
+ * @param func The ZFunction that must be applied on this message
+ */
+template<>
+n_network::t_msgptr createMsg<std::string>(const std::string& dest, const std::string& destP,
+        const std::string& sourceP, const std::string& msg, t_zfunc& func);
 
 }
 
