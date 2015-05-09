@@ -195,7 +195,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 		if (not this->isMessageLocal(message)) {
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
-			this->receiveMessage(message);
+			this->queuePendingMessage(message);
 		}
 	}
 	this->unlockMessages();
