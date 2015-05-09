@@ -15,12 +15,12 @@
 
 //x size of the simulated grid
 #ifndef BENCH_FIRE_SIZEX
-#define BENCH_FIRE_SIZEX 5
+#define BENCH_FIRE_SIZEX 4
 #endif
 
 //y size of the simulated grid
 #ifndef BENCH_FIRE_SIZEY
-#define BENCH_FIRE_SIZEY 5
+#define BENCH_FIRE_SIZEY 4
 #endif
 
 #include "controller.h"

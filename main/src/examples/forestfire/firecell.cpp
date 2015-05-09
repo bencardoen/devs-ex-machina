@@ -151,8 +151,6 @@ void FireCell::intTransition()
 	newState->m_phase = newPhase;
 	newState->m_temperature = newTemp;
 
-	std::cerr << newState->toString() << "\n";
-
 	setState(newState);
 }
 

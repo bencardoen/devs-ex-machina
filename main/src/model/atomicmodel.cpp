@@ -14,7 +14,7 @@ AtomicModel::AtomicModel(std::string name, std::size_t)
 {
 }
 
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t)
 	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
 {
 }
