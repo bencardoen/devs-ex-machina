@@ -461,22 +461,17 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 		std::size_t turns,Controller& ctrl)
 {
 	auto core = ctrl.m_cores[myid];
-	constexpr size_t KILL_ZOMBIE = 50;	// @see Core::m_zombie_rounds
+	constexpr size_t YIELD_ZOMBIE = 10;	// @see Core::m_zombie_rounds
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex> lv(vectorlock);
 		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
 	};
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if(core->getZombieRounds()>KILL_ZOMBIE){
-			if(not core->existTransientMessage()){
-				std::lock_guard<std::mutex> signallock(vectorlock);
-				LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, setting flag to STOP.");
-				set_flag(threadsignal[myid], n_threadflags::STOP);
-			}else{
-				LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, but there are still messages in network :: trying to yield.");
-				std::this_thread::yield();
-			}
+		if(core->getZombieRounds()>YIELD_ZOMBIE){
+			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread.");
+			std::chrono::milliseconds ms{25};
+			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
 		}
 
 		{	/// Intercept a direct order to stop myself.
@@ -489,30 +484,37 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 		}
 
 		if (core->isIdle()) {
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
-			set_flag(threadsignal[myid], n_threadflags::IDLE);
-
+			std::chrono::milliseconds ms{45};	// TODO use condition variable.
+			std::this_thread::sleep_for(ms);
+			{
+				std::lock_guard<std::mutex> signallock(vectorlock);
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
+				set_flag(threadsignal[myid], n_threadflags::IDLE);
+			}
 			if(core->terminatedByFunctor()){
 				ctrl.distributeTerminationTime(core->getTime());
 			}
-
-			size_t countidle = 0;
-			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				const std::size_t& flag = threadsignal[i];
-				if(flag_is_set(flag, n_threadflags::IDLE) or flag_is_set(flag, n_threadflags::STOP))
-					++countidle;
+			/// Decide if everyone is idle.
+			// Can't be done by counting flags, these are to slow to be set.
+			// Atomic isIdle is waay faster.
+			bool quit = true;
+			for(const auto& coreentry : ctrl.m_cores ){
+				if( not coreentry.second->isIdle()){
+					quit = false;
+					break;
+				}
 			}
-			if (countidle == threadsignal.size()) {			// All threads are idle/stopped, stop this tread as well.
-				if (not core->existTransientMessage()) {
+			if(quit){
+				if (not core->existTransientMessage()) {	// Final deathtrap : network has message, can't quit.
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 						" all other threads are stopped or idle, network is idle, quitting.");
 					ctrl.m_rungvt.store(false);
+					std::lock_guard<std::mutex> signallock(vectorlock);
 					set_flag(threadsignal[myid], n_threadflags::STOP);
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-						" all other threads are stopped or idle, network reports transients, idling.");
+					" all other threads are stopped or idle, network still reports transients, idling.");
 				}
 			}
 		} else {
