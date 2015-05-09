@@ -12,9 +12,9 @@ cmake_minimum_required(VERSION 2.8)
 ### Register Cotire ###########################################################
 #This speeds up recompilation if STL or other large (template impl) headers
 #are used (Boost, ...)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-include(cotire)
-SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+#include(cotire)
+#SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 5)
 ###############################################################################
 
 
@@ -226,4 +226,4 @@ target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 # Cotire detects when a rebuild of header is required.
 # Comment to disable cotire alltogether. (which is only needed if this causes
 # issues with your code, cotire detects if/when it can do it's job.
-cotire(${PROJECT_NAME})
+#cotire(${PROJECT_NAME}, ${PROJECT_NAME}_benchfire)

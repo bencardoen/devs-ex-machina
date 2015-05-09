@@ -108,20 +108,26 @@ void AtomicModel::setGVT(t_timestamp gvt)
 t_timestamp AtomicModel::revert(t_timestamp time)
 {
 	if (!m_keepOldStates) {
-		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
+		LOG_ERROR("Model has set m_keepOldStates to false, can't call revert!");
 		return t_timestamp::infinity();
 	}
 	auto r_itStates = m_oldStates.rbegin();
 	int index = m_oldStates.size() - 1;
 
 	// We walk over all old states in reverse, and keep track of the index
-	LOG_ERROR("Model has no old states to revert to!");
-	assert(!m_oldStates.empty() && "No states to revert to.");
+	if(m_oldStates.empty()){
+		LOG_ERROR("Model has no old states to revert to!", " revert was called with arg ", time);
+		throw std::logic_error("Atomicmodel has no states to revert to.");
+	}
 	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
 		index--;
+	}
+	if(index < 0){
+		LOG_ERROR("Model , revert moved index to ", index, " quitting.");
+		throw std::out_of_range("Index out of range (negative) in revert.");
 	}
 
 	t_stateptr state = m_oldStates[index];
