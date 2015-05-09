@@ -64,9 +64,6 @@ void Multicore::handleAntiMessage(const t_msgptr& msg)
 	LOG_DEBUG("MCore:: handling antimessage ", msg->toString());
 	if (this->m_received_messages->contains(MessageEntry(msg))) {
 		this->m_received_messages->erase(MessageEntry(msg));
-	} else {
-		LOG_ERROR("MCore:: ", this->getCoreID(), " received antimessage without corresponding message",
-		        msg->toString());
 	}
 }
 
@@ -336,6 +333,7 @@ void n_model::Multicore::unlockMessages()
 
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
+	/// Example : revert , current = 10, totime = 7, gvt = 3
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {

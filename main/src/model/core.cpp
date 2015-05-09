@@ -464,7 +464,7 @@ void n_model::Core::clearModels()
 
 void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 {
-	LOG_DEBUG("Core :: ", this->getCoreID(), " Queueing message for processing ::\n", msg);
+	LOG_DEBUG("Core :: ", this->getCoreID(), " Queueing message for processing ::\n", msg->toString());
 	MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
@@ -521,7 +521,7 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	this->lockMessages();
 	this->m_received_messages->unschedule_until(messages, tokentime);
 	this->unlockMessages();
-
+	LOG_INFO("MCore :: ", this->getCoreID(), " got ", messages.size(), " from pending.");
 	for (const auto& entry : messages) {
 		std::string modelname = entry.getMessage()->getDestinationModel();
 		if (not this->containsModel(modelname)) {			//DynSDevs : filter void messages
