@@ -115,6 +115,8 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	int index = m_oldStates.size() - 1;
 
 	// We walk over all old states in reverse, and keep track of the index
+	LOG_ERROR("Model has no old states to revert to!");
+	assert(!m_oldStates.empty() && "No states to revert to.");
 	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;

@@ -22,11 +22,6 @@ typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(con
 			return t_Scheduler(new SynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
 		return t_Scheduler(new UnSynchronizedScheduler<boost::heap::fibonacci_heap<X>, X>);
 	}
-	case Storage::BINOMIAL: {
-		if(synchronized)
-			return t_Scheduler(new SynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
-		return t_Scheduler(new UnSynchronizedScheduler<boost::heap::binomial_heap<X>, X>);
-	}
 	case Storage::PAIRING: {
 		if(synchronized)
 			return t_Scheduler(new SynchronizedScheduler<boost::heap::pairing_heap<X>, X>);
@@ -36,11 +31,6 @@ typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(con
 		if(synchronized)
 			return t_Scheduler(new SynchronizedScheduler<boost::heap::skew_heap<X, boost::heap::mutable_<true>>, X>);
 		return t_Scheduler(new UnSynchronizedScheduler<boost::heap::skew_heap<X, boost::heap::mutable_<true>>, X>);
-	}
-	case Storage::D_ARY:{
-		if(synchronized)
-			return t_Scheduler(new SynchronizedScheduler<boost::heap::d_ary_heap<X, boost::heap::arity<8>, boost::heap::mutable_<true>>, X>);
-		return t_Scheduler(new UnSynchronizedScheduler<boost::heap::d_ary_heap<X, boost::heap::arity<8>, boost::heap::mutable_<true>>, X>);
 	}
 	case Storage::LIST:{
 		if(synchronized)

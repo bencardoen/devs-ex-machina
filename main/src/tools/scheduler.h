@@ -118,6 +118,13 @@ public:
 	virtual
 	void
 	printScheduler() = 0;
+
+	/**
+	 * Test any invariant that has to hold during modifying operations.
+	 */
+	virtual
+	void
+	testInvariant()=0;
 };
 
 template<typename T>
