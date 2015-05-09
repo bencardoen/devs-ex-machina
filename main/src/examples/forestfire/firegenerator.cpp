@@ -72,7 +72,6 @@ std::vector<n_network::t_msgptr> FireGenerator::output() const
 	for(n_network::t_msgptr& ptr: container){
 		LOG_DEBUG("created message: ", ptr->toString());
 	}
-	std::cerr << std::endl;
 	return container;
 }
 

@@ -10,7 +10,7 @@
 //set some macros, if they aren't defined already when compiling
 //termination time
 #ifndef BENCH_FIRE_MAXTIME
-#define BENCH_FIRE_MAXTIME 3
+#define BENCH_FIRE_MAXTIME 6
 #endif
 
 //x size of the simulated grid
