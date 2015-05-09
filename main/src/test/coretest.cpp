@@ -37,7 +37,7 @@ TEST(ModelEntry, Scheduling)
 {
 	RecordProperty("description",
 	        "Tests if models can be scheduled with identical timestamps, and timestamps differing only in causality.");
-	auto scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::BINOMIAL, false);
+	auto scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	EXPECT_TRUE(scheduler->empty());
 	std::stringstream s;
 	for (size_t i = 0; i < 100; ++i) {

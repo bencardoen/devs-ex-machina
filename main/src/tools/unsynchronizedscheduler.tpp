@@ -15,7 +15,9 @@ void UnSynchronizedScheduler<X, R>::push_back(const R& item) {
 		throw std::logic_error("Error, scheduler already contains item");
 	}
 	t_handle handle = m_storage.push(item);
-	m_hashtable.insert(std::make_pair(item, handle));
+	const bool insert_success = m_hashtable.insert(std::make_pair(item, handle)).second;
+	assert(insert_success == true && "Hashvalue failed");
+	testInvariant();
 	assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
 }
 
@@ -29,6 +31,7 @@ const R& UnSynchronizedScheduler<X, R>::top() {
 	if (m_storage.empty()) {
 		throw std::out_of_range("No elements in scheduler to top.");
 	}
+	testInvariant();
 	return m_storage.top();
 }
 
@@ -43,6 +46,7 @@ R UnSynchronizedScheduler<X, R>::pop() {
 	if(erased != 1){
 		throw std::logic_error("Failed erasing top of scheduler.");
 	}
+	testInvariant();
 	return top_el;
 }
 
@@ -60,6 +64,7 @@ template<typename X, typename R>
 void UnSynchronizedScheduler<X, R>::clear() {
 	m_hashtable.clear();
 	m_storage.clear();
+	testInvariant();
 }
 
 template<typename X, typename R>
@@ -67,12 +72,16 @@ void UnSynchronizedScheduler<X, R>::unschedule_until(std::vector<R>& container,
 		const R& time) {
 	while (not m_storage.empty()) {
 		const R element = m_storage.top(); // Note: using const & here gives false threading errors, a copy is required anyway.
-		if (element < time)
+		if (element < time){
+			testInvariant();
 			return;
+		}
+		// Else remove and copy
 		m_storage.pop();
 		m_hashtable.erase(element);
 		container.push_back(element);
 	}
+	testInvariant();
 }
 
 template<typename X, typename R>
@@ -87,8 +96,10 @@ bool UnSynchronizedScheduler<X, R>::erase(const R& elem) {
 		auto handle = found->second;// The actual type of the handle is a typedef listed in the header file.
 		m_storage.erase(handle);
 		m_hashtable.erase(elem);
+		testInvariant();
 		return true;
 	} else {
+		testInvariant();
 		return false;
 	}
 }
@@ -99,6 +110,19 @@ void UnSynchronizedScheduler<X, R>::printScheduler()  {
 	for(;iter != m_storage.ordered_end(); ++iter){
 		R stored = *iter;
 		std::cout << stored << std::endl;
+	}
+}
+
+template<typename X, typename R>
+void UnSynchronizedScheduler<X, R>::testInvariant() {
+	if(m_storage.size() != m_hashtable.size()){
+		std::stringstream ss;
+		ss << "Invariant Scheduler failed :: \n";
+		ss << "Current size of hashmap == ";
+		ss << m_hashtable.size();
+		ss << " != current size of heap :: ";
+		ss << m_storage.size();
+		throw std::logic_error(ss.str());
 	}
 }
 

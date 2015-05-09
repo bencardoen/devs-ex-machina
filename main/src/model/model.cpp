@@ -51,6 +51,12 @@ void Model::setState(const t_stateptr& newState)
 	m_state = newState;
 	if (m_keepOldStates)
 		m_oldStates.push_back(m_state);
+	else {
+		if (m_oldStates.size() != 0)
+			m_oldStates.at(0) = m_state;
+		else
+			m_oldStates.push_back(m_state);
+	}
 }
 
 void Model::setParent(const std::shared_ptr<Model>& parent)
