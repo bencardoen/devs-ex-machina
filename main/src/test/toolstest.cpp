@@ -71,7 +71,7 @@ class SchedulerTest: public ::testing::Test
 public:
 	SchedulerTest()
 	{
-		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::BINOMIAL, true);
+		scheduler = SchedulerFactory<t_TypeUsed>::makeScheduler(Storage::FIBONACCI, true);
 	}
 
 	void SetUp()
