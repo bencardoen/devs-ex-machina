@@ -468,11 +468,6 @@ TEST(Multicore, revert){
 	t_msgptr msgaftergvt = createObject<Message>("mylight", aftergvt, "", "");
 	msgaftergvt->setSourceCore(0);
 	msgaftergvt->setDestinationCore(1);
-	std::vector<t_msgptr> processed = {msg, msggvt, msgaftergvt};
-	coreone->markProcessed(processed);
-	for(const auto& msg : processed){
-		coreone->markMessageStored(msg);
-	}
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62

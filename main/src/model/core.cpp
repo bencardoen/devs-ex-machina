@@ -50,6 +50,7 @@ bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 	const bool found = this->containsModel(msg->getDestinationModel());
 	if (found) {
 		msg->setDestinationCore(this->getCoreID());
+		LOG_DEBUG("Core ::", this->getCoreID(), " message is local : \n", msg->toString());
 		return true;
 	} else {
 		return false;
@@ -162,7 +163,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
 			this->traceConf(urgent);
-			this->markProcessed(found->second);		// Store message as processed for timewarp.
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
 		}
@@ -174,7 +174,6 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->setTime(noncausaltime);
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
-		this->markProcessed(remaining.second);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
 		if (queried != t_timestamp::infinity()) {
 			LOG_DEBUG("CORE: ", this->getCoreID(), " Model ", model->getName(),
@@ -560,7 +559,7 @@ void n_model::Core::setGVT(const t_timestamp& newgvt)
 		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}
-	if (newgvt < this->getGVT()) {
+	if (newgvt <= this->getGVT()) {
 		LOG_WARNING("CORE:: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
 		        this->getGVT(), " ignoring ");
 		return;

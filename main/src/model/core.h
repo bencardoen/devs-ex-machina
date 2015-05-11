@@ -437,8 +437,15 @@ public:
 	t_timestamp
 	getTerminationTime();
 
+	/**
+	 * Return if core has triggered termination functor.
+	 * @synchronized
+	 */
 	bool terminatedByFunctor()const;
 
+	/**
+	 * Indicate this instance has terminated by functor.
+	 */
 	void setTerminatedByFunctor(bool b);
 
 	/**
@@ -495,13 +502,6 @@ public:
 	 */
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
-
-	/**
-	 * After a model received a set of messages, store these for later use.
-	 * @attention noop in single core, only relevant in multicore (revert)
-	 */
-	virtual
-	void markProcessed(const std::vector<t_msgptr>&) {;}
 
 	// TODO make private
 	virtual
