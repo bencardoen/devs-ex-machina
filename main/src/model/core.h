@@ -503,7 +503,9 @@ public:
 	virtual
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
 
-	// TODO make private
+	/**
+	 * Record msg as sent.
+	 */
 	virtual
 	void markMessageStored(const t_msgptr&){;}
 
