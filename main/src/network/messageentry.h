@@ -5,10 +5,11 @@
  *      Author: Ben Cardoen
  */
 
-#include "message.h"
-
 #ifndef SRC_NETWORK_MESSAGEENTRY_H_
 #define SRC_NETWORK_MESSAGEENTRY_H_
+
+#include "port.h"
+#include "message.h"
 
 namespace n_network {
 
@@ -68,6 +69,33 @@ public:
 	std::ostream& operator<<(std::ostream& os, const MessageEntry& rhs){
 		os << rhs.getMessage()->toString();
 		return os;
+	}
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialization::t_oarchive& archive)
+	{
+		archive(m_message);
+	}
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialization::t_iarchive& archive)
+	{
+		archive(m_message);
+	}
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<MessageEntry>& construct)
+	{
+		t_msgptr msg;
+		archive(msg);
+		construct(msg);
 	}
 };
 

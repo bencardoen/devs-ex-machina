@@ -11,6 +11,7 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/unordered_map.hpp"
+#include "cereal/types/vector.hpp"
 
 using n_network::MessageEntry;
 
@@ -61,9 +62,9 @@ void n_model::Core::save(const std::string& fname)
 	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
 	cereal::BinaryOutputArchive oarchive(fs);
 
-	std::vector<MessageEntry> messages;
+	std::vector<t_msgptr> messages;
 	while (not m_received_messages->empty()) {
-		messages.push_back(m_received_messages->pop());
+		messages.push_back(m_received_messages->pop().getMessage());
 	}
 
 	std::vector<ModelEntry> scheduler;
@@ -71,14 +72,28 @@ void n_model::Core::save(const std::string& fname)
 		scheduler.push_back(m_scheduler->pop());
 	}
 
-	oarchive(m_models);
+	oarchive(m_models, messages, scheduler);
 }
 
 void n_model::Core::load(const std::string& fname)
 {
 	std::fstream fs (fname, std::fstream::in | std::fstream::binary);
 	cereal::BinaryInputArchive iarchive(fs);
-	iarchive(m_models);
+
+	std::vector<t_msgptr> messages;
+	std::vector<ModelEntry> scheduler;
+
+	iarchive(m_models, messages, scheduler);
+
+	while (not messages.empty()) {
+		m_received_messages->push_back(MessageEntry(messages.back()));
+		messages.pop_back();
+	}
+
+	while (not scheduler.empty()) {
+		m_scheduler->push_back(scheduler.back());
+		scheduler.pop_back();
+	}
 }
 
 void n_model::Core::addModel(t_atomicmodelptr model)
