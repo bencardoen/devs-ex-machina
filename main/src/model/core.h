@@ -437,8 +437,15 @@ public:
 	t_timestamp
 	getTerminationTime();
 
+	/**
+	 * Return if core has triggered termination functor.
+	 * @synchronized
+	 */
 	bool terminatedByFunctor()const;
 
+	/**
+	 * Indicate this instance has terminated by functor.
+	 */
 	void setTerminatedByFunctor(bool b);
 
 	/**
@@ -497,13 +504,8 @@ public:
 	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
 
 	/**
-	 * After a model received a set of messages, store these for later use.
-	 * @attention noop in single core, only relevant in multicore (revert)
+	 * Record msg as sent.
 	 */
-	virtual
-	void markProcessed(const std::vector<t_msgptr>&) {;}
-
-	// TODO make private
 	virtual
 	void markMessageStored(const t_msgptr&){;}
 
@@ -567,6 +569,28 @@ public:
 	virtual
 	void
 	setColor(MessageColor mc);
+
+	/**
+	 * Serialize this object to the given archive
+	 *
+	 * @param archive A container for the desired output stream
+	 */
+	void serialize(n_serialization::t_oarchive& archive);
+
+	/**
+	 * Unserialize this object to the given archive
+	 *
+	 * @param archive A container for the desired input stream
+	 */
+	void serialize(n_serialization::t_iarchive& archive);
+
+	/**
+	 * Helper function for unserializing smart pointers to an object of this class.
+	 *
+	 * @param archive A container for the desired input stream
+	 * @param construct A helper struct for constructing the original object
+	 */
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

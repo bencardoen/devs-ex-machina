@@ -13,6 +13,7 @@
 #include "model.h"
 #include "atomicmodel.h"
 #include "coupledmodel.h"
+#include "core.h"
 #include "cereal/archives/binary.hpp"
 #include <sstream>
 
@@ -186,3 +187,16 @@ TEST(Cereal, CoupledModel)
 
 	EXPECT_EQ(m1.getName(), m2.getName());
 }
+
+TEST(Cereal, Core)
+{
+	Core c1;
+	std::string filename ("core1_test_out.bin");
+	c1.save(filename);
+
+	Core c2;
+	c2.load(filename);
+
+	EXPECT_EQ(c1.getCoreID(), c2.getCoreID());
+}
+

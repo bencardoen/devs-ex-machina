@@ -51,6 +51,12 @@ void Model::setState(const t_stateptr& newState)
 	m_state = newState;
 	if (m_keepOldStates)
 		m_oldStates.push_back(m_state);
+	else {
+		if (m_oldStates.size() != 0)
+			m_oldStates.at(0) = m_state;
+		else
+			m_oldStates.push_back(m_state);
+	}
 }
 
 void Model::setParent(const std::shared_ptr<Model>& parent)
@@ -172,7 +178,9 @@ void Model::setKeepOldStates(bool b)
 
 void Model::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_name, m_timeLast, m_timeNext, m_state, m_oldStates,
+	std::vector<t_stateptr> oldStates;
+	if (not m_oldStates.empty()) oldStates.push_back(m_oldStates.at(0));
+	archive(m_name, m_timeLast, m_timeNext, m_state, oldStates,
 			m_iPorts, m_oPorts, m_sendMessages, m_receivedMessages,
 			m_keepOldStates, m_parent);
 }

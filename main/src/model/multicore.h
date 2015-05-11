@@ -89,11 +89,6 @@ private:
 	std::deque<t_msgptr>		m_sent_messages;
 
 	/**
-	 * Processed messages, stored in Front[earliest....latest..now] Back order.
-	 */
-	std::deque<t_msgptr>		m_processed_messages;
-
-	/**
 	 * Mattern 1.4, marks vcount for outgoing message
 	 */
 	void
@@ -218,11 +213,6 @@ public:
 	 */
 	virtual
 	void receiveMessage(const t_msgptr&)override;
-
-	/**
-	 * If a model received a set of messages, store these message as processed in the core.
-	 */
-	void markProcessed(const std::vector<t_msgptr>&) override;
 
 	/**
 	 * Sets new gvt.

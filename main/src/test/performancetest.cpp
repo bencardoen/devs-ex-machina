@@ -31,8 +31,8 @@ TEST(Performance, DEVStone)
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		// Create a DEVStone simulation with width 1 and depth 1
-		t_coupledmodelptr d = createObject<DEVStone>(1, 1, false); // TODO change width once scheduler problem is solved
+		// Create a DEVStone simulation with width 2 and depth 3
+		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
