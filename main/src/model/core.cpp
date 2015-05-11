@@ -5,8 +5,12 @@
  */
 #include "core.h"
 #include <cassert>
+#include <fstream>
 #include "globallog.h"
 #include "objectfactory.h"
+#include "cereal/archives/binary.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/unordered_map.hpp"
 
 using n_network::MessageEntry;
 
@@ -18,11 +22,6 @@ n_model::Core::~Core()
 	}
 	m_models.clear();
 	m_received_messages->clear();
-}
-
-void n_model::Core::load(const std::string&)
-{
-	throw std::logic_error("Core : load not implemented");
 }
 
 n_model::Core::Core()
@@ -57,9 +56,29 @@ bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 	}
 }
 
-void n_model::Core::save(const std::string&)
+void n_model::Core::save(const std::string& fname)
 {
-	throw std::logic_error("Core : save not implemented");
+	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	cereal::BinaryOutputArchive oarchive(fs);
+
+	std::vector<MessageEntry> messages;
+	while (not m_received_messages->empty()) {
+		messages.push_back(m_received_messages->pop());
+	}
+
+	std::vector<ModelEntry> scheduler;
+	while (not m_scheduler->empty()) {
+		scheduler.push_back(m_scheduler->pop());
+	}
+
+	oarchive(m_models);
+}
+
+void n_model::Core::load(const std::string& fname)
+{
+	std::fstream fs (fname, std::fstream::in | std::fstream::binary);
+	cereal::BinaryInputArchive iarchive(fs);
+	iarchive(m_models);
 }
 
 void n_model::Core::addModel(t_atomicmodelptr model)
@@ -624,7 +643,7 @@ void n_model::Core::serialize(n_serialization::t_iarchive& archive) {
 	archive(m_time, m_gvt);
 }
 
-void n_model::Core::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<n_model::Core>& construct )
+void n_model::Core::load_and_construct(n_serialization::t_iarchive&, cereal::construct<n_model::Core>& construct )
 {
 	construct();
 }
