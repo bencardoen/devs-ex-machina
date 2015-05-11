@@ -35,10 +35,10 @@ public:
 	 * @brief Returns on which Core to place a Model
 	 * @param model the AtomicModel to be allocated
 	 */
-	size_t allocate(const n_model::t_atomicmodelptr& m)
+	size_t allocate(n_model::t_atomicmodelptr& m)
 	{
 		int corenum = m->getCorenumber();
-		if(corenum != -1) {	// The user didn't specify a particular core, so we pick one ourselves
+		if(corenum == -1) {	// The user didn't specify a particular core, so we pick one ourselves
 			int i = m_i;
 			m_i = (m_i + 1) % m_cores;
 			m->setCorenumber(i); // We let the model know which core we decided to place it on
