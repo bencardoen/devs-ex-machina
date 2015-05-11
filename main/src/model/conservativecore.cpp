@@ -104,7 +104,7 @@ void Conservativecore::updateEOT()
  */
 void Conservativecore::updateEIT()
 {
-	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT curr=", this->m_eit);
+	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for (size_t i = 0; i < this->m_cores; ++i) {
 		if (i == this->getCoreID())
@@ -116,7 +116,7 @@ void Conservativecore::updateEIT()
 		LOG_INFO("CCore:: ", this->getCoreID(), " updating eit to ", min_eot_others);
 		this->m_eit = min_eot_others;
 	} else {
-		// TODO can this happen and if so, how to 'fix' it ?
+		LOG_WARNING("CCore:: ",this->getCoreID(), " all eots == infinity ");
 	}
 }
 
@@ -127,7 +127,9 @@ void Conservativecore::syncTime(){
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
+	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
 	t_timestamp corrected = std::min( this->getEit(), newtime);
+	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min (", this->getEit(), ", ", newtime);
 	Multicore::setTime(corrected);
 }
 

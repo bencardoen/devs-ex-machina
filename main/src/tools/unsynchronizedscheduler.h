@@ -17,7 +17,7 @@ class SchedulerFactory;
 
 /**
  * Unlocked Scheduler.
- * Each item can be stored once (per hash collision).
+ * Each item can be stored once (for equal hash values).
  * @see SchedulerFactory for construction.
  * @param X Storage type
  * @param S Item type
@@ -110,6 +110,10 @@ public:
 	virtual
 	void
 	printScheduler()override;
+
+	virtual
+	void
+	testInvariant()override;
 
 };
 

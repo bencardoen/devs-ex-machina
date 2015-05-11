@@ -59,7 +59,7 @@ public:
 	/**
 	 * Explicitly not virtual, do not subclass.
 	 */
-	~SharedVector();
+	~SharedVector(){;}
 };
 
 } /* namespace n_model */

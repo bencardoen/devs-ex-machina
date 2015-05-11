@@ -22,11 +22,12 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 {
 	auto tracers = createObject<n_tracers::t_tracerset>();
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(coreAmount);
+	std::shared_ptr<n_control::LocationTable> locTab =
+		createObject<n_control::LocationTable>((simType == Controller::PDEVS) ? coreAmount : 1);
 
 	// If no custom allocator is given, use simple allocator
 	if (allocator == nullptr)
-		allocator = createObject<SimpleAllocator>(coreAmount);
+		allocator = createObject<SimpleAllocator>((simType == Controller::PDEVS) ? coreAmount : 1);
 
 	// Create all cores
 	switch (simType) {
