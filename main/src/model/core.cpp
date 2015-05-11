@@ -617,3 +617,16 @@ void
 n_model::Core::setColor(MessageColor){
 	assert(false);
 }
+
+void n_model::Core::serialize(n_serialization::t_oarchive& archive) {
+	archive(m_time, m_gvt);
+}
+
+void n_model::Core::serialize(n_serialization::t_iarchive& archive) {
+	archive(m_time, m_gvt);
+}
+
+void n_model::Core::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<n_model::Core>& construct )
+{
+	construct();
+}

@@ -13,6 +13,7 @@
 #include "model.h"
 #include "atomicmodel.h"
 #include "coupledmodel.h"
+#include "core.h"
 #include "cereal/archives/binary.hpp"
 #include <sstream>
 
@@ -186,3 +187,4 @@ TEST(Cereal, CoupledModel)
 
 	EXPECT_EQ(m1.getName(), m2.getName());
 }
+
