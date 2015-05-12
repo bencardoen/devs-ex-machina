@@ -38,6 +38,8 @@ const char* sig2str(int sig){
 void signalHandler(int sig){
 	LOG_ERROR("Critical failure: aborted with signal ", sig, " (", sig2str(sig), ')');
 	LOG_FLUSH;
+	if(sig == SIGINT)
+		std::terminate();
 }
 
 /**
@@ -47,6 +49,7 @@ int installHandler(){
 	std::signal(SIGSEGV, &signalHandler);
 	std::signal(SIGTERM, &signalHandler);
 	std::signal(SIGABRT, &signalHandler);
+	std::signal(SIGINT, &signalHandler);
 
 	return 0;
 }
