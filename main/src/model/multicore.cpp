@@ -118,7 +118,8 @@ void Multicore::getMessages()
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	this->lockMessages();
-	for (const auto & message : messages) {
+	for( auto i = messages.rbegin(); i != messages.rend(); i++) {
+		const auto & message = *i;
 		assert(message->getDestinationCore() == this->getCoreID());
 		if(this->containsModel(message->getDestinationModel())){
 			this->receiveMessage(message);
@@ -334,7 +335,7 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 
 	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
 		auto msg = m_sent_messages.back();
-		if (msg->getTimeStamp() > totime) {
+		if (msg->getTimeStamp() >= totime) {
 			m_sent_messages.pop_back();
 			LOG_DEBUG("MCORE:: ", this->getCoreID(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);

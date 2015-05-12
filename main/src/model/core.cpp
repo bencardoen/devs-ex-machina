@@ -484,7 +484,9 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
-		LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		this->m_received_messages->erase(entry);
+		this->m_received_messages->push_back(entry);
 	}
 }
 
