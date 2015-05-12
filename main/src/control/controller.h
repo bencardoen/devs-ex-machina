@@ -25,6 +25,7 @@
 #include "tracers.h"
 #include "globallog.h"
 #include "dssharedstate.h"
+#include "timeevent.h"
 
 namespace n_control {
 
@@ -67,6 +68,8 @@ private:
 	std::shared_ptr<n_model::RootModel> m_root;
 	t_coupledmodelptr m_coupledOrigin;
 	n_tracers::t_tracersetptr m_tracers;
+	TimeEventQueue m_events;
+	t_timestamp m_lastGVT;
 
 	DSSharedState m_sharedState;
 	bool m_dsPhase;
@@ -87,7 +90,7 @@ private:
 	/**
 	 * Interval time (in milliseconds) during which consecutive gvt calculations are performed.
 	 * A GVT thread will run [5ms |run| interval | interval | ... ].
-	 * @attention : The OS will schedule at least interval sleep time, but more is ofcourse possible.
+	 * @attention : The OS will schedule at least interval sleep time, but more is of course possible.
 	 * @synchronized
 	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
 	 */
@@ -95,7 +98,7 @@ private:
 
 	/**
 	 * Shared memory flag. Used to signal between threads simulating Cores and
-	 * the GVT thread wether or not the last should continue.
+	 * the GVT thread whether or not the last should continue.
 	 * False means interrupt at earliest possible time to do so cleanly.
 	 */
 	std::atomic<bool> 	m_rungvt;
@@ -215,6 +218,16 @@ public:
 	void setGVTInterval(std::size_t ms);
 
 	/**
+	 * @brief Add a moment during which the simulation will pause for a certain time
+	 */
+	void addPauseEvent(t_timestamp time, size_t duration, bool repeating = false);
+
+	/**
+	 * @brief Add a moment on which the simulation will be paused, saved and continued
+	 */
+	void addSaveEvent(t_timestamp time, bool repeating = false);
+
+	/**
 	 * Return the current GVT threading interval.
 	 */
 	std::size_t
@@ -255,6 +268,11 @@ private:
 	 * @brief Add an atomic model to a specific core
 	 */
 	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
+
+	/**
+	 * @brief Handle all time events until now, returns whether the simulation should continue
+	 */
+	bool handleTimeEvents(std::condition_variable& cv, std::mutex& cvlock);
 
 //	void threadGVT(n_network::Time freq);
 
