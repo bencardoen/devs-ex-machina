@@ -222,6 +222,7 @@ void Controller::simulate()
 		return;
 	}
 
+	m_events.prepare();
 	m_tracers->startTrace();
 
 	m_isSimulating = true;
@@ -317,7 +318,9 @@ void Controller::simPDEVS()
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
-	this->startGVTThread();	/// Starts and joins GVT threads.
+	do {
+		this->startGVTThread();	/// Starts and joins GVT threads.
+	} while (handleTimeEvents(cv, cvlock));
 
 	for (auto& t : m_threads) {
 		t.join();
@@ -455,6 +458,44 @@ void Controller::distributeTerminationTime(t_timestamp ntime){
 	}
 }
 
+void Controller::addPauseEvent(t_timestamp time, size_t duration, bool repeating)
+{
+	m_events.push(TimeEvent(time, TimeEvent::Type::PAUSE, repeating, duration));
+}
+
+void Controller::addSaveEvent(t_timestamp time, bool repeating)
+{
+	m_events.push(TimeEvent(time, TimeEvent::Type::SAVE, repeating));
+}
+
+bool Controller::handleTimeEvents(std::condition_variable& cv, std::mutex& cvlock)
+{
+	LOG_INFO("CONTROLLER: Handling any events");
+	bool cont = false;
+	bool save = false;
+	std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
+	for(TimeEvent& event : worklist) {
+		switch(event.m_type) {
+		case TimeEvent::Type::PAUSE:
+			cont = true;
+			LOG_INFO("CONTROLLER: Pausing for ", event.m_duration, " seconds.");
+			cvlock.lock();		//Stop cores
+			cv.notify_all();
+			sleep(event.m_duration);
+			cvlock.unlock();	//Start cores again
+			cv.notify_all();
+			break;
+		case TimeEvent::Type::SAVE:
+			cont = true;
+			save = true; 	// We're only going to save once
+			break;
+		}
+	}
+	if(save) {
+		//TODO Save Controller
+	}
+	return cont;
+}
 
 void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		std::vector<std::size_t>& threadsignal, std::mutex& vectorlock,
@@ -569,6 +610,11 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
 		for (const auto& ucore : cont.m_cores)
 			ucore.second->setGVT(cmsg->getGvt());
+		cont.m_lastGVT = cmsg->getGvt();
+		if(cont.m_events.countTodo(cmsg->getGvt()) > 0) {
+			LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
+			gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
+		}
 	} else {
 		if(gvtsafe == false){
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
@@ -579,6 +625,11 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		if (cmsg->isGvtFound()) {
 			for (const auto& ucore : cont.m_cores)
 				ucore.second->setGVT(cmsg->getGvt());
+			cont.m_lastGVT = cmsg->getGvt();
+			if(cont.m_events.countTodo(cmsg->getGvt()) > 0) {
+				LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
+				gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
+			}
 		} else {
 			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
 			// TODO check/reset core state, or crash hard.

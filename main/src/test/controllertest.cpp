@@ -19,6 +19,7 @@
 #include "trafficsystemc.h"
 #include "trafficsystemds.h"
 #include "dynamiccore.h"
+#include "timeevent.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -33,7 +34,7 @@ using namespace n_examples;
 /*
  * Function to test part of the functionality present in Controller's addModel methods
  */
-void testAddModel(const t_atomicmodelptr& model, std::shared_ptr<Allocator> allocator,
+void testAddModel(t_atomicmodelptr& model, std::shared_ptr<Allocator> allocator,
         std::shared_ptr<n_control::LocationTable> locTab)
 {
 	size_t coreID = allocator->allocate(model);
@@ -211,6 +212,31 @@ TEST(Controller, ControllerConfig)
 		auto ctrl = conf.createController();
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
+
+		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl->addModel(m1);
+
+		ctrl->simulate();
+	}
+}
+
+TEST(Controller, Pause)
+{
+	RecordProperty("description", "Tests pause functionality of simulator");
+
+	ControllerConfig conf;
+	conf.name = "SimpleSim";
+	conf.saveInterval = 30;
+	conf.simType = Controller::PDEVS;
+	conf.coreAmount = 2;
+
+	std::ofstream filestream(TESTFOLDER "controller/pausetest.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(360, 0);
+		ctrl->setTerminationTime(endTime);
+		ctrl->addPauseEvent(t_timestamp(120,0),5);
 
 		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 		ctrl->addModel(m1);

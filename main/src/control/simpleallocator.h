@@ -13,7 +13,7 @@
 namespace n_control {
 
 /**
- * @brief Simple, dumb allocator that spreads models evenly
+ * @brief Simple, dumb allocator that tries to spread models evenly, but gets overruled by the models' configuration
  */
 class SimpleAllocator: public Allocator
 {
@@ -35,11 +35,16 @@ public:
 	 * @brief Returns on which Core to place a Model
 	 * @param model the AtomicModel to be allocated
 	 */
-	size_t allocate(const n_model::t_atomicmodelptr&)
+	size_t allocate(n_model::t_atomicmodelptr& m)
 	{
-		int i = m_i;
-		m_i = (m_i + 1) % m_cores;
-		return i;
+		int corenum = m->getCorenumber();
+		if(corenum == -1) {	// The user didn't specify a particular core, so we pick one ourselves
+			int i = m_i;
+			m_i = (m_i + 1) % m_cores;
+			m->setCorenumber(i); // We let the model know which core we decided to place it on
+			return i;
+		}
+		else return corenum;	// The user already specified a core for this model, so we better pick that one!
 	}
 };
 
