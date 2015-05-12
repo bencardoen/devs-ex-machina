@@ -119,3 +119,25 @@ TEST(Message, Antimessage){
 	EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
 	EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
 }
+
+TEST(Message, Smoketest){
+	//// Try to break scheduler.
+	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
+	for(size_t i = 0; i<1000; ++i){
+		std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(0,i), "TargetPort", "SourcePort", " cargo ");
+		msg->setDestinationCore(1);
+		msg->setSourceCore(0);
+		t_msgptr antimessage = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
+		antimessage->setDestinationCore(0);
+		antimessage->setSourceCore(1);
+		EXPECT_FALSE(scheduler->contains(msg));
+		size_t oldsize = scheduler->size();
+		scheduler->push_back(MessageEntry(msg));
+		EXPECT_TRUE(oldsize == scheduler->size()-1);
+		EXPECT_TRUE(scheduler->contains(MessageEntry(msg)));
+		EXPECT_TRUE(scheduler->contains(MessageEntry(antimessage)));
+		scheduler->erase(MessageEntry(antimessage));
+		EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
+		EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
+	}
+}

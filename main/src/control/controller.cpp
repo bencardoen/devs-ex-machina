@@ -409,7 +409,7 @@ void Controller::startGVTThread()
 	LOG_INFO("Controller:: joined GVT thread");
 	while(m_rungvt.load()==true){
 		if(infguard < ++i){
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking off.");
 			m_rungvt.store(false);
 			break;// No join, have not started thread.
 		}

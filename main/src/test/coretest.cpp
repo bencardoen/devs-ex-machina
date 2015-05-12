@@ -12,6 +12,7 @@
 #include "trafficlightc.h"
 #include "policemanc.h"
 #include "controller.h"
+#include "conservativecore.h"
 #include "simpleallocator.h"
 #include "tracers.h"
 #include "coutredirect.h"
@@ -468,11 +469,6 @@ TEST(Multicore, revert){
 	t_msgptr msgaftergvt = createObject<Message>("mylight", aftergvt, "", "");
 	msgaftergvt->setSourceCore(0);
 	msgaftergvt->setDestinationCore(1);
-	std::vector<t_msgptr> processed = {msg, msggvt, msgaftergvt};
-	coreone->markProcessed(processed);
-	for(const auto& msg : processed){
-		coreone->markMessageStored(msg);
-	}
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
@@ -482,6 +478,7 @@ TEST(Multicore, revert){
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	Message origin = *msgaftergvt;
 	t_msgptr antimessage( new Message(origin));
+	antimessage->setSourceCore(42);	// Work around error in log.
 	antimessage->setAntiMessage(true);
 	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
 	EXPECT_EQ(coreone->getTime().getTime(), 63);
@@ -708,7 +705,7 @@ TEST(Multicore, revertoffbyone){
 	EXPECT_EQ(c2->getTime().getTime(), 108);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
-	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
 	msg->setSourceCore(0);
 	msg->setDestinationCore(1);
 	msg->paint(MessageColor::WHITE);
@@ -734,9 +731,8 @@ TEST(Multicore, revertstress){
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
-	CoutRedirect myRedirect(filestream);
 	auto tracers = createObject<n_tracers::t_tracerset>();
-
+	CoutRedirect myRedirect(filestream);
 	t_networkptr network = createObject<Network>(2);
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
@@ -760,7 +756,7 @@ TEST(Multicore, revertstress){
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
-	//c1->printSchedulerState();
+	c1->printSchedulerState();
 
 	c2->setTracers(tracers);
 	c2->init();
@@ -782,12 +778,12 @@ TEST(Multicore, revertstress){
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
 	EXPECT_EQ(c2->getTime().getTime(), 108);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
-	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
 	msg->setSourceCore(0);
 	msg->setDestinationCore(1);
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
-	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "policeman.OUT", "trafficLight.INTERRUPT", "toManual");
+	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
 	msglater->setSourceCore(0);
 	msglater->setDestinationCore(1);
 	msglater->paint(MessageColor::WHITE);
@@ -796,6 +792,68 @@ TEST(Multicore, revertstress){
 	c2->logCoreState();
 	EXPECT_EQ(c2->getTime().getTime(),101 );// Model switched to oo, so time will not advance.
 	EXPECT_EQ(c2->getZombieRounds(), 0);	// but still have another message to handle @ 101.
+
+
+	n_tracers::traceUntil(t_timestamp::infinity());
+	n_tracers::clearAll();
+	n_tracers::waitForTracer();
+	tracers->finishTrace();
+
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+
+	}
+}
+
+TEST(Multicore, revert_antimessaging){
+	RecordProperty("description", "Try to break revert by doing illogical tests.");
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	auto tracers = createObject<n_tracers::t_tracerset>();
+	CoutRedirect myRedirect(filestream);
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+
+	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	tracers->startTrace();
+	// c1: has policeman
+	// c2: has trafficlight
+	c1->runSmallStep();
+	c1->runSmallStep();
+	c1->printSchedulerState();
+	EXPECT_TRUE(c1->getTime().getTime()==300);	// Core 1 has sent 1 message, trafficlight is still at 0.
+	c1->revert(t_timestamp(32,0));
+	c1->runSmallStep();	// Time goes from 32 -> 200 (first scheduled).
+	EXPECT_TRUE(c1->getTime().getTime()==200);
+	EXPECT_TRUE(c2->existTransientMessage());
+	c2->runSmallStep();	// Trafficlight requests messages, sees message + antimessage
+	// It first queues the message, then sees the next (anti) , and annihilates it.
+	EXPECT_TRUE(c2->getTime().getTime()==58);
+	EXPECT_FALSE(c2->existTransientMessage());
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -864,6 +922,68 @@ TEST(Multicore, GVT){
 	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
 	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
 
+	}
+
+}
+
+
+TEST(Conservativecore, GVT){
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+
+	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+	t_coreptr c1 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+	t_coreptr c2 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+	coreMap[0] = c1;
+	coreMap[1] = c2;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	ctrl.addModel(m);
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	//c1->printSchedulerState();
+
+	c2->setTracers(tracers);
+	c2->init();
+	c2->setTerminationTime(endTime);
+	c2->setLive(true);
+	c2->logCoreState();
+	tracers->startTrace();
+	// c1: has policeman
+	// c2: has trafficlight
+
+	c2->runSmallStep();
+	c2->logCoreState();
+	c2->runSmallStep();
+	c2->logCoreState();	// C2 @108
+	c1->runSmallStep();	// C1
+	c1->logCoreState(); 	// C1 @200, GVT = 108.
+	// This fails since we have no lookahead models.
+	/**
+	std::atomic<bool> rungvt(true);
+	n_control::runGVT(ctrl, rungvt);
+	EXPECT_EQ(c1->getGVT().getTime(), 108);
+	EXPECT_EQ(c1->getGVT(), c2->getGVT());
+	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
+	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
+	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+	*/
 	}
 
 }

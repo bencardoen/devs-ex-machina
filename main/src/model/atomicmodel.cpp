@@ -14,9 +14,16 @@ AtomicModel::AtomicModel(std::string name, std::size_t)
 {
 }
 
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priority*/)
 	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
 {
+	/** TODO enable (breaks tracertest)
+	if(priority!= 0){
+		m_priority=nextPriority();
+	}else{
+		m_priority=priority;
+	}
+	*/
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
@@ -114,9 +121,12 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	auto r_itStates = m_oldStates.rbegin();
 	int index = m_oldStates.size() - 1;
 
+	if(m_oldStates.empty()){
+		LOG_ERROR("Model has no old states to revert to!");
+		throw std::logic_error("Model  has no states to revert to.");
+	}
+
 	// We walk over all old states in reverse, and keep track of the index
-	LOG_ERROR("Model has no old states to revert to!");
-	assert(!m_oldStates.empty() && "No states to revert to.");
 	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
