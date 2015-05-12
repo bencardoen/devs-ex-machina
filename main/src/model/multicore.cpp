@@ -18,7 +18,6 @@ Multicore::~Multicore()
 	this->m_network.reset();
 	// this->m_received_messages member of Core.cpp, don't touch.
 	this->m_sent_messages.clear();
-	this->m_processed_messages.clear();
 }
 
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
@@ -31,8 +30,12 @@ void Multicore::sendMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
+	if(coreid >= m_cores || coreid == this->getCoreID()){
+		LOG_ERROR("\tMCORE :: ", this->getCoreID(), " failed lookup for msg ", msg->toString());
+		return;
+	}
 	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
-	LOG_DEBUG("MCore:: ", this->getCoreID(), " sending message ", msg->toString());
+	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
 	this->countMessage(msg);					// Make sure Mattern is notified
@@ -48,7 +51,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
-	LOG_DEBUG("MCore:: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
+	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
 	this->m_network->acceptMessage(amsg);
 	this->countMessage(amsg);					// Make sure Mattern is notified
 }
@@ -61,7 +64,7 @@ void Multicore::paintMessage(const t_msgptr& msg)
 void Multicore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
-	LOG_DEBUG("MCore:: handling antimessage ", msg->toString());
+	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
 	if (this->m_received_messages->contains(MessageEntry(msg))) {
 		this->m_received_messages->erase(MessageEntry(msg));
 	}
@@ -69,7 +72,7 @@ void Multicore::handleAntiMessage(const t_msgptr& msg)
 
 void Multicore::markMessageStored(const t_msgptr& msg)
 {
-	LOG_DEBUG("MCore:: ", this->getCoreID(), " storing sent message", msg->toString());
+	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
 }
 
@@ -93,13 +96,13 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 
 	// If we receive a message from our own, we don't want that to be counted in the V vector
 	if (msg->getSourceCore() == this->getCoreID()){
-		LOG_ERROR("MCore :: ", this->getCoreID(), " got message with Source == my id ?? ", msg->toString());
+		LOG_ERROR("\tMCORE :: ", this->getCoreID(), " got message with Source == my id ?? ", msg->toString());
 		return;
 	}
 
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
-	std::lock_guard<std::mutex> lock(this->m_vlock);
 	if (msg->getColor() == MessageColor::WHITE) {
+		std::lock_guard<std::mutex> lock(this->m_vlock);
 		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
 		//this->m_wake_on_msg.notify_all();
 	}
@@ -108,7 +111,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 void Multicore::getMessages()
 {
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-	LOG_INFO("MCore id:", this->getCoreID(), " received ", messages.size(), " messages ");
+	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	this->sortIncoming(messages);
 }
 
@@ -195,7 +198,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		this->waitUntilOK(msg, rungvt);
 		// If all items in count vectors are zero
 		if (msg->countIsZero()) {
-			LOG_INFO("MCore:: ", this->getCoreID(), " process init received control message, found GVT!");
+			LOG_INFO("MCORE :: ", this->getCoreID(), " process init received control message, found GVT!");
 
 			// We found GVT!
 			t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
@@ -206,7 +209,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 			return;
 		} else {
 			// if 3d round? exit?
-			LOG_INFO("MCore:: ", this->getCoreID(),
+			LOG_INFO("MCORE :: ", this->getCoreID(),
 			        " process init received control message, starting 2nd round");
 
 			// We start a second round
@@ -252,14 +255,6 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 	}
 }
 
-void Multicore::markProcessed(const std::vector<t_msgptr>& messages)
-{
-	for (const auto& msg : messages) {
-		LOG_DEBUG("MCore : ", this->getCoreID(), " storing processed msg", msg->toString());
-		this->m_processed_messages.push_back(msg);
-	}
-}
-
 void Multicore::setGVT(const t_timestamp& newgvt)
 {
 	Core::setGVT(newgvt);
@@ -269,35 +264,27 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 		return;
 	}
 	this->lockSimulatorStep();
-	// Clear processed messages with time < gvt
-	// Message don't need a lock, simulator can't change
-	auto iter = m_processed_messages.begin();
-	for (; iter != m_processed_messages.end(); ++iter) {
-		if ((*iter)->getTimeStamp() > this->getGVT()) {
-			break;
-		}
-	}
-	LOG_DEBUG("MCore:: ", this->getCoreID(), "setgvt found ", distance(m_processed_messages.begin(), iter),
-	        " processed messages to erase.");
-	m_processed_messages.erase(m_processed_messages.begin(), iter);		//erase[......GVT x)
-	LOG_DEBUG("MCore:: ", this->getCoreID(), "processed messages now contains :: ", m_processed_messages.size());
+	/*
+	 * Simulator lock => message lock. (single step takes simlock, then message lock
+	 */
 
+	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {
 		if ((*senditer)->getTimeStamp() > this->getGVT()) {
 			break;
 		}
 	}
-
+	// Erase them.
 	LOG_DEBUG("MCore:: ", this->getCoreID(), " found ", distance(m_sent_messages.begin(), senditer),
 	        " sent messages to erase.");
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCore:: ", this->getCoreID(), " sent messages now contains :: ", m_sent_messages.size());
-
+	// Update models
 	for (const auto& modelentry : this->m_models) {
 		modelentry.second->setGVT(newgvt);
 	}
-
+	// Reset state (note V-vector is reset by Mattern code.
 	this->setColor(MessageColor::WHITE);
 	LOG_INFO("Mcore:: ", this->getCoreID(), " painted core back to white, for next gvt calculation");
 	this->unlockSimulatorStep();
@@ -305,23 +292,23 @@ void Multicore::setGVT(const t_timestamp& newgvt)
 
 void n_model::Multicore::lockSimulatorStep()
 {
-	LOG_DEBUG("MCORE:: trying to lock simulator core");
+	LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
 	this->m_locallock.lock();
-	LOG_DEBUG("MCORE:: simulator core locked");
+	LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
 }
 
 void n_model::Multicore::unlockSimulatorStep()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "trying to unlock simulator core", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " trying to unlock simulator core.");
 	this->m_locallock.unlock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), "simulator core unlocked", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " simulator core unlocked.");
 }
 
 void n_model::Multicore::lockMessages()
 {
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locking ... ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locking ... ");
 	m_msglock.lock();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locked ", this->getCoreID());
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " msgs locked ");
 }
 
 void n_model::Multicore::unlockMessages()
@@ -342,24 +329,14 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 		this->setLive(true);
 		this->setTerminatedByFunctor(false);
 	}
-	// We have the simulator lock
-	// DO NOT lock on msgs, we're called by receive message, which is locked !!
-	while (!m_processed_messages.empty()) {
-		auto msg = m_processed_messages.back();
-		if (msg->getTimeStamp() > totime) {
-			LOG_DEBUG("MCORE:: ", this->getCoreID(), " repushing processed message ", msg->toString());
-			m_processed_messages.pop_back();
-			this->queuePendingMessage(msg);
-		} else {
-			break;
-		}
-	}
-	// All send messages time < totime, delete (antimessage).
-	while (!m_sent_messages.empty()) {
+	//		  vv Simlock		  vv Messagelock
+	// Call chain :: singleStep->getMessages->sortIncoming -> receiveMessage() -> revert()
+
+	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
 		auto msg = m_sent_messages.back();
 		if (msg->getTimeStamp() > totime) {
 			m_sent_messages.pop_back();
-			LOG_DEBUG("MCORE:: ", this->getCoreID(), " popping sent message ", msg->toString());
+			LOG_DEBUG("MCORE:: ", this->getCoreID(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);
 		} else {
 			break;

@@ -14,9 +14,16 @@ AtomicModel::AtomicModel(std::string name, std::size_t)
 {
 }
 
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t)
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priority*/)
 	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
 {
+	/** TODO enable (breaks tracertest)
+	if(priority!= 0){
+		m_priority=nextPriority();
+	}else{
+		m_priority=priority;
+	}
+	*/
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
@@ -114,20 +121,17 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 	auto r_itStates = m_oldStates.rbegin();
 	int index = m_oldStates.size() - 1;
 
-	// We walk over all old states in reverse, and keep track of the index
 	if(m_oldStates.empty()){
-		LOG_ERROR("Model has no old states to revert to!", " revert was called with arg ", time);
-		throw std::logic_error("Atomicmodel has no states to revert to.");
+		LOG_ERROR("Model has no old states to revert to!");
+		throw std::logic_error("Model  has no states to revert to.");
 	}
+
+	// We walk over all old states in reverse, and keep track of the index
 	for (; r_itStates != m_oldStates.rbegin() + (m_oldStates.size() - 1); r_itStates++) {
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
 		index--;
-	}
-	if(index < 0){
-		LOG_ERROR("Model , revert moved index to ", index, " quitting.");
-		throw std::out_of_range("Index out of range (negative) in revert.");
 	}
 
 	t_stateptr state = m_oldStates[index];

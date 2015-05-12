@@ -17,12 +17,12 @@ void Network::acceptMessage(const t_msgptr& msg)
 {
 	m_queues[msg->getDestinationCore()].push(msg);
 	m_counting.store(true);
-	LOG_DEBUG("NETWORK: Network accepting message");
+	LOG_DEBUG("\tNETWORK: Network accepting message");
 }
 
 Network::t_messages Network::getMessages(std::size_t coreid)
 {
-	LOG_DEBUG("NETWORK: Network sending msgs to ", coreid);
+	LOG_DEBUG("\tNETWORK: Network sending msgs to ", coreid);
 	return m_queues[coreid].purge();
 }
 
