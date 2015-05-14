@@ -14,6 +14,8 @@
 #include "atomicmodel.h"
 #include "coupledmodel.h"
 #include "core.h"
+#include "modelentry.h"
+#include "messageentry.h"
 #include "cereal/archives/binary.hpp"
 #include <sstream>
 
@@ -198,5 +200,40 @@ TEST(Cereal, Core)
 	c2.load(filename);
 
 	EXPECT_EQ(c1.getCoreID(), c2.getCoreID());
+}
+
+TEST(Cereal, MessageEntry)
+{
+	std::stringstream ss;
+
+	t_msgptr m1 = std::make_shared<n_network::Message>("test", 0, "dest", "source");
+	t_msgptr m2 = std::make_shared<n_network::Message>("err", 1, "err", "err");
+
+	MessageEntry me1 (m1);
+	MessageEntry me2 (m2);
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(me1);
+	iarchive(me2);
+
+	EXPECT_TRUE(me1 == me2);
+}
+
+TEST(Cereal, ModelEntry)
+{
+	std::stringstream ss;
+
+	ModelEntry me1 ("test", 0);
+	ModelEntry me2 ("err", 0);
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(me1);
+	iarchive(me2);
+
+	EXPECT_TRUE(me1 == me2);
 }
 

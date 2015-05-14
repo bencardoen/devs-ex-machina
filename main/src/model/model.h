@@ -16,6 +16,7 @@
 #include "port.h"		//include glog, ofactory
 #include "state.h"
 #include "dssharedstate.h"	//include string
+#include "cereal/types/polymorphic.hpp"
 
 namespace n_control{
 	class Controller;
