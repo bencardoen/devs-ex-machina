@@ -144,6 +144,7 @@ add_executable(${PROJECT_NAME}
 	src/test/messagetest.cpp
 	src/test/cerealtest.cpp
 	src/test/performancetest.cpp
+	src/test/testmodels.cpp
  	src/main.cpp
  	)
 add_executable(${PROJECT_NAME}_benchfire
