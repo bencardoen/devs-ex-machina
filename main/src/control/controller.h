@@ -168,8 +168,6 @@ public:
 	 */
 	void startGVTThread();
 
-//	void save(std::string filepath, std::string filename) = delete;
-//	void load(std::string filepath, std::string filename) = delete;
 //	void checkForTemporaryIrreversible();
 
 	/**
@@ -242,7 +240,12 @@ private:
 	/**
 	 * @brief Serialize all cores and models, dump tracer output
 	 */
-	void save(bool traceOnly = false);
+	void save(const std::string& fname, bool traceOnly = false);
+
+	/**
+	 * @brief Load all cores and models
+	 */
+	void load(const std::string& fname);
 
 	/**
 	 * @brief Simulation setup and loop using regular DEVS
