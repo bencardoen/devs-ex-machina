@@ -10,6 +10,8 @@
 #include <deque>
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include "cereal/archives/binary.hpp"
 
 using namespace n_tools;
 
@@ -29,8 +31,16 @@ Controller::~Controller()
 {
 }
 
-void Controller::save(bool traceOnly)
+void Controller::save(const std::string& fname, bool traceOnly)
 {
+	if (fname == "") return;
+	// New implementation cereal:
+	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	cereal::BinaryOutputArchive oarchive(fs);
+
+	oarchive(m_coupledOrigin, m_lastGVT);
+
+	// Old implementation:
 	switch (m_simType) {
 	case CLASSIC:
 	case DSDEVS: {
@@ -46,6 +56,18 @@ void Controller::save(bool traceOnly)
 		break;
 	}
 	}
+}
+
+void Controller::load(const std::string& fname)
+{
+    std::fstream fs (fname, std::fstream::in | std::fstream::binary);
+    cereal::BinaryInputArchive iarchive(fs);
+
+    t_timestamp gvt;
+    iarchive(m_coupledOrigin, m_lastGVT);
+
+    //TODO: create cores and iterate over models to allocate them all to the right core
+    //TODO: set loaded GVT to the new cores
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic)
@@ -276,7 +298,7 @@ void Controller::simDEVS()
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
 		}
 		if (i % m_saveInterval == 0) {
-			save(true); // TODO remove boolean when serialization implemented
+			save("", true); // TODO remove boolean when serialization implemented & change string
 		}
 	}
 }
@@ -356,7 +378,7 @@ void Controller::simDSDEVS()
 			break;
 		}
 		if (i % m_saveInterval == 0) {
-			save(true); // TODO remove boolean when serialization implemented
+			save("", true); // TODO remove boolean when serialization implemented & change string
 		}
 	}
 }
