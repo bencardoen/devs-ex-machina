@@ -10,17 +10,17 @@
 //set some macros, if they aren't defined already when compiling
 //termination time
 #ifndef BENCH_FIRE_MAXTIME
-#define BENCH_FIRE_MAXTIME 10
+#define BENCH_FIRE_MAXTIME 3
 #endif
 
 //x size of the simulated grid
 #ifndef BENCH_FIRE_SIZEX
-#define BENCH_FIRE_SIZEX 5
+#define BENCH_FIRE_SIZEX 3
 #endif
 
 //y size of the simulated grid
 #ifndef BENCH_FIRE_SIZEY
-#define BENCH_FIRE_SIZEY 5
+#define BENCH_FIRE_SIZEY 3
 #endif
 
 #include "controller.h"
@@ -28,6 +28,8 @@
 #include "objectfactory.h"
 #include "simpleallocator.h"
 #include "multicore.h"
+
+LOG_INIT("firebench.log")
 
 int main(int, char**)
 {

@@ -24,6 +24,7 @@
 #include <cstring>
 #if LOGGING != false
 #include "logger.h"
+#include <csignal>
 #endif
 
 #ifndef LOG_LEVEL
@@ -41,20 +42,6 @@
 
 #define LOG_GLOBAL n_tools::n_globalLog::globalLog
 
-//macro for intitializing the global logger
-#if LOGGING==true
-
-namespace n_tools {
-namespace n_globalLog {
-
-extern Logger<LOG_LEVEL> globalLog;
-
-} /*namespace n_globalLog*/
-} /*namespace n_tools*/
-#define LOG_INIT(filename) n_tools::Logger<LOG_LEVEL> LOG_GLOBAL(filename);
-#else
-#define LOG_INIT(filename)
-#endif
 //macros for calling the logging functions
 #define LOG_BLOCK(logCommand) do{\
 	logCommand;\
@@ -82,6 +69,26 @@ extern Logger<LOG_LEVEL> globalLog;
 #define LOG_INFO(...) LOG_CALL(logInfo, "INFO", __VA_ARGS__)
 #else
 #define LOG_INFO(...) LOG_NOOP
+#endif
+#if LOG_LEVEL
+#define LOG_FLUSH LOG_BLOCK(LOG_GLOBAL.flush())
+#else
+#define LOG_FLUSH LOG_NOOP
+#endif
+
+//macro for intitializing the global logger
+#if LOGGING==true
+
+namespace n_tools {
+namespace n_globalLog {
+
+extern Logger<LOG_LEVEL> globalLog;
+
+} /*namespace n_globalLog*/
+} /*namespace n_tools*/
+#define LOG_INIT(filename) n_tools::Logger<LOG_LEVEL> LOG_GLOBAL(filename);
+#else
+#define LOG_INIT(filename)
 #endif
 
 //TODO clean up macro definitions

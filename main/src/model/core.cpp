@@ -178,6 +178,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			urgent->setTime(noncausaltime);
 			this->traceInt(urgent);
 		} else {
+			urgent->setTimeElapsed(0);
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
 			this->traceConf(urgent);
@@ -188,6 +189,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
+		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
@@ -484,7 +486,9 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
-		LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		this->m_received_messages->erase(entry);
+		this->m_received_messages->push_back(entry);
 	}
 }
 

@@ -12,9 +12,9 @@ cmake_minimum_required(VERSION 2.8)
 ### Register Cotire ###########################################################
 #This speeds up recompilation if STL or other large (template impl) headers
 #are used (Boost, ...)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-include(cotire)
-SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+#include(cotire)
+#SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 5)
 ###############################################################################
 
 
@@ -95,6 +95,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC -march=native -g ${flagstdc11} ")
 
 add_executable(${PROJECT_NAME}
 	src/tools/logger.cpp
+	src/tools/globallog.cpp
 	src/tools/coutredirect.cpp
 	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
@@ -146,7 +147,10 @@ add_executable(${PROJECT_NAME}
  	src/main.cpp
  	)
 add_executable(${PROJECT_NAME}_benchfire
+	src/tools/logger.cpp
+	src/tools/globallog.cpp
 	src/tools/coutredirect.cpp
+	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
 	src/model/cellmodel.cpp
 	src/model/coupledmodel.cpp
@@ -179,7 +183,7 @@ add_executable(${PROJECT_NAME}_benchfire
 ###############################################################################
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
-					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=0 "#-o3"# -flto"
+					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15 "#-o3"# -flto"
 					)
 
 ### INCLUDE PATHS ############################################################
@@ -222,4 +226,4 @@ target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 # Cotire detects when a rebuild of header is required.
 # Comment to disable cotire alltogether. (which is only needed if this causes
 # issues with your code, cotire detects if/when it can do it's job.
-cotire(${PROJECT_NAME})
+#cotire(${PROJECT_NAME}, ${PROJECT_NAME}_benchfire)

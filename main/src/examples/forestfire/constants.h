@@ -22,7 +22,7 @@ const double T_IGNITE = 300.0;
 const double T_GENERATE = 500.0;
 const double T_BURNED = 60.0;
 const double TIMESTEP = 0.01;
-const std::size_t RADIUS = 3;
+const std::size_t RADIUS = 1;
 const double TMP_DIFF = 1.0;
 
 /**

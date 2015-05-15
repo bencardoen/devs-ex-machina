@@ -140,7 +140,7 @@ void Generator::intTransition()
 
 std::vector<n_network::t_msgptr> Generator::output() const
 {
-	auto msg = getPort("out_event1")->createMessages(n_tools::inttostring(1));
+	auto msg = getPort("out_event1")->createMessages(n_tools::toString(1));
 	return msg;
 }
 
@@ -148,8 +148,8 @@ std::vector<n_network::t_msgptr> Generator::output() const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
-	: CoupledModel("Coupled" + n_tools::inttostring(depth))
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, std::size_t randomta)
+	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
@@ -161,9 +161,9 @@ CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
 		connectPorts(recv, recurse->getPort("in_event1"));
 
 		n_model::t_atomicmodelptr prev;
-		for (uint i = 0; i < width; ++i) {
+		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-			        "Processor" + n_tools::inttostring(depth) + "_" + n_tools::inttostring(i), randomta);
+			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -176,9 +176,9 @@ CoupledRecursion::CoupledRecursion(uint width, uint depth, uint randomta)
 		connectPorts(prev->getPort("out_event1"), send);
 	} else {
 		n_model::t_atomicmodelptr prev;
-		for (uint i = 0; i < width; ++i) {
+		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-			        "Processor" + n_tools::inttostring(depth) + "_" + n_tools::inttostring(i), randomta);
+			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -199,7 +199,7 @@ CoupledRecursion::~CoupledRecursion()
 /*
  * DEVStone
  */
-DEVStone::DEVStone(uint width, uint depth, uint randomta)
+DEVStone::DEVStone(std::size_t width, std::size_t depth, std::size_t randomta)
 	: CoupledModel("DEVStone")
 {
 	auto gen = n_tools::createObject<Generator>();

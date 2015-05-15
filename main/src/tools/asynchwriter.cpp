@@ -44,8 +44,8 @@ void ASynchWriter::worker()
 	}
 }
 
-ASynchWriter::ASynchWriter(const std::string& name)
-	: m_out(name), m_buffer(512), m_done(false), m_thread(std::bind(&ASynchWriter::worker, this))
+ASynchWriter::ASynchWriter(const std::string& name, std::ios_base::openmode mode)
+	: m_out(name, mode), m_buffer(512), m_done(false), m_thread(std::bind(&ASynchWriter::worker, this))
 {
 	assert(m_out.is_open() && "AsynchWriter::AsynchWriter Failed to open the file for output.");
 

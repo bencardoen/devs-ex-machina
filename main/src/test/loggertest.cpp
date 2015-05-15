@@ -23,6 +23,7 @@ const char* c = TESTFOLDER;
 		logger.logError("ERROR log 1\n");\
 		logger.logInfo("INFO log 1\n");\
 		logger.logWarning("WARNING log 2\n");\
+		logger.flush();\
 		logger.logDebug("DEBUG log 2\n");\
 		logger.logError("ERROR log 2\n");\
 		logger.logInfo("INFO log 2\n");\

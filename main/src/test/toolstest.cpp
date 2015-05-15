@@ -105,7 +105,7 @@ TEST_F(SchedulerTest, basic_push)
 	EXPECT_EQ(scheduler->contains(3), true);
 	scheduler->push_back(2);
 	EXPECT_EQ(scheduler->contains(2), true);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	EXPECT_EQ(scheduler->contains(42), false);
 }
 
@@ -117,7 +117,7 @@ TEST_F(SchedulerTest, basic_push_order)
 	scheduler->push_back(1);
 	scheduler->push_back(3);
 	scheduler->push_back(2);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	size_t pops = scheduler->size();
 	for (size_t i = 1; i < pops + 1; ++i) {
 		t_TypeUsed q = scheduler->pop();
@@ -141,16 +141,16 @@ TEST_F(SchedulerTest, basic_unschedule_until)
 	for (size_t i = 0; i < 10; ++i) {
 		scheduler->push_back(i);
 	}
-	EXPECT_EQ(scheduler->size(), 10);
+	EXPECT_EQ(scheduler->size(), 10u);
 	std::vector<t_TypeUsed> rem;
 	scheduler->unschedule_until(rem, 5);
-	EXPECT_EQ(rem.size(), 6);
-	EXPECT_EQ(scheduler->size(), 4);
+	EXPECT_EQ(rem.size(), 6u);
+	EXPECT_EQ(scheduler->size(), 4u);
 	for (size_t i = 0; i < 4; ++i) {
 		scheduler->top();
 		scheduler->pop();
 	}
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 	EXPECT_EQ(scheduler->empty(), true);
 }
 
@@ -182,7 +182,7 @@ TEST_F(SchedulerTest, Concurrency_evenwritersreaders)
 
 	for (auto& t : threads)
 		t.join();
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 	EXPECT_EQ(scheduler->empty(), true);
 	EXPECT_EQ(writer_done, pushcount);
 }
@@ -213,7 +213,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 
 	for (auto& t : threads)
 		t.join();
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 	EXPECT_EQ(scheduler->empty(), true);
 	EXPECT_EQ(writer_done, pushcount);
 }
@@ -244,7 +244,7 @@ TEST_F(SchedulerTest, Concurrency_threadoverload)
 
 	for (auto& t : threads)
 		t.join();
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 	EXPECT_EQ(scheduler->empty(), true);
 	EXPECT_EQ(writer_done, pushcount);
 }
@@ -288,7 +288,7 @@ TEST_F(UnSyncedSchedulerTest, basic_push)
 	EXPECT_EQ(scheduler->contains(3), true);
 	scheduler->push_back(2);
 	EXPECT_EQ(scheduler->contains(2), true);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	EXPECT_EQ(scheduler->contains(42), false);
 }
 
@@ -300,7 +300,7 @@ TEST_F(UnSyncedSchedulerTest, basic_push_order)
 	scheduler->push_back(1);
 	scheduler->push_back(3);
 	scheduler->push_back(2);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	size_t pops = scheduler->size();
 	for (size_t i = 1; i < pops + 1; ++i) {
 		t_TypeUsed q = scheduler->pop();
@@ -324,16 +324,16 @@ TEST_F(UnSyncedSchedulerTest, basic_unschedule_until)
 	for (size_t i = 0; i < 10; ++i) {
 		scheduler->push_back(i);
 	}
-	EXPECT_EQ(scheduler->size(), 10);
+	EXPECT_EQ(scheduler->size(), 10u);
 	std::vector<t_TypeUsed> rem;
 	scheduler->unschedule_until(rem, 5);
-	EXPECT_EQ(rem.size(), 6);
-	EXPECT_EQ(scheduler->size(), 4);
+	EXPECT_EQ(rem.size(), 6u);
+	EXPECT_EQ(scheduler->size(), 4u);
 	for (size_t i = 0; i < 4; ++i) {
 		scheduler->top();
 		scheduler->pop();
 	}
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 	EXPECT_EQ(scheduler->empty(), true);
 }
 
