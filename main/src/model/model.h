@@ -208,10 +208,15 @@ public:
 	 */
 	virtual void setController(n_control::Controller* newControl);
 
-	/*
+	/**
 	 * @brief Gets the next scheduled time.
 	 */
 	t_timestamp getTimeNext() const;
+
+	/**
+	 * @brief Gets the last scheduled time.
+	 */
+	t_timestamp getTimeLast() const;
 
 	/**
 	 * @brief Sets the variable that determines if old states are to be kept or not

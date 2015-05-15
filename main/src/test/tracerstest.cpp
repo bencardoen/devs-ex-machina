@@ -85,9 +85,9 @@ TEST(tracing, getSizeHasTracers) {
 	testSize<int, double>();
 	testSize<int, double, char>();
 	//tests what happens when you slice the object
-	EXPECT_EQ(((Tracers<double, char> )Tracers<int, double, char>()).getSize(), 2);
-	EXPECT_EQ(((Tracers<char> )Tracers<int, double, char>()).getSize(), 1);
-	EXPECT_EQ(((Tracers<> )Tracers<int, double, char>()).getSize(), 0);
+	EXPECT_EQ(((Tracers<double, char> )Tracers<int, double, char>()).getSize(), 2u);
+	EXPECT_EQ(((Tracers<char> )Tracers<int, double, char>()).getSize(), 1u);
+	EXPECT_EQ(((Tracers<> )Tracers<int, double, char>()).getSize(), 0u);
 	EXPECT_EQ(((Tracers<double, char> )Tracers<int, double, char>()).hasTracers(), true);
 	EXPECT_EQ(((Tracers<char> )Tracers<int, double, char>()).hasTracers(), true);
 	EXPECT_EQ(((Tracers<> )Tracers<int, double, char>()).hasTracers(), false);
@@ -195,16 +195,16 @@ struct TraceCallTest
 #define TEST_DATA_PART(i, a0, a1, a2, b0, b1, b2, c0, c1, c2, d0, d1, d2) \
 	EXPECT_EQ(tester.getByID<i>().m_value[0].m_timesCalled, a0);\
 	EXPECT_EQ(tester.getByID<i>().m_value[0].m_lastTime, a1);\
-	EXPECT_EQ(tester.getByID<0>().m_value[0].m_lastID, a2);\
+	EXPECT_EQ(tester.getByID<i>().m_value[0].m_lastID, a2);\
 	EXPECT_EQ(tester.getByID<i>().m_value[1].m_timesCalled, b0);\
 	EXPECT_EQ(tester.getByID<i>().m_value[1].m_lastTime, b1);\
-	EXPECT_EQ(tester.getByID<0>().m_value[1].m_lastID, b2);\
+	EXPECT_EQ(tester.getByID<i>().m_value[1].m_lastID, b2);\
 	EXPECT_EQ(tester.getByID<i>().m_value[2].m_timesCalled, c0);\
 	EXPECT_EQ(tester.getByID<i>().m_value[2].m_lastTime, c1);\
-	EXPECT_EQ(tester.getByID<0>().m_value[2].m_lastID, c2);\
+	EXPECT_EQ(tester.getByID<i>().m_value[2].m_lastID, c2);\
 	EXPECT_EQ(tester.getByID<i>().m_value[3].m_timesCalled, d0);\
 	EXPECT_EQ(tester.getByID<i>().m_value[3].m_lastTime, d1);\
-	EXPECT_EQ(tester.getByID<0>().m_value[3].m_lastID, d2);
+	EXPECT_EQ(tester.getByID<i>().m_value[3].m_lastID, d2);
 
 #define TEST_DATA(a0, a1, a2, b0, b1, b2, c0, c1, c2, d0, d1, d2) \
 	TEST_DATA_PART(0, a0, a1, a2, b0, b1, b2, c0, c1, c2, d0, d1, d2) \

@@ -101,8 +101,8 @@ TEST(Model, Basic)
 	RecordProperty("description", "Verifies all basic functionality of the default model functions");
 	Model model1("ABC");
 	EXPECT_EQ(model1.getState(), nullptr);
-	EXPECT_EQ(model1.getIPorts().size(), 0);
-	EXPECT_EQ(model1.getOPorts().size(), 0);
+	EXPECT_EQ(model1.getIPorts().size(), 0u);
+	EXPECT_EQ(model1.getOPorts().size(), 0u);
 	EXPECT_EQ(model1.getName(), "ABC");
 	EXPECT_EQ(model1.getPort(""), nullptr);
 	Model model2("DEF");
@@ -123,8 +123,8 @@ TEST(Model, TransitionTesting)
 	EXPECT_EQ(tl.getState()->toString(), "red");
 	tl.setTime(t_timestamp(30));
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(60));
-	EXPECT_EQ(tl.getState()->m_timeLast.getTime(), 30);
-	EXPECT_EQ(tl.getState()->m_timeNext.getTime(), 90);
+	EXPECT_EQ(tl.getState()->m_timeLast.getTime(), 30u);
+	EXPECT_EQ(tl.getState()->m_timeNext.getTime(), 90u);
 	tl.intTransition();
 	EXPECT_EQ(tl.getState()->toString(), "green");
 	EXPECT_EQ(tl.timeAdvance(), t_timestamp(50));

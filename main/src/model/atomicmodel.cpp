@@ -171,6 +171,11 @@ t_timestamp AtomicModel::getTimeElapsed() const
 	return m_elapsed;
 }
 
+void AtomicModel::setTimeElapsed(t_timestamp elapsed)
+{
+	m_elapsed = elapsed;
+}
+
 void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
@@ -200,4 +205,3 @@ void AtomicModel::setCorenumber(int corenumber)
 }
 
 }
-

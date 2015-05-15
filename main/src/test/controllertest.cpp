@@ -59,10 +59,10 @@ TEST(Controller, allocation)
 	testAddModel(m3, allocator, locTab);
 	testAddModel(m4, allocator, locTab);
 
-	EXPECT_EQ(locTab->lookupModel("Fst"), 0);
-	EXPECT_EQ(locTab->lookupModel("Snd"), 1);
-	EXPECT_EQ(locTab->lookupModel("Thd"), 0);
-	EXPECT_EQ(locTab->lookupModel("Fth"), 1);
+	EXPECT_EQ(locTab->lookupModel("Fst"), 0u);
+	EXPECT_EQ(locTab->lookupModel("Snd"), 1u);
+	EXPECT_EQ(locTab->lookupModel("Thd"), 0u);
+	EXPECT_EQ(locTab->lookupModel("Fth"), 1u);
 }
 
 TEST(Controller, cDEVS)

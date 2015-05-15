@@ -51,10 +51,10 @@ TEST(ModelEntry, Scheduling)
 	std::vector<ModelEntry> imminent;
 	ModelEntry token("", t_timestamp(50, 0));
 	scheduler->unschedule_until(imminent, token);
-	EXPECT_EQ(scheduler->size(), 50);
+	EXPECT_EQ(scheduler->size(), 50u);
 	token = ModelEntry("", t_timestamp(100, 0));
 	scheduler->unschedule_until(imminent, token);
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 
 	// Test if scheduling models at same time is a problem
 	ModelEntry origin("Abc", t_timestamp(0));
@@ -62,14 +62,14 @@ TEST(ModelEntry, Scheduling)
 	ModelEntry third("Cab", t_timestamp(0, 1));
 	scheduler->push_back(origin);
 	scheduler->push_back(duplicate);
-	EXPECT_EQ(scheduler->size(), 2);
+	EXPECT_EQ(scheduler->size(), 2u);
 	scheduler->push_back(third);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	ModelEntry found = scheduler->pop();
 	EXPECT_EQ(found.getName(), "Abc");
 	EXPECT_EQ(scheduler->pop().getName(), "Bca");
 	EXPECT_EQ(scheduler->pop().getName(), "Cab");
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 }
 
 TEST(ModelScheduling, BasicOperations)
@@ -82,9 +82,9 @@ TEST(ModelScheduling, BasicOperations)
 	std::unordered_set<ModelEntry> set;
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(), 2);
+	EXPECT_EQ(set.size(), 2u);
 	set.clear();
-	EXPECT_EQ(set.size(), 0);
+	EXPECT_EQ(set.size(), 0u);
 	// This is evil, and is never guaranteed to work.
 	// A model entry with the same name is equal no matter what time is set.
 	// The alternative allows insertion multiple times (an error).
@@ -95,7 +95,7 @@ TEST(ModelScheduling, BasicOperations)
 	EXPECT_TRUE(me > you); // Note this is so the max-heap property works as a min heap.
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(), 1);
+	EXPECT_EQ(set.size(), 1u);
 }
 
 TEST(Core, CoreFlow)
@@ -107,7 +107,7 @@ TEST(Core, CoreFlow)
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	c.setTracers(tracers);
-	EXPECT_EQ(c.getCoreID(), 0);
+	EXPECT_EQ(c.getCoreID(), 0u);
 	std::string portname_stub = "model_port";
 	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
 	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
@@ -123,7 +123,7 @@ TEST(Core, CoreFlow)
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
 	auto imminent = c.getImminent();
-	EXPECT_EQ(imminent.size(), 2);
+	EXPECT_EQ(imminent.size(), 2u);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	c.syncTime();
@@ -132,7 +132,7 @@ TEST(Core, CoreFlow)
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
 	c.syncTime();
-	EXPECT_EQ(imminent.size(), 2);
+	EXPECT_EQ(imminent.size(), 2u);
 }
 
 TEST(DynamicCore, smallStep)
@@ -153,13 +153,13 @@ TEST(DynamicCore, smallStep)
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
 	std::vector<t_atomicmodelptr> imms;
 	c->getLastImminents(imms);
-	EXPECT_EQ(imms.size(), 0);
+	EXPECT_EQ(imms.size(), 0u);
 	c->setLive(true);
 	c->syncTime();
 	while(c->isLive()){
 		c->runSmallStep();
 		c->getLastImminents(imms);
-		EXPECT_EQ(imms.size(), 2);
+		EXPECT_EQ(imms.size(), 2u);
 		if(imms.size()==2){
 			EXPECT_EQ(imms[0],modelfrom);
 			EXPECT_EQ(imms[1], modelto);
@@ -176,7 +176,7 @@ TEST(DynamicCore, smallStep)
 	c->runSmallStep();
 	c->printSchedulerState();
 	c->getLastImminents(imms);
-	EXPECT_EQ(imms.size(), 0);
+	EXPECT_EQ(imms.size(), 0u);
 }
 
 class termfun: public n_model::TerminationFunctor
@@ -449,11 +449,11 @@ TEST(Multicore, revert){
 	coreone->setTerminationTime(endtime);
 	coreone->init();
 	coreone->syncTime();
-	EXPECT_EQ(coreone->getTime().getTime(), 58);
+	EXPECT_EQ(coreone->getTime().getTime(), 58u);
 	//coreone->printSchedulerState();
 	coreone->setLive(true);
 	coreone->runSmallStep();
-	EXPECT_EQ(coreone->getTime().getTime(), 108);
+	EXPECT_EQ(coreone->getTime().getTime(), 108u);
 	//coreone->printSchedulerState();
 	// Trigger revert
 	// Setup message state to test all paths
@@ -473,7 +473,7 @@ TEST(Multicore, revert){
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
 
-	EXPECT_EQ(coreone->getTime(), 62);
+	EXPECT_EQ(coreone->getTime(), 62u);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	Message origin = *msgaftergvt;
@@ -481,9 +481,9 @@ TEST(Multicore, revert){
 	antimessage->setSourceCore(42);	// Work around error in log.
 	antimessage->setAntiMessage(true);
 	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
-	EXPECT_EQ(coreone->getTime().getTime(), 63);
+	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
-	EXPECT_EQ(coreone->getTime().getTime(), 108);
+	EXPECT_EQ(coreone->getTime().getTime(), 108u);
 }
 
 
@@ -546,10 +546,10 @@ TEST(Multicore, revertidle){
 	// Test that a Core can go from idle to live again without corrupting.
 	c1->revert(t_timestamp(201,42));
 	// Expecting time = 201,42, revert of model 1x antimessage @300.
-	EXPECT_EQ(c1->getTime().getTime(), 201);
+	EXPECT_EQ(c1->getTime().getTime(), 201u);
 	c1->logCoreState();
 	c1->runSmallStep();	// no imminents, no messages, adv time to 300::1	// 1 only if single test is run
-	EXPECT_EQ(c1->getTime().getTime(), 300);
+	EXPECT_EQ(c1->getTime().getTime(), 300u);
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
@@ -627,14 +627,14 @@ TEST(Multicore, revertedgecases){
 	/// c2 remains in zombiestate
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getZombieRounds(), 2);
+	EXPECT_EQ(c2->getZombieRounds(), 2u);
 	c1->runSmallStep();	// C1 time:300->500, send message to light, state idle
 	c1->logCoreState();
-	EXPECT_EQ(c1->getTime().getTime(), 500);
+	EXPECT_EQ(c1->getTime().getTime(), 500u);
 	c2->runSmallStep();	// C2 receives msg, does nothing (nothing to do @200), advances to 300
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(), 300);
-	EXPECT_EQ(c2->getZombieRounds(), 0);
+	EXPECT_EQ(c2->getTime().getTime(), 300u);
+	EXPECT_EQ(c2->getZombieRounds(), 0u);
 	c2->runSmallStep();	// C2 finally awakens, light receives message, core terminates @360.
 	c2->logCoreState();
 
@@ -698,11 +698,11 @@ TEST(Multicore, revertoffbyone){
 	c2->runSmallStep();
 	c2->logCoreState();
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
-	EXPECT_EQ(c2->getTime().getTime(), 57);
+	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
-	EXPECT_EQ(c2->getTime().getTime(), 58);
+	EXPECT_EQ(c2->getTime().getTime(), 58u);
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
-	EXPECT_EQ(c2->getTime().getTime(), 108);
+	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
@@ -712,8 +712,8 @@ TEST(Multicore, revertoffbyone){
 	network->acceptMessage(msg);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(),108 );// Model switched to oo, so time will not advance.
-	EXPECT_EQ(c2->getZombieRounds(), 1);	// so zombie round = 1;
+	EXPECT_EQ(c2->getTime().getTime(), 108u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 1u);	// so zombie round = 1;
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -772,11 +772,11 @@ TEST(Multicore, revertstress){
 	c2->runSmallStep();
 	c2->logCoreState();
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
-	EXPECT_EQ(c2->getTime().getTime(), 57);
+	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
-	EXPECT_EQ(c2->getTime().getTime(), 58);
+	EXPECT_EQ(c2->getTime().getTime(), 58u);
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
-	EXPECT_EQ(c2->getTime().getTime(), 108);
+	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
 	msg->setSourceCore(0);
@@ -790,8 +790,8 @@ TEST(Multicore, revertstress){
 	network->acceptMessage(msglater);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(),101 );// Model switched to oo, so time will not advance.
-	EXPECT_EQ(c2->getZombieRounds(), 0);	// but still have another message to handle @ 101.
+	EXPECT_EQ(c2->getTime().getTime(), 101u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 0u);	// but still have another message to handle @ 101.
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -916,7 +916,7 @@ TEST(Multicore, GVT){
 	c1->logCoreState(); 	// C1 @200, GVT = 108.
 	std::atomic<bool> rungvt(true);
 	n_control::runGVT(ctrl, rungvt);
-	EXPECT_EQ(c1->getGVT().getTime(), 108);
+	EXPECT_EQ(c1->getGVT().getTime(), 108u);
 	EXPECT_EQ(c1->getGVT(), c2->getGVT());
 	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
 	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);

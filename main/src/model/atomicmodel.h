@@ -208,6 +208,11 @@ public:
 	t_timestamp getTimeElapsed() const;
 
 	/**
+	 * @brief Sets the elapsed time since the previous internal transition.
+	 */
+	void setTimeElapsed(t_timestamp elapsed);
+
+	/**
 	 * Serialize this object to the given archive
 	 *
 	 * @param archive A container for the desired output stream
