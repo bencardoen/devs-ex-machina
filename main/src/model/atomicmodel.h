@@ -207,6 +207,11 @@ public:
 	 */
 	t_timestamp getTimeElapsed() const;
 
+	// TODO remove stub
+	void addInfluencees(std::set<std::string>& /*influences*/){
+		;
+	}
+
 	/**
 	 * Serialize this object to the given archive
 	 *

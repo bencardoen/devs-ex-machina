@@ -12,7 +12,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc), m_sent_message(false)
+	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc), m_sent_message(false),m_min_lookahead(t_timestamp::infinity())
 {
 	;
 }
@@ -58,6 +58,7 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
  */
 void Conservativecore::updateEOT()
 {
+	// TODO rewrite with lookahead.
 	t_timestamp val = this->m_eit;
 	if (m_sent_message) {
 		val.increaseCausality(1);
@@ -124,6 +125,7 @@ void Conservativecore::syncTime(){
 	this->updateEOT();
 	this->updateEIT();
 	Core::syncTime();	// Multicore has no syncTime.
+	this->resetLookahead();
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -131,6 +133,45 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	t_timestamp corrected = std::min( this->getEit(), newtime);
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min (", this->getEit(), ", ", newtime);
 	Multicore::setTime(corrected);
+}
+
+void Conservativecore::init(){
+	Core::init();
+	buildInfluenceeMap();
+}
+
+
+void Conservativecore::initExistingSimulation(t_timestamp loaddate){
+	Core::initExistingSimulation(loaddate);
+	buildInfluenceeMap();
+}
+
+void Conservativecore::buildInfluenceeMap(){
+	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map");
+	std::set<std::string>	influencees;
+	for(const auto& modelentry: m_models){
+		const auto& model = modelentry.second;
+		model->addInfluencees(influencees);
+	}
+	for(const auto& modelname : influencees){
+		std::size_t influencee_core = this->m_loctable->lookupModel(modelname);
+		this->m_influencees.insert(influencee_core);
+	}
+	LOG_INFO("CCORE :: ", this->getCoreID(), " influencee map == ");
+	for(const auto& coreid : m_influencees){
+		LOG_INFO("CCORE :: ", this->getCoreID() , " influenced by " ,  coreid);
+	}
+}
+
+void Conservativecore::postTransition(const t_atomicmodelptr& model){
+	t_timestamp current_min = this->m_min_lookahead;
+	t_timestamp model_la = model->lookAhead();
+	this->m_min_lookahead = std::min(current_min, model_la);
+	LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
+}
+
+void Conservativecore::resetLookahead(){
+	this->m_min_lookahead = t_timestamp::infinity();
 }
 
 } /* namespace n_model */

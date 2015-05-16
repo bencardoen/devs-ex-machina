@@ -65,6 +65,30 @@ private:
 	 * Record if we sent a message in the last round.
 	 */
 	bool		m_sent_message;
+
+	/**
+	 * Store the cores that influence this core.
+	 * This is constructed by asking each model what model it is influenced
+	 * by, and for those constructing a corresponding list of
+	 * core ID's.
+	 * @example:
+	 * 	Trafficlight 	@ core 0
+	 * 	Policeman	@ core 1
+	 * 	This core ==0, influencees = "Policeman", == {1}
+	 */
+	std::set<std::size_t> m_influencees;
+
+	/**
+	 * Minimum lookahead for all transitioned models in a simulation step.
+	 */
+	t_timestamp		m_min_lookahead;
+
+	/**
+	 * Reset lookahead to inf, to be invoked after each sim run.
+	 */
+	void
+	resetLookahead();
+
 public:
 	Conservativecore() = delete;
 
@@ -123,6 +147,28 @@ public:
 	 */
 	void
 	setTime(const t_timestamp& newtime)override;
+
+	void
+	buildInfluenceeMap();
+
+	/**
+	 * Link creation of influencee-map into call to init.
+	 * @attention : call once and once only.
+	 */
+	void
+	init()override;
+
+	/**
+	 *Link creation of influencee-map into call to init.
+	 */
+	void
+	initExistingSimulation(t_timestamp loaddate)override;
+
+	/**
+	 * Allow a subclass to query a model after it has transitioned.
+	 */
+	void
+	postTransition(const t_atomicmodelptr&)override;
 };
 
 } /* namespace n_model */
