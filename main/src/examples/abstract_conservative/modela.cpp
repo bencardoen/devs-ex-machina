@@ -21,7 +21,7 @@ ModelA::~ModelA()
 {
 }
 
-void ModelA::extTransition(const std::vector<n_network::t_msgptr> & message)
+void ModelA::extTransition(const std::vector<n_network::t_msgptr> & )
 {
 	// No external transitions available
 }
