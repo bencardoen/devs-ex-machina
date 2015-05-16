@@ -12,6 +12,9 @@
 
 namespace n_model {
 
+/**
+ * Stores the maximum of EOT values per kernel.
+ */
 typedef std::shared_ptr<SharedVector<t_timestamp>> t_eotvector;
 
 
@@ -24,18 +27,21 @@ typedef std::shared_ptr<SharedVector<t_timestamp>> t_eotvector;
  * 	-> doOutput on imminent
  *		-> send non local output, queue the rest		// Intercepted here @sendmessage
  *	-> getPendingMail() // get messages with time < current
- *	-> transition(imminent + mail)					// Is ok, time <= eit
+ *	-> transition(imminent + mail)					// +add Lookahead
  *
- *	## Do updateEOT()
- *	## Do updateEIT()
  *
- *	-> syncTime, but override so that we don't move beyond eit.
+ *
+ *	-> syncTime, but override so that we don't move beyond eit.	// Step 4,5, calc&set EOT/EIT, intercept time
  */
 
 /**
- * Specialization of Multicore class. Avoids revert by simulating only up to
- * a safe point in the future.
  * @brief Conservative formalism implementation of parallel simulation.
+ *
+ * This Core/Kernel will advance time upto a safe limiting value, determined by other kernels
+ * if they host models that influence a model in this kernel.
+ * @source : J. J. Nutaro, Building Software for Simulation: Theory and Algorithms, with
+Applications in C++. Wiley Publishing, 2010.
+ *
  */
 class Conservativecore: public Multicore
 {
@@ -47,9 +53,6 @@ private:
 
 	t_timestamp getEit()const;
 
-	/**
-	 *@pre neweit > getEit().
-	 */
 	void setEit(const t_timestamp& neweit);
 
 	///			|
@@ -65,6 +68,30 @@ private:
 	 * Record if we sent a message in the last round.
 	 */
 	bool		m_sent_message;
+
+	/**
+	 * Store the cores that influence this core.
+	 * This is constructed by asking each model what model it is influenced
+	 * by, and for those constructing a corresponding list of
+	 * core ID's.
+	 * @example:
+	 * 	Trafficlight 	@ core 0
+	 * 	Policeman	@ core 1
+	 * 	This core ==0, influencees = "Policeman", == {1}
+	 */
+	std::set<std::size_t> m_influencees;
+
+	/**
+	 * Minimum lookahead for all transitioned models in a simulation step.
+	 */
+	t_timestamp		m_min_lookahead;
+
+	/**
+	 * Reset lookahead to inf, to be invoked after each sim run.
+	 */
+	void
+	resetLookahead();
+
 public:
 	Conservativecore() = delete;
 
@@ -87,7 +114,7 @@ public:
 	sendMessage(const t_msgptr& msg)override;
 
 	/**
-	 * In theory, in a distributed setting we need access to getMessages() to get a EOT value.
+	 * In theory, in a distributed setting we need access to getMessages() to get an EOT value.
 	 * For us, this is NOT required (shared memory).
 	 * In the algoritm, we need to keep a floating max of all rcd messages per core, but this is
 	 * done @sender side by sendMessage && shared vector. We have that information even before the
@@ -105,8 +132,8 @@ public:
 
 	/**
 	 * Steps 4/5 of algorithm CNPDEVS.
-	 * Update EIT as lowest of ~maximal~ EOTS. Since all the hard work on the EOTS is allready done, this is
-	 * reasonably simple.
+	 * Update EIT as lowest of ~maximal~ EOTS. Since all the hard work on the EOTS is already done, this is
+	 * reasonably simple. Furthermore, we only look at EOTS' of influencing kernels.
 	 */
 	void
 	updateEIT();
@@ -123,6 +150,45 @@ public:
 	 */
 	void
 	setTime(const t_timestamp& newtime)override;
+
+	/**
+	 * @brief Condense model depency graph to integer-index vector.
+	 *
+	 * We ask each of our own models for the names of the models they are influenced by
+	 * Next, for each of that list, we query the lookuptable to see where they are
+	 * allocated to get a mapping from Name <> Kernel location. This means that we know at
+	 * once who we're influenced by, so we only need to look at those kernel's EOTS.
+	 */
+	void
+	buildInfluenceeMap();
+
+	/**
+	 * Link creation of influencee-map into call to init.
+	 * @attention : call once and once only.
+	 */
+	void
+	init()override;
+
+	/**
+	 *Link creation of influencee-map into call to init.
+	 */
+	void
+	initExistingSimulation(t_timestamp loaddate)override;
+
+	/**
+	 * Allow a subclass to query a model after it has transitioned.
+	 * This is required to make the Conservative Algorithm work, it needs to query the lookahead of
+	 * a recently transitioned model. The alternative ( call lookahead regardless of model state) is expensive
+	 * for both kernel and model.
+	 */
+	void
+	postTransition(const t_atomicmodelptr&)override;
+
+	/**
+	 * Return current Earliest input time.
+	 */
+	t_timestamp
+	getEit();
 };
 
 } /* namespace n_model */

@@ -169,6 +169,28 @@ void n_model::Core::init()
 	}
 }
 
+
+void n_model::Core::initExistingSimulation(t_timestamp loaddate){
+
+	if (this->m_scheduler->size() != 0) {
+		LOG_ERROR("\tCORE :: ", this->getCoreID(),
+		" scheduler is not empty on call to initExistingSimulation(), cowardly refusing to corrupt state any further.");
+		return;
+	}
+	for (const auto& model : this->m_models) {
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
+	}
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Reinitializing with loaddate ", loaddate );
+	this->m_gvt = loaddate;
+	this->m_time = loaddate;
+	for (const auto& model : this->m_models) {
+		model.second->setTime(t_timestamp(loaddate.getTime(), 0));	// DO NOT use priority, model does this already
+		const t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
+		this->scheduleModel(model.first, model_scheduled_time);
+		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
+	}
+}
+
 void n_model::Core::collectOutput(std::set<std::string>& imminents)
 {
 	/**
@@ -203,11 +225,13 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
 			urgent->setTime(noncausaltime);
+			this->postTransition(urgent);
 			this->traceInt(urgent);
 		} else {
 			urgent->setTimeElapsed(0);
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
+			this->postTransition(urgent);
 			this->traceConf(urgent);
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
@@ -219,6 +243,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
+		postTransition(model);
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.

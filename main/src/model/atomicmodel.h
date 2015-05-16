@@ -206,6 +206,14 @@ public:
 	 * Elapsed time allows to shift the transitions of a model in time without having to change the TimeAdvance function.
 	 */
 	t_timestamp getTimeElapsed() const;
+	
+	/**
+	 * Adds all this model's influences to the given set.
+	 * This function is used in conservative parallel simulation.
+	 *
+	 * @param influences A set of all current influences (strings: host names) that will be completed
+	 */
+	void addInfluencees(std::set<std::string>& influences) const;
 
 	/**
 	 * @brief Sets the elapsed time since the previous internal transition.

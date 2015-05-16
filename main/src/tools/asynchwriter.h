@@ -19,6 +19,7 @@
 #include <atomic>
 #include <deque>
 #include <iostream>
+#include <set>
 
 namespace n_tools {
 template<typename T, typename C = std::deque<T> >

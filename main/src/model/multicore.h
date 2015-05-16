@@ -27,11 +27,13 @@ private:
 	 */
 	t_networkptr			m_network;
 
+protected:
 	/**
-	 *
+	 * Location table
 	 */
 	n_control::t_location_tableptr	m_loctable;
 
+private:
 	/**
 	 * This core's current color state.
 	 */
