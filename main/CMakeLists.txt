@@ -110,6 +110,9 @@ add_executable(${PROJECT_NAME}
 	src/model/multicore.cpp
 	src/model/conservativecore.cpp
 	src/model/zfunc.cpp
+	src/examples/abstract_conservative/modela.cpp
+	src/examples/abstract_conservative/modelb.cpp
+	src/examples/abstract_conservative/modelc.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
 	src/examples/trafficlight_coupled/trafficlightc.cpp
 	src/examples/trafficlight_coupled/policemanc.cpp
@@ -199,6 +202,7 @@ include_directories(	src
 				src/model
 				src/tracers
 				src/performance/devstone
+				src/examples/abstract_conservative
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
 				src/examples/trafficlight_ds

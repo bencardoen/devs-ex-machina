@@ -1,18 +1,17 @@
 /*
- * policemanc.h
+ * modela.h
  *
- *  Created on: Mar 28, 2015
+ *  Created on: May 16, 2015
  *      Author: tim
  */
 
-#ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
-#define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
+#ifndef SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELA_H_
+#define SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELA_H_
 
 #include "atomicmodel.h"
 #include "state.h"
-#include <assert.h>
 
-namespace n_examples_coupled {
+namespace n_examples_abstract_c {
 
 using n_model::State;
 using n_model::t_stateptr;
@@ -21,26 +20,11 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class PolicemanMode: public State
+class ModelA: public n_model::AtomicModel
 {
 public:
-	PolicemanMode(std::string state);
-	std::string toXML() override;
-	std::string toJSON() override;
-	std::string toCell() override;
-	~PolicemanMode()
-	{
-	}
-};
-
-class Policeman: public AtomicModel
-{
-public:
-	Policeman() = delete;
-	Policeman(std::string, std::size_t priority = 0);
-	~Policeman()
-	{
-	}
+	ModelA(std::string name, std::size_t priority = 0);
+	virtual ~ModelA();
 
 	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	void intTransition() override;
@@ -56,6 +40,6 @@ public:
 	t_stateptr setState(std::string);
 };
 
-}
+} /* namespace n_examples_abstract_c */
 
-#endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_ */
+#endif /* SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELA_H_ */

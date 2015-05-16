@@ -108,6 +108,14 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 	return this->getPort("OBSERVED")->createMessages(message);
 }
 
+t_timestamp TrafficLight::lookAhead() const
+{
+	// Lookahead of this model is 0, because the policeman can interrupt the traffic light at any
+	// given time
+	return t_timestamp();
+}
+
+
 t_stateptr TrafficLight::setState(std::string s)
 {
 	this->Model::setState(n_tools::createObject<TrafficLightMode>(s));
