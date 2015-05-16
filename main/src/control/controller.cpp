@@ -19,10 +19,10 @@ namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,
         std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab, n_tracers::t_tracersetptr tracers,
-        size_t saveInterval):
-        	m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name),
-        	m_checkTermTime(false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores),
-        	m_locTab(locTab), m_allocator(alloc), m_tracers(tracers), m_dsPhase(false),m_sleep_gvt_thread(85),m_rungvt(false)
+        size_t saveInterval)
+	: m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(false), m_checkTermCond(
+	        false), m_traceInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(alloc), m_tracers(
+	        tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -31,43 +31,42 @@ Controller::~Controller()
 {
 }
 
-void Controller::save(const std::string& fname, bool traceOnly)
-{
-	if (fname == "") return;
-	// New implementation cereal:
-	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchive(fs);
-
-	oarchive(m_coupledOrigin, m_lastGVT);
-
-	// Old implementation:
+void Controller::trace() {
 	switch (m_simType) {
 	case CLASSIC:
 	case DSDEVS: {
-		if (!traceOnly) {
-			throw std::logic_error("Controller : serialization for CLASSIC not implemented");
-		}
 		t_timestamp time = m_cores.begin()->second->getTime();
 		n_tracers::traceUntil(time);
 		break;
 	}
 	case PDEVS: {
-		throw std::logic_error("Controller : save() for PDEVS not implemented");
+		throw std::logic_error("Controller : trace() for PDEVS not implemented");
 		break;
 	}
 	}
 }
 
+void Controller::save(const std::string& fname)
+{
+	if (fname == "")
+		return;
+	// New implementation cereal:
+	std::fstream fs(fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	cereal::BinaryOutputArchive oarchive(fs);
+
+	oarchive(m_coupledOrigin, m_lastGVT);
+}
+
 void Controller::load(const std::string& fname)
 {
-    std::fstream fs (fname, std::fstream::in | std::fstream::binary);
-    cereal::BinaryInputArchive iarchive(fs);
+	std::fstream fs(fname, std::fstream::in | std::fstream::binary);
+	cereal::BinaryInputArchive iarchive(fs);
 
-    t_timestamp gvt;
-    iarchive(m_coupledOrigin, m_lastGVT);
+	t_timestamp gvt;
+	iarchive(m_coupledOrigin, m_lastGVT);
 
-    //TODO: create cores and iterate over models to allocate them all to the right core
-    //TODO: set loaded GVT to the new cores
+	//TODO: create cores and iterate over models to allocate them all to the right core
+	//TODO: set loaded GVT to the new cores
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic)
@@ -295,8 +294,8 @@ void Controller::simDEVS()
 			core->runSmallStep();
 		} else
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
-		if (i % m_saveInterval == 0) {
-			save("", true); // TODO remove boolean when serialization implemented & change string
+		if (i % m_traceInterval == 0) {
+			trace(); // TODO remove boolean when serialization implemented & change string
 		}
 	}
 }
@@ -328,19 +327,20 @@ void Controller::simPDEVS()
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-			std::thread(
-				cvworker,
-					std::ref(cv), std::ref(cvlock), i,
-					std::ref(threadsignal), std::ref(veclock), deadlockVal,
-					std::ref(*this)
-							)
-		        	);
+		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
+		                std::ref(veclock), deadlockVal, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
 	do {
-		this->startGVTThread();	/// Starts and joins GVT threads.
+		this->startGVTThread();	// Starts and joins GVT threads.
 	} while (handleTimeEvents(cv, cvlock));
+	// Explanation of the above:
+	//  The event queue is checked for occurring events each time a GVT is calculated
+	//  If there are any, the simulation needs to be halted in any case so the GVT thread is stopped
+	//  All events are then handled by handleTimeEvents, which returns True so a new GVT thread is set up again
+	//   and the simulation continues
+	//  If the GVT thread ended for any other reason we pass through handleTimeEvents and break out of the loop
 
 	for (auto& t : m_threads) {
 		t.join();
@@ -375,8 +375,8 @@ void Controller::simDSDEVS()
 			LOG_DEBUG("CONTROLLER: CORE NO LONGER LIVE");
 			break;
 		}
-		if (i % m_saveInterval == 0) {
-			save("", true); // TODO remove boolean when serialization implemented & change string
+		if (i % m_traceInterval == 0) {
+			trace(); // TODO remove boolean when serialization implemented & change string
 		}
 	}
 }
@@ -420,23 +420,23 @@ void Controller::setCheckpointInterval(t_timestamp interv)
 
 void Controller::startGVTThread()
 {
-	constexpr std::size_t infguard=100;
+	constexpr std::size_t infguard = 100;
 	std::size_t i = 0;
-	std::chrono::milliseconds ms{5};	// Wait before running gvt, this prevents an obvious gvt of zero.
+	std::chrono::milliseconds ms { 5 };	// Wait before running gvt, this prevents an obvious gvt of zero.
 	std::this_thread::sleep_for(ms);
 	LOG_INFO("Controller:: starting GVT thread");
 	std::thread runonce(&runGVT, std::ref(*this), std::ref(m_rungvt));
 	runonce.join();
-	std::chrono::milliseconds sleep{m_sleep_gvt_thread};	// Wait before running gvt, this prevents an obvious gvt of zero.
+	std::chrono::milliseconds sleep { m_sleep_gvt_thread };	// Wait before running gvt, this prevents an obvious gvt of zero.
 	std::this_thread::sleep_for(sleep);
 	LOG_INFO("Controller:: joined GVT thread");
-	while(m_rungvt.load()==true){
-		if(infguard < ++i){
+	while (m_rungvt.load() == true) {
+		if (infguard < ++i) {
 			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking off.");
 			m_rungvt.store(false);
-			break;// No join, have not started thread.
+			break;	// No join, have not started thread.
 		}
-		std::chrono::milliseconds ms{this->getGVTInterval()};	// Wait before running gvt, this prevents an obvious gvt of zero.
+		std::chrono::milliseconds ms { this->getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
 		std::this_thread::sleep_for(ms);
 		LOG_INFO("Controller:: starting GVT thread");
 		std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
@@ -462,64 +462,68 @@ void Controller::emptyAllCores()
 	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
 }
 
-
-void Controller::setGVTInterval(std::size_t ms){
+void Controller::setGVTInterval(std::size_t ms)
+{
 	this->m_sleep_gvt_thread.store(ms);
 }
 
-std::size_t Controller::getGVTInterval(){
+std::size_t Controller::getGVTInterval()
+{
 	return this->m_sleep_gvt_thread;
 }
 
-
-void Controller::distributeTerminationTime(t_timestamp ntime){
-	for(const auto& core : m_cores){
+void Controller::distributeTerminationTime(t_timestamp ntime)
+{
+	for (const auto& core : m_cores) {
 		core.second->setTerminationTime(ntime);
 	}
 }
 
 void Controller::addPauseEvent(t_timestamp time, size_t duration, bool repeating)
 {
-	m_events.push(TimeEvent(time, TimeEvent::Type::PAUSE, repeating, duration));
+	m_events.push(TimeEvent(time, duration, repeating));
 }
 
-void Controller::addSaveEvent(t_timestamp time, bool repeating)
+void Controller::addSaveEvent(t_timestamp time, std::string prefix, bool repeating)
 {
-	m_events.push(TimeEvent(time, TimeEvent::Type::SAVE, repeating));
+	m_events.push(TimeEvent(time, prefix, repeating));
 }
 
 bool Controller::handleTimeEvents(std::condition_variable& cv, std::mutex& cvlock)
 {
 	LOG_INFO("CONTROLLER: Handling any events");
-	bool cont = false;
-	bool save = false;
+	bool svd = false;
+	size_t pause = 0;
 	std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
-	for(TimeEvent& event : worklist) {
-		switch(event.m_type) {
+	for (TimeEvent& event : worklist) {
+		switch (event.m_type) {
 		case TimeEvent::Type::PAUSE:
-			cont = true;
-			LOG_INFO("CONTROLLER: Pausing for ", event.m_duration, " seconds.");
+			LOG_INFO("CONTROLLER: Pausing at ", n_tools::inttostring(event.m_time.getTime()), " for ",
+			        event.m_duration, " seconds ", ((event.m_repeating) ? "[REPEATING]" : "[SINGLE]"));
+			pause += event.m_duration;
+			break;
+		case TimeEvent::Type::SAVE:
+			svd = true;
 			cvlock.lock();		//Stop cores
 			cv.notify_all();
-			sleep(event.m_duration);
+			save(event.m_prefix + "_" + n_tools::inttostring(event.m_time.getTime()));
 			cvlock.unlock();	//Start cores again
 			cv.notify_all();
 			break;
-		case TimeEvent::Type::SAVE:
-			cont = true;
-			save = true; 	// We're only going to save once
-			break;
 		}
 	}
-	if(save) {
-		//TODO Save Controller
+	if (pause) {
+		cvlock.lock();		//Stop cores
+		cv.notify_all();
+		sleep(pause);
+		cvlock.unlock();	//Start cores again
+		cv.notify_all();
 	}
-	return cont;
+	return (svd || pause > 0);
 }
 
-void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-		std::vector<std::size_t>& threadsignal, std::mutex& vectorlock,
-		std::size_t turns,Controller& ctrl)
+void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<std::size_t>& threadsignal,
+        std::mutex& vectorlock, std::size_t turns, Controller& ctrl)
 {
 	auto core = ctrl.m_cores[myid];
 	constexpr size_t KILL_ZOMBIE = 50;	// @see Core::m_zombie_rounds
@@ -529,15 +533,16 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 	};
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if(core->getZombieRounds()>KILL_ZOMBIE){
+		if (core->getZombieRounds() > KILL_ZOMBIE) {
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(), " has triggered zombie max value, killing.");
+			LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(),
+			        " has triggered zombie max value, killing.");
 			set_flag(threadsignal[myid], n_threadflags::STOP);
 		}
 
 		{	/// Intercept a direct order to stop myself.
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if( flag_is_set(threadsignal[myid], n_threadflags::STOP) ){
+			if (flag_is_set(threadsignal[myid], n_threadflags::STOP)) {
 				core->setLive(false);
 				ctrl.m_rungvt.store(false);
 				return;
@@ -546,40 +551,41 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 
 		if (core->isIdle()) {
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
+			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
+			        " threadsignal setting flag to IDLE");
 			set_flag(threadsignal[myid], n_threadflags::IDLE);
 
-			if(core->terminatedByFunctor()){
+			if (core->terminatedByFunctor()) {
 				ctrl.distributeTerminationTime(core->getTime());
 			}
 
 			size_t countidle = 0;
 			for (size_t i = 0; i < threadsignal.size(); ++i) {
 				const std::size_t& flag = threadsignal[i];
-				if(flag_is_set(flag, n_threadflags::IDLE) or flag_is_set(flag, n_threadflags::STOP))
+				if (flag_is_set(flag, n_threadflags::IDLE) or flag_is_set(flag, n_threadflags::STOP))
 					++countidle;
 			}
-			if (countidle == threadsignal.size()) {			// All threads are idle/stopped, stop this tread as well.
+			if (countidle == threadsignal.size()) {	// All threads are idle/stopped, stop this tread as well.
 				if (not core->existTransientMessage()) {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-						" all other threads are stopped or idle, network is idle, quitting.");
+					        " all other threads are stopped or idle, network is idle, quitting.");
 					ctrl.m_rungvt.store(false);
 					set_flag(threadsignal[myid], n_threadflags::STOP);
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-						" all other threads are stopped or idle, network reports transients, idling.");
+					        " all other threads are stopped or idle, network reports transients, idling.");
 				}
 			}
 		} else {
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if ( flag_is_set(threadsignal[myid], n_threadflags::IDLE) ) {
+			if (flag_is_set(threadsignal[myid], n_threadflags::IDLE)) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
 				unset_flag(threadsignal[myid], n_threadflags::IDLE);
-				if(core->getTerminationTime() != ctrl.m_terminationTime){		// Core possibly idle due to term functor
-					ctrl.distributeTerminationTime(ctrl.m_terminationTime);		// but revert can invalidate that, need
-				}									// to reset all termtimes. (cascade!)
+				if (core->getTerminationTime() != ctrl.m_terminationTime) {// Core possibly idle due to term functor
+					ctrl.distributeTerminationTime(ctrl.m_terminationTime);	// but revert can invalidate that, need
+				}						// to reset all termtimes. (cascade!)
 			}
 		}
 		if (core->isLive() or core->isIdle()) {
@@ -590,11 +596,11 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 		bool skip_barrier = false;
 		{
 			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (not flag_is_set(threadsignal[myid], n_threadflags::FREE)){
+			if (not flag_is_set(threadsignal[myid], n_threadflags::FREE)) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " switching flag to WAITING");
 				set_flag(threadsignal[myid], n_threadflags::ISWAITING);
-			}else{	// Don't log, this can easily go into 100MB logs if anything at all goes wrong in the sim.
+			} else {// Don't log, this can easily go into 100MB logs if anything at all goes wrong in the sim.
 				skip_barrier = true;
 			}
 		}
@@ -607,7 +613,7 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 {
-	if(not gvtsafe){
+	if (not gvtsafe) {
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;
 	}
@@ -617,7 +623,7 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 
 	for (size_t i = 0; i < corecount; ++i) {
 		cont.m_cores[i]->receiveControl(cmsg, (i == 0), gvtsafe);
-		if(gvtsafe == false){
+		if (gvtsafe == false) {
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
@@ -630,13 +636,14 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
 		for (const auto& ucore : cont.m_cores)
 			ucore.second->setGVT(cmsg->getGvt());
+		n_tracers::traceUntil(cmsg->getGvt());
 		cont.m_lastGVT = cmsg->getGvt();
-		if(cont.m_events.countTodo(cmsg->getGvt()) > 0) {
+		if (cont.m_events.countTodo(cmsg->getGvt()) > 0) {
 			LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
 			gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 		}
 	} else {
-		if(gvtsafe == false){
+		if (gvtsafe == false) {
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
@@ -645,8 +652,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		if (cmsg->isGvtFound()) {
 			for (const auto& ucore : cont.m_cores)
 				ucore.second->setGVT(cmsg->getGvt());
+			n_tracers::traceUntil(cmsg->getGvt());
 			cont.m_lastGVT = cmsg->getGvt();
-			if(cont.m_events.countTodo(cmsg->getGvt()) > 0) {
+			if (cont.m_events.countTodo(cmsg->getGvt()) > 0) {
 				LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
 				gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 			}

@@ -59,7 +59,7 @@ private:
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
-	size_t m_saveInterval;
+	size_t m_traceInterval;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
@@ -222,7 +222,7 @@ public:
 	/**
 	 * @brief Add a moment on which the simulation will be paused, saved and continued
 	 */
-	void addSaveEvent(t_timestamp time, bool repeating = false);
+	void addSaveEvent(t_timestamp time, std::string prefix, bool repeating = false);
 
 	/**
 	 * Return the current GVT threading interval.
@@ -236,10 +236,13 @@ private:
 	 */
 	bool check();
 
+	void trace();
+
 	/**
 	 * @brief Serialize all cores and models, dump tracer output
+	 * @precondition All cores need to be stopped beforehand
 	 */
-	void save(const std::string& fname, bool traceOnly = false);
+	void save(const std::string& fname);
 
 	/**
 	 * @brief Load all cores and models

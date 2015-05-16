@@ -27,26 +27,53 @@ struct TimeEvent
 	{
 		PAUSE,	///< Pause the simulation
 		SAVE,	///< Save the simulation
-	};
+	} m_type;
 
-	TimeEvent(t_timestamp t, Type et, bool r, size_t d = 0)
-		: m_time(t), m_type(et), m_duration(d), m_repeating(r)
-	{
-	}
-	;
-
+	/*
+	 * Time at which the event occurs (next)
+	 */
 	t_timestamp m_time;
-	Type m_type;
+
+	/*
+	 * For repeating events: rate at which an event occurs.
+	 * Is set to the same value as m_time in constructor
+	 */
+	t_timestamp m_interval;
+
+	/*
+	 * For PAUSE events: duration of the pause
+	 */
 	size_t m_duration;
+
+	/*
+	 * For SAVE events: prefix of file to be saved
+	 */
+	std::string m_prefix;
 
 	/*
 	 * Whether the event repeats every <m_time> times
 	 */
 	bool m_repeating;
-	bool operator<(const TimeEvent& rhs) const
-	{
-		return m_time > rhs.m_time; // Sort lowest time first
-	}
+
+	/**
+	 * @brief Ctor for PAUSE TimeEvents
+	 */
+	TimeEvent(t_timestamp t, size_t d, bool r);
+
+	/**
+	 * @brief Ctor for SAVE TimeEvents
+	 */
+	TimeEvent(t_timestamp t, std::string pf, bool r);
+
+	/**
+	 * @brief Operator which sorts TimeEvents in ASCENDING m_time order
+	 */
+	bool operator<(const TimeEvent& rhs) const;
+
+	/**
+	 * @brief If this event is repeating, push it one interval ahead
+	 */
+	void advance();
 };
 
 class TimeEventQueue
@@ -57,40 +84,22 @@ public:
 	TimeEventQueue() {};
 	~TimeEventQueue() {};
 
-	void push(TimeEvent te) {
-		m_queue.push_back(te);
-	}
+	void push(TimeEvent te);
 
-	void prepare() {
-		std::sort(m_queue.begin(), m_queue.end());
-	}
+	/**
+	 * @brief sort the event queue
+	 */
+	void prepare();
+
 	/**
 	 * @brief Count how many unhandled events are waiting in the queue
 	 */
-	int countTodo(const t_timestamp& now)
-	{
-		int amnt = 0;
-		for(TimeEvent& te : m_queue) {
-			if(te.m_time > now) break;
-			++amnt;
-		}
-		return amnt;
-	}
+	int countTodo(const t_timestamp& now);
 
 	/**
 	 * @brief Pops and returns any unhandled time events from the queue
 	 */
-	std::vector<TimeEvent> popUntil(const t_timestamp& now)
-	{
-		std::vector<TimeEvent> worklist;
-		while (!m_queue.empty()) {
-			TimeEvent& ev = m_queue.front();
-			if(ev.m_time < now) break;
-			worklist.push_back(ev);
-			m_queue.pop_back();
-		}
-		return worklist;
-	}
+	std::vector<TimeEvent> popUntil(const t_timestamp& now);
 };
 
 } /* namespace n_control */
