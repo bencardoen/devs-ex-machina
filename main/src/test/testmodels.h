@@ -87,6 +87,10 @@ public:
 	ElapsedNothing();
 	virtual void intTransition() override;
 	virtual n_network::t_timestamp timeAdvance() const override;
+	virtual std::vector<n_network::t_msgptr> output() const override
+	{
+		return std::vector<n_network::t_msgptr>();
+	}
 };
 
 class GeneratorDS: public Generator

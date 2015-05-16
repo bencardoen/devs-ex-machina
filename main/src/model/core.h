@@ -234,6 +234,12 @@ public:
 	void addModel(t_atomicmodelptr model);
 
 	/**
+	 * Add model to this core during dynamic structured simulation.
+	 * @pre !containsModel(model->getName());
+	 */
+	void addModelDS(t_atomicmodelptr model);
+
+	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
 	 */

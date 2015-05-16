@@ -64,7 +64,9 @@ void n_model::Port::removeOutPort(const t_portptr& port)
 
 void Port::removeInPort(const t_portptr& port)
 {
-	m_ins.erase(std::find(m_ins.begin(), m_ins.end(), port));
+	auto it = std::find(m_ins.begin(), m_ins.end(), port);
+	if(it != m_ins.end())
+		m_ins.erase(it);
 }
 
 bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)

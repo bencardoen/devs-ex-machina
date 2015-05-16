@@ -87,6 +87,7 @@ Generator::Generator(std::string name, std::size_t t_gen_event1, bool binary):
 	m_outport(addOutPort("outport"))
 {
 	setState(n_tools::createObject<GeneratorState>());
+	std::dynamic_pointer_cast<GeneratorState>(getState())->m_counter = t_gen_event1;
 }
 
 void Generator::extTransition(const std::vector<n_network::t_msgptr>&)
@@ -179,8 +180,8 @@ bool GeneratorDS::modelTransition(n_model::DSSharedState*)
 DSDevsRoot::DSDevsRoot():
 	CoupledModel("Root"),
 	m_model(n_tools::createObject<GeneratorDS>()),
-	m_model2(n_tools::createObject<Processor>("Processor2")),
-	m_model3(n_tools::createObject<Processor>("Processor3")),
+	m_model2(n_tools::createObject<Processor>("Processor_2")),
+	m_model3(n_tools::createObject<Processor>("Processor_3")),
 	m_model4(nullptr),
 	m_modelX(nullptr)
 {
@@ -196,7 +197,8 @@ bool DSDevsRoot::modelTransition(n_model::DSSharedState*)
 {
 	n_model::t_modelptr ptr = std::dynamic_pointer_cast<n_model::Model>(m_model2);
 	removeSubModel(ptr);
-	m_model2 = n_tools::createObject<Processor>("Processor2");
+	m_model2 = n_tools::createObject<Processor>("Processor_2");
+	addSubModel(m_model2);
 	connectPorts(m_model2->m_outport, m_model3->m_inport);
 	m_model4 = n_tools::createObject<CoupledProcessor>(2u, 3);
 	addSubModel(m_model4);

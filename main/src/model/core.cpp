@@ -103,6 +103,18 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	this->m_models[mname] = model;
 }
 
+void n_model::Core::addModelDS(t_atomicmodelptr model)
+{
+	std::string mname = model->getName();
+	model->setTime(m_time);
+	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
+	this->m_models[mname] = model;
+	t_timestamp ta = model->timeAdvance();
+	t_timestamp nextT = ta.getTime() == t_timestamp::infinity().getTime()? t_timestamp::infinity(): m_time + ta;
+	LOG_DEBUG("scheduling: ", model->getName(), " at ", m_time, " + ", ta, " = ", nextT);
+	scheduleModel(model->getName(), nextT);
+}
+
 n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
 {
 	assert(this->containsModel(mname) && "Model not in core.");
@@ -266,7 +278,7 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 		assert(this->containsModel(old) && " Trying to reschedule model not in this core ?!");
 		t_atomicmodelptr model = this->m_models[old];
 		t_timestamp ta = model->timeAdvance();
-		if (ta != t_timestamp::infinity()) {
+		if (ta.getTime() != t_timestamp::infinity().getTime()) {
 			t_timestamp next = ta + this->m_time;
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
 			        " rescheduled @ ", next);
@@ -454,12 +466,12 @@ void n_model::Core::checkTerminationFunction()
 void n_model::Core::removeModel(std::string name)
 {
 	if (this->containsModel(name)) {
-		std::size_t erased = this->m_models.erase(name);
-		assert(erased > 0 && "Failed to erase model ??");
+		m_models.erase(name);
 		ModelEntry target(name, t_timestamp(0, 0));
 		this->m_scheduler->erase(target);
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
+		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
+		assert(m_models.find(name) == m_models.end() && "Removal from scheduler failed !! model still in m_models");
 	} else {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " you've asked to remove model with name ", name, " which is not in this core.");
 	}

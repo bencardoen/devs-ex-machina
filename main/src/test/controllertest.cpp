@@ -20,6 +20,7 @@
 #include "trafficsystemds.h"
 #include "dynamiccore.h"
 #include "timeevent.h"
+#include "testmodels.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -157,6 +158,32 @@ TEST(Controller, DSDEVS_connections)
 
 	EXPECT_EQ(
 	        n_misc::filecmp(TESTFOLDER "controller/dstestConnections.txt", TESTFOLDER "controller/dstestConnections.corr"),
+	        0);
+}
+
+TEST(Controller, DSDevs_full)
+{
+	RecordProperty("description", "Full dynamic structured test");
+
+	ControllerConfig conf;
+	conf.name = "DSDevsSim";
+	conf.simType = Controller::DSDEVS;
+	conf.saveInterval = 30;
+
+	std::ofstream filestream(TESTFOLDER "controller/dstest.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(400, 0);
+		ctrl->setTerminationTime(endTime);
+
+		t_coupledmodelptr m1 = createObject<n_testmodel::DSDevsRoot>();
+		ctrl->addModel(m1);
+
+		ctrl->simulate();
+	}
+	EXPECT_EQ(
+	        n_misc::filecmp(TESTFOLDER "controller/dstest.txt", TESTFOLDER "controller/dstest.corr"),
 	        0);
 }
 

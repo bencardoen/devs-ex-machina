@@ -35,10 +35,19 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 	//precondition: not simulating or DSDEVS
 	//remove the model itself
 	std::vector<t_modelptr>::iterator it = std::find(m_components.begin(), m_components.end(), model);
-	if(it != m_components.end())
+	if(it == m_components.end()) {
+
+		LOG_ERROR("removing model with name ", model->getName(), " (", model.get(), ')');
+		LOG_ERROR(" > current models:");
+		for(const auto& i:m_components) {
+			LOG_ERROR("    > ", i->getName(), " (", i.get(), ')');
+		}
+		LOG_FLUSH;
 		throw std::logic_error("CoupledModel::removeSubModel Tried to remove a model that is not mine.");
+	}
 
 	m_components.erase(it);
+
 	model->resetParents();
 	//remove all connections to this model
 	// loop over all models & remove their connections with this model
@@ -63,15 +72,19 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 	if(m_control) {
 		t_atomicmodelptr adevs = std::dynamic_pointer_cast<AtomicModel>(model);
 		if(adevs != nullptr){
+			LOG_DEBUG("Removed atomic model '", model->getName(), "' while in DSDEVS");
 			m_control->dsUnscheduleModel(adevs);
 			return;
 		}
 		t_coupledmodelptr cdevs = std::dynamic_pointer_cast<CoupledModel>(model);
 		if(cdevs != nullptr){
+			LOG_DEBUG("Removed coupled model '", model->getName(), "' while in DSDEVS");
 			cdevs->unscheduleChildren();
 			return;
 		}
 		throw std::logic_error("removeSubModel::unscheduleChildren found child that is not an atomic nor a coupled model.");
+	} else {
+		LOG_DEBUG("Removed model while not in simulation");
 	}
 }
 
@@ -107,6 +120,9 @@ void CoupledModel::disconnectPorts(const t_portptr& p1, const t_portptr& p2)
 
 void CoupledModel::removeConnectionsBetween(t_modelptr& mod1, t_modelptr& mod2)
 {
+	if(mod1.get() == mod2.get())
+		return;
+
 	for(std::map<std::string, t_portptr>::value_type& port1 : mod1->getOPorts()){
 		for(std::map<std::string, t_portptr>::value_type& port2 : mod2->getIPorts()){
 			disconnectPorts(port1.second, port2.second);

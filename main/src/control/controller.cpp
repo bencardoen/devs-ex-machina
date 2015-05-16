@@ -158,6 +158,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	//recursively add submodels, if necessary
 	t_coupledmodelptr coupled = std::dynamic_pointer_cast<CoupledModel>(model);
 	if (coupled) {
+		LOG_DEBUG("Adding new coupled model during DS phase: ", model->getName());
 		//it is a coupled model, remove all its children
 		std::vector<t_modelptr> comp = coupled->getComponents();
 		for (t_modelptr& sub : comp)
@@ -166,12 +167,15 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	}
 	t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(model);
 	if (atomic) {
+		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs
-		m_cores.begin()->second->addModel(atomic);
+		m_cores.begin()->second->addModelDS(atomic);
 		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
 		return;
 	}
+	model->setController(this);
+	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
 }
 
 void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
@@ -179,6 +183,7 @@ void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
 	assert(isInDSPhase() && "Controller::dsUnscheduleModel called while not in the DS phase.");
 	dsUndoDirectConnect();
 
+	LOG_DEBUG("removing model: ", model->getName());
 	//it is an atomic model. Just remove this one from the core
 	m_cores.begin()->second->removeModel(model->getName());
 }
