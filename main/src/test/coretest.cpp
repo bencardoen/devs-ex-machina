@@ -939,10 +939,10 @@ TEST(Conservativecore, GVT){
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-	t_coreptr c1 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
-	t_coreptr c2 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+	coreMap[0] = c0;
+	coreMap[1] = c1;
 
 	t_timestamp endTime(360, 0);
 
@@ -952,38 +952,32 @@ TEST(Conservativecore, GVT){
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 	ctrl.addModel(m);
+	c0->setTracers(tracers);
+	c0->init();
+	c0->setTerminationTime(endTime);
+	c0->setLive(true);
+	c0->logCoreState();
+	EXPECT_EQ(c0->getCoreID(),0);		// 0 has policeman, influenceemap = empty
+
 	c1->setTracers(tracers);
 	c1->init();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
-	//c1->printSchedulerState();
 
-	c2->setTracers(tracers);
-	c2->init();
-	c2->setTerminationTime(endTime);
-	c2->setLive(true);
-	c2->logCoreState();
-	tracers->startTrace();
-	// c1: has policeman
-	// c2: has trafficlight
-
-	c2->runSmallStep();
-	c2->logCoreState();
-	c2->runSmallStep();
-	c2->logCoreState();	// C2 @108
-	c1->runSmallStep();	// C1
-	c1->logCoreState(); 	// C1 @200, GVT = 108.
-	// This fails since we have no lookahead models.
-	/**
-	std::atomic<bool> rungvt(true);
-	n_control::runGVT(ctrl, rungvt);
-	EXPECT_EQ(c1->getGVT().getTime(), 108);
-	EXPECT_EQ(c1->getGVT(), c2->getGVT());
-	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
-	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
-	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-	*/
+	tracers->startTrace();			// 1 has trafficlight, influenceemap = 0
+	c1->runSmallStep();			// Will try to advance, but can't. EOT[0]=0
+	c0->runSmallStep();			// synctime 0->200, EOT[0] = 200, EIT=oo
+	c1->runSmallStep();			// synctime 0->58   EOT[1] = 58   EIT=200
+	EXPECT_EQ(eotvector->get(0).getTime(), 200);
+	EXPECT_EQ(eotvector->get(1).getTime(),58);
+	c1->runSmallStep();			// time 58 -> 108
+	c1->runSmallStep();			// time 108 -> 118
+	c1->runSmallStep();			// time 118 -> 178
+	c1->runSmallStep();			// want to advance from 178->228, but EIT=200, time =200
+	c0->runSmallStep();			// EIT = oo, EOT[0]=200, since we have sent a message
+	EXPECT_EQ(eotvector->get(0).getTime(), 200);
+	c1->runSmallStep();			// still stuck @200
+	EXPECT_EQ(eotvector->get(1).getTime(), 200);
 	}
-
 }

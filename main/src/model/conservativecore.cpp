@@ -25,11 +25,7 @@ t_timestamp Conservativecore::getEit()const {return m_eit;}
 
 void
 Conservativecore::setEit(const t_timestamp& neweit){
-	if(neweit > m_eit)
-		m_eit = neweit;
-	else{
-		LOG_ERROR("Core :: ", this->getCoreID() , " trying to update EIT with a lower ", neweit, " value than current :", this->getEit());
-	}
+	this->m_eit = neweit;
 }
 
 void Conservativecore::sendMessage(const t_msgptr& msg)
@@ -37,6 +33,7 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
 	m_sent_message = true;
 	t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
 	t_timestamp myeot = m_distributed_eot->get(getCoreID());
+	/// Step 4 in PDF, but do this @ caller side.
 	if (myeot < msgtime) {
 		LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
 		m_distributed_eot->set(getCoreID(), msgtime);
@@ -44,81 +41,56 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
 	Multicore::sendMessage(msg);
 }
 
-/**
- * Step 3 of algorithm CNPDEVS
- * 	// Use but don't change eit
- * 	If output sent:
- * 		val = (eit,1);
- * 	Else
- * 		val = eit + lookahead // no causality
- * 	candidate = std::min(val, nextscheduled);	// aka next 'autonomous event'
- *	eot = std::max(eot, candidate)
- *	m_distributed_eot.set(this->getCoreID(), eot);
- *
- */
 void Conservativecore::updateEOT()
 {
-	// TODO rewrite with lookahead.
-	t_timestamp val = this->m_eit;
-	if (m_sent_message) {
-		val.increaseCausality(1);
-		m_sent_message = false;		// Make sure we reset this flag.
-	} else {
-		t_timestamp lookahead_min = t_timestamp::infinity();
-		for (const auto& entry : m_models) {
-			t_timestamp la = entry.second->lookAhead();
-			if (la.getTime() != 0) {	// TODO Tim check if edge case is correct.
-				lookahead_min = std::min(lookahead_min, la);
-			} else {
-				lookahead_min = std::min(lookahead_min, la);
-				LOG_WARNING("CCore:: ", this->getCoreID(), " model ", entry.first,
-				        " gave 0 as lookahead, ignoring.");
-			}
-		}
-		// 2 cases : infinity() (no models or all inf), or a real non zero value.
-		if (lookahead_min != t_timestamp::infinity()) {
-			val = val + lookahead_min;
-		} else {
-			LOG_WARNING("CCore:: ", this->getCoreID(), " got only infinity/0 as lookaheads ?");
+	/** Step 3 of CNPDEVS
+	 * Pseudocode :
+	 * 	EOT(myid) = std::min(x,y)
+	 * 		x = eit + lookahead_min
+	 * 		y = 	if(sent_message)	eit,1
+	 * 			else			top of scheduler (next event)
+	 */
+	t_timestamp x;
+	if(m_eit == t_timestamp::infinity() || this->m_min_lookahead == t_timestamp::infinity())
+		x = t_timestamp::infinity();
+	else{
+		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);
+	}
+	t_timestamp y = t_timestamp::infinity();
+	if(this->m_sent_message){
+		this->m_sent_message = false;		// Reset sent flag, else we won't have a clue.
+		y = t_timestamp(this->getTime().getTime(), 1);
+	}else{
+		if(!this->m_scheduler->empty()){
+			y = this->m_scheduler->top().getTime();
 		}
 	}
-	// Look at first scheduled transition, compare with lookahead + eit.
-	t_timestamp candidate = val;
-	if (not this->m_scheduler->empty()) {
-		t_timestamp firsttransition = this->m_scheduler->top().getTime();
-		candidate = std::min(val, firsttransition);
-	}
-	//Finally, update EOT value
-	t_timestamp eot = this->m_distributed_eot->get(this->getCoreID());
-	eot = std::max(eot, candidate);
-	LOG_INFO("Updating EOT for Core ", this->getCoreID(), " to ", eot);
-	//Replaces 'sending' EOT message.
-	this->m_distributed_eot->set(this->getCoreID(), eot);
+	t_timestamp neweot = std::min(x,y);
+	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
+	this->m_distributed_eot->set(this->getCoreID(), neweot);
 }
 
 /**
  * Step 4/5 of CNPDEVS.
  * a) For all messages from the network, for each core, get max timestamp.
  * b) From those values, get the minimum and set that value to our own EIT.
- * We don't need step a, this is allready done by sendMessage/sharedVector, so we only need to collect the maxima
+ * We don't need step a, this is already done by sendMessage/sharedVector, so we only need to collect the maxima
  * and update EIT with the min value.
  */
 void Conservativecore::updateEIT()
 {
+	/**
+	 * Pseudocode: our EIT = min of all distributed EOT's, IFF those carry models that
+	 * influence us.
+	 */
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
-	for (size_t i = 0; i < this->m_cores; ++i) {
-		if (i == this->getCoreID())
-			continue;	// We don't want our own EOT (which is not an eot for us).
-		min_eot_others = std::min(this->m_distributed_eot->get(i), min_eot_others);
+	for(const auto& influence_id : m_influencees){
+		const t_timestamp new_eot = this->m_distributed_eot->get(influence_id);
+		min_eot_others = std::min(min_eot_others, new_eot);
 	}
-	LOG_INFO("CCore:: ", this->getCoreID(), " lowest remote EOT ==", min_eot_others);
-	if (min_eot_others != t_timestamp::infinity()) {
-		LOG_INFO("CCore:: ", this->getCoreID(), " updating eit to ", min_eot_others);
-		this->m_eit = min_eot_others;
-	} else {
-		LOG_WARNING("CCore:: ",this->getCoreID(), " all eots == infinity ");
-	}
+	this->setEit(min_eot_others);
+	LOG_INFO("Core:: ", this->getCoreID(), " new EIT == ", min_eot_others);
 }
 
 void Conservativecore::syncTime(){

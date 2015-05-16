@@ -207,11 +207,6 @@ public:
 	 */
 	t_timestamp getTimeElapsed() const;
 
-	// TODO remove stub
-	void addInfluencees(std::set<std::string>& /*influences*/){
-		;
-	}
-
 	/**
 	 * Adds all this model's influences to the given set.
 	 * This function is used in conservative parallel simulation.
