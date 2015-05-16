@@ -86,6 +86,13 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 	return this->getPort("OUT")->createMessages(message);
 }
 
+t_timestamp Policeman::lookAhead() const
+{
+	// Nothing can interrupt the police
+	return t_timestamp::infinity();
+}
+
+
 t_stateptr Policeman::setState(std::string s)
 {
 	this->Model::setState(n_tools::createObject<PolicemanMode>(s));
