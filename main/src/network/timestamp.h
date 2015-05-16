@@ -102,7 +102,7 @@ public:
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
 	{
-		if(t == infinity()){
+		if(isInfinity(t)){
 			os << "inf";
 			return os;
 		}
@@ -161,7 +161,7 @@ public:
 	 */
 	friend Time operator+(const Time& lhs, const Time& rhs)
 	{
-		if(rhs == infinity() || lhs == infinity())
+		if(isInfinity(rhs) || isInfinity(lhs))
 			return infinity();
 		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}

@@ -79,7 +79,7 @@ public:
 		*ssr << "<event>\n"
 			"<model>" << adevs->getName() << "</model>\n"
 			"<time>";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << "</time>\n"
@@ -100,7 +100,7 @@ public:
 		*ssr << "<event>\n"
 			"<model>" << adevs->getName() << "</model>\n"
 			"<time>";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << "</time>\n"
@@ -120,7 +120,7 @@ public:
 		*ssr << "<event>\n"
 			"<model>" << adevs->getName() << "</model>\n"
 			"<time>";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << "</time>\n"

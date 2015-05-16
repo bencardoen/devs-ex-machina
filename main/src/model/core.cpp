@@ -110,7 +110,7 @@ void n_model::Core::addModelDS(t_atomicmodelptr model)
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
 	t_timestamp ta = model->timeAdvance();
-	t_timestamp nextT = ta.getTime() == t_timestamp::infinity().getTime()? t_timestamp::infinity(): m_time + ta;
+	t_timestamp nextT = m_time + ta;
 	LOG_DEBUG("scheduling: ", model->getName(), " at ", m_time, " + ", ta, " = ", nextT);
 	scheduleModel(model->getName(), nextT);
 }
@@ -130,7 +130,7 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
 	if (this->m_models.find(name) != this->m_models.end()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
-		if(t.getTime() == t_timestamp::infinity().getTime()){
+		if(isInfinity(t)){
 			LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", name , "@", t);
 			return;
 		}
@@ -247,7 +247,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
-		if (queried != t_timestamp::infinity()) {
+		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
 			imminents.insert(model->getName());
@@ -303,7 +303,7 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 		assert(this->containsModel(old) && " Trying to reschedule model not in this core ?!");
 		t_atomicmodelptr model = this->m_models[old];
 		t_timestamp ta = model->timeAdvance();
-		if (ta.getTime() != t_timestamp::infinity().getTime()) {
+		if (!isInfinity(ta)) {
 			t_timestamp next = ta + this->m_time;
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
 			        " rescheduled @ ", next);
@@ -323,7 +323,7 @@ void n_model::Core::syncTime()
 	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
-	if (newtime == t_timestamp::infinity()) {
+	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		this->m_zombie_rounds.fetch_add(1);
 		return;
@@ -551,7 +551,7 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 	for (const auto& modelentry : m_models) {
 		t_timestamp modellast = modelentry.second->revert(totime);
 		// Bug lived here : Do not set time on model.
-		if (modellast != t_timestamp::infinity()) {
+		if (!isInfinity(modellast)) {
 			this->scheduleModel(modelentry.first, modellast);
 		} else {
 			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert",
@@ -629,7 +629,7 @@ t_timestamp n_model::Core::getFirstMessageTime()
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
 {
-	if (newgvt == t_timestamp::infinity()) {
+	if (isInfinity(newgvt)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}

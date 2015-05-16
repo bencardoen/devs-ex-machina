@@ -85,7 +85,7 @@ public:
 			"\t\tInitial State: " << state->toString() << "\n"
 		        "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
@@ -108,7 +108,7 @@ public:
 
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
@@ -129,7 +129,7 @@ public:
 
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';
@@ -154,7 +154,7 @@ public:
 
 	        *ssr << "\t\tNext scheduled internal transition at time ";
 		t_timestamp nextT =  adevs->getTimeNext();
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << nextT;
 		else *ssr << nextT.getTime();
 		*ssr << '\n';

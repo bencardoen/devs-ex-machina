@@ -148,7 +148,7 @@ TEST(DynamicCore, smallStep)
 	c->addModel(modelto);
 	c->init();
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
@@ -207,7 +207,7 @@ TEST(Core, terminationfunction)
 	c->init();
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	c->setTerminationFunction(createObject<termfun>());
 
 	t_timestamp coretimebefore = c->getTime();
@@ -237,7 +237,7 @@ TEST(Core, Messaging)
 
 	c->init();
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	t_timestamp coretimebefore = c->getTime();
 	c->setLive(true);
 	EXPECT_TRUE(c->isLive() == true);
@@ -1034,7 +1034,7 @@ TEST(Conservativecore, Abstract){
 	/// We begin in a null state, cores start from 0-time, but will advance time (eit/eot)
 	c0->runSmallStep();
 	EXPECT_EQ(eotvector->get(0).getTime(), 10u);		// min of : scheduled=10, eit=inf
-	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(c0->getEit()));
 	c1->runSmallStep();
 	EXPECT_EQ(eotvector->get(1).getTime(), 10u);		// min of : lookahead=30, eit=10
 	EXPECT_EQ(c1->getEit().getTime(), 10u);
@@ -1042,7 +1042,7 @@ TEST(Conservativecore, Abstract){
 
 	c0->runSmallStep();
 	EXPECT_EQ(eotvector->get(0).getTime(), 20u);		// min of : scheduled=20, eit=inf
-	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(c0->getEit()));
 	c1->runSmallStep();
 	EXPECT_EQ(eotvector->get(1).getTime(), 20u);		// min of : lookahead=30, y=20 (scheduled)
 	EXPECT_EQ(c1->getEit().getTime(), 20u);
@@ -1051,7 +1051,7 @@ TEST(Conservativecore, Abstract){
 
 	c0->runSmallStep();
 	EXPECT_EQ(eotvector->get(0).getTime(), 30u);
-	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(c0->getEit()));
 	c1->runSmallStep();
 	EXPECT_EQ(eotvector->get(1).getTime(), 30u);		// B : ta=oo @ state 2
 	EXPECT_EQ(c1->getEit().getTime(), 30u);
