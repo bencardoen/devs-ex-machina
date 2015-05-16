@@ -28,7 +28,7 @@ ModelState::ModelState():
 
 std::string ModelState::toString()
 {
-	return n_tools::toString(m_counter);
+	return m_counter == std::numeric_limits<std::size_t>::max() ? "inf": n_tools::toString(m_counter);
 }
 
 std::string ModelState::toXML()

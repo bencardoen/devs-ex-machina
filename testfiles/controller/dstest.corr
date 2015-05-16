@@ -1,0 +1,414 @@
+
+__  Current Time: 0____________________
+
+
+	INITIAL CONDITIONS in model GEN
+		Initial State: 10
+		Next scheduled internal transition at time 5
+
+	INITIAL CONDITIONS in model Processor_2
+		Initial State: inf
+		Next scheduled internal transition at time inf
+
+	INITIAL CONDITIONS in model Processor_3
+		Initial State: inf
+		Next scheduled internal transition at time inf
+
+__  Current Time: 5____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+			port <outport>:
+				EventSize = 1
+		Next scheduled internal transition at time 15
+
+	EXTERNAL TRANSITION in model Processor_2
+		New State: 10
+		Input Port Configuration:
+			port <inport>:
+				EventSize = 1
+		Next scheduled internal transition at time 15
+
+	EXTERNAL TRANSITION in model Processor_3
+		New State: 10
+		Input Port Configuration:
+			port <inport>:
+				EventSize = 1
+		Next scheduled internal transition at time 15
+
+__  Current Time: 15____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 25
+
+	INTERNAL TRANSITION in model Processor_3
+		New State: inf
+		Output Port Configuration:
+			port <outport>:
+				EventSize = 1
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor0
+		New State: 2
+		Input Port Configuration:
+			port <inport>:
+				EventSize = 1
+		Next scheduled internal transition at time 17
+
+__  Current Time: 17____________________
+
+
+	INTERNAL TRANSITION in model Processor0
+		New State: inf
+		Output Port Configuration:
+			port <outport>:
+				EventSize = 1
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor1
+		New State: 2
+		Input Port Configuration:
+			port <inport>:
+				EventSize = 1
+		Next scheduled internal transition at time 19
+
+__  Current Time: 19____________________
+
+
+	INTERNAL TRANSITION in model Processor1
+		New State: inf
+		Output Port Configuration:
+			port <outport>:
+				EventSize = 1
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor2
+		New State: 2
+		Input Port Configuration:
+			port <inport>:
+				EventSize = 1
+		Next scheduled internal transition at time 21
+
+__  Current Time: 21____________________
+
+
+	INTERNAL TRANSITION in model Processor2
+		New State: inf
+		Output Port Configuration:
+			port <outport>:
+				EventSize = 1
+		Next scheduled internal transition at time inf
+
+__  Current Time: 25____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 35
+
+	INTERNAL TRANSITION in model ElapsedNothing
+		New State: 0
+		Output Port Configuration:
+		Next scheduled internal transition at time inf
+
+__  Current Time: 35____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 45
+
+__  Current Time: 45____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 55
+
+__  Current Time: 55____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 65
+
+__  Current Time: 65____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 75
+
+__  Current Time: 75____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 85
+
+__  Current Time: 85____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 95
+
+__  Current Time: 95____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 105
+
+__  Current Time: 105____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 115
+
+__  Current Time: 115____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 125
+
+__  Current Time: 125____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 135
+
+__  Current Time: 135____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 145
+
+__  Current Time: 145____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 155
+
+__  Current Time: 155____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 165
+
+__  Current Time: 165____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 175
+
+__  Current Time: 175____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 185
+
+__  Current Time: 185____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 195
+
+__  Current Time: 195____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 205
+
+__  Current Time: 205____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 215
+
+__  Current Time: 215____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 225
+
+__  Current Time: 225____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 235
+
+__  Current Time: 235____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 245
+
+__  Current Time: 245____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 255
+
+__  Current Time: 255____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 265
+
+__  Current Time: 265____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 275
+
+__  Current Time: 275____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 285
+
+__  Current Time: 285____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 295
+
+__  Current Time: 295____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 305
+
+__  Current Time: 305____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 315
+
+__  Current Time: 315____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 325
+
+__  Current Time: 325____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 335
+
+__  Current Time: 335____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 345
+
+__  Current Time: 345____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 355
+
+__  Current Time: 355____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 365
+
+__  Current Time: 365____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 375
+
+__  Current Time: 375____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 385
+
+__  Current Time: 385____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 395
+
+__  Current Time: 395____________________
+
+
+	INTERNAL TRANSITION in model GEN
+		New State: 10
+		Output Port Configuration:
+		Next scheduled internal transition at time 405

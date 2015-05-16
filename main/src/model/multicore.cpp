@@ -259,7 +259,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 void Multicore::setGVT(const t_timestamp& newgvt)
 {
 	Core::setGVT(newgvt);
-	if (newgvt < this->getGVT() or isInfinity(newgvt)) {
+	if (newgvt < this->getGVT() || isInfinity(newgvt)) {
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
 		return;
