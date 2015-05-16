@@ -41,32 +41,41 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
 	Multicore::sendMessage(msg);
 }
 
-void Conservativecore::updateEOT()
-{
-	/** Step 3 of CNPDEVS
+/** Step 3 of CNPDEVS
 	 * Pseudocode :
 	 * 	EOT(myid) = std::min(x,y)
 	 * 		x = eit + lookahead_min
 	 * 		y = 	if(sent_message)	eit,1
 	 * 			else			top of scheduler (next event)
+	 * 			none of the above : oo
 	 */
+void Conservativecore::updateEOT()
+{
 	t_timestamp x;
-	if(m_eit == t_timestamp::infinity() || this->m_min_lookahead == t_timestamp::infinity())
+	/// Edge case : EIT=oo (non-dependent kernel), DO NOT add lookahead to inf, but use time().
+	if(isInfinity(this->m_eit) || isInfinity(this->m_min_lookahead)){
 		x = t_timestamp::infinity();
-	else{
-		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);
+	}else{
+		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);	// TODO  this can still overflow, but then we're dead anyway.
 	}
+
 	t_timestamp y = t_timestamp::infinity();
 	if(this->m_sent_message){
 		this->m_sent_message = false;		// Reset sent flag, else we won't have a clue.
-		y = t_timestamp(this->getTime().getTime(), 1);
+		if(this->m_eit.getTime()==std::numeric_limits<t_timestamp::t_time>::max()){	// Be very careful here, eit=oo does not imply
+			y = t_timestamp(this->getTime().getTime(), 1);				// that we're sending with timestamp oo, a detail
+		}else{										// that's missing from the pdf.
+			y = t_timestamp(this->m_eit.getTime(), 1);
+		}
 	}else{
 		if(!this->m_scheduler->empty()){
 			y = this->m_scheduler->top().getTime();
 		}
 	}
+
 	t_timestamp neweot = std::min(x,y);
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
+
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 }
 
@@ -79,47 +88,78 @@ void Conservativecore::updateEOT()
  */
 void Conservativecore::updateEIT()
 {
-	/**
-	 * Pseudocode: our EIT = min of all distributed EOT's, IFF those carry models that
-	 * influence us.
+	/**Implementation alg:
+	 * 	-> for all kernels we depend on, get their max EOT
+	 * 	-> from that set, get the min, that's our new EIT
 	 */
-	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT eit_now = ", this->m_eit);
+	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(const auto& influence_id : m_influencees){
 		const t_timestamp new_eot = this->m_distributed_eot->get(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
+
 	this->setEit(min_eot_others);
 	LOG_INFO("Core:: ", this->getCoreID(), " new EIT == ", min_eot_others);
 }
 
 void Conservativecore::syncTime(){
+	// These 2 steps need to be explicitly done BEFORE Core::syncTime does it's thing, else we
+	// can't stop time from advancing > eit. Note that this is also the algorithm's order.
 	this->updateEOT();
 	this->updateEIT();
-	Core::syncTime();	// Multicore has no syncTime.
+	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
+	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
 	this->resetLookahead();
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
+	/** Step 1/2 of algoritm:
+	 * 	Advance state until time >= eit.
+	 * 	A kernel works in rounds however, so we only enforce here that the
+	 * 	kernel time never advances beyond eit.
+	 */
 	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
+
 	t_timestamp corrected = std::min( this->getEit(), newtime);
+
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min (", this->getEit(), ", ", newtime);
+
+	// Core::setTime is not locked, which is an issue if we run GVT async.
+	// vv is a synchronized setter.
 	Multicore::setTime(corrected);
 }
 
 void Conservativecore::init(){
+	/// Get first time, offset all models if required
 	Core::init();
+
+	/// Make sure we know who we're slaved to
 	buildInfluenceeMap();
+
+	/// Get first lookahead.
+	for(const auto& model : m_models){
+		t_timestamp current_min = this->m_min_lookahead;
+		t_timestamp model_la = model.second->lookAhead();
+		this->m_min_lookahead = std::min(current_min, model_la);
+		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
+	}
 }
 
 
 void Conservativecore::initExistingSimulation(t_timestamp loaddate){
 	Core::initExistingSimulation(loaddate);
 	buildInfluenceeMap();
+	for(const auto& model : m_models){
+		t_timestamp current_min = this->m_min_lookahead;
+		t_timestamp model_la = model.second->lookAhead();
+		this->m_min_lookahead = std::min(current_min, model_la);
+		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
+	}
 }
 
 void Conservativecore::buildInfluenceeMap(){
-	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map");
+	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map.");
 	std::set<std::string>	influencees;
 	for(const auto& modelentry: m_models){
 		const auto& model = modelentry.second;
@@ -144,6 +184,10 @@ void Conservativecore::postTransition(const t_atomicmodelptr& model){
 
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
+}
+
+t_timestamp Conservativecore::getEit(){
+	return m_eit;
 }
 
 } /* namespace n_model */

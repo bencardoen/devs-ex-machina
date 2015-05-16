@@ -9,6 +9,7 @@
 #include "timestamp.h"
 #include "objectfactory.h"
 #include "trafficlight.h"
+#include "modelc.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
 #include "controller.h"
@@ -979,5 +980,150 @@ TEST(Conservativecore, GVT){
 	EXPECT_EQ(eotvector->get(0).getTime(), 200);
 	c1->runSmallStep();			// still stuck @200
 	EXPECT_EQ(eotvector->get(1).getTime(), 200);
+	std::atomic<bool> rungvt(true);
+	n_control::runGVT(ctrl, rungvt);
+	EXPECT_EQ(c0->getGVT().getTime(), 200);
+	EXPECT_EQ(c1->getGVT().getTime(), 200);
+	}
+}
+
+TEST(Conservativecore, Abstract){
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	using namespace n_examples_abstract_c;
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+
+	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+	coreMap[0] = c0;
+	coreMap[1] = c1;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<ModelC>("modelC");
+	ctrl.addModel(m);
+	c0->setTracers(tracers);
+	c0->init();
+	c0->setTerminationTime(endTime);
+	c0->setLive(true);
+	c0->logCoreState();
+	EXPECT_EQ(c0->getCoreID(),0);
+
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	/**
+	 * C0 : A, influence map = {}
+	 * C1 : B  influence map = {0}
+	 * initial lookahead 0 = infinity
+	 * initial lookahead 1 = 30
+	 */
+	/// We begin in a null state, cores start from 0-time, but will advance time (eit/eot)
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 10);		// min of : scheduled=10, eit=inf
+	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 10);		// min of : lookahead=30, eit=10
+	EXPECT_EQ(c1->getEit().getTime(), 10);
+	// Still in beginstate.
+
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 20);		// min of : scheduled=20, eit=inf
+	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 20);		// min of : lookahead=30, y=20 (scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 20);
+	// State A:1, B:1
+
+
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 30);
+	EXPECT_EQ(c0->getEit(), t_timestamp::infinity());
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 30);		// B : ta=oo @ state 2
+	EXPECT_EQ(c1->getEit().getTime(), 30);
+	// State A:2, B:2
+
+	c0->runSmallStep();					// Send Message
+	EXPECT_EQ(eotvector->get(0).getTime(), 30);		// x=infinity, first scheduled = 30, Coretime == 40 !!!
+	EXPECT_EQ(c0->getTime().getTime(), 40);
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	c1->runSmallStep();					// receive message, but do not process it (yet), nexttime=30
+	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// 1(B) is longer scheduled, so EOT does not find anything.
+	EXPECT_EQ(c1->getEit().getTime(), 30);			// Eit == 30 based on EOT value of 0
+	// State A:3 B:2
+
+	c0->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(0).getTime(), 50);		// x=infinity, first scheduled = 50
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==50);
+	c1->runSmallStep();					// process pending message, become live again
+	EXPECT_EQ(eotvector->get(1).getTime(), 40);		// min(x=60 (time=30+lookahead 30), y=40 first scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 50);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),40);
+	// A:4, B:3
+
+	c0->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(0).getTime(), 60);		// x=infinity, first scheduled = 60
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==60);
+	c1->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(1).getTime(), 50);		// min(x=eit=50 + lookahead=20 == 70, y=50 first scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 60);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),50);			// Time is 50, we can advance safely to 60, but
+	// A:5, B:4							// that requires more than 1 round. In parallel B could
+								// do this.
+
+
+	c0->runSmallStep();					// send message
+	EXPECT_EQ(eotvector->get(0).getTime(), 60);		// x=infinity, just sent message @60, so 60,1
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time advances to 70 (next scheduled)
+	c1->runSmallStep();					// Get message from A, but queue it
+								// B AGAIN goes offline : oo
+	EXPECT_EQ(eotvector->get(1).getTime(), 70);		// lookahead = 10, eit=60 == 70
+	EXPECT_EQ(c1->getEit().getTime(), 60);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),60);			// Can forward time to 60 (time of rec'd message
+	// A:6, B:5
+
+	c0->runSmallStep();					// new timeadvance=infinity, lookahead =infinity, no msgs
+	EXPECT_TRUE(isInfinity(eotvector->get(0)));		// x=infinity, y=infinity
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time is now stuck @ 70, we're zombie
+
+	c1->runSmallStep();					// Process message from A, B becomes live again
+								// reschedules @60+10, lookahead=inf
+	EXPECT_EQ(eotvector->get(1).getTime(), 70);		// x=inf, y=70 (first scheduled)
+	EXPECT_TRUE(isInfinity(c1->getEit()));			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),70);			// Time can advance to 70 (next scheduled)
+	// A:7, B:6
+
+	c0->runSmallStep();					// new timeadvance=infinity, lookahead =infinity, no msgs
+	EXPECT_TRUE(isInfinity(eotvector->get(0)));		// x=infinity, y=infinity
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time is now stuck @ 70, we're zombie
+
+	c1->runSmallStep();					// Internal transition 6->7 @ B
+								// B goes offline (ta=inf), la=oo
+	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// x=inf, y=inf
+	EXPECT_TRUE(isInfinity(c1->getEit()));			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),70);			// Time is stuck
+	// A:7, B:7
+
+	/// That's all folks.
+	tracers->startTrace();
 	}
 }

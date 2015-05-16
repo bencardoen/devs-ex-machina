@@ -219,6 +219,14 @@ inline t_timestamp makeLatest(const t_timestamp& now)
 	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
 }
 
+/**
+ * Return true if the time part of the timestamp is infinite.
+ * @attention not the same as ==infinity(), since that also checks causality.
+ */
+inline bool isInfinity(const t_timestamp& arg){
+	return(arg.getTime() == std::numeric_limits<t_timestamp::t_time>::max());
+}
+
 } /* namespace n_network */
 
 namespace std {
