@@ -237,6 +237,12 @@ const std::vector<n_network::t_msgptr>& Port::getReceivedMessages() const
 	return m_receivedMessages;
 }
 
+void Port::addInfluencees(std::set<std::string>& influences) const
+{
+	for (auto& port : this->m_coupled_ins)
+		influences.insert(port->getHostName());
+}
+
 void Port::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
