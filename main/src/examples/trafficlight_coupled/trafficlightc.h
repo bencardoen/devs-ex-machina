@@ -42,6 +42,7 @@ public:
 	void intTransition() override;
 	t_timestamp timeAdvance() const override;
 	std::vector<n_network::t_msgptr> output() const override;
+	t_timestamp lookAhead() const override;
 
 	/*
 	 * The following function has been created to easily

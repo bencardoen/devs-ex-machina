@@ -170,6 +170,12 @@ t_timestamp AtomicModel::getTimeElapsed() const
 	return m_elapsed;
 }
 
+void AtomicModel::addInfluencees(std::set<std::string>& influences) const
+{
+	for (auto& port: this->m_iPorts)
+		port.second->addInfluencees(influences);
+}
+
 void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));

@@ -213,6 +213,14 @@ public:
 	}
 
 	/**
+	 * Adds all this model's influences to the given set.
+	 * This function is used in conservative parallel simulation.
+	 *
+	 * @param influences A set of all current influences (strings: host names) that will be completed
+	 */
+	void addInfluencees(std::set<std::string>& influences) const;
+
+	/**
 	 * Serialize this object to the given archive
 	 *
 	 * @param archive A container for the desired output stream
