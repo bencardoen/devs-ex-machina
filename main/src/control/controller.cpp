@@ -68,6 +68,7 @@ void Controller::load(const std::string& fname)
 
     //TODO: create cores and iterate over models to allocate them all to the right core
     //TODO: set loaded GVT to the new cores
+    // @use void initExistingSimulation(t_timestamp loaddate); in Core.
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic)
@@ -76,7 +77,7 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	if (m_hasMainModel) { // old models need to be replaced
 		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
-		emptyAllCores();		// TODO erases correctly allocated models from core in pdevs.
+		emptyAllCores();
 	}
 	size_t coreID = m_allocator->allocate(atomic);
 	addModel(atomic, coreID);
@@ -552,9 +553,9 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 		}
 
 		if (core->isIdle()) {
-			std::chrono::milliseconds ms{45};	// TODO use condition variable.
-			std::this_thread::sleep_for(ms);
-			{
+			std::chrono::milliseconds ms{45};	// TODO this is a partial solution to a hard problem
+			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
+			{					// lowers the probability of triggering deadlock.
 				std::lock_guard<std::mutex> signallock(vectorlock);
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 				set_flag(threadsignal[myid], n_threadflags::IDLE);

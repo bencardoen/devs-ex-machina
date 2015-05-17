@@ -55,17 +55,15 @@ private:
 
 	void setEit(const t_timestamp& neweit);
 
-	///			|
-	/// m_eot is stored in  v
-
 	/**
 	 * Shared vector of all eots of all cores.
 	 * Used in calculating max future simtime.
+	 * A core only reads influencing core eots, and only writes its own.
 	 */
 	t_eotvector	m_distributed_eot;
 
 	/**
-	 * Record if we sent a message in the last round.
+	 * Record if we sent a message in the last simulation round.
 	 */
 	bool		m_sent_message;
 
@@ -87,10 +85,26 @@ private:
 	t_timestamp		m_min_lookahead;
 
 	/**
-	 * Reset lookahead to inf, to be invoked after each sim run.
+	 * Reset lookahead to inf, invoked after each sim run.
 	 */
 	void
 	resetLookahead();
+
+	/**
+	 * Step 3 of algorithm CNPDEVS
+	 * Update our own EOT value with either:
+	 * 	EIT, EIT+lookahead, EIT+nextscheduled
+	 */
+	void
+	updateEOT();
+
+	/**
+	 * Steps 4/5 of algorithm CNPDEVS.
+	 * Update EIT as lowest of ~maximal~ EOTS. Since all the hard work on the EOTS is already done, this is
+	 * reasonably simple. Furthermore, we only look at EOTS' of influencing kernels.
+	 */
+	void
+	updateEIT();
 
 public:
 	Conservativecore() = delete;
@@ -121,22 +135,6 @@ public:
 	 * message reaches the network.
 	 */
 	// void getMessages()override
-
-	/**
-	 * Step 3 of algorithm CNPDEVS
-	 * Update our own EOT value with either:
-	 * 	EIT, EIT+lookahead, EIT+nextscheduled
-	 */
-	void
-	updateEOT();
-
-	/**
-	 * Steps 4/5 of algorithm CNPDEVS.
-	 * Update EIT as lowest of ~maximal~ EOTS. Since all the hard work on the EOTS is already done, this is
-	 * reasonably simple. Furthermore, we only look at EOTS' of influencing kernels.
-	 */
-	void
-	updateEIT();
 
 	/**
 	 * Executes Steps 3/4/5 of algorithms (iow update(EOT|EIT)), before forwarding to Base class syncTime

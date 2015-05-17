@@ -455,8 +455,8 @@ void n_model::Core::traceConf(const t_atomicmodelptr& model)
 void n_model::Core::setTerminationTime(t_timestamp endtime)
 {
 	this->m_termtime = endtime;
-	/// TODO !NOT! if endtime < this->getTime() revert
-	/// I'm not sure this is safe.
+	// If we're ahead of this time when we receive it (caused by async functor termination),
+	// we're fine to just stop. (@see Yentl's paper.)
 }
 
 n_network::t_timestamp n_model::Core::getTerminationTime()

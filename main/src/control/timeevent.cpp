@@ -11,13 +11,13 @@ namespace n_control {
 
 timeevent::timeevent()
 {
-	// TODO Auto-generated constructor stub
+
 
 }
 
 timeevent::~timeevent()
 {
-	// TODO Auto-generated destructor stub
+
 }
 
 } /* namespace n_control */

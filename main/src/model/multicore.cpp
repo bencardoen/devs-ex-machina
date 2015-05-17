@@ -45,8 +45,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
-	        msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());// Use explicit copy accessors to void any chance for races.
-	// TODO Race : it's still possible a model uses msg->Payload while we copy it. Don't use it ? (it's not in hash).
+	        msg->getDestinationPort(), msg->getSourcePort(), "");// Use explicit copy accessors to void any chance for races.
 	this->paintMessage(amsg);		// Antimessage should have same color as core!!
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());

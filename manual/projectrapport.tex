@@ -15,7 +15,10 @@
 \usepackage{url}
   \lstset{basicstyle=\ttfamily\tiny\color{blue}}
 \usepackage{graphicx}
-\usepackage[]{algorithm2e}
+%\usepackage[]{algorithm2e}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{pifont}
 
 \title{Project Report\\\textsc{DEVS Ex Machina}}
 \author{Ben Cardoen\\Pieter Lauwers\\Stijn Manhaeve\\Tim Tuijn\\Matthijs Van Os}
@@ -28,7 +31,7 @@
 \chapter{Summary}
 %
 \section*{}
-The project implements a C++ port of the PyPDEVS project, extended with conservative synchronization and a change in system architecture from distributed simulation on several nodes (asymmetric mp) to a symmetric multiprocessing architecture. \\The summarized goal of the project is to provide an implementation of the offered DEVS formalisms with significantly lower execution time by levering the smp architecture.
+The project implements a C++ port of the PyPDEVS project, extended with conservative synchronization and a change in system architecture from distributed simulation on several nodes (asymmetric mp) to a symmetric multiprocessing architecture. \\The summarized goal of the project is to provide an implementation of the offered DEVS formalisms with significantly lower execution time by leveraging the smp architecture.
 
 \section*{Terminology}
 The literature sometimes exchanges terms, to avoid any confusion the following frequent terms are listed with their associated meaning as used in this document:
@@ -38,7 +41,12 @@ The literature sometimes exchanges terms, to avoid any confusion the following f
   \item Distributed parallelism : computation distributed over several physically separated machines communicating by means of a network stack.
   \item SMP : symmetric multiprocessing, running a parallel computation on several distinct CPU cores/threads on the same machine with shared memory (and/or cache).
   \item message : any exchange of high level information between entities, user defined or for inter-kernel synchronization.
+  \item lookahead : Timespan relative to current state where the output of the model is not influenced by its input. (as per definition in \cite{cons}, app B)
+  \item eot : Earliest output time. Timepoint in future where the core/kernel will output events.
+  \item eit : Earliest input time. Timepoint in future where the core/kernel expects to
+  be change state on receiving event.
 \end{itemize}
+Lookahead is collected per model per kernel, eit/eot are based on information from models but determined on a core/kernel level.
 
 \chapter{Planning}
 \section{Parallel}
@@ -70,6 +78,9 @@ The project requires a compliant C++11 compiler and library, but beyond that is 
 \section{Object representation}
 In Python everything is a reference, and since the DEVS formalisms require that the user be allowed to override most of the basic entities, the best representation for an object was a shared\textunderscore ptr. Passing by value could have been safer (e.g. between threads) but would introduce slicing.\\ Another advantage was that we would use as little memory as possible, for example sending a message means passing an const reference to a shared pointer, which is usually equal in size to 2 pointers. By passing by const ref we minimize most of the penalty usually involved in copyconstructing shared pointers. \\
 The only downside is the synchronized access to the reference count in the shared pointer. There is also a need for more boilerplate code to use shared pointers in containers (providing pass-through hash function, comparison etc). 
+
+\section{Messaging Size}
+A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but this can be overridden by way of templated code. %TODO Stijn.
 
 \chapter{Design}
 \section{Overview}
@@ -152,14 +163,47 @@ Only the removal/addition of connections is currently supported. Unlike the PyPD
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
 \subsubsection{Conservative}
-Conservative time synchronization is still under development.
+The implementation of the conservative formalism follows the algorithm as described in \cite{cons}. \\
+\paragraph{Algorithm}
+The following listing briefly states the steps required in the conservative synchronization algorithm.\\
+Initialize eit,eot as (0,0) per kernel.\\
+A Time object has an absolute first field , followed by a causal second field.\\
+\begin{algorithm}
+\caption{Conservative PDEVS}
+\label{CHalgorithm}
+\begin{algorithmic}
+\Procedure{CPDEVS Modified}{}
+\State 0.1 Construct a depency graph, determining which models influence this kernel directly
+\State 0.2 If a msg is sent : eot = (timestamp > eot) ? timestamp : eot
+\While{Termination trigger not reached}
+\State 1. Simulate until vtime $>=$ eit
+\State 1.a If msg is sent during sim : eot = max(timestamp, eot)
+\State 2.a Time x = (eit + min lookahead, 0)
+\State 2.b Time y = (msg sent) ? (eit,1) : (time next transition)
+\State 2.c Time eot = std::min(x,y)
+\State 2.d Share eot value with other kernels.
+\State 3   Time eit = min ( $eot_i$ for i in influencing kernels)
+\EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}\\
+\subparagraph{Differences with ADEVS}
+A big difference between ADEVS' and our implementation is that we hold the eot-values of all kernels in shared memory. This means that step 1.a , which is normally done by the receiver when it inspects the message queue, can be done immediately. This also avoids the queueing delay incurred by simulation traffic.\\
+Using the shared memory approach, we also avoid the sending of any synchronization message to other cores (required in ADEVS). \\In step 2.d we simply overwrite our old EOT value with the newly calculated. The shared EOT vector is only written at 1 position for each kernel , and only the influencing EOT values are ever read. \\
+\subparagraph{Dependency calculation}
+The author of the models needs to supply the kernel, for each model, with a list of models by whom it is influenced. Receiving a message that alters a model's output is defined as influencing in this context. Using the allocation information provided by the Controller, the Kernel will them determine which other Kernels (including possibly itself) it is dependent on.\\
+Note however that dependency here is in practice non-transitive, a model needs only to list those models that it directly receives events from, not separated by several models in between. \\
+This last point requires clarification, suppose we have 3 models A, B, C with A sending output to B, and B to C. C is indirectly influenced by A, but need not record this information (which is non trivial to retrieve for a non-trivial model, disregarding cycles for the moment). \\
+Let A be allocated @ kernel 0, B @ 1, C @ 2. While the dependency is transitive, since kernel 1 is already bound by kernel 0, kernel 2 does not require kernel 0's information (eot). By moving this transitivity to the kernel level, the model's author only has to look at 1-edge distant dependencies. \\
+At construction a Conservative Kernel will collect , for each model it holds, the list of names of influencing models. Next, the kernel requests for each unique name the allocation information (O(1) lookup). Note that this can be optimized if the model stores its allocation information, but this then prohibits runtime reallocation.
+
 
 
 \chapter{Obstacles}
 \section{Virtualization}
 Virtualization proved a significant hurdle by exposing potential faults. Standard compliant code was found to be leaking memory by not calling container member destructors but only on a VM with Linux as Guest and Windows as Host. This was never reproducible in another setting.
 \section{Threading}
-libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}, triggering an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}.
+libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}, triggering an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1
 \section{Toolchains}
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
 \section{Logger}
@@ -246,6 +290,10 @@ Further optimizations included but are not limited to:
   \bibitem{cereal} \url{https://uscilab.github.io/cereal/}
   
   \bibitem{cpp} \url{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4296.pdf}
+  
+  \bibitem{cons}  J. J. Nutaro, Building Software for Simulation: Theory and Algorithms, with
+Applications in C++. Wiley Publishing, 2010.
+
 
   \end{thebibliography}
 \end{document}

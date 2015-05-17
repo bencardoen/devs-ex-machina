@@ -195,7 +195,7 @@ TEST_F(SchedulerTest, Concurrency_1writerkreaders)
 	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency();  // 1 = main
 	if(std::thread::hardware_concurrency() <= 1){
-		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
+		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!");
 		return;
 	}
 	const int pushcount = 1;
@@ -226,7 +226,7 @@ TEST_F(SchedulerTest, Concurrency_threadoverload)
 	const int totalsize = 500;
 	const int threadcount = std::thread::hardware_concurrency() * 2;
 	if(std::thread::hardware_concurrency() <= 1){
-		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!"); // TODO change to warning.
+		LOG_WARNING("Skipping threaded test, no support for threads on implementation !!");
 		return;
 	}
 	const int pushcount = threadcount / 2;

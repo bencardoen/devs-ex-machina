@@ -2,7 +2,7 @@
  * conservativecore.cpp
  *
  *  Created on: 4 May 2015
- *      Author: ben
+ *      Author: Ben Cardoen -- Tim Tuijn
  */
 
 #include <conservativecore.h>
@@ -104,13 +104,20 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-	// These 2 steps need to be explicitly done BEFORE Core::syncTime does it's thing, else we
-	// can't stop time from advancing > eit. Note that this is also the algorithm's order.
+	/** The algorithm says : advance until next time >= eit
+	 *  		-> then calculate EOT/EIT
+	 *  We'll advance anyway, but EOT/EIT have to be recalculated more to avoid
+	 *  slowing down. Case in point : EIT=oo, EOT=10, Time:10->20, EOT can never be behind current time.
+	 *
+	 */
 	this->updateEOT();
 	this->updateEIT();
+
 	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
+
 	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
 	this->resetLookahead();
+
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
 	// Else a dependent kernel can get hung op, since in Idle() state we'll never get here again.
 	if(this->isIdle()){

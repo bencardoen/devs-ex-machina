@@ -83,7 +83,7 @@ void SynchronizedScheduler<X, R>::unschedule_until(std::vector<R>& container,
 		}
 		m_storage.pop();
 		m_hashtable.erase(element);
-		container.push_back(element); // TODO if push_back fails, the element is lost forever (neither in container, nor in scheduler.
+		container.push_back(element);
 	}
 	testInvariant();
 }
