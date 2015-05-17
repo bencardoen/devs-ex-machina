@@ -10,6 +10,7 @@
 #include "network.h"
 #include "objectfactory.h"
 #include "controller.h"
+#include "conservativecore.h"
 #include "simpleallocator.h"
 #include "trafficlight.h"
 #include "tracers.h"
@@ -21,6 +22,7 @@
 #include "dynamiccore.h"
 #include "timeevent.h"
 #include "testmodels.h"
+#include "modelc.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -270,4 +272,43 @@ TEST(Controller, Pause)
 
 		ctrl->simulate();
 	}
+}
+
+TEST(Controller, CONDEVS)
+{
+	RecordProperty("description", "Running a simple multicore simulation");
+	std::ofstream filestream(TESTFOLDER "controller/condevstest.txt");
+	using namespace n_examples_abstract_c;
+	{
+		CoutRedirect myRedirect(filestream);
+		auto tracers = createObject<n_tracers::t_tracerset>();
+
+		t_networkptr network = createObject<Network>(2);
+		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
+		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+
+		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+		auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+		auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+
+		coreMap[0] = c0;
+		coreMap[1] = c1;
+
+		t_timestamp endTime(70, 0);
+
+		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		ctrl.setPDEVS();
+		ctrl.setTerminationTime(endTime);
+
+		t_coupledmodelptr m = createObject<ModelC>("modelC");
+		ctrl.addModel(m);
+
+		ctrl.simulate();
+		EXPECT_TRUE(c0->isLive() == false);
+		EXPECT_TRUE(c1->isLive() == false);
+		EXPECT_TRUE(c0->getTime() >= endTime || c1->getTime() >= endTime);
+	};
+
+	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/condevstest.txt", TESTFOLDER "controller/condevstest.corr"), 0);
 }

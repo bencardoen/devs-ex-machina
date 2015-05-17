@@ -111,6 +111,11 @@ void Conservativecore::syncTime(){
 	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
 	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
 	this->resetLookahead();
+	// If we've terminated, our EOT should be our current time, not what we've calculated.
+	// Else a dependent kernel can get hung op, since in Idle() state we'll never get here again.
+	if(this->isIdle()){
+		this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
+	}
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -123,7 +128,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 	t_timestamp corrected = std::min( this->getEit(), newtime);
 
-	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min (", this->getEit(), ", ", newtime);
+	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime);
 
 	// Core::setTime is not locked, which is an issue if we run GVT async.
 	// vv is a synchronized setter.
