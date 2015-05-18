@@ -84,7 +84,6 @@ const TraceMessage* TraceMessageEntry::operator->() const
 bool operator<(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 {
 	if (!(*lhs < *rhs) && !(*lhs > *rhs)) {
-		LOG_DEBUG("TRACER: timestamps are equal: ", lhs->getTimeStamp(), " == ", rhs->getTimeStamp());
 		return lhs.m_pointer > rhs.m_pointer;
 	}
 	return *lhs > *rhs;
