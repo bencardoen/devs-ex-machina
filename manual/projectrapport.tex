@@ -125,7 +125,16 @@ The tracing component makes heavy use of template programming. For more detailed
 The models hide all implementation details for the particular DEVS formalisms, without limiting the user to extend into any subclassed model of his/her choice. The use can focus on what he/she wants the model to emulate, and not worry about for example locking, allocation etc. We refer to the manual for more information about the creation of these models.
 
 \section{Scheduler}
-The scheduler from the prototypes was reused, with little to no changes (barring a few bugfixes). An unsynchronized version was implemented for comparison purposes.
+A Scheduler was implemented based on the prototyping code. As required, as list based scheduler was implemented. \\
+The interface from PyPDevs' scheduler class was reused, but internally the scheduler class in our project differs on a few point. \\
+\subsection{Composition}
+All schedulers are based on a heap, which order items to be scheduled. We never actually schedule models, only entries (A struct containing name and time to schedule), allowing for far faster operation. This is complemented by a hashmap, so that entries can have O(1) lookup and erasure (required for the use case of antimessaging, among others). The operation massReschedule() was left out of the interface, since it can be easily composed using erase() and push\textunderscore back().
+\\
+\subsection{Implementation}
+The actual heap used is either based on std::list as required, or one of Boost's heaps. The user is provided with a convenience factory function that creates Scheduler instances with varying heap backends. In general, the Fibonacci heap is one of the fastest, with skew heap sometimes coming out ahead. The list based heap is always a factor 2 slower, though again this depends on the usage scenario. \\Important to note is that only node based heaps can be used efficiently (without compromising the performance of erase() and contains()). We store on insertion an iterator with the key of the pushed element in the hashmap. This also works as a safety check, preventing double insertion (depending ofcourse on the hash-specialization semantics). This freedom of implementation is visible in the tracers where duplicate elements are allowed if they have a different address, contrasted with the model scheduler which disallows a model to be scheduled twice.\\
+Finally, the std::hash$<>$ specialization used by the message scheduler allows O(1) annihilation of a message by its antimessage (since the hash is identical).
+\subsection{Differences}
+We intended to use the scheduler class not only for scheduling models, but also to store pending incoming messages, and tracing messages. To allow this, the Scheduler class only requires from a scheduled item that it has operator$<$ and std::hash$<$T$>$ defined.
 
 \section{Controller}
 For the controller, care was taken in making the interface both functional and minimal. The default configuration is quick to set up, and customization is possible should the user require it.
