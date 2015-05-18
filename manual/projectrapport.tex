@@ -136,7 +136,7 @@ For serialization we used the Cereal \cite{cereal} header-only framework. We hav
 \chapter{Non-functional requirements}
 \section{Correctness}
 \subsubsection{Testing}
-The use of the jenkins CI was heavily leveraged, in combination with extensive testing. Any feauture increment could only be merged into the project if it passed the developer's own jenkins instance.
+The use of the jenkins CI was heavily leveraged, in combination with extensive testing. Any feature increment could only be merged into the project if it passed the developer's own jenkins instance.
 \subsubsection{Thread races and deadlock}
 Deadlocks and race conditions are very hard to debug, let alone prevent. To help us in this area as much as possible we used prototypes of threaded code in the tests before merging them into the main classes, and each build is checked with ThreadSanitizer \cite{tsan} which proved invaluable in preventing races and deadlocks in the threaded codepaths.
 \subsubsection{Memory leaks and undefined behaviour}
@@ -153,11 +153,11 @@ In Windows we chose the Cygwin platform instead of MinGW to compile our project 
 
 \chapter{Functional requirements}
 \section{DEVS Formalisms}
-\section{Single core}
+\subsection{Single core}
 The single core implementations follow exactly the runtime behaviour shown by the PyPDEVS simulator. We've chosen to emulate the Select() function with an integer priority value the user can set. This saves 1 virtual function call per transition and can quite easily be optimized by the compiler since it remains constant.
-\subsection{DirectConnect}
+\subsubsection{DirectConnect}
 The directConnect algorithm has gone relatively unchanged from its implementation in PyPDEVS, though the role of the RootDEVS class has been simplified somewhat. Its main function has been reduced to executing directConnect and then storing the resulting list of connected atomic models.
-\subsection{Dynamic Structured}
+\subsubsection{Dynamic Structured}
 Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
@@ -262,15 +262,6 @@ We let each logger print several hundred thousand messages to a file. These are 
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
 While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
-
-\section{Further work.}
-Further optimizations included but are not limited to: 
-\begin{enumerate}
-\item Custom memory allocators/pools (boost, ...)
-\item Profiling guided recompilation
-\item Detecting bottlenecks with perf and gprof.
-\item ...
-\end{enumerate}
 
 \begin{thebibliography}{1}
 
