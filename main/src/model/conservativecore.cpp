@@ -56,7 +56,7 @@ void Conservativecore::updateEOT()
 	if(isInfinity(this->m_eit) || isInfinity(this->m_min_lookahead)){
 		x = t_timestamp::infinity();
 	}else{
-		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);	// TODO  this can still overflow, but then we're dead anyway.
+		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);	//  this can still overflow, but then we're dead anyway.
 	}
 
 	t_timestamp y = t_timestamp::infinity();

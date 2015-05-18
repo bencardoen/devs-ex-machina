@@ -457,8 +457,6 @@ TEST(tracing, policies) {
 		pFile.stopTracer();
 		EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE"filewrite_1.txt", TESTFOLDERTRACE"filewrite_corr_1.txt"), 0);
 	}	//filewrite_1.txt is surely released here.
-	//TODO test for files that cannot be opened for writing
-	//test for reopening a finished file
 
 	//make sure the buffer is flushed
 	std::stringstream newCoutTarget;

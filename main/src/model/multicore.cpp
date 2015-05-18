@@ -157,7 +157,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 }
 
 void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<bool>& rungvt)
-{	// TODO Beautify!!
+{
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
 	if(rungvt==false){

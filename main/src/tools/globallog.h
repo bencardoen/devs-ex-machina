@@ -91,23 +91,4 @@ extern Logger<LOG_LEVEL> globalLog;
 #define LOG_INIT(filename)
 #endif
 
-//TODO clean up macro definitions
-//#undef LOG_NONE
-//#undef LOG_ERROR_I
-//#undef LOG_WARNING_I
-//#undef LOG_DEBUG_I
-//#undef LOG_INFO_I
-//
-//#undef LOG_ERROR_STR
-//#undef LOG_WARNING_STR
-//#undef LOG_DEBUG_STR
-//#undef LOG_INFO_STR
-//#undef LOG_LEVEL
-//#undef LOG_FILTER
-//#undef LOG_BLOCK
-//#undef LOG_ARGS
-//#undef LOG_NOOP
-//
-//#undef LOG_GLOBAL
-//#undef LOG_MUTEX
 #endif /* SRC_TOOLS_GLOBALLOG_H_ */

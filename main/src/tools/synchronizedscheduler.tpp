@@ -73,7 +73,6 @@ void SynchronizedScheduler<X, R>::unschedule_until(std::vector<R>& container,
 		const R& time) {
 	// Two options to implement this : use ordered iterators (NlogN) or pop until(log n)
 	// We need to lock the whole heap during the operation to ensure consistent results.
-	// TODO test edge cases , empty scheduler , unschedule more than present etc....
 	std::lock_guard<std::mutex> lock(m_lock);
 	while (not m_storage.empty()) {
 		const R element = m_storage.top(); // Note: using const & here gives false threading errors, a copy is required anyway.

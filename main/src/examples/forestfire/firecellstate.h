@@ -39,8 +39,6 @@ public:
 	 * @param t the new temperature
 	 */
 	void setTemp(double t);
-
-	//TODO @Pieter serialize FireCell
 };
 
 typedef std::shared_ptr<FireCellState> t_firecellstateptr;

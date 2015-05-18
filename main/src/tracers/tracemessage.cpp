@@ -187,7 +187,6 @@ void clearAll()
 {
 	while (!scheduler->empty()) {
 		TraceMessageEntry ptr = scheduler->pop();
-		//TODO unsure whether we have to print all these. I think not
 		n_tools::takeBack(ptr.getPointer());
 	}
 }

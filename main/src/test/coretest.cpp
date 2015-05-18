@@ -357,7 +357,7 @@ TEST(Core, threading)
 	cores.push_back(coretwo);
 
 	std::vector<std::thread> threads;
-	const std::size_t threadcount = 2;			//TODO replace with concurrency
+	const std::size_t threadcount = 2;
 	if (threadcount <= 1) {
 		LOG_WARNING("Skipping test, no threads!");
 		return;

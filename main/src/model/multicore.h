@@ -82,9 +82,6 @@ private:
 	 */
 	std::mutex 			m_timelock;
 
-	// TODO re-enable cvar if we can actually use it
-	//std::condition_variable	m_wake_on_msg;
-
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */

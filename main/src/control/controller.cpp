@@ -239,9 +239,6 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 
 void Controller::simulate()
 {
-//	if (!m_tracers->isInitialized()) {
-//		// TODO ERROR
-//	}
 	assert(m_isSimulating == false && "Can't start a simulation while already simulating.");
 
 	if (!m_hasMainModel) {
@@ -553,7 +550,7 @@ void cvworker(	std::condition_variable& cv, std::mutex& cvlock, std::size_t myid
 		}
 
 		if (core->isIdle()) {
-			std::chrono::milliseconds ms{45};	// TODO this is a partial solution to a hard problem
+			std::chrono::milliseconds ms{45};	// this is a partial solution to a hard problem
 			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
 			{					// lowers the probability of triggering deadlock.
 				std::lock_guard<std::mutex> signallock(vectorlock);
@@ -667,7 +664,6 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			}
 		} else {
 			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
-			// TODO check/reset core state, or crash hard.
 		}
 	}
 }

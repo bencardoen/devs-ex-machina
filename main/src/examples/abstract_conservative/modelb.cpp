@@ -67,12 +67,6 @@ t_timestamp ModelB::lookAhead() const
 	if ((*state == "0") || (*state == "3")){
 		return t_timestamp(30);
 	}
-	// TODO : BEN, ik denk niet dat je ooit de lookahead van deze volgende staten
-	// 	  	(1,4,2,5) zult moeten oproepen aangezien je met de lookahead van 30
-	//		al genoeg weet, check dit wel!
-	// DONE : Tim, als je assert(false) in lookahead 1,4,2,5 zet faalt de simulatie vrijwel direct.
-	// De lookahead wordt altijd opgeroepen, ook als je een externe transitie doet (je staat verandert immers)
-	// en dus ook (mogelijk) je lookahead.
 	else if ((*state == "1") || (*state == "4")){
 		return t_timestamp(20);
 	}

@@ -237,7 +237,7 @@ struct hash<n_network::Time<T, X>>
 	{
 		constexpr int prime = 17;
 		// Could left shift, but what if time is Floating point ??
-		// todo use enable_if floating point to get better results here.
+		// use enable_if floating point to get better results here.
 		// @warning : test with -fsanitize=integer (mind overflow).
 		size_t result = hash<T>()(item.getTime()) * prime;
 		result += hash<X>()(item.getCausality()) * prime;	// second field is very small.
