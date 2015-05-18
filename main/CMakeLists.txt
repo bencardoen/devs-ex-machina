@@ -122,6 +122,7 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/firegenerator.cpp
 	src/examples/forestfire/firespread.cpp
 	src/performance/devstone/devstone.cpp
+	src/performance/benchmarks/phold.cpp
 	src/control/allocator.cpp
 	src/control/controller.cpp
 	src/control/controllerconfig.cpp
@@ -161,6 +162,7 @@ include_directories(	src
 				src/model
 				src/tracers
 				src/performance/devstone
+				src/performance/benchmarks
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
 				src/examples/trafficlight_ds
