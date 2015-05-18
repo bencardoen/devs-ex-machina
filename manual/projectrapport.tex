@@ -190,22 +190,33 @@ A Time object has an absolute first field , followed by a causal second field.\\
 \subparagraph{Differences with ADEVS}
 A big difference between ADEVS' and our implementation is that we hold the eot-values of all kernels in shared memory. This means that step 1.a , which is normally done by the receiver when it inspects the message queue, can be done immediately. This also avoids the queueing delay incurred by simulation traffic.\\
 Using the shared memory approach, we also avoid the sending of any synchronization message to other cores (required in ADEVS). \\In step 2.d we simply overwrite our old EOT value with the newly calculated. The shared EOT vector is only written at 1 position for each kernel , and only the influencing EOT values are ever read. \\
+Also important to note is that there exist several edge cases not listed in this algorithm, but force the implementation to do more work than listed above. Consider a kernel with a non-dependent model A (that receives no input). By definition A has eit = oo, causing all eot-calculation to be skipped forever. We can't do this, if there exists at least 1 model depending on A, this model would get incorrect eot-values (either 0 or oo, which neither are correct since A is not prohibited from sending output).\\
+The correct behaviour here is to replace eit with the vtime of the kernel at each simulation step and to use that in the algorithm.\\
+ Furthermore, collecting lookahead values from models needs to be done in step 1, a lookahead value is calculated starting from the time it acquires a new state. This means that the lookahead value used in 2.a has to be continuously updated, regardless of usage, and has to be reset between simulation rounds (step 1 can entail several of such rounds). If we don't reset the minimum lookahead value in between rounds, there are scenarios where an incorrect minimum of a model that is no longer scheduled in the next round can warp the calculation. \\ 
+ The calculation done in steps 2, 3 are quite efficiently implemented, although a future optimization could delay step 3 until several rounds have passed, more in line with the theoretical algorithm.
 \subparagraph{Dependency calculation}
-The author of the models needs to supply the kernel, for each model, with a list of models by whom it is influenced. Receiving a message that alters a model's output is defined as influencing in this context. Using the allocation information provided by the Controller, the Kernel will them determine which other Kernels (including possibly itself) it is dependent on.\\
-Note however that dependency here is in practice non-transitive, a model needs only to list those models that it directly receives events from, not separated by several models in between. \\
-This last point requires clarification, suppose we have 3 models A, B, C with A sending output to B, and B to C. C is indirectly influenced by A, but need not record this information (which is non trivial to retrieve for a non-trivial model, disregarding cycles for the moment). \\
+The author of the models needs to supply the kernel, for each model, with a list of models by whom it is influenced. Receiving a message that alters a model's output is defined as influencing in this context. Using the allocation information provided by the Controller, the Kernel will then determine which other Kernels (including possibly itself) it is dependent on.\\
+It is important to note that the user need not interpret this dependency relation as transition, and needs to look only at 1-edge removed models. \\
+To clarify this last point: suppose we have 3 models A, B, C with A sending output to B, and B to C. C is indirectly influenced by A, but need not record this information (which is non trivial to retrieve for a non-trivial model, disregarding cycles for the moment). \\
 Let A be allocated @ kernel 0, B @ 1, C @ 2. While the dependency is transitive, since kernel 1 is already bound by kernel 0, kernel 2 does not require kernel 0's information (eot). By moving this transitivity to the kernel level, the model's author only has to look at 1-edge distant dependencies. \\
-At construction a Conservative Kernel will collect , for each model it holds, the list of names of influencing models. Next, the kernel requests for each unique name the allocation information (O(1) lookup). Note that this can be optimized if the model stores its allocation information, but this then prohibits runtime reallocation.
-
-
+At construction a Conservative Kernel will collect , for each model it holds, the list of names of influencing models. Next, the kernel requests for each unique name the allocation information (O(1) lookup). Note that this can be optimized if the model stores its allocation information, but this then prohibits runtime reallocation should this be implemented in the future.
 
 \chapter{Obstacles}
 \section{Virtualization}
 Virtualization proved a significant hurdle by exposing potential faults. Standard compliant code was found to be leaking memory by not calling container member destructors but only on a VM with Linux as Guest and Windows as Host. This was never reproducible in another setting.
 \section{Threading}
-libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}, triggering an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1
+\subsection{String}
+libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}. This is triggers an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] of the original string, proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1.\\
+\subsection{Timing}
+We also encountered several scenarios where thread scheduling complicated our kernel control code. An extreme example of this is Valgrind, which can cause multithreaded code to be executed sequentially. This can be fatal for a parallel simulator if a dependent core is scheduled before the influencing core is ever executed. Modifying valgrind's invocation can alleviate this, but there remain edge cases where a core/kernel can get into a state where it can no longer advance (depending on the model composition). The simulator detects this and (eventually) halts the simulation. \\ Note that the above problem is not limited to valgrind, on Virtualized system this is more easily triggered than in a non virtualized setting.\\
+Furthermore, we also force an idle kernel (a kernel that has either reaches termination time, or can't advance time (no messages and no scheduled models) to yield/sleep for a short duration. The reason for this behaviour is to allow the other cores execution time, which would otherwise be spent in idling loops. A condition variable was evaluated as a solution, but not implemented since it also suffered from timing issues (time between thread awakening and core simulating).
+\section{Heaps}
+2 of the Heaps we use in the Scheduler proved to have subtle corrupting bugs, which were only found quite late in the project. Boost's binomial heap, for reasons so far unknown, sometimes fails to deallocate/remove nodes/items. The actual failure is masked until the next insertion, where we then triggered one of our own invariant checks (the heap size was no longer equal to that of the hashmap). It should be noted that we already experienced similar issues with the binomial heap not deallocating memory despite size() returning 0. \\ Time prevented us from writing up a formal bug report, since the bug is hard to reproduce and even harder to detect.
+The D-ary heap triggered an move-assing to self assertion when we used the Debugging version of the STL, so we had to remove both from our Schedulers. This is no way impacted performance, as the Fibonacci heap was in practice faster (with the skew heap sometimes overtaking it).
 \section{Toolchains}
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
+The plot plugin from Jenkins was used to do perfomance regression testing, but the plugin itself is not that stable. Nonetheless, we detected several random regression using the plotted graphs. \\
+G++ failed with an internal compiler error in certain multi-build cmake scenario's, for which a  bug was filed \cite{gpp}. GDB also intermittently failed with a segmentation fault when debugging threaded code. Using Fedora's bug reporting mechanism abrt a bug \cite{gdb} was filed for this as well.
 \section{Logger}
 The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on Cygwin. 
 Stijn therefore wrote his own implementation.\\
@@ -284,6 +295,10 @@ While the difference is considerable, we should keep in mind that g3log generate
   
   \bibitem{cons}  J. J. Nutaro, Building Software for Simulation: Theory and Algorithms, with
 Applications in C++. Wiley Publishing, 2010.
+
+  \bibitem{gpp}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219175}
+  
+  \bibitem{gdb}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219180}
 
 
   \end{thebibliography}
