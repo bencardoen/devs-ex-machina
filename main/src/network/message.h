@@ -229,6 +229,26 @@ public:
 
 };
 
+//namespace{
+template<typename T>
+struct isString: public std::false_type{};
+
+template<>
+struct isString<std::string>: public std::true_type{};
+
+//}
+
+
+template<typename T>
+typename std::enable_if<!isString<T>::value, const T&>::type getMsgPayload(const t_msgptr& msg){
+	return std::dynamic_pointer_cast<n_network::SpecializedMessage<T>>(msg)->getData();
+}
+
+template<typename T>
+typename std::enable_if<isString<T>::value, std::string>::type getMsgPayload(const t_msgptr& msg){
+	return msg->getPayload();
+}
+
 } // end namespace n_network
 
 namespace std {

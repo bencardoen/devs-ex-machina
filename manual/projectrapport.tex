@@ -80,7 +80,25 @@ In Python everything is a reference, and since the DEVS formalisms require that 
 The only downside is the synchronized access to the reference count in the shared pointer. There is also a need for more boilerplate code to use shared pointers in containers (providing pass-through hash function, comparison etc). 
 
 \section{Messaging Size}
-A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but this can be overridden by way of templated code. %TODO Stijn.
+A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but a specialized message class can be used for sending objects of a different type. When constructing a message by using the functionality provided by the Port class, this happens automatically. When receiving messages, the free function template is provided to extract the object from the message.\\
+For example:
+\begin{lstlisting}[language=C++,basicstyle=\small\color{black}]
+//initialization of necessary objects is left out.
+double value;
+n_model::t_portptr port;
+
+//create messages that contain a double
+auto msgVector = port->createMessages(value);
+
+//say we receive this message somewhere else
+n_network::t_msgptr received =  msgVector[0];
+
+//retrieve the data when receiving the message
+const double& data = n_network::getMsgPayload<double>(received);
+
+//Assuming that no Z function was applied to the message.
+assert(value == data);
+\end{lstlisting}
 
 \chapter{Design}
 \section{Overview}
@@ -238,13 +256,15 @@ This implementation only covers the most basic needs:
 	\item levels can be individually switched on/off at compile time
 	\item No logging code is executed whatsoever if the logger is disabled
 	\item log messages contain filename and line number of the log command
+	\item crash safety. The logger will catch the following signals and flush all remaining output before exiting the program:
+		\begin{itemize}
+			\item \emph{SIGSEGV} Segmentation fault, sent by the operating system.
+			\item \emph{SIGTERM} Termination request, sent by the program.
+			\item \emph{SIGABRT} Abort --- abnormal termination, e.g. when an assertion fails.
+			\item \emph{SIGINT} Interrupt, used for catching crtl+C, which is useful for debugging deadlocks.
+		\end{itemize}
 \end{itemize}
-It therefore lacks certain key features such as
-\begin{itemize}
-	\item crash safe
-	\item custom assert that will log an error before shutting down
-\end{itemize}
-Chances are that we will wait with implementing these features until we actually need them.
+
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
