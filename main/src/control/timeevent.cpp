@@ -40,10 +40,10 @@ void TimeEventQueue::prepare()
 	std::sort(m_queue.begin(), m_queue.end());
 }
 
-int TimeEventQueue::countTodo(const t_timestamp& now)
+int TimeEventQueue::countTodo(const t_timestamp& now) const
 {
 	int amnt = 0;
-	for (TimeEvent& te : m_queue) {
+	for (const TimeEvent& te : m_queue) {
 		if (te.m_time > now)
 			break;
 		++amnt;
@@ -70,4 +70,10 @@ std::vector<TimeEvent> TimeEventQueue::popUntil(const t_timestamp& now)
 	return worklist;
 }
 
+bool TimeEventQueue::todo(const t_timestamp& now) const
+{
+	return (!m_queue.empty()) ? (m_queue[0].m_time < now) : false;
+}
+
 } /* namespace n_control */
+

@@ -92,9 +92,14 @@ public:
 	void prepare();
 
 	/**
+	 * @brief Checks if any still unhandled events are pending
+	 */
+	bool todo(const t_timestamp& now) const;
+
+	/**
 	 * @brief Count how many unhandled events are waiting in the queue
 	 */
-	int countTodo(const t_timestamp& now);
+	int countTodo(const t_timestamp& now) const;
 
 	/**
 	 * @brief Pops and returns any unhandled time events from the queue

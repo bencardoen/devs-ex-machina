@@ -54,6 +54,14 @@ inline std::string inttostring(int i)
 	return number;
 }
 
+inline int stringtoint(std::string str)
+{
+	int num;
+	std::istringstream ss(str);
+	ss >> num;
+	return num;
+}
+
 }
 
 #endif // STRINGTOOLS_H_
