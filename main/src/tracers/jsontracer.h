@@ -93,7 +93,7 @@ public:
 		*ssr << "{\n"
 			"\"model\":\"" << adevs->getName() << "\",\n"
 			"\"time\":";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
 		*ssr << ",\n"
@@ -114,7 +114,7 @@ public:
 		*ssr << "{\n"
 			"\"model\":\"" << adevs->getName() << "\",\n"
 			"\"time\":";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
 		*ssr << ",\n"
@@ -135,7 +135,7 @@ public:
 		*ssr << "{\n"
 			"\"model\":\"" << adevs->getName() << "\",\n"
 			"\"time\":";
-		if(nextT == t_timestamp::infinity())
+		if(isInfinity(nextT))
 			*ssr << '"' << nextT << '"';
 		else *ssr << nextT.getTime();
 		*ssr << ",\n"

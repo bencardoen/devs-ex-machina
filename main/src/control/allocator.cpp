@@ -10,12 +10,12 @@
 namespace n_control {
 
 Allocator::Allocator() {
-	// TODO Auto-generated constructor stub
+
 
 }
 
 Allocator::~Allocator() {
-	// TODO Auto-generated destructor stub
+
 }
 
 } /* namespace n_control */

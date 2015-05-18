@@ -166,6 +166,11 @@ t_timestamp Model::getTimeNext() const
 	return m_timeNext;
 }
 
+t_timestamp Model::getTimeLast() const
+{
+	return m_timeLast;
+}
+
 bool Model::getKeepOldStates() const
 {
 	return m_keepOldStates;

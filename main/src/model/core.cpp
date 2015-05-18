@@ -103,6 +103,18 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	this->m_models[mname] = model;
 }
 
+void n_model::Core::addModelDS(t_atomicmodelptr model)
+{
+	std::string mname = model->getName();
+	model->setTime(m_time);
+	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
+	this->m_models[mname] = model;
+	t_timestamp ta = model->timeAdvance();
+	t_timestamp nextT = m_time + ta;
+	LOG_DEBUG("scheduling: ", model->getName(), " at ", m_time, " + ", ta, " = ", nextT);
+	scheduleModel(model->getName(), nextT);
+}
+
 n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
 {
 	assert(this->containsModel(mname) && "Model not in core.");
@@ -118,7 +130,7 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
 	if (this->m_models.find(name) != this->m_models.end()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
-		if(t.getTime() == t_timestamp::infinity().getTime()){
+		if(isInfinity(t)){
 			LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", name , "@", t);
 			return;
 		}
@@ -151,6 +163,28 @@ void n_model::Core::init()
 	for (const auto& model : this->m_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
 		model.second->setTime(modelTime);	// DO NOT use priority, model does this already
+		const t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
+		this->scheduleModel(model.first, model_scheduled_time);
+		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
+	}
+}
+
+
+void n_model::Core::initExistingSimulation(t_timestamp loaddate){
+
+	if (this->m_scheduler->size() != 0) {
+		LOG_ERROR("\tCORE :: ", this->getCoreID(),
+		" scheduler is not empty on call to initExistingSimulation(), cowardly refusing to corrupt state any further.");
+		return;
+	}
+	for (const auto& model : this->m_models) {
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
+	}
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Reinitializing with loaddate ", loaddate );
+	this->m_gvt = loaddate;
+	this->m_time = loaddate;
+	for (const auto& model : this->m_models) {
+		model.second->setTime(t_timestamp(loaddate.getTime(), 0));	// DO NOT use priority, model does this already
 		const t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
 		this->scheduleModel(model.first, model_scheduled_time);
 		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
@@ -191,10 +225,13 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (found == mail.end()) {				// Internal
 			urgent->intTransition();
 			urgent->setTime(noncausaltime);
+			this->postTransition(urgent);
 			this->traceInt(urgent);
 		} else {
+			urgent->setTimeElapsed(0);
 			urgent->confTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
+			this->postTransition(urgent);
 			this->traceConf(urgent);
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
@@ -203,12 +240,14 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 
 	for (const auto& remaining : mail) {				// External
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
+		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
+		postTransition(model);
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
-		if (queried != t_timestamp::infinity()) {
+		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
 			imminents.insert(model->getName());
@@ -264,7 +303,7 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 		assert(this->containsModel(old) && " Trying to reschedule model not in this core ?!");
 		t_atomicmodelptr model = this->m_models[old];
 		t_timestamp ta = model->timeAdvance();
-		if (ta != t_timestamp::infinity()) {
+		if (!isInfinity(ta)) {
 			t_timestamp next = ta + this->m_time;
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
 			        " rescheduled @ ", next);
@@ -284,7 +323,7 @@ void n_model::Core::syncTime()
 	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
-	if (newtime == t_timestamp::infinity()) {
+	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		this->m_zombie_rounds.fetch_add(1);
 		return;
@@ -416,8 +455,8 @@ void n_model::Core::traceConf(const t_atomicmodelptr& model)
 void n_model::Core::setTerminationTime(t_timestamp endtime)
 {
 	this->m_termtime = endtime;
-	/// TODO !NOT! if endtime < this->getTime() revert
-	/// I'm not sure this is safe.
+	// If we're ahead of this time when we receive it (caused by async functor termination),
+	// we're fine to just stop. (@see Yentl's paper.)
 }
 
 n_network::t_timestamp n_model::Core::getTerminationTime()
@@ -452,12 +491,12 @@ void n_model::Core::checkTerminationFunction()
 void n_model::Core::removeModel(std::string name)
 {
 	if (this->containsModel(name)) {
-		std::size_t erased = this->m_models.erase(name);
-		assert(erased > 0 && "Failed to erase model ??");
+		m_models.erase(name);
 		ModelEntry target(name, t_timestamp(0, 0));
 		this->m_scheduler->erase(target);
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !!");
+		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
+		assert(m_models.find(name) == m_models.end() && "Removal from scheduler failed !! model still in m_models");
 	} else {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " you've asked to remove model with name ", name, " which is not in this core.");
 	}
@@ -499,7 +538,9 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
-		LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		this->m_received_messages->erase(entry);
+		this->m_received_messages->push_back(entry);
 	}
 }
 
@@ -510,7 +551,7 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 	for (const auto& modelentry : m_models) {
 		t_timestamp modellast = modelentry.second->revert(totime);
 		// Bug lived here : Do not set time on model.
-		if (modellast != t_timestamp::infinity()) {
+		if (!isInfinity(modellast)) {
 			this->scheduleModel(modelentry.first, modellast);
 		} else {
 			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert",
@@ -588,7 +629,7 @@ t_timestamp n_model::Core::getFirstMessageTime()
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
 {
-	if (newgvt == t_timestamp::infinity()) {
+	if (isInfinity(newgvt)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}

@@ -45,8 +45,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
-	        msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());// Use explicit copy accessors to void any chance for races.
-	// TODO Race : it's still possible a model uses msg->Payload while we copy it. Don't use it ? (it's not in hash).
+	        msg->getDestinationPort(), msg->getSourcePort(), "");// Use explicit copy accessors to void any chance for races.
 	this->paintMessage(amsg);		// Antimessage should have same color as core!!
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
@@ -118,7 +117,8 @@ void Multicore::getMessages()
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	this->lockMessages();
-	for (const auto & message : messages) {
+	for( auto i = messages.rbegin(); i != messages.rend(); i++) {
+		const auto & message = *i;
 		assert(message->getDestinationCore() == this->getCoreID());
 		if(this->containsModel(message->getDestinationModel())){
 			this->receiveMessage(message);
@@ -157,7 +157,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 }
 
 void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<bool>& rungvt)
-{	// TODO Beautify!!
+{
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
 	if(rungvt==false){
@@ -258,7 +258,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 void Multicore::setGVT(const t_timestamp& newgvt)
 {
 	Core::setGVT(newgvt);
-	if (newgvt < this->getGVT() or newgvt == t_timestamp::infinity()) {
+	if (newgvt < this->getGVT() || isInfinity(newgvt)) {
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
 		return;
@@ -320,6 +320,7 @@ void n_model::Multicore::unlockMessages()
 
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
+	/// Example : revert , current = 10, totime = 7, gvt = 3
 	assert(totime >= this->getGVT());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {
@@ -333,7 +334,7 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 
 	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
 		auto msg = m_sent_messages.back();
-		if (msg->getTimeStamp() > totime) {
+		if (msg->getTimeStamp() >= totime) {
 			m_sent_messages.pop_back();
 			LOG_DEBUG("MCORE:: ", this->getCoreID(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);

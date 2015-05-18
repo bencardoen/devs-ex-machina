@@ -39,10 +39,14 @@ bool endswith(const std::string& full, const std::string& part)
 /**
  * @brief Convert integer to string (Windows friendly)
  * @param i Integer to be converted
- * @return Returned string
+ * @return string representation of the integer
  */
-inline std::string inttostring(int i)
+//@{
+inline std::string toString(std::size_t i)
 {
+#ifndef __CYGWIN__
+	return std::to_string(i);
+#else
 	if (i == 0)
 		return "0";
 	std::string number = "";
@@ -52,16 +56,26 @@ inline std::string inttostring(int i)
 		number.insert(0, 1, c);
 	}
 	return number;
+#endif
 }
 
-inline int stringtoint(std::string str)
+inline std::string toString(int i)
 {
-	int num;
-	std::istringstream ss(str);
-	ss >> num;
-	return num;
+#ifndef __CYGWIN__
+	return std::to_string(i);
+#else
+	if (i == 0)
+		return "0";
+	std::string number = i < 0? "-":"";
+	while (i != 0) {
+		char c = (i % 10) + 48; // Black magic with Ascii
+		i /= 10;
+		number.insert(0, 1, c);
+	}
+	return number;
+#endif
 }
-
+//@}
 }
 
 #endif // STRINGTOOLS_H_

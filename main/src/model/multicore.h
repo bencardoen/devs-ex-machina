@@ -27,11 +27,13 @@ private:
 	 */
 	t_networkptr			m_network;
 
+protected:
 	/**
-	 *
+	 * Location table
 	 */
 	n_control::t_location_tableptr	m_loctable;
 
+private:
 	/**
 	 * This core's current color state.
 	 */
@@ -79,9 +81,6 @@ private:
 	 * @attention Needed for GVT (among other things).
 	 */
 	std::mutex 			m_timelock;
-
-	// TODO re-enable cvar if we can actually use it
-	//std::condition_variable	m_wake_on_msg;
 
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.

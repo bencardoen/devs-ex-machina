@@ -9,15 +9,6 @@ cmake_minimum_required(VERSION 2.8)
 #   @author Ben Cardoen                                                       #
 ###############################################################################
 
-### Register Cotire ###########################################################
-#This speeds up recompilation if STL or other large (template impl) headers
-#are used (Boost, ...)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
-include(cotire)
-SET (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
-###############################################################################
-
-
 ### PROJECT NAME ##############################################################
 SET(PROJECT_NAME "dxexmachina")
 project(${PROJECT_NAME})
@@ -26,13 +17,13 @@ project(${PROJECT_NAME})
 ### DEPENDENCIES ##############################################################
 # Use CMAKE to discover listed dependencies. If found, these set the
 # respective include/library paths referenced later.
-
+# In localpreferences.txt write any root path for any dependency listed.
+# DO NOT use comments in localpreferences.txt
 include ( localpreferences.txt OPTIONAL )
 
 find_package(Boost COMPONENTS  system)
 
-#set(CMAKE_THREAD_PREFER_PTHREAD TRUE)      # Sometimes help pthread problems
-find_package(Threads REQUIRED)                       # REQUIRED C++11 <thread>
+find_package(Threads REQUIRED)               
 
 find_package(GTest REQUIRED)
 
@@ -44,9 +35,9 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 add_custom_target(doc
-${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMENT "Generating API documentation with Doxygen" VERBATIM
+	${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMENT "Generating API documentation with Doxygen" VERBATIM
 )
 endif(DOXYGEN_FOUND)
 ###############################################################################
@@ -60,14 +51,11 @@ if (${CYGWIN})
     SET(flagstdc11 -std=gnu++11)
 endif()
 
-### Debug build (slows by a factor of x4 for STL), but catches any [size+1]
-### and iterator past the end mistakes.
-## Thread debugging flags -fsanitize=thread required -fPIE, and requires the same for among others gtest.
-#-D_GLIBCXX_DEBUG
+### Debug #####################################################################
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE ")
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" ) ## Use these if hunting obscure bugs :  -fsanitize=undefined -ftrapv -fsanitize=integer (you will end up in boost, stl !!)
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" )
 endif()
 
 ### Profiling -- Clang and G++ ###############################################
@@ -77,7 +65,7 @@ SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC -march=native -g ${flagstdc11} ")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -march=native -g ${flagstdc11} ")
 
 ###############################################################################
 
@@ -86,15 +74,10 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC -march=native -g ${flagstdc11} ")
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ### SOURCES ###################################################################
-# 2 choices here:
-#   1.Standard C++ code, no templates : list only .cpp files, they include headers
-#   and compiler will discover them
-#   2. 'Magic' headers: Template declaration in .h file, template implementation in
-#       .tpp file, last line of .h files : #include .tpp (to separate impl / interf)
-#       Then, and only then, include the .h file. (NOT/NEVER the .tpp file)
 
 add_executable(${PROJECT_NAME}
 	src/tools/logger.cpp
+	src/tools/globallog.cpp
 	src/tools/coutredirect.cpp
 	src/tools/asynchwriter.cpp
 	src/model/atomicmodel.cpp
@@ -109,6 +92,9 @@ add_executable(${PROJECT_NAME}
 	src/model/multicore.cpp
 	src/model/conservativecore.cpp
 	src/model/zfunc.cpp
+	src/examples/abstract_conservative/modela.cpp
+	src/examples/abstract_conservative/modelb.cpp
+	src/examples/abstract_conservative/modelc.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
 	src/examples/trafficlight_coupled/trafficlightc.cpp
 	src/examples/trafficlight_coupled/policemanc.cpp
@@ -145,16 +131,60 @@ add_executable(${PROJECT_NAME}
 	src/test/messagetest.cpp
 	src/test/cerealtest.cpp
 	src/test/performancetest.cpp
+	src/test/testmodels.cpp
  	src/main.cpp
  	)
+
+ add_executable(${PROJECT_NAME}_benchfire
+ 	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/cellmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/examples/forestfire/constants.cpp
+ 	src/examples/forestfire/firecell.cpp
+ 	src/examples/forestfire/firecellstate.cpp
+ 	src/examples/forestfire/firegenerator.cpp
+ 	src/examples/forestfire/firespread.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+  	src/mainbenchfire.cpp
+  	)
 ###############################################################################
 
+# SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
+# 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15 "#-o3"# -flto"
+# 					)
+
 ### INCLUDE PATHS ############################################################
-include_directories(${Boost_INCLUDE_DIRS})             # Boost
+# These are found by the section above.
+include_directories(${Boost_INCLUDE_DIRS})             
 include_directories(${GTEST_INCLUDE_DIRS})
-MESSAGE( STATUS"Boost Include Directories found :${Boost_INCLUDE_DIRS}")
-MESSAGE( STATUS"GTest Include Directories found :${GTEST_INCLUDE_DIRS}")
-include_directories(	src 
+
+MESSAGE( STATUS"Using Boost Include Directories @ path :${Boost_INCLUDE_DIRS}")
+MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
+
+# Note : this allows #include "file.h". Hierarchy assumes $root/main/....
+include_directories(	
+				src 
 				include
 				src/serialization
 				src/test 
@@ -162,7 +192,7 @@ include_directories(	src
 				src/model
 				src/tracers
 				src/performance/devstone
-				src/performance/benchmarks
+				src/examples/abstract_conservative
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
 				src/examples/trafficlight_ds
@@ -171,9 +201,10 @@ include_directories(	src
 				)   # Project headers are in same folder as source
 
 ### LINKER ####################################################################
+
 # Register libraries needed.
-#set(LIBS ${LIBS} ${GSL_LIBRARIES} ${GSLCBLAS_LIBRARIES})
 set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -183,10 +214,8 @@ endif()
 
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
+
 ###############################################################################
 
-### Cotire ###
-# Cotire detects when a rebuild of header is required.
-# Comment to disable cotire alltogether. (which is only needed if this causes
-# issues with your code, cotire detects if/when it can do it's job.
-cotire(${PROJECT_NAME})
+

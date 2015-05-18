@@ -11,6 +11,7 @@
 #include "message.h"
 #include "msgqueue.h"
 #include <vector>
+#include <atomic>
 #include "tools/globallog.h"
 
 namespace n_network{

@@ -7,9 +7,25 @@
 #ifndef SRC_TOOLS_GLOBALLOG_H_
 #define SRC_TOOLS_GLOBALLOG_H_
 #define LOG_USEGLOBAL
-#include "logger.h"
+
+#ifdef LOG_LEVEL
+#if LOG_LEVEL == 0
+#define LOGGING false
+#else
+#define LOGGING true
+#endif
+#else
+#define LOGGING true
+#endif
+
+
+
 #include "macros.h"
 #include <cstring>
+#if LOGGING != false
+#include "logger.h"
+#include <csignal>
+#endif
 
 #ifndef LOG_LEVEL
 #define LOG_LEVEL 15	//default logging level
@@ -26,20 +42,6 @@
 
 #define LOG_GLOBAL n_tools::n_globalLog::globalLog
 
-//macro for intitializing the global logger
-#if LOGGING==true
-
-namespace n_tools {
-namespace n_globalLog {
-
-extern Logger<LOG_LEVEL> globalLog;
-
-} /*namespace n_globalLog*/
-} /*namespace n_tools*/
-#define LOG_INIT(filename) n_tools::Logger<LOG_LEVEL> LOG_GLOBAL(filename);
-#else
-#define LOG_INIT(filename)
-#endif
 //macros for calling the logging functions
 #define LOG_BLOCK(logCommand) do{\
 	logCommand;\
@@ -68,24 +70,25 @@ extern Logger<LOG_LEVEL> globalLog;
 #else
 #define LOG_INFO(...) LOG_NOOP
 #endif
+#if LOG_LEVEL
+#define LOG_FLUSH LOG_BLOCK(LOG_GLOBAL.flush())
+#else
+#define LOG_FLUSH LOG_NOOP
+#endif
 
-//TODO clean up macro definitions
-//#undef LOG_NONE
-//#undef LOG_ERROR_I
-//#undef LOG_WARNING_I
-//#undef LOG_DEBUG_I
-//#undef LOG_INFO_I
-//
-//#undef LOG_ERROR_STR
-//#undef LOG_WARNING_STR
-//#undef LOG_DEBUG_STR
-//#undef LOG_INFO_STR
-//#undef LOG_LEVEL
-//#undef LOG_FILTER
-//#undef LOG_BLOCK
-//#undef LOG_ARGS
-//#undef LOG_NOOP
-//
-//#undef LOG_GLOBAL
-//#undef LOG_MUTEX
+//macro for intitializing the global logger
+#if LOGGING==true
+
+namespace n_tools {
+namespace n_globalLog {
+
+extern Logger<LOG_LEVEL> globalLog;
+
+} /*namespace n_globalLog*/
+} /*namespace n_tools*/
+#define LOG_INIT(filename) n_tools::Logger<LOG_LEVEL> LOG_GLOBAL(filename);
+#else
+#define LOG_INIT(filename)
+#endif
+
 #endif /* SRC_TOOLS_GLOBALLOG_H_ */

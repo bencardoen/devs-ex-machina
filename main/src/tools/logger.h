@@ -30,11 +30,15 @@ class Logger
 {
 public:
 	Logger(const std::string& filename)
-		: m_buf(new ASynchWriter(filename))
-		, m_out(m_buf){
+		: m_filename(filename)
+		, m_buf(new ASynchWriter(filename))
+		, m_out(m_buf)
+	{
 		m_out.rdbuf(m_buf);
 	}
 	~Logger() {
+		//Probably don't need to lock here.
+		//If you try to print stuff while destructing the logger, it's your own fault that stuff will fail
 		m_out.flush();
 		delete m_buf;
 	}
@@ -87,7 +91,19 @@ public:
 		//don't log this level
 	}
 
+	/**
+	 * @brief Flushes all remaining output and forces a write to file
+	 */
+	void flush(){
+		std::lock_guard<std::mutex> m(this->m_mutex);	//DEFINITELY lock here as we're deleting the buffer!
+		m_out.flush();
+		delete m_buf;
+		m_buf = new ASynchWriter(m_filename, std::ios_base::app | std::ios_base::out);	//will append
+		m_out.rdbuf(m_buf);
+	}
+
 private:
+	std::string m_filename;
 	ASynchWriter* m_buf;
 	std::ostream m_out;
 	std::mutex m_mutex;

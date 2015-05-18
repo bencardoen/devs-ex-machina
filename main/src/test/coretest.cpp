@@ -9,6 +9,7 @@
 #include "timestamp.h"
 #include "objectfactory.h"
 #include "trafficlight.h"
+#include "modelc.h"
 #include "trafficlightc.h"
 #include "policemanc.h"
 #include "controller.h"
@@ -51,10 +52,10 @@ TEST(ModelEntry, Scheduling)
 	std::vector<ModelEntry> imminent;
 	ModelEntry token("", t_timestamp(50, 0));
 	scheduler->unschedule_until(imminent, token);
-	EXPECT_EQ(scheduler->size(), 50);
+	EXPECT_EQ(scheduler->size(), 50u);
 	token = ModelEntry("", t_timestamp(100, 0));
 	scheduler->unschedule_until(imminent, token);
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 
 	// Test if scheduling models at same time is a problem
 	ModelEntry origin("Abc", t_timestamp(0));
@@ -62,14 +63,14 @@ TEST(ModelEntry, Scheduling)
 	ModelEntry third("Cab", t_timestamp(0, 1));
 	scheduler->push_back(origin);
 	scheduler->push_back(duplicate);
-	EXPECT_EQ(scheduler->size(), 2);
+	EXPECT_EQ(scheduler->size(), 2u);
 	scheduler->push_back(third);
-	EXPECT_EQ(scheduler->size(), 3);
+	EXPECT_EQ(scheduler->size(), 3u);
 	ModelEntry found = scheduler->pop();
 	EXPECT_EQ(found.getName(), "Abc");
 	EXPECT_EQ(scheduler->pop().getName(), "Bca");
 	EXPECT_EQ(scheduler->pop().getName(), "Cab");
-	EXPECT_EQ(scheduler->size(), 0);
+	EXPECT_EQ(scheduler->size(), 0u);
 }
 
 TEST(ModelScheduling, BasicOperations)
@@ -82,9 +83,9 @@ TEST(ModelScheduling, BasicOperations)
 	std::unordered_set<ModelEntry> set;
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(), 2);
+	EXPECT_EQ(set.size(), 2u);
 	set.clear();
-	EXPECT_EQ(set.size(), 0);
+	EXPECT_EQ(set.size(), 0u);
 	// This is evil, and is never guaranteed to work.
 	// A model entry with the same name is equal no matter what time is set.
 	// The alternative allows insertion multiple times (an error).
@@ -95,7 +96,7 @@ TEST(ModelScheduling, BasicOperations)
 	EXPECT_TRUE(me > you); // Note this is so the max-heap property works as a min heap.
 	set.insert(me);
 	set.insert(you);
-	EXPECT_EQ(set.size(), 1);
+	EXPECT_EQ(set.size(), 1u);
 }
 
 TEST(Core, CoreFlow)
@@ -107,7 +108,7 @@ TEST(Core, CoreFlow)
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	c.setTracers(tracers);
-	EXPECT_EQ(c.getCoreID(), 0);
+	EXPECT_EQ(c.getCoreID(), 0u);
 	std::string portname_stub = "model_port";
 	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
 	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
@@ -123,7 +124,7 @@ TEST(Core, CoreFlow)
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
 	auto imminent = c.getImminent();
-	EXPECT_EQ(imminent.size(), 2);
+	EXPECT_EQ(imminent.size(), 2u);
 	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	c.syncTime();
@@ -132,7 +133,7 @@ TEST(Core, CoreFlow)
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
 	c.syncTime();
-	EXPECT_EQ(imminent.size(), 2);
+	EXPECT_EQ(imminent.size(), 2u);
 }
 
 TEST(DynamicCore, smallStep)
@@ -147,19 +148,19 @@ TEST(DynamicCore, smallStep)
 	c->addModel(modelto);
 	c->init();
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
 	std::vector<t_atomicmodelptr> imms;
 	c->getLastImminents(imms);
-	EXPECT_EQ(imms.size(), 0);
+	EXPECT_EQ(imms.size(), 0u);
 	c->setLive(true);
 	c->syncTime();
 	while(c->isLive()){
 		c->runSmallStep();
 		c->getLastImminents(imms);
-		EXPECT_EQ(imms.size(), 2);
+		EXPECT_EQ(imms.size(), 2u);
 		if(imms.size()==2){
 			EXPECT_EQ(imms[0],modelfrom);
 			EXPECT_EQ(imms[1], modelto);
@@ -176,7 +177,7 @@ TEST(DynamicCore, smallStep)
 	c->runSmallStep();
 	c->printSchedulerState();
 	c->getLastImminents(imms);
-	EXPECT_EQ(imms.size(), 0);
+	EXPECT_EQ(imms.size(), 0u);
 }
 
 class termfun: public n_model::TerminationFunctor
@@ -206,7 +207,7 @@ TEST(Core, terminationfunction)
 	c->init();
 	// Set termination conditions (optional), both are checked (time first, then function)
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	c->setTerminationFunction(createObject<termfun>());
 
 	t_timestamp coretimebefore = c->getTime();
@@ -236,7 +237,7 @@ TEST(Core, Messaging)
 
 	c->init();
 	auto finaltime = c->getTerminationTime();
-	EXPECT_EQ(finaltime, t_timestamp::infinity());
+	EXPECT_TRUE(isInfinity(finaltime));
 	t_timestamp coretimebefore = c->getTime();
 	c->setLive(true);
 	EXPECT_TRUE(c->isLive() == true);
@@ -356,7 +357,7 @@ TEST(Core, threading)
 	cores.push_back(coretwo);
 
 	std::vector<std::thread> threads;
-	const std::size_t threadcount = 2;			//TODO replace with concurrency
+	const std::size_t threadcount = 2;
 	if (threadcount <= 1) {
 		LOG_WARNING("Skipping test, no threads!");
 		return;
@@ -449,11 +450,11 @@ TEST(Multicore, revert){
 	coreone->setTerminationTime(endtime);
 	coreone->init();
 	coreone->syncTime();
-	EXPECT_EQ(coreone->getTime().getTime(), 58);
+	EXPECT_EQ(coreone->getTime().getTime(), 58u);
 	//coreone->printSchedulerState();
 	coreone->setLive(true);
 	coreone->runSmallStep();
-	EXPECT_EQ(coreone->getTime().getTime(), 108);
+	EXPECT_EQ(coreone->getTime().getTime(), 108u);
 	//coreone->printSchedulerState();
 	// Trigger revert
 	// Setup message state to test all paths
@@ -473,7 +474,7 @@ TEST(Multicore, revert){
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
 
-	EXPECT_EQ(coreone->getTime(), 62);
+	EXPECT_EQ(coreone->getTime(), 62u);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	Message origin = *msgaftergvt;
@@ -481,9 +482,9 @@ TEST(Multicore, revert){
 	antimessage->setSourceCore(42);	// Work around error in log.
 	antimessage->setAntiMessage(true);
 	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
-	EXPECT_EQ(coreone->getTime().getTime(), 63);
+	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
-	EXPECT_EQ(coreone->getTime().getTime(), 108);
+	EXPECT_EQ(coreone->getTime().getTime(), 108u);
 }
 
 
@@ -546,10 +547,10 @@ TEST(Multicore, revertidle){
 	// Test that a Core can go from idle to live again without corrupting.
 	c1->revert(t_timestamp(201,42));
 	// Expecting time = 201,42, revert of model 1x antimessage @300.
-	EXPECT_EQ(c1->getTime().getTime(), 201);
+	EXPECT_EQ(c1->getTime().getTime(), 201u);
 	c1->logCoreState();
 	c1->runSmallStep();	// no imminents, no messages, adv time to 300::1	// 1 only if single test is run
-	EXPECT_EQ(c1->getTime().getTime(), 300);
+	EXPECT_EQ(c1->getTime().getTime(), 300u);
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
@@ -627,14 +628,14 @@ TEST(Multicore, revertedgecases){
 	/// c2 remains in zombiestate
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getZombieRounds(), 2);
+	EXPECT_EQ(c2->getZombieRounds(), 2u);
 	c1->runSmallStep();	// C1 time:300->500, send message to light, state idle
 	c1->logCoreState();
-	EXPECT_EQ(c1->getTime().getTime(), 500);
+	EXPECT_EQ(c1->getTime().getTime(), 500u);
 	c2->runSmallStep();	// C2 receives msg, does nothing (nothing to do @200), advances to 300
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(), 300);
-	EXPECT_EQ(c2->getZombieRounds(), 0);
+	EXPECT_EQ(c2->getTime().getTime(), 300u);
+	EXPECT_EQ(c2->getZombieRounds(), 0u);
 	c2->runSmallStep();	// C2 finally awakens, light receives message, core terminates @360.
 	c2->logCoreState();
 
@@ -698,11 +699,11 @@ TEST(Multicore, revertoffbyone){
 	c2->runSmallStep();
 	c2->logCoreState();
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
-	EXPECT_EQ(c2->getTime().getTime(), 57);
+	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
-	EXPECT_EQ(c2->getTime().getTime(), 58);
+	EXPECT_EQ(c2->getTime().getTime(), 58u);
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
-	EXPECT_EQ(c2->getTime().getTime(), 108);
+	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
@@ -712,8 +713,8 @@ TEST(Multicore, revertoffbyone){
 	network->acceptMessage(msg);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(),108 );// Model switched to oo, so time will not advance.
-	EXPECT_EQ(c2->getZombieRounds(), 1);	// so zombie round = 1;
+	EXPECT_EQ(c2->getTime().getTime(), 108u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 1u);	// so zombie round = 1;
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -772,11 +773,11 @@ TEST(Multicore, revertstress){
 	c2->runSmallStep();
 	c2->logCoreState();
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
-	EXPECT_EQ(c2->getTime().getTime(), 57);
+	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
-	EXPECT_EQ(c2->getTime().getTime(), 58);
+	EXPECT_EQ(c2->getTime().getTime(), 58u);
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
-	EXPECT_EQ(c2->getTime().getTime(), 108);
+	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
 	msg->setSourceCore(0);
@@ -790,8 +791,8 @@ TEST(Multicore, revertstress){
 	network->acceptMessage(msglater);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(),101 );// Model switched to oo, so time will not advance.
-	EXPECT_EQ(c2->getZombieRounds(), 0);	// but still have another message to handle @ 101.
+	EXPECT_EQ(c2->getTime().getTime(), 101u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getZombieRounds(), 0u);	// but still have another message to handle @ 101.
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -916,7 +917,7 @@ TEST(Multicore, GVT){
 	c1->logCoreState(); 	// C1 @200, GVT = 108.
 	std::atomic<bool> rungvt(true);
 	n_control::runGVT(ctrl, rungvt);
-	EXPECT_EQ(c1->getGVT().getTime(), 108);
+	EXPECT_EQ(c1->getGVT().getTime(), 108u);
 	EXPECT_EQ(c1->getGVT(), c2->getGVT());
 	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
 	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
@@ -939,10 +940,10 @@ TEST(Conservativecore, GVT){
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-	t_coreptr c1 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
-	t_coreptr c2 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+	coreMap[0] = c0;
+	coreMap[1] = c1;
 
 	t_timestamp endTime(360, 0);
 
@@ -952,38 +953,177 @@ TEST(Conservativecore, GVT){
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 	ctrl.addModel(m);
+	c0->setTracers(tracers);
+	c0->init();
+	c0->setTerminationTime(endTime);
+	c0->setLive(true);
+	c0->logCoreState();
+	EXPECT_EQ(c0->getCoreID(),0u);		// 0 has policeman, influenceemap = empty
+
 	c1->setTracers(tracers);
 	c1->init();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
-	//c1->printSchedulerState();
 
-	c2->setTracers(tracers);
-	c2->init();
-	c2->setTerminationTime(endTime);
-	c2->setLive(true);
-	c2->logCoreState();
-	tracers->startTrace();
-	// c1: has policeman
-	// c2: has trafficlight
-
-	c2->runSmallStep();
-	c2->logCoreState();
-	c2->runSmallStep();
-	c2->logCoreState();	// C2 @108
-	c1->runSmallStep();	// C1
-	c1->logCoreState(); 	// C1 @200, GVT = 108.
-	// This fails since we have no lookahead models.
-	/**
+	tracers->startTrace();			// 1 has trafficlight, influenceemap = 0
+	c1->runSmallStep();			// Will try to advance, but can't. EOT[0]=0
+	c0->runSmallStep();			// synctime 0->200, EOT[0] = 200, EIT=oo
+	c1->runSmallStep();			// synctime 0->58   EOT[1] = 58   EIT=200
+	EXPECT_EQ(eotvector->get(0).getTime(), 200u);
+	EXPECT_EQ(eotvector->get(1).getTime(),58u);
+	c1->runSmallStep();			// time 58 -> 108
+	c1->runSmallStep();			// time 108 -> 118
+	c1->runSmallStep();			// time 118 -> 178
+	c1->runSmallStep();			// want to advance from 178->228, but EIT=200, time =200
+	c0->runSmallStep();			// EIT = oo, EOT[0]=200, since we have sent a message
+	EXPECT_EQ(eotvector->get(0).getTime(), 200u);
+	c1->runSmallStep();			// still stuck @200
+	EXPECT_EQ(eotvector->get(1).getTime(), 200u);
 	std::atomic<bool> rungvt(true);
 	n_control::runGVT(ctrl, rungvt);
-	EXPECT_EQ(c1->getGVT().getTime(), 108);
-	EXPECT_EQ(c1->getGVT(), c2->getGVT());
-	EXPECT_EQ(c1->getColor(), MessageColor::WHITE);
-	EXPECT_EQ(c2->getColor(), MessageColor::WHITE);
-	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-	*/
+	EXPECT_EQ(c0->getGVT().getTime(), 200u);
+	EXPECT_EQ(c1->getGVT().getTime(), 200u);
 	}
+}
 
+TEST(Conservativecore, Abstract){
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+	CoutRedirect myRedirect(filestream);
+	using namespace n_examples_abstract_c;
+	auto tracers = createObject<n_tracers::t_tracerset>();
+
+	t_networkptr network = createObject<Network>(2);
+	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
+	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
+
+	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector);
+	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector);
+	coreMap[0] = c0;
+	coreMap[1] = c1;
+
+	t_timestamp endTime(360, 0);
+
+	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+	ctrl.setPDEVS();
+	ctrl.setTerminationTime(endTime);
+
+	t_coupledmodelptr m = createObject<ModelC>("modelC");
+	ctrl.addModel(m);
+	c0->setTracers(tracers);
+	c0->init();
+	c0->setTerminationTime(endTime);
+	c0->setLive(true);
+	c0->logCoreState();
+	EXPECT_EQ(c0->getCoreID(),0u);
+
+	c1->setTracers(tracers);
+	c1->init();
+	c1->setTerminationTime(endTime);
+	c1->setLive(true);
+	c1->logCoreState();
+	/**
+	 * C0 : A, influence map = {}
+	 * C1 : B  influence map = {0}
+	 * initial lookahead 0 = infinity
+	 * initial lookahead 1 = 30
+	 */
+	/// We begin in a null state, cores start from 0-time, but will advance time (eit/eot)
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 10u);		// min of : scheduled=10, eit=inf
+	EXPECT_TRUE(isInfinity(c0->getEit()));
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 10u);		// min of : lookahead=30, eit=10
+	EXPECT_EQ(c1->getEit().getTime(), 10u);
+	// Still in beginstate.
+
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 20u);		// min of : scheduled=20, eit=inf
+	EXPECT_TRUE(isInfinity(c0->getEit()));
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 20u);		// min of : lookahead=30, y=20 (scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 20u);
+	// State A:1, B:1
+
+
+	c0->runSmallStep();
+	EXPECT_EQ(eotvector->get(0).getTime(), 30u);
+	EXPECT_TRUE(isInfinity(c0->getEit()));
+	c1->runSmallStep();
+	EXPECT_EQ(eotvector->get(1).getTime(), 30u);		// B : ta=oo @ state 2
+	EXPECT_EQ(c1->getEit().getTime(), 30u);
+	// State A:2, B:2
+
+	c0->runSmallStep();					// Send Message
+	EXPECT_EQ(eotvector->get(0).getTime(), 30u);		// x=infinity, first scheduled = 30, Coretime == 40 !!!
+	EXPECT_EQ(c0->getTime().getTime(), 40u);
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	c1->runSmallStep();					// receive message, but do not process it (yet), nexttime=30
+	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// 1(B) is longer scheduled, so EOT does not find anything.
+	EXPECT_EQ(c1->getEit().getTime(), 30u);			// Eit == 30 based on EOT value of 0
+	// State A:3 B:2
+
+	c0->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(0).getTime(), 50u);		// x=infinity, first scheduled = 50
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==50);
+	c1->runSmallStep();					// process pending message, become live again
+	EXPECT_EQ(eotvector->get(1).getTime(), 40u);		// min(x=60 (time=30+lookahead 30), y=40 first scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 50u);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),40u);
+	// A:4, B:3
+
+	c0->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(0).getTime(), 60u);		// x=infinity, first scheduled = 60
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==60);
+	c1->runSmallStep();					//
+	EXPECT_EQ(eotvector->get(1).getTime(), 50u);		// min(x=eit=50 + lookahead=20 == 70, y=50 first scheduled)
+	EXPECT_EQ(c1->getEit().getTime(), 60u);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),50u);			// Time is 50, we can advance safely to 60, but
+	// A:5, B:4							// that requires more than 1 round. In parallel B could
+								// do this.
+
+
+	c0->runSmallStep();					// send message
+	EXPECT_EQ(eotvector->get(0).getTime(), 60u);		// x=infinity, just sent message @60, so 60,1
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time advances to 70 (next scheduled)
+	c1->runSmallStep();					// Get message from A, but queue it
+								// B AGAIN goes offline : oo
+	EXPECT_EQ(eotvector->get(1).getTime(), 70u);		// lookahead = 10, eit=60 == 70
+	EXPECT_EQ(c1->getEit().getTime(), 60u);			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),60u);			// Can forward time to 60 (time of rec'd message
+	// A:6, B:5
+
+	c0->runSmallStep();					// new timeadvance=infinity, lookahead =infinity, no msgs
+	EXPECT_TRUE(isInfinity(eotvector->get(0)));		// x=infinity, y=infinity
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time is now stuck @ 70, we're zombie
+
+	c1->runSmallStep();					// Process message from A, B becomes live again
+								// reschedules @60+10, lookahead=inf
+	EXPECT_EQ(eotvector->get(1).getTime(), 70u);		// x=inf, y=70 (first scheduled)
+	EXPECT_TRUE(isInfinity(c1->getEit()));			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),70u);			// Time can advance to 70 (next scheduled)
+	// A:7, B:6
+
+	c0->runSmallStep();					// new timeadvance=infinity, lookahead =infinity, no msgs
+	EXPECT_TRUE(isInfinity(eotvector->get(0)));		// x=infinity, y=infinity
+	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
+	EXPECT_TRUE(c0->getTime().getTime()==70);		// Time is now stuck @ 70, we're zombie
+
+	c1->runSmallStep();					// Internal transition 6->7 @ B
+								// B goes offline (ta=inf), la=oo
+	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// x=inf, y=inf
+	EXPECT_TRUE(isInfinity(c1->getEit()));			// Eit = eot _0
+	EXPECT_EQ(c1->getTime().getTime(),70u);			// Time is stuck
+	// A:7, B:7
+
+	/// That's all folks.
+	tracers->startTrace();
+	}
 }

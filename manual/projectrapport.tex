@@ -15,7 +15,10 @@
 \usepackage{url}
   \lstset{basicstyle=\ttfamily\tiny\color{blue}}
 \usepackage{graphicx}
-\usepackage[]{algorithm2e}
+%\usepackage[]{algorithm2e}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{pifont}
 
 \title{Project Report\\\textsc{DEVS Ex Machina}}
 \author{Ben Cardoen\\Pieter Lauwers\\Stijn Manhaeve\\Tim Tuijn\\Matthijs Van Os}
@@ -28,7 +31,7 @@
 \chapter{Summary}
 %
 \section*{}
-The project implements a C++ port of the PyPDEVS project, extended with conservative synchronization and a change in system architecture from distributed simulation on several nodes (asymmetric mp) to a symmetric multiprocessing architecture. \\The summarized goal of the project is to provide an implementation of the offered DEVS formalisms with significantly lower execution time by levering the smp architecture.
+The project implements a C++ port of the PyPDEVS project, extended with conservative synchronization and a change in system architecture from distributed simulation on several nodes (asymmetric mp) to a symmetric multiprocessing architecture. \\The summarized goal of the project is to provide an implementation of the offered DEVS formalisms with significantly lower execution time by leveraging the smp architecture.
 
 \section*{Terminology}
 The literature sometimes exchanges terms, to avoid any confusion the following frequent terms are listed with their associated meaning as used in this document:
@@ -38,7 +41,12 @@ The literature sometimes exchanges terms, to avoid any confusion the following f
   \item Distributed parallelism : computation distributed over several physically separated machines communicating by means of a network stack.
   \item SMP : symmetric multiprocessing, running a parallel computation on several distinct CPU cores/threads on the same machine with shared memory (and/or cache).
   \item message : any exchange of high level information between entities, user defined or for inter-kernel synchronization.
+  \item lookahead : Timespan relative to current state where the output of the model is not influenced by its input. (as per definition in \cite{cons}, app B)
+  \item eot : Earliest output time. Timepoint in future where the core/kernel will output events.
+  \item eit : Earliest input time. Timepoint in future where the core/kernel expects to
+  be change state on receiving event.
 \end{itemize}
+Lookahead is collected per model per kernel, eit/eot are based on information from models but determined on a core/kernel level.
 
 \chapter{Planning}
 \section{Parallel}
@@ -70,6 +78,9 @@ The project requires a compliant C++11 compiler and library, but beyond that is 
 \section{Object representation}
 In Python everything is a reference, and since the DEVS formalisms require that the user be allowed to override most of the basic entities, the best representation for an object was a shared\textunderscore ptr. Passing by value could have been safer (e.g. between threads) but would introduce slicing.\\ Another advantage was that we would use as little memory as possible, for example sending a message means passing an const reference to a shared pointer, which is usually equal in size to 2 pointers. By passing by const ref we minimize most of the penalty usually involved in copyconstructing shared pointers. \\
 The only downside is the synchronized access to the reference count in the shared pointer. There is also a need for more boilerplate code to use shared pointers in containers (providing pass-through hash function, comparison etc). 
+
+\section{Messaging Size}
+A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but this can be overridden by way of templated code. %TODO Stijn.
 
 \chapter{Design}
 \section{Overview}
@@ -114,7 +125,16 @@ The tracing component makes heavy use of template programming. For more detailed
 The models hide all implementation details for the particular DEVS formalisms, without limiting the user to extend into any subclassed model of his/her choice. The use can focus on what he/she wants the model to emulate, and not worry about for example locking, allocation etc. We refer to the manual for more information about the creation of these models.
 
 \section{Scheduler}
-The scheduler from the prototypes was reused, with little to no changes (barring a few bugfixes). An unsynchronized version was implemented for comparison purposes.
+A Scheduler was implemented based on the prototyping code. As required, as list based scheduler was implemented. \\
+The interface from PyPDevs' scheduler class was reused, but internally the scheduler class in our project differs on a few point. \\
+\subsection{Composition}
+All schedulers are based on a heap, which order items to be scheduled. We never actually schedule models, only entries (A struct containing name and time to schedule), allowing for far faster operation. This is complemented by a hashmap, so that entries can have O(1) lookup and erasure (required for the use case of antimessaging, among others). The operation massReschedule() was left out of the interface, since it can be easily composed using erase() and push\textunderscore back().
+\\
+\subsection{Implementation}
+The actual heap used is either based on std::list as required, or one of Boost's heaps. The user is provided with a convenience factory function that creates Scheduler instances with varying heap backends. In general, the Fibonacci heap is one of the fastest, with skew heap sometimes coming out ahead. The list based heap is always a factor 2 slower, though again this depends on the usage scenario. \\Important to note is that only node based heaps can be used efficiently (without compromising the performance of erase() and contains()). We store on insertion an iterator with the key of the pushed element in the hashmap. This also works as a safety check, preventing double insertion (depending ofcourse on the hash-specialization semantics). This freedom of implementation is visible in the tracers where duplicate elements are allowed if they have a different address, contrasted with the model scheduler which disallows a model to be scheduled twice.\\
+Finally, the std::hash$<>$ specialization used by the message scheduler allows O(1) annihilation of a message by its antimessage (since the hash is identical).
+\subsection{Differences}
+We intended to use the scheduler class not only for scheduling models, but also to store pending incoming messages, and tracing messages. To allow this, the Scheduler class only requires from a scheduled item that it has operator$<$ and std::hash$<$T$>$ defined.
 
 \section{Controller}
 For the controller, care was taken in making the interface both functional and minimal. The default configuration is quick to set up, and customization is possible should the user require it.
@@ -125,7 +145,7 @@ For serialization we used the Cereal \cite{cereal} header-only framework. We hav
 \chapter{Non-functional requirements}
 \section{Correctness}
 \subsubsection{Testing}
-The use of the jenkins CI was heavily leveraged, in combination with extensive testing. Any feauture increment could only be merged into the project if it passed the developer's own jenkins instance.
+The use of the jenkins CI was heavily leveraged, in combination with extensive testing. Any feature increment could only be merged into the project if it passed the developer's own jenkins instance.
 \subsubsection{Thread races and deadlock}
 Deadlocks and race conditions are very hard to debug, let alone prevent. To help us in this area as much as possible we used prototypes of threaded code in the tests before merging them into the main classes, and each build is checked with ThreadSanitizer \cite{tsan} which proved invaluable in preventing races and deadlocks in the threaded codepaths.
 \subsubsection{Memory leaks and undefined behaviour}
@@ -142,26 +162,70 @@ In Windows we chose the Cygwin platform instead of MinGW to compile our project 
 
 \chapter{Functional requirements}
 \section{DEVS Formalisms}
-\section{Single core}
+\subsection{Single core}
 The single core implementations follow exactly the runtime behaviour shown by the PyPDEVS simulator. We've chosen to emulate the Select() function with an integer priority value the user can set. This saves 1 virtual function call per transition and can quite easily be optimized by the compiler since it remains constant.
-\subsection{DirectConnect}
+\subsubsection{DirectConnect}
 The directConnect algorithm has gone relatively unchanged from its implementation in PyPDEVS, though the role of the RootDEVS class has been simplified somewhat. Its main function has been reduced to executing directConnect and then storing the resulting list of connected atomic models.
-\subsection{Dynamic Structured}
+\subsubsection{Dynamic Structured}
 Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
 \subsubsection{Conservative}
-Conservative time synchronization is still under development.
-
+The implementation of the conservative formalism follows the algorithm as described in \cite{cons}. \\
+\paragraph{Algorithm}
+The following listing briefly states the steps required in the conservative synchronization algorithm.\\
+Initialize eit,eot as (0,0) per kernel.\\
+A Time object has an absolute first field , followed by a causal second field.\\
+\begin{algorithm}
+\caption{Conservative PDEVS}
+\label{CHalgorithm}
+\begin{algorithmic}
+\Procedure{CPDEVS Modified}{}
+\State 0.1 Construct a depency graph, determining which models influence this kernel directly
+\State 0.2 If a msg is sent : eot = (timestamp > eot) ? timestamp : eot
+\While{Termination trigger not reached}
+\State 1. Simulate until vtime $>=$ eit
+\State 1.a If msg is sent during sim : eot = max(timestamp, eot)
+\State 2.a Time x = (eit + min lookahead, 0)
+\State 2.b Time y = (msg sent) ? (eit,1) : (time next transition)
+\State 2.c Time eot = std::min(x,y)
+\State 2.d Share eot value with other kernels.
+\State 3   Time eit = min ( $eot_i$ for i in influencing kernels)
+\EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}\\
+\subparagraph{Differences with ADEVS}
+A big difference between ADEVS' and our implementation is that we hold the eot-values of all kernels in shared memory. This means that step 1.a , which is normally done by the receiver when it inspects the message queue, can be done immediately. This also avoids the queueing delay incurred by simulation traffic.\\
+Using the shared memory approach, we also avoid the sending of any synchronization message to other cores (required in ADEVS). \\In step 2.d we simply overwrite our old EOT value with the newly calculated. The shared EOT vector is only written at 1 position for each kernel , and only the influencing EOT values are ever read. \\
+Also important to note is that there exist several edge cases not listed in this algorithm, but force the implementation to do more work than listed above. Consider a kernel with a non-dependent model A (that receives no input). By definition A has eit = oo, causing all eot-calculation to be skipped forever. We can't do this, if there exists at least 1 model depending on A, this model would get incorrect eot-values (either 0 or oo, which neither are correct since A is not prohibited from sending output).\\
+The correct behaviour here is to replace eit with the vtime of the kernel at each simulation step and to use that in the algorithm.\\
+ Furthermore, collecting lookahead values from models needs to be done in step 1, a lookahead value is calculated starting from the time it acquires a new state. This means that the lookahead value used in 2.a has to be continuously updated, regardless of usage, and has to be reset between simulation rounds (step 1 can entail several of such rounds). If we don't reset the minimum lookahead value in between rounds, there are scenarios where an incorrect minimum of a model that is no longer scheduled in the next round can warp the calculation. \\ 
+ The calculation done in steps 2, 3 are quite efficiently implemented, although a future optimization could delay step 3 until several rounds have passed, more in line with the theoretical algorithm.
+\subparagraph{Dependency calculation}
+The author of the models needs to supply the kernel, for each model, with a list of models by whom it is influenced. Receiving a message that alters a model's output is defined as influencing in this context. Using the allocation information provided by the Controller, the Kernel will then determine which other Kernels (including possibly itself) it is dependent on.\\
+It is important to note that the user need not interpret this dependency relation as transition, and needs to look only at 1-edge removed models. \\
+To clarify this last point: suppose we have 3 models A, B, C with A sending output to B, and B to C. C is indirectly influenced by A, but need not record this information (which is non trivial to retrieve for a non-trivial model, disregarding cycles for the moment). \\
+Let A be allocated @ kernel 0, B @ 1, C @ 2. While the dependency is transitive, since kernel 1 is already bound by kernel 0, kernel 2 does not require kernel 0's information (eot). By moving this transitivity to the kernel level, the model's author only has to look at 1-edge distant dependencies. \\
+At construction a Conservative Kernel will collect , for each model it holds, the list of names of influencing models. Next, the kernel requests for each unique name the allocation information (O(1) lookup). Note that this can be optimized if the model stores its allocation information, but this then prohibits runtime reallocation should this be implemented in the future.
 
 \chapter{Obstacles}
 \section{Virtualization}
 Virtualization proved a significant hurdle by exposing potential faults. Standard compliant code was found to be leaking memory by not calling container member destructors but only on a VM with Linux as Guest and Windows as Host. This was never reproducible in another setting.
 \section{Threading}
-libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}, triggering an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}.
+\subsection{String}
+libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}. This is triggers an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] of the original string, proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1.\\
+\subsection{Timing}
+We also encountered several scenarios where thread scheduling complicated our kernel control code. An extreme example of this is Valgrind, which can cause multithreaded code to be executed sequentially. This can be fatal for a parallel simulator if a dependent core is scheduled before the influencing core is ever executed. Modifying valgrind's invocation can alleviate this, but there remain edge cases where a core/kernel can get into a state where it can no longer advance (depending on the model composition). The simulator detects this and (eventually) halts the simulation. \\ Note that the above problem is not limited to valgrind, on Virtualized system this is more easily triggered than in a non virtualized setting.\\
+Furthermore, we also force an idle kernel (a kernel that has either reaches termination time, or can't advance time (no messages and no scheduled models) to yield/sleep for a short duration. The reason for this behaviour is to allow the other cores execution time, which would otherwise be spent in idling loops. A condition variable was evaluated as a solution, but not implemented since it also suffered from timing issues (time between thread awakening and core simulating).
+\section{Heaps}
+2 of the Heaps we use in the Scheduler proved to have subtle corrupting bugs, which were only found quite late in the project. Boost's binomial heap, for reasons so far unknown, sometimes fails to deallocate/remove nodes/items. The actual failure is masked until the next insertion, where we then triggered one of our own invariant checks (the heap size was no longer equal to that of the hashmap). It should be noted that we already experienced similar issues with the binomial heap not deallocating memory despite size() returning 0. \\ Time prevented us from writing up a formal bug report, since the bug is hard to reproduce and even harder to detect.
+The D-ary heap triggered an move-assing to self assertion when we used the Debugging version of the STL, so we had to remove both from our Schedulers. This is no way impacted performance, as the Fibonacci heap was in practice faster (with the skew heap sometimes overtaking it).
 \section{Toolchains}
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
+The plot plugin from Jenkins was used to do perfomance regression testing, but the plugin itself is not that stable. Nonetheless, we detected several random regression using the plotted graphs. \\
+G++ failed with an internal compiler error in certain multi-build cmake scenario's, for which a  bug was filed \cite{gpp}. GDB also intermittently failed with a segmentation fault when debugging threaded code. Using Fedora's bug reporting mechanism abrt a bug \cite{gdb} was filed for this as well.
 \section{Logger}
 The recommended logger (g3log), while powerful and fast, proved a dead end since it does not compile on Cygwin. 
 Stijn therefore wrote his own implementation.\\
@@ -219,15 +283,6 @@ We let each logger print several hundred thousand messages to a file. These are 
 \subsubsection{Conclusion}
 While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
 
-\section{Further work.}
-Further optimizations included but are not limited to: 
-\begin{enumerate}
-\item Custom memory allocators/pools (boost, ...)
-\item Profiling guided recompilation
-\item Detecting bottlenecks with perf and gprof.
-\item ...
-\end{enumerate}
-
 \begin{thebibliography}{1}
 
 
@@ -246,6 +301,14 @@ Further optimizations included but are not limited to:
   \bibitem{cereal} \url{https://uscilab.github.io/cereal/}
   
   \bibitem{cpp} \url{http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4296.pdf}
+  
+  \bibitem{cons}  J. J. Nutaro, Building Software for Simulation: Theory and Algorithms, with
+Applications in C++. Wiley Publishing, 2010.
+
+  \bibitem{gpp}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219175}
+  
+  \bibitem{gdb}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219180}
+
 
   \end{thebibliography}
 \end{document}

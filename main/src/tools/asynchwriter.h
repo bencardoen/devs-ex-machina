@@ -17,6 +17,9 @@
 #include <thread>
 #include <vector>
 #include <atomic>
+#include <deque>
+#include <iostream>
+#include <set>
 
 namespace n_tools {
 template<typename T, typename C = std::deque<T> >
@@ -67,7 +70,7 @@ public:
 	 * @param name The name of the file that will be opened.
 	 * @precondition The system must be able to open the file for output.
 	 */
-	ASynchWriter(const std::string& name);
+	ASynchWriter(const std::string& name, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::trunc);
 	~ASynchWriter();
 	int overflow(int c);
 	int sync();

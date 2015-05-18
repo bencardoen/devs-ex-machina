@@ -9,6 +9,7 @@
 #include "messageentry.h"
 #include "controlmessage.h"
 #include "tracers.h"
+#include <set>
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_
@@ -233,6 +234,12 @@ public:
 	void addModel(t_atomicmodelptr model);
 
 	/**
+	 * Add model to this core during dynamic structured simulation.
+	 * @pre !containsModel(model->getName());
+	 */
+	void addModelDS(t_atomicmodelptr model);
+
+	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
 	 */
@@ -280,8 +287,20 @@ public:
 	/**
 	 * Run at startup, populate the scheduler with the model's timeadvance() +- elapsed.
 	 * @attention : run this once and once only.
+	 * @review : this is not part of the constructor since this instance is in a legal state after
+	 * the constructor, but needs to receive models piecemeal by the controller.
 	 */
+	virtual
 	void init();
+
+	/**
+	 * Initialize the Core/Kernel with a non-zero GVT.
+	 * Typically called after a Core is loaded with models who are in turn
+	 * created from a previously run simulation.
+	 * @attention run once, after load construction.
+	 */
+	virtual
+	void initExistingSimulation(t_timestamp loaddate);
 
 	/**
 	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
@@ -436,6 +455,13 @@ public:
 	virtual
 	t_timestamp
 	getTerminationTime();
+
+	/**
+	 * Allow a subclass to query a model after it has transitioned.
+	 */
+	virtual
+	void
+	postTransition(const t_atomicmodelptr&){;}
 
 	/**
 	 * Return if core has triggered termination functor.

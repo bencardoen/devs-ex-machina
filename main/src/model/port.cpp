@@ -64,7 +64,9 @@ void n_model::Port::removeOutPort(const t_portptr& port)
 
 void Port::removeInPort(const t_portptr& port)
 {
-	m_ins.erase(std::find(m_ins.begin(), m_ins.end(), port));
+	auto it = std::find(m_ins.begin(), m_ins.end(), port);
+	if(it != m_ins.end())
+		m_ins.erase(it);
 }
 
 bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
@@ -154,60 +156,6 @@ const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const
 	return m_coupled_outs;
 }
 
-n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
-        const std::string& msg, t_zfunc& func)
-{
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
-	messagetobesend = (*func)(messagetobesend);
-	return messagetobesend;
-}
-
-std::vector<n_network::t_msgptr> Port::createMessages(std::string message)
-{
-	std::vector<n_network::t_msgptr> container;
-	createMessages(message, container);
-	return container;
-}
-
-
-std::vector<n_network::t_msgptr> Port::createMessages(std::string message, std::vector<n_network::t_msgptr>& container)
-{
-	std::string sourcePort = this->getFullName();
-	{
-		std::string str = "";
-		t_zfunc zfunc = nullptr;
-		n_network::t_msgptr msg = n_tools::createObject<n_network::Message>("",
-			n_network::t_timestamp::infinity(), "", sourcePort, message);
-		m_sentMessages.push_back(msg);
-	}
-
-	// We want to iterate over the correct ports (whether we use direct connect or not)
-	if (!m_usingDirectConnect) {
-		for (auto& pair : m_outs) {
-			t_zfunc& zFunction = pair.second;
-			std::string model_destination = pair.first->getHostName();
-	//			std::string sourcePort = this->getFullName();
-			std::string destPort = n_tools::copyString(pair.first->getFullName());
-			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
-
-			// We now know everything, we create the message, apply the zFunction and push it on the vector
-			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
-		}
-	} else {
-		for (auto& pair : m_coupled_outs) {
-			std::string model_destination = pair.first->getHostName();
-	//			std::string sourcePort = this->getFullName();
-			std::string destPort = n_tools::copyString(pair.first->getFullName());
-			for (t_zfunc& zFunction : pair.second) {
-				container.push_back(
-					createMsg(model_destination, destPort, sourcePort, message, zFunction));
-			}
-		}
-	}
-	return container;
-}
-
 void Port::clearSentMessages()
 {
 	m_sentMessages.clear();
@@ -237,6 +185,12 @@ const std::vector<n_network::t_msgptr>& Port::getReceivedMessages() const
 	return m_receivedMessages;
 }
 
+void Port::addInfluencees(std::set<std::string>& influences) const
+{
+	for (auto& port : this->m_coupled_ins)
+		influences.insert(port->getHostName());
+}
+
 void Port::serialize(n_serialization::t_oarchive& archive)
 {
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
@@ -261,6 +215,16 @@ void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::cons
 
 	archive(name, hostname, inputPort);
 	construct(name, hostname, inputPort);
+}
+
+template<>
+n_network::t_msgptr createMsg<std::string>(const std::string& dest, const std::string& destP, const std::string& sourceP,
+        const std::string& msg, t_zfunc& func)
+{
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
+	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	messagetobesend = (*func)(messagetobesend);
+	return messagetobesend;
 }
 
 }

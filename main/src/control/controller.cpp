@@ -65,8 +65,9 @@ void Controller::load(const std::string& fname)
 	t_timestamp gvt;
 	iarchive(m_coupledOrigin, m_lastGVT);
 
-	//TODO: create cores and iterate over models to allocate them all to the right core
-	//TODO: set loaded GVT to the new cores
+    //TODO: create cores and iterate over models to allocate them all to the right core
+    //TODO: set loaded GVT to the new cores
+    // @use void initExistingSimulation(t_timestamp loaddate); in Core.
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic)
@@ -75,7 +76,7 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	if (m_hasMainModel) { // old models need to be replaced
 		LOG_WARNING("CONTROLLER: Replacing main model, any older models will be dropped!");
-		emptyAllCores();		// TODO erases correctly allocated models from core in pdevs.
+		emptyAllCores();
 	}
 	size_t coreID = m_allocator->allocate(atomic);
 	addModel(atomic, coreID);
@@ -89,8 +90,9 @@ void Controller::doDirectConnect()
 {
 	if (m_coupledOrigin) {
 		m_root->directConnect(m_coupledOrigin);
-	} else
+	} else {
 		LOG_DEBUG("doDirectConnect no coupled origin!");
+	}
 }
 
 void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
@@ -156,6 +158,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	//recursively add submodels, if necessary
 	t_coupledmodelptr coupled = std::dynamic_pointer_cast<CoupledModel>(model);
 	if (coupled) {
+		LOG_DEBUG("Adding new coupled model during DS phase: ", model->getName());
 		//it is a coupled model, remove all its children
 		std::vector<t_modelptr> comp = coupled->getComponents();
 		for (t_modelptr& sub : comp)
@@ -164,12 +167,15 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	}
 	t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(model);
 	if (atomic) {
+		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs
-		m_cores.begin()->second->addModel(atomic);
+		m_cores.begin()->second->addModelDS(atomic);
 		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
 		return;
 	}
+	model->setController(this);
+	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
 }
 
 void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
@@ -177,6 +183,7 @@ void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
 	assert(isInDSPhase() && "Controller::dsUnscheduleModel called while not in the DS phase.");
 	dsUndoDirectConnect();
 
+	LOG_DEBUG("removing model: ", model->getName());
 	//it is an atomic model. Just remove this one from the core
 	m_cores.begin()->second->removeModel(model->getName());
 }
@@ -231,9 +238,6 @@ void Controller::addModel(t_coupledmodelptr& coupled)
 
 void Controller::simulate()
 {
-//	if (!m_tracers->isInitialized()) {
-//		// TODO ERROR
-//	}
 	assert(m_isSimulating == false && "Can't start a simulation while already simulating.");
 
 	if (!m_hasMainModel) {
@@ -292,7 +296,7 @@ void Controller::simDEVS()
 		if (core->isLive()) {
 			LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
 			core->runSmallStep();
-		} else
+		} else {
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
 		if (i % m_traceInterval == 0) {
 			trace(); // TODO remove boolean when serialization implemented & change string
@@ -430,9 +434,9 @@ void Controller::startGVTThread()
 	std::chrono::milliseconds sleep { m_sleep_gvt_thread };	// Wait before running gvt, this prevents an obvious gvt of zero.
 	std::this_thread::sleep_for(sleep);
 	LOG_INFO("Controller:: joined GVT thread");
-	while (m_rungvt.load() == true) {
-		if (infguard < ++i) {
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking off.");
+	while(m_rungvt.load()==true){
+		if(infguard < ++i){
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
 			m_rungvt.store(false);
 			break;	// No join, have not started thread.
 		}
@@ -526,18 +530,17 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::mutex& vectorlock, std::size_t turns, Controller& ctrl)
 {
 	auto core = ctrl.m_cores[myid];
-	constexpr size_t KILL_ZOMBIE = 50;	// @see Core::m_zombie_rounds
+	constexpr size_t YIELD_ZOMBIE = 10;	// @see Core::m_zombie_rounds
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex> lv(vectorlock);
 		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
 	};
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if (core->getZombieRounds() > KILL_ZOMBIE) {
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_WARNING("CVWORKER: Thread for core ", core->getCoreID(),
-			        " has triggered zombie max value, killing.");
-			set_flag(threadsignal[myid], n_threadflags::STOP);
+		if(core->getZombieRounds()>YIELD_ZOMBIE){
+			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread.");
+			std::chrono::milliseconds ms{25};
+			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
 		}
 
 		{	/// Intercept a direct order to stop myself.
@@ -550,31 +553,37 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		}
 
 		if (core->isIdle()) {
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-			        " threadsignal setting flag to IDLE");
-			set_flag(threadsignal[myid], n_threadflags::IDLE);
-
-			if (core->terminatedByFunctor()) {
+			std::chrono::milliseconds ms{45};	// this is a partial solution to a hard problem
+			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
+			{					// lowers the probability of triggering deadlock.
+				std::lock_guard<std::mutex> signallock(vectorlock);
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
+				set_flag(threadsignal[myid], n_threadflags::IDLE);
+			}
+			if(core->terminatedByFunctor()){
 				ctrl.distributeTerminationTime(core->getTime());
 			}
-
-			size_t countidle = 0;
-			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				const std::size_t& flag = threadsignal[i];
-				if (flag_is_set(flag, n_threadflags::IDLE) or flag_is_set(flag, n_threadflags::STOP))
-					++countidle;
+			/// Decide if everyone is idle.
+			// Can't be done by counting flags, these are to slow to be set.
+			// Atomic isIdle is waay faster.
+			bool quit = true;
+			for(const auto& coreentry : ctrl.m_cores ){
+				if( not coreentry.second->isIdle()){
+					quit = false;
+					break;
+				}
 			}
-			if (countidle == threadsignal.size()) {	// All threads are idle/stopped, stop this tread as well.
-				if (not core->existTransientMessage()) {
+			if(quit){
+				if (not core->existTransientMessage()) {	// Final deathtrap : network has message, can't quit.
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					        " all other threads are stopped or idle, network is idle, quitting.");
 					ctrl.m_rungvt.store(false);
+					std::lock_guard<std::mutex> signallock(vectorlock);
 					set_flag(threadsignal[myid], n_threadflags::STOP);
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network reports transients, idling.");
+					" all other threads are stopped or idle, network still reports transients, idling.");
 				}
 			}
 		} else {
@@ -660,7 +669,6 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			}
 		} else {
 			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
-			// TODO check/reset core state, or crash hard.
 		}
 	}
 }

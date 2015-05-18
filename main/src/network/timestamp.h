@@ -102,7 +102,7 @@ public:
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
 	{
-		if(t == infinity()){
+		if(isInfinity(t)){
 			os << "inf";
 			return os;
 		}
@@ -161,7 +161,7 @@ public:
 	 */
 	friend Time operator+(const Time& lhs, const Time& rhs)
 	{
-		if(rhs == infinity() || lhs == infinity())
+		if(isInfinity(rhs) || isInfinity(lhs))
 			return infinity();
 		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
@@ -219,6 +219,14 @@ inline t_timestamp makeLatest(const t_timestamp& now)
 	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
 }
 
+/**
+ * Return true if the time part of the timestamp is infinite.
+ * @attention not the same as ==infinity(), since that also checks causality.
+ */
+inline bool isInfinity(const t_timestamp& arg){
+	return(arg.getTime() == std::numeric_limits<t_timestamp::t_time>::max());
+}
+
 } /* namespace n_network */
 
 namespace std {
@@ -229,7 +237,7 @@ struct hash<n_network::Time<T, X>>
 	{
 		constexpr int prime = 17;
 		// Could left shift, but what if time is Floating point ??
-		// todo use enable_if floating point to get better results here.
+		// use enable_if floating point to get better results here.
 		// @warning : test with -fsanitize=integer (mind overflow).
 		size_t result = hash<T>()(item.getTime()) * prime;
 		result += hash<X>()(item.getCausality()) * prime;	// second field is very small.

@@ -135,7 +135,7 @@ public:
 		return n_tools::copyString(m_source_port);
 	}
 
-	std::string getPayload() const
+	virtual std::string getPayload() const
 	{
 		return n_tools::copyString(m_payload);
 	}
@@ -195,6 +195,39 @@ public:
  * Typedef for client classes
  */
 typedef std::shared_ptr<Message> t_msgptr;
+
+/**
+ * @brief Message class for sending data that is not a string.
+ * @note
+ */
+template<typename DataType>
+class SpecializedMessage: public Message
+{
+public:
+	SpecializedMessage(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport, const DataType& data):
+		Message(modeldest, time_made, destport, sourceport, std::string(reinterpret_cast<const char*>(&(data)), sizeof(DataType)))
+	{
+		static_assert(!std::is_pointer<DataType>::value,
+			"Using pointer types is not allowed.\n"
+			" The reason is that messages might get deleted without being delivered t a model.\n"
+			" Otherwise, there might be dangling pointers left behind, resulting into a pretty much unfixable memory leak.\n"
+			" Please also don't use a struct with pointer members.\n"
+			"  They have the same problem, but there is currently no way to check for that case at compile time.");
+	}
+
+	const DataType& getData() const{
+		return *reinterpret_cast<const DataType*>(m_payload.c_str());
+	}
+
+	virtual std::string getPayload() const override
+	{
+		std::stringstream ssr;
+		const DataType& data = getData();
+		ssr << data;
+		return ssr.str();
+	}
+
+};
 
 } // end namespace n_network
 
