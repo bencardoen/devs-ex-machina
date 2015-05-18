@@ -185,7 +185,14 @@ The single core implementations follow exactly the runtime behaviour shown by th
 \subsubsection{DirectConnect}
 The directConnect algorithm has gone relatively unchanged from its implementation in PyPDEVS, though the role of the RootDEVS class has been simplified somewhat. Its main function has been reduced to executing directConnect and then storing the resulting list of connected atomic models.
 \subsubsection{Dynamic Structured}
-Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
+Dynamic structured DEVS is completely supported in single core simulation. This includes allowing the following structural changes during the simulation:
+\begin{itemize}
+	\item adding/removing connections
+	\item adding/removing ports
+	\item adding/removing submodels.
+\end{itemize}
+These changes are only allowed during a special phase of the simulation. The simulator provides a map object of type \lstinline[language=C++,basicstyle=\small\color{black}]{std::multimap<std::string, std::string>} that can be used for communication and cooperation between the models. During one simulation step, this communication always happens from bottom to top. Only models that had an internal transition are considered for performing dynamic structured.\\
+Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
@@ -256,7 +263,7 @@ This implementation only covers the most basic needs:
 	\item levels can be individually switched on/off at compile time
 	\item No logging code is executed whatsoever if the logger is disabled
 	\item log messages contain filename and line number of the log command
-	\item crash safety. The logger will catch the following signals and flush all remaining output before exiting the program:
+	\item basic crash safety. The logger will catch the following signals and flush all remaining output before exiting the program:
 		\begin{itemize}
 			\item \emph{SIGSEGV} Segmentation fault, sent by the operating system.
 			\item \emph{SIGTERM} Termination request, sent by the program.
@@ -301,7 +308,7 @@ We let each logger print several hundred thousand messages to a file. These are 
 \subsubsection{Our own logger}
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
-While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
+While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
 
 \begin{thebibliography}{1}
 

@@ -99,13 +99,21 @@ If n is too large, that is, n is larger than or equal to the amount of used trac
 \inlinecpp{std::tuple<...>} already offers a lot of functionality that we implemented ourself. The reason why we chose to reinvent the wheel over using \inlinecpp{std::tuple<...>} is because our implementation makes it very easy to loop over all the registered tracer objects and call one of their functions.\\
 Looping over a \inlinecpp{std::tuple<...>}, while possible\footnote{Looping \lstinline{std::tuple<>}: \href{http://stackoverflow.com/a/6894436}{Stack Overflow}}, involves a lot of boilerplate code for a simple function call.
 
-\part*{Individual tracer}
+\part*{Individual tracers}
 A Tracer has to generate output for certain events and send it to some output sink.\\
 Each individual tracer class has the exact same structure. Policy-based programming\footnote{Policy-based programming: \href{http://en.wikipedia.org/wiki/Policy-based_design}{Wikipedia}} is used to separate the output writing logic from the output creation logic. This allows the user to use their own output method without having to rewrite all the existing tracers.\\
-\subsection{Policies}
-An output policy dictates where the generated output will go to. At the moment, we have implemented a policy for writing the output to \inlinecpp{std::cout} and another policy for writing the output to a file.
-\section{Planned changes}
-At the moment, we have only implemented one tracer, the verbose tracer. The other tracers (XML, JSON and CELL) will have a very similar structure. We could just create a single base class and use virtual functions to provide the implementation of the tracer-specific functionality. However, this would defeat the purpose of custom designing the template classes we have already. Another option is to use the Curiously Recurring Template Pattern (CRTP)\footnote{CRTP: \href{http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}{Wikipedia}}.
+\section{Policies}
+An output policy dictates where the generated output will go to. At the moment, we have implemented a policy for writing the output to \inlinecpp{std::cout}, a policy for writing the output to a file and a policy that will write to multiple files.
+\paragraph{note:} Only the CELL tracer will make proper use of the multi-file output policy. The other policies can be used by all tracers.
+\section{Tracers}
+At the moment, we have implemented the following tracers:
+\begin{itemize}
+	\item Verbose
+	\item XML
+	\item JSON
+	\item CELL
+\end{itemize}
+Because the \emph{Verbose}, \emph{XML} and \emph{JSON} tracers have a very similar structure and share a large portion of code, we created a single base class. The Curiously Recurring Template Pattern (CRTP)\footnote{CRTP: \href{http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern}{Wikipedia}} is used for the tracer-specific details.
 \paragraph{Curiously Recurring Template Pattern} This pattern allows a base class to call functionality of a derived class without having to use virtual functions or function overloading. It is in effect a way to deal with this kind of polymorphic behavior at compile time. The compiler knows exactly which functions will be called by the base class and can therefore use optimization techniques that are not always available when using runtime polymorphism.
 
 \part*{Output Scheduling}
