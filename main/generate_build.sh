@@ -12,6 +12,19 @@
 SCRIPT="__SCRIPT__:"
 echo "$SCRIPT Received "$#" arguments".
 
+echo "$SCRIPT Detecting nr of CPU's to use for make ....".
+
+# Nr of thread for make
+NRCPU=4
+
+if hash nproc 2>/dev/null;
+then 
+	NRCPU=`nproc`
+	echo "$SCRIPT Found $NRCPU Cores."
+	NRCPU=$((2*$NRCPU))
+	echo "$SCRIPT Using $NRCPU threads for make."
+fi
+
 ## Set default values of build variables.
 BUILD_TYPE="Debug"
 COMPILER="g++"
@@ -23,8 +36,8 @@ OSNAME=$(uname -o)
 echo "$SCRIPT Running script on OS::  $OSNAME"
 if [ "$OSNAME" == "Cygwin" ]
 then
-    echo "$SCRIPT Changing eclipse indexer to $ECLIPSE_INDEXER_ARGS"
     ECLIPSE_INDEXER_ARGS="-std=gnu++11"
+    echo "$SCRIPT detected Cygwin,  changing eclipse indexer to $ECLIPSE_INDEXER_ARGS"
 fi
 
 # Override build type with first argument
@@ -80,4 +93,4 @@ cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1="$ECLIPSE_INDE
 
 echo "$SCRIPT Building project .... "
 # Compile & link everything in build, assuming quad core
-make all -j8
+make all -j$NRCPU
