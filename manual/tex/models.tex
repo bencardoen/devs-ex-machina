@@ -42,7 +42,7 @@ When \textbf{sending messages} (\textbf{output function}), there are a few rules
 	\item \textsl{t\_portptr Model::getPort(std::string name) const}
 	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port:: \\createMessages(std::string message)}
 \end{itemize} 
-Something like this would work: this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message"); \\
+Something like this would work: \textsl{this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message");} \\
 
 It's important that a model name is unique over the whole simulation, and portname should be unique per model.\\
 
