@@ -111,19 +111,39 @@ public:
 	 * @return whether or not the port was already added
 	 */
 	bool setInPort(const t_portptr& port);
+
+	/**
+	 * @brief Clears all links to other ports from this message.
+	 * @note This function will not remove these references from the other ports.
+	 * @see CoupledModel::disconnectPorts to safely remove connections between ports.
+	 */
 	void clear();
 
 	/**
-	 * Sets a coupled input port to this port (for direct connect usage)
-	 *
-	 * @param port New input port
-	 *
+	 * @brief Removes a port from the list of outgoing connections
 	 */
 	void removeOutPort(const t_portptr& port);
+
+	/**
+	 * @brief Removes a port from the list of incoming connections
+	 */
 	void removeInPort(const t_portptr& port);
 
+	/**
+	 * @brief Adds an outgoing connection with a Z function.
+	 * @param port new output port
+	 * @param function function matching with the new output port
+	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
+	 * @see setZFunc
+	 */
 	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
 
+	/**
+	 * @brief Adds an incoming connection.
+	 * @param port new input port
+	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
+	 * @see setInPort
+	 */
 	void setInPortCoupled(const t_portptr& port);
 
 	/*
@@ -133,7 +153,15 @@ public:
 	 */
 	void setUsingDirectConnect(bool dc);
 
+	/**
+	 * @brief Resets all information pertaining to the direct connect algorithm.
+	 */
 	void resetDirectConnect();
+
+	/**
+	 * @brief Whether or not directConnect is used for this port
+	 * @see setUsingDirectConnect
+	 */
 	bool isUsingDirectConnect() const;
 
 
@@ -154,8 +182,9 @@ public:
 	}
 
 	/**
-	 * @brief Creates messages with a given payload and stores them in a container
-	 * These messages are addressed to all out-ports that are currently connected
+	 * @brief Creates messages with a given payload and stores them in a container.
+	 *
+	 * These messages are addressed to all out-ports that are currently connected.
 	 * Zfunctions that apply will be called on the messages
 	 *
 	 * @param message The payload of the message that is to be sent
@@ -168,11 +197,29 @@ public:
 	template<typename DataType = std::string>
 	std::vector<n_network::t_msgptr> createMessages(const DataType& message, std::vector<n_network::t_msgptr>& container);
 
+	/**
+	 * @brief Returns a reference to all ports from incoming connections
+	 */
 	const std::vector<t_portptr>& getIns() const;
+	/**
+	 * @brief Returns a reference to all ports from outgoing connections
+	 */
 	const std::map<t_portptr, t_zfunc>& getOuts() const;
+	/**
+	 * @brief Returns all ports from incoming connections
+	 */
 	std::vector<t_portptr>& getIns();
+	/**
+	 * @brief Returns to all ports from outgoing connections
+	 */
 	std::map<t_portptr, t_zfunc>& getOuts();
+	/**
+	 * @brief Returns a reference to all ports from incoming connections, using the directConnect algorithm.
+	 */
 	const std::vector<t_portptr>& getCoupledIns() const;
+	/**
+	 * @brief Returns a reference to all ports from outgoing connections, using the directConnect algorithm.
+	 */
 	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
 
 	/**
@@ -279,16 +326,43 @@ std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
 	return container;
 }
 
+/*
+ * unnamed namespace to hide the template implementation from the rest of the code
+ */
+namespace
+{
+
 /**
- * @brief Creates a single message
+ * @brief Struct for forcing array to pointer type degeneration.
+ */
+///@{
+template<class T>
+struct array2ptr
+{
+    typedef T type;
+};
+
+template<class T, std::size_t N>
+struct array2ptr<T[N]>
+{
+    typedef const T * type;
+};
+///@}
+
+/**
+ * @brief Type specific implementation for creating a single message
  * @param dest The name of the destination model
  * @param destP The full name of the destination port
  * @param sourceP The full name of the source port
  * @param msg The data send with this message
  * @param func The ZFunction that must be applied on this message
  */
+///@{
+/**
+ * @brief Base case. Used for everything except strings
+ */
 template<typename DataType>
-n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+inline n_network::t_msgptr createMsgImpl(const std::string& dest, const std::string& destP, const std::string& sourceP,
         const DataType& msg, t_zfunc& func)
 {
 	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(dest,
@@ -298,18 +372,49 @@ n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP,
 }
 
 /**
- * @brief Creates a single message.
- * Specialization of Port::createMsg for pure string messages
+ * @brief Overload for std::string
+ */
+template<>
+inline n_network::t_msgptr createMsgImpl<std::string>(const std::string& dest, const std::string& destP,
+        const std::string& sourceP, const std::string& msg, t_zfunc& func)
+{
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
+		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	messagetobesend = (*func)(messagetobesend);
+	return messagetobesend;
+}
+
+/**
+ * @brief Overload for string literals
+ */
+template<>
+inline n_network::t_msgptr createMsgImpl<const char*>(const std::string& dest, const std::string& destP,
+        const std::string& sourceP, const char* const & msg, t_zfunc& func)
+{
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
+		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	messagetobesend = (*func)(messagetobesend);
+	return messagetobesend;
+}
+///@}
+
+}
+
+/**
+ * @brief Creating a single message.
+ * @tparam T The type of the data that will be contained within the message. This type can usually be inferred from the function arguments.
  * @param dest The name of the destination model
  * @param destP The full name of the destination port
  * @param sourceP The full name of the source port
- * @param msg The string data send with this message
+ * @param msg The data send with this message
  * @param func The ZFunction that must be applied on this message
  */
-template<>
-n_network::t_msgptr createMsg<std::string>(const std::string& dest, const std::string& destP,
-        const std::string& sourceP, const std::string& msg, t_zfunc& func);
-
+template<typename T>
+inline n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+        const T& msg, t_zfunc& func)
+{
+	return createMsgImpl<typename array2ptr<T>::type>(dest, destP, sourceP, msg, func);
+}
 }
 
 #endif /* PORT_H_ */
