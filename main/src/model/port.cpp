@@ -217,14 +217,4 @@ void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::cons
 	construct(name, hostname, inputPort);
 }
 
-template<>
-n_network::t_msgptr createMsg<std::string>(const std::string& dest, const std::string& destP, const std::string& sourceP,
-        const std::string& msg, t_zfunc& func)
-{
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
-	messagetobesend = (*func)(messagetobesend);
-	return messagetobesend;
-}
-
 }
