@@ -21,13 +21,6 @@ PHOLDModelState::~PHOLDModelState()
 {
 }
 
-std::shared_ptr<PHOLDModelState> PHOLDModelState::copy()
-{
-	auto newState = n_tools::createObject<PHOLDModelState>();
-	newState->m_events = m_events;
-	return newState;
-}
-
 
 /*
  * HeavyPHOLDProcessor
@@ -40,7 +33,7 @@ HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t t
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
-		addOutPort("outport_" + n_tools::toString(i));
+		m_outs.push_back(addOutPort("outport_" + n_tools::toString(i)));
 	}
 	auto state = n_tools::createObject<PHOLDModelState>();
 	state->m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
@@ -54,74 +47,94 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 size_t HeavyPHOLDProcessor::getProcTime(size_t event) const
 {
 	srand(event);
-	return rand() % 10; //TODO determine proper rand value, since we don't use floats
+	return rand() % 101; //TODO determine proper rand value, since we don't use floats
 }
 
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 {
+	LOG_INFO("[PHOLD] - Getting next destination. [Local=",m_local.size(),"] [Remote=",m_remote.size(),"]");
 	srand(event);
-	if ((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) > m_percentageRemotes || m_remote.empty()) {
-		return m_local[rand() % m_local.size()];
+	if (rand() % 101 > (int)(m_percentageRemotes*100) || m_remote.empty()) {
+		size_t chosen = m_local[rand() % m_local.size()];
+		LOG_INFO("[PHOLD] - Picked local: ", chosen);
+		return chosen;
 	} else {
-		return m_remote[rand() % m_remote.size()];
+		size_t chosen = m_remote[rand() % m_remote.size()];
+		LOG_INFO("[PHOLD] - Picked remote: ", chosen);
+		return chosen;
 	}
 }
 
 n_model::t_timestamp HeavyPHOLDProcessor::timeAdvance() const
 {
-	std::cout<<"ADVANCE "<<m_elapsed<<std::endl;
+	LOG_INFO("[PHOLD] - ",getName()," does TIMEADVANCE");
 	std::shared_ptr<PHOLDModelState> state = std::dynamic_pointer_cast<PHOLDModelState>(getState());
 	if (!state->m_events.empty()) {
+		LOG_INFO("[PHOLD] - ",getName()," has an event with time ",state->m_events[0].m_procTime,".");
 		return n_network::t_timestamp(state->m_events[0].m_procTime, 0);
 	} else {
+		LOG_INFO("[PHOLD] - ",getName()," has no events left, advances to infinity.");
 		return n_network::t_timestamp::infinity();
 	}
 }
 
 void HeavyPHOLDProcessor::intTransition()
 {
-	std::shared_ptr<PHOLDModelState> newState = std::dynamic_pointer_cast<PHOLDModelState>(getState())->copy();
+	LOG_INFO("[PHOLD] - ",getName()," does an INTERNAL TRANSITION");
+	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
+		        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
 	newState->m_events.pop_front();
 	setState(newState);
 }
 
 void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
-	std::shared_ptr<PHOLDModelState> newState = std::dynamic_pointer_cast<PHOLDModelState>(getState())->copy();
+	LOG_INFO("[PHOLD] - ",getName()," does a CONFLUENT TRANSITION");
+	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
+		        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
 	if (!newState->m_events.empty()) {
 		newState->m_events.pop_front();
 	}
 	for (auto& msg : message) {
-		int payload = n_tools::toInt(msg->getPayload());
+		++m_messageCount;
+		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		for (size_t i = 0; i < m_iter; ++i); 	// We just do stuff for a while
+		std::this_thread::sleep_for(std::chrono::milliseconds(m_iter)); // Wait a bit.
 	}
+	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 	setState(newState);
 }
 
 void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
-	std::shared_ptr<PHOLDModelState> newState = std::dynamic_pointer_cast<PHOLDModelState>(getState())->copy();
+	LOG_INFO("[PHOLD] - ",getName()," does an EXTERNAL TRANSITION");
+	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
+	        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
 	if (!newState->m_events.empty()) {
 		newState->m_events[0].m_procTime -= m_elapsed.getTime();
 	}
 	for (auto& msg : message) {
-		int payload = n_tools::toInt(msg->getPayload());
+		++m_messageCount;
+		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
 		for (size_t i = 0; i < m_iter; ++i); 	// We just do stuff for a while
 	}
+	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 	setState(newState);
 }
 
 std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 {
-	std::shared_ptr<PHOLDModelState> state = std::dynamic_pointer_cast<PHOLDModelState>(getState())->copy();;
+	LOG_INFO("[PHOLD] - ",getName()," produces OUTPUT");
+	std::shared_ptr<PHOLDModelState> state = std::dynamic_pointer_cast<PHOLDModelState>(getState());
 
 	if (!state->m_events.empty()) {
-		srand(state->m_events[0].m_modelNumber);
-		int r = rand() % 60000;
-		size_t i = getNextDestination(state->m_events[0].m_modelNumber);
-		return getPort("outport_" + n_tools::toString(i))->createMessages(n_tools::toString(r));
+		EventPair& i = state->m_events[0];
+		srand(i.m_modelNumber);
+		size_t dest = getNextDestination(i.m_modelNumber);
+		size_t r = rand() % 60000;
+		LOG_INFO("[PHOLD] - ",getName()," sends a message to outport ", dest);
+		return m_outs[dest]->createMessages(r);
 	}
 	return std::vector<n_network::t_msgptr>();
 }

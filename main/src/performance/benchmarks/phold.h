@@ -9,6 +9,8 @@
 #define SRC_PERFORMANCE_BENCHMARKS_PHOLD_H_
 
 #include <stdlib.h>
+#include <thread>
+#include <chrono>
 #include "atomicmodel.h"
 #include "coupledmodel.h"
 
@@ -26,7 +28,6 @@ class PHOLDModelState: public n_model::State
 public:
 	PHOLDModelState();
 	virtual ~PHOLDModelState();
-	std::shared_ptr<PHOLDModelState> copy();
 
 	std::deque<EventPair> m_events;
 };
@@ -40,6 +41,8 @@ private:
 	size_t m_iter;
 	std::vector<size_t> m_local;
 	std::vector<size_t> m_remote;
+	int m_messageCount;
+	std::vector<n_model::t_portptr> m_outs;
 public:
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber, std::vector<size_t> local,
 	        std::vector<size_t> remote, size_t percentageRemotes);
