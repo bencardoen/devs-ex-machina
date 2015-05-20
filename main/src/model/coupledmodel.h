@@ -134,4 +134,6 @@ public:
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;
 }
 
+CEREAL_REGISTER_TYPE(n_model::CoupledModel)
+
 #endif /* COUPLEDMODEL_H_ */

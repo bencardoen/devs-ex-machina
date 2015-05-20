@@ -17,6 +17,7 @@
 #include "modelentry.h"
 #include "messageentry.h"
 #include "cereal/archives/binary.hpp"
+#include "cereal/types/polymorphic.hpp"
 #include <sstream>
 
 using namespace n_model;
@@ -188,6 +189,54 @@ TEST(Cereal, CoupledModel)
 	iarchive(m2);
 
 	EXPECT_EQ(m1.getName(), m2.getName());
+}
+
+TEST(Cereal, ModelPolyModel)
+{
+	std::stringstream ss;
+
+	t_modelptr mpm1 = std::make_shared<Model>("test");
+	t_modelptr mpm2 = std::make_shared<Model>("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(mpm1);
+	iarchive(mpm2);
+
+	EXPECT_EQ(mpm1->getName(), mpm2->getName());
+}
+
+TEST(Cereal, ModelPolyAtomicModel)
+{
+	std::stringstream ss;
+
+	t_modelptr mpm1 = std::make_shared<AtomicModel>("test");
+	t_modelptr mpm2 = std::make_shared<AtomicModel>("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(mpm1);
+	iarchive(mpm2);
+
+	EXPECT_EQ(mpm1->getName(), mpm2->getName());
+}
+
+TEST(Cereal, ModelPolyCoupledModel)
+{
+	std::stringstream ss;
+
+	t_modelptr mpm1 = std::make_shared<CoupledModel>("test");
+	t_modelptr mpm2 = std::make_shared<CoupledModel>("err");
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(mpm1);
+	iarchive(mpm2);
+
+	EXPECT_EQ(mpm1->getName(), mpm2->getName());
 }
 
 TEST(Cereal, Core)
