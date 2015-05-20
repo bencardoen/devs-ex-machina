@@ -161,6 +161,7 @@ add_executable(${PROJECT_NAME}
  	src/control/controller.cpp
  	src/control/controllerconfig.cpp
  	src/control/locationtable.cpp
+	src/control/timeevent.cpp
  	src/network/message.cpp
  	src/network/controlmessage.cpp
  	src/network/network.cpp
@@ -192,6 +193,7 @@ include_directories(
 				src/model
 				src/tracers
 				src/performance/devstone
+				src/performance/benchmarks
 				src/examples/abstract_conservative
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled

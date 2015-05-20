@@ -33,14 +33,14 @@ std::shared_ptr<PHOLDModelState> PHOLDModelState::copy()
  * HeavyPHOLDProcessor
  */
 
-HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, uint iter, uint totalAtomics, uint modelNumber,
-        std::vector<uint> local, std::vector<uint> remote, uint percentageRemotes)
+HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
+        std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes)
 	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_totalAtomics(totalAtomics),
 	  m_modelNumber(modelNumber), m_iter(iter), m_local(local), m_remote(remote)
 {
 	addInPort("inport");
-	for (uint i = 0; i < totalAtomics; ++i) {
-		addOutPort("outport_" + n_tools::inttostring(i));
+	for (size_t i = 0; i < totalAtomics; ++i) {
+		addOutPort("outport_" + n_tools::toString(i));
 	}
 	auto state = n_tools::createObject<PHOLDModelState>();
 	state->m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
@@ -51,13 +51,13 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 {
 }
 
-size_t HeavyPHOLDProcessor::getProcTime(uint event) const
+size_t HeavyPHOLDProcessor::getProcTime(size_t event) const
 {
 	srand(event);
 	return rand() % 10; //TODO determine proper rand value, since we don't use floats
 }
 
-uint HeavyPHOLDProcessor::getNextDestination(uint event) const
+size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 {
 	srand(event);
 	if ((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) > m_percentageRemotes || m_remote.empty()) {
@@ -92,9 +92,9 @@ void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> 
 		newState->m_events.pop_front();
 	}
 	for (auto& msg : message) {
-		int payload = n_tools::stringtoint(msg->getPayload());
+		int payload = n_tools::toInt(msg->getPayload());
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		for (uint i = 0; i < m_iter; ++i); 	// We just do stuff for a while
+		for (size_t i = 0; i < m_iter; ++i); 	// We just do stuff for a while
 	}
 	setState(newState);
 }
@@ -106,9 +106,9 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 		newState->m_events[0].m_procTime -= m_elapsed.getTime();
 	}
 	for (auto& msg : message) {
-		int payload = n_tools::stringtoint(msg->getPayload());
+		int payload = n_tools::toInt(msg->getPayload());
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		for (uint i = 0; i < m_iter; ++i); 	// We just do stuff for a while
+		for (size_t i = 0; i < m_iter; ++i); 	// We just do stuff for a while
 	}
 	setState(newState);
 }
@@ -120,8 +120,8 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 	if (!state->m_events.empty()) {
 		srand(state->m_events[0].m_modelNumber);
 		int r = rand() % 60000;
-		uint i = getNextDestination(state->m_events[0].m_modelNumber);
-		return getPort("outport_" + n_tools::inttostring(i))->createMessages(n_tools::inttostring(r));
+		size_t i = getNextDestination(state->m_events[0].m_modelNumber);
+		return getPort("outport_" + n_tools::toString(i))->createMessages(n_tools::toString(r));
 	}
 	return std::vector<n_network::t_msgptr>();
 }
@@ -130,32 +130,32 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
  * PHOLD
  */
 
-PHOLD::PHOLD(uint nodes, uint atomicsPerNode, uint iter, float percentageRemotes)
+PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, float percentageRemotes)
 	: n_model::CoupledModel("PHOLD")
 {
 	std::vector<n_model::t_atomicmodelptr> processors;
-	std::vector<std::vector<uint>> procs;
+	std::vector<std::vector<size_t>> procs;
 
-	uint totalAtomics = nodes * atomicsPerNode;
+	size_t totalAtomics = nodes * atomicsPerNode;
 
-	for (uint i = 0; i < nodes; ++i) {
-		procs.push_back(std::vector<uint>());
-		for (uint j = 0; j < atomicsPerNode; ++j) {
+	for (size_t i = 0; i < nodes; ++i) {
+		procs.push_back(std::vector<size_t>());
+		for (size_t j = 0; j < atomicsPerNode; ++j) {
 			procs[i].push_back(atomicsPerNode * i + j);
 		}
 	}
 
-	uint cntr = 0;
-	for (uint i = 0; i < nodes; ++i) {
-		std::vector<uint> allnoi;
-		for (uint k = 0; k < nodes; ++k) {
+	size_t cntr = 0;
+	for (size_t i = 0; i < nodes; ++i) {
+		std::vector<size_t> allnoi;
+		for (size_t k = 0; k < nodes; ++k) {
 			if (i != k)
 				allnoi.insert(allnoi.end(), procs[k].begin(), procs[k].end());
 		}
-		for (uint num : procs[i]) {
-			std::vector<uint> inoj = procs[i];
+		for (size_t num : procs[i]) {
+			std::vector<size_t> inoj = procs[i];
 			inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
-			auto p = n_tools::createObject<HeavyPHOLDProcessor>("Processor_" + n_tools::inttostring(cntr),
+			auto p = n_tools::createObject<HeavyPHOLDProcessor>("Processor_" + n_tools::toString(cntr),
 			        iter, totalAtomics, cntr, inoj, allnoi, percentageRemotes);
 			processors.push_back(p);
 			addSubModel(p);
@@ -163,11 +163,11 @@ PHOLD::PHOLD(uint nodes, uint atomicsPerNode, uint iter, float percentageRemotes
 		}
 	}
 
-	for (uint i = 0; i < processors.size(); ++i) {
-		for (uint j = 0; j < processors.size(); ++j) {
+	for (size_t i = 0; i < processors.size(); ++i) {
+		for (size_t j = 0; j < processors.size(); ++j) {
 			if (i == j)
 				continue;
-			connectPorts(processors[i]->getPort("outport_" + n_tools::inttostring(i)),
+			connectPorts(processors[i]->getPort("outport_" + n_tools::toString(i)),
 			        processors[j]->getPort("inport"));
 		}
 	}

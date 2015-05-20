@@ -76,6 +76,19 @@ inline std::string toString(int i)
 #endif
 }
 //@}
+
+/**
+ * @brief Convert string to integer (Windows friendly)
+ * @param str String to be converted
+ * @return integer representation of the string
+ */
+inline int toInt(std::string str)
+{
+	int num;
+	std::istringstream ss(str);
+	ss >> num;
+	return num;
+}
 }
 
 #endif // STRINGTOOLS_H_

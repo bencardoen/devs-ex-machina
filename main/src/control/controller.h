@@ -277,6 +277,7 @@ private:
 
 	/**
 	 * @brief Handle all time events until now, returns whether the simulation should continue
+	 * @attention This method should only be used in PDEVS mode
 	 */
 	bool handleTimeEvents(std::condition_variable& cv, std::mutex& cvlock);
 

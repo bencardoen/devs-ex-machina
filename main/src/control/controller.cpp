@@ -40,7 +40,7 @@ void Controller::trace() {
 		break;
 	}
 	case PDEVS: {
-		throw std::logic_error("Controller : trace() for PDEVS not implemented");
+		throw std::logic_error("Controller : trace() should not be used in PDEVS!");
 		break;
 	}
 	}
@@ -298,8 +298,29 @@ void Controller::simDEVS()
 			core->runSmallStep();
 		} else {
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
-		if (i % m_traceInterval == 0) {
-			trace(); // TODO remove boolean when serialization implemented & change string
+			if (i % m_traceInterval == 0) {
+				trace();
+				if(!m_events.todo(core->getTime())) continue;	// If no events to handle, just go on
+				std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
+				uint pause;
+				for (TimeEvent& event : worklist) {
+					switch (event.m_type) {
+					case TimeEvent::Type::PAUSE:
+						LOG_INFO("CONTROLLER: Pausing at ",
+						        n_tools::toString(event.m_time.getTime()), " for ",
+						        event.m_duration, " seconds ",
+						        ((event.m_repeating) ? "[REPEATING]" : "[SINGLE]"));
+						pause += event.m_duration;
+						break;
+					case TimeEvent::Type::SAVE:
+						save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()));
+						break;
+					}
+				}
+				if (pause) {
+					sleep(pause);
+				}
+			}
 		}
 	}
 }
@@ -502,7 +523,7 @@ bool Controller::handleTimeEvents(std::condition_variable& cv, std::mutex& cvloc
 	for (TimeEvent& event : worklist) {
 		switch (event.m_type) {
 		case TimeEvent::Type::PAUSE:
-			LOG_INFO("CONTROLLER: Pausing at ", n_tools::inttostring(event.m_time.getTime()), " for ",
+			LOG_INFO("CONTROLLER: Pausing at ", n_tools::toString(event.m_time.getTime()), " for ",
 			        event.m_duration, " seconds ", ((event.m_repeating) ? "[REPEATING]" : "[SINGLE]"));
 			pause += event.m_duration;
 			break;
@@ -510,7 +531,7 @@ bool Controller::handleTimeEvents(std::condition_variable& cv, std::mutex& cvloc
 			svd = true;
 			cvlock.lock();		//Stop cores
 			cv.notify_all();
-			save(event.m_prefix + "_" + n_tools::inttostring(event.m_time.getTime()));
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()));
 			cvlock.unlock();	//Start cores again
 			cv.notify_all();
 			break;

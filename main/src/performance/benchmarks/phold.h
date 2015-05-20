@@ -16,8 +16,8 @@ namespace n_benchmarks_phold {
 
 struct EventPair
 {
-	EventPair(uint mn, size_t pt) : m_modelNumber(mn), m_procTime(pt) {};
-	uint m_modelNumber;
+	EventPair(size_t mn, size_t pt) : m_modelNumber(mn), m_procTime(pt) {};
+	size_t m_modelNumber;
 	size_t m_procTime;
 };
 
@@ -34,15 +34,15 @@ public:
 class HeavyPHOLDProcessor: public n_model::AtomicModel
 {
 private:
-	uint m_percentageRemotes;
-	uint m_totalAtomics;
-	uint m_modelNumber;
-	uint m_iter;
-	std::vector<uint> m_local;
-	std::vector<uint> m_remote;
+	size_t m_percentageRemotes;
+	size_t m_totalAtomics;
+	size_t m_modelNumber;
+	size_t m_iter;
+	std::vector<size_t> m_local;
+	std::vector<size_t> m_remote;
 public:
-	HeavyPHOLDProcessor(std::string name, uint iter, uint totalAtomics, uint modelNumber, std::vector<uint> local,
-	        std::vector<uint> remote, uint percentageRemotes);
+	HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber, std::vector<size_t> local,
+	        std::vector<size_t> remote, size_t percentageRemotes);
 	virtual ~HeavyPHOLDProcessor();
 
 	virtual n_model::t_timestamp timeAdvance() const;
@@ -51,14 +51,14 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual std::vector<n_network::t_msgptr> output() const;
 
-	size_t getProcTime(uint event) const;
-	uint getNextDestination(uint event) const;
+	size_t getProcTime(size_t event) const;
+	size_t getNextDestination(size_t event) const;
 };
 
 class PHOLD: public n_model::CoupledModel
 {
 public:
-	PHOLD(uint nodes, uint atomicsPerNode, uint iter, float percentageRemotes);
+	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, float percentageRemotes);
 	virtual ~PHOLD();
 };
 

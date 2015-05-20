@@ -47,20 +47,20 @@ TEST(Performance, PHOLD)
 
 	ControllerConfig conf;
 	conf.name = "PHOLDBench";
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 4;
+//	conf.simType = Controller::PDEVS;
+//	conf.coreAmount = 4;
 	conf.saveInterval = 1;
 
-	std::ofstream filestream("testfiles/performance/phold.txt");
-	{
-		CoutRedirect myRedirect(filestream);
+//	std::ofstream filestream("testfiles/performance/phold.txt");
+//	{
+//		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = createObject<PHOLD>(1, 10, 64, 0.1);
+		t_coupledmodelptr d = createObject<PHOLD>(1, 10, 0, 0.1);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
-	}
+//	}
 }
