@@ -85,6 +85,10 @@ private:
 	t_timestamp m_prevTime;
 
 public:
+	/**
+	 * @brief Constructs a new CellTracer object.
+	 * @note Depending on which OutputPolicy is used, this tracer must be initialized before it can be used. See the documentation of the policy itself.
+	 */
 	CellTracer(): m_prevTime(0, std::numeric_limits<t_timestamp::t_causal>::max())
 	{
 	}

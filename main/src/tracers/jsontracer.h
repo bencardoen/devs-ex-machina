@@ -22,12 +22,14 @@ using namespace n_network;
  * @brief Tracer that will generate xml output.
  * @tparam OutputPolicy A policy that dictates what should happen with the output
  * @note The structure of the trace output is based on the xml structure.
- * 	 If a standardized structure already exists, please either send us a mail or fix this issue here
+ * 	 If a standardized structure already exists, please either send us a mail or fix this issue here.
+ * @note The MultifilePolicy is not supported by this tracer.
  */
 template<typename OutputPolicy>
 class JsonTracer: public OutputPolicy, public TracerBase<JsonTracer<OutputPolicy>>
 {
 private:
+	static_assert(!std::is_same<OutputPolicy, MultiFileWriter>::value, "The JSonTracer does not support the MultiFileWriter policy.");
 	char m_comma = ' ';
 	/**
 	 * @brief Typedef for this class.
@@ -72,6 +74,10 @@ private:
 	}
 
 public:
+	/**
+	 * @brief Constructs a new JsonTracer object.
+	 * @note Depending on which OutputPolicy is used, this tracer must be initialized before it can be used. See the documentation of the policy itself.
+	 */
 	JsonTracer() = default;
 	/**
 	 * @brief Performs the actual tracing. Once this function is called, there is no going back.

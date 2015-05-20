@@ -21,6 +21,7 @@ using namespace n_network;
 /**
  * @brief Tracer that will generate verbose output.
  * @tparam OutputPolicy A policy that dictates what should happen with the output
+ * @note The MultifilePolicy is not supported by this tracer.
  */
 template<typename OutputPolicy>
 class VerboseTracer: public OutputPolicy, public TracerBase<VerboseTracer<OutputPolicy>>
@@ -57,6 +58,10 @@ private:
 	}
 
 public:
+	/**
+	 * @brief Constructs a new VerboseTracer object.
+	 * @note Depending on which OutputPolicy is used, this tracer must be initialized before it can be used. See the documentation of the policy itself.
+	 */
 	VerboseTracer(): m_prevTime(0, std::numeric_limits<t_timestamp::t_causal>::max())
 	{
 	}

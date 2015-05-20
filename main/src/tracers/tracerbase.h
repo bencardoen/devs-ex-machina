@@ -13,7 +13,20 @@
 
 namespace n_tracers {
 /**
- * @brief Common base class for all tracers.
+ * @brief Common base class for some tracers.
+ *
+ * This class takes care of creating messages, scheduling them and cleaning up the allocated memory.
+ * The subclass is required to implement the following interface:
+ * @code
+	void doTrace(t_timestamp, std::ostringstream*);
+	void tracesInitImpl(const t_atomicmodelptr&, t_timestamp, std::ostringstream*);
+	void tracesInternalImpl(const t_atomicmodelptr&, std::ostringstream*);
+	void tracesExternalImpl(const t_atomicmodelptr&, std::ostringstream*);
+	void tracesConfluentImpl(const t_atomicmodelptr&, std::ostringstream*);
+	void startTrace();
+	void finishTrace();
+ * @endcode
+ * @see XmlTracer, @see JsonTracer, @see VerboseTracer for examples.
  */
 template<typename T>
 class TracerBase

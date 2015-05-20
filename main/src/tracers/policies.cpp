@@ -143,7 +143,3 @@ void n_tracers::CoutWriter::startTracer(bool)
 {
 	m_disabled = false;
 }
-
-n_tracers::CoutWriter::~CoutWriter()
-{
-}

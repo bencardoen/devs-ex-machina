@@ -19,9 +19,9 @@ namespace n_tracers {
 TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback)
 	: Message("", time, "", ""), m_func(func), m_takeBack(takeback)
 {
-	m_timestamp.increaseCausality(1u);
 	assert(m_func != nullptr && "TraceMessage::TraceMessage can't accept nullptr as execution function");
 	assert(m_takeBack != nullptr && "TraceMessage::TraceMessage Can't accept nullptr as cleanup function. If you don't need a cleanup function, either provide an empty one or omit the argument.");
+	m_timestamp.increaseCausality(1u);
 	setSourceCore(coreID);
 }
 
@@ -97,6 +97,11 @@ bool operator>(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 bool operator>=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 {
 	return (!(lhs < rhs));
+}
+
+bool operator<=(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
+{
+	return (!(lhs > rhs));
 }
 
 bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
