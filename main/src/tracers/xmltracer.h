@@ -23,6 +23,7 @@ using namespace n_network;
  * @tparam OutputPolicy A policy that dictates what should happen with the output
  *
  * The generated xml will have the structure expected by the DEVS Trace Plotter by Hongyan (Bill) Song
+ * @note The MultifilePolicy is not supported by this tracer.
  */
 template<typename OutputPolicy>
 class XmlTracer: public OutputPolicy, public TracerBase<XmlTracer<OutputPolicy>>
@@ -59,6 +60,10 @@ private:
 	}
 
 public:
+	/**
+	 * @brief Constructs a new XmlTracer object.
+	 * @note Depending on which OutputPolicy is used, this tracer must be initialized before it can be used. See the documentation of the policy itself.
+	 */
 	XmlTracer() = default;
 	/**
 	 * @brief Performs the actual tracing. Once this function is called, there is no going back.
