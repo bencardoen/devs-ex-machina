@@ -41,7 +41,7 @@ TEST(Performance, DEVStone)
 	}
 }
 
-TEST(Performance, PHOLD)
+TEST(Performance, DISABLED_PHOLD)
 {
 	RecordProperty("description", "Runs the PHOLD benchmark");
 
@@ -51,9 +51,9 @@ TEST(Performance, PHOLD)
 //	conf.coreAmount = 4;
 	conf.saveInterval = 1;
 
-//	std::ofstream filestream("testfiles/performance/phold.txt");
-//	{
-//		CoutRedirect myRedirect(filestream);
+	std::ofstream filestream("testfiles/performance/phold.txt");
+	{
+		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
@@ -62,5 +62,5 @@ TEST(Performance, PHOLD)
 		ctrl->addModel(d);
 
 		ctrl->simulate();
-//	}
+	}
 }
