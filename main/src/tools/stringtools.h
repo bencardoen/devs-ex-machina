@@ -37,11 +37,10 @@ bool endswith(const std::string& full, const std::string& part)
 }
 
 /**
- * @brief Convert integer to string (Windows friendly)
+ * @brief Convert unsigned integer to string (Windows friendly)
  * @param i Integer to be converted
  * @return string representation of the integer
  */
-//@{
 inline std::string toString(std::size_t i)
 {
 #ifndef __CYGWIN__
@@ -59,6 +58,11 @@ inline std::string toString(std::size_t i)
 #endif
 }
 
+/**
+ * @brief Convert integer to string (Windows friendly)
+ * @param i Integer to be converted
+ * @return string representation of the integer
+ */
 inline std::string toString(int i)
 {
 #ifndef __CYGWIN__
@@ -75,7 +79,6 @@ inline std::string toString(int i)
 	return number;
 #endif
 }
-//@}
 }
 
 #endif // STRINGTOOLS_H_
