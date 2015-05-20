@@ -249,7 +249,7 @@ TEST(Controller, ControllerConfig)
 	}
 }
 
-TEST(Controller, DISABLED_Pause)
+TEST(PauseSave, Pause)
 {
 	RecordProperty("description", "Tests pause functionality of simulator");
 
@@ -274,7 +274,7 @@ TEST(Controller, DISABLED_Pause)
 	}
 }
 
-TEST(Controller, DISABLED_RepeatPause)
+TEST(PauseSave, RepeatPause)
 {
 	RecordProperty("description", "Tests repeating pause");
 
