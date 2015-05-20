@@ -1,48 +1,52 @@
 \section{States}
-You can can make your own states with almost no limitations. The only requirements for a user's own states are that they should be objects from a type that implements \textsl{n\_model::State}. This class has a few functions that have to be implemented:
+You can can make your own states with almost no limitations. The only requirements for a user's own states are that they should be objects from a type that implements \texttt{n\_model::State}. This class has a few functions that have to be implemented:
 \begin{itemize}
-	\item \textsl{std::string toString()}
-	\item \textsl{std::string toXML()}
-	\item \textsl{std::string toCell()}
+	\item \texttt{std::string toString()}
+	\item \texttt{std::string toXML()}
+	\item \texttt{std::string toCell()}
 \end{itemize}
 If the user does not override the above functions, this will result in a logged error. Serialization prohibits abstract functions, which enforces this workaround.\\
-While members in sub-classes can be added without any problems, by default there is a public member \textsl{std::string m\_state} implemented in \textsl{State} that can be used to represent the user's state.
+While members in sub-classes can be added without any problems, by default there is a public member \texttt{std::string m\_state} implemented in \texttt{State} that can be used to represent the user's state.
 \\ For serialization you have to declare (after class definition) 
 \begin{verbatim}
 CEREAL_REGISTER_TYPE(MyState);
 \end{verbatim}
 
 \section{Atomic models}
-Atomic models can be made by implementing a sub-class of \\ \textsl{n\_model::AtomicModel}. The most basic functions to be implemented are:
+Atomic models can be made by implementing a sub-class of \texttt{n\_model::AtomicModel}. The most basic functions to be implemented are:
 \begin{enumerate}
-	\item \textsl{void AtomicModel::extTransition(const std::vector{\textless}n\_network::t\_msgptr{\textgreater} \& inputs)}\\
+	\item \texttt{void AtomicModel::extTransition(const std::vector{\textless}n\_network::t\_msgptr{\textgreater} \& inputs)}\\
 		Performs the model's external transition. The input argument is a vector with all messages at a certain point in time.
-	\item \textsl{void AtomicModel::intTransition()}\\
+	\item \texttt{void AtomicModel::intTransition()}\\
 		Performs the model's internal transition. 
-	\item \textsl{t\_timestamp AtomicModel::timeAdvance() const}\\
+	\item \texttt{t\_timestamp AtomicModel::timeAdvance() const}\\
 		Should return the model's current time advance value; the amount of time after which the following internal transition occurs. This function should not alter the model in any way.
-	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} AtomicModel::output()  const}\\
+	\item \texttt{std::vector{\textless}n\_network::t\_msgptr{\textgreater} AtomicModel::output()  const}\\
 		Returns the model's output; all messages that are to be send should be returned via this function. This function should not alter the model in any way.
 \end{enumerate}
 If these are not overridden, this will result in a logged assertion error.\\
+A user can optionally implement the lookahead function, when a parallel conservative simulation is required:
+\begin{itemize}
+	\item \texttt{t\_timestamp AtomicModel::lookAhead() const}
+\end{itemize}
 
-The user can access the model's \textbf{state} at any time using the built-in function \textsl{t\_stateptr Model::getState() const}. The acquired state can then be examined. When implementing the functions \textsl{extTransition} and \textsl{intTransition}, you must make use of the built-in function \textsl{void Model::setState(const t\_stateptr\& newState)} to set a new state.\\
+The user can access the model's \textbf{state} at any time using the built-in function \texttt{t\_stateptr Model::getState() const}. The acquired state can then be examined. When implementing the functions \texttt{extTransition} and \texttt{intTransition}, you must make use of the built-in function \texttt{void Model::setState(const t\_stateptr\& newState)} to set a new state.\\
 
-\textbf{Timestamps} that the user has to generate, for example in the \textsl{timeAdvance} function, can be easily constructed using the following constructor:\\ \textsl{t\_timestamp(size\_t)}).\\
+\textbf{Timestamps} that the user has to generate, for example in the \texttt{timeAdvance} function, can be easily constructed using the following constructor:\\ \texttt{t\_timestamp(size\_t)}).\\
 
 \textbf{Input and output ports} can be added to a model by following functions:
 \begin{itemize}
-	\item \textsl{t\_portptr Model::addInPort(std::string name)}
-	\item \textsl{t\_portptr Model::addOutPort(std::string name)}
+	\item \texttt{t\_portptr Model::addInPort(std::string name)}
+	\item \texttt{t\_portptr Model::addOutPort(std::string name)}
 \end{itemize}
 These functions return a pointer to the port that was added, so you can connect ports easier. More about that later on. \\
 
 When \textbf{sending messages} (\textbf{output function}), there are a few rules you should take into account. The message you want to send can only be a string. This string should be given to the port you want to send it through. The port will then create the actual messages (that are send over the models) and return them to you in a vector. All these messages (from possibly different ports) should be joined in 1 vector and be returned in the output function. The following functions will allow you to do so:
 \begin{itemize}
-	\item \textsl{t\_portptr Model::getPort(std::string name) const}
-	\item \textsl{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port:: \\createMessages(std::string message)}
+	\item \texttt{t\_portptr Model::getPort(std::string name) const}
+	\item \texttt{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port:: \\createMessages(std::string message)}
 \end{itemize} 
-Something like this would work: this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message"); \\
+Something like this would work: \texttt{this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message");} \\
 
 It's important that a model name is unique over the whole simulation, and portname should be unique per model.\\
 
@@ -54,20 +58,20 @@ CEREAL_REGISTER_TYPE(MyModel);
 \textbf{NOTE} that things like setting initial states, adding ports or setting other variables should be done before the model itself is used in any way. Incomplete models or undefined behaviour may be the result of said incorrect use.
 
 \section{Coupled models}
-Coupled models only require you to implement them as a sub-class of \\ \textsl{n\_model::CoupledModel}.
+Coupled models only require you to implement them as a sub-class of \\ \texttt{n\_model::CoupledModel}.
 
-\textbf{Adding sub-models} requires following function: \textsl{void CoupledModel:: \\addSubModel(const t\_modelptr\& model)}.
+\textbf{Adding sub-models} requires following function: \texttt{void CoupledModel:: \\addSubModel(const t\_modelptr\& model)}.
 
 \textbf{Creating input and output ports} is done in the same way as the atomic models.
 
-\textbf{Connecting these ports} can be done with the function\\ \textsl{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}.\\ This function connects port \textsl{p1} to port \textsl{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
+\textbf{Connecting these ports} can be done with the function\\ \texttt{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}.\\ This function connects port \texttt{p1} to port \texttt{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
 It is possible to connect ports from a coupled model to one of it's direct atomic (or coupled) model children.
 
 \section{Dynamic Structured DEVS}
 Both atomic models and coupled models can implement the following function:
 \begin{itemize}
-	\item \textsl{bool Model::modelTransition(DSSharedState* shared);}
+	\item \texttt{bool Model::modelTransition(DSSharedState* shared);}
 \end{itemize}
 The \textsl{shared} parameter gives access to a shared state. This state can be used to organize structural changes from the bottom up. It will not be wiped in between transitions.\\
 The return value indicates whether or not the simulator should look at the parent of the current model for performing Dynamic Structured DEVS. This way, not all models have to be consulted for structural changes.\\
-In the \textsl{modelTransition} function, models can add and remove connections, ports and submodels. Currently, only adding and removing connections is supported.
+In the \textsl{modelTransition} function, models can add and remove connections, ports and submodels. Do note that the same rules for creating objects still apply.

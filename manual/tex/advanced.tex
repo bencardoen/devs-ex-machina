@@ -68,9 +68,21 @@ public:
    */
   void tracesConfluent(const t_atomicmodelptr& adevs,
                        std::size_t coreid);
+
+  /**
+   * @brief Traces the  start of the output
+   * Certain tracers can use this to generate a header or similar
+   */
+  void startTrace();
+  
+  /**
+   * @brief Finishes the trace output
+   * Certain tracers can use this to generate a footer or similar
+   */
+  void finishTrace();
 };
 \end{lstlisting}
-Even though it is not explicitly enforced, it is highly recommended to derive your custom implementation from the \lstinline{TracerBase} class and to allow the use of output policies.\\
+Even though it is not explicitly enforced, it is highly recommended to allow the use of output policies.\\
 Note that the tracer must not print its output upon generation. To make sure that the output is still generated in the correct order, the tracer must register a \lstinline{TraceMessage}.
 \subparagraph{Registering a trace message}
 The \lstinline{TraceMessage} class is defined in the \path{src/tracers/tracemessage.h} header file. These messages allow the simulator to schedule output generation and purge unwanted messages upon rollback. They contain the following elements:
@@ -82,4 +94,4 @@ The \lstinline{TraceMessage} class is defined in the \path{src/tracers/tracemess
 		Just like the \emph{execute function}, this function must be of type \lstinline{void()}.
 \end{itemize}
 When the message is created, it can be scheduled with the free function \lstinline{void scheduleMessage(t_tracemessageptr message)}.\\
-Both the \lstinline{TraceMessage} class and the \lstinline{scheduleMessage} function are defined in the \path{src/tracers/tracemessage.h} header. For a more in-depth example, you can always take a look at the implementation of the \lstinline{VerboseTracer} implementation.
+Both the \lstinline{TraceMessage} class and the \lstinline{scheduleMessage} function are defined in the \path{src/tracers/tracemessage.h} header. For a more in-depth example, you can always take a look at the implementation of the \lstinline{VerboseTracer} or the \lstinline{CellTracer}.

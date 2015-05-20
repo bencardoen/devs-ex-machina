@@ -6,6 +6,7 @@
  */
 
 #include "atomicmodel.h"
+#include "cereal/types/base_class.hpp"
 
 namespace n_model {
 
@@ -184,12 +185,12 @@ void AtomicModel::setTimeElapsed(t_timestamp elapsed)
 
 void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
+	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
 void AtomicModel::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
+	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
 }
 
 void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)

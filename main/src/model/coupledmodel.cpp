@@ -8,6 +8,7 @@
 #include "coupledmodel.h"
 #include "controller.h"
 #include "cereal/types/vector.hpp"
+#include "cereal/types/base_class.hpp"
 
 namespace n_model {
 

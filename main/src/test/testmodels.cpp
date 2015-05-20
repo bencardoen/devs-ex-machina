@@ -49,7 +49,7 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	if(message.empty())
 		return;
-	Event event = std::dynamic_pointer_cast<n_network::SpecializedMessage<Event>>(message[0])->getData();
+	const Event& event = n_network::getMsgPayload<Event>(message[0]);
 
 	auto newState = n_tools::createObject<ModelState>();
 	newState->m_counter = m_event1;

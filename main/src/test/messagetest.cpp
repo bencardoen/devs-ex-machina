@@ -141,3 +141,44 @@ TEST(Message, Smoketest){
 		EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
 	}
 }
+
+struct MyStruct
+{
+	int i;
+	char c;
+	double d;
+};
+std::ostream& operator<<(std::ostream& o, const MyStruct& m){
+	o << m.i << ' ' << m.c << ' ' << m.d;
+	return o;
+}
+
+TEST(Message, ContentTest){
+	t_msgptr msgStr = n_tools::createObject<Message>("model", 1, "dest", "source", "payload");
+	EXPECT_EQ(msgStr->getDestinationPort(), "dest");
+	EXPECT_EQ(msgStr->getSourcePort(), "source");
+	EXPECT_EQ(msgStr->getPayload(), "payload");
+	EXPECT_EQ(msgStr->getDestinationModel(), "model");
+	std::string str = n_network::getMsgPayload<std::string>(msgStr);
+	EXPECT_EQ(str, "payload");
+
+	t_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>("model", 1, "dest", "source", 3.14);
+	EXPECT_EQ(msgDouble->getDestinationPort(), "dest");
+	EXPECT_EQ(msgDouble->getSourcePort(), "source");
+	EXPECT_EQ(msgDouble->getDestinationModel(), "model");
+	const double& doub = n_network::getMsgPayload<double>(msgDouble);
+	EXPECT_EQ(doub, 3.14);
+
+	MyStruct data = {-2, 't', 42.24};
+	MyStruct control = data;
+	t_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>("model", 1, "dest", "source", data);
+	EXPECT_EQ(msgMyStruct->getDestinationPort(), "dest");
+	EXPECT_EQ(msgMyStruct->getSourcePort(), "source");
+	EXPECT_EQ(msgMyStruct->getDestinationModel(), "model");
+	const MyStruct& res = n_network::getMsgPayload<MyStruct>(msgMyStruct);
+	data.i++;
+	EXPECT_EQ(res.i, control.i);
+	EXPECT_EQ(res.c, control.c);
+	EXPECT_EQ(res.d, control.d);
+	EXPECT_NE(data.i, control.i);
+}

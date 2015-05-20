@@ -66,7 +66,7 @@ std::vector<n_network::t_msgptr> FireGenerator::output() const
 	double i = 1.0;
 	for(const std::map<std::string, n_model::t_portptr>::value_type& port : m_oPorts){
 		double val = T_AMBIENT + T_GENERATE/i;
-		port.second->createMessages<double>(val, container);
+		port.second->createMessages(val, container);
 		i *= 2.0;
 	}
 	for(n_network::t_msgptr& ptr: container){

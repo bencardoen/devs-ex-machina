@@ -80,7 +80,25 @@ In Python everything is a reference, and since the DEVS formalisms require that 
 The only downside is the synchronized access to the reference count in the shared pointer. There is also a need for more boilerplate code to use shared pointers in containers (providing pass-through hash function, comparison etc). 
 
 \section{Messaging Size}
-A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but this can be overridden by way of templated code. %TODO Stijn.
+A message is constructed once, and after that never copied. Messages are sent and received by reference to smart pointer, incurring a size cost of (on 64-bit platforms) 128bit. The payload (and its size) is irrelevant to the simulation up to the point where the message is actually received. A default implementation allows the payload stored as a std::string, but a specialized message class can be used for sending objects of a different type. When constructing a message by using the functionality provided by the Port class, this happens automatically. When receiving messages, the free function template is provided to extract the object from the message.\\
+For example:
+\begin{lstlisting}[language=C++,basicstyle=\small\color{black}]
+//initialization of necessary objects is left out.
+double value;
+n_model::t_portptr port;
+
+//create messages that contain a double
+auto msgVector = port->createMessages(value);
+
+//say we receive this message somewhere else
+n_network::t_msgptr received =  msgVector[0];
+
+//retrieve the data when receiving the message
+const double& data = n_network::getMsgPayload<double>(received);
+
+//Assuming that no Z function was applied to the message.
+assert(value == data);
+\end{lstlisting}
 
 \chapter{Design}
 \section{Overview}
@@ -167,7 +185,14 @@ The single core implementations follow exactly the runtime behaviour shown by th
 \subsubsection{DirectConnect}
 The directConnect algorithm has gone relatively unchanged from its implementation in PyPDEVS, though the role of the RootDEVS class has been simplified somewhat. Its main function has been reduced to executing directConnect and then storing the resulting list of connected atomic models.
 \subsubsection{Dynamic Structured}
-Only the removal/addition of connections is currently supported. Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
+Dynamic structured DEVS is completely supported in single core simulation. This includes allowing the following structural changes during the simulation:
+\begin{itemize}
+	\item adding/removing connections
+	\item adding/removing ports
+	\item adding/removing submodels.
+\end{itemize}
+These changes are only allowed during a special phase of the simulation. The simulator provides a map object of type \lstinline[language=C++,basicstyle=\small\color{black}]{std::multimap<std::string, std::string>} that can be used for communication and cooperation between the models. During one simulation step, this communication always happens from bottom to top. Only models that had an internal transition are considered for performing dynamic structured.\\
+Unlike the PyPDEVS, we will try to keep a removed model intact when it is removed from the simulation.
 \subsection{Parallel}
 \subsubsection{Optimistic}
 Optimistic time synchronization requires an implementation of timewarp, and more extensive locking than would be required for conservative. The GVT algorithm (Mattern \cite{Mattern}) runs on a separate thread from the simulation kernel threads, so care must be taken that they don't deadlock, but don't race either.
@@ -238,13 +263,15 @@ This implementation only covers the most basic needs:
 	\item levels can be individually switched on/off at compile time
 	\item No logging code is executed whatsoever if the logger is disabled
 	\item log messages contain filename and line number of the log command
+	\item basic crash safety. The logger will catch the following signals and flush all remaining output before exiting the program:
+		\begin{itemize}
+			\item \emph{SIGSEGV} Segmentation fault, sent by the operating system.
+			\item \emph{SIGTERM} Termination request, sent by the program.
+			\item \emph{SIGABRT} Abort --- abnormal termination, e.g. when an assertion fails.
+			\item \emph{SIGINT} Interrupt, used for catching crtl+C, which is useful for debugging deadlocks.
+		\end{itemize}
 \end{itemize}
-It therefore lacks certain key features such as
-\begin{itemize}
-	\item crash safe
-	\item custom assert that will log an error before shutting down
-\end{itemize}
-Chances are that we will wait with implementing these features until we actually need them.
+
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
@@ -281,7 +308,7 @@ We let each logger print several hundred thousand messages to a file. These are 
 \subsubsection{Our own logger}
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
-While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
+While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
 
 \begin{thebibliography}{1}
 
