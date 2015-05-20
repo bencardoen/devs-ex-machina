@@ -13,6 +13,9 @@
 #include <assert.h>
 #include <map>
 #include "globallog.h"
+#include "archive.h"
+#include "cereal/types/polymorphic.hpp"
+#include "cereal/access.hpp"
 
 namespace n_model {
 class AtomicModel: public Model
@@ -245,5 +248,7 @@ public:
 
 typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
 }	// end namespace
+
+CEREAL_REGISTER_TYPE(n_model::AtomicModel)
 
 #endif /* ATOMICMODEL_H_ */
