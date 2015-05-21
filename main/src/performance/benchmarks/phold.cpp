@@ -29,7 +29,7 @@ PHOLDModelState::~PHOLDModelState()
 HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
         std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes)
 	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_totalAtomics(totalAtomics),
-	  m_modelNumber(modelNumber), m_iter(iter), m_local(local), m_remote(remote)
+	  m_modelNumber(modelNumber), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
@@ -133,8 +133,10 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 		srand(i.m_modelNumber);
 		size_t dest = getNextDestination(i.m_modelNumber);
 		size_t r = rand() % 60000;
-		LOG_INFO("[PHOLD] - ",getName()," sends a message to outport ", dest);
-		return m_outs[dest]->createMessages(r);
+		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
+		auto messages = m_outs[dest]->createMessages(r);
+		LOG_INFO("[PHOLD] - ",getName()," Ports created ", messages.size(), " messages.");
+		return messages;
 	}
 	return std::vector<n_network::t_msgptr>();
 }
