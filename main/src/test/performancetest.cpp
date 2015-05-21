@@ -41,7 +41,7 @@ TEST(Performance, DEVStone)
 	}
 }
 
-TEST(Performance, DISABLED_PHOLD)
+TEST(Performance, PHOLD)
 {
 	RecordProperty("description", "Runs the PHOLD benchmark");
 

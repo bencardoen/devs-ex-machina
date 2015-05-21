@@ -4,6 +4,7 @@
  *  Created on: Mar 17, 2015
  *      Author: Tim Stijn
  */
+#include "globallog.h"
 
 #include "atomicmodel.h"
 #include "cereal/types/base_class.hpp"
@@ -62,12 +63,14 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 std::vector<n_network::t_msgptr> AtomicModel::doOutput()
 {
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
-	for (auto& port : m_oPorts)
+	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
+	for (auto& port : m_oPorts){
 		port.second->clearSentMessages();
-
+	}
+	LOG_DEBUG("Atomic Model ::  ", this->getName(), " calling output() function. ");
 	// Do the actual output function
 	auto messages = this->output();
-
+	LOG_DEBUG("Atomic Model ::  ", this->getName(), " output resulted in ", messages.size(), " messages ");
 	// We return the output back to the core
 	return messages;
 }

@@ -322,6 +322,10 @@ void Controller::simDEVS()
 				}
 			}
 		}
+		if(core->getZombieRounds() > 1){
+			LOG_ERROR("Core has reached zombie state in classic devs.");
+			break;
+		}
 	}
 }
 
@@ -402,6 +406,10 @@ void Controller::simDSDEVS()
 		}
 		if (i % m_traceInterval == 0) {
 			trace(); // TODO remove boolean when serialization implemented & change string
+		}
+		if(core->getZombieRounds() > 1){
+			LOG_ERROR("Core has reached zombie state in ds devs.");
+			break;
 		}
 	}
 }
