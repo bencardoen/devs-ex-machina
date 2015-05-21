@@ -36,8 +36,6 @@ class HeavyPHOLDProcessor: public n_model::AtomicModel
 {
 private:
 	size_t m_percentageRemotes;
-	size_t m_totalAtomics;
-	size_t m_modelNumber;
 	size_t m_iter;
 	std::vector<size_t> m_local;
 	std::vector<size_t> m_remote;
