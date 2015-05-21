@@ -10,7 +10,7 @@
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), saveInterval(5)
+	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5)
 {
 }
 
@@ -39,8 +39,18 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		break;
 	case Controller::PDEVS:
 		t_networkptr network = createObject<Network>(coreAmount);
-		for (size_t i = 0; i < coreAmount; ++i) {
-			coreMap[i] = createObject<Multicore>(network, i, locTab, coreAmount);
+		switch (pdevsType) {
+		case OPTIMISTIC:
+			for (size_t i = 0; i < coreAmount; ++i) {
+				coreMap[i] = createObject<Multicore>(network, i, locTab, coreAmount);
+			}
+			break;
+		case CONSERVATIVE:
+			t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(coreAmount, t_timestamp(0,0));
+			for (size_t i = 0; i < coreAmount; ++i) {
+				coreMap[i] = createObject<Conservativecore>(network, i, locTab, coreAmount, eotvector);
+			}
+			break;
 		}
 		break;
 	}
