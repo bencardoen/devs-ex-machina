@@ -21,7 +21,7 @@ TimeEvent::TimeEvent(t_timestamp t, std::string pf, bool r)
 
 bool TimeEvent::operator<(const TimeEvent& rhs) const
 {
-	return m_time > rhs.m_time; // Sort lowest time first
+	return m_time < rhs.m_time; // Sort highest time at the front
 }
 
 void TimeEvent::advance()
@@ -33,10 +33,6 @@ void TimeEvent::advance()
 void TimeEventQueue::push(TimeEvent te)
 {
 	m_queue.push_back(te);
-}
-
-void TimeEventQueue::prepare()
-{
 	std::sort(m_queue.begin(), m_queue.end());
 }
 
@@ -55,16 +51,15 @@ std::vector<TimeEvent> TimeEventQueue::popUntil(const t_timestamp& now)
 {
 	std::vector<TimeEvent> worklist;
 	while (!m_queue.empty()) {
-		TimeEvent& ev = m_queue.back();
-		if (ev.m_time > now)
+		TimeEvent ev = m_queue.back(); // Take the earliest element
+		if (ev.m_time > now)		// If this is not pending, it's no use looking any further
 			break;
 		worklist.push_back(ev);
 		m_queue.pop_back();
 
 		if (ev.m_repeating) {
 			ev.advance();
-			m_queue.push_back(ev);
-			prepare();
+			push(ev);
 		}
 	}
 	return worklist;
@@ -72,7 +67,7 @@ std::vector<TimeEvent> TimeEventQueue::popUntil(const t_timestamp& now)
 
 bool TimeEventQueue::todo(const t_timestamp& now) const
 {
-	return (!m_queue.empty()) ? (m_queue[0].m_time < now) : false;
+	return (!m_queue.empty() && m_queue.back().m_time <= now);
 }
 
 } /* namespace n_control */
