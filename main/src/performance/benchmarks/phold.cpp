@@ -28,8 +28,7 @@ PHOLDModelState::~PHOLDModelState()
 
 HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
         std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes)
-	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_totalAtomics(totalAtomics),
-	  m_modelNumber(modelNumber), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
+	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
@@ -99,7 +98,7 @@ void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> 
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		std::this_thread::sleep_for(std::chrono::milliseconds(m_iter)); // Wait a bit.
+		for (size_t i = 0; i < m_iter; ++i); 	// We just do stuff for a while
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 	setState(newState);
@@ -182,7 +181,7 @@ PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, float percentageR
 		for (size_t j = 0; j < processors.size(); ++j) {
 			if (i == j)
 				continue;
-			connectPorts(processors[i]->getPort("outport_" + n_tools::toString(i)),
+			connectPorts(processors[i]->getPort("outport_" + n_tools::toString(j)),
 			        processors[j]->getPort("inport"));
 		}
 	}
