@@ -302,7 +302,7 @@ void Controller::simDEVS()
 				trace();
 				if(!m_events.todo(core->getTime())) continue;	// If no events to handle, just go on
 				std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
-				uint pause;
+				uint pause = 0;
 				for (TimeEvent& event : worklist) {
 					switch (event.m_type) {
 					case TimeEvent::Type::PAUSE:
