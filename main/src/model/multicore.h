@@ -50,6 +50,17 @@ private:
 	std::mutex			m_vlock;
 
 	/**
+	 * Lock required for condition variable used in GVT calculation.
+	 */
+	std::mutex			m_cvarlock;
+
+	/**
+	 * Condition variable used in GVT.
+	 * @see waitUntilOK
+	 */
+	std::condition_variable		m_wake_on_msg;
+
+	/**
 	 * Simulation lock
 	 */
 	std::mutex			m_locallock;

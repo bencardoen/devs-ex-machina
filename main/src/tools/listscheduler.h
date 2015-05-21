@@ -50,7 +50,7 @@ public:
 			throw std::logic_error("Error, scheduler already contains item");
 		}
 		auto handle = m_storage.insert(m_storage.end(), element);
-		auto result = m_hashtable.insert(std::make_pair(element, handle));
+		m_hashtable.insert(std::make_pair(element, handle));
 		m_storage.sort();
 		testInvariant();
 	}

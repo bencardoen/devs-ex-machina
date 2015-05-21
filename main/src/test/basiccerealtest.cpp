@@ -9,7 +9,7 @@
 // would also apply to the registration
 #include <basiccerealtestclasses.h>
 #include <gtest/gtest.h>
-#include "cereal/archives/xml.hpp"
+#include "cereal/archives/portable_binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 
 #include <iostream>
@@ -18,17 +18,19 @@
 TEST(BasicCereal, Polymorphism)
 {
   {
-    std::ofstream os( "polymorphism_test.xml" );
-    cereal::XMLOutputArchive oarchive( os );
+    std::ofstream os( "polymorphism_test.bin" );
+    //cereal::XMLOutputArchive oarchive( os );
+    //cereal::BinaryOutputArchive oarchive( os );
+    cereal::PortableBinaryOutputArchive oarchive( os );
 
     // Create instances of the derived classes, but only keep base class pointers
     std::shared_ptr<BaseClass> ptr1 = std::make_shared<DerivedClassOne>();
     std::shared_ptr<BaseClass> ptr2 = std::make_shared<EmbarrassingDerivedClass>();
-    //oarchive( ptr1, ptr2 );
+    oarchive( ptr1, ptr2 );
   }
 
   /*{
-    std::ifstream is( "polymorphism_test.xml" );
+    std::ifstream is( "polymorphism_test.bin" );
     cereal::XMLInputArchive iarchive( is );
 
     // De-serialize the data as base class pointers, and watch as they are

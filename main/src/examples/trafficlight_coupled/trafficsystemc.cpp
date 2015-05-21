@@ -21,5 +21,12 @@ TrafficSystem::TrafficSystem(std::string name) : CoupledModel(name) {
 
 }
 
+void TrafficSystem::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficSystem>& construct)
+{
+	std::string name;
+	archive(name);
+	construct(name);
+}
+
 }
 

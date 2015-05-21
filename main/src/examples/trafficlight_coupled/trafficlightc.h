@@ -29,6 +29,8 @@ public:
 	std::string toJSON() override;
 	std::string toCell() override;
 	~TrafficLightMode() {}
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLightMode>& construct);
 };
 
 class TrafficLight: public AtomicModel
@@ -50,8 +52,13 @@ public:
 	 */
 	using AtomicModel::setState;
 	t_stateptr setState(std::string);
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLight>& construct);
 };
 
 }
+
+CEREAL_REGISTER_TYPE(n_examples_coupled::TrafficLightMode)
+CEREAL_REGISTER_TYPE(n_examples_coupled::TrafficLight)
 
 #endif /* SRC_EXAMPLES_TRAFFICLIGHTC_H_ */

@@ -29,6 +29,13 @@ std::string TrafficLightMode::toCell()
 	return "";
 }
 
+void TrafficLightMode::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLightMode>& construct)
+{
+	std::string state;
+	archive(state);
+	construct(state);
+}
+
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
 	: AtomicModel(name, priority)
 {
@@ -120,6 +127,14 @@ t_stateptr TrafficLight::setState(std::string s)
 {
 	this->Model::setState(n_tools::createObject<TrafficLightMode>(s));
 	return this->getState();
+}
+
+void TrafficLight::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLight>& construct)
+{
+	std::string name;
+	std::size_t priority;
+	archive(name, priority);
+	construct(name, priority);
 }
 
 }
