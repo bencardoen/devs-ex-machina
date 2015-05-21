@@ -344,7 +344,7 @@ TEST(Save, ClassicSave)
 
 	ControllerConfig conf;
 	conf.name = "SimpleSim";
-	conf.saveInterval = 30;
+	conf.saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "controller/savetestc.txt");
 	{
@@ -367,7 +367,7 @@ TEST(Save, ClassicLoad)
 
 	ControllerConfig conf;
 	conf.name = "LoadedSim";
-	conf.saveInterval = 30;
+	conf.saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "controller/loadtestc.txt");
 	{
