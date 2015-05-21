@@ -16,6 +16,7 @@
 #include "multicore.h"
 #include "controller.h"
 #include "dynamiccore.h"
+#include "conservativecore.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>
@@ -52,13 +53,24 @@ struct ControllerConfig
 	/**
 	 * The amount of cores the simulation will run on
 	 * By default: @c 1
-	 * @attention : This parameter will be disregarded completely if you do not set the simlation type to PDEVS
+	 * @attention : This parameter is specific only to PDEVS, in other cases it will be disregarded
 	 */
 	size_t coreAmount;
 
 	/**
+	 * Behavior of the PDEVS simulation
+	 * By default: @c OPTIMISTIC
+	 * @attention : This parameter is specific only to PDEVS, in other cases it will be disregarded
+	 */
+	enum PDEVSBehavior {
+		OPTIMISTIC,
+		CONSERVATIVE
+	} pdevsType;
+
+	/**
 	 * How many times the simulation will go over the list of cores before tracing and saving everything
 	 * By default: @c 5
+	 * @attention : This parameter is specific only to Classic DEVS, in other cases it will be disregarded
 	 */
 	size_t saveInterval;
 
