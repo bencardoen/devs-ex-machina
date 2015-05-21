@@ -335,7 +335,7 @@ void Controller::simPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
-	constexpr std::size_t deadlockVal = 1000000;	// If a thread fails to stop, provide a cutoff value.
+	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -586,8 +586,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
 			{					// lowers the probability of triggering deadlock.
 				std::lock_guard<std::mutex> signallock(vectorlock);
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 				set_flag(threadsignal[myid], n_threadflags::IDLE);
+				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 			}
 			if(core->terminatedByFunctor()){
 				ctrl.distributeTerminationTime(core->getTime());

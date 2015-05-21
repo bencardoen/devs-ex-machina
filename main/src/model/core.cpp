@@ -554,7 +554,7 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 		if (!isInfinity(modellast)) {
 			this->scheduleModel(modelentry.first, modellast);
 		} else {
-			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert",
+			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert :: ",
 			        modelentry.second->getName());
 		}
 	}
@@ -567,21 +567,23 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
-		// Don't store antimessages, we're partially ordered, there is no way a sent messages can be hopped over in a FIFO by its antimessage.
-		this->queuePendingMessage(msg);
+		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
 	}
-	// Either antimessage < time, or plain message < time, trigger revert AFTER saving msg.
-	if (msg->getTimeStamp() < this->getTime()) {
+	/** Let y<z:
+	 *  If we're at time [x,z] and we receive a message [x,y], this message need not
+	 *  trigger a revert since we will handle all messages from [x,0] up to [x,oo] in this turn.
+	 */
+	if (msg->getTimeStamp().getTime() < this->getTime().getTime()) {
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time < than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
-		this->revert(msg->getTimeStamp());
+		this->revert(msg->getTimeStamp().getTime());
 	}
 }
 
 void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)
 {
 	/**
-	 * Check if we have pending messages with time <= (now, oo);
+	 * Check if we have pending messages with time <= (time=now, caus=oo);
 	 * If so, add them to the mailbag
 	 */
 	t_timestamp nowtime = makeLatest(this->getTime());
@@ -610,20 +612,11 @@ t_timestamp n_model::Core::getFirstMessageTime()
 {
 	t_timestamp mintime = t_timestamp::infinity();
 	this->lockMessages();
-	while (not this->m_received_messages->empty()) {
-		MessageEntry first = this->m_received_messages->top();
-		std::string modeldest = first.getMessage()->getDestinationModel();
-		if (this->containsModel(modeldest)) {
-			mintime = first.getMessage()->getTimeStamp();
-			this->unlockMessages();					// second exit path, don't forget to unlock.
-			return mintime;
-		} else {							// Handle DYN structured stale msgs.
-			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing message from msgqueue with destination ",
-			        modeldest);
-			this->m_received_messages->pop();
-		}
+	if(not this->m_received_messages->empty()){
+		mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
 	}
 	this->unlockMessages();
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
 	return mintime;
 }
 
@@ -633,13 +626,13 @@ void n_model::Core::setGVT(const t_timestamp& newgvt)
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}
-	if (newgvt <= this->getGVT()) {
+	if (newgvt.getTime() <= this->getGVT().getTime()) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
 		        this->getGVT(), " ignoring ");
 		return;
 	}
-	LOG_INFO("\tCORE :: ", this->getCoreID(), " Setting gvt from ::", this->getGVT(), " to ", newgvt);
-	this->m_gvt = newgvt;
+	LOG_INFO("\tCORE :: ", this->getCoreID(), " Setting gvt from ::", this->getGVT(), " to ", newgvt.getTime());
+	this->m_gvt = t_timestamp(newgvt.getTime(), 0);
 }
 
 void n_model::Core::printPendingMessages()

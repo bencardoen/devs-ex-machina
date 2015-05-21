@@ -103,7 +103,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	if (msg->getColor() == MessageColor::WHITE) {
 		std::lock_guard<std::mutex> lock(this->m_vlock);
 		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
-		//this->m_wake_on_msg.notify_all();
+		this->m_wake_on_msg.notify_all();
 	}
 }
 
@@ -136,23 +136,26 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 	// The V vector of this core can change because ordinary message are
 	// still being received by another thread in this core, this is why
 	// we lock the V vector
-	int msgcount = msg->getCountVector()[this->getCoreID()];
-	std::mutex cvlock;
-	std::unique_lock<std::mutex> ucvlock(cvlock);
+	const int msgcount = msg->getCountVector()[this->getCoreID()];
 	while (true) {
-		std::lock_guard<std::mutex> lock(m_vlock);
+
 		if(rungvt == false){
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
 			return;
 		}
-		int v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
+		int v_value = 0;
+		{
+			std::lock_guard<std::mutex> lock(m_vlock);
+			v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
+		}
 		if (v_value + msgcount <= 0){
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
 			break; // Lock is released, all white messages are received!
 		}
-		//m_vlock.unlock();		// Allow others to change v-vector.
-		//this->m_wake_on_msg.wait(ucvlock);
-		//assert(false);
+		{
+			std::unique_lock<std::mutex> cvunique(m_cvarlock);
+			this->m_wake_on_msg.wait(cvunique);
+		}
 	}
 }
 
@@ -255,8 +258,9 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 	}
 }
 
-void Multicore::setGVT(const t_timestamp& newgvt)
+void Multicore::setGVT(const t_timestamp& candidate)
 {
+	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 	Core::setGVT(newgvt);
 	if (newgvt < this->getGVT() || isInfinity(newgvt)) {
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
@@ -321,7 +325,7 @@ void n_model::Multicore::unlockMessages()
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
 	/// Example : revert , current = 10, totime = 7, gvt = 3
-	assert(totime >= this->getGVT());
+	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {
 		LOG_DEBUG("MCORE:: ", this->getCoreID(), " Core going from idle to active ");
