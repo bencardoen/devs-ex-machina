@@ -302,7 +302,7 @@ void Controller::simDEVS()
 				trace();
 				if(!m_events.todo(core->getTime())) continue;	// If no events to handle, just go on
 				std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
-				uint pause;
+				uint pause = 0;
 				for (TimeEvent& event : worklist) {
 					switch (event.m_type) {
 					case TimeEvent::Type::PAUSE:
@@ -321,6 +321,10 @@ void Controller::simDEVS()
 					sleep(pause);
 				}
 			}
+		}
+		if(core->getZombieRounds() > 1){
+			LOG_ERROR("Core has reached zombie state in classic devs.");
+			break;
 		}
 	}
 }
@@ -402,6 +406,10 @@ void Controller::simDSDEVS()
 		}
 		if (i % m_traceInterval == 0) {
 			trace(); // TODO remove boolean when serialization implemented & change string
+		}
+		if(core->getZombieRounds() > 1){
+			LOG_ERROR("Core has reached zombie state in ds devs.");
+			break;
 		}
 	}
 }

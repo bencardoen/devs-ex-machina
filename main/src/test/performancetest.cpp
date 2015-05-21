@@ -41,7 +41,7 @@ TEST(Performance, DEVStone)
 	}
 }
 
-TEST(Performance, DISABLED_PHOLD)
+TEST(Performance, PHOLD)
 {
 	RecordProperty("description", "Runs the PHOLD benchmark");
 
@@ -58,7 +58,7 @@ TEST(Performance, DISABLED_PHOLD)
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = createObject<PHOLD>(1, 10, 0, 0.1);
+		t_coupledmodelptr d = createObject<PHOLD>(1, 10, 128, 0.1);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
