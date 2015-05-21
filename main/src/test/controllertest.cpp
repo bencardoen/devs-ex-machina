@@ -288,7 +288,7 @@ TEST(Controller, CONDEVS)
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/condevstest.txt", TESTFOLDER "controller/condevstest.corr"), 0);
 }
 
-TEST(PauseSave, Pause)
+TEST(Pause, Pause)
 {
 	RecordProperty("description", "Tests pause functionality of simulator");
 
@@ -313,7 +313,7 @@ TEST(PauseSave, Pause)
 	}
 }
 
-TEST(PauseSave, RepeatPause)
+TEST(Pause, RepeatPause)
 {
 	RecordProperty("description", "Tests repeating pause");
 
@@ -334,6 +334,94 @@ TEST(PauseSave, RepeatPause)
 		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 		ctrl->addModel(m1);
 
+		ctrl->simulate();
+	}
+}
+
+TEST(Save, ClassicSave)
+{
+	RecordProperty("description", "Tests saving a simple simulation");
+
+	ControllerConfig conf;
+	conf.name = "SimpleSim";
+	conf.saveInterval = 30;
+
+	std::ofstream filestream(TESTFOLDER "controller/savetestc.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(720, 0);
+		ctrl->setTerminationTime(endTime);
+		ctrl->addSaveEvent(t_timestamp(100, 0), TESTFOLDER "controller/savetestc");
+
+		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl->addModel(m1);
+
+		ctrl->simulate();
+	}
+}
+
+TEST(Save, ClassicLoad)
+{
+	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
+
+	ControllerConfig conf;
+	conf.name = "LoadedSim";
+	conf.saveInterval = 30;
+
+	std::ofstream filestream(TESTFOLDER "controller/loadtestc.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(720, 0);
+		ctrl->setTerminationTime(endTime);
+		ctrl->load(TESTFOLDER "controller/savetestc_100.devs");
+		ctrl->simulate();
+	}
+}
+
+TEST(Save, ParallelSave)
+{
+	RecordProperty("description", "Tests saving a simple simulation");
+
+	ControllerConfig conf;
+	conf.name = "SimpleSim";
+	conf.saveInterval = 1;
+	conf.simType = Controller::PDEVS;
+	conf.coreAmount = 2;
+
+	std::ofstream filestream(TESTFOLDER "controller/savetestp.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(720, 0);
+		ctrl->setTerminationTime(endTime);
+		ctrl->addSaveEvent(t_timestamp(100, 0), TESTFOLDER "controller/savetestp");
+
+		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+		ctrl->addModel(m1);
+
+		ctrl->simulate();
+	}
+}
+
+TEST(Save, DISABLED_ParallelLoad)
+{
+	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
+
+	ControllerConfig conf;
+	conf.name = "LoadedSim";
+	conf.saveInterval = 30;
+	conf.simType = Controller::PDEVS;
+	conf.coreAmount = 2;
+
+	std::ofstream filestream(TESTFOLDER "controller/loadtestp.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(720, 0);
+		ctrl->setTerminationTime(endTime);
+		ctrl->load(TESTFOLDER "controller/savetestp_100.devs");
 		ctrl->simulate();
 	}
 }

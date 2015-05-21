@@ -52,6 +52,7 @@ private:
 	SimType m_simType;
 	bool m_hasMainModel;
 	bool m_isSimulating;
+	bool m_isLoadedSim;	/// Whether this is a simulation reinitialized from a binary save
 
 	std::string m_name;
 
@@ -113,7 +114,7 @@ public:
 	 * @brief Serialize all models
 	 * @precondition All cores need to be stopped beforehand
 	 */
-	void save(const std::string& fname);
+	void save(const std::string& fname, const t_timestamp& time);
 
 	/**
 	 * @brief Load all models

@@ -20,9 +20,9 @@ namespace n_control {
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
         std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab, n_tracers::t_tracersetptr& tracers,
         size_t saveInterval)
-	: m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(false), m_checkTermCond(
-	        false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(alloc), m_tracers(
-	        tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
+	: m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
+	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 }
@@ -31,7 +31,7 @@ Controller::~Controller()
 {
 }
 
-void Controller::save(const std::string& fname)
+void Controller::save(const std::string& fname, const t_timestamp& time)
 {
 	if (fname == "")
 		return;
@@ -39,9 +39,9 @@ void Controller::save(const std::string& fname)
 	cereal::BinaryOutputArchive oarchive(fs);
 
 	if(m_coupledOrigin) {
-		oarchive(m_coupledOrigin, m_lastGVT);
+		oarchive(time, m_coupledOrigin);
 	} else {
-		oarchive(m_atomicOrigin, m_lastGVT);
+		oarchive(time, m_atomicOrigin);
 	}
 }
 
@@ -51,22 +51,15 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 	std::fstream fs(fname, std::fstream::in | std::fstream::binary);
 	cereal::BinaryInputArchive iarchive(fs);
 
-	t_timestamp gvt;
 	if(isSingleAtomic) {
-		iarchive(m_atomicOrigin, m_lastGVT);
+		iarchive(m_lastGVT, m_atomicOrigin);
 		addModel(m_atomicOrigin); // Just run standard adding procedure
 	}
 	else {
-		iarchive(m_coupledOrigin, m_lastGVT);
+		iarchive(m_lastGVT, m_coupledOrigin);
 		addModel(m_coupledOrigin); // Just run standard adding procedure
 	}
-	for(auto& core : m_cores) {
-		core.second->initExistingSimulation(m_lastGVT);
-	}
-
-    //TODO: create cores and iterate over models to allocate them all to the right core
-    //TODO: set loaded GVT to the new cores
-    // @use void initExistingSimulation(t_timestamp loaddate); in Core.
+	m_isLoadedSim = true;
 }
 
 void Controller::addModel(t_atomicmodelptr& atomic)
@@ -244,7 +237,12 @@ void Controller::simDEVS()
 	// configure core
 	auto core = m_cores.begin()->second; // there is only one core in Classic DEVS
 	core->setTracers(m_tracers);
-	core->init();
+
+	if (!m_isLoadedSim) {	// The simulation starts from scratch
+		core->init();
+	} else {		// The simulation was loaded from a binary
+		core->initExistingSimulation(m_lastGVT);
+	}
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -287,7 +285,7 @@ void Controller::simPDEVS()
 	// configure all cores
 	for (auto core : m_cores) {
 		core.second->setTracers(m_tracers);
-		core.second->init();
+		(!m_isLoadedSim) ? core.second->init() : core.second->initExistingSimulation(m_lastGVT);
 
 		if (m_checkTermTime)
 			core.second->setTerminationTime(m_terminationTime);
@@ -327,7 +325,12 @@ void Controller::simDSDEVS()
 {
 	auto core = m_cores.begin()->second; // there is only one core in DS DEVS
 	core->setTracers(m_tracers);
-	core->init();
+
+	if (!m_isLoadedSim) {	// The simulation starts from scratch
+		core->init();
+	} else {		// The simulation was loaded from a binary
+		core->initExistingSimulation(m_lastGVT);
+	}
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -414,7 +417,7 @@ void Controller::handleTimeEventsSingle(const t_timestamp& now)
 		case TimeEvent::Type::SAVE:
 			LOG_INFO("CONTROLLER: Saving to file ", event.m_prefix, "_",
 			        n_tools::toString(event.m_time.getTime()), ".devs");
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs");
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs", now);
 			break;
 		}
 	}
@@ -441,7 +444,7 @@ bool Controller::handleTimeEventsParallel(std::condition_variable& cv, std::mute
 			cvlock.lock();		//Stop cores
 			cv.notify_all();
 			LOG_INFO("CONTROLLER: Saving to file ",event.m_prefix,"_",n_tools::toString(event.m_time.getTime()),".devs");
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs");
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs", m_lastGVT);
 			cvlock.unlock();	//Start cores again
 			cv.notify_all();
 			break;
