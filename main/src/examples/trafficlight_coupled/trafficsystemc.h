@@ -26,8 +26,12 @@ public:
 	TrafficSystem() = delete;
 	TrafficSystem(std::string name);
 	~TrafficSystem() {}
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficSystem>& construct);
 };
 
 }
+
+CEREAL_REGISTER_TYPE(n_examples_coupled::TrafficSystem)
 
 #endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_TRAFFICSYSTEMC_H_ */

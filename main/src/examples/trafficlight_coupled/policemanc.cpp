@@ -30,6 +30,13 @@ std::string PolicemanMode::toCell()
 	return "";
 }
 
+void PolicemanMode::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<PolicemanMode>& construct)
+{
+	std::string state;
+	archive(state);
+	construct(state);
+}
+
 Policeman::Policeman(std::string name, std::size_t priority)
 	: AtomicModel(name, priority)
 {
@@ -97,6 +104,13 @@ t_stateptr Policeman::setState(std::string s)
 {
 	this->Model::setState(n_tools::createObject<PolicemanMode>(s));
 	return this->getState();
+}
+
+void Policeman::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Policeman>& construct)
+{
+	std::string name;
+	archive(name);
+	construct(name);
 }
 
 }

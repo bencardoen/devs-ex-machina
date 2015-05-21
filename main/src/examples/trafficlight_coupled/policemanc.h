@@ -31,6 +31,8 @@ public:
 	~PolicemanMode()
 	{
 	}
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<PolicemanMode>& construct);
 };
 
 class Policeman: public AtomicModel
@@ -54,8 +56,13 @@ public:
 	 */
 	using AtomicModel::setState;
 	t_stateptr setState(std::string);
+
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Policeman>& construct);
 };
 
 }
+
+CEREAL_REGISTER_TYPE(n_examples_coupled::Policeman)
+CEREAL_REGISTER_TYPE(n_examples_coupled::PolicemanMode)
 
 #endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_ */

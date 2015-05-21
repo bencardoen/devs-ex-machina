@@ -16,12 +16,14 @@
 #include "core.h"
 #include "modelentry.h"
 #include "messageentry.h"
+#include "trafficsystemc.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 #include <sstream>
 
 using namespace n_model;
 using namespace n_network;
+using namespace n_examples_coupled;
 
 class MyRecord
 {
@@ -211,32 +213,32 @@ TEST(Cereal, ModelPolyAtomicModel)
 {
 	std::stringstream ss;
 
-	t_modelptr mpm1 = std::make_shared<AtomicModel>("test");
-	t_modelptr mpm2 = std::make_shared<AtomicModel>("err");
+	t_modelptr mpa1 = std::make_shared<AtomicModel>("test");
+	t_modelptr mpa2 = std::make_shared<AtomicModel>("err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);
 
-	oarchive(mpm1);
-	iarchive(mpm2);
+	oarchive(mpa1);
+	iarchive(mpa2);
 
-	EXPECT_EQ(mpm1->getName(), mpm2->getName());
+	EXPECT_EQ(mpa1->getName(), mpa2->getName());
 }
 
 TEST(Cereal, ModelPolyCoupledModel)
 {
 	std::stringstream ss;
 
-	t_modelptr mpm1 = std::make_shared<CoupledModel>("test");
-	t_modelptr mpm2 = std::make_shared<CoupledModel>("err");
+	t_modelptr mpc1 = std::make_shared<CoupledModel>("test");
+	t_modelptr mpc2 = std::make_shared<CoupledModel>("err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);
 
-	oarchive(mpm1);
-	iarchive(mpm2);
+	oarchive(mpc1);
+	iarchive(mpc2);
 
-	EXPECT_EQ(mpm1->getName(), mpm2->getName());
+	EXPECT_EQ(mpc1->getName(), mpc2->getName());
 }
 
 TEST(Cereal, Core)
@@ -286,3 +288,47 @@ TEST(Cereal, ModelEntry)
 	EXPECT_TRUE(me1 == me2);
 }
 
+TEST(Cereal, ExampleModels)
+{
+	{
+		std::stringstream ss;
+
+		t_modelptr mp1o = std::make_shared<TrafficLight>("TrafficLight");
+		t_modelptr mp1i;
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1o);
+		iarchive(mp1i);
+
+		EXPECT_EQ(mp1o->getName(), mp1i->getName());
+	}
+	{
+		std::stringstream ss;
+		t_modelptr mp2o = std::make_shared<Policeman>("Policeman");
+		t_modelptr mp2i;
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp2o);
+		iarchive(mp2i);
+
+		EXPECT_EQ(mp2o->getName(), mp2i->getName());
+	}
+
+	{
+		std::stringstream ss;
+		t_modelptr mp3o = std::make_shared<TrafficSystem>("TrafficSystem");
+		t_modelptr mp3i;
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp3o);
+		iarchive(mp3i);
+
+		EXPECT_EQ(mp3o->getName(), mp3i->getName());
+	}
+}
