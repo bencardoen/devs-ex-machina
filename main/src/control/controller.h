@@ -55,17 +55,17 @@ private:
 
 	std::string m_name;
 
-	t_timestamp m_checkpointInterval;
 	bool m_checkTermTime;
 	t_timestamp m_terminationTime;
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
-	size_t m_traceInterval;
+	size_t m_saveInterval;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
+	t_atomicmodelptr m_atomicOrigin;
 	t_coupledmodelptr m_coupledOrigin;
 	n_tracers::t_tracersetptr m_tracers;
 	TimeEventQueue m_events;
@@ -75,17 +75,6 @@ private:
 	bool m_dsPhase;
 
 	std::vector<std::thread> m_threads;
-
-	void doDirectConnect();
-	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
-
-	/**
-	 * If a core triggers a termination functor, it will pass its current time to
-	 * the controller as the new termination time for the other cores.
-	 * Example scenario: C1: triggers f() @ 101, C2 is @ 200. C2 will keep simulating (f()) need
-	 * not evaluate to true on C2.
-	 */
-	void distributeTerminationTime(t_timestamp);
 
 	/**
 	 * Interval time (in milliseconds) during which consecutive gvt calculations are performed.
@@ -104,12 +93,9 @@ private:
 	std::atomic<bool> 	m_rungvt;
 
 public:
-	/**
-	 * @param
-	 */
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr> cores,		// TODO don't copy, use &
-		std::shared_ptr<Allocator> alloc, std::shared_ptr<LocationTable> locTab,
-		n_tracers::t_tracersetptr tracers, size_t traceInterval = 5);
+	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
+		std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab,
+		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5);
 
 	virtual ~Controller();
 
@@ -159,9 +145,25 @@ public:
 	void setTerminationCondition(t_terminationfunctor termination_condition);
 
 	/**
-	 * @brief Set checkpointing interval
+	 * Update the GVT interval with a new value.
 	 */
-	void setCheckpointInterval(t_timestamp interv);
+	void setGVTInterval(std::size_t ms);
+
+	/**
+	 * @brief Add a moment during which the simulation will pause for a certain time
+	 */
+	void addPauseEvent(t_timestamp time, size_t duration, bool repeating = false);
+
+	/**
+	 * @brief Add a moment on which the simulation will be paused, saved and continued
+	 */
+	void addSaveEvent(t_timestamp time, std::string prefix, bool repeating = false);
+
+	/**
+	 * Return the current GVT threading interval.
+	 */
+	std::size_t
+	getGVTInterval();
 
 	/**
 	 * @brief Start thread for GVT
@@ -210,34 +212,11 @@ public:
 	 */
 	bool isInDSPhase() const;
 
-	/**
-	 * Update the GVT interval with a new value.
-	 */
-	void setGVTInterval(std::size_t ms);
-
-	/**
-	 * @brief Add a moment during which the simulation will pause for a certain time
-	 */
-	void addPauseEvent(t_timestamp time, size_t duration, bool repeating = false);
-
-	/**
-	 * @brief Add a moment on which the simulation will be paused, saved and continued
-	 */
-	void addSaveEvent(t_timestamp time, std::string prefix, bool repeating = false);
-
-	/**
-	 * Return the current GVT threading interval.
-	 */
-	std::size_t
-	getGVTInterval();
-
 private:
 	/**
 	 * @brief Check if simulation needs to continue
 	 */
 	bool check();
-
-	void trace();
 
 	/**
 	 * @brief Serialize all cores and models, dump tracer output
@@ -247,8 +226,9 @@ private:
 
 	/**
 	 * @brief Load all cores and models
+	 * @param isSingleAtomic : Whether nor not the simulation was of a single atomic model, false by default
 	 */
-	void load(const std::string& fname);
+	void load(const std::string& fname, bool isSingleAtomic = false);
 
 	/**
 	 * @brief Simulation setup and loop using regular DEVS
@@ -277,11 +257,26 @@ private:
 
 	/**
 	 * @brief Handle all time events until now, returns whether the simulation should continue
+	 * @attention This method should only be used in CLASSIC or DSDEVS mode
+	 */
+	void handleTimeEventsSingle();
+
+	/**
+	 * @brief Handle all time events until now, returns whether the simulation should continue
 	 * @attention This method should only be used in PDEVS mode
 	 */
-	bool handleTimeEvents(std::condition_variable& cv, std::mutex& cvlock);
+	bool handleTimeEventsParallel(std::condition_variable& cv, std::mutex& cvlock);
 
-//	void threadGVT(n_network::Time freq);
+	void doDirectConnect();
+	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
+
+	/**
+	 * If a core triggers a termination functor, it will pass its current time to
+	 * the controller as the new termination time for the other cores.
+	 * Example scenario: C1: triggers f() @ 101, C2 is @ 200. C2 will keep simulating (f()) need
+	 * not evaluate to true on C2.
+	 */
+	void distributeTerminationTime(t_timestamp);
 
 	friend
 	void runGVT(Controller&, std::atomic<bool>& rungvt);
