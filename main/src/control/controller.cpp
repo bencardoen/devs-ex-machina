@@ -51,6 +51,7 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 	std::fstream fs(fname, std::fstream::in | std::fstream::binary);
 	cereal::BinaryInputArchive iarchive(fs);
 
+	LOG_INFO("CONTROLLER: Loading simulation from file ", fname);
 	if(isSingleAtomic) {
 		iarchive(m_lastGVT, m_atomicOrigin);
 		addModel(m_atomicOrigin); // Just run standard adding procedure
@@ -59,6 +60,7 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 		iarchive(m_lastGVT, m_coupledOrigin);
 		addModel(m_coupledOrigin); // Just run standard adding procedure
 	}
+	LOG_INFO("CONTROLLER: Loaded simulation starts at ", m_lastGVT);
 	m_isLoadedSim = true;
 }
 
