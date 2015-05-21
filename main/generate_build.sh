@@ -22,8 +22,9 @@ then
 	NRCPU=`nproc`
 	echo "$SCRIPT Found $NRCPU Cores."
 	NRCPU=$((2*$NRCPU))
-	echo "$SCRIPT Using $NRCPU threads for make."
 fi
+
+echo "$SCRIPT Using $NRCPU threads for make."
 
 ## Set default values of build variables.
 BUILD_TYPE="Debug"
