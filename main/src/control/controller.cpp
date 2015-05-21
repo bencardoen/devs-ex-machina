@@ -43,7 +43,6 @@ void Controller::save(const std::string& fname)
 	} else {
 		oarchive(m_atomicOrigin, m_lastGVT);
 	}
-
 }
 
 void Controller::load(const std::string& fname, bool isSingleAtomic)
@@ -212,7 +211,6 @@ void Controller::simulate()
 		return;
 	}
 
-	m_events.prepare();
 	m_tracers->startTrace();
 
 	m_isSimulating = true;
@@ -264,13 +262,14 @@ void Controller::simDEVS()
 			core->runSmallStep();
 		} else {
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
-			if (i % m_saveInterval == 0) {
-				t_timestamp time = m_cores.begin()->second->getTime();
-				n_tracers::traceUntil(time);
-				if(m_events.todo(core->getTime())) handleTimeEventsSingle();
-			}
 		}
-		if(core->getZombieRounds() > 1){
+		if (i % m_saveInterval == 0) {
+			t_timestamp time = core->getTime();
+			n_tracers::traceUntil(time);
+			if (m_events.todo(time))
+				handleTimeEventsSingle(time);
+		}
+		if (core->getZombieRounds() > 1) {
 			LOG_ERROR("Core has reached zombie state in classic devs.");
 			break;
 		}
@@ -353,9 +352,9 @@ void Controller::simDSDEVS()
 			break;
 		}
 		if (i % m_saveInterval == 0) {
-			t_timestamp time = m_cores.begin()->second->getTime();
+			t_timestamp time = core->getTime();
 			n_tracers::traceUntil(time);
-			if(m_events.todo(core->getTime())) handleTimeEventsSingle();
+			if(m_events.todo(time)) handleTimeEventsSingle(time);
 		}
 		if(core->getZombieRounds() > 1){
 			LOG_ERROR("Core has reached zombie state in ds devs.");
@@ -400,10 +399,10 @@ bool Controller::check()
 	return false;
 }
 
-void Controller::handleTimeEventsSingle()
+void Controller::handleTimeEventsSingle(const t_timestamp& now)
 {
 	LOG_INFO("CONTROLLER: Handling any events");
-	std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
+	std::vector<TimeEvent> worklist = m_events.popUntil(now);
 	uint pause = 0;
 	for (TimeEvent& event : worklist) {
 		switch (event.m_type) {
@@ -413,7 +412,9 @@ void Controller::handleTimeEventsSingle()
 			pause += event.m_duration;
 			break;
 		case TimeEvent::Type::SAVE:
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()));
+			LOG_INFO("CONTROLLER: Saving to file ", event.m_prefix, "_",
+			        n_tools::toString(event.m_time.getTime()), ".devs");
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs");
 			break;
 		}
 	}
@@ -439,7 +440,8 @@ bool Controller::handleTimeEventsParallel(std::condition_variable& cv, std::mute
 			svd = true;
 			cvlock.lock();		//Stop cores
 			cv.notify_all();
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()));
+			LOG_INFO("CONTROLLER: Saving to file ",event.m_prefix,"_",n_tools::toString(event.m_time.getTime()),".devs");
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs");
 			cvlock.unlock();	//Start cores again
 			cv.notify_all();
 			break;

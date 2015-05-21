@@ -110,6 +110,18 @@ public:
 	void addModel(t_coupledmodelptr& coupled);
 
 	/**
+	 * @brief Serialize all models
+	 * @precondition All cores need to be stopped beforehand
+	 */
+	void save(const std::string& fname);
+
+	/**
+	 * @brief Load all models
+	 * @param isSingleAtomic : Whether nor not the simulation was of a single atomic model, false by default
+	 */
+	void load(const std::string& fname, bool isSingleAtomic = false);
+
+	/**
 	 * @brief Main loop, starts simulation
 	 */
 	void simulate();
@@ -219,18 +231,6 @@ private:
 	bool check();
 
 	/**
-	 * @brief Serialize all cores and models, dump tracer output
-	 * @precondition All cores need to be stopped beforehand
-	 */
-	void save(const std::string& fname);
-
-	/**
-	 * @brief Load all cores and models
-	 * @param isSingleAtomic : Whether nor not the simulation was of a single atomic model, false by default
-	 */
-	void load(const std::string& fname, bool isSingleAtomic = false);
-
-	/**
 	 * @brief Simulation setup and loop using regular DEVS
 	 */
 	void simDEVS();
@@ -259,7 +259,7 @@ private:
 	 * @brief Handle all time events until now, returns whether the simulation should continue
 	 * @attention This method should only be used in CLASSIC or DSDEVS mode
 	 */
-	void handleTimeEventsSingle();
+	void handleTimeEventsSingle(const t_timestamp& now);
 
 	/**
 	 * @brief Handle all time events until now, returns whether the simulation should continue
