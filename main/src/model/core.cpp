@@ -184,8 +184,9 @@ void n_model::Core::initExistingSimulation(t_timestamp loaddate){
 	this->m_gvt = loaddate;
 	this->m_time = loaddate;
 	for (const auto& model : this->m_models) {
-		model.second->setTime(t_timestamp(loaddate.getTime(), 0));	// DO NOT use priority, model does this already
-		const t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
+//		model.second->setTime(t_timestamp(loaddate.getTime(), 0));	// DO NOT use priority, model does this already
+		LOG_INFO("Model ", model.second->getName(), " TImenext = ", model.second->getTimeNext(), " loaddate ", loaddate);
+		t_timestamp model_scheduled_time(model.second->getTimeNext().getTime(), 0); // model.second->timeAdvance();
 		this->scheduleModel(model.first, model_scheduled_time);
 		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
 	}
