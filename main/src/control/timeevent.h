@@ -85,12 +85,10 @@ public:
 	TimeEventQueue() {};
 	~TimeEventQueue() {};
 
-	void push(TimeEvent te);
-
 	/**
-	 * @brief sort the event queue
+	 * @brief Add event to queue
 	 */
-	void prepare();
+	void push(TimeEvent te);
 
 	/**
 	 * @brief Checks if any still unhandled events are pending
