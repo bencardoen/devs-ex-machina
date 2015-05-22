@@ -219,6 +219,8 @@ void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cere
 	std::string name;
 	archive(name);
 	construct(name);
+
+	archive(construct->m_components);
 }
 
 }

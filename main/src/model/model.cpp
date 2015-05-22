@@ -202,6 +202,17 @@ void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 	std::string name;
 	archive(name);
 	construct(name);
+
+	archive(construct->m_timeLast);
+	archive(construct->m_timeNext);
+	archive(construct->m_state);
+	archive(construct->m_oldStates);
+	archive(construct->m_iPorts);
+	archive(construct->m_oPorts);
+	archive(construct->m_sendMessages);
+	archive(construct->m_receivedMessages);
+	archive(construct->m_keepOldStates);
+	archive(construct->m_parent);
 }
 
 }

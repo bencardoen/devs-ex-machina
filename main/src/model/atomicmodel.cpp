@@ -188,12 +188,12 @@ void AtomicModel::setTimeElapsed(t_timestamp elapsed)
 
 void AtomicModel::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
+	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
 }
 
 void AtomicModel::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead, cereal::virtual_base_class<Model>(this));
+	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
 }
 
 void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
@@ -202,6 +202,10 @@ void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cerea
 	std::size_t priority;
 	archive(name, priority);
 	construct(name, priority);
+
+	archive(construct->m_corenumber);
+	archive(construct->m_elapsed);
+	archive(construct->m_lastRead);
 }
 
 int AtomicModel::getCorenumber() const

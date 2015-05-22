@@ -134,6 +134,9 @@ TEST(Cereal, State)
 	std::stringstream ss;
 
 	State s1 = State("test");
+	s1.m_timeLast = t_timestamp(42,42);
+	s1.m_timeNext = t_timestamp(41,41);
+
 	State s2 = State("err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
@@ -143,6 +146,34 @@ TEST(Cereal, State)
 	iarchive(s2);
 
 	EXPECT_EQ(s1.toString(), s2.toString());
+	EXPECT_EQ(s1.m_timeLast, s2.m_timeLast);
+	EXPECT_EQ(s1.m_timeNext, s2.m_timeNext);
+}
+
+TEST(Cereal, StatePointer)
+{
+	std::stringstream ss;
+
+	t_stateptr sp1 = n_tools::createObject<State>("Mystate");
+	sp1->m_timeLast=t_timestamp(32,32);
+	sp1->m_timeNext=t_timestamp(55,55);
+	State s1 = *sp1;	// for debugging
+
+	t_stateptr sp2 = n_tools::createObject<State>("OtherMystate");
+	sp2->m_timeLast=t_timestamp(44,44);
+	State s2 = *sp2;	// for debugging
+
+	cereal::BinaryOutputArchive oarchive(ss);
+	cereal::BinaryInputArchive iarchive(ss);
+
+	oarchive(sp1);
+	iarchive(sp2);
+
+	s2 = *sp2;			// for debugging
+
+	EXPECT_EQ(sp1->toString(), sp2->toString());
+	EXPECT_EQ(sp1->m_timeLast, sp2->m_timeLast);
+	EXPECT_EQ(sp1->m_timeNext, sp2->m_timeNext);
 }
 
 TEST(Cereal, Model)

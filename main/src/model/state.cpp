@@ -34,6 +34,7 @@ void State::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 	std::string state;
 	archive(state);
 	construct(state);
+	archive(construct->m_timeLast, construct->m_timeNext);
 }
 
 }
