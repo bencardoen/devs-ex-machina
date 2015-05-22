@@ -99,6 +99,13 @@ const double& data = n_network::getMsgPayload<double>(received);
 //Assuming that no Z function was applied to the message.
 assert(value == data);
 \end{lstlisting}
+\paragraph{Note} While it is technically possible, we strongly discourage the usage of the following data types in these messages:
+\begin{itemize}
+	\item raw pointers to heap-allocated object.\\
+			Messages can be destroyed during a time warp prior to being delivered to a model. This will result in a memory leak if there are no other references to these objects.
+	\item pointers or references to local objects.\\
+		When these objects go out of scope, they are destructed, rendering the pointer or reference invalid.
+\end{itemize}
 
 \chapter{Design}
 \section{Overview}
@@ -111,7 +118,14 @@ We've slightly departed from the PyPDEVS structure, to allow for more encapsulat
 \end{figure}
 
 \section{Translating Dynamic Typing to Static Typing}
-To represent objects that can be at runtime any type chosen by the user, we had 2 options : void* which is highly fragile in use, and impossible to serialize, or std::string(), which can double as an "anytype" by storing a serialized object inside the string, should this be required. \\This leaves the same degree of freedom dynamic typing grants to the user in PyPDEVS, with the added benefit of some checking provided by the compiler. Consider for example a user who stores an object serialized into the payload string of a message object, the compiler can in advance detect if the serializing object is at least serializable. \\ Misuse would either surface during compilation, or at worst could be checked with casting or exceptions. Misuse of void* could result in anything from undefined behaviour to stack corruption.
+Certain classes of the simulation, such as the messages between models and the model states, must be able to contain objects of any type. However, C++ is a statically typed language. To overcome this problem, we came up with the following three solutions:
+\begin{itemize}
+	\item Keep a \texttt{void*} that points to the actual data. This approach is very fragile and impossible to serialize. Misuse of \texttt{void*} could result in anything from undefined behaviour to stack corruption.
+	\item Serialize everything to \texttt{std::string}. Serialization is not a trivial operation. Continuously serializing and deserializing can be a very large performance hit. Moreover, it would require each and every type to be serializable. On the flip side, the compiler can help by detecting whether or not the object can be serialized or not.
+	\item Make use of inheritance and create a specialized subclass for each and every datatype. In the case of the messages, a class template can be used to facilitate this process. In the case of the model states, we decided that it is best that the user provides the subclass.\\
+	Since we use pointers for messages and states, a pointer cast is all that is needed to access the members of the specialized class. For extra safety, we suggest to use \texttt{std::dynamic\_pointer\_cast}.
+\end{itemize}
+We chose the third option because it both offers speed and safety.
 
 \section{Class decomposition}
 The active entities in the project were discovered using several methods: use cases, argumentation and counterargumentation during the weekly meetings, and studying the existing implementation. This led to the following simplified decomposition:
@@ -144,7 +158,7 @@ The models hide all implementation details for the particular DEVS formalisms, w
 
 \section{Scheduler}
 A Scheduler was implemented based on the prototyping code. As required, as list based scheduler was implemented. \\
-The interface from PyPDevs' scheduler class was reused, but internally the scheduler class in our project differs on a few point. \\
+The interface from PyPDevs' scheduler class was reused, but internally the scheduler class in our project differs on a few points. \\
 \subsection{Composition}
 All schedulers are based on a heap, which order items to be scheduled. We never actually schedule models, only entries (A struct containing name and time to schedule), allowing for far faster operation. This is complemented by a hashmap, so that entries can have O(1) lookup and erasure (required for the use case of antimessaging, among others). The operation massReschedule() was left out of the interface, since it can be easily composed using erase() and push\textunderscore back().
 \\
@@ -240,7 +254,7 @@ At construction a Conservative Kernel will collect , for each model it holds, th
 Virtualization proved a significant hurdle by exposing potential faults. Standard compliant code was found to be leaking memory by not calling container member destructors but only on a VM with Linux as Guest and Windows as Host. This was never reproducible in another setting.
 \section{Threading}
 \subsection{String}
-libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}. This is triggers an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] of the original string, proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1.\\
+libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}. This triggers an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] of the original string, proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1.\\
 \subsection{Timing}
 We also encountered several scenarios where thread scheduling complicated our kernel control code. An extreme example of this is Valgrind, which can cause multithreaded code to be executed sequentially. This can be fatal for a parallel simulator if a dependent core is scheduled before the influencing core is ever executed. Modifying valgrind's invocation can alleviate this, but there remain edge cases where a core/kernel can get into a state where it can no longer advance (depending on the model composition). The simulator detects this and (eventually) halts the simulation. \\ Note that the above problem is not limited to valgrind, on Virtualized system this is more easily triggered than in a non virtualized setting.\\
 Furthermore, we also force an idle kernel (a kernel that has either reaches termination time, or can't advance time (no messages and no scheduled models) to yield/sleep for a short duration. The reason for this behaviour is to allow the other cores execution time, which would otherwise be spent in idling loops. A condition variable was evaluated as a solution, but not implemented since it also suffered from timing issues (time between thread awakening and core simulating).
@@ -261,8 +275,8 @@ This implementation only covers the most basic needs:
 	\item multiple logging levels currently, the following 4 levels are supported:\\
 		\emph{INFO}, \emph{DEBUG}, \emph{WARNING} and \emph{ERROR}
 	\item levels can be individually switched on/off at compile time
-	\item No logging code is executed whatsoever if the logger is disabled
-	\item log messages contain filename and line number of the log command
+	\item No logging code is executed whatsoever if the logger is disabled.
+	\item log messages contain file name and line number of the log command.
 	\item basic crash safety. The logger will catch the following signals and flush all remaining output before exiting the program:
 		\begin{itemize}
 			\item \emph{SIGSEGV} Segmentation fault, sent by the operating system.
@@ -271,6 +285,9 @@ This implementation only covers the most basic needs:
 			\item \emph{SIGINT} Interrupt, used for catching crtl+C, which is useful for debugging deadlocks.
 		\end{itemize}
 \end{itemize}
+
+\paragraph{Asynchronous output}
+To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
@@ -308,7 +325,7 @@ We let each logger print several hundred thousand messages to a file. These are 
 \subsubsection{Our own logger}
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
-While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches.
+While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as a more extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches taken by the program.
 
 \begin{thebibliography}{1}
 
@@ -336,6 +353,7 @@ Applications in C++. Wiley Publishing, 2010.
   
   \bibitem{gdb}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219180}
 
+  \bibitem{asynchwrite} \url{http://stackoverflow.com/a/21127776}
 
   \end{thebibliography}
 \end{document}
