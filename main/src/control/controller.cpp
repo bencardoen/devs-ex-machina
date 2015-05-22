@@ -36,7 +36,6 @@ void Controller::save(const std::string& fname, const t_timestamp& time)
 	if (fname == "")
 		return;
 	LOG_INFO("CONTROLLER: Saving simulation to file ", fname, " at time ", time.getTime());
-	LOG_INFO("CONTROLLER: Exist transient messages: ", m_cores[0]->existTransientMessage());
 	std::fstream fs(fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
 	cereal::BinaryOutputArchive oarchive(fs);
 
