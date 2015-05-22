@@ -93,4 +93,9 @@ void n_network::Message::load_and_construct(n_serialization::t_iarchive& archive
 	archive(timestamp, destination_model, destination_port, source_port, payload,
 			destination_core, source_core, color, antimessage);
 	construct(destination_model, timestamp, destination_port, source_port, payload);
+
+	construct->m_destination_core = destination_core;
+	construct->m_source_core = source_core;
+	construct->m_color = color;
+	construct->m_antimessage = antimessage;
 }

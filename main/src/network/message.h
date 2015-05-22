@@ -15,6 +15,8 @@
 #include <sstream>
 #include <iosfwd>
 
+class TestCereal;
+
 namespace n_network {
 
 /**
@@ -34,6 +36,7 @@ operator<<(std::ostream& os, const MessageColor& c);
  */
 class Message
 {
+	friend class ::TestCereal;
 protected:
 	/**
 	 * Unique model name of target.
@@ -254,7 +257,6 @@ public:
 	 * @param archive A container for the desired output stream
 	 */
 	void serialize(n_serialization::t_oarchive& archive);
-
 
 	/**
 	 * Helper function for unserializing smart pointers to an object of this class.

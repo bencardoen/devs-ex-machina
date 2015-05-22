@@ -22,12 +22,12 @@ bool operator==(const std::string lhs, const State& rhs)
 void State::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("STATE: SAVE TimeLast ", m_timeLast, " TimeNext ", m_timeNext, " State ", m_state);
-	archive(m_timeLast, m_timeNext, m_state);
+	archive(m_state, m_timeLast, m_timeNext);
 }
 
 void State::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_timeLast, m_timeNext, m_state);
+	archive(m_state, m_timeLast, m_timeNext);
 	LOG_INFO("STATE: LOAD TimeLast ", m_timeLast, " TimeNext ", m_timeNext, " State ", m_state);
 }
 
@@ -35,8 +35,7 @@ void State::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 {
 	LOG_INFO("STATE: Load and Construct");
 	std::string state;
-	t_timestamp a, b;
-	archive(a, b, state);
+	archive(state);
 	construct(state);
 	archive(construct->m_timeLast, construct->m_timeNext);
 }

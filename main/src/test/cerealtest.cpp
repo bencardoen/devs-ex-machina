@@ -60,7 +60,7 @@ TEST(Cereal, General)
 	EXPECT_EQ(recOut.z, recIn.z);
 }
 
-TEST(Cereal, Port)
+TEST(Cereal, PortBasic)
 {
 	std::stringstream ss;
 
@@ -97,7 +97,7 @@ TEST(Cereal, Zfunc)
 	EXPECT_TRUE(m1 == m2);
 }
 
-TEST(Cereal, Message)
+TEST(Cereal, MessageBasic)
 {
 	std::stringstream ss;
 
@@ -155,8 +155,8 @@ TEST(Cereal, StatePointer)
 	std::stringstream ss;
 
 	t_stateptr sp1 = n_tools::createObject<State>("Mystate");
-	sp1->m_timeLast=t_timestamp(32,32);
-	sp1->m_timeNext=t_timestamp(55,55);
+	sp1->m_timeLast = t_timestamp(32,32);
+	sp1->m_timeNext = t_timestamp(55,55);
 	State s1 = *sp1;	// for debugging
 
 	t_stateptr sp2 = n_tools::createObject<State>("OtherMystate");
@@ -176,23 +176,235 @@ TEST(Cereal, StatePointer)
 	EXPECT_EQ(sp1->m_timeNext, sp2->m_timeNext);
 }
 
+class TestCereal {
+public:
+	static void testCerealModel()
+	{
+		std::stringstream ss;
+
+		Model m1 = Model("test");
+		m1.m_timeLast = t_timestamp(42,42);
+		m1.m_timeNext = t_timestamp(42,42);
+		Model m2 = Model("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(m1);
+		iarchive(m2);
+
+		EXPECT_EQ(m1.getName(), m2.getName());
+		EXPECT_EQ(m1.m_timeLast, m2.m_timeLast);
+		EXPECT_EQ(m1.m_timeNext, m2.m_timeNext);
+	}
+
+	static void testCerealModelPointer()
+	{
+		std::stringstream ss;
+
+		t_modelptr mp1 = n_tools::createObject<Model>("test");
+		mp1->m_timeLast = t_timestamp(42,42);
+		mp1->m_timeNext = t_timestamp(42,42);
+		t_modelptr mp2 = n_tools::createObject<Model>("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1);
+		iarchive(mp2);
+
+		EXPECT_EQ(mp1->getName(), mp2->getName());
+		EXPECT_EQ(mp1->m_timeLast, mp2->m_timeLast);
+		EXPECT_EQ(mp1->m_timeNext, mp2->m_timeNext);
+	}
+
+	static void testCerealCoupledModel()
+	{
+		std::stringstream ss;
+
+		CoupledModel m1 = CoupledModel("test");
+		m1.m_timeLast = t_timestamp(42,42);
+		m1.m_timeNext = t_timestamp(42,42);
+		CoupledModel m2 = CoupledModel("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(m1);
+		iarchive(m2);
+
+		EXPECT_EQ(m1.getName(), m2.getName());
+		EXPECT_EQ(m1.m_timeLast, m2.m_timeLast);
+		EXPECT_EQ(m1.m_timeNext, m2.m_timeNext);
+	}
+
+	static void testCerealModelCoupledPointer()
+	{
+		std::stringstream ss;
+
+		t_modelptr mp1 = n_tools::createObject<CoupledModel>("test");
+		mp1->m_timeLast = t_timestamp(42,42);
+		mp1->m_timeNext = t_timestamp(42,42);
+		t_modelptr mp2 = n_tools::createObject<CoupledModel>("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1);
+		iarchive(mp2);
+
+		EXPECT_EQ(mp1->getName(), mp2->getName());
+		EXPECT_EQ(mp1->m_timeLast, mp2->m_timeLast);
+		EXPECT_EQ(mp1->m_timeNext, mp2->m_timeNext);
+	}
+
+	static void testCerealAtomicModel()
+	{
+		std::stringstream ss;
+
+		AtomicModel m1 = AtomicModel("test");
+		m1.m_timeLast = t_timestamp(42,42);
+		m1.m_timeNext = t_timestamp(42,42);
+		AtomicModel m2 = AtomicModel("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(m1);
+		iarchive(m2);
+
+		EXPECT_EQ(m1.getName(), m2.getName());
+		EXPECT_EQ(m1.m_timeLast, m2.m_timeLast);
+		EXPECT_EQ(m1.m_timeNext, m2.m_timeNext);
+	}
+
+	static void testCerealAtomicModelPointer()
+	{
+		std::stringstream ss;
+
+		t_modelptr mp1 = n_tools::createObject<AtomicModel>("test");
+		mp1->m_timeLast = t_timestamp(42,42);
+		mp1->m_timeNext = t_timestamp(42,42);
+		t_modelptr mp2 = n_tools::createObject<AtomicModel>("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1);
+		iarchive(mp2);
+
+		EXPECT_EQ(mp1->getName(), mp2->getName());
+		EXPECT_EQ(mp1->m_timeLast, mp2->m_timeLast);
+		EXPECT_EQ(mp1->m_timeNext, mp2->m_timeNext);
+	}
+
+	static void testCerealPort()
+	{
+		std::stringstream ss;
+
+		Port p1 = Port("poort1", "host1", true);
+		p1.m_usingDirectConnect = true;
+		Port p2 = Port("err", "err", false);
+		p2.m_usingDirectConnect = false;
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(p1);
+		iarchive(p2);
+
+		EXPECT_EQ(p1.getFullName(), p2.getFullName());
+		EXPECT_EQ(p1.isInPort(), p2.isInPort());
+		EXPECT_EQ(p1.m_usingDirectConnect, p2.m_usingDirectConnect);
+	}
+
+	static void testCerealPortPointer()
+	{
+		std::stringstream ss;
+
+		t_portptr pp1 = n_tools::createObject<Port>("poort1", "host1", true);
+		pp1->m_usingDirectConnect = true;
+		t_portptr pp2 = n_tools::createObject<Port>("err", "err", false);
+		pp2->m_usingDirectConnect = false;
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(pp1);
+		iarchive(pp2);
+
+		EXPECT_EQ(pp1->getFullName(), pp2->getFullName());
+		EXPECT_EQ(pp1->isInPort(), pp2->isInPort());
+		EXPECT_EQ(pp1->m_usingDirectConnect, pp2->m_usingDirectConnect);
+	}
+
+	static void testCerealMessagePointer()
+	{
+		std::stringstream ss;
+
+		t_msgptr mp1 = n_tools::createObject<Message>("test", 0, "dest", "source");
+		mp1->m_timestamp = t_timestamp(42,42);
+		mp1->m_antimessage = true;
+		t_msgptr mp2 = n_tools::createObject<Message>("err", 1, "err", "err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1);
+		iarchive(mp2);
+
+		EXPECT_TRUE(*mp1 == *mp2);
+		EXPECT_EQ(mp1->m_timestamp, mp2->m_timestamp);
+		EXPECT_EQ(mp1->m_antimessage, mp2->m_antimessage);
+	}
+};
+
 TEST(Cereal, Model)
 {
-	std::stringstream ss;
+	TestCereal::testCerealModel();
+}
 
-	Model m1 = Model("test");
-	Model m2 = Model("err");
+TEST(Cereal, ModelPointer)
+{
+	TestCereal::testCerealModelPointer();
+}
 
-	cereal::BinaryOutputArchive oarchive(ss);
-	cereal::BinaryInputArchive iarchive(ss);
+TEST(Cereal, CoupledModel)
+{
+	TestCereal::testCerealCoupledModel();
+}
 
-	oarchive(m1);
-	iarchive(m2);
-
-	EXPECT_EQ(m1.getName(), m2.getName());
+TEST(Cereal, CoupledModelPointer)
+{
+	TestCereal::testCerealModelCoupledPointer();
 }
 
 TEST(Cereal, AtomicModel)
+{
+	TestCereal::testCerealAtomicModel();
+}
+
+TEST(Cereal, AtomicModelPointer)
+{
+	TestCereal::testCerealAtomicModelPointer();
+}
+
+TEST(Cereal, Port)
+{
+	TestCereal::testCerealPort();
+}
+
+TEST(Cereal, PortPointer)
+{
+	TestCereal::testCerealPortPointer();
+}
+
+TEST(Cereal, MessagePointer)
+{
+	TestCereal::testCerealMessagePointer();
+}
+
+TEST(Cereal, AtomicModelBasic)
 {
 	std::stringstream ss;
 
@@ -208,7 +420,7 @@ TEST(Cereal, AtomicModel)
 	EXPECT_EQ(m1.getName(), m2.getName());
 }
 
-TEST(Cereal, CoupledModel)
+TEST(Cereal, CoupledModelBasic)
 {
 	std::stringstream ss;
 

@@ -21,13 +21,17 @@ namespace n_control{
 	class Controller;
 }
 
+class TestCereal;
+
 namespace n_model {
 
 using n_network::t_timestamp;
 
+
 class Model
 {
 	friend n_control::Controller;
+	friend class ::TestCereal;
 private:
 	std::string m_name;
 

@@ -11,9 +11,12 @@
 #include "model.h"
 #include "objectfactory.h"
 
+class TestCereal;
+
 namespace n_model {
 class CoupledModel: public Model
 {
+	friend class ::TestCereal;
 private:
 	/**
 	 * Removes all connections between two models

@@ -209,12 +209,15 @@ void Port::serialize(n_serialization::t_iarchive& archive)
 
 void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )
 {
-	std::string name;
+	/*std::string name;
 	std::string hostname;
 	bool inputPort;
 
 	archive(name, hostname, inputPort);
-	construct(name, hostname, inputPort);
+	construct(name, hostname, inputPort);*/
+
+	construct("", "", false);
+	construct->serialize(archive);
 }
 
 }

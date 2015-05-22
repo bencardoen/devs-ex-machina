@@ -216,11 +216,8 @@ void CoupledModel::serialize(n_serialization::t_iarchive& archive)
 
 void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct)
 {
-	std::string name;
-	archive(name);
-	construct(name);
-
-	archive(construct->m_components);
+	construct("temp");
+	construct->serialize(archive);
 }
 
 }

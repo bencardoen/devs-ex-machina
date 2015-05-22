@@ -17,9 +17,12 @@
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/access.hpp"
 
+class TestCereal;
+
 namespace n_model {
 class AtomicModel: public Model
 {
+	friend class ::TestCereal;
 private:
 	static size_t nextPriority()
 	{

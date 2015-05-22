@@ -17,6 +17,8 @@
 #include "globallog.h"
 #include "objectfactory.h"
 
+class TestCereal;
+
 namespace n_model {
 
 class Port;
@@ -25,6 +27,7 @@ typedef std::shared_ptr<Port> t_portptr;
 
 class Port
 {
+	friend class ::TestCereal;
 private:
 	std::string m_name;
 	std::string m_hostname;
