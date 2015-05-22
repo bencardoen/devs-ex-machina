@@ -220,6 +220,7 @@ include_directories(
 				src/examples/trafficlight_classic
 				src/examples/trafficlight_coupled
 				src/examples/trafficlight_ds
+				src/examples/trafficsystem
 				src/network
 				src/control
 				)   # Project headers are in same folder as source
