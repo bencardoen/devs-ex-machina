@@ -98,7 +98,8 @@ void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> 
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		for (size_t i = 0; i < m_iter;){ ++i; } 	// We just do stuff for a while
+		volatile size_t i = 0;
+		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 	setState(newState);
@@ -116,7 +117,8 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
-		for (size_t i = 0; i < m_iter;){ ++i; } 	// We just do stuff for a while
+		volatile size_t i = 0;
+		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 	setState(newState);
