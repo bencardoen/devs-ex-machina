@@ -184,9 +184,9 @@ TEST(Controller, DSDevs_full)
 
 		ctrl->simulate();
 	}
-//	EXPECT_EQ(
-//	        n_misc::filecmp(TESTFOLDER "controller/dstest.txt", TESTFOLDER "controller/dstest.corr"),
-//	        0);
+	EXPECT_EQ(
+	        n_misc::filecmp(TESTFOLDER "controller/dstest.txt", TESTFOLDER "controller/dstest.corr"),
+	        0);
 }
 
 TEST(Controller, pDEVS)
