@@ -29,11 +29,22 @@ std::string TrafficLightMode::toCell()
 	return "";
 }
 
+void TrafficLightMode::serialize(n_serialization::t_oarchive& archive)
+{
+	LOG_INFO("SERIALIZATION: Saving Traffic Light Mode '", m_state, "' with timeNext = ", m_timeNext, " and timeLast = ", m_timeLast);
+	archive(cereal::virtual_base_class<State>( this ));
+}
+
+void TrafficLightMode::serialize(n_serialization::t_iarchive& archive)
+{
+	archive(cereal::virtual_base_class<State>( this ));
+	LOG_INFO("SERIALIZATION: Loaded Traffic Light Mode '", m_state, "' with timeNext = ", m_timeNext, " and timeLast = ", m_timeLast);
+}
+
 void TrafficLightMode::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLightMode>& construct)
 {
-	std::string state;
-	archive(state);
-	construct(state);
+	construct("");
+	construct->serialize(archive);
 }
 
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
@@ -129,12 +140,24 @@ t_stateptr TrafficLight::setState(std::string s)
 	return this->getState();
 }
 
+void TrafficLight::serialize(n_serialization::t_oarchive& archive)
+{
+	LOG_INFO("SERIALIZATION: Saving Traffic Light '", getName(), "' with timeNext = ", m_timeNext);
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+}
+
+void TrafficLight::serialize(n_serialization::t_iarchive& archive)
+{
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	LOG_INFO("SERIALIZATION: Loaded Traffic Light '", getName(), "' with timeNext = ", m_timeNext);
+}
+
+
 void TrafficLight::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLight>& construct)
 {
-	std::string name;
-	std::size_t priority;
-	archive(name, priority);
-	construct(name, priority);
+	LOG_DEBUG("TrafficLight: Load and Construct");
+	construct("");
+	construct->serialize(archive);
 }
 
 }

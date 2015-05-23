@@ -80,6 +80,7 @@ void n_network::Message::serialize(n_serialization::t_oarchive& archive)
 
 void n_network::Message::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Message>& construct)
 {
+	LOG_DEBUG("Message: Load and Construct");
 	std::string destination_model;
 	std::size_t destination_core;
 	std::size_t source_core;
@@ -92,7 +93,9 @@ void n_network::Message::load_and_construct(n_serialization::t_iarchive& archive
 
 	archive(timestamp, destination_model, destination_port, source_port, payload,
 			destination_core, source_core, color, antimessage);
+	LOG_DEBUG("Message: Loaded");
 	construct(destination_model, timestamp, destination_port, source_port, payload);
+	LOG_DEBUG("Message: Constructed");
 
 	construct->m_destination_core = destination_core;
 	construct->m_source_core = source_core;

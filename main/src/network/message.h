@@ -188,6 +188,7 @@ public:
 	 */
 	virtual std::string getPayload() const
 	{
+		LOG_DEBUG("Message: getPayload");
 		return n_tools::copyString(m_payload);
 	}
 
@@ -316,6 +317,7 @@ public:
 	 */
 	virtual std::string getPayload() const override
 	{
+		LOG_DEBUG("SpecializedMessage: getPayload");
 		std::stringstream ssr;
 		const DataType& data = getData();
 		ssr << data;

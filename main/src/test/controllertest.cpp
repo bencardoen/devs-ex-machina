@@ -405,7 +405,7 @@ TEST(Save, ParallelSave)
 	}
 }
 
-TEST(Save, DISABLED_ParallelLoad)
+TEST(Save, ParallelLoad)
 {
 	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
 

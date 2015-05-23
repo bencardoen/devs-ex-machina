@@ -30,11 +30,22 @@ std::string PolicemanMode::toCell()
 	return "";
 }
 
+void PolicemanMode::serialize(n_serialization::t_oarchive& archive)
+{
+	LOG_INFO("SERIALIZATION: Saving Policeman Mode '", m_state, "' with timeNext = ", m_timeNext, " and timeLast = ", m_timeLast);
+	archive(cereal::virtual_base_class<State>( this ));
+}
+
+void PolicemanMode::serialize(n_serialization::t_iarchive& archive)
+{
+	archive(cereal::virtual_base_class<State>( this ));
+	LOG_INFO("SERIALIZATION: Loaded Policeman Mode '", m_state, "' with timeNext = ", m_timeNext, " and timeLast = ", m_timeLast);
+}
+
 void PolicemanMode::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<PolicemanMode>& construct)
 {
-	std::string state;
-	archive(state);
-	construct(state);
+	construct("");
+	construct->serialize(archive);
 }
 
 Policeman::Policeman(std::string name, std::size_t priority)
@@ -106,11 +117,22 @@ t_stateptr Policeman::setState(std::string s)
 	return this->getState();
 }
 
+void Policeman::serialize(n_serialization::t_oarchive& archive)
+{
+	LOG_INFO("SERIALIZATION: Saving Policeman '", getName(), "' with timeNext = ", m_timeNext);
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+}
+
+void Policeman::serialize(n_serialization::t_iarchive& archive)
+{
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	LOG_INFO("SERIALIZATION: Loaded Policeman '", getName(), "' with timeNext = ", m_timeNext);
+}
+
 void Policeman::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Policeman>& construct)
 {
-	std::string name;
-	archive(name);
-	construct(name);
+	construct("");
+	construct->serialize(archive);
 }
 
 }
