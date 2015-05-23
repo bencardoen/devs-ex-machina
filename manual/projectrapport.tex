@@ -198,9 +198,7 @@ We met at least once every week (barring the exam period), with each meeting hav
 \subsubsection{Code review}
 Although there was no real formal code review done up to now, we've had several debug sessions reviewing each others code. This means the most critical used sections of the code are allready reasonably well reviewed, albeit not formally.
 \subsubsection{Portability}
-We develop on Unix, Windows and MacOSX.
-
-In Windows we chose the Cygwin platform instead of MinGW to compile our project on. This because we make use of the C++11 std::thread objects; MinGW doesn't support POSIX threads. When building the project with GTest on Windows you need to use the -std=gnu++11 flag instead of the standard -std=c++11 flag, because we need the GNU extensions to correctly link everything.
+We develop on Unix, Windows and MacOSX. In Windows we chose the Cygwin platform instead of MinGW to compile our project on. This because we make use of the C++11 std::thread objects; MinGW doesn't support POSIX threads. 
 
 \chapter{Functional requirements}
 \section{DEVS Formalisms}
@@ -299,6 +297,13 @@ This implementation only covers the most basic needs:
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
+\section{Compiling multi-platform}
+A lot of obstacles were tackled while getting the project to work an Windows. When building with GTest on Windows you need to use the \texttt{-std=gnu++11} flag instead of the standard \texttt{-std=c++11} flag, because we need the GNU extensions to correctly link everything.
+
+All standard c++11 \textit{to string} functionality in Cygwin is not supported \cite{cygwin_tostring} (MinGW32 doesn't support this either). With basic \textit{to string} functionality we mean the functions that are listed here \cite{c++11_tostring} and under the 'See also' section. The problem seems to be a library called Newlib \cite{newlib} that doesn't provide crucial functions.
+
+Mac OSX needs the libc++ library to compile all C++11 features on. 
+
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
 \section{First comparison}
@@ -364,6 +369,12 @@ Applications in C++. Wiley Publishing, 2010.
   \bibitem{gdb}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219180}
 
   \bibitem{asynchwrite} \url{http://stackoverflow.com/a/21127776}
+  
+  \bibitem{c++11_tostring} \url{http://en.cppreference.com/w/cpp/string/basic_string/to_string}
+  
+  \bibitem{cygwin_tostring} \url{https://cygwin.com/ml/cygwin/2015-01/msg00245.html}
+  
+  \bibitem{newlib} \url{https://sourceware.org/newlib/}
 
   \end{thebibliography}
 \end{document}
