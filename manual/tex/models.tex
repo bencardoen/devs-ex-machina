@@ -57,6 +57,9 @@ CEREAL_REGISTER_TYPE(MyModel);
 
 \textbf{NOTE} that things like setting initial states, adding ports or setting other variables should be done before the model itself is used in any way. Incomplete models or undefined behaviour may be the result of said incorrect use.
 
+\subsection{Cell Atomic Model}
+The \texttt{CellAtomicModel} is a specialized atomic model that provides functionality for the cell tracer. It is useful when models are laid out in a grid. This class extends the interface of the atomic model with methods for getting or setting the position of this model in the grid.
+
 \section{Coupled models}
 Coupled models only require you to implement them as a sub-class of \\ \texttt{n\_model::CoupledModel}.
 

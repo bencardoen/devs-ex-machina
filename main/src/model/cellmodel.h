@@ -16,8 +16,8 @@ namespace n_model {
 typedef std::pair<std::size_t, std::size_t> t_point;
 
 /**
- * @brief Specialized state that contains a position.
- * This state can be used for the Cell Tracer
+ * @brief Specialized atomic model that contains a position.
+ * This model can be used for the Cell Tracer
  */
 class CellAtomicModel: public n_model::AtomicModel
 {
