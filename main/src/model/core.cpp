@@ -317,11 +317,16 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 
 void n_model::Core::syncTime()
 {
+	/**
+	 * We need to advance time from now [x,y] to  min(first message, first scheduled transition).
+	 * Most of this code are safety checks.
+	 * Locking : we're in SimulatorLock, and request/release Messagelock.
+	 */
 	t_timestamp nextfired = t_timestamp::infinity();
 	if (not this->m_scheduler->empty()) {
 		nextfired = this->m_scheduler->top().getTime();
 	}
-	t_timestamp firstmessagetime = this->getFirstMessageTime();	// Locked on msgs.
+	t_timestamp firstmessagetime = this->getFirstMessageTime();
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {
@@ -331,7 +336,7 @@ void n_model::Core::syncTime()
 	}
 	if (this->getTime() > newtime) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID() ," Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
-		assert(false);	// crash hard.
+		throw std::runtime_error("Core time going backwards. ");
 	}
 	// Here we a valid new time.
 	this->setTime(newtime);						// It's possible this stalls time if eit == old time
@@ -656,7 +661,7 @@ void n_model::Core::logCoreState()
 bool
 n_model::Core::existTransientMessage(){
 	LOG_ERROR("\tCORE :: ", this->getCoreID(), " existTransientMessage called on single core.");
-	assert(false);
+	throw std::runtime_error("You invoked existTransientMessage on a single core implementation (which has no network)!)");
 }
 
 std::size_t

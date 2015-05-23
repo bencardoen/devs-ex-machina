@@ -38,7 +38,7 @@ Alternatively, invoke cmake manually : \\
 \texttt{\$cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE\_CXX\_COMPILER\_ARG1=\\"\{-std=c++11|-std=gnu++11\}" -DCMAKE\_CXX\_COMPILER="\{clang++|g++\}" \\-DCMAKE\_BUILD\_TYPE=\{Release|Debug\} ../main}\\
 \texttt{\$make -j\{CPU-CORES\}}\\
 
-On Windows the default script should work but if you come into any problems, the commands given above work as well.
+On Windows the default script should work but if you come into any problems, the commands given above work if you use the CXX compiler argument \texttt{-std=gnu++11}.
 \subsubsection{Development}
 The cmake invocation has created an Eclipse CDT project for you to open the simulator code in:
 \begin{itemize}
