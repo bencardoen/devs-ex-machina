@@ -13,6 +13,7 @@ namespace n_tools {
 /**
  * Std::string has race errors (COW implementation is not thread safe)
  * Avoid any race by explicitly forcing a string data copy (which is threadsafe).
+ * Can be deprecated if using libstdc++ >= 5 or with llvm's libc++.
  */
 inline std::string copyString(const std::string& input)
 {

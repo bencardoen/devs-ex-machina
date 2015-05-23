@@ -2,7 +2,7 @@
  * sharedvector.h
  *
  *  Created on: 4 May 2015
- *      Author: ben
+ *      Author: Ben Cardoen
  */
 
 #ifndef SRC_TOOLS_SHAREDVECTOR_H_
@@ -15,7 +15,9 @@ namespace n_model {
  * Single writer - Multiple Reader problem with a twist:
  * For N clients, each will only ~write~ his own value, never another.
  * Each will only ever read other values, never his own.
+ * This class is used to allow Conservative cores to pass eot values.
  * @brief Provides single operation synchronized access to const sized shared container.
+ * @todo : implement movable mutex approach.
  */
 template<typename T>
 class SharedVector

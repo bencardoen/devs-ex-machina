@@ -627,8 +627,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				ctrl.distributeTerminationTime(core->getTime());
 			}
 			/// Decide if everyone is idle.
-			// Can't be done by counting flags, these are to slow to be set.
-			// Atomic isIdle is waay faster.
+			// Can't be done by counting flags, these are too slow to be set.
+			// Atomic isIdle is faster.
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
 				if( not coreentry.second->isIdle()){

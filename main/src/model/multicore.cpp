@@ -2,7 +2,7 @@
  * Multicore.cpp
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen -- Tim Tuijn
  */
 
 #include <multicore.h>
@@ -101,14 +101,18 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	if (msg->getColor() == MessageColor::WHITE) {
-		std::lock_guard<std::mutex> lock(this->m_vlock);
-		this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
+		{	// Raii, so that notified thread will not have to wait on lock.
+			std::lock_guard<std::mutex> lock(this->m_vlock);
+			this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
+		}
 		this->m_wake_on_msg.notify_all();
 	}
 }
 
 void Multicore::getMessages()
 {
+	// TODO : in principle, we could reduce threading issues by detecting live here (earlier) iso
+	// after simulation.
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	this->sortIncoming(messages);
@@ -116,10 +120,12 @@ void Multicore::getMessages()
 
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
+	// Locking could be done inside the for loop, but would make disecting logs much more difficult.
 	this->lockMessages();
+	// Reversing the processing order drastically reduces revert.
+	// Consider time = 5, messages ={4,3,2,1} = 4x revert, but only once (to 1) needed.
 	for( auto i = messages.rbegin(); i != messages.rend(); i++) {
 		const auto & message = *i;
-		assert(message->getDestinationCore() == this->getCoreID());
 		if(this->containsModel(message->getDestinationModel())){
 			this->receiveMessage(message);
 		}else{
@@ -150,8 +156,9 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 		}
 		if (v_value + msgcount <= 0){
 			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
-			break; // Lock is released, all white messages are received!
+			break;
 		}
+		// Sleep in cvar, else we starve the sim thread.
 		{
 			std::unique_lock<std::mutex> cvunique(m_cvarlock);
 			this->m_wake_on_msg.wait(cvunique);
@@ -267,11 +274,9 @@ void Multicore::setGVT(const t_timestamp& candidate)
 		        this->getGVT());
 		return;
 	}
+	// Have to erase msgs older than gvt, inform models, require Msglock, SimLock (model != synced)
+	// Simlock => msglock.
 	this->lockSimulatorStep();
-	/*
-	 * Simulator lock => message lock. (single step takes simlock, then message lock
-	 */
-
 	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {
@@ -324,7 +329,6 @@ void n_model::Multicore::unlockMessages()
 
 void n_model::Multicore::revert(const t_timestamp& totime)
 {
-	/// Example : revert , current = 10, totime = 7, gvt = 3
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {
@@ -337,8 +341,8 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 	// Call chain :: singleStep->getMessages->sortIncoming -> receiveMessage() -> revert()
 
 	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
-		auto msg = m_sent_messages.back();
-		if (msg->getTimeStamp() >= totime) {
+		const auto& msg = m_sent_messages.back();
+		if (msg->getTimeStamp().getTime() >= totime.getTime()) {
 			m_sent_messages.pop_back();
 			LOG_DEBUG("MCORE:: ", this->getCoreID(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);

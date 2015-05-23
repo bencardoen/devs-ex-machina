@@ -53,7 +53,8 @@ The other classes only add one new tracer object that they own privately.
 \section{Methods}
 Certain methods deserve special attention because of the way they are implemented.
 \subsection{Constructor}
-The non-default constructor can be used to initialize all the tracers at once. It uses the copy constructor to initialize the tracer members. There is also a default constructor.
+The non-default constructor can be used to initialize all the tracers at once. It uses the copy constructor to initialize the tracer members. There is also a default constructor.\\
+\paragraph{note:} The individual tracer classes must all implement either a copy constructor or a default constructor.
 \subsection{getParent}
 The private \inlinecpp{getParent} method returns a reference to the parent class part of the object, effectively granting access to the interface provided by that type. It works by casting the \inlinecpp{this} pointer to the appropriate pointer type and dereferencing it. The use of \inlinecpp{static_cast} over a c-style cast assures type correctness.
 \paragraph{example}
@@ -64,7 +65,7 @@ This function allows direct access to the n\textsuperscript{th} registered trace
 Standard C++ doesn't allow function member template specialization for a non-specialized class template\footnote{specialization rules: \href{http://en.cppreference.com/w/cpp/language/template_specialization}{cppreference.com}}, therefore we used a workaround.
 \subsubsection{sfinae}
 The implementation relies heavily on sfinae - Substitution Failure Is Not An Error\footnote{sfinae: \href{http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error}{Wikipedia}}.\\
-Basically, you present the compiler a few options for implementations of a particular function template. Only one of those options should compile correctly with any given template arguments. When the compiler fails to substitute the template arguments in one option, it continues with the other options until it either finds a single suitable option. When no suitable option can be found, the result is a compiler error.\\
+Basically, you present the compiler a few options for implementations of a particular function template. Only one of those options should compile correctly with any given template arguments. When the compiler fails to substitute the template arguments in one option, it continues with the other options until it either finds a single suitable option or no suitable option at all. In the latter case, the result is a rather convoluted compiler error.\\
 \subsubsection{implementation}
 The implementation offers three very similar implementations of the \inlinecpp{getTracer} function:
 \begin{lstlisting}[language=c++]
@@ -92,11 +93,11 @@ getByID() = delete;
 The \inlinecpp{std::tuple_element<n, std::tuple<T, TracerElems...>>::type>} denotes the type of the tracer that should be returned and is not really relevant to this explanation.\\
 The \inlinecpp{std::enable_if<Condition, type>} struct defines a typedef \lstinline{type}\lstinline{} if the condition evaluates to true. If the condition evaluates to false, the struct is empty.\\
 Therefore, depending on the value of the template argument \inlinecpp{n}, the return value of one of the three options is defined and the others are not, resulting in a substitution error.\\
-If n is too large, that is, n is larger than or equal to the amount of used tracers, the last option is taken. Because that function is deleted, the compiler\footnote{Only tested with GCC 4.9.2.} generates an error that points to where the function was invoked.\\
-\textbf{Note} that you cannot use the \inlinecpp{>} operator in the \inlinecpp{std::enable_if} condition. The compiler gets confused because it fails to distinguish between the comparison operator and the closing angle bracket of the template.
+If \inlinecpp{n} is too large, that is, n is larger than or equal to the amount of used tracers, the last option is taken. Because that function is deleted, the compiler\footnote{Only tested with GCC 4.9.2.} generates an error that points to where the function was invoked.\\
+\textbf{Note} You cannot use the \inlinecpp{>} operator in the \inlinecpp{std::enable_if} condition. The compiler gets confused because it fails to distinguish between the comparison operator and the closing angle bracket of the template.
 
 \section{What about std::tuple?}
-\inlinecpp{std::tuple<...>} already offers a lot of functionality that we implemented ourself. The reason why we chose to reinvent the wheel over using \inlinecpp{std::tuple<...>} is because our implementation makes it very easy to loop over all the registered tracer objects and call one of their functions.\\
+\inlinecpp{std::tuple<...>} already offers a lot of functionality that we implemented ourselves. The reason why we chose to reinvent the wheel over using \inlinecpp{std::tuple<...>} is because our implementation makes it very easy to loop over all the registered tracer objects and call one of their functions.\\
 Looping over a \inlinecpp{std::tuple<...>}, while possible\footnote{Looping \lstinline{std::tuple<>}: \href{http://stackoverflow.com/a/6894436}{Stack Overflow}}, involves a lot of boilerplate code for a simple function call.
 
 \part*{Individual tracers}
@@ -126,7 +127,7 @@ The tracers put their generated output in a message, much like the messages that
 	\item \emph{coreID} Each simulation has a unique core ID. When this core requests a rollback, we can selectively purge only the trace messages that belong to this core. Otherwise, if one core does not participate in the rollback, for example when it did not receive an antimessage, its output is not touched.
 	\item \emph{delete function} In some cases, memory could be allocated on the heap. This function can be used to free that memory. It will be called when the message is destructed, regardless of whether its \emph{execute function} was called.
 \end{itemize}
-Both the \emph{execute function} and the \emph{delete function} are objects of type \inlinecpp{std::function<void()>}. You can use \inlinecpp{std::bind<...>(...)} to create a delegate.
+Both the \emph{execute function} and the \emph{delete function} are objects of type \inlinecpp{std::function<void()>}. You can use \inlinecpp{std::bind<...>(...)} to create a delegate and pass that object as a parameter for the constructor.
 
 \section{Message handling}
 Unlike in the Python PDEVS implementation, trace messages are not scheduled together with the other messages, but rather in a separate scheduler. The following free functions are defined for managing the messages
@@ -143,6 +144,6 @@ Unlike in the Python PDEVS implementation, trace messages are not scheduled toge
 	\item \inlinecpp{void waitForTracer();}\\*
 			Waits until the tracing thread is finished.
 \end{itemize}
-In the background, \emph{traceUntil} will create a new thread that will perform the actual output. Therefore, rest of the simulation does not have to wait until this job is done. The current implementation can still be optimized further, for example by using a 1 reader/multiple writers approach. We will try to fix this for the beta version.
+In the background, \emph{traceUntil} will create a new thread that will perform the actual output. Therefore, rest of the simulation does not have to wait until this job is done.
 
 \end{document}
