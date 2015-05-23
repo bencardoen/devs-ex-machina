@@ -2,7 +2,7 @@
  * msgqueue.h
  *
  *  Created on: 12 Mar 2015
- *      Author: ben
+ *      Author: Ben Cardoen
  */
 
 #ifndef SRC_NETWORK_MSGQUEUE_H_

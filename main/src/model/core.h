@@ -300,7 +300,7 @@ public:
 	 * @attention run once, after load construction.
 	 */
 	virtual
-	void initExistingSimulation(t_timestamp loaddate);
+	void initExistingSimulation(const t_timestamp& loaddate);
 
 	/**
 	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)

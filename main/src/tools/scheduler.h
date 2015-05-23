@@ -202,7 +202,7 @@ struct hash<n_tools::ExampleItem>
 {
 	size_t operator()(const n_tools::ExampleItem& item) const
 	{
-		// Defer hash of item to hash of 1 member. To use many, look at boost's implementation.
+		// Defer hash of item to hash of 1 member. To use many, look at boost's implementation of hash combine.
 		return hash<n_tools::ExampleItem::timetype>()(item.prior);
 	}
 };

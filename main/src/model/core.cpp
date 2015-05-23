@@ -170,7 +170,7 @@ void n_model::Core::init()
 }
 
 
-void n_model::Core::initExistingSimulation(t_timestamp loaddate){
+void n_model::Core::initExistingSimulation(const t_timestamp& loaddate){
 
 	if (this->m_scheduler->size() != 0) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID(),
@@ -184,7 +184,6 @@ void n_model::Core::initExistingSimulation(t_timestamp loaddate){
 	this->m_gvt = loaddate;
 	this->m_time = loaddate;
 	for (const auto& model : this->m_models) {
-//		model.second->setTime(t_timestamp(loaddate.getTime(), 0));	// DO NOT use priority, model does this already
 		LOG_INFO("Model ", model.second->getName(), " TImenext = ", model.second->getTimeNext(), " loaddate ", loaddate);
 		t_timestamp model_scheduled_time(model.second->getTimeNext().getTime(), 0); // model.second->timeAdvance();
 		this->scheduleModel(model.first, model_scheduled_time);
@@ -544,7 +543,7 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, ignoring ", msg->toString());
+		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ", msg->toString());
 		this->m_received_messages->erase(entry);
 		this->m_received_messages->push_back(entry);
 	}
@@ -603,14 +602,10 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 
 	for (const auto& entry : messages) {
 		std::string modelname = entry.getMessage()->getDestinationModel();
-		if (not this->containsModel(modelname)) {			//DynSDevs : filter void messages
-			continue;
-		} else {
-			if (mailbag.find(modelname) == mailbag.end()) {
+		if (mailbag.find(modelname) == mailbag.end()) {
 				mailbag[modelname] = std::vector<t_msgptr>();	// Only make them if we have mail.
-			}
-			mailbag[modelname].push_back(entry.getMessage());
 		}
+		mailbag[modelname].push_back(entry.getMessage());
 	}
 }
 

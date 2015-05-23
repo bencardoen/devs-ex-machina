@@ -131,7 +131,7 @@ public:
 	 * In theory, in a distributed setting we need access to getMessages() to get an EOT value.
 	 * For us, this is NOT required (shared memory).
 	 * In the algoritm, we need to keep a floating max of all rcd messages per core, but this is
-	 * done @sender side by sendMessage && shared vector. We have that information even before the
+	 * done at sender side by sendMessage && shared vector. We have that information even before the
 	 * message reaches the network.
 	 */
 	// void getMessages()override
@@ -168,10 +168,11 @@ public:
 	init()override;
 
 	/**
-	 *Link creation of influencee-map into call to init.
+	 * When starting a core with serialized models from a previous run,
+	 * rebuild the influencee map in addition to the superclass init code.
 	 */
 	void
-	initExistingSimulation(t_timestamp loaddate)override;
+	initExistingSimulation(const t_timestamp& loaddate)override;
 
 	/**
 	 * Allow a subclass to query a model after it has transitioned.
