@@ -147,8 +147,7 @@ PyPDEVS uses MPI to exchange messages between kernels, whereas we could use shar
 	\label{networkdesign}
 \end{figure} 
 Early benchmarks showed a repeatable throughput of 5e5 msg/s, with 4 kernels on modest hardware. The problems of (unintentional) out of order receipt and potential loss of messages are a non-issue in this context, since we use FIFO queues and loss of a message would implicate severe system failure (in which case message loss is the lesser problem).\\
-Another advantage of hiding the message exchange behind a shared Network class instance is that, should this be required in the future, the kernel could run on different machines without requiring much redesigning of the system. An RPC implementation would simply have to implement the Network class on both sides. \\
-Late in the project functionality was added to check if the network contained any transient messages. This is not required for any algorithms, but to allow Cores to safely stop in an optimistic simulation. Due to OS-scheduling of threads it is entirely possible for all cores to report being idle (having reached termination time) and with a message still in the network. The controller would decide the simulation is done and exit, which would be incorrect. Synchronizing the steps which decide if a core is idle and if there are messages would be more expensive than adding this functionality with an atomic boolean to the network.
+Another advantage of hiding the message exchange behind a shared Network class instance is that, should this be required in the future, the kernel could run on different machines without requiring much redesigning of the system. An RPC implementation would simply have to implement the Network class on both sides.
 
 \section{Tracing}
 The tracing uses template programming, and is largely asynchronous w.r.t. the simulator kernels. This can be seen by the high utilization values when benchmarking the examples.
@@ -163,20 +162,11 @@ The interface from PyPDevs' scheduler class was reused, but internally the sched
 \subsection{Composition}
 All schedulers are based on a heap, which order items to be scheduled. We never actually schedule models, only entries (A struct containing name and time to schedule), allowing for far faster operation. This is complemented by a hashmap, so that entries can have O(1) lookup and erasure (required for the use case of antimessaging, among others). The operation massReschedule() was left out of the interface, since it can be easily composed using erase() and push\textunderscore back().
 \\
-\subsection{Reuse by other classes.}
-Several classes in the project require a heap-like functionality, by making the Scheduler class as generic as possible, we can reuse the same code instead of limiting its use to scheduling models only.
-The Scheduler class is  reused by the Tracers (scheduling tracing events) and the messaging queue in a kernel. Each client class can select at construction which heap backend to use, and if single operation synchronization is desired.
-\subsection{Entries}
-A scheduler instance can schedule any item provided it has a well defined implementation of the hash function and operator less than. In practice however, we used specialized Entry structs, so that intrusion upon the scheduled items was not necessary. \\
-Consider for example scheduling a model: \\ If the scheduling code relies only on the hash function of the model, this implementation can never change. But if we use a struct holding a reference/pointer/name to the model as the scheduled item, we can redefine any operator without interfering with other client classes of Model. This for example occurs in the Scheduler that holds pending incoming messages in the Kernel/Core, and the Tracers which has a scheduler for a subclass of Message. Both use specific locally defined entry classes without influencing each other.
 \subsection{Implementation}
-The actual heap used is either based on std::list as required, or one of Boost's heaps. The user is provided with a convenience factory function that creates Scheduler instances with varying heap backends. In general, the Fibonacci heap is one of the fastest, with skew heap sometimes coming out ahead. The list based heap is usually slower, though again this depends on the usage scenario. \\Important to note is that only node based heaps can be used efficiently (without compromising the performance of erase() and contains()). We store on insertion an iterator with the key of the pushed element in the hashmap. This also works as a safety check, preventing double insertion (depending on the hash-specialization semantics). This freedom of implementation is visible in the tracers where duplicate elements are allowed if they have a different address, contrasted with the model scheduler which disallows a model to be scheduled twice.\\
-Finally, the std::hash$<>$ specialization used by the message scheduler allows O(1) annihilation of a message by its antimessage (since the hash is identical). Similar usage of erase() is required in the model scheduler to quickly invalidate old scheduled entries (massReschedule).
-
-\subsection{ADevs scheduler}
-The adevs scheduler is a binary heap, but does not allow erasure of entries which would render it incapable of fulfilling the Pdevs scheduler interface. The binary heap (e.g. stl/boost priority queue or any container + heap operations in stl) can't be used since we need to store pointers to entries, which requires a node based heap. \\It can be emulated by using the faster Fibonacci or skew heaps, or the slower list based heap. \\
-Note that Adevs's implementation is intrusive upon the model  (q\textunderscore index), which could make the scheduling code vulnerable. \\
-Should we implement a binary heap scheduler without nodes, the pointer correcting code on any heap operation would prohibit scaling, since any heap operation would invalidate the iterators pointing to the entries. Furthermore, a whole series of operations on non node based containers (eg vector) have this same invalidating behaviour, making the implementation unnecessarily complex.
+The actual heap used is either based on std::list as required, or one of Boost's heaps. The user is provided with a convenience factory function that creates Scheduler instances with varying heap backends. In general, the Fibonacci heap is one of the fastest, with skew heap sometimes coming out ahead. The list based heap is always a factor 2 slower, though again this depends on the usage scenario. \\Important to note is that only node based heaps can be used efficiently (without compromising the performance of erase() and contains()). We store on insertion an iterator with the key of the pushed element in the hashmap. This also works as a safety check, preventing double insertion (depending ofcourse on the hash-specialization semantics). This freedom of implementation is visible in the tracers where duplicate elements are allowed if they have a different address, contrasted with the model scheduler which disallows a model to be scheduled twice.\\
+Finally, the std::hash$<>$ specialization used by the message scheduler allows O(1) annihilation of a message by its antimessage (since the hash is identical).
+\subsection{Differences}
+We intended to use the scheduler class not only for scheduling models, but also to store pending incoming messages, and tracing messages. To allow this, the Scheduler class only requires from a scheduled item that it has operator$<$ and std::hash$<$T$>$ defined.
 
 \section{Controller}
 For the controller, care was taken in making the interface both functional and minimal. The default configuration is quick to set up, and customization is possible should the user require it.
@@ -198,7 +188,9 @@ We met at least once every week (barring the exam period), with each meeting hav
 \subsubsection{Code review}
 Although there was no real formal code review done up to now, we've had several debug sessions reviewing each others code. This means the most critical used sections of the code are allready reasonably well reviewed, albeit not formally.
 \subsubsection{Portability}
-We develop on Unix, Windows and MacOSX. In Windows we chose the Cygwin platform instead of MinGW to compile our project on. This because we make use of the C++11 std::thread objects; MinGW doesn't support POSIX threads. 
+We develop on Unix, Windows and MacOSX.
+
+In Windows we chose the Cygwin platform instead of MinGW to compile our project on. This because we make use of the C++11 std::thread objects; MinGW doesn't support POSIX threads. When building the project with GTest on Windows you need to use the -std=gnu++11 flag instead of the standard -std=c++11 flag, because we need the GNU extensions to correctly link everything.
 
 \chapter{Functional requirements}
 \section{DEVS Formalisms}
@@ -244,15 +236,15 @@ A Time object has an absolute first field , followed by a causal second field.\\
 \end{algorithmic}
 \end{algorithm}\\
 \subparagraph{Differences with ADEVS}
-A big difference between ADEVS' and our implementation is that we hold the eot-values of all kernels in shared memory. This means that step 1.a , which is normally done by the receiver when it inspects the message queue, can be done immediately. This also avoids the queueing delay incurred by simulation traffic, and conversely does not interfere with the simulation traffic.\\
+A big difference between ADEVS' and our implementation is that we hold the eot-values of all kernels in shared memory. This means that step 1.a , which is normally done by the receiver when it inspects the message queue, can be done immediately. This also avoids the queueing delay incurred by simulation traffic.\\
 Using the shared memory approach, we also avoid the sending of any synchronization message to other cores (required in ADEVS). \\In step 2.d we simply overwrite our old EOT value with the newly calculated. The shared EOT vector is only written at 1 position for each kernel , and only the influencing EOT values are ever read. \\
-Also important to note is that there exist several edge cases not listed in this algorithm, but which force the implementation to do more work than listed above. Consider a kernel with a non-dependent model A (that receives no input). By definition A has eit = oo, causing all eot-calculation to be skipped forever. We can't do this, if there exists at least 1 model depending on A, this model would get incorrect eot-values (either 0 or oo, which neither are correct since A is not prohibited from sending output).\\
+Also important to note is that there exist several edge cases not listed in this algorithm, but force the implementation to do more work than listed above. Consider a kernel with a non-dependent model A (that receives no input). By definition A has eit = oo, causing all eot-calculation to be skipped forever. We can't do this, if there exists at least 1 model depending on A, this model would get incorrect eot-values (either 0 or oo, which neither are correct since A is not prohibited from sending output).\\
 The correct behaviour here is to replace eit with the vtime of the kernel at each simulation step and to use that in the algorithm.\\
- Furthermore, collecting lookahead values from models needs to be done in step 1.a. The lookahead value is calculated starting from the time it acquires a new state, this means that the lookahead value used in 2.a has to be continuously updated, regardless of usage, and has to be reset between simulation rounds (step 1 can entail several of such rounds in the theoretic form of the algorithm). If we don't reset the minimum lookahead value in between rounds, there are scenarios where an incorrect minimum of a model that is no longer scheduled in the next round can warp the calculation, potentially freezing the simulation. \\ 
- The calculation done in steps 2, 3 are quite efficiently implemented, although a future optimization could delay step 3 until several rounds have passed, more in line with the theoretical algorithm. For details please consult the source code of Doxygen documentation of class Conservativecore.
+ Furthermore, collecting lookahead values from models needs to be done in step 1, a lookahead value is calculated starting from the time it acquires a new state. This means that the lookahead value used in 2.a has to be continuously updated, regardless of usage, and has to be reset between simulation rounds (step 1 can entail several of such rounds). If we don't reset the minimum lookahead value in between rounds, there are scenarios where an incorrect minimum of a model that is no longer scheduled in the next round can warp the calculation. \\ 
+ The calculation done in steps 2, 3 are quite efficiently implemented, although a future optimization could delay step 3 until several rounds have passed, more in line with the theoretical algorithm.
 \subparagraph{Dependency calculation}
 The author of the models needs to supply the kernel, for each model, with a list of models by whom it is influenced. Receiving a message that alters a model's output is defined as influencing in this context. Using the allocation information provided by the Controller, the Kernel will then determine which other Kernels (including possibly itself) it is dependent on.\\
-It is important to note that the user need not interpret this dependency relation as transitive, and needs to look only at 1-edge removed models. \\
+It is important to note that the user need not interpret this dependency relation as transition, and needs to look only at 1-edge removed models. \\
 To clarify this last point: suppose we have 3 models A, B, C with A sending output to B, and B to C. C is indirectly influenced by A, but need not record this information (which is non trivial to retrieve for a non-trivial model, disregarding cycles for the moment). \\
 Let A be allocated @ kernel 0, B @ 1, C @ 2. While the dependency is transitive, since kernel 1 is already bound by kernel 0, kernel 2 does not require kernel 0's information (eot). By moving this transitivity to the kernel level, the model's author only has to look at 1-edge distant dependencies. \\
 At construction a Conservative Kernel will collect , for each model it holds, the list of names of influencing models. Next, the kernel requests for each unique name the allocation information (O(1) lookup). Note that this can be optimized if the model stores its allocation information, but this then prohibits runtime reallocation should this be implemented in the future.
@@ -264,11 +256,11 @@ Virtualization proved a significant hurdle by exposing potential faults. Standar
 \subsection{String}
 libstdc++'s std::string implementation appears to be still Copy On Write (despite 21.4.1 p6 from the C++ standard) \cite{cpp}. This triggers an alert by threadsanitizer for a possible race whenever a string was supposedly copied but internally still stored as a reference to the same object. Explicitly invoking the string constructor with the char[] of the original string, proved to be a safe workaround here. Note that this problem is a known issue \cite{cow}, which is solved in GCC 5.1.\\
 \subsection{Timing}
-We also encountered several scenarios where thread scheduling complicated our kernel control code. An extreme example of this is Valgrind, which can cause multithreaded code to be executed sequentially. This can be fatal for a parallel simulator if a dependent core is scheduled before the influencing core is ever executed. Modifying valgrind's invocation can alleviate this, but there remain edge cases where a core/kernel can get into a state where it can no longer advance (depending on the model composition). The simulator detects this and (eventually) halts the simulation. \\ Note that the above problem is not limited to valgrind, on a virtualized OS this is more easily triggered than in a non virtualized setting.\\
-Furthermore, we also force an idle kernel (a kernel that has either reached termination time, or can't advance time (no messages and no scheduled models) to yield/sleep for a short duration. The reason for this behaviour is to try to grant the other cores execution time, possibly alleviating thread starvation where an idle core (but non-idle thread) would starve a non-idle core. A condition variable was evaluated as a solution, but not implemented since it also suffered from timing issues (time between thread awakening and core simulating), and would conflict with the controlling code (save,pause) already in place. 
+We also encountered several scenarios where thread scheduling complicated our kernel control code. An extreme example of this is Valgrind, which can cause multithreaded code to be executed sequentially. This can be fatal for a parallel simulator if a dependent core is scheduled before the influencing core is ever executed. Modifying valgrind's invocation can alleviate this, but there remain edge cases where a core/kernel can get into a state where it can no longer advance (depending on the model composition). The simulator detects this and (eventually) halts the simulation. \\ Note that the above problem is not limited to valgrind, on Virtualized system this is more easily triggered than in a non virtualized setting.\\
+Furthermore, we also force an idle kernel (a kernel that has either reaches termination time, or can't advance time (no messages and no scheduled models) to yield/sleep for a short duration. The reason for this behaviour is to allow the other cores execution time, which would otherwise be spent in idling loops. A condition variable was evaluated as a solution, but not implemented since it also suffered from timing issues (time between thread awakening and core simulating).
 \section{Heaps}
 2 of the Heaps we use in the Scheduler proved to have subtle corrupting bugs, which were only found quite late in the project. Boost's binomial heap, for reasons so far unknown, sometimes fails to deallocate/remove nodes/items. The actual failure is masked until the next insertion, where we then triggered one of our own invariant checks (the heap size was no longer equal to that of the hashmap). It should be noted that we already experienced similar issues with the binomial heap not deallocating memory despite size() returning 0. \\ Time prevented us from writing up a formal bug report, since the bug is hard to reproduce and even harder to detect.
-The D-ary heap triggered a "move-assign to self" assertion when we used the Debugging version of the STL, so we had to remove both from our Schedulers. This is no way impacted performance, as the Fibonacci heap was in practice faster (with the skew heap sometimes overtaking it).
+The D-ary heap triggered an move-assing to self assertion when we used the Debugging version of the STL, so we had to remove both from our Schedulers. This is no way impacted performance, as the Fibonacci heap was in practice faster (with the skew heap sometimes overtaking it).
 \section{Toolchains}
 To develop we used the required toolchains:\\ g++/clang++ as compiler, Eclipse+CDT as IDE, git for dvcs, jenkins as ci, cmake as build tool supplemented with some shell and python scripting.
 The plot plugin from Jenkins was used to do perfomance regression testing, but the plugin itself is not that stable. Nonetheless, we detected several random regression using the plotted graphs. \\
@@ -296,13 +288,6 @@ This implementation only covers the most basic needs:
 
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
-
-\section{Compiling multi-platform}
-A lot of obstacles were tackled while getting the project to work an Windows. When building with GTest on Windows you need to use the \texttt{-std=gnu++11} flag instead of the standard \texttt{-std=c++11} flag, because we need the GNU extensions to correctly link everything.
-
-All standard c++11 \textit{to string} functionality in Cygwin is not supported \cite{cygwin_tostring} (MinGW32 doesn't support this either). With basic \textit{to string} functionality we mean the functions that are listed here \cite{c++11_tostring} and under the 'See also' section. The problem seems to be a library called Newlib \cite{newlib} that doesn't provide crucial functions.
-
-Mac OSX needs the libc++ library to compile all C++11 features on. 
 
 \chapter{Performance Analysis}
 Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
@@ -369,12 +354,6 @@ Applications in C++. Wiley Publishing, 2010.
   \bibitem{gdb}  \url{https://bugzilla.redhat.com/show_bug.cgi?id=1219180}
 
   \bibitem{asynchwrite} \url{http://stackoverflow.com/a/21127776}
-  
-  \bibitem{c++11_tostring} \url{http://en.cppreference.com/w/cpp/string/basic_string/to_string}
-  
-  \bibitem{cygwin_tostring} \url{https://cygwin.com/ml/cygwin/2015-01/msg00245.html}
-  
-  \bibitem{newlib} \url{https://sourceware.org/newlib/}
 
   \end{thebibliography}
 \end{document}

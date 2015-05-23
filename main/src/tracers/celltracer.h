@@ -21,8 +21,11 @@ namespace n_tracers{
 using namespace n_network;
 
 /**
- * @brief Tracer that will generate verbose output.
+ * @brief Tracer that will generate cell output.
  * @tparam OutputPolicy A policy that dictates what should happen with the output
+ *
+ * This tracer requires the models to be a subclass of the CellAtomicModel class.
+ * If a model does not derive from this type, it is ignored.
  */
 template<typename OutputPolicy, std::size_t XSize, std::size_t YSize>
 class CellTracer: public OutputPolicy
