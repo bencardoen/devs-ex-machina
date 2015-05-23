@@ -194,31 +194,9 @@ void Model::serialize(n_serialization::t_oarchive& archive)
 void Model::serialize(n_serialization::t_iarchive& archive)
 {
 	LOG_DEBUG("MODEL: Serialize (load)");
-	archive(m_name);
-	LOG_DEBUG("MODEL: 2 Serialize (load)");
-	archive(m_timeLast);
-	LOG_DEBUG("MODEL: 3 Serialize (load)");
-	archive(m_timeNext);
-	LOG_DEBUG("MODEL: 4 Serialize (load)");
-	archive(m_state);
-	LOG_DEBUG("MODEL: 5 Serialize (load)");
-	archive(m_oldStates);
-		LOG_DEBUG("MODEL: 6 Serialize (load)");
-		archive(m_iPorts);
-			LOG_DEBUG("MODEL: 7 Serialize (load)");
-			archive(m_oPorts);
-				LOG_DEBUG("MODEL: 8 Serialize (load)");
-				//archive(m_sendMessages);
-					LOG_DEBUG("MODEL: 9 Serialize (load)");
-					//archive(m_receivedMessages);
-						LOG_DEBUG("MODEL: 10 Serialize (load)");
-						archive(m_keepOldStates);
-												LOG_DEBUG("MODEL: 11 Serialize (load)");
-												archive(m_parent);
-																		LOG_DEBUG("MODEL: 12 Serialize (load)");
-	/*archive(m_oldStates,
-			m_iPorts, m_oPorts, m_sendMessages, m_receivedMessages,
-			m_keepOldStates, m_parent);*/
+	archive(m_name, m_timeLast, m_timeNext, m_state, m_oldStates,
+			m_iPorts, m_oPorts, m_keepOldStates, m_parent);
+
 	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "' with timeNext = ", m_timeNext);
 }
 

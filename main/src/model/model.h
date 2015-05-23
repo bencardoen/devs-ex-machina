@@ -56,7 +56,7 @@ protected:
 	std::deque<n_network::t_msgptr> m_sendMessages;
 	std::deque<n_network::t_msgptr> m_receivedMessages;
 
-	n_control::Controller* m_control;	//@Pieter Deze member moet je niet serializeren.
+	n_control::Controller* m_control;
 
 	/**
 	 * @brief Variable that determines if old states are to be kept or not
