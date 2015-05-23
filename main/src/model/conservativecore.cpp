@@ -119,7 +119,7 @@ void Conservativecore::syncTime(){
 	this->resetLookahead();
 
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
-	// Else a dependent kernel can get hung op, since in Idle() state we'll never get here again.
+	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
 	if(this->isIdle()){
 		this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
 	}
@@ -159,7 +159,7 @@ void Conservativecore::init(){
 }
 
 
-void Conservativecore::initExistingSimulation(t_timestamp loaddate){
+void Conservativecore::initExistingSimulation(const t_timestamp& loaddate){
 	Core::initExistingSimulation(loaddate);
 	buildInfluenceeMap();
 	for(const auto& model : m_models){

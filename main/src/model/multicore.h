@@ -259,6 +259,9 @@ public:
 	void
 	unlockMessages()override;
 
+	/**
+	 * Returns true if the network detects a pending message for any core.
+	 */
 	bool
 	existTransientMessage()override;
 

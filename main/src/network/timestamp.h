@@ -38,6 +38,10 @@ bool nearly_equal(const T& left, const T& right)
 
 /**
  * Represents a timestamp with optional causal ordering.
+ * Adevs' time is floating point based, this class can provide that as well by
+ * setting template parameter T to double/float. Note that this severely complicates comparison.
+ * Infinity is always defined as std::numeric_limits<Q>::max() for any type Q, so make sure this
+ * specialization exist for your type.
  */
 template<typename T, typename X>
 class Time
@@ -92,7 +96,7 @@ public:
 	}
 
 	/**
-	 * Simulates CPDevs' select function. A priority/offset of 0 (highest) will force a model to be chosen first.
+	 * Simulates PDevs' select function. A priority/offset of 0 (highest) will force a model to be chosen first.
 	 */
 	void increaseCausality(const X& offset)
 	{
