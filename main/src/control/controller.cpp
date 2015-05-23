@@ -12,6 +12,7 @@
 #include <chrono>
 #include <fstream>
 #include "cereal/archives/binary.hpp"
+#include "cereal/types/polymorphic.hpp"
 
 using namespace n_tools;
 
@@ -35,30 +36,51 @@ void Controller::save(const std::string& fname, const t_timestamp& time)
 {
 	if (fname == "")
 		return;
-	LOG_INFO("CONTROLLER: Saving simulation to file ", fname, " at time ", time.getTime());
-	std::fstream fs(fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchive(fs);
+
+	std::string fnameModel = fname + ".devs";
+	std::fstream fsmodel(fnameModel, std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	cereal::BinaryOutputArchive oarchivemodel(fsmodel);
+
+	std::string fnameGvt = fname + "_gvt.devs";
+	std::fstream fsgvt(fnameGvt, std::fstream::out | std::fstream::trunc | std::fstream::binary);
+	cereal::BinaryOutputArchive oarchivegvt(fsgvt);
+
+
+	LOG_INFO("CONTROLLER: Saving GVT to file ", fnameGvt, " at time ", time.getTime());
+	oarchivegvt(time);
+	LOG_INFO("CONTROLLER: Saving simulation to file ", fnameModel, " at time ", time.getTime());
 
 	if(m_coupledOrigin) {
-		oarchive(time, m_coupledOrigin);
+		oarchivemodel(m_coupledOrigin);
 	} else {
-		oarchive(time, m_atomicOrigin);
+		oarchivemodel(m_atomicOrigin);
 	}
 }
 
 void Controller::load(const std::string& fname, bool isSingleAtomic)
 {
 	assert(fname != "" && "Can't load simulation without file!");
-	std::fstream fs(fname, std::fstream::in | std::fstream::binary);
-	cereal::BinaryInputArchive iarchive(fs);
+
+	std::string fnameModel = fname + ".devs";
+	std::fstream fsmodel(fnameModel, std::fstream::in | std::fstream::binary);
+	cereal::BinaryInputArchive iarchivemodel(fsmodel);
+
+	std::string fnameGvt = fname + "_gvt.devs";
+	std::fstream fsgvt(fnameGvt, std::fstream::in | std::fstream::binary);
+	cereal::BinaryInputArchive iarchivegvt(fsgvt);
+
+	LOG_INFO("CONTROLLER: Loading GVT from file ", fnameGvt);
+	iarchivegvt(m_lastGVT);
 
 	LOG_INFO("CONTROLLER: Loading simulation from file ", fname);
 	if(isSingleAtomic) {
-		iarchive(m_lastGVT, m_atomicOrigin);
+		LOG_INFO("CONTROLLER: Loading AtomicModel");
+		iarchivemodel(m_atomicOrigin);
 		addModel(m_atomicOrigin); // Just run standard adding procedure
 	}
 	else {
-		iarchive(m_lastGVT, m_coupledOrigin);
+		LOG_INFO("CONTROLLER: Loading CoupledModel");
+		iarchivemodel(m_coupledOrigin);
 		addModel(m_coupledOrigin); // Just run standard adding procedure
 	}
 	LOG_INFO("CONTROLLER: Loaded simulation starts at ", m_lastGVT);
@@ -419,8 +441,8 @@ void Controller::handleTimeEventsSingle(const t_timestamp& now)
 			break;
 		case TimeEvent::Type::SAVE:
 			LOG_INFO("CONTROLLER: Saving to file ", event.m_prefix, "_",
-			        n_tools::toString(event.m_time.getTime()), ".devs");
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs", now);
+			        n_tools::toString(event.m_time.getTime()));
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()), now);
 			break;
 		}
 	}
@@ -446,8 +468,8 @@ bool Controller::handleTimeEventsParallel(std::condition_variable& cv, std::mute
 			svd = true;
 			cvlock.lock();		//Stop cores
 			cv.notify_all();
-			LOG_INFO("CONTROLLER: Saving to file ",event.m_prefix,"_",n_tools::toString(event.m_time.getTime()),".devs");
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()) + ".devs", m_lastGVT);
+			LOG_INFO("CONTROLLER: Saving to file ",event.m_prefix,"_",n_tools::toString(event.m_time.getTime()));
+			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()), m_lastGVT);
 			cvlock.unlock();	//Start cores again
 			cv.notify_all();
 			break;

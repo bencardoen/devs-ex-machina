@@ -20,6 +20,7 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 #include <sstream>
+#include "cereal/types/vector.hpp"
 
 using namespace n_model;
 using namespace n_network;
@@ -218,6 +219,46 @@ public:
 		EXPECT_EQ(mp1->m_timeNext, mp2->m_timeNext);
 	}
 
+	static void testCerealMultipleModelPointers()
+	{
+		std::stringstream ss;
+
+		t_modelptr mp1a = n_tools::createObject<Model>("test");
+		mp1a->m_timeLast = t_timestamp(11,12);
+		mp1a->m_timeNext = t_timestamp(13,14);
+		t_modelptr mp1b = n_tools::createObject<Model>("err");
+
+		t_modelptr mp2a = n_tools::createObject<Model>("test");
+		mp2a->m_timeLast = t_timestamp(21,22);
+		mp2a->m_timeNext = t_timestamp(23,24);
+		t_modelptr mp2b = n_tools::createObject<Model>("err");
+
+		t_modelptr mp3a = n_tools::createObject<Model>("test");
+		mp3a->m_timeLast = t_timestamp(31,32);
+		mp3a->m_timeNext = t_timestamp(33,34);
+		t_modelptr mp3b = n_tools::createObject<Model>("err");
+
+		cereal::BinaryOutputArchive oarchive(ss);
+		cereal::BinaryInputArchive iarchive(ss);
+
+		oarchive(mp1a, mp2a);
+		oarchive(mp3a);
+		iarchive(mp1b, mp2b);
+		iarchive(mp3b);
+
+		EXPECT_EQ(mp1a->getName(), mp1b->getName());
+		EXPECT_EQ(mp1a->m_timeLast, mp1b->m_timeLast);
+		EXPECT_EQ(mp1a->m_timeNext, mp1b->m_timeNext);
+
+		EXPECT_EQ(mp2a->getName(), mp2b->getName());
+		EXPECT_EQ(mp2a->m_timeLast, mp2b->m_timeLast);
+		EXPECT_EQ(mp2a->m_timeNext, mp2b->m_timeNext);
+
+		EXPECT_EQ(mp3a->getName(), mp3b->getName());
+		EXPECT_EQ(mp3a->m_timeLast, mp3b->m_timeLast);
+		EXPECT_EQ(mp3a->m_timeNext, mp3b->m_timeNext);
+	}
+
 	static void testCerealCoupledModel()
 	{
 		std::stringstream ss;
@@ -282,10 +323,10 @@ public:
 	{
 		std::stringstream ss;
 
-		t_modelptr mp1 = n_tools::createObject<AtomicModel>("test");
+		t_atomicmodelptr mp1 = n_tools::createObject<AtomicModel>("test");
 		mp1->m_timeLast = t_timestamp(42,42);
 		mp1->m_timeNext = t_timestamp(42,42);
-		t_modelptr mp2 = n_tools::createObject<AtomicModel>("err");
+		t_atomicmodelptr mp2 = n_tools::createObject<AtomicModel>("err");
 
 		cereal::BinaryOutputArchive oarchive(ss);
 		cereal::BinaryInputArchive iarchive(ss);
@@ -367,6 +408,11 @@ TEST(Cereal, Model)
 TEST(Cereal, ModelPointer)
 {
 	TestCereal::testCerealModelPointer();
+}
+
+TEST(Cereal, MultipleModelPointers)
+{
+	TestCereal::testCerealMultipleModelPointers();
 }
 
 TEST(Cereal, CoupledModel)
@@ -536,15 +582,43 @@ TEST(Cereal, ExampleModels)
 	{
 		std::stringstream ss;
 
-		t_modelptr mp1o = std::make_shared<TrafficLight>("TrafficLight");
-		t_modelptr mp1i;
+		t_modelptr mp1o = n_tools::createObject<TrafficLight>("TrafficLight");
+		t_modelptr mp1i  = n_tools::createObject<TrafficLight>("Err");
+		t_modelptr mp2o = n_tools::createObject<Policeman>("Policeman");
+		t_modelptr mp2i = n_tools::createObject<Policeman>("Err");
+		t_modelptr mp3o = n_tools::createObject<Policeman>("Policeman");
+		t_modelptr mp3i = n_tools::createObject<Policeman>("Err");
+		int a = 99;
+		int b;
+
+		//int c = 199;
+		//int d = 0;
 
 		cereal::BinaryOutputArchive oarchive(ss);
 		cereal::BinaryInputArchive iarchive(ss);
 
-		oarchive(mp1o);
-		iarchive(mp1i);
+		std::vector<t_modelptr> vector;
+		vector.push_back(mp1o);
+		vector.push_back(mp2o);
 
+		std::vector<t_modelptr> vector2;
+		std::vector<int> intv;
+		intv.push_back(5);
+		intv.push_back(3);
+
+		oarchive(mp1o);
+		oarchive(mp3o);
+		oarchive(a);
+		iarchive(mp1i);
+		iarchive(mp3i);
+		iarchive(b);
+
+		//EXPECT_EQ(mp1o->getName(), mp1i->getName());
+		//EXPECT_EQ(vector.at(0)->getName(), vector2.at(0)->getName());
+		//EXPECT_EQ(vector.at(1)->getName(), vector2.at(1)->getName());
+		//EXPECT_EQ(vector.at(1)->getName(), vector2.at(1)->getName());
+		//EXPECT_EQ(mp2o->getName(), mp2i->getName());
+		//EXPECT_EQ(a, b);
 		EXPECT_EQ(mp1o->getName(), mp1i->getName());
 	}
 	{

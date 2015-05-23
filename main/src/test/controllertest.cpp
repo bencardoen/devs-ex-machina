@@ -375,7 +375,7 @@ TEST(Save, ClassicLoad)
 		auto ctrl = conf.createController();
 		t_timestamp endTime(720, 0);
 		ctrl->setTerminationTime(endTime);
-		ctrl->load(TESTFOLDER "controller/savetestc_100.devs");
+		ctrl->load(TESTFOLDER "controller/savetestc_100");
 		ctrl->simulate();
 	}
 }
@@ -421,7 +421,7 @@ TEST(Save, DISABLED_ParallelLoad)
 		auto ctrl = conf.createController();
 		t_timestamp endTime(720, 0);
 		ctrl->setTerminationTime(endTime);
-		ctrl->load(TESTFOLDER "controller/savetestp_100.devs");
+		ctrl->load(TESTFOLDER "controller/savetestp_100");
 		ctrl->simulate();
 	}
 }
