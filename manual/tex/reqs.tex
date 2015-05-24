@@ -23,7 +23,7 @@ Debian based:\\
 Red-hat based:\\
 \texttt{\$sudo yum install boost-devel}\\
 \subsubsection{Preparing the build}
-We use thread-sanitizer to verify thread-safety at runtime instrumented by the compiler (g++ and clang). This however requires building the project (and by extension any linked libraries) with position independent flags. For the simulator this is resolved by CMake, however for gtest you'll need to manually build GTest with this extra flag:\\
+We use thread-sanitizer to verify thread-safety at runtime instrumented by the compiler (g++ and clang). This however requires building the project (and by extension any linked libraries) with position-independent flags. For the simulator this is resolved by CMake, however for gtest you'll need to manually build GTest with this extra flag:\\
 In file internal\textunderscore utils.cmake change compile options to append the compile flag \texttt{-fpie} :
 \texttt{set(cxx\textunderscore base\textunderscore flags "-Wall -Wshadow -fpie")}\\
 If you have any non-standard locations where the compiler should search for Boost and/or GTest, place them in the file localpreferences.txt.\\
