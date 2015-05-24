@@ -192,6 +192,74 @@ add_executable(${PROJECT_NAME}
   	src/mainbenchfire.cpp
   	)
 
+add_executable(${PROJECT_NAME}_devstone
+ 	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/performance/devstone/devstone.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+	src/control/timeevent.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+  	src/maindevstone.cpp
+  	)
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					)
+
+add_executable(${PROJECT_NAME}_phold
+ 	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/performance/benchmarks/phold.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+	src/control/timeevent.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+  	src/mainphold.cpp
+  	)
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					)
+
 # SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
 # 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15 "#-o3"# -flto"
 # 					)
@@ -241,4 +309,6 @@ endif()
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 ###############################################################################
