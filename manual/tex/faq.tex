@@ -1,3 +1,11 @@
+\section{General considerations}
+\begin{enumerate}
+	\item If you violate certain clearly documented preconditions (such as having several models with the exact same name), the simulator is allowed to crash hard.
+	\item Do not use any non-serializable features of C++, examples are std::function (function / raw pointers in general).
+	\item Time is represented using std::size\textunderscore t internally, which is 64 bits wide on most 64-bit systems, 32 on older 32-bit system. As a result, should you ever use an explicit value larger than std::numeric\textunderscore limits$<$std::size\textunderscore t$>$::max(), the time representation will fail in unexpected ways. The same issue arises if the simulator advances beyond that time point. It's possible to change the typedef t\textunderscore timestamp to use a larger type should this be necessary for you. For example :\\
+	\lstinline!typedef Time<unsigned long long, unsigned long long> t_timestamp;!
+	As long as the supplied type to Time has well-defined operators for the aritmetic and comparison operators (at least partial ordered), and the type has a specialization for numeric limits, it can be used.
+\end{enumerate}
 
 \section{Platform specific}
 \subsubsection{Virtualization}
@@ -7,19 +15,12 @@
 \end{enumerate}
 \subsubsection{Cygwin}
 \begin{enumerate}
-\item std::to\textunderscore string is not supported, do not use it in your own models. Some old C functions like atoi and stoi are not supported as well.
+\item std::to\textunderscore string is not supported, do not use it in your own models. Some old C functions like atoi and stoi are not supported either.
 \item GTest version 1.7 corrupts the stack if a test fails, use version 1.6 until GTest resolves this.
 \end{enumerate}
-\section{General considerations}
-\begin{enumerate}
-\item If you violate certain clearly documented preconditions (such as having several models with the exact same name), the simulator is allowed to crash hard.
-\item Do not use any non-serializable features of C++, examples are std::function (function / raw pointers in general).
-\item Time is represented using std::size\textunderscore t internally, which is 64 bits wide on most 64-bit systems, 32 on older 32-bit system. As a result, should you ever use an explicit value larger than std::numeric\textunderscore limits$<$std::size\textunderscore t$>$::max(), the time representation will fail in unexpected ways. The same issue arises if the simulator advances beyond that time point. It's possible to change the typedef t\textunderscore timestamp to use a larger type should this be necessary for you. For example :\\
-\lstinline!typedef Time<unsigned long long, unsigned long long> t_timestamp;!
-As long as the supplied type to Time has well-defined operators for the aritmetic and comparison operators (at least partial ordered), and the type has a specialization for numeric limits, it can be used.
-\end{enumerate}
+
 \section{Threading}
 \begin{enumerate}
-\item Never use more simulator cores than hardware threads you have available. For example on a dual core cpu with hyperthreading, 4 simualtor-cores is the limit you should adhere to. The simulator may work with more simulator-cores, but performance will be crippled and starvation is likely.
+\item Never use more simulator cores than hardware threads you have available. For example on a dual core cpu with hyperthreading, 4 simualtor cores is the limit you should adhere to. The simulator may work with more simulator cores, but performance will be crippled and starvation is likely.
 \item libstdc++'s implementation of std::string is Copy on Write, this introduces an inherent danger for race conditions. Should you ever be confronted with this issue (in your own models), use the provided copyString function in stringtools.h to force g++ to generate an explicit (safe) copy.
 \end{enumerate}

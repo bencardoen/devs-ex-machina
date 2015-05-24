@@ -1,5 +1,5 @@
 \section{States}
-You can can make your own states with almost no limitations. The only requirements for a user's own states are that they should be objects from a type that implements \texttt{n\_model::State}. This class has a few functions that have to be implemented:
+You can make your own states with almost no limitations. The only requirements for a user's own states are that they should be objects from a type that implements \texttt{n\_model::State}. This class has a few functions that have to be implemented:
 \begin{itemize}
 	\item \texttt{std::string toString()}
 	\item \texttt{std::string toXML()}
@@ -7,10 +7,38 @@ You can can make your own states with almost no limitations. The only requiremen
 \end{itemize}
 If the user does not override the above functions, this will result in a logged error. Serialization prohibits abstract functions, which enforces this workaround.\\
 While members in sub-classes can be added without any problems, by default there is a public member \texttt{std::string m\_state} implemented in \texttt{State} that can be used to represent the user's state.
-\\ For serialization you have to declare (after class definition) 
-\begin{verbatim}
+
+\subsubsection{Serialization}
+For serialization you have to define three serialization functions with following signature: 
+\begin{lstlisting}
+void serialize(n_serialization::t_oarchive& archive) {
+	archive(cereal::virtual_base_class<State>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+void serialize(n_serialization::t_iarchive& archive) {
+	archive(cereal::virtual_base_class<State>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+static void load_and_construct(n_serialization::t_iarchive& archive,
+			cereal::construct<MyState>& construct) {
+	construct("");
+	construct->serialize(archive);
+}
+\end{lstlisting}
+In case your own states uses more datamembers, you can include them to the serialization by adding them at the back of the parameter list of archive() in the first two functions. For more information consult the Cereal manual.\\
+\\ 
+For example:
+\begin{lstlisting}
+int a = 5;
+archive(cereal::virtual_base_class<State>( this ), a);
+\end{lstlisting}
+After the class definition you have to register your new state throug the following macro: 
+\begin{lstlisting}
 CEREAL_REGISTER_TYPE(MyState);
-\end{verbatim}
+\end{lstlisting}
+\textbf{NOTE} the registration has to be done outside of any namespaces to work properly. 
 
 \section{Atomic models}
 Atomic models can be made by implementing a sub-class of \texttt{n\_model::AtomicModel}. The most basic functions to be implemented are:
@@ -20,9 +48,9 @@ Atomic models can be made by implementing a sub-class of \texttt{n\_model::Atomi
 	\item \texttt{void AtomicModel::intTransition()}\\
 		Performs the model's internal transition. 
 	\item \texttt{t\_timestamp AtomicModel::timeAdvance() const}\\
-		Should return the model's current time advance value; the amount of time after which the following internal transition occurs. This function should not alter the model in any way.
+		Should return the model's current time advance value, the amount of time after which the following internal transition occurs. This function should not alter the model in any way.
 	\item \texttt{std::vector{\textless}n\_network::t\_msgptr{\textgreater} AtomicModel::output()  const}\\
-		Returns the model's output; all messages that are to be send should be returned via this function. This function should not alter the model in any way.
+		Returns the model's output; all messages that are to be sent should be returned via this function. This function should not alter the model in any way.
 \end{enumerate}
 If these are not overridden, this will result in a logged assertion error.\\
 A user can optionally implement the lookahead function, when a parallel conservative simulation is required:
@@ -41,21 +69,49 @@ The user can access the model's \textbf{state} at any time using the built-in fu
 \end{itemize}
 These functions return a pointer to the port that was added, so you can connect ports easier. More about that later on. \\
 
-When \textbf{sending messages} (\textbf{output function}), there are a few rules you should take into account. The message you want to send can only be a string. This string should be given to the port you want to send it through. The port will then create the actual messages (that are send over the models) and return them to you in a vector. All these messages (from possibly different ports) should be joined in 1 vector and be returned in the output function. The following functions will allow you to do so:
+When \textbf{sending messages} (\textbf{output function}), there are a few rules you should take into account. The message you want to send can only be a string. This string should be given to the port you want to send it through. The port will then create the actual messages (which are sent over the models) and return them to you in a vector. All these messages (from possibly different ports) should be joined in 1 vector and be returned in the output function. The following functions will allow you to do so:
 \begin{itemize}
 	\item \texttt{t\_portptr Model::getPort(std::string name) const}
 	\item \texttt{std::vector{\textless}n\_network::t\_msgptr{\textgreater} Port:: \\createMessages(std::string message)}
 \end{itemize} 
 Something like this would work: \texttt{this-{\textgreater}getPort("OUT")-{\textgreater} \\createMessages("my\_message");} \\
 
-It's important that a model name is unique over the whole simulation, and portname should be unique per model.\\
-
-For serialization you have to declare (after class definition)
-\begin{verbatim}
-CEREAL_REGISTER_TYPE(MyModel);
-\end{verbatim}
+It's important that a model name is unique over the whole simulation, and port name should be unique per model. \\
 
 \textbf{NOTE} that things like setting initial states, adding ports or setting other variables should be done before the model itself is used in any way. Incomplete models or undefined behaviour may be the result of said incorrect use.
+
+\subsubsection{Serialization}
+For serialization you have to define three serialization methods with following signature: 
+\begin{lstlisting}
+void serialize(n_serialization::t_oarchive& archive) {
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+void serialize(n_serialization::t_iarchive& archive) {
+	archive(cereal::virtual_base_class<AtomicModel>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+static void load_and_construct(n_serialization::t_iarchive& archive,
+			cereal::construct<MyAtomicModel>& construct) {
+	construct("");
+	construct->serialize(archive);
+}
+\end{lstlisting}
+In case your own atomic models uses more datamembers, you can include them to the serialization by adding them at the back of the parameter list of archive() in the first two functions. For more information consult the Cereal manual.\\
+\\ 
+For example:
+\begin{lstlisting}
+int a = 5;
+archive(cereal::virtual_base_class<AtomicModel>( this ), a);
+\end{lstlisting}
+After the class definition you have to register your new atomic model throug the following macro: 
+\begin{lstlisting}
+CEREAL_REGISTER_TYPE(MyAtomicModel);
+\end{lstlisting}
+
+\textbf{NOTE} the registration has to be done outside of any namespaces to work properly.
 
 \subsection{Cell Atomic Model}
 The \texttt{CellAtomicModel} is a specialized atomic model that provides functionality for the cell tracer. It is useful when models are laid out in a grid. This class extends the interface of the atomic model with methods for getting or setting the position of this model in the grid.
@@ -69,6 +125,39 @@ Coupled models only require you to implement them as a sub-class of \\ \texttt{n
 
 \textbf{Connecting these ports} can be done with the function\\ \texttt{void CoupledModel::connectPorts(const t\_portptr\& p1, const t\_portptr\& p2, t\_zfunc zFunction);}.\\ This function connects port \texttt{p1} to port \texttt{p2}. An optional Z function can be added that will modify the messages during transit from one port to another.
 It is possible to connect ports from a coupled model to one of it's direct atomic (or coupled) model children.
+
+\subsubsection{Serialization}
+For serialization you have to define three serialization methods with following signature: 
+\begin{lstlisting}
+void serialize(n_serialization::t_oarchive& archive) {
+	archive(cereal::virtual_base_class<CoupledModel>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+void serialize(n_serialization::t_iarchive& archive) {
+	archive(cereal::virtual_base_class<CoupledModel>( this ));
+}
+\end{lstlisting}
+\begin{lstlisting}
+static void load_and_construct(n_serialization::t_iarchive& archive,
+			cereal::construct<MyCoupledModel>& construct) {
+	construct("");
+	construct->serialize(archive);
+}
+\end{lstlisting}
+In case your own coupled models uses more datamembers, you can include them to the serialization by adding them at the back of the parameter list of archive() in the first two functions. For more information consult the Cereal manual.\\
+\\ 
+For example:
+\begin{lstlisting}
+int a = 5;
+archive(cereal::virtual_base_class<CoupledModel>( this ), a);
+\end{lstlisting}
+After the class definition you have to register your new atomic model throug the following macro: 
+\begin{lstlisting}
+CEREAL_REGISTER_TYPE(MyCoupledModel);
+\end{lstlisting}
+
+\textbf{NOTE} the registration has to be done outside of any namespaces to work properly.
 
 \section{Dynamic Structured DEVS}
 Both atomic models and coupled models can implement the following function:
