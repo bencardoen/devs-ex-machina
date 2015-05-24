@@ -48,24 +48,6 @@ The literature sometimes exchanges terms, to avoid any confusion the following f
 \end{itemize}
 Lookahead is collected per model per kernel, eit/eot are based on information from models but determined on a core/kernel level.
 
-\chapter{Planning}
-\section{Parallel}
-\begin {itemize}
-\item GVT integration : week 0-1, Ben and Tim
-\item Conservative : week 2-3 , Ben and Tim
-\end {itemize}
-\section{General}
-\begin {itemize}
-\item Dynamic Structured : week 1-3 Stijn
-\item DevStone and examples : week 0-2 Matthijs and Pieter
-\item Serialization : week 0 Pieter
-\item Simulation control : week 1-3 Matthijs and Pieter  
-\item Tracers : week 0 Stijn
-\item Benchmarking PyPDevs Adevs : week 3 Matthijs and Pieter
-\end {itemize}
-\section{Optimization}
-Week 4 general review.
-
 \chapter{Architecture Analysis}
 \section{Implementation language}
 Python is a very powerful language, but due to its interpreted nature it suffers from a performance point of view. Python's GIL \cite{gil} makes this issue even more serious whenever multi-threading is required. Although it relieves the developer from tracking resource allocation, this comes at a price in the overhead caused by the GC. \\
@@ -297,33 +279,7 @@ This implementation only covers the most basic needs:
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
-\chapter{Performance Analysis}
-Whenever we made big design/architecture decisions, we first wrote some prototyping testcode to prove the viability (e.g. Network, Tracing, Logger).
-\section{First comparison}
-We use perf to get statistically sound benchmarks. The command run was :
-\lstinline!$perf stat -r {rounds} {command}!\\
-
-\subsection{Classic}
-An endtime of 3.6e6 was set, and both examples run against each other.
-\lstinputlisting[]{pycla.txt}
-The following shows a recording of the C++ implementation of the same example.\\
-\lstinputlisting[]{cpcla.txt}
-\subsubsection{Conclusion}
-The C++ port is approximately 12.906 times faster.
-
-\subsection{Dynamic structured}
-An end-time of 3.6e6 was set, and both examples run against each other.
-\lstinputlisting[]{pydyn.txt}
-The following shows a recording of the C++ implementation of the same example.\\
-\lstinputlisting[]{cpdyn.txt}
-\subsubsection{Conclusion}
-This result is still warped due to the startup/shutdown time of GTEST, but allready the C++ port is roughly 7.05 times faster, only page faults and migrations are worse (but being worked on).
-\subsection{Parallel}
-With GVT not yet active, an endtime of 3.6e6 was used (as before).\lstinputlisting[]{pypar.txt}\
-The following shows a recording of the C++ implementation of the same example.\\
-\lstinputlisting[]{cppar.txt}
-\subsubsection{Conclusion}
-The C++ port is approximately 19.6 times faster.
+\chapter{Logger analysis}
 
 \section{Logger}
 We have also conducted a small benchmark to compare the raw power of our logger and the proposed g3log.
