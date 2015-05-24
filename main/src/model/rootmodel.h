@@ -22,6 +22,7 @@ private:
 public:
 	RootModel();
 	virtual ~RootModel();
+	void setComponents(t_coupledmodelptr& model);
 	/**
 	 * @precondition All atomic models have a unique name
 	 */

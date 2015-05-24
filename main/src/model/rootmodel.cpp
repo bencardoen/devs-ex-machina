@@ -20,6 +20,25 @@ RootModel::~RootModel()
 {
 }
 
+void RootModel::setComponents(t_coupledmodelptr& model)
+{
+	std::deque<t_coupledmodelptr> toDo;
+	toDo.push_back(model);
+	while (!toDo.empty()) {
+		t_coupledmodelptr& top = toDo.front();
+		toDo.pop_front();
+		for (t_modelptr& current : top->getComponents()) {
+			current->setParent(top);
+			t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(current);
+			if (atomic) {
+				m_components.push_back(atomic);
+			} else {
+				toDo.push_back(std::dynamic_pointer_cast<CoupledModel>(current));
+			}
+		}
+	}
+}
+
 const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupledmodelptr& model)
 {
 	if (m_directConnected)
