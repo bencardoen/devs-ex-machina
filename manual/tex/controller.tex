@@ -28,6 +28,17 @@ The easiest way to get started is using the included \textsl{ControllerConfig}. 
 \end{tabular}
 \\
 \begin{tabular}{lp{8cm}}
+\textit{simType} & The behavior of the Parallel DEVS:
+
+	\begin{tabular}{l|l}
+	\textsf{Option} & \textsf{Meaning} \\
+	\texttt{OPTIMISTIC} & \emph{Optimistic PDEVS Simulation} \\
+	\texttt{CONSERVATIVE} & \emph{Conservative PDEVS Simulation} \\
+	\end{tabular} \newline
+	
+	The default is \emph{OPTIMISTIC} \newline
+	\textit{[This option is disregarded if you do not run PDEVS]}
+\\\\
 \textit{coreAmount} & The amount of cores the simulation will run on \newline
 						\textit{[This option is disregarded if you do not run PDEVS]} \newline
 						By default this is 1
@@ -53,7 +64,19 @@ The final step of the setup would be to add any models to the controller using t
 
 \section{Control}
 You can choose to let the simulation end at a certain moment by adding a \textbf{termination time} or a \textbf{termination condition}.\\
-The termination time can be set using the controller's \textsl{setTerminationTime} method, the termination condition by using \textsl{setTerminationCondition} and passing a custom \textsl{TerminationFunctor}.\\ %TODO add manual terminationfunctor?
+The termination time can be set using the controller's \textsl{setTerminationTime} method, the termination condition by using \textsl{setTerminationCondition} and passing a custom \textsl{TerminationFunctor}.
+
+\subsection{Events}
+If you want to schedule certain events while the simulation is running, like pausing and saving, you can use the Controller's \textsl{addPauseEvent} and \textsl{addSaveEvent} methods.\\
 \\
+The \textsl{addPauseEvent} method requires the \emph{simulated time} at which the simulator has to pause and how long the pause should take (in seconds).\\
+The \textsl{addSaveEvent} method requires the \emph{simulated time} at which the simulation has to be saved and the \textsl{prefix} of the saved file. For example: a save at the simulated time \textit{100} with the prefix \texttt{mySimSave} will result in a file \texttt{mySimSave\_100.devs}.
+
+For both events, the boolean value \textit{true} can be added as an additional argument to make the event repeat itself until the simulation ends.
+
+\subsubsection{Loading a previous simulation}
+Loading a previous simulation from a savefile follows the same procedure as setting up a regular simulation for the most part. First the simulation is configured (optionally by using the ControllerConfig object as described above), then instead of loading a new model, you can use the Controller's \textsl{load} method to load the data of your previous simulation.\\
+\emph{Important: To load a simulation \textbf{do not} have to use the same configuration!}
+
+\section{Starting the simulation}
 Finally, you can start the DEVS using the controller's \textsl{simulate} method.
-%TODO Serializatie: save, load
