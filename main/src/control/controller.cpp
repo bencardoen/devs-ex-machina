@@ -81,7 +81,19 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 	else {
 		LOG_INFO("CONTROLLER: Loading CoupledModel");
 		iarchivemodel(m_coupledOrigin);
-		addModel(m_coupledOrigin); // Just run standard adding procedure
+		m_root->setComponents(m_coupledOrigin);
+		for (t_atomicmodelptr& model : m_root->getComponents()) {
+			size_t coreID = m_allocator->allocate(model);
+			addModel(model, coreID);
+			if (m_simType != SimType::PDEVS)
+				model->setKeepOldStates(false);
+			else
+				model->setKeepOldStates(true);
+			LOG_DEBUG("Controller::addModel added model with name ", model->getName());
+		}
+		if (m_simType == SimType::DSDEVS)
+			m_coupledOrigin->setController(this);
+		m_hasMainModel = true;
 	}
 	LOG_INFO("CONTROLLER: Loaded simulation starts at ", m_lastGVT);
 	m_isLoadedSim = true;

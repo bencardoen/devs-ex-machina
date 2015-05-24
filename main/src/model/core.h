@@ -10,6 +10,7 @@
 #include "controlmessage.h"
 #include "tracers.h"
 #include <set>
+#include <condition_variable>
 
 #ifndef SRC_MODEL_CORE_H_
 #define SRC_MODEL_CORE_H_

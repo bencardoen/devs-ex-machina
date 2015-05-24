@@ -16,6 +16,7 @@
 #include "archive.h"
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/access.hpp"
+#include <set>
 
 class TestCereal;
 

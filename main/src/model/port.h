@@ -16,6 +16,7 @@
 #include "zfunc.h"
 #include "globallog.h"
 #include "objectfactory.h"
+#include <set>
 
 class TestCereal;
 
