@@ -341,8 +341,8 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 	// Call chain :: singleStep->getMessages->sortIncoming -> receiveMessage() -> revert()
 
 	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
-		const auto& msg = m_sent_messages.back();
-		if (msg->getTimeStamp().getTime() >= totime.getTime()) {
+		auto msg = m_sent_messages.back();
+		if (msg->getTimeStamp() >= totime) {
 			m_sent_messages.pop_back();
 			LOG_DEBUG("MCORE:: ", this->getCoreID(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);

@@ -605,7 +605,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::mutex& vectorlock, std::size_t turns, Controller& ctrl)
 {
 	auto core = ctrl.m_cores[myid];
-	constexpr size_t YIELD_ZOMBIE = 10;	// @see Core::m_zombie_rounds
+	constexpr size_t YIELD_ZOMBIE = 25;	// @see Core::m_zombie_rounds
 	auto predicate = [&]()->bool {
 		std::lock_guard<std::mutex> lv(vectorlock);
 		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
@@ -616,6 +616,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread.");
 			std::chrono::milliseconds ms{25};
 			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
+			//core->setIdle(true);
 		}
 
 		{	/// Intercept a direct order to stop myself.
