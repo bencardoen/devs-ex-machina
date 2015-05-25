@@ -527,6 +527,93 @@ $ perf stat ./sim 32 0
        0.015852985 seconds time elapsed
 \end{Verbatim}
 
+\section{Compared to PyPDEVS on PyPy}
+Surprisingly, both DEVStone and PHOLD perform significantly worse using \textit{PyPy} instead of \textit{CPython}, despite the sometimes dramatically improved CPU utilization. Perhaps these two test cases just happen to be "JIT-unfriendly".\\
+\textit{PyPy} is known to sometimes perform worse when profiling but informally its speed didn't seem any different when running the benchmarks without using \texttt{perf}.
+
+\subsection{DEVStone}
+\paragraph{\textsc{PythonPDEVS} - Classic DEVS on PyPy}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat pypy experiment.py default 3 false > out.txt
+
+ Performance counter stats for 'pypy experiment.py default 3 false':
+
+       2367.165094 task-clock (msec)         #    0.998 CPUs utilized          
+               276 context-switches          #    0.117 K/sec                  
+                20 cpu-migrations            #    0.008 K/sec                  
+            11,357 page-faults               #    0.005 M/sec                  
+     6,765,226,427 cycles                    #    2.858 GHz                     [83.37%]
+     4,234,478,457 stalled-cycles-frontend   #   62.59% frontend cycles idle    [83.27%]
+     3,145,973,412 stalled-cycles-backend    #   46.50% backend  cycles idle    [66.67%]
+     5,014,442,675 instructions              #    0.74  insns per cycle        
+                                             #    0.84  stalled cycles per insn [83.49%]
+     1,077,122,966 branches                  #  455.027 M/sec                   [83.44%]
+        38,104,090 branch-misses             #    3.54% of all branches         [83.27%]
+
+       2.372239526 seconds time elapsed
+\end{Verbatim}
+\paragraph{\textsc{PythonPDEVS} - Parallel DEVS on PyPy}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat mpirun -np 2 pypy experiment.py default 3 false > out.txt
+
+ Performance counter stats for 'mpirun -np 2 pypy experiment.py default 3 false':
+
+       5789.446884 task-clock (msec)         #    1.991 CPUs utilized          
+               624 context-switches          #    0.108 K/sec                  
+                40 cpu-migrations            #    0.007 K/sec                  
+            23,245 page-faults               #    0.004 M/sec                  
+    15,328,712,962 cycles                    #    2.648 GHz                     [83.32%]
+    10,258,365,662 stalled-cycles-frontend   #   66.92% frontend cycles idle    [83.32%]
+     7,799,638,758 stalled-cycles-backend    #   50.88% backend  cycles idle    [66.54%]
+    10,156,225,688 instructions              #    0.66  insns per cycle        
+                                             #    1.01  stalled cycles per insn [83.23%]
+     2,163,097,214 branches                  #  373.628 M/sec                   [83.47%]
+        76,428,341 branch-misses             #    3.53% of all branches         [83.42%]
+
+       2.907224325 seconds time elapsed
+\end{Verbatim}
+\subsection{PHOLD}
+\paragraph{\textsc{PythonPDEVS} - Classic DEVS on PyPy}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat pypy experiment.py > out.txt
+
+ Performance counter stats for 'pypy experiment.py':
+
+       1827.849910 task-clock (msec)         #    0.999 CPUs utilized          
+               220 context-switches          #    0.120 K/sec                  
+                10 cpu-migrations            #    0.005 K/sec                  
+            14,385 page-faults               #    0.008 M/sec                  
+     5,224,512,160 cycles                    #    2.858 GHz                     [83.37%]
+     3,283,008,184 stalled-cycles-frontend   #   62.84% frontend cycles idle    [83.37%]
+     2,563,366,886 stalled-cycles-backend    #   49.06% backend  cycles idle    [66.80%]
+     4,079,915,131 instructions              #    0.78  insns per cycle        
+                                             #    0.80  stalled cycles per insn [83.42%]
+       758,611,592 branches                  #  415.029 M/sec                   [83.37%]
+        28,841,978 branch-misses             #    3.80% of all branches         [83.16%]
+
+       1.830573045 seconds time elapsed
+\end{Verbatim}
+\paragraph{\textsc{PythonPDEVS} - Parallel DEVS on PyPy}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat mpirun -np 2 pypy experiment.py > out.txt
+
+ Performance counter stats for 'mpirun -np 2 pypy experiment.py':
+
+       5410.417506 task-clock (msec)         #    1.992 CPUs utilized          
+               785 context-switches          #    0.145 K/sec                  
+                33 cpu-migrations            #    0.006 K/sec                  
+            28,874 page-faults               #    0.005 M/sec                  
+    15,456,764,898 cycles                    #    2.857 GHz                     [83.35%]
+    12,040,987,764 stalled-cycles-frontend   #   77.90% frontend cycles idle    [83.35%]
+     6,550,209,612 stalled-cycles-backend    #   42.38% backend  cycles idle    [66.70%]
+     7,709,537,731 instructions              #    0.50  insns per cycle        
+                                             #    1.56  stalled cycles per insn [83.41%]
+     1,430,492,329 branches                  #  264.396 M/sec                   [83.42%]
+        63,358,010 branch-misses             #    4.43% of all branches         [83.21%]
+
+       2.716329957 seconds time elapsed
+\end{Verbatim}
+
 \section{Logger}
 We have also conducted a small benchmark to compare the raw power of our logger and the proposed g3log.
 We let each logger print several hundred thousand messages to a file. These are the performance statistics:
