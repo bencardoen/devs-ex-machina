@@ -282,11 +282,16 @@ To implement the asynchronous output, we made use of a custom stream buffer. The
 
 \chapter{Performance analysis}
 To measure the performance of \textsc{DEVS Ex Machina} under more demanding conditions, \textbf{DEVStone} and \textbf{PHOLD} benchmarks were used. Every time we compare the performance of our implementation with \textit{PythonPDEVS}.\\
+Note: at the time, no major research has gone into the use of several compiler optimizations. Potentially, there is still speed to be gained here.\\
+\\
+{\footnotesize[All the following tests were performed using an \textit{Intel Core i5 M520} CPU at 2.40GHz with 4GB RAM]}
+
 
 \section{Classic DEVS}
-Using Classic DEVS we see noticeable speedups compared to PyPDEVS. The tests are completed in far less time, using the CPU more effici\"ently.
+Using Classic DEVS we see noticeable speedups compared to PyPDEVS. The tests are completed in far less time, using the CPU more efficiently.
 
 \subsection{DEVStone}
+The DEVStone benchmark used for both implementations has a width of 2 and a depth of 3.
 \paragraph{\textsc{DEVS Ex Machina}}
 \begin{Verbatim}[fontsize=\small]
 $ perf stat ./dxexmachina_devstone 
@@ -311,7 +316,7 @@ $ perf stat ./dxexmachina_devstone
 \begin{Verbatim}[fontsize=\small]
 $ perf stat python experiment.py default 2 false > out.txt
 
- Performance counter stats for 'python experiment.py def 2 false':
+ Performance counter stats for 'python experiment.py default 2 false':
 
         709.776558 task-clock (msec)         #    0.989 CPUs utilized          
                191 context-switches          #    0.269 K/sec                  
@@ -350,9 +355,9 @@ $ perf stat ./dxexmachina_phold
 \end{Verbatim}
 \paragraph{\textsc{PythonPDEVS}}
 \begin{Verbatim}[fontsize=\small]
-$ perf stat python experiment.py def 2 false > out.txt
+$ perf stat python experiment.py default 2 false > out.txt
 
- Performance counter stats for 'python experiment.py def 2 false':
+ Performance counter stats for 'python experiment.py default 2 false':
 
         709.776558 task-clock (msec)         #    0.989 CPUs utilized          
                191 context-switches          #    0.269 K/sec                  
@@ -395,9 +400,9 @@ $ perf stat ./dxexmachina_devstone
 \end{Verbatim}
 \paragraph{\textsc{PythonPDEVS}}
 \begin{Verbatim}[fontsize=\small]
-$ perf stat mpirun -np 2 python experiment.py def 2 false > out.txt
+$ perf stat mpirun -np 2 python experiment.py default 2 false > out.txt
 
- Performance counter stats for 'mpirun -np 2 python experiment.py def 2 false':
+ Performance counter stats for 'mpirun -np 2 python experiment.py default 2 false':
 
         787.125992 task-clock (msec)         #    0.371 CPUs utilized          
              1,120 context-switches          #    0.001 M/sec                  
@@ -437,6 +442,50 @@ $ perf stat ./dxexmachina_phold
 \end{Verbatim}
 \paragraph{\textsc{PythonPDEVS}}
 PHOLD in parallel on PyPDEVS crashed immediately with an MPI error, hence a comparison was not possible for now. However, given the results of our implementation we can assume that here too, the parallel simulation would be quite a bit slower.
+
+\section{Compared to \textsc{ADEVS}}
+Since the DEVStone benchmark for \textsc{ADEVS} does not support different depths, a test with greater width was performed instead.\\
+As we can see, \textsc{ADEVS} is still quite a bit faster, though its CPU usage is less efficient.
+\paragraph{\textsc{DEVS Ex Machina} - Classic DEVS}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat ./dxexmachina_devstone 32 0
+
+ Performance counter stats for './dxexmachina_devstone 32 0':
+
+        836.066726 task-clock (msec)         #    1.113 CPUs utilized          
+             1,241 context-switches          #    0.001 M/sec                  
+             1,027 cpu-migrations            #    0.001 M/sec                  
+               720 page-faults               #    0.861 K/sec                  
+     2,278,424,999 cycles                    #    2.725 GHz                     [84.52%]
+       959,881,005 stalled-cycles-frontend   #   42.13% frontend cycles idle    [84.53%]
+       500,732,097 stalled-cycles-backend    #   21.98% backend  cycles idle    [68.69%]
+     2,775,228,039 instructions              #    1.22  insns per cycle        
+                                             #    0.35  stalled cycles per insn [85.11%]
+       654,396,817 branches                  #  782.709 M/sec                   [84.56%]
+         9,222,451 branch-misses             #    1.41% of all branches         [83.94%]
+
+       0.750984696 seconds time elapsed
+\end{Verbatim}
+\paragraph{\textsc{ADEVS} - Classic DEVS}
+\begin{Verbatim}[fontsize=\small]
+$ perf stat ./sim 32 0
+
+ Performance counter stats for './sim 32 0':
+
+         15.465233 task-clock (msec)         #    0.976 CPUs utilized          
+                 1 context-switches          #    0.065 K/sec                  
+                 1 cpu-migrations            #    0.065 K/sec                  
+               340 page-faults               #    0.022 M/sec                  
+        22,395,954 cycles                    #    1.448 GHz                     [74.20%]
+         6,618,757 stalled-cycles-frontend   #   29.55% frontend cycles idle    [74.17%]
+         2,895,009 stalled-cycles-backend    #   12.93% backend  cycles idle    [87.88%]
+        31,797,999 instructions              #    1.42  insns per cycle        
+                                             #    0.21  stalled cycles per insn
+         6,645,494 branches                  #  429.705 M/sec                  
+           250,467 branch-misses             #    3.77% of all branches         [74.03%]
+
+       0.015852985 seconds time elapsed
+\end{Verbatim}
 
 \section{Logger}
 We have also conducted a small benchmark to compare the raw power of our logger and the proposed g3log.
