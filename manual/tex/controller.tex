@@ -35,15 +35,16 @@ The easiest way to get started is using the included \textsl{ControllerConfig}. 
 	\texttt{OPTIMISTIC} & \emph{Optimistic PDEVS Simulation} \\
 	\texttt{CONSERVATIVE} & \emph{Conservative PDEVS Simulation} \\
 	\end{tabular} \newline
+	\textit{[This option is disregarded if you do not run PDEVS]} \newline
+	The default is \emph{OPTIMISTIC}
 	
-	The default is \emph{OPTIMISTIC} \newline
-	\textit{[This option is disregarded if you do not run PDEVS]}
 \\\\
 \textit{coreAmount} & The amount of cores the simulation will run on \newline
 						\textit{[This option is disregarded if you do not run PDEVS]} \newline
 						By default this is 1
 \\\\
 \textit{saveInterval} & This value decides how often the simulation is saved and the tracing output dumped. A value of 3 would mean that this happens every 3 simulation cycles. \newline
+\textit{[This option is disregarded if you do not run CLASSIC or DSDEVS]} \newline
 						The default value is 5
 \\\\
 \textit{allocator} & By default this is the included \textsl{SimpleAllocator}
@@ -75,8 +76,12 @@ The \textsl{addSaveEvent} method requires the \emph{simulated time} at which the
 For both events, the boolean value \textit{true} can be added as an additional argument to make the event repeat itself until the simulation ends.
 
 \subsubsection{Loading a previous simulation}
-Loading a previous simulation from a savefile follows the same procedure as setting up a regular simulation for the most part. First the simulation is configured (optionally by using the ControllerConfig object as described above), then instead of loading a new model, you can use the Controller's \textsl{load} method to load the data of your previous simulation.\\
-\emph{Important: To load a simulation \textbf{do not} have to use the same configuration!}
+Loading a previous simulation from a savefile follows the same procedure as setting up a regular simulation for the most part.\\
+First the simulation is configured (optionally by using the ControllerConfig object as described above) and then, instead of loading a new model, you can use the Controller's \textsl{load} method to load the data of your previous simulation.\\
+\\
+\textit{Important: to load a simulation you \textbf{do not} have to use the same configuration!}
+\\
+If you wish to increase the amount of cores of a loaded simulation, it is recommended to use an allocator which overrides the model's preferred location, since those will still be set to the cores of the previous simulation. The included \textsl{SimpleAllocator} can be used by setting its \texttt{allowUserOverride} flag to \texttt{false} in the constructor. Reducing the amount of cores is handled automatically.
 
 \section{Starting the simulation}
 Finally, you can start the DEVS using the controller's \textsl{simulate} method.
