@@ -13,17 +13,18 @@
 namespace n_control {
 
 /**
- * @brief Simple, dumb allocator that tries to spread models evenly, but gets overruled by the models' configuration
+ * @brief Simple, dumb allocator that tries to spread models evenly, but gets overruled by the models' configuration by default
  */
 class SimpleAllocator: public Allocator
 {
 private:
 	size_t m_i;
 	size_t m_cores;
+	bool m_allowUserOverride;
 
 public:
-	SimpleAllocator(size_t c)
-		: m_i(0), m_cores(c)
+	SimpleAllocator(size_t c, bool allowOverride = true)
+		: m_i(0), m_cores(c), m_allowUserOverride(allowOverride)
 	{
 	}
 
@@ -38,13 +39,15 @@ public:
 	size_t allocate(n_model::t_atomicmodelptr& m)
 	{
 		int corenum = m->getCorenumber();
-		if(corenum == -1) {	// The user didn't specify a particular core, so we pick one ourselves
-			int i = m_i;
-			m_i = (m_i + 1) % m_cores;
-			m->setCorenumber(i); // We let the model know which core we decided to place it on
-			return i;
+		if(!m_allowUserOverride || corenum == -1) {	// If user override is not allowed, or if it is but the
+			corenum = m_i;				//  user didn't specify a particular core, we pick a
+			m_i = (m_i + 1) % m_cores;		//  destination ourselves
+		} else {
+			corenum %= m_cores;	// Make absolutely sure the model always ends up on a real core
+						//  e.g. if the user lowered the amount of cores on a loaded simulation
 		}
-		else return corenum;	// The user already specified a core for this model, so we better pick that one!
+		m->setCorenumber(corenum);
+		return corenum;
 	}
 };
 
