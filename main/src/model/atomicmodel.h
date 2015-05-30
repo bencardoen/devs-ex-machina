@@ -112,6 +112,14 @@ public:
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 
 	/**
+	 * Transitions the model confluently with given messages, this function will call the user-implemented confTransition
+	 * function and will also store all messages properly for the tracer to find them
+	 *
+	 * @param message List of messages that are needed for the transition
+	 */
+	void doConfTransition(const std::vector<n_network::t_msgptr> & message);
+
+	/**
 	 * Get the current time advance, one of the functions the user has to implement
 	 *
 	 * @return Current time advance

@@ -9,6 +9,17 @@
 
 namespace n_virus {
 
+std::ostream& operator <<(std::ostream& out, const MsgData& data)
+{
+	return (out << data.m_value);
+}
+
+MsgData::MsgData(int val, std::string from):
+	m_value(val), m_from(from)
+{
+}
+
+
 /*
  * CELLSTATE
  */
@@ -37,10 +48,14 @@ Cell::Cell(std::string name, size_t neighbours, size_t production, size_t seed, 
 {
 	m_rng.seed(seed);
 	addInPort("in");
-	for (size_t i = 0; i < neighbours; ++i) {
-		m_neighbours.push_back(addOutPort("out_" + n_tools::toString(i)));
-	}
 	setState(n_tools::createObject<CellState>(production, capacity));
+}
+
+n_model::t_portptr n_virus::Cell::addConnection()
+{
+	n_model::t_portptr ptr = addOutPort("out_" + n_tools::toString(m_neighbours.size()));
+	m_neighbours.push_back(ptr);
+	return ptr;
 }
 
 Cell::~Cell()
@@ -96,7 +111,7 @@ void Cell::confTransition(const std::vector<n_network::t_msgptr> & message)
 	updateCurState();
 	produce();
 	for (auto& msg : message) {
-		int incoming = n_network::getMsgPayload<int>(msg);
+		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
 	m_leaving = send();
@@ -107,7 +122,7 @@ void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	updateCurState();
 	for (auto& msg : message) {
-		int incoming = n_network::getMsgPayload<int>(msg);
+		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
 	setState(m_curState);
@@ -116,7 +131,7 @@ void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 std::vector<n_network::t_msgptr> Cell::output() const
 {
 	if (m_leaving != 0) {
-		auto messages = m_neighbours[m_target]->createMessages(m_leaving);
+		auto messages = m_neighbours[m_target]->createMessages(MsgData(m_leaving, getName()));
 		return messages;
 	} else {
 		return std::vector<n_network::t_msgptr>();
@@ -138,7 +153,7 @@ Structure::Structure(size_t poolsize, size_t connections)
 	addSubModel(posBase);
 	addSubModel(negBase);
 
-	std::vector<n_model::t_atomicmodelptr> cells = { posBase, negBase };
+	std::vector<std::shared_ptr<Cell>> cells = { posBase, negBase };
 	std::uniform_int_distribution<size_t> sizer(1, 12);
 	for (size_t i = 0; i < poolsize; ++i) {
 		cells.push_back(
@@ -167,9 +182,9 @@ Structure::Structure(size_t poolsize, size_t connections)
 			size_t thisPort = conGrid[thisCell].back();
 			size_t otherPort = conGrid[otherCell].back();
 
-			connectPorts(cells[thisCell]->getPort("out_" + n_tools::toString(thisPort)),
+			connectPorts(cells[thisCell]->addConnection(),
 			        cells[otherCell]->getPort("in"));
-			connectPorts(cells[otherCell]->getPort("out_" + n_tools::toString(otherPort)),
+			connectPorts(cells[otherCell]->addConnection(),
 			        cells[thisCell]->getPort("in"));
 
 			conGrid[otherCell].pop_back();
@@ -183,4 +198,3 @@ Structure::~Structure()
 }
 
 } /* namespace n_virus */
-

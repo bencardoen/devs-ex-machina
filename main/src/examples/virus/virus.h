@@ -19,6 +19,21 @@
 
 namespace n_virus {
 
+/**
+ * @brief Small struct that is sent as a message.
+ *
+ * It contains an amoint of viri and the name of the source cell
+ */
+struct MsgData
+{
+	int m_value;
+	std::string m_from;
+
+	MsgData(int val, std::string from);
+};
+
+std::ostream& operator<<(std::ostream& out, const MsgData& data);
+
 class CellState: public n_model::State
 {
 public:
@@ -46,6 +61,8 @@ public:
 	int send();
 	void receive(int incoming);
 	void produce();
+
+	n_model::t_portptr addConnection();
 
 	virtual n_model::t_timestamp timeAdvance() const;
 	virtual void intTransition();

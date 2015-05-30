@@ -229,7 +229,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			this->traceInt(urgent);
 		} else {
 			urgent->setTimeElapsed(0);
-			urgent->confTransition(found->second);		// Confluent
+			urgent->doConfTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
 			this->postTransition(urgent);
 			this->traceConf(urgent);

@@ -31,7 +31,7 @@ AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priorit
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
-	this->doExtTransition(message);
+	this->extTransition(message);
 }
 
 void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& message)
@@ -58,6 +58,32 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 
 	// Do the actual external transition
 	this->extTransition(message);
+}
+
+
+void AtomicModel::doConfTransition(const std::vector<n_network::t_msgptr>& message)
+{
+	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
+	for (auto& port : m_iPorts)
+		port.second->clearReceivedMessages();
+
+	for (auto& m : message) {
+		std::string destport = m->getDestinationPort();
+		auto it = m_iPorts.begin();
+		while (it != m_iPorts.end()) {
+			if (n_tools::endswith(destport, it->first))
+				break;
+			++it;
+		}
+		// When we find the port, we add the message temporarily to it for the tracer
+		if (it != m_iPorts.end())
+			it->second->addMessage(m, true);
+		else {
+			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
+		}
+	}
+
+	this->confTransition(message);
 }
 
 std::vector<n_network::t_msgptr> AtomicModel::doOutput()

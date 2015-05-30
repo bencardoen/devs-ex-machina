@@ -80,6 +80,14 @@ struct ControllerConfig
 	 */
 	std::shared_ptr<Allocator> allocator;
 
+	/**
+	 * The tracerset used by the simulator.
+	 * By default: @c nullptr
+	 * @attention: If this parameter is not set, a new TracerSet will be created using the default constructor.
+	 * @see Tracers
+	 */
+	n_tracers::t_tracersetptr tracerset;
+
 	ControllerConfig();
 	virtual ~ControllerConfig();
 
