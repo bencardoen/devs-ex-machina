@@ -223,7 +223,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		t_atomicmodelptr urgent = this->m_models[imminent];
 		const auto& found = mail.find(imminent);
 		if (found == mail.end()) {				// Internal
-			urgent->intTransition();
+			urgent->doIntTransition();
 			urgent->setTime(noncausaltime);
 			this->postTransition(urgent);
 			this->traceInt(urgent);

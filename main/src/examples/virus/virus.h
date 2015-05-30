@@ -39,6 +39,8 @@ class CellState: public n_model::State
 public:
 	size_t m_production;
 	int m_capacity;
+	int m_toSend;	//how much will be sent the this time
+	std::size_t m_target; //the target
 public:
 	CellState(size_t production, int capacity = 0);
 	virtual ~CellState();
@@ -51,8 +53,6 @@ private:
 	std::mt19937 m_rng;
 	std::vector<n_model::t_portptr> m_neighbours;
 	std::shared_ptr<CellState> m_curState;
-	int m_leaving;
-	size_t m_target;
 public:
 	Cell(std::string name, size_t neighbours, size_t production, size_t seed, size_t capacity = 0);
 	virtual ~Cell();

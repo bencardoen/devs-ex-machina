@@ -60,6 +60,13 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 	this->extTransition(message);
 }
 
+void AtomicModel::doIntTransition()
+{
+	for (auto& port : m_iPorts)
+		port.second->clearReceivedMessages();
+	intTransition();
+}
+
 
 void AtomicModel::doConfTransition(const std::vector<n_network::t_msgptr>& message)
 {

@@ -25,7 +25,7 @@ MsgData::MsgData(int val, std::string from):
  */
 
 CellState::CellState(size_t production, int capacity)
-	: m_production(production), m_capacity(capacity)
+	: m_production(production), m_capacity(capacity), m_toSend(0), m_target(0u)
 {
 }
 
@@ -44,11 +44,11 @@ std::string CellState::toString()
  */
 
 Cell::Cell(std::string name, size_t neighbours, size_t production, size_t seed, size_t capacity)
-	: AtomicModel(name), m_leaving(0), m_target(0)
+	: AtomicModel(name), m_curState(n_tools::createObject<CellState>(production, capacity))
 {
 	m_rng.seed(seed);
 	addInPort("in");
-	setState(n_tools::createObject<CellState>(production, capacity));
+	setState(m_curState);
 }
 
 n_model::t_portptr n_virus::Cell::addConnection()
@@ -73,9 +73,7 @@ int Cell::send()
 		return 0;
 
 	std::uniform_int_distribution<int> dist(std::min(0,m_curState->m_capacity-1), std::max(0,m_curState->m_capacity-1));
-	int amount = dist(m_rng);
-	m_curState->m_capacity -= amount;
-	return amount;
+	return dist(m_rng);
 }
 
 void Cell::receive(int incoming)
@@ -90,18 +88,18 @@ void Cell::produce()
 
 n_model::t_timestamp Cell::timeAdvance() const
 {
-	return n_network::t_timestamp(10, 0);
+	return m_curState->m_capacity == 0? n_network::t_timestamp::infinity() : n_network::t_timestamp(10, 0);
 }
 
 void Cell::intTransition()
 {
 	updateCurState();
 	produce();
+	m_curState->m_capacity -= m_curState->m_toSend;
 
-	// We need to precalculate the following since output is const
-	m_leaving = send();
 	std::uniform_int_distribution<size_t> dist(0, m_neighbours.size()-1);
-	m_target = dist(m_rng);
+	m_curState->m_target = dist(m_rng);
+	m_curState->m_toSend = send();	//calculate what we'll send next time round
 
 	setState(m_curState);
 }
@@ -110,28 +108,34 @@ void Cell::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	updateCurState();
 	produce();
+	m_curState->m_capacity -= m_curState->m_toSend;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
-	m_leaving = send();
+
+	std::uniform_int_distribution<size_t> dist(0, m_neighbours.size()-1);
+	m_curState->m_target = dist(m_rng);
+	m_curState->m_toSend = send();	//calculate what we'll send next time round
 	setState(m_curState);
 }
 
 void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	updateCurState();
+	m_curState->m_capacity -= m_curState->m_toSend;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
+	m_curState->m_toSend = send();	//calculate what we'll send next time round
 	setState(m_curState);
 }
 
 std::vector<n_network::t_msgptr> Cell::output() const
 {
-	if (m_leaving != 0) {
-		auto messages = m_neighbours[m_target]->createMessages(MsgData(m_leaving, getName()));
+	if (m_curState->m_toSend != 0) {
+		auto messages = m_neighbours[m_curState->m_target]->createMessages(MsgData(m_curState->m_toSend, getName()));
 		return messages;
 	} else {
 		return std::vector<n_network::t_msgptr>();

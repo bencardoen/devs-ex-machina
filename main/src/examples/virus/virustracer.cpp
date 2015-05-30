@@ -30,7 +30,7 @@ std::string val2color(int val){
 
 std::ostream& n_virus::operator <<(std::ostream& out, const CellData& data)
 {
-	out << data.m_dotName << "[shape=circle, "
+	out << data.m_dotName << "[shape=" << (data.m_dotName[0] == 'C'? "circle": "doublecircle") <<", "
 		"color=" << val2color(data.m_value) << ", "
 		"fontcolor=" << val2color(data.m_value) << ", "
 		"style=bold, "
@@ -134,7 +134,13 @@ void n_virus::VirusTracer::actualTrace(t_timestamp time)
 				print("\n ", MovementData(pIt1.first, pIt2.first, pIt2.second, revIt->second));
 				pIt2.second = 0;
 				revIt->second = 0;
+				LOG_DEBUG("Reset cell movement data from ", pIt1.first, " and ", pIt2.first, " to 0");
 			}
+		}
+	}
+	for(auto pIt1 = m_conn.begin(); pIt1 != m_conn.end(); ++pIt1){
+		for(auto pIt2 = pIt1->second.begin(); pIt2 != pIt1->second.end(); ++pIt2){
+			pIt2->second = 0;
 		}
 	}
 	print("\n}");
@@ -153,6 +159,7 @@ void n_virus::VirusTracer::transitionTrace(t_timestamp time, std::vector<Movemen
 	//save state of this model
 	for(const MovementData& d: movements)
 		m_conn[d.m_from][d.m_to] = d.m_amountLeft;
+	LOG_DEBUG("Saving ", movements.size(), " movement updates @", m_prevTime.getTime());
 	auto it = m_cells.find(mFrom);
 	if(it == m_cells.end())
 		m_cells.insert(std::make_pair(mFrom, CellData(mFrom, senderValue)));

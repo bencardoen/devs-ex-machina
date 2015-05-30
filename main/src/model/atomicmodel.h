@@ -97,6 +97,11 @@ public:
 	/**
 	 * Perform an internal transition, one of the functions the user has to implement
 	 */
+	void doIntTransition();
+
+	/**
+	 * Perform an internal transition, one of the functions the user has to implement
+	 */
 	virtual void intTransition()
 	{
 		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
