@@ -148,7 +148,7 @@ std::vector<n_network::t_msgptr> Generator::output() const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, std::size_t randomta)
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
 	n_model::t_portptr recv = addInPort("in_event1");
@@ -199,7 +199,7 @@ CoupledRecursion::~CoupledRecursion()
 /*
  * DEVStone
  */
-DEVStone::DEVStone(std::size_t width, std::size_t depth, std::size_t randomta)
+DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
 	: CoupledModel("DEVStone")
 {
 	auto gen = n_tools::createObject<Generator>();
