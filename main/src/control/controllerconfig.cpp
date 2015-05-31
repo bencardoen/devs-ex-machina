@@ -10,7 +10,7 @@
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5)
+	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5), tracerset(nullptr), zombieIdleThreshold(-1)
 {
 }
 
@@ -20,7 +20,7 @@ ControllerConfig::~ControllerConfig()
 
 std::shared_ptr<Controller> ControllerConfig::createController()
 {
-	auto tracers = createObject<n_tracers::t_tracerset>();
+	auto tracers = tracerset? tracerset : createObject<n_tracers::t_tracerset>();
 	std::unordered_map<std::size_t, t_coreptr> coreMap;
 	std::shared_ptr<n_control::LocationTable> locTab =
 		createObject<n_control::LocationTable>((simType == Controller::PDEVS) ? coreAmount : 1);
@@ -58,6 +58,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	auto ctrl = createObject<Controller>(name, coreMap, allocator, locTab, tracers, saveInterval);
 
 	ctrl->setSimType(simType);
+	ctrl->setZombieIdleThreshold(zombieIdleThreshold);
 
 	return ctrl;
 }
