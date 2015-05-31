@@ -10,7 +10,7 @@
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5), tracerset(nullptr)
+	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5), tracerset(nullptr), zombieIdleThreshold(-1)
 {
 }
 
