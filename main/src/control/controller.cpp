@@ -26,7 +26,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
-	m_forceZombieIdle.store(true);
+	m_zombieIdleThreshold.store(true);
 }
 
 Controller::~Controller()
@@ -602,9 +602,9 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
-void Controller::forceZombieIdle(bool force)
+void Controller::setZombieIdleThreshold(int threshold)
 {
-	m_forceZombieIdle.store(force);
+	m_zombieIdleThreshold.store(threshold);
 }
 
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<std::size_t>& threadsignal,
@@ -622,7 +622,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread.");
 			std::chrono::milliseconds ms{25};
 			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
-			if(ctrl.m_forceZombieIdle.load()) core->setIdle(true);
+			int thres = ctrl.m_zombieIdleThreshold.load();
+			if(thres >= 0 && i >= thres) core->setIdle(true);
 		}
 
 		{	/// Intercept a direct order to stop myself.
