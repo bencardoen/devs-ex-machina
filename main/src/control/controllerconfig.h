@@ -81,6 +81,14 @@ struct ControllerConfig
 	std::shared_ptr<Allocator> allocator;
 
 	/**
+	 * The tracerset used by the simulator.
+	 * By default: @c nullptr
+	 * @attention: If this parameter is not set, a new TracerSet will be created using the default constructor.
+	 * @see Tracers
+	 */
+	n_tracers::t_tracersetptr tracerset;
+
+	/**
 	 * Forces cores to go into IDLE mode after a certain amount of cycles should they enter a "zombie" state after
 	 * 	reverting (no next scheduled time for models).
 	 * By default: @c -1 (do not force)

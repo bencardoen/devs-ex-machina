@@ -11,14 +11,23 @@
 #include "verbosetracer.h"
 #include "policies.h"
 
-namespace n_tracers {
+#ifdef VIRUSTRACER
+#include "examples/virus/virustracer.h"
+#endif
 
+namespace n_tracers {
+#ifndef VIRUSTRACER
 /**
  * @brief Default set of tracers.
  * The default set of tracers uses only one Tracer (the Verbose tracer)
  * and sends its output to std::cout
  */
 typedef Tracers<VerboseTracer<CoutWriter>> t_tracerset;
+
+#else
+typedef Tracers<VerboseTracer<FileWriter>, n_virus::VirusTracer> t_tracerset;
+
+#endif
 
 } /* namespace n_tracers */
 

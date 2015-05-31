@@ -32,6 +32,7 @@ n_network::Message::Message(std::string modeldest, const t_timestamp& time_made,
 		m_destination_model(modeldest), m_destination_core(std::numeric_limits<std::size_t>::max()),m_source_core(std::numeric_limits<std::size_t>::max()),
 		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_payload(payload), m_color(MessageColor::WHITE),m_antimessage(false)
 	{
+		LOG_DEBUG("initializing message with modeldest ", modeldest);
 	}
 
 
