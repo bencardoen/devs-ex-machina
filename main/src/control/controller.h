@@ -61,6 +61,7 @@ private:
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
 	size_t m_saveInterval;
+	std::atomic<bool> m_forceZombieIdle;
 
 	std::unordered_map<std::size_t, t_coreptr> m_cores;
 	t_location_tableptr m_locTab;
@@ -224,6 +225,11 @@ public:
 	 * @return Whether or not the simulator is currently performing Dynamic Structured DEVS
 	 */
 	bool isInDSPhase() const;
+
+	/**
+	 * @brief forces "zombie" cores to go IDLE
+	 */
+	void forceZombieIdle(bool force = true);
 
 private:
 	/**

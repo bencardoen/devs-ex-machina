@@ -80,6 +80,14 @@ struct ControllerConfig
 	 */
 	std::shared_ptr<Allocator> allocator;
 
+	/**
+	 * Forces cores to go into IDLE mode should they enter a "zombie" state after reverting (no next scheduled time for models).
+	 * By default: @c false
+	 * @attention : This parameter is specific only to Parallel DEVS modes, in other cases it will be disregarded
+	 * @attention : USE AT YOUR OWN RISK. This can dramatically increase the speed of some simulations, but break others!
+	 */
+	bool forceZombieIdle;
+
 	ControllerConfig();
 	virtual ~ControllerConfig();
 

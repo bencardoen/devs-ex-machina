@@ -10,7 +10,7 @@
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5)
+	: name("MySimulation"), simType(Controller::CLASSIC), coreAmount(1), pdevsType(OPTIMISTIC), saveInterval(5), forceZombieIdle(false)
 {
 }
 
@@ -58,6 +58,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	auto ctrl = createObject<Controller>(name, coreMap, allocator, locTab, tracers, saveInterval);
 
 	ctrl->setSimType(simType);
+	ctrl->forceZombieIdle(forceZombieIdle);
 
 	return ctrl;
 }
