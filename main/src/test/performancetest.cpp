@@ -25,10 +25,10 @@ TEST(Performance, DEVStone)
 
 	ControllerConfig conf;
 	conf.name = "DEVStone";
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+//	conf.simType = Controller::PDEVS;
+//	conf.coreAmount = 2;
+//	conf.zombieIdleThreshold = 10;
 	conf.saveInterval = 1;
-	conf.zombieIdleThreshold = 10;
 
 	std::ofstream filestream(TESTFOLDER "performance/devstone.txt");
 	{
@@ -51,10 +51,10 @@ TEST(Performance, PHOLD)
 
 	ControllerConfig conf;
 	conf.name = "PHOLDBench";
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+//	conf.simType = Controller::PDEVS;
+//	conf.coreAmount = 2;
+//	conf.zombieIdleThreshold = 10;
 	conf.saveInterval = 1;
-	conf.zombieIdleThreshold = 10;
 
 	std::ofstream filestream(TESTFOLDER "/performance/phold.txt");
 	{
