@@ -12,6 +12,7 @@
 #include "state.h"
 #include "car.h"
 #include "query.h"
+#include "queryack.h"
 #include <vector>
 
 namespace n_examples_traffic {
@@ -26,10 +27,12 @@ using n_network::t_timestamp;
 
 class RoadSegmentState: public State
 {
+	friend class RoadSegment;
+
 private:
 	std::vector<std::shared_ptr<Car> > cars_present;
-	std::vector<std::shared_ptr<Query> > query_buffer;
-	//std::vector<std::shared_ptr<?> > deny_list;
+	std::vector<int> query_buffer;
+	std::vector<std::shared_ptr<QueryAck> > deny_list;
 	bool reserved;
 	t_timestamp send_query_delay;
 	int send_query_id;
@@ -37,7 +40,7 @@ private:
 	int send_ack_id;
 	t_timestamp send_car_delay;
 	int send_car_id;
-	std::shared_ptr<Car> last_car;
+	int last_car;
 
 
 public:
@@ -60,7 +63,7 @@ private:
 	t_timestamp observ_delay;
 
 	t_portptr q_rans, q_recv, car_in, entries, q_rans_bs, q_recvs_bs, q_recv_bs, Q_recv, Q_rack;
-	t_portptr q_sans, q_send, car_out, exists, _q_sans_bs, Q_send, Q_sack;
+	t_portptr q_sans, q_send, car_out, exits, q_sans_bs, Q_send, Q_sack;
 
 public:
     RoadSegment(int district, float l, float v_max, t_timestamp observ_delay, std::string name);

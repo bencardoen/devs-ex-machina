@@ -58,4 +58,9 @@ std::ostream& operator<<(std::ostream& os, const Car& rhs)
 	return os;
 }
 
+int Car::getID() const
+{
+	return ID;
+}
+
 }

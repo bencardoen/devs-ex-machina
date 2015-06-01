@@ -113,7 +113,6 @@ void Building::extTransition(const std::vector<n_network::t_msgptr> & message)
 	getBuildingState()->send_car_delay = getBuildingState()->send_car_delay - m_elapsed;
 
 	for (auto msg : message) {
-		Car tmp = n_network::getMsgPayload<Car>(msg);
 		if(msg->getDestinationPort() == Q_rack->getFullName()) {
 			QueryAck queryAck = n_network::getMsgPayload<QueryAck>(msg);
 			if (getBuildingState()->send_car_id == queryAck.ID and (getBuildingState()->sent < send_max)) {

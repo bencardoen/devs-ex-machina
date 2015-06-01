@@ -18,6 +18,8 @@ using n_network::t_timestamp;
 class QueryAck
 {
 	friend class Building;
+	friend class RoadSegment;
+
 private:
 	int ID;
 	t_timestamp t_until_dep;

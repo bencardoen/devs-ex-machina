@@ -19,6 +19,7 @@ using n_network::t_timestamp;
 class Car
 {
 	friend class Building;
+	friend class RoadSegment;
 
 private:
 	int ID;
@@ -35,6 +36,8 @@ public:
 	Car(int ID, float v, float v_pref, int dv_pos_max, int dv_neg_max, t_timestamp departure_time);
 	Car(const Car&);
 	std::string toString() const;
+
+	int getID() const;
 
 	friend
 	bool operator==(const Car& left, const Car& right);
