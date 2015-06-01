@@ -5,6 +5,14 @@
  *      Author: pieter
  */
 
+#include "road.h"
 
+namespace n_examples_traffic {
+Road::Road(int district, std::string name, int segments): CoupledModel(name)
+{
+
+}
+
+}
 
 
