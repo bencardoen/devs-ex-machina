@@ -13,6 +13,9 @@
 namespace n_examples_traffic {
 class Query
 {
+	friend class RoadSegment;
+	friend class Intersection;
+
 private:
 	int ID;
 	std::string direction;

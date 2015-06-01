@@ -56,6 +56,8 @@ public:
 
 class RoadSegment: public AtomicModel
 {
+	friend class Road;
+
 private:
 	int district;
 	float l;
@@ -73,9 +75,8 @@ public:
 	void intTransition() override;
 	t_timestamp timeAdvance() const override;
 	std::vector<n_network::t_msgptr> output() const override;
-	t_timestamp lookAhead() const override;
 
-	t_timestamp mintime();
+	t_timestamp mintime() const;
 	std::shared_ptr<RoadSegmentState> getRoadSegmentState() const;
 };
 

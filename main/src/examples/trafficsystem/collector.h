@@ -25,12 +25,14 @@ using n_network::t_timestamp;
 
 class CollectorState: public State
 {
+	friend class Collector;
+
 private:
-	std::vector<Car> cars;
+	std::vector<std::shared_ptr<Car> > cars;
 
 
 public:
-	CollectorState(std::string state);
+	CollectorState();
 	CollectorState(const CollectorState&);
 	std::string toString();
 

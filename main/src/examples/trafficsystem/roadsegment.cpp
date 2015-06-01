@@ -250,6 +250,7 @@ void RoadSegment::intTransition()
 		getRoadSegmentState()->send_ack_id = -1;
 	}
 	else if (getRoadSegmentState()->send_query_delay == t_timestamp()) {
+		// Just sent a query, now deny all other queries and wait until the current car has left
 		getRoadSegmentState()->send_query_delay = t_timestamp::infinity();
 		getRoadSegmentState()->send_query_id = -1;
 	}
@@ -258,12 +259,14 @@ void RoadSegment::intTransition()
 		getRoadSegmentState()->send_car_delay = t_timestamp::infinity();
 		getRoadSegmentState()->send_car_id = -1;
 
+		// A car has left, so we can answer to the first other query we received
 		if (not getRoadSegmentState()->query_buffer.empty()) {
 			getRoadSegmentState()->send_ack_delay = observ_delay;
 			getRoadSegmentState()->send_ack_id = getRoadSegmentState()->query_buffer.back();
 			getRoadSegmentState()->query_buffer.pop_back();
 		}
 		else {
+			// No car is waiting for this segment, so 'unreserve' it
 			getRoadSegmentState()->reserved = false;
 		}
 	}
@@ -277,22 +280,63 @@ void RoadSegment::intTransition()
 
 t_timestamp RoadSegment::timeAdvance() const
 {
-
+	t_timestamp delay = mintime();
+	// Take care of floating point errors
+	return (delay > t_timestamp())? delay : t_timestamp();
 }
 
 std::vector<n_network::t_msgptr> RoadSegment::output() const
 {
+	t_timestamp mintime = this->mintime();
+	std::vector<n_network::t_msgptr> container;
+	if (getRoadSegmentState()->send_ack_delay == mintime) {
+		t_timestamp t_until_dep;
+		int ackID = getRoadSegmentState()->send_ack_id;
+		if (getRoadSegmentState()->cars_present.size() == 0) {
+			t_until_dep = t_timestamp();
+		}
+		else if (getRoadSegmentState()->cars_present.at(0)->v == 0) {
+			t_until_dep = t_timestamp::infinity();
+		}
+		else {
+			t_until_dep = t_timestamp(l / getRoadSegmentState()->cars_present.at(0)->v);
+		}
+		std::shared_ptr<QueryAck> ack = std::make_shared<QueryAck>(ackID, t_until_dep);
+		Q_sack->createMessages(ack, container);
+		q_sans_bs->createMessages(ack, container);
+	}
+	else if (getRoadSegmentState()->send_query_delay == mintime) {
+		std::shared_ptr<Query> query = std::make_shared<Query>(getRoadSegmentState()->send_query_id);
+		if (not getRoadSegmentState()->cars_present.at(0)->path.empty()) {
+			query->direction = getRoadSegmentState()->cars_present.at(0)->path.at(0);
+			Q_send->createMessages(query, container);
+		}
+	}
+	else if (getRoadSegmentState()->send_car_delay == mintime) {
+		std::shared_ptr<Car> car = getRoadSegmentState()->cars_present.at(0);
+		car->distance_travelled += l;
+		if (car->path.empty()) {
+			exits->createMessages(car, container);
+		}
+		else {
+			car_out->createMessages(car, container);
+		}
+	}
 
+	return container;
 }
 
-t_timestamp RoadSegment::lookAhead() const
+
+t_timestamp RoadSegment::mintime() const
 {
-
-}
-
-t_timestamp RoadSegment::mintime()
-{
-
+	if (getRoadSegmentState()->send_query_delay < getRoadSegmentState()->send_ack_delay) {
+		return ((getRoadSegmentState()->send_query_delay < getRoadSegmentState()->send_car_delay)?
+				getRoadSegmentState()->send_query_delay : getRoadSegmentState()->send_car_delay);
+	}
+	else {
+		return ((getRoadSegmentState()->send_ack_delay < getRoadSegmentState()->send_car_delay)?
+				getRoadSegmentState()->send_ack_delay : getRoadSegmentState()->send_ack_delay);
+	}
 }
 
 std::shared_ptr<RoadSegmentState> RoadSegment::getRoadSegmentState() const

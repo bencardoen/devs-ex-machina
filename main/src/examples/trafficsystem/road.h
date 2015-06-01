@@ -22,8 +22,6 @@ using n_model::t_portptr;
 class Road: public CoupledModel
 {
 private:
-	std::vector<std::shared_ptr<RoadSegment> > segment;
-
 	t_portptr q_rans, q_recv, car_in, entries, q_rans_bs, q_recv_bs;
 	t_portptr q_sans, q_send, car_out, exits, q_sans_bs;
 
