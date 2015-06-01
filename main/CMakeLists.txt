@@ -202,6 +202,10 @@ add_executable(${PROJECT_NAME}
   	src/mainbenchfire.cpp
   	)
 
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					)
+
 add_executable(${PROJECT_NAME}_devstone
  	src/tools/logger.cpp
  	src/tools/globallog.cpp
@@ -232,7 +236,7 @@ add_executable(${PROJECT_NAME}_devstone
   	src/maindevstone.cpp
   	)
 
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
  					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
  					)
 
@@ -266,7 +270,7 @@ add_executable(${PROJECT_NAME}_phold
   	src/mainphold.cpp
   	)
 
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
  					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
  					)
 
@@ -287,6 +291,7 @@ add_executable(${PROJECT_NAME}_virus
  	src/model/conservativecore.cpp
  	src/model/zfunc.cpp
  	src/examples/virus/virus.cpp
+ 	src/examples/virus/virustracer.cpp
  	src/control/allocator.cpp
  	src/control/controller.cpp
  	src/control/controllerconfig.cpp
@@ -300,8 +305,8 @@ add_executable(${PROJECT_NAME}_virus
   	src/mainvirus.cpp
   	)
 
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=15 -DVIRUSTRACER=1 -w"
  					)
 
 # SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES

@@ -4,6 +4,12 @@
  *      Author: Matthijs Van Os - Devs Ex Machina
  */
 
+#ifndef VIRUSTRACER
+#define VIRUSTRACER;	//added this line so that the poor Eclipse CDT indexer knows that this option should be set.
+static_assert(false, "Virus simulation needs the VIRUSTRACER macro set in the compilation options.\n"
+			"please add the following setting to the build settings of this build: -DVIRUSTRACER=1");
+#endif
+
 #include "controllerconfig.h"
 #include "coutredirect.h"
 #include "virus.h"
@@ -55,17 +61,18 @@ int main(int argc, char** args)
 		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
 	conf.coreAmount = coreAmt;
 	conf.saveInterval = 5;
+	conf.tracerset = createObject<n_tracers::t_tracerset>();
+	conf.tracerset->getByID<0>().initialize("./virus.txt");
+	conf.tracerset->getByID<1>().initialize("./virus", ".dot");
+//	conf.tracerset->getByID<1>().initialize();
+	//create the controller
+	auto ctrl = conf.createController();
+	t_timestamp endTime(1200, 0);
+	ctrl->setTerminationTime(endTime);
 
-	std::ofstream filestream("./virus.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(1200, 0);
-		ctrl->setTerminationTime(endTime);
+	t_coupledmodelptr d = n_tools::createObject< n_virus::Structure>(poolsize, connections);
+	ctrl->addModel(d);
 
-		t_coupledmodelptr d = n_tools::createObject< n_virus::Structure>(poolsize, connections);
-		ctrl->addModel(d);
-
-		ctrl->simulate();
-	}
+	//fire the simulation!
+	ctrl->simulate();
 }

@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include "compare.h"
 #include "coutredirect.h"
 #include "controllerconfig.h"
 #include "objectfactory.h"
@@ -24,9 +25,12 @@ TEST(Performance, DEVStone)
 
 	ControllerConfig conf;
 	conf.name = "DEVStone";
+//	conf.simType = Controller::PDEVS;
+//	conf.coreAmount = 2;
+//	conf.zombieIdleThreshold = 10;
 	conf.saveInterval = 1;
 
-	std::ofstream filestream("testfiles/performance/devstone.txt");
+	std::ofstream filestream(TESTFOLDER "performance/devstone.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
@@ -47,11 +51,12 @@ TEST(Performance, PHOLD)
 
 	ControllerConfig conf;
 	conf.name = "PHOLDBench";
-	//conf.simType = Controller::PDEVS;
-	//conf.coreAmount = 2;
+//	conf.simType = Controller::PDEVS;
+//	conf.coreAmount = 2;
+//	conf.zombieIdleThreshold = 10;
 	conf.saveInterval = 1;
 
-	std::ofstream filestream("testfiles/performance/phold.txt");
+	std::ofstream filestream(TESTFOLDER "/performance/phold.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();

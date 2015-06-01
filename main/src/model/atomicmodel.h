@@ -73,9 +73,10 @@ public:
 	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
 
 	/**
-	 * Perform an external transition, one of the functions the user has to implement
+	 * Perform an external transition
 	 *
 	 * @param message A vector of messagepointers that represent events
+	 * @warning This function MUST be implemented in the simulated model
 	 */
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message)
 	{
@@ -95,7 +96,14 @@ public:
 	void doExtTransition(const std::vector<n_network::t_msgptr>& message);
 
 	/**
-	 * Perform an internal transition, one of the functions the user has to implement
+	 * Perform an internal transition, this function will call the user-implemented intTransition
+	 * function and will also store all messages properly for the tracer to find them
+	 */
+	void doIntTransition();
+
+	/**
+	 * Perform an internal transition.
+	 * @warning This function MUST be implemented in the simulated model
 	 */
 	virtual void intTransition()
 	{
@@ -105,16 +113,29 @@ public:
 	;
 
 	/**
-	 * Transitions the model confluently with given messages
+	 * Transitions the model confluently with given messages.
+	 * The default implementation will first call intTransition and then extTransition.
+	 * If a different implementation is needed, the user can provide it by
+	 * overriding this funtion.
 	 *
 	 * @param message List of messages that are needed for the transition
 	 */
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 
 	/**
-	 * Get the current time advance, one of the functions the user has to implement
+	 * Transitions the model confluently with given messages, this function will call the user-implemented confTransition
+	 * function and will also store all messages properly for the tracer to find them
+	 *
+	 * @param message List of messages that are needed for the transition
+	 */
+	void doConfTransition(const std::vector<n_network::t_msgptr> & message);
+
+	/**
+	 * Get the current time advance
 	 *
 	 * @return Current time advance
+	 * @warning This function MUST be implemented in the simulated model
+	 * @postcondition The time advance may not be 0 or negative.
 	 */
 	virtual t_timestamp timeAdvance() const
 	{
@@ -137,9 +158,12 @@ public:
 	}
 
 	/**
-	 * Get the current output, one of the functions the user has to implement
+	 * Get the current output
 	 *
 	 * @return vector with pointers to all output messages in it
+	 * @warning This function MUST be implemented in the simulated model
+	 * @note Keep in mind that this function is called before
+	 * 	any of the transition functions are called.
 	 */
 	virtual std::vector<n_network::t_msgptr> output() const
 	{
