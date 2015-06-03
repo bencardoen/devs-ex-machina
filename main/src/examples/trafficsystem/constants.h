@@ -10,7 +10,7 @@
 
 namespace n_examples_traffic {
 
-enum class Direction {
+enum Direction {
 	NORTH, EAST, SOUTH, WEST
 };
 

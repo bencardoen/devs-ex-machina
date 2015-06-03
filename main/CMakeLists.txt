@@ -127,6 +127,16 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/firecellstate.cpp
 	src/examples/forestfire/firegenerator.cpp
 	src/examples/forestfire/firespread.cpp
+	src/examples/trafficsystem/car.cpp
+	src/examples/trafficsystem/query.cpp
+	src/examples/trafficsystem/queryack.cpp
+	src/examples/trafficsystem/building.cpp
+	src/examples/trafficsystem/residence.cpp
+	src/examples/trafficsystem/commercial.cpp
+	src/examples/trafficsystem/roadsegment.cpp
+	src/examples/trafficsystem/road.cpp
+	src/examples/trafficsystem/intersection.cpp
+	src/examples/trafficsystem/collector.cpp
 	src/performance/devstone/devstone.cpp
 	src/performance/benchmarks/phold.cpp
 	src/control/allocator.cpp

@@ -171,6 +171,17 @@ public:
 	}
 
 	/**
+	 * Subtraction of time object
+	 * @return (Time (left+right), max(left,right))
+	 */
+	friend Time operator-(const Time& lhs, const Time& rhs)
+	{
+		if(isInfinity(rhs) || isInfinity(lhs))
+			return infinity();
+		return Time(lhs.m_timestamp - rhs.m_timestamp, std::min(lhs.m_causal, rhs.m_causal));
+	}
+
+	/**
 	 * Serialize this object to the given archive
 	 *
 	 * @param archive A container for the desired output stream

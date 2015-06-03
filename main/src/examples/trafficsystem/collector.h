@@ -8,7 +8,54 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_COLLECTOR_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_COLLECTOR_H_
 
+#include "atomicmodel.h"
+#include "state.h"
+#include "car.h"
+#include <vector>
 
+namespace n_examples_traffic {
+
+using n_network::t_msgptr;
+using n_model::AtomicModel;
+using n_model::State;
+using n_model::t_stateptr;
+using n_model::t_modelptr;
+using n_model::t_portptr;
+using n_network::t_timestamp;
+
+class CollectorState: public State
+{
+	friend class Collector;
+
+private:
+	std::vector<std::shared_ptr<Car> > cars;
+
+
+public:
+	CollectorState();
+	CollectorState(const CollectorState&);
+	std::string toString();
+
+	~CollectorState() {}
+};
+
+class Collector: public AtomicModel
+{
+private:
+    int district;
+
+    t_portptr car_in;
+
+public:
+    Collector();
+	~Collector() {}
+
+	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
+
+	std::shared_ptr<CollectorState> getCollectorState() const;
+};
+
+} // end namespace
 
 
 
