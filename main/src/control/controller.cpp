@@ -26,7 +26,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
-	m_zombieIdleThreshold.store(true);
+	m_zombieIdleThreshold.store(-1);
 }
 
 Controller::~Controller()
