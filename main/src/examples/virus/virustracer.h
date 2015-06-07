@@ -30,8 +30,9 @@ struct CellData
 	int m_value;			//current value
 	int m_production;		//production
 	std::string m_dotName;		//dot name
+	bool m_doPrint;
 
-	CellData(std::string modelName, int value, int production);
+	CellData(std::string modelName, int value, int production, bool doPrint);
 private:
 	static std::size_t m_counter;
 };
@@ -94,7 +95,7 @@ public:
 	/**
 	 * @brief Performs the actual tracing of a transition. Once this function is called, there is no going back.
 	 */
-	void transitionTrace(t_timestamp time, std::vector<MovementData> movements, std::string mFrom, int senderValue, int senderProduction);
+	void transitionTrace(t_timestamp time, std::vector<MovementData> movements, CellData data);
 
 	/**
 	 * @brief Traces state initialization of a model

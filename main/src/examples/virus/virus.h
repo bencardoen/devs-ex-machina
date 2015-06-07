@@ -41,6 +41,7 @@ public:
 	int m_capacity;
 	int m_toSend;	//how much will be sent the this time
 	std::size_t m_target; //the target
+	bool m_produced;		//whether or not we produced something last time
 public:
 	CellState(size_t production, int capacity = 0);
 	virtual ~CellState();

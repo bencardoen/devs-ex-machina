@@ -11,11 +11,12 @@ using namespace n_virus;
 
 std::size_t CellData::m_counter = 0;
 
-n_virus::CellData::CellData(std::string modelName, int value, int production):
+n_virus::CellData::CellData(std::string modelName, int value, int production, bool doPrint):
 	m_modelName(modelName),
 	m_value(value),
 	m_production(production),
-	m_dotName(modelName)
+	m_dotName(modelName),
+	m_doPrint(doPrint)
 {
 
 }
@@ -36,9 +37,17 @@ std::ostream& n_virus::operator <<(std::ostream& out, const CellData& data)
 		"fontcolor=" << val2color(data.m_value) << ", "
 		"style=bold, "
 		;
-	if(data.m_value != 0)
-		out << "label=<<FONT POINT-SIZE=\"" << int(10+std::sqrt(std::abs(data.m_value))) << "\">" << std::abs(data.m_value) << "</FONT><BR/><FONT POINT-SIZE=\"8\">+" << std::abs(data.m_production) << "</FONT>>";
-	else
+	if(data.m_value != 0) {
+		out << "label=<<FONT POINT-SIZE=\""
+			<< int(10+std::sqrt(std::abs(data.m_value)))
+			<< "\">" << std::abs(data.m_value)
+			<< "</FONT><BR/><FONT POINT-SIZE=\"8\">";
+		if(data.m_doPrint)
+			out << '+' << std::abs(data.m_production);
+		else
+			out << ' ';
+		out << "</FONT>>";
+	} else
 		out << "label=\"\"";
 
 	out << "];";
@@ -46,7 +55,10 @@ std::ostream& n_virus::operator <<(std::ostream& out, const CellData& data)
 }
 
 n_virus::MovementData::MovementData(std::string from, std::string to, int amountL, int amountR):
-	m_from(from), m_to(to), m_amountLeft(amountL), m_amountRight(amountR)
+	m_from(from),
+	m_to(to),
+	m_amountLeft(amountL),
+	m_amountRight(amountR)
 {
 }
 
@@ -57,6 +69,7 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"color=gray, "
 			"fontcolor=gray, "
 			"label=\"\", dir=none];"
+			<< data.m_to << " -> " << data.m_from << "[style=invis];"
 		;
 		return out;
 	}
@@ -66,6 +79,8 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"fontcolor=" << val2color(data.m_amountLeft) << ", "
 			"label=\"" << std::abs(data.m_amountLeft) << "\"];"
 		;
+	} else {
+		out << data.m_from << " -> " << data.m_to << "[style=invis];";
 	}
 	if(data.m_amountRight != 0) {
 		out << data.m_to << " -> " << data.m_from << "["
@@ -73,6 +88,8 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"fontcolor=" << val2color(data.m_amountRight) << ", "
 			"label=\"" << std::abs(data.m_amountRight) << "\"];"
 		;
+	} else {
+		out << data.m_to << " -> " << data.m_from << "[style=invis];";
 	}
 	return out;
 }
@@ -86,8 +103,9 @@ void n_virus::VirusTracer::traceCall(const n_model::t_atomicmodelptr& adevs, std
 	if(!celldevs) return;	//don't celltrace models that don't have the correct type of state
 
 	std::string from = celldevs->getName();
-	int cellvalue = std::dynamic_pointer_cast<n_virus::CellState>(celldevs->getState())->m_capacity;
-	int cellProd = std::dynamic_pointer_cast<n_virus::CellState>(celldevs->getState())->m_production;
+	const CellState& cstate = *(std::dynamic_pointer_cast<n_virus::CellState>(celldevs->getState()));
+	int cellvalue = cstate.m_capacity;
+	int cellProd = cstate.m_production;
 
 	std::vector<MovementData> movements;
 	if(isInit) {
@@ -112,8 +130,9 @@ void n_virus::VirusTracer::traceCall(const n_model::t_atomicmodelptr& adevs, std
 			}
 		}
 	}
-
-	std::function<void()>  fun = std::bind(&VirusTracer::transitionTrace, this, time, movements, from, cellvalue, cellProd);
+	CellData data(from, cellvalue, cellProd, cstate.m_produced);
+	LOG_DEBUG("tracing virus ", from, "(", cellvalue, ") (", cellProd, ") produced: ", data.m_doPrint);
+	std::function<void()> fun = std::bind(&VirusTracer::transitionTrace, this, time, movements, data);
 
 	t_tracemessageptr message = n_tools::createRawObject<TraceMessage>(time, fun, coreid);
 	//deal with the message
@@ -150,8 +169,7 @@ void n_virus::VirusTracer::actualTrace(t_timestamp time)
 	//clear all movement
 }
 
-void n_virus::VirusTracer::transitionTrace(t_timestamp time, std::vector<MovementData> movements, std::string mFrom,
-        int senderValue, int senderProduction)
+void n_virus::VirusTracer::transitionTrace(t_timestamp time, std::vector<MovementData> movements, CellData data)
 
 {
 //	LOG_DEBUG("time: ", time, " from: ", mFrom, " to: ", mTo, " value: ", value, " @current time: ", time, " <> prevTime: ", m_prevTime);
@@ -159,14 +177,15 @@ void n_virus::VirusTracer::transitionTrace(t_timestamp time, std::vector<Movemen
 		actualTrace(time);
 		m_prevTime = time;
 	}
+	LOG_DEBUG("really tracing virus ", data.m_modelName, "(", data.m_value, ") (", data.m_production, ") produced: ", data.m_doPrint);
 	//save state of this model
 	for(const MovementData& d: movements)
 		m_conn[d.m_from][d.m_to] = d.m_amountLeft;
 	LOG_DEBUG("Saving ", movements.size(), " movement updates @", m_prevTime.getTime());
-	auto it = m_cells.find(mFrom);
+	auto it = m_cells.find(data.m_modelName);
 	if(it == m_cells.end())
-		m_cells.insert(std::make_pair(mFrom, CellData(mFrom, senderValue, senderProduction)));
+		m_cells.insert(std::make_pair(data.m_modelName, data));
 	else
-		it->second = CellData(mFrom, senderValue, senderProduction);
+		it->second = data;
 
 }
