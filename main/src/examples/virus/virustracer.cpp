@@ -69,7 +69,6 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"color=gray, "
 			"fontcolor=gray, "
 			"label=\"\", dir=none];"
-			<< data.m_to << " -> " << data.m_from << "[style=invis];"
 		;
 		return out;
 	}
@@ -79,8 +78,6 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"fontcolor=" << val2color(data.m_amountLeft) << ", "
 			"label=\"" << std::abs(data.m_amountLeft) << "\"];"
 		;
-	} else {
-		out << data.m_from << " -> " << data.m_to << "[style=invis];";
 	}
 	if(data.m_amountRight != 0) {
 		out << data.m_to << " -> " << data.m_from << "["
@@ -88,8 +85,6 @@ std::ostream& n_virus::operator <<(std::ostream& out, const MovementData& data)
 			"fontcolor=" << val2color(data.m_amountRight) << ", "
 			"label=\"" << std::abs(data.m_amountRight) << "\"];"
 		;
-	} else {
-		out << data.m_to << " -> " << data.m_from << "[style=invis];";
 	}
 	return out;
 }
