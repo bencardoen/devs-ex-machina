@@ -71,13 +71,14 @@ private:
 
 	//keeps track of all the stuff in the arrays
 
-	inline void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid){
+	inline void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid)
+	{
 		t_timestamp time = adevs->getState()->m_timeLast; // get timestamp of the transition
 		traceCall(adevs, coreid, time);
 	}
 
-	void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid, t_timestamp time, bool isInit = false);
-
+	void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid, t_timestamp time,
+	        bool isInit = false);
 
 	void actualTrace(t_timestamp time);
 
