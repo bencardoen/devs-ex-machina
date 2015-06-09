@@ -25,7 +25,8 @@ MsgData::MsgData(int val, std::string from):
  */
 
 CellState::CellState(size_t production, int capacity)
-	: m_production(production), m_capacity(capacity), m_toSend(0), m_target(0u)
+	: m_production(production), m_capacity(capacity), m_toSend(0), m_target(0u),
+	 m_produced(false)
 {
 }
 
@@ -96,6 +97,7 @@ void Cell::intTransition()
 	updateCurState();
 	produce();
 	m_curState->m_capacity -= m_curState->m_toSend;
+	m_curState->m_produced = true;
 
 	std::uniform_int_distribution<size_t> dist(0, m_neighbours.size()-1);
 	m_curState->m_target = dist(m_rng);
@@ -109,6 +111,7 @@ void Cell::confTransition(const std::vector<n_network::t_msgptr> & message)
 	updateCurState();
 	produce();
 	m_curState->m_capacity -= m_curState->m_toSend;
+	m_curState->m_produced = true;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
@@ -122,8 +125,9 @@ void Cell::confTransition(const std::vector<n_network::t_msgptr> & message)
 
 void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
+	LOG_DEBUG("virus external transition");
 	updateCurState();
-	m_curState->m_capacity -= m_curState->m_toSend;
+	m_curState->m_produced = false;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);

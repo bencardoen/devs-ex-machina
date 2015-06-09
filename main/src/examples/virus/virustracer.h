@@ -30,8 +30,9 @@ struct CellData
 	int m_value;			//current value
 	int m_production;		//production
 	std::string m_dotName;		//dot name
+	bool m_doPrint;
 
-	CellData(std::string modelName, int value, int production);
+	CellData(std::string modelName, int value, int production, bool doPrint);
 private:
 	static std::size_t m_counter;
 };
@@ -70,13 +71,14 @@ private:
 
 	//keeps track of all the stuff in the arrays
 
-	inline void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid){
+	inline void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid)
+	{
 		t_timestamp time = adevs->getState()->m_timeLast; // get timestamp of the transition
 		traceCall(adevs, coreid, time);
 	}
 
-	void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid, t_timestamp time, bool isInit = false);
-
+	void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid, t_timestamp time,
+	        bool isInit = false);
 
 	void actualTrace(t_timestamp time);
 
@@ -94,7 +96,7 @@ public:
 	/**
 	 * @brief Performs the actual tracing of a transition. Once this function is called, there is no going back.
 	 */
-	void transitionTrace(t_timestamp time, std::vector<MovementData> movements, std::string mFrom, int senderValue, int senderProduction);
+	void transitionTrace(t_timestamp time, std::vector<MovementData> movements, CellData data);
 
 	/**
 	 * @brief Traces state initialization of a model
