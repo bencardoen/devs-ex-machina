@@ -6,6 +6,7 @@
  */
 
 #include "car.h"
+#include "globallog.h"
 #include <sstream>
 
 namespace n_examples_traffic {
@@ -13,8 +14,10 @@ namespace n_examples_traffic {
 Car::Car(int ID, float v, float v_pref, int dv_pos_max, int dv_neg_max, t_timestamp departure_time):
 		ID(ID), v(v), v_pref(v_pref), dv_pos_max(dv_pos_max), dv_neg_max(dv_neg_max), departure_time(departure_time)
 {
+	LOG_DEBUG("Car: Creating car");
 	distance_travelled = 0;
 	remaining_x = 0;
+	LOG_DEBUG("BUILDING: Done creating car");
 }
 
 bool operator==(const Car& left, const Car& right)

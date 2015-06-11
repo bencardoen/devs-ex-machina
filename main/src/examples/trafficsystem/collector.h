@@ -34,13 +34,15 @@ private:
 public:
 	CollectorState();
 	CollectorState(const CollectorState&);
-	std::string toString();
+	std::string toString() override;
 
 	~CollectorState() {}
 };
 
 class Collector: public AtomicModel
 {
+	friend class City;
+
 private:
     int district;
 
@@ -51,6 +53,9 @@ public:
 	~Collector() {}
 
 	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
+	void intTransition() override;
+	t_timestamp timeAdvance() const override;
+	std::vector<n_network::t_msgptr> output() const override;
 
 	std::shared_ptr<CollectorState> getCollectorState() const;
 };

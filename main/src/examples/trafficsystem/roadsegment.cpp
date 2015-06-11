@@ -120,6 +120,7 @@ RoadSegment::RoadSegment(int district, float l, float v_max, t_timestamp observ_
 
 void RoadSegment::extTransition(const std::vector<n_network::t_msgptr> & message)
 {
+	LOG_DEBUG("ROADSEGMENT: " + getName() + " - enter extTransition");
 	getRoadSegmentState()->send_query_delay = getRoadSegmentState()->send_query_delay - m_elapsed;
 	getRoadSegmentState()->send_ack_delay = getRoadSegmentState()->send_ack_delay - m_elapsed;
 	getRoadSegmentState()->send_car_delay = getRoadSegmentState()->send_car_delay - m_elapsed;
@@ -130,11 +131,13 @@ void RoadSegment::extTransition(const std::vector<n_network::t_msgptr> & message
 	for (auto msg : message) {
 		if(msg->getDestinationPort() == Q_recv->getFullName()
 				or msg->getDestinationPort() == q_recv_bs->getFullName() ) {
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect Query");
 			Query query = n_network::getMsgPayload<Query>(msg);
 		}
 
 		if(msg->getDestinationPort() == car_in->getFullName()
 				or msg->getDestinationPort() == entries->getFullName() ) {
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect Car");
 			std::shared_ptr<Car> car = std::make_shared<Car>(n_network::getMsgPayload<Car>(msg));
 
 			getRoadSegmentState()->last_car = -1;
@@ -173,7 +176,10 @@ void RoadSegment::extTransition(const std::vector<n_network::t_msgptr> & message
 
 		if(msg->getDestinationPort() == Q_rack->getFullName()
 				or msg->getDestinationPort() == q_rans_bs->getFullName() ) {
-			std::shared_ptr<QueryAck> ack = std::make_shared<QueryAck>(n_network::getMsgPayload<QueryAck>(msg));
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect QueryAck");
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSourcePort());
+			std::shared_ptr<QueryAck> ack = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - received QueryAck");
 
 			if(getRoadSegmentState()->cars_present.size() == 1
 					and ack->ID == getRoadSegmentState()->cars_present.at(0)->ID) {
@@ -241,6 +247,7 @@ void RoadSegment::extTransition(const std::vector<n_network::t_msgptr> & message
 
 void RoadSegment::intTransition()
 {
+	LOG_DEBUG("ROADSEGMENT: " + getName() + " - enter intTransition");
 	t_timestamp mintime = this->mintime();
 	getRoadSegmentState()->send_query_delay = getRoadSegmentState()->send_query_delay - mintime;
 	getRoadSegmentState()->send_ack_delay = getRoadSegmentState()->send_query_delay - mintime;
@@ -280,6 +287,7 @@ void RoadSegment::intTransition()
 
 t_timestamp RoadSegment::timeAdvance() const
 {
+	LOG_DEBUG("ROADSEGMENT: " + getName() + " - enter timeAdvance");
 	t_timestamp delay = mintime();
 	// Take care of floating point errors
 	return (delay > t_timestamp())? delay : t_timestamp();
@@ -287,6 +295,7 @@ t_timestamp RoadSegment::timeAdvance() const
 
 std::vector<n_network::t_msgptr> RoadSegment::output() const
 {
+	LOG_DEBUG("ROADSEGMENT: " + getName() + " - enter output");
 	t_timestamp mintime = this->mintime();
 	std::vector<n_network::t_msgptr> container;
 	if (getRoadSegmentState()->send_ack_delay == mintime) {

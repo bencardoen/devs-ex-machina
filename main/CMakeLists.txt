@@ -128,6 +128,7 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/firegenerator.cpp
 	src/examples/forestfire/firespread.cpp
 	src/examples/trafficsystem/car.cpp
+	src/examples/trafficsystem/city.cpp
 	src/examples/trafficsystem/query.cpp
 	src/examples/trafficsystem/queryack.cpp
 	src/examples/trafficsystem/building.cpp
@@ -164,6 +165,7 @@ add_executable(${PROJECT_NAME}
 	src/test/basiccerealtest.cpp
 	src/test/performancetest.cpp
 	src/test/testmodels.cpp
+	src/test/trafficsystemtest.cpp
  	src/main.cpp
  	)
 
@@ -273,6 +275,50 @@ add_executable(${PROJECT_NAME}_phold
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
  					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
  					)
+ 					
+add_executable(${PROJECT_NAME}_traffic
+ 	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+	src/control/timeevent.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+ 	src/examples/trafficsystem/car.cpp
+	src/examples/trafficsystem/city.cpp
+	src/examples/trafficsystem/query.cpp
+	src/examples/trafficsystem/queryack.cpp
+	src/examples/trafficsystem/building.cpp
+	src/examples/trafficsystem/residence.cpp
+	src/examples/trafficsystem/commercial.cpp
+	src/examples/trafficsystem/roadsegment.cpp
+	src/examples/trafficsystem/road.cpp
+	src/examples/trafficsystem/intersection.cpp
+	src/examples/trafficsystem/collector.cpp
+  	src/maintraffic.cpp
+  	)
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15"
+ 					)
 
 add_executable(${PROJECT_NAME}_virus
  	src/tools/logger.cpp
@@ -362,4 +408,5 @@ target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 ###############################################################################

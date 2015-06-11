@@ -21,31 +21,36 @@ CommercialState::CommercialState(const CommercialState& state): CommercialState(
 {
 }
 
-std::string CommercialState::toString() const
+std::string CommercialState::toString()
 {
 	return "CommercialState";
 }
 
 Commercial::Commercial(int district, std::string name):
-		Building(false, district, std::vector<std::string>(), 100, 100, 15, 15, 15, 150, name)
+		Building(false, district, std::make_shared<std::vector<std::string> >(), 100, 100, 15, 15, 15, 150, name)
 {
+	LOG_DEBUG("COMMERCIAL: Creating commercial " + name);
 	setState(n_tools::createObject<CommercialState>());
 	toCollector = addOutPort("toCollector");
+	LOG_DEBUG("COMMERCIAL: Done creating commercial " + name);
 }
 
 void Commercial::extTransition(const std::vector<n_network::t_msgptr> & message)
 {
+	LOG_DEBUG("COMMERCIAL: " + getName() + " - enter extTransition");
 	auto msg = message.at(0);
 	setState(n_tools::createObject<CommercialState>(n_network::getMsgPayload<CommercialState>(msg)));
 }
 
 void Commercial::intTransition()
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter intTransition");
 	setState(n_tools::createObject<CommercialState>());
 }
 
 t_timestamp Commercial::timeAdvance() const
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter timeAdvance");
 	if (getCommercialState()->car) {
 		return t_timestamp::infinity();
 	}
@@ -56,6 +61,7 @@ t_timestamp Commercial::timeAdvance() const
 
 std::vector<n_network::t_msgptr> Commercial::output() const
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter output");
 	return toCollector->createMessages(getCommercialState()->car);
 }
 

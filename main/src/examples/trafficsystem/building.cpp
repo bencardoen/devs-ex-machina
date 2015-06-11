@@ -15,9 +15,10 @@
 
 namespace n_examples_traffic {
 
-BuildingState::BuildingState(int IAT_min, int IAT_max, std::vector<std::string> path, std::string name):
+BuildingState::BuildingState(int IAT_min, int IAT_max, std::shared_ptr<std::vector<std::string> > path, std::string name):
 		State(), name(name), path(path)
 {
+	LOG_DEBUG("BUILDING: Creating building state " + name);
 	currentTime = 0;
 
 	srand (time(NULL));
@@ -27,14 +28,14 @@ BuildingState::BuildingState(int IAT_min, int IAT_max, std::vector<std::string> 
 
 	send_car_delay = t_timestamp::infinity();
 
-	if (path.empty()) {
+	if (path->empty()) {
 		send_query_delay = t_timestamp::infinity();
 	}
 
 	int part1, part2;
 	std::string temp = name.substr(name.find("_") + 1, name.length());
-	std::istringstream buffer1(temp.substr(0, name.find("_")));
-	std::istringstream buffer2(temp.substr(name.find("_") + 1, name.length()));
+	std::istringstream buffer1(temp.substr(0, temp.find("_")));
+	std::istringstream buffer2(temp.substr(temp.find("_") + 1, name.length()));
 	buffer1 >> part1;
 	buffer2 >> part2;
 	send_query_id = part1 * 1000 + part2;
@@ -42,6 +43,7 @@ BuildingState::BuildingState(int IAT_min, int IAT_max, std::vector<std::string> 
 	send_car_id = send_query_id;
 	next_v_pref = 0;
 	sent = 0;
+	LOG_DEBUG("BUILDING: Done creating building state " + name);
 }
 
 BuildingState::BuildingState(const BuildingState& state): BuildingState(0, 0, state.path, state.name)
@@ -58,7 +60,7 @@ BuildingState::BuildingState(const BuildingState& state): BuildingState(0, 0, st
 
 std::string BuildingState::toString()
 {
-	if (not path.empty()) {
+	if (not path->empty()) {
 		std::stringstream ss;
 		ss << "Residence: send_query_delay = " << send_query_delay;
 		ss << ", send_query_id = " << send_query_id;
@@ -83,12 +85,13 @@ void BuildingState::setSendQueryDelay(int IAT_min, int IAT_max)
 	send_query_delay = IAT_min + (random * (IAT_max - IAT_min));
 }
 
-Building::Building(bool, int district, std::vector<std::string> path, int IAT_min = 100, int IAT_max = 100,
+Building::Building(bool, int district, std::shared_ptr<std::vector<std::string> > path, int IAT_min = 100, int IAT_max = 100,
 			 	   int v_pref_min = 15, int v_pref_max = 15, int dv_pos_max = 15, int dv_neg_max = 150, std::string name = "Building"):
 				AtomicModel(name), IAT_min(IAT_min), IAT_max(IAT_max),
 				v_pref_min(v_pref_min), v_pref_max(v_pref_max),
 				dv_pos_max(dv_pos_max), dv_neg_max(dv_neg_max), district(district)
 {
+	LOG_DEBUG("BUILDING: Creating building " + name);
 	setState(n_tools::createObject<BuildingState>(IAT_min, IAT_max, path, name));
 	getBuildingState()->setNextVPref(v_pref_min, v_pref_max);
 	send_max = 1;
@@ -104,20 +107,26 @@ Building::Building(bool, int district, std::vector<std::string> path, int IAT_mi
 	q_rans = addInPort("q_rans");
 	Q_rack = q_rans;
 	entry = addInPort("entry");
+
+	LOG_DEBUG("BUILDING: Done creating building " + name);
 }
 
 void Building::extTransition(const std::vector<n_network::t_msgptr> & message)
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter extTransition");
 	getBuildingState()->currentTime = getBuildingState()->currentTime + m_elapsed;
 	getBuildingState()->send_query_delay = getBuildingState()->send_query_delay - m_elapsed;
 	getBuildingState()->send_car_delay = getBuildingState()->send_car_delay - m_elapsed;
 
 	for (auto msg : message) {
 		if(msg->getDestinationPort() == Q_rack->getFullName()) {
-			QueryAck queryAck = n_network::getMsgPayload<QueryAck>(msg);
-			if (getBuildingState()->send_car_id == queryAck.ID and (getBuildingState()->sent < send_max)) {
-				getBuildingState()->send_car_delay = queryAck.t_until_dep;
-				if (queryAck.t_until_dep < t_timestamp(20000,0)) {
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect QueryAck");
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSourcePort());
+			std::shared_ptr<QueryAck> queryAck = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - received QueryAck");
+			if (getBuildingState()->send_car_id == queryAck->ID and (getBuildingState()->sent < send_max)) {
+				getBuildingState()->send_car_delay = queryAck->t_until_dep;
+				if (queryAck->t_until_dep < t_timestamp(20000,0)) {
 					getBuildingState()->sent += 1;
 					// Generate the next situation
 					if (getBuildingState()->sent < send_max) {
@@ -132,6 +141,7 @@ void Building::extTransition(const std::vector<n_network::t_msgptr> & message)
 
 void Building::intTransition()
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter intTransition");
 	t_timestamp mintime = timeAdvance();
 	getBuildingState()->currentTime = getBuildingState()->currentTime + mintime;
 	getBuildingState()->send_query_delay = getBuildingState()->send_query_delay - mintime;
@@ -149,6 +159,7 @@ void Building::intTransition()
 
 t_timestamp Building::timeAdvance() const
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter timeAdvance");
 	if (getBuildingState()->send_query_delay < getBuildingState()->send_car_delay) {
 		return getBuildingState()->send_query_delay;
 	}
@@ -157,13 +168,14 @@ t_timestamp Building::timeAdvance() const
 
 std::vector<n_network::t_msgptr> Building::output() const
 {
+	LOG_DEBUG("BUILDING: " + getName() + " - enter output");
 	t_timestamp mintime = timeAdvance();
 	t_timestamp currentTime = getBuildingState()->currentTime + timeAdvance();
 
 	if (getBuildingState()->send_car_delay == mintime) {
 		float v_pref = getBuildingState()->next_v_pref;
 		Car car (getBuildingState()->send_car_id, 0, v_pref, dv_pos_max, dv_neg_max, currentTime);
-		car.path = getBuildingState()->path;
+		car.path = *getBuildingState()->path;
 		return car_out->createMessages(car);
 	}
 	else if (getBuildingState()->send_query_delay == mintime) {

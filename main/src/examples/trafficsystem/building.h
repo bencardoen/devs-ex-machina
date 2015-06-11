@@ -30,7 +30,7 @@ class BuildingState: public State
 
 private:
 	std::string name;
-	std::vector<std::string> path;
+	std::shared_ptr<std::vector<std::string> > path;
 	std::mt19937 randomGenerator;
 	t_timestamp currentTime;
 	t_timestamp send_query_delay;
@@ -42,7 +42,7 @@ private:
 
 
 public:
-	BuildingState(int IAT_min, int IAT_max, std::vector<std::string> path, std::string name);
+	BuildingState(int IAT_min, int IAT_max, std::shared_ptr<std::vector<std::string> > path, std::string name);
 	BuildingState(const BuildingState&);
 	std::string toString();
 
@@ -71,7 +71,7 @@ protected:
     t_portptr q_rans, Q_rack, entry;
 
 public:
-	Building(bool generator, int district, std::vector<std::string> path, int IAT_min, int IAT_max,
+	Building(bool generator, int district, std::shared_ptr<std::vector<std::string> > path, int IAT_min, int IAT_max,
 			 int v_pref_min, int v_pref_max, int dv_pos_max, int dv_neg_max, std::string name);
 	~Building() {}
 

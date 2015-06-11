@@ -50,4 +50,19 @@ std::shared_ptr<CollectorState> Collector::getCollectorState() const
 	return std::static_pointer_cast<CollectorState>(getState());
 }
 
+void Collector::intTransition()
+{
+	return;
+}
+
+t_timestamp Collector::timeAdvance() const
+{
+	return t_timestamp::infinity();
+}
+
+std::vector<n_network::t_msgptr> Collector::output() const
+{
+	return std::vector<n_network::t_msgptr> ();
+}
+
 }

@@ -51,6 +51,8 @@ public:
 
 class Intersection: public AtomicModel
 {
+	friend class City;
+
 private:
 	int district;
 	t_timestamp switch_signal_delay;
