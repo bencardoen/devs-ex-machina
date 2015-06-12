@@ -619,11 +619,14 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		if(core->getZombieRounds()>YIELD_ZOMBIE){
-			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread.");
+			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
 			std::chrono::milliseconds ms{25};
 			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
 			int thres = ctrl.m_zombieIdleThreshold.load();
-			if(thres >= 0 && i >= thres) core->setIdle(true);
+			if(thres >= 0 && core->getZombieRounds() >= (size_t)thres) {
+				LOG_WARNING("CVWORKER: Reached zombie threshold (",thres,"), idling the core!");
+				core->setIdle(true);
+			}
 		}
 
 		{	/// Intercept a direct order to stop myself.
@@ -681,7 +684,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			}
 		}
 		if (core->isLive() or core->isIdle()) {
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i);
+			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
 			core->runSmallStep();
 		}
 
