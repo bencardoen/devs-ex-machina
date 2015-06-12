@@ -85,7 +85,7 @@ private:
 	std::atomic<bool> m_idle;
 
 	/**
-	 * If a core keeps getting stuck, define here how many rounds this allowed to happen.
+	 * Count for how long this core has been in a zombie state
 	 * @attention : A round == zombiestate if time does not advance, but this does (obviously) not
 	 * apply if the core is idling (ie beyond termtime/fun).
 	 */
