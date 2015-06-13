@@ -69,7 +69,7 @@ public:
 class CoupledRecursion : public n_model::CoupledModel
 {
 public:
-	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta);
+	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, int coreAmt);
 	virtual ~CoupledRecursion();
 };
 
@@ -77,7 +77,7 @@ public:
 class DEVStone : public n_model::CoupledModel
 {
 public:
-	DEVStone(std::size_t width, std::size_t depth, bool randomta);
+	DEVStone(std::size_t width, std::size_t depth, bool randomta, int coreAmt=-1);
 	virtual ~DEVStone();
 };
 
