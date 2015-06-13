@@ -153,25 +153,29 @@ void Intersection::extTransition(const std::vector<n_network::t_msgptr> & messag
 				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSourcePort());
 				std::shared_ptr<QueryAck> ack = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
 				LOG_DEBUG("INTERSECTION: " + getName() + " - received QueryAck");
-
-				getIntersectionState()->ackDir.at(ack->ID) = direction;
+				LOG_DEBUG("INTERSECTION: A");
+				getIntersectionState()->ackDir[ack->ID] = direction;
+				LOG_DEBUG("INTERSECTION: B");
 				bool found = false;
 				auto first = getIntersectionState()->id_locations.begin();
 				auto last = getIntersectionState()->id_locations.end();
 				auto it = std::find(first, last, ack->ID);
+				LOG_DEBUG("INTERSECTION: C");
 				if (it != last) {
 					found = getIntersectionState()->block.find(direction_str[*it]);
 				}
 				t_timestamp t_until_dep;
 				if ((ack->t_until_dep > getIntersectionState()->switch_signal) or found) {
+					LOG_DEBUG("INTERSECTION: 1");
 					auto first = getIntersectionState()->id_locations.begin();
 					auto last = getIntersectionState()->id_locations.end();
 					auto it = std::find(first, last, ack->ID);
 					if (it == last) continue;
-
+					LOG_DEBUG("INTERSECTION: 2");
 					t_until_dep = t_timestamp::infinity();
 					std::shared_ptr<Query> nquery = std::make_shared<Query>(ack->ID);
 					nquery->direction = int_to_dir[direction];
+					LOG_DEBUG("INTERSECTION: 3");
 					getIntersectionState()->queued_queries.push_back(nquery);
 				}
 				else {
@@ -233,9 +237,77 @@ t_timestamp Intersection::timeAdvance() const
 
 std::vector<n_network::t_msgptr> Intersection::output() const
 {
+	std::map<std::string, int> dir_to_int;
+	dir_to_int["n"] = 0;
+	dir_to_int["e"] = 1;
+	dir_to_int["s"] = 2;
+	dir_to_int["w"] = 3;
+
+	std::map<int, std::string> int_to_dir;
+	int_to_dir[0] = "n";
+	int_to_dir[1] = "e";
+	int_to_dir[2] = "s";
+	int_to_dir[3] = "w";
+
+	char direction_str [4] = {'0', '1', '2', '3'};
+
 	LOG_DEBUG("INTERSECTION: " + getName() + " - enter output");
 	std::vector<n_network::t_msgptr> container;
-	//TODO
+	std::string new_block = (getIntersectionState()->block == HORIZONTAL)? VERTICAL : HORIZONTAL;
+	if (getIntersectionState()->switch_signal == timeAdvance()) {
+		// We switch our traffic lights
+		// Resend all queries for those that are waiting
+		for (auto query : getIntersectionState()->queued_queries) {
+			bool found = false;
+			auto first = getIntersectionState()->id_locations.begin();
+			auto last = getIntersectionState()->id_locations.end();
+			auto it = std::find(first, last, query->ID);
+			if (it != last) {
+				found = new_block.find(direction_str[it - first]);
+			}
+			if (not found) {
+				q_send[dir_to_int[query->direction]]->createMessages(query, container);
+			}
+		}
+		for (unsigned int loc = 0; loc < getIntersectionState()->id_locations.size(); ++loc) {
+			int car_id = getIntersectionState()->id_locations.at(loc);
+			if (car_id == -1) continue;
+			if (new_block.find(direction_str[loc])) {
+				std::shared_ptr<QueryAck> ack = std::make_shared<QueryAck>(car_id, t_timestamp::infinity());
+				q_sans[loc]->createMessages(ack, container);
+			}
+			else {
+				try {
+					Query query = Query(car_id);
+					query.direction = int_to_dir[getIntersectionState()->ackDir[car_id]];
+					q_send[getIntersectionState()->ackDir[car_id]]->createMessages(query, container);
+				}
+				catch (const std::out_of_range&) {
+				}
+			}
+		}
+	}
+
+	// We might have some messages to forward too
+	for (auto car : getIntersectionState()->send_car) {
+		std::string dest = car->path.front();
+		car->path.erase(car->path.begin());
+		car_out[dir_to_int[dest]]->createMessages(*car, container);
+	}
+
+	for (auto query : getIntersectionState()->send_query) {
+		q_send[dir_to_int[query->direction]]->createMessages(*query, container);
+	}
+
+	for (auto ack : getIntersectionState()->send_ack) {
+		// Broadcast for now
+		auto first = getIntersectionState()->id_locations.begin();
+		auto last = getIntersectionState()->id_locations.end();
+		auto it = std::find(first, last, ack->ID);
+		if (it != last) q_sans[it - first]->createMessages(ack, container);
+	}
+
+
 	return container;
 }
 
