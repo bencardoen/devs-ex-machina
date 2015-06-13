@@ -148,15 +148,16 @@ std::vector<n_network::t_msgptr> Generator::output() const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta)
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, int coreAmt)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
+	int location = depth / coreAmt;
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
 
 	if (depth > 1) {
 		n_model::t_coupledmodelptr recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1,
-		        randomta);
+		        randomta, coreAmt);
 		addSubModel(recurse);
 		connectPorts(recv, recurse->getPort("in_event1"));
 
@@ -164,6 +165,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
 			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
+			if(coreAmt != -1) proc->setCorenumber(location);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -179,6 +181,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
 			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
+			if(coreAmt != -1) proc->setCorenumber(location);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -199,11 +202,11 @@ CoupledRecursion::~CoupledRecursion()
 /*
  * DEVStone
  */
-DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
+DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta, int coreAmt)
 	: CoupledModel("DEVStone")
 {
 	auto gen = n_tools::createObject<Generator>();
-	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta);
+	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta, coreAmt);
 	addSubModel(gen);
 	addSubModel(recurse);
 

@@ -26,9 +26,9 @@ TEST(Performance, DEVStone)
 
 	ControllerConfig conf;
 	conf.name = "DEVStone";
-//	conf.simType = Controller::PDEVS;
-//	conf.coreAmount = 2;
-//	conf.zombieIdleThreshold = 10;
+	conf.simType = Controller::PDEVS;
+	conf.pdevsType = ControllerConfig::OPTIMISTIC;
+	conf.coreAmount = 2;
 	conf.saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "performance/devstone.txt");
@@ -39,7 +39,7 @@ TEST(Performance, DEVStone)
 		ctrl->setTerminationTime(endTime);
 
 		// Create a DEVStone simulation with width 2 and depth 3
-		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false);
+		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false, 2);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
