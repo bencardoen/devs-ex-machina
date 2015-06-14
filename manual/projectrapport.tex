@@ -280,6 +280,9 @@ This implementation only covers the most basic needs:
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
+\section{Jenkins}
+While building the traffic system on the Jenkins server problems occured and the server crashed due to a memory shortage. A lower level of optimization solved this problem.
+
 \chapter{Performance analysis}
 To measure the performance of \textsc{DEVS Ex Machina} under more demanding conditions, \textbf{DEVStone} and \textbf{PHOLD} benchmarks were used in combination with the \texttt{perf} profiler tool. Every time we compare the performance of our implementation with \textit{PythonPDEVS}.\\
 Note: at the moment, no major research has gone into the use of compiler optimizations yet. Potentially, there is still speed to be gained here.\\
@@ -623,6 +626,41 @@ We let each logger print several hundred thousand messages to a file. These are 
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
 While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as a more extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches taken by the program.
+
+
+\chapter{Examples}
+As it was part of the assignment we've implemented a set of examples for our simulator. Except from the virus-model all examples are based on models described in Yentl's thesis. 
+
+\subsubsection{Traffic light}
+This simple model is an exact copy of the model used as an example in pypdevs.
+
+\subsubsection{DEVStone}
+...\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the DEVStone model to work.
+
+\subsubsection{Forrestfire}
+...\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
+
+\subsubsection{Traffic system}
+The traffic system is based on the traffic system described in Yentl's paper. We've implemented two versions, a bigger one and a smaller one.\\
+A modified version of Yenl's script generates the header and source file for the city model and makes it possible to easily adopt the models size. The script can be found in the './main/script' folder of our repository.\\
+\\
+Run the following command to generate a city:
+\begin{Verbatim}[fontsize=\small]
+$ python script_devsexmachina.py {x} {y} {nodes} {districts}
+\end{Verbatim}
+The small city is 10 x 50 segments large and the larger city exists of 10 x 500 segments. Both cities are generated for 50 nodes and 5 districts as described in Yentl's thesis.\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work. This executable contains the larger version of the city. To build large cities you have to ensure that there is a sufficient amount of memory available. 
+
+\subsubsection{Virus}
+...\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
+
 
 \begin{thebibliography}{1}
 
