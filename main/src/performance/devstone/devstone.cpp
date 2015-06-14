@@ -148,15 +148,15 @@ std::vector<n_network::t_msgptr> Generator::output() const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, int coreAmt)
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t totalDepth, std::size_t depth, bool randomta, int coreAmt)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
-	int location = depth / coreAmt;
+	int location = (depth-1) / (totalDepth/coreAmt);
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
 
 	if (depth > 1) {
-		n_model::t_coupledmodelptr recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1,
+		n_model::t_coupledmodelptr recurse = n_tools::createObject<CoupledRecursion>(width, totalDepth, depth - 1,
 		        randomta, coreAmt);
 		addSubModel(recurse);
 		connectPorts(recv, recurse->getPort("in_event1"));
@@ -206,7 +206,7 @@ DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta, int core
 	: CoupledModel("DEVStone")
 {
 	auto gen = n_tools::createObject<Generator>();
-	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta, coreAmt);
+	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, depth, randomta, coreAmt);
 	addSubModel(gen);
 	addSubModel(recurse);
 
