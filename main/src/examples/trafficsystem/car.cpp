@@ -50,7 +50,7 @@ std::string Car::toString() const
 	ss << ", departure_time = " << departure_time;
 	ss << ", distance_travelled = " << distance_travelled;
 	ss << ", v = " << v;
-	//ss << ", path = " << path;; TODO: check if necessary
+	//ss << ", path = " << path;;
 
 	return ss.str();
 }

@@ -54,7 +54,7 @@ BuildingState::BuildingState(const BuildingState& state): BuildingState(0, 0, st
 	send_query_id = state.send_query_id;
 	send_car_id = state.send_car_id;
 	next_v_pref = state.next_v_pref;
-	randomGenerator = state.randomGenerator;	// TODO: copy necessary?
+	randomGenerator = state.randomGenerator;
 	sent = state.sent;
 }
 
@@ -172,6 +172,7 @@ std::vector<n_network::t_msgptr> Building::output() const
 	t_timestamp mintime = timeAdvance();
 	t_timestamp currentTime = getBuildingState()->currentTime + timeAdvance();
 
+	std::cout << "(" << getBuildingState()->send_car_delay << ", " << mintime << ")";
 	if (getBuildingState()->send_car_delay == mintime) {
 		float v_pref = getBuildingState()->next_v_pref;
 		Car car (getBuildingState()->send_car_id, 0, v_pref, dv_pos_max, dv_neg_max, currentTime);

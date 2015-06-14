@@ -13,6 +13,7 @@
 #include "objectfactory.h"
 #include "devstone.h"
 #include "phold.h"
+#include "city_small.h"
 
 using namespace n_control;
 using namespace n_devstone;
@@ -39,6 +40,26 @@ TEST(Performance, DEVStone)
 
 		// Create a DEVStone simulation with width 2 and depth 3
 		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false);
+		ctrl->addModel(d);
+
+		ctrl->simulate();
+	}
+}
+
+TEST(Performance, TrafficSystem)
+{
+	ControllerConfig conf;
+	conf.name = "TrafficSystem";
+
+	std::ofstream filestream(TESTFOLDER "performance/traffic.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		auto ctrl = conf.createController();
+		t_timestamp endTime(1000, 0);
+		n_examples_traffic::City city;
+		ctrl->setTerminationTime(endTime);
+
+		t_coupledmodelptr d = n_tools::createObject<n_examples_traffic::City>();
 		ctrl->addModel(d);
 
 		ctrl->simulate();

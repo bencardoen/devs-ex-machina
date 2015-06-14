@@ -19,9 +19,9 @@ RoadSegmentState::RoadSegmentState(): State()
 	reserved = false;
 	send_query_delay = t_timestamp::infinity();
 	send_query_id = -1;
-	t_timestamp send_ack_delay = t_timestamp::infinity();
+	send_ack_delay = t_timestamp::infinity();
 	send_ack_id = -1;
-	t_timestamp send_car_delay = t_timestamp::infinity();
+	send_car_delay = t_timestamp::infinity();
 	send_car_id = -1;
 	last_car = -1;
 }

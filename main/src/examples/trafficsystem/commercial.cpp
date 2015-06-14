@@ -51,7 +51,7 @@ void Commercial::intTransition()
 t_timestamp Commercial::timeAdvance() const
 {
 	LOG_DEBUG("BUILDING: " + getName() + " - enter timeAdvance");
-	if (getCommercialState()->car) {
+	if (not getCommercialState()->car) {
 		return t_timestamp::infinity();
 	}
 	else {

@@ -128,7 +128,7 @@ add_executable(${PROJECT_NAME}
 	src/examples/forestfire/firegenerator.cpp
 	src/examples/forestfire/firespread.cpp
 	src/examples/trafficsystem/car.cpp
-	src/examples/trafficsystem/city.cpp
+	src/examples/trafficsystem/city_small.cpp
 	src/examples/trafficsystem/query.cpp
 	src/examples/trafficsystem/queryack.cpp
 	src/examples/trafficsystem/building.cpp
@@ -165,7 +165,6 @@ add_executable(${PROJECT_NAME}
 	src/test/basiccerealtest.cpp
 	src/test/performancetest.cpp
 	src/test/testmodels.cpp
-	src/test/trafficsystemtest.cpp
  	src/main.cpp
  	)
 
@@ -317,7 +316,7 @@ add_executable(${PROJECT_NAME}_traffic
   	)
 
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15"
+ 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
  					)
 
 add_executable(${PROJECT_NAME}_virus
