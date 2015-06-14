@@ -25,7 +25,7 @@ void RootModel::setComponents(t_coupledmodelptr& model)
 	std::deque<t_coupledmodelptr> toDo;
 	toDo.push_back(model);
 	while (!toDo.empty()) {
-		t_coupledmodelptr& top = toDo.front();
+		t_coupledmodelptr top = toDo.front();
 		toDo.pop_front();
 		for (t_modelptr& current : top->getComponents()) {
 			current->setParent(top);
@@ -51,7 +51,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupled
 		std::deque<t_coupledmodelptr> toDo;
 		toDo.push_back(model);
 		while (!toDo.empty()) {
-			t_coupledmodelptr& top = toDo.front();
+			t_coupledmodelptr top = toDo.front();
 			toDo.pop_front();
 			for (t_modelptr& current : top->getComponents()) {
 				current->setParent(top);
