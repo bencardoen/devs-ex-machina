@@ -85,7 +85,7 @@ SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC
 #SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -march=native -g ${flagstdc11} ")
-SET(OPTIMIZATION_FLAG "-O3")
+SET(OPTIMIZATION_FLAG "-O0")
 if (${APPLE})
 	SET(OPTIMIZATION_FLAG "-O1")
 endif()
