@@ -69,7 +69,7 @@ public:
 class CoupledRecursion : public n_model::CoupledModel
 {
 public:
-	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, int coreAmt);
+	CoupledRecursion(std::size_t width, std::size_t totalDepth, std::size_t depth, bool randomta, int coreAmt);
 	virtual ~CoupledRecursion();
 };
 
@@ -77,7 +77,11 @@ public:
 class DEVStone : public n_model::CoupledModel
 {
 public:
-	DEVStone(std::size_t width, std::size_t depth, bool randomta, int coreAmt=-1);
+	/**
+	 * @attention if the coreAmt argument is specified, a simple optimization in the placement of atomics will be
+	 * 	performed. Leave this empty should you wish to use a custom allocator!
+	 */
+	DEVStone(std::size_t width, std::size_t depth, bool randomta, int coreAmt = -1);
 	virtual ~DEVStone();
 };
 
