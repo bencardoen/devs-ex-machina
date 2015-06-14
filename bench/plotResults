@@ -1,0 +1,59 @@
+#!/usr/bin/env gnuplot
+reset
+set terminal pngcairo
+set ylabel "Duration (seconds)"
+set xlabel "Parameters"
+set format x "%f"
+set xtics out rotate by -80
+set xtics font "Verdana,10"
+set mytics 4
+set grid xtics lt 0 lw 1
+set grid ytics lt 1 lw 2
+set grid mytics lt 0 lw 1
+set key below
+set pointsize 1.0
+
+# =====================================================================
+# DEVStone - Classic
+# =====================================================================
+set output 'devstone_classic.png'
+set terminal pngcairo size 640,800
+set title 'DEVStone - Classic'
+set yrange [0.0:11.0]
+set xtics ("2, 3" 0, "2, 8" 1, "8, 3" 2, "8, 8" 3, "12, 12" 4)
+plot 'DEM_devstone_c' using 1:2 title 'DEVS Ex Machina' with points pointtype 7, \
+	'PYP_devstone_c' using 1:2 title 'Python PDEVS' with points pointtype 7
+
+# =====================================================================
+# DEVStone - PDEVS
+# =====================================================================
+set output 'devstone_parallel.png'
+set terminal pngcairo size 640,800
+set title 'DEVStone - Parallel'
+set xtics ("2, 3" 0, "2, 8" 1, "8, 3" 2, "8, 8" 3, "12, 12" 4, "12, 12 (4 cores)" 5)
+set yrange [0.0:11.0]
+plot 'DEM_devstone_po' using 1:2 title 'DEVS Ex Machina - Optimistic' with points pointtype 7, \
+	'PYP_devstone_p' using 1:2 title 'Python PDEVS' with points pointtype 7, \
+	'DEM_devstone_pc' using 1:2 title 'DEVS Ex Machina - Conservative' with points pointtype 7
+
+# =====================================================================
+# PHOLD - Classic
+# =====================================================================
+set output 'phold_classic.png'
+set terminal pngcairo size 640,800
+set title 'PHOLD - Classic'
+set yrange [0.0:2.2]
+set xtics ("1, 10, 0, 10" 0, "1, 10, 128, 10" 1, "1, 10, 256, 10" 2, "1, 10, 1536, 10" 3)
+plot 'DEM_phold_c' using 1:2 title 'DEVS Ex Machina' with points pointtype 7, \
+	'PYP_phold_c' using 1:2 title 'Python PDEVS' with points pointtype 7
+
+# =====================================================================	
+# PHOLD - PDEVS
+# =====================================================================
+set output 'phold_parallel.png'
+set terminal pngcairo size 640,800
+set title 'PHOLD - Parallel'
+set yrange [0.0:2.2]
+plot 'DEM_phold_po' using 1:2 title 'DEVS Ex Machina - Optimistic' with points pointtype 7, \
+	'PYP_phold_p' using 1:2 title 'Python PDEVS' with points pointtype 7, \
+	'DEM_phold_pc' using 1:2 title 'DEVS Ex Machina - Conservative' with points pointtype 7
