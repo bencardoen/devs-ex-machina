@@ -8,6 +8,9 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_CONSTANTS_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_CONSTANTS_H_
 
+#include <map>
+#include <string>
+
 namespace n_examples_traffic {
 
 enum Direction {

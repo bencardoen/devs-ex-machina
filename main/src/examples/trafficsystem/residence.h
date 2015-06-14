@@ -14,8 +14,10 @@ namespace n_examples_traffic {
 
 class Residence: public Building
 {
+	friend class City;
+
 public:
-    Residence(std::vector<std::string> path, int district, std::string name, int IAT_min, int IAT_max,
+    Residence(std::shared_ptr<std::vector<std::string> > path, int district, std::string name, int IAT_min, int IAT_max,
     		  int v_pref_min, int v_pref_max, int dv_pos_max, int dv_neg_max);
 	~Residence() {}
 };

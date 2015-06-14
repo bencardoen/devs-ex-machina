@@ -20,6 +20,7 @@ class Car
 {
 	friend class Building;
 	friend class RoadSegment;
+	friend class Intersection;
 
 private:
 	int ID;

@@ -24,13 +24,15 @@ public:
 	CommercialState(std::shared_ptr<Car> car);
 	CommercialState();
 	CommercialState(const CommercialState&);
-	std::string toString() const;
+	std::string toString() override;
 
 	~CommercialState() {}
 };
 
 class Commercial: public Building
 {
+	friend class City;
+
 private:
     t_portptr toCollector;
 
