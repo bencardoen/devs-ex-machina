@@ -280,212 +280,246 @@ This implementation only covers the most basic needs:
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
-\section{Jenkins}
-While building the traffic system on the Jenkins server problems occured and the server crashed due to a memory shortage. A lower level of optimization solved this problem.
-
 \chapter{Performance analysis}
-To measure the performance of \textsc{DEVS Ex Machina} under more demanding conditions, \textbf{DEVStone} and \textbf{PHOLD} benchmarks were used in combination with the \texttt{perf} profiler tool. Every time we compare the performance of our implementation with \textit{PythonPDEVS}.\\
+To measure the performance of \textsc{DEVS Ex Machina} under more demanding conditions, \textbf{DEVStone} and \textbf{PHOLD} benchmarks were used in combination with the \texttt{perf} profiler tool. As these are standardized tests, they allow easy comparison between our implementation and \textit{PythonPDEVS}.\\
 Note: at the moment, no major research has gone into the use of compiler optimizations yet. Potentially, there is still speed to be gained here.\\
 \\
-{\footnotesize[All the following tests were performed using an \textit{Intel Core i5 M520} CPU at 2.40GHz, parallel testing was done using 2 simulation cores.]}
+{\footnotesize[All the following tests were performed using an \textit{Intel Core i5 M520} CPU at 2.40GHz, parallel testing was done using 2 simulation cores. All tests were ran 5 times to give an indication of the predictability of the result.]}
 
+\pagebreak
 
-\section{Classic DEVS}
-Using Classic DEVS we see noticeable speedups compared to PyPDEVS. Both tests are completed in far less time, using the CPU more efficiently.
+\section{DEVStone}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \hspace*{-1.5in}
+  \includegraphics[width=1.6\linewidth]{devstone_classic.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1.6\linewidth]{devstone_parallel.png}
+\end{minipage}
+\end{figure}
+
+In both Classic and Parallel DEVS there are noticeable speedups compared to \textit{PyPDEVS}.\\
+Looking at \textsc{DEVS Ex Machina} specifically we can see that in the first few, rather lightweight cases the single core Classic DEVS simulation is faster than PDEVS, in the first case even twice as fast. Once more models start to get involved however, things quickly turn around since the benefit of having the raw processing power of more cores available outweighs the cost of setting up and managing multiple threads.\\
+Additionally, the final and most demanding test case, a DEVStone benchmark of depth and width 12, was also executed with 4 cores, which showed a slight improvement over using 2 cores.
+\\
+
+However, it should be noted that in PDEVS a somewhat thought-out assignment of models to cores is of critical importance. A parallel simulation with models placed haphazardly can perform \emph{significantly} worse than a Classic DEVS which doesn't have to deal with placement. In general, it is best to keep the most used connections intra-core.
+
+\pagebreak
+
+\section{PHOLD}
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \hspace*{-1.5in}
+  \includegraphics[width=1.6\linewidth]{phold_classic.png}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1.6\linewidth]{phold_parallel.png}
+\end{minipage}
+\end{figure}
+
+{\footnotesize[ To make a useful comparison with \textit{Python PDEVS} possible, care was taken to make sure the "meaningless" computations related to the payload size were not removed by compiler optimisations ]}\\
+\\
+This benchmark tests the effect of different payload sizes in a highly interconnected environment.\\
+In both environments \textsc{DEVS Ex Machina} is significantly faster than \textit{PyPDEVS}.
+Especially interesting is the second graph with parellel results. Whereas in DEVStone Optimistic and Conservative DEVS performed relatively equally, here we can spot a clear discrepancy between them.\\
+
+In Optimistic we can see that as the payload grows, the total runtime becomes less predictable. Because of the inherent interconnectivity of the benchmark, and because processing a message with a larger payload can take a while, the chance of reverts or even series of reverts is increased.
+
+In Conservative simulation however, the flow time is tightly controlled, avoiding reverts. In this case this behavior leads to significantly better results.
+
+\pagebreak
+
+\section{Detailed stats}
+Some more detailed statistics provided by \texttt{perf} are shown here. Each time, only the result of a single run is provided, to give a general indication.
 
 \subsection{DEVStone}
-The DEVStone benchmark used for both implementations has a width of 2 and a depth of 3.
 \paragraph{\textsc{DEVS Ex Machina}}
 \begin{Verbatim}[fontsize=\small]
 $ perf stat ./dxexmachina_devstone classic 2 3
-
  Performance counter stats for './dxexmachina_devstone classic 2 3':
 
-        174.007707 task-clock (msec)         #    1.111 CPUs utilized          
-               184 context-switches          #    0.001 M/sec                  
+        189.176880 task-clock (msec)         #    1.115 CPUs utilized          
+               243 context-switches          #    0.001 M/sec                  
                212 cpu-migrations            #    0.001 M/sec                  
-               696 page-faults               #    0.004 M/sec                  
-       463,684,386 cycles                    #    2.665 GHz                     [83.13%]
-       196,709,921 stalled-cycles-frontend   #   42.42% frontend cycles idle    [85.77%]
-       103,770,146 stalled-cycles-backend    #   22.38% backend  cycles idle    [68.62%]
-       557,355,313 instructions              #    1.20  insns per cycle        
-                                             #    0.35  stalled cycles per insn [86.11%]
-       131,411,927 branches                  #  755.208 M/sec                   [85.62%]
-         1,720,031 branch-misses             #    1.31% of all branches         [83.38%]
+               691 page-faults               #    0.004 M/sec                  
+       476,733,288 cycles                    #    2.520 GHz                     [84.35%]
+       204,107,284 stalled-cycles-frontend   #   42.81% frontend cycles idle    [84.40%]
+        95,948,277 stalled-cycles-backend    #   20.13% backend  cycles idle    [67.48%]
+       561,945,984 instructions              #    1.18  insns per cycle        
+                                             #    0.36  stalled cycles per insn [85.07%]
+       132,785,648 branches                  #  701.913 M/sec                   [84.93%]
+         1,847,286 branch-misses             #    1.39% of all branches         [84.62%]
 
-       0.156664362 seconds time elapsed
+       0.169685736 seconds time elapsed
+       
+$ perf stat ./dxexmachina_devstone opdevs 2 2 3
+ Performance counter stats for './dxexmachina_devstone opdevs 2 2 3':
+
+        258.435415 task-clock (msec)         #    0.924 CPUs utilized          
+             1,201 context-switches          #    0.005 M/sec                  
+                26 cpu-migrations            #    0.101 K/sec                  
+             3,836 page-faults               #    0.015 M/sec                  
+       613,419,141 cycles                    #    2.374 GHz                     [83.93%]
+       316,632,123 stalled-cycles-frontend   #   51.62% frontend cycles idle    [85.01%]
+       139,998,026 stalled-cycles-backend    #   22.82% backend  cycles idle    [67.52%]
+       615,911,601 instructions              #    1.00  insns per cycle        
+                                             #    0.51  stalled cycles per insn [84.95%]
+       144,090,841 branches                  #  557.551 M/sec                   [85.11%]
+         2,820,791 branch-misses             #    1.96% of all branches         [78.96%]
+
+       0.279720722 seconds time elapsed
+
+$ perf stat ./dxexmachina_devstone cpdevs 2 2 3
+ Performance counter stats for './dxexmachina_devstone cpdevs 2 2 3':
+
+        257.663639 task-clock (msec)         #    0.851 CPUs utilized          
+               911 context-switches          #    0.004 M/sec                  
+                19 cpu-migrations            #    0.074 K/sec                  
+             3,837 page-faults               #    0.015 M/sec                  
+       663,670,571 cycles                    #    2.576 GHz                     [82.64%]
+       351,293,037 stalled-cycles-frontend   #   52.93% frontend cycles idle    [82.43%]
+       197,270,653 stalled-cycles-backend    #   29.72% backend  cycles idle    [65.25%]
+       643,477,063 instructions              #    0.97  insns per cycle        
+                                             #    0.55  stalled cycles per insn [84.74%]
+       150,533,837 branches                  #  584.226 M/sec                   [87.77%]
+         2,968,904 branch-misses             #    1.97% of all branches         [82.67%]
+
+       0.302693494 seconds time elapsed
 \end{Verbatim}
 \paragraph{\textsc{PythonPDEVS}}
 \begin{Verbatim}[fontsize=\small]
-$ perf stat python experiment.py default 2 false > out.txt
+$ perf stat ./dxexmachina_devstone classic 2 3
+ Performance counter stats for 'python ./DEVStone/experiment.py default 2 false':
 
- Performance counter stats for 'python experiment.py default 2 false':
+        670.501187 task-clock (msec)         #    0.959 CPUs utilized          
+               169 context-switches          #    0.252 K/sec                  
+                22 cpu-migrations            #    0.033 K/sec                  
+             4,962 page-faults               #    0.007 M/sec                  
+     1,828,074,336 cycles                    #    2.726 GHz                     [82.96%]
+       983,729,421 stalled-cycles-frontend   #   53.81% frontend cycles idle    [83.51%]
+       600,902,567 stalled-cycles-backend    #   32.87% backend  cycles idle    [67.59%]
+     1,691,525,594 instructions              #    0.93  insns per cycle        
+                                             #    0.58  stalled cycles per insn [84.05%]
+       380,934,259 branches                  #  568.134 M/sec                   [83.42%]
+        15,797,482 branch-misses             #    4.15% of all branches         [82.57%]
 
-        709.776558 task-clock (msec)         #    0.989 CPUs utilized          
-               191 context-switches          #    0.269 K/sec                  
-                34 cpu-migrations            #    0.048 K/sec                  
-             2,942 page-faults               #    0.004 M/sec                  
-     1,687,298,167 cycles                    #    2.377 GHz                     [82.71%]
-       866,759,527 stalled-cycles-frontend   #   51.37% frontend cycles idle    [83.25%]
-       562,247,464 stalled-cycles-backend    #   33.32% backend  cycles idle    [67.62%]
-     1,672,919,036 instructions              #    0.99  insns per cycle        
-                                             #    0.52  stalled cycles per insn [83.82%]
-       375,443,818 branches                  #  528.961 M/sec                   [83.25%]
-        14,867,814 branch-misses             #    3.96% of all branches         [83.28%]
+       0.699383675 seconds time elapsed
+       
+$ perf stat ./dxexmachina_devstone opdevs 2 2 3
+ Performance counter stats for 'mpirun -np 2 python ./DEVStone/experiment.py default 2 false':
 
-       0.717576473 seconds time elapsed
+        692.210888 task-clock (msec)         #    0.330 CPUs utilized          
+               909 context-switches          #    0.001 M/sec                  
+                99 cpu-migrations            #    0.143 K/sec                  
+             8,728 page-faults               #    0.013 M/sec                  
+     1,801,930,537 cycles                    #    2.603 GHz                     [82.89%]
+       929,771,707 stalled-cycles-frontend   #   51.60% frontend cycles idle    [82.88%]
+       581,151,775 stalled-cycles-backend    #   32.25% backend  cycles idle    [68.37%]
+     1,800,262,136 instructions              #    1.00  insns per cycle        
+                                             #    0.52  stalled cycles per insn [84.52%]
+       403,185,223 branches                  #  582.460 M/sec                   [84.04%]
+        13,159,671 branch-misses             #    3.26% of all branches         [82.92%]
+
+       2.099629915 seconds time elapsed
 \end{Verbatim}
 \subsection{PHOLD}
 \paragraph{\textsc{DEVS Ex Machina}}
 \begin{Verbatim}[fontsize=\small]
 $ perf stat ./dxexmachina_phold classic 1 10 0 10
-
  Performance counter stats for './dxexmachina_phold classic 1 10 0 10':
 
-         15.847971 task-clock (msec)         #    1.047 CPUs utilized          
-                15 context-switches          #    0.946 K/sec                  
-                28 cpu-migrations            #    0.002 M/sec                  
-               710 page-faults               #    0.045 M/sec                  
-        27,365,192 cycles                    #    1.727 GHz                     [74.72%]
-        12,605,461 stalled-cycles-frontend   #   46.06% frontend cycles idle    [73.78%]
-         7,424,569 stalled-cycles-backend    #   27.13% backend  cycles idle    [86.04%]
-        31,095,649 instructions              #    1.14  insns per cycle        
-                                             #    0.41  stalled cycles per insn
-         6,955,945 branches                  #  438.917 M/sec                  
-           132,996 branch-misses             #    1.91% of all branches         [74.99%]
+         12.815382 task-clock (msec)         #    1.081 CPUs utilized          
+                11 context-switches          #    0.858 K/sec                  
+                25 cpu-migrations            #    0.002 M/sec                  
+               712 page-faults               #    0.056 M/sec                  
+        27,657,920 cycles                    #    2.158 GHz                     [64.22%]
+        13,070,687 stalled-cycles-frontend   #   47.26% frontend cycles idle    [75.41%]
+         8,563,853 stalled-cycles-backend    #   30.96% backend  cycles idle   
+        31,010,010 instructions              #    1.12  insns per cycle        
+                                             #    0.42  stalled cycles per insn
+         6,957,728 branches                  #  542.920 M/sec                  
+           122,049 branch-misses             #    1.75% of all branches         [69.03%]
 
-       0.015131930 seconds time elapsed
-\end{Verbatim}
-\paragraph{\textsc{PythonPDEVS}}
-\begin{Verbatim}[fontsize=\small]
-$ perf stat python experiment.py default 2 false > out.txt
-
- Performance counter stats for 'python experiment.py default 2 false':
-
-        709.776558 task-clock (msec)         #    0.989 CPUs utilized          
-               191 context-switches          #    0.269 K/sec                  
-                34 cpu-migrations            #    0.048 K/sec                  
-             2,942 page-faults               #    0.004 M/sec                  
-     1,687,298,167 cycles                    #    2.377 GHz                     [82.71%]
-       866,759,527 stalled-cycles-frontend   #   51.37% frontend cycles idle    [83.25%]
-       562,247,464 stalled-cycles-backend    #   33.32% backend  cycles idle    [67.62%]
-     1,672,919,036 instructions              #    0.99  insns per cycle        
-                                             #    0.52  stalled cycles per insn [83.82%]
-       375,443,818 branches                  #  528.961 M/sec                   [83.25%]
-        14,867,814 branch-misses             #    3.96% of all branches         [83.28%]
-
-       0.717576473 seconds time elapsed
-\end{Verbatim}
-
-\section{Parallel DEVS}
-Also in parallel simulations \textsc{DEVS Ex Machina} completes quite a bit quicker, again achieving higher CPU utilization.
-Additionally we can see that Conservative PDEVS performs consistently significantly faster than Parallel PDEVS, in the case of PHOLD.
-
-\subsection{DEVStone}
-\paragraph{\textsc{DEVS Ex Machina} - Optimistic}
-\begin{Verbatim}[fontsize=\small]
-$ perf stat ./dxexmachina_devstone opdevs 2 2 3
-
- Performance counter stats for './dxexmachina_devstone opdevs 2 2 3':
-
-         95.265846 task-clock (msec)         #    0.499 CPUs utilized          
-               191 context-switches          #    0.002 M/sec                  
-                15 cpu-migrations            #    0.157 K/sec                  
-             1,229 page-faults               #    0.013 M/sec                  
-       197,702,110 cycles                    #    2.075 GHz                     [82.53%]
-        95,414,988 stalled-cycles-frontend   #   48.26% frontend cycles idle    [83.54%]
-        47,283,951 stalled-cycles-backend    #   23.92% backend  cycles idle    [76.71%]
-       199,327,993 instructions              #    1.01  insns per cycle        
-                                             #    0.48  stalled cycles per insn [91.61%]
-        47,887,986 branches                  #  502.677 M/sec                   [86.14%]
-           931,688 branch-misses             #    1.95% of all branches         [75.36%]
-
-       0.191066656 seconds time elapsed
-\end{Verbatim}
-\paragraph{\textsc{DEVS Ex Machina} - Conservative}
-\begin{Verbatim}[fontsize=\small]
-$ perf stat ./dxexmachina_devstone cpdevs 2 2 3
-
- Performance counter stats for './dxexmachina_devstone cpdevs 2 2 3':
-
-        129.292299 task-clock (msec)         #    0.555 CPUs utilized          
-               672 context-switches          #    0.005 M/sec                  
-                15 cpu-migrations            #    0.116 K/sec                  
-             2,177 page-faults               #    0.017 M/sec                  
-       308,983,665 cycles                    #    2.390 GHz                     [74.75%]
-       151,616,998 stalled-cycles-frontend   #   49.07% frontend cycles idle    [84.43%]
-        82,891,133 stalled-cycles-backend    #   26.83% backend  cycles idle    [76.81%]
-       276,296,034 instructions              #    0.89  insns per cycle        
-                                             #    0.55  stalled cycles per insn [88.68%]
-        66,513,459 branches                  #  514.443 M/sec                   [87.86%]
-         1,390,075 branch-misses             #    2.09% of all branches         [77.49%]
-
-       0.233046274 seconds time elapsed
-\end{Verbatim}
-\paragraph{\textsc{PythonPDEVS}}
-\begin{Verbatim}[fontsize=\small]
-$ perf stat mpirun -np 2 python experiment.py default 2 false > out.txt
-
- Performance counter stats for 'mpirun -np 2 python experiment.py default 2 false':
-
-        787.125992 task-clock (msec)         #    0.371 CPUs utilized          
-             1,120 context-switches          #    0.001 M/sec                  
-                91 cpu-migrations            #    0.116 K/sec                  
-             8,684 page-faults               #    0.011 M/sec                  
-     1,786,217,349 cycles                    #    2.269 GHz                     [83.85%]
-       935,480,076 stalled-cycles-frontend   #   52.37% frontend cycles idle    [84.18%]
-       619,366,137 stalled-cycles-backend    #   34.67% backend  cycles idle    [65.26%]
-     1,796,463,414 instructions              #    1.01  insns per cycle        
-                                             #    0.52  stalled cycles per insn [84.16%]
-       403,042,819 branches                  #  512.044 M/sec                   [84.70%]
-        13,210,328 branch-misses             #    3.28% of all branches         [82.68%]
-
-       2.123888919 seconds time elapsed
-\end{Verbatim}
-
-\subsection{PHOLD}
-\paragraph{\textsc{DEVS Ex Machina} - Optimistic}
-\begin{Verbatim}[fontsize=\small]
+       0.011857863 seconds time elapsed
+       
 $ perf stat ./dxexmachina_phold opdevs 2 1 10 0 10
-
  Performance counter stats for './dxexmachina_phold opdevs 2 1 10 0 10':
 
-         20.741980 task-clock (msec)         #    0.092 CPUs utilized          
-                73 context-switches          #    0.004 M/sec                  
-                 8 cpu-migrations            #    0.386 K/sec                  
-               760 page-faults               #    0.037 M/sec                  
-        28,281,718 cycles                    #    1.364 GHz                     [42.03%]
-        14,899,039 stalled-cycles-frontend   #   52.68% frontend cycles idle    [79.62%]
-         8,373,668 stalled-cycles-backend    #   29.61% backend  cycles idle   
-        29,601,476 instructions              #    1.05  insns per cycle        
-                                             #    0.50  stalled cycles per insn
-         6,754,172 branches                  #  325.628 M/sec                  
-           135,220 branch-misses             #    2.00% of all branches         [81.22%]
+         58.345592 task-clock (msec)         #    0.103 CPUs utilized          
+               235 context-switches          #    0.004 M/sec                  
+                24 cpu-migrations            #    0.411 K/sec                  
+               844 page-faults               #    0.014 M/sec                  
+        86,073,977 cycles                    #    1.475 GHz                     [79.15%]
+        41,603,661 stalled-cycles-frontend   #   48.33% frontend cycles idle    [87.74%]
+        23,030,593 stalled-cycles-backend    #   26.76% backend  cycles idle    [54.61%]
+        93,532,407 instructions              #    1.09  insns per cycle        
+                                             #    0.44  stalled cycles per insn [79.51%]
+        20,525,076 branches                  #  351.785 M/sec                   [88.38%]
+           426,419 branch-misses             #    2.08% of all branches         [93.36%]
 
-       0.225834153 seconds time elapsed
-\end{Verbatim}
-\paragraph{\textsc{DEVS Ex Machina} - Conservative}
-\begin{Verbatim}[fontsize=\small]
+       0.564278040 seconds time elapsed
+       
 $ perf stat ./dxexmachina_phold cpdevs 2 1 10 0 10
-
  Performance counter stats for './dxexmachina_phold cpdevs 2 1 10 0 10':
 
-         28.509489 task-clock (msec)         #    0.286 CPUs utilized          
-                95 context-switches          #    0.003 M/sec                  
-                11 cpu-migrations            #    0.386 K/sec                  
-               813 page-faults               #    0.029 M/sec                  
-        54,757,291 cycles                    #    1.921 GHz                     [63.45%]
-        29,057,227 stalled-cycles-frontend   #   53.07% frontend cycles idle    [86.87%]
-        15,602,463 stalled-cycles-backend    #   28.49% backend  cycles idle    [90.08%]
-        53,326,834 instructions              #    0.97  insns per cycle        
-                                             #    0.54  stalled cycles per insn
-        12,449,801 branches                  #  436.690 M/sec                  
-           219,155 branch-misses             #    1.76% of all branches         [64.68%]
+         45.097489 task-clock (msec)         #    0.453 CPUs utilized          
+                46 context-switches          #    0.001 M/sec                  
+                13 cpu-migrations            #    0.288 K/sec                  
+               856 page-faults               #    0.019 M/sec                  
+        68,793,923 cycles                    #    1.525 GHz                     [67.00%]
+        40,973,357 stalled-cycles-frontend   #   59.56% frontend cycles idle    [82.61%]
+        15,619,202 stalled-cycles-backend    #   22.70% backend  cycles idle    [71.88%]
+        56,478,836 instructions              #    0.82  insns per cycle        
+                                             #    0.73  stalled cycles per insn [91.10%]
+        13,722,715 branches                  #  304.290 M/sec                   [91.32%]
+           279,636 branch-misses             #    2.04% of all branches         [90.09%]
 
-       0.099591165 seconds time elapsed
+       0.099622680 seconds time elapsed
 \end{Verbatim}
 \paragraph{\textsc{PythonPDEVS}}
-PHOLD in parallel on PyPDEVS crashed immediately with an MPI error, hence a comparison was not possible for now.
+\begin{Verbatim}[fontsize=\small]
+$ perf stat ./dxexmachina_phold classic 1 10 0 10
+ Performance counter stats for 'python ./benchmarks/experiment.py':
+
+        671.561546 task-clock (msec)         #    0.998 CPUs utilized          
+                97 context-switches          #    0.144 K/sec                  
+                18 cpu-migrations            #    0.027 K/sec                  
+             2,974 page-faults               #    0.004 M/sec                  
+     1,916,305,122 cycles                    #    2.854 GHz                     [83.35%]
+     1,005,734,716 stalled-cycles-frontend   #   52.48% frontend cycles idle    [83.34%]
+       499,103,479 stalled-cycles-backend    #   26.05% backend  cycles idle    [66.69%]
+     2,060,775,055 instructions              #    1.08  insns per cycle        
+                                             #    0.49  stalled cycles per insn [83.34%]
+       345,264,964 branches                  #  514.123 M/sec                   [83.89%]
+        12,293,319 branch-misses             #    3.56% of all branches         [82.87%]
+
+       0.673223302 seconds time elapsed
+       
+$ perf stat ./dxexmachina_phold opdevs 2 1 10 0 10
+ Performance counter stats for 'mpirun -np 2 python ./benchmarks/experiment.py':
+
+        866.680461 task-clock (msec)         #    0.800 CPUs utilized          
+               929 context-switches          #    0.001 M/sec                  
+                83 cpu-migrations            #    0.096 K/sec                  
+             7,466 page-faults               #    0.009 M/sec                  
+     2,326,077,914 cycles                    #    2.684 GHz                     [83.64%]
+     1,283,069,850 stalled-cycles-frontend   #   55.16% frontend cycles idle    [83.95%]
+       940,158,530 stalled-cycles-backend    #   40.42% backend  cycles idle    [65.55%]
+     2,325,361,346 instructions              #    1.00  insns per cycle        
+                                             #    0.55  stalled cycles per insn [82.69%]
+       402,983,176 branches                  #  464.973 M/sec                   [83.67%]
+        15,476,432 branch-misses             #    3.84% of all branches         [84.05%]
+
+       1.083881333 seconds time elapsed
+\end{Verbatim}
 
 \section{Compared to \textsc{ADEVS}}
 Since the DEVStone benchmark for \textsc{ADEVS} does not support different depths, a test with greater width was performed instead. As we can see, \textsc{ADEVS} is still quite a bit faster.
@@ -626,41 +660,6 @@ We let each logger print several hundred thousand messages to a file. These are 
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
 While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as a more extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches taken by the program.
-
-
-\chapter{Examples}
-As it was part of the assignment we've implemented a set of examples for our simulator. Except from the virus-model all examples are based on models described in Yentl's thesis. 
-
-\subsubsection{Traffic light}
-This simple model is an exact copy of the model used as an example in pypdevs.
-
-\subsubsection{DEVStone}
-...\\
-\\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the DEVStone model to work.
-
-\subsubsection{Forrestfire}
-...\\
-\\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
-
-\subsubsection{Traffic system}
-The traffic system is based on the traffic system described in Yentl's paper. We've implemented two versions, a bigger one and a smaller one.\\
-A modified version of Yenl's script generates the header and source file for the city model and makes it possible to easily adopt the models size. The script can be found in the './main/script' folder of our repository.\\
-\\
-Run the following command to generate a city:
-\begin{Verbatim}[fontsize=\small]
-$ python script_devsexmachina.py {x} {y} {nodes} {districts}
-\end{Verbatim}
-The small city is 10 x 50 segments large and the larger city exists of 10 x 500 segments. Both cities are generated for 50 nodes and 5 districts as described in Yentl's thesis.\\
-\\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work. This executable contains the larger version of the city. To build large cities you have to ensure that there is a sufficient amount of memory available. 
-
-\subsubsection{Virus}
-...\\
-\\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
-
 
 \begin{thebibliography}{1}
 
