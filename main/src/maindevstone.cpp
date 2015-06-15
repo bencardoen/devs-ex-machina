@@ -57,6 +57,7 @@ int main(int argc, char** args)
 		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
 	conf.coreAmount = coreAmt;
 	conf.saveInterval = 5;
+	conf.zombieIdleThreshold = 10;
 
 	std::ofstream filestream("./devstone.txt");
 	{
@@ -65,7 +66,7 @@ int main(int argc, char** args)
 		t_timestamp endTime(1000, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
+		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false, coreAmt);
 		ctrl->addModel(d);
 
 		ctrl->simulate();

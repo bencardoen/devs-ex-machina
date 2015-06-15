@@ -64,6 +64,7 @@ int main(int argc, char** args)
 		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
 	conf.coreAmount = coreAmt;
 	conf.saveInterval = 5;
+	conf.zombieIdleThreshold = 10;
 
 	std::ofstream filestream("./phold.txt");
 	{
