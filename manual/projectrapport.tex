@@ -8,6 +8,7 @@
 \usepackage{listings}
 \usepackage{amssymb}
 \usepackage{fancyvrb}
+\usepackage{wrapfig}
 \usepackage{hyperref}
 \usepackage[T1]{fontenc}
 \usepackage[scaled]{beramono}
@@ -280,11 +281,13 @@ This implementation only covers the most basic needs:
 \paragraph{Asynchronous output}
 To implement the asynchronous output, we made use of a custom stream buffer. The original design is by Dietmar K{\"u}hl \cite{asynchwrite}. We modified this design in order to make it thread safe.
 
+\section{Jenkins}
+While building the traffic system on the Jenkins server problems occured and the server crashed due to a memory shortage. A lower level of optimization solved this problem.
+
 \chapter{Performance analysis}
 To measure the performance of \textsc{DEVS Ex Machina} under more demanding conditions, \textbf{DEVStone} and \textbf{PHOLD} benchmarks were used in combination with the \texttt{perf} profiler tool. As these are standardized tests, they allow easy comparison between our implementation and \textit{PythonPDEVS}.\\
-Note: at the moment, no major research has gone into the use of compiler optimizations yet. Potentially, there is still speed to be gained here.\\
 \\
-{\footnotesize[All the following tests were performed using an \textit{Intel Core i5 M520} CPU at 2.40GHz, parallel testing was done using 2 simulation cores. All tests were ran 5 times to give an indication of the predictability of the result.]}
+{\footnotesize[All the following tests were performed using an \textit{Intel Core i5 M520} CPU at 2.40GHz, parallel testing was done using 2 simulation cores unless mentioned otherwise. Compilation was done with the \texttt{-O3} optimization flag. All tests were ran 5 times to give an indication of the predictability of the result.]}
 
 \pagebreak
 
@@ -329,9 +332,9 @@ However, it should be noted that in PDEVS a somewhat thought-out assignment of m
 \\
 This benchmark tests the effect of different payload sizes in a highly interconnected environment.\\
 In both environments \textsc{DEVS Ex Machina} is significantly faster than \textit{PyPDEVS}.
-Especially interesting is the second graph with parellel results. Whereas in DEVStone Optimistic and Conservative DEVS performed relatively equally, here we can spot a clear discrepancy between them.\\
+Especially interesting is the second graph with parellel results. Whereas in DEVStone Optimistic and Conservative DEVS performed relatively equally, here we can spot a clear discrepancy between them.
 
-In Optimistic we can see that as the payload grows, the total runtime becomes less predictable. Because of the inherent interconnectivity of the benchmark, and because processing a message with a larger payload can take a while, the chance of reverts or even series of reverts is increased.
+In Optimistic we can see that as the payload grows, the total runtime becomes less predictable. Because of the inherent interconnectivity of the benchmark (lots of inter-core communication), and because processing a message with a larger payload can take a while, the chance of reverts or even series of reverts is increased.
 
 In Conservative simulation however, the flow time is tightly controlled, avoiding reverts. In this case this behavior leads to significantly better results.
 
@@ -660,6 +663,55 @@ We let each logger print several hundred thousand messages to a file. These are 
 \lstinputlisting[]{own.perf}
 \subsubsection{Conclusion}
 While the difference is considerable, we should keep in mind that g3log generates timestamps for each message. It also contains several features that our logger doesn't, such as a more extensive crash safety. Moreover, g3log allows the user to dynamically change which log levels are filtered, while this can only be decided at compile time for our logger. This can be clearly seen in the amount of branches taken by the program.
+
+\chapter{Examples}
+As part of the assignment we've implemented a set of examples for our simulator. Most of them are based on models already described in Yentl's thesis. 
+
+\subsubsection{Traffic light and Traffic System}
+These simple models are an exact copy of those used as examples in pypdevs.
+
+\subsubsection{DEVStone}
+DEVStone is a standardized benchmark for DEVS. It can be run using the separate executable \texttt{dxexmachina\_devstone}. If this executable has not been generated, run the following command from the \texttt{build} folder: \texttt{make dxexmachina\_devstone}\\
+The executable takes a few arguments. First you can specify whether you want to run it in Classic DEVS mode (\texttt{classic}) or Parallel (\texttt{opdevs} and \texttt{cpdevs} for Optimistic and Conservative respectively) followed by the amount of cores.\\
+Next you can specify the width and the depth of the benchmark. By default this is 2 and 3.
+
+\subsubsection{PHOLD}
+PHOLD simulates a highly interconnected environment. Running it follows a procedure largely similar to \textbf{DEVStone}. The benchmark runs from a separate executable \texttt{dxexmachina\_phold}.\\
+Again, its first arguments are the type of simulation. What follows is, in order, the amount of nodes in the \textbf{PHOLD}, the amount of atomic models per node, the size of the payload, and the percentage of remotes.
+
+\subsubsection{Forestfire}
+...\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
+
+\subsubsection{Traffic system}
+The \textbf{traffic system} is based on the traffic system described in Yentl's paper. We've implemented two versions, a bigger one and a smaller one.\\
+A modified version of Yenl's script generates the header and source file for the city model and makes it possible to easily adopt the models size. The script can be found in the './main/script' folder of our repository.\\
+\\
+Run the following command to generate a city:
+\begin{Verbatim}[fontsize=\small]
+$ python script_devsexmachina.py {x} {y} {nodes} {districts}
+\end{Verbatim}
+The small city is 10 x 50 segments large and the larger city exists of 10 x 500 segments. Both cities are generated for 50 nodes and 5 districts as described in Yentl's thesis.\\
+\\
+\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work. This executable contains the larger version of the city. To build large cities you have to ensure that there is a sufficient amount of memory available. 
+
+\subsubsection{Virus}
+\begin{wrapfigure}{r}{0.3\textwidth}
+  \begin{center}
+    \includegraphics[width=0.28\textwidth]{virus}
+  \end{center}
+\end{wrapfigure}
+
+Virus simulates the spread of two viruses over a pool of healthy cells.\\
+
+The procedure is quite simple: each type of virus starts out in a single cell. Every cell, once in control of a virus, produces a set number of new viruses every turn and also sends out some of its contained viruses to a neighbour; this can be a neutral cell (thereby taking it over), a friendly cell (reenforcing it) or a cell owned by the other virus (reducing its numbers and possibly taking over the cell).\\
+As a result this produces quite dynamic behavior, with both viruses spreading and moving around the pool or getting into stalemates.\\
+
+This model is relatively interesting because it is well-connected and gradually produces more and more messages. Just like \textbf{PHOLD} it has performance gains in Conservative PDEVS over Optimistic.\\
+\\
+\textbf{Virus} has its own separate executable, \texttt{dxexmachina\_virus} which can be generated and used just like those of \textbf{DEVStone} and \textbf{PHOLD}. After specifying the simulation type the arguments are respectively the size of the cell pool (apart from the two starting cells), and the maximum amount of connections per cell.
+
 
 \begin{thebibliography}{1}
 
