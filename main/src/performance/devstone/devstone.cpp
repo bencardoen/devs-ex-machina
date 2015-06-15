@@ -151,7 +151,10 @@ std::vector<n_network::t_msgptr> Generator::output() const
 CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t totalDepth, std::size_t depth, bool randomta, int coreAmt)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
-	int location = (depth-1) / (totalDepth/coreAmt);
+	// If possible, split layers (CoupledRecursion) over cores in even chunks
+	// eg. depth 7, coreAmt 2 -> core#0: layer 1,2,3,4 core#1: layer 5,6,7
+	int location = (depth>1 && coreAmt!=-1) ? (depth-1) / (totalDepth/coreAmt + totalDepth%2) : -1;
+
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
 
@@ -165,7 +168,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t totalDepth, st
 		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
 			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
-			if(coreAmt != -1) proc->setCorenumber(location);
+			proc->setCorenumber(location);
 			addSubModel(proc);
 
 			if (i == 0) {
@@ -181,7 +184,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t totalDepth, st
 		for (std::size_t i = 0; i < width; ++i) {
 			n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
 			        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
-			if(coreAmt != -1) proc->setCorenumber(location);
+			proc->setCorenumber(location);
 			addSubModel(proc);
 
 			if (i == 0) {
