@@ -673,16 +673,19 @@ These simple models are an exact copy of those used as examples in pypdevs.
 \subsubsection{DEVStone}
 DEVStone is a standardized benchmark for DEVS. It can be run using the separate executable \texttt{dxexmachina\_devstone}. If this executable has not been generated, run the following command from the \texttt{build} folder: \texttt{make dxexmachina\_devstone}\\
 The executable takes a few arguments. First you can specify whether you want to run it in Classic DEVS mode (\texttt{classic}) or Parallel (\texttt{opdevs} and \texttt{cpdevs} for Optimistic and Conservative respectively) followed by the amount of cores.\\
-Next you can specify the width and the depth of the benchmark. By default this is 2 and 3.
+Next you can specify the width and the depth of the benchmark. By default this is 2 and 3.\\
+For more complex changes you can alter the source file \texttt{maindevstone.cpp}. Be sure to run \texttt{make dxexmachina\_devstone} again afterwards to recompile.
 
 \subsubsection{PHOLD}
 PHOLD simulates a highly interconnected environment. Running it follows a procedure largely similar to \textbf{DEVStone}. The benchmark runs from a separate executable \texttt{dxexmachina\_phold}.\\
-Again, its first arguments are the type of simulation. What follows is, in order, the amount of nodes in the \textbf{PHOLD}, the amount of atomic models per node, the size of the payload, and the percentage of remotes.
+Again, its first arguments are the type of simulation. What follows is, in order, the amount of nodes in the \textbf{PHOLD}, the amount of atomic models per node, the size of the payload, and the percentage of remotes.\\
+The configuration's source file is \texttt{mainphold.cpp}.
 
 \subsubsection{Forestfire}
-...\\
-\\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work.
+Forestfire is a highly demanding interconnected model that inherently has a high chance of reverts or even series of reverts.\\
+At the top of its source file, \texttt{mainbenchfire.cpp}, you can configure its 2 parameters, the width and height of the forest, as well as the duration of the test by altering the values of the macros \texttt{BENCH\_FIRE\_SIZEX}, \texttt{BENCH\_FIRE\_SIZEY} and \texttt{BENCH\_FIRE\_MAXTIME}.\\
+
+The executable for this sole test is \texttt{dxexmachina\_benchfire}.
 
 \subsubsection{Traffic system}
 The \textbf{traffic system} is based on the traffic system described in Yentl's paper. We've implemented two versions, a bigger one and a smaller one.\\
@@ -694,7 +697,8 @@ $ python script_devsexmachina.py {x} {y} {nodes} {districts}
 \end{Verbatim}
 The small city is 10 x 50 segments large and the larger city exists of 10 x 500 segments. Both cities are generated for 50 nodes and 5 districts as described in Yentl's thesis.\\
 \\
-\textbf{NOTE} We added an extra executable to the project containing only the necessary implementation for the traffic system model to work. This executable contains the larger version of the city. To build large cities you have to ensure that there is a sufficient amount of memory available. 
+We added an extra executable, \texttt{dxexmachina\_traffic}, to the project containing only the necessary implementation for the traffic system model to work. This executable contains the larger version of the city. To build large cities you have to ensure that there is a sufficient amount of memory available.\\
+The source file of this executable is \texttt{maintraffic.cpp}.
 
 \subsubsection{Virus}
 \begin{wrapfigure}{r}{0.3\textwidth}
@@ -710,7 +714,8 @@ As a result this produces quite dynamic behavior, with both viruses spreading an
 
 This model is relatively interesting because it is well-connected and gradually produces more and more messages. Just like \textbf{PHOLD} it has performance gains in Conservative PDEVS over Optimistic.\\
 \\
-\textbf{Virus} has its own separate executable, \texttt{dxexmachina\_virus} which can be generated and used just like those of \textbf{DEVStone} and \textbf{PHOLD}. After specifying the simulation type the arguments are respectively the size of the cell pool (apart from the two starting cells), and the maximum amount of connections per cell.
+\textbf{Virus} has its own separate executable, \texttt{dxexmachina\_virus} which can be generated and used just like those of \textbf{DEVStone} and \textbf{PHOLD}. After specifying the simulation type the arguments are respectively the size of the cell pool (apart from the two starting cells), and the maximum amount of connections per cell.\\
+The source of this configuration can be found in \texttt{mainvirus.cpp}.
 
 
 \begin{thebibliography}{1}
