@@ -8,12 +8,12 @@
 #ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_TRAFFICSYSTEMC_H_
 #define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_TRAFFICSYSTEMC_H_
 
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "model/state.h"
 #include <assert.h>
-#include "policemanc.h"
-#include "trafficlightc.h"
+#include "examples/trafficlight_coupled/policemanc.h"
+#include "examples/trafficlight_coupled/trafficlightc.h"
 #include "cereal/archives/binary.hpp"
 
 namespace n_examples_coupled {

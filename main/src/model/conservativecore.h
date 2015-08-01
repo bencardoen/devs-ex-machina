@@ -4,8 +4,8 @@
  *  Created on: 4 May 2015
  *      Author: Ben Cardoen -- Tim Tuijn
  */
-#include "multicore.h"
-#include "sharedvector.h"
+#include "model/multicore.h"
+#include "tools/sharedvector.h"
 
 #ifndef SRC_MODEL_CONSERVATIVECORE_H_
 #define SRC_MODEL_CONSERVATIVECORE_H_

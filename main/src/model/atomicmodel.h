@@ -8,12 +8,12 @@
 #ifndef ATOMICMODEL_H_
 #define ATOMICMODEL_H_
 
-#include "model.h"
-#include "message.h"	// include globallog
+#include "model/model.h"
+#include "network/message.h"	// include globallog
 #include <assert.h>
 #include <map>
-#include "globallog.h"
-#include "archive.h"
+#include "tools/globallog.h"
+#include "serialization/archive.h"
 #include "cereal/types/polymorphic.hpp"
 #include "cereal/access.hpp"
 #include <set>

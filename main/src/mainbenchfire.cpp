@@ -23,11 +23,11 @@
 #define BENCH_FIRE_SIZEY 3
 #endif
 
-#include "controller.h"
+#include "control/controller.h"
 #include "examples/forestfire/firespread.h"
-#include "objectfactory.h"
-#include "simpleallocator.h"
-#include "multicore.h"
+#include "tools/objectfactory.h"
+#include "control/simpleallocator.h"
+#include "model/multicore.h"
 
 LOG_INIT("firebench.log")
 

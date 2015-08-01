@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "compare.h"
+#include "test/compare.h"
 
 namespace n_misc{
 

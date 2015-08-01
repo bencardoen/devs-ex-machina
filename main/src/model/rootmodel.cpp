@@ -4,7 +4,7 @@
  *  Created on: 30 Mar 2015
  *      Author: matthijs
  */
-#include "rootmodel.h"
+#include "model/rootmodel.h"
 #include <deque>
 #include <set>
 #include <cassert>

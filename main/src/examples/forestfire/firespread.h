@@ -8,7 +8,7 @@
 #ifndef SRC_EXAMPLES_FORESTFIRE_FIRESPREAD_H_
 #define SRC_EXAMPLES_FORESTFIRE_FIRESPREAD_H_
 
-#include <coupledmodel.h>
+#include "model/coupledmodel.h"
 
 namespace n_examples {
 

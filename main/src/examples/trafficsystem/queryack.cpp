@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "queryack.h"
+#include "examples/trafficsystem/queryack.h"
 #include <sstream>
 
 namespace n_examples_traffic {

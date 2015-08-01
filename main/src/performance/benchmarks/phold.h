@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <thread>
 #include <chrono>
-#include "atomicmodel.h"
-#include "coupledmodel.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
 
 namespace n_benchmarks_phold {
 

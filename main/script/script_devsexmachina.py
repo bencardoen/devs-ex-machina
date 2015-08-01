@@ -203,19 +203,19 @@ class City(object):
 
     def __init__(self, districts):
         self.sourcefile = open('generated_city.cpp', 'w')
-        self.sourcefile.write('#include "city.h"\n')
+        self.sourcefile.write('#include "examples/trafficsystem/city.h"\n')
         self.sourcefile.write('#include <sstream>\n')
 
         self.header = open('generated_city.h', 'w')
         self.header.write('#ifndef SRC_EXAMPLES_TRAFFICSYSTEM_CITY_H_\n')
         self.header.write('#define SRC_EXAMPLES_TRAFFICSYSTEM_CITY_H_\n')
-        self.header.write('#include "coupledmodel.h"\n')
-        self.header.write('#include "collector.h"\n')
-        self.header.write('#include "residence.h"\n')
-        self.header.write('#include "commercial.h"\n')
-        self.header.write('#include "intersection.h"\n')
-        self.header.write('#include "constants.h"\n')
-        self.header.write('#include "road.h"\n')
+        self.header.write('#include "model/coupledmodel.h"\n')
+        self.header.write('#include "examples/trafficsystem/collector.h"\n')
+        self.header.write('#include "examples/trafficsystem/residence.h"\n')
+        self.header.write('#include "examples/trafficsystem/commercial.h"\n')
+        self.header.write('#include "examples/trafficsystem/intersection.h"\n')
+        self.header.write('#include "examples/trafficsystem/constants.h"\n')
+        self.header.write('#include "examples/trafficsystem/road.h"\n')
         self.header.write('#include <vector>\n')
 
         self.directions = {}

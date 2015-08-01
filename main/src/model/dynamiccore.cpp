@@ -5,7 +5,7 @@
  *      Author: Ben Cardoen
  */
 
-#include <dynamiccore.h>
+#include "model/dynamiccore.h"
 
 namespace n_model {
 

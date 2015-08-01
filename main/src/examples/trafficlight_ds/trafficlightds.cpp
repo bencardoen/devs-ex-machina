@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "trafficlightds.h"
+#include "examples/trafficlight_ds/trafficlightds.h"
 
 namespace n_examples_ds {
 

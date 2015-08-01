@@ -8,9 +8,9 @@
 #ifndef SRC_MODEL_MULTICORE_H_
 #define SRC_MODEL_MULTICORE_H_
 
-#include "core.h"
-#include "locationtable.h"
-#include "v.h"
+#include "model/core.h"
+#include "control/locationtable.h"
+#include "model/v.h"
 using n_network::MessageColor;
 
 

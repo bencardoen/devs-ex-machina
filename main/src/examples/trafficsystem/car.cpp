@@ -5,8 +5,8 @@
  *      Author: pieter
  */
 
-#include "car.h"
-#include "globallog.h"
+#include "examples/trafficsystem/car.h"
+#include "tools/globallog.h"
 #include <sstream>
 
 namespace n_examples_traffic {

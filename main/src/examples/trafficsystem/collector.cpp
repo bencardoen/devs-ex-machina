@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "collector.h"
+#include "examples/trafficsystem/collector.h"
 #include <sstream>
 
 namespace n_examples_traffic {

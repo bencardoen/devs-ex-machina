@@ -7,13 +7,13 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
-#include "compare.h"
-#include "coutredirect.h"
-#include "controllerconfig.h"
-#include "objectfactory.h"
-#include "devstone.h"
-#include "phold.h"
-#include "city_small.h"
+#include "test/compare.h"
+#include "tools/coutredirect.h"
+#include "control/controllerconfig.h"
+#include "tools/objectfactory.h"
+#include "performance/devstone/devstone.h"
+#include "performance/benchmarks/phold.h"
+#include "examples/trafficsystem/city_small.h"
 
 using namespace n_control;
 using namespace n_devstone;

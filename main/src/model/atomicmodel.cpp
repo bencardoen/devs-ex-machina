@@ -4,9 +4,9 @@
  *  Created on: Mar 17, 2015
  *      Author: Tim Stijn
  */
-#include "globallog.h"
+#include "tools/globallog.h"
 
-#include "atomicmodel.h"
+#include "model/atomicmodel.h"
 #include "cereal/types/base_class.hpp"
 
 namespace n_model {

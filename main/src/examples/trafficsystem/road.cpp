@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "road.h"
+#include "examples/trafficsystem/road.h"
 #include <sstream>
 
 namespace n_examples_traffic {

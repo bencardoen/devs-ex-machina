@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "virustracer.h"
+#include "examples/virus/virustracer.h"
 
 using namespace n_virus;
 

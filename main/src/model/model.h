@@ -13,9 +13,9 @@
 #include <deque>
 #include <memory>
 #include <sstream>
-#include "port.h"		//include glog, ofactory
-#include "state.h"
-#include "dssharedstate.h"	//include string
+#include "model/port.h"		//include glog, ofactory
+#include "model/state.h"
+#include "model/dssharedstate.h"	//include string
 
 namespace n_control{
 	class Controller;

@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_FORESTFIRE_FIRECELLSTATE_H_
 #define SRC_EXAMPLES_FORESTFIRE_FIRECELLSTATE_H_
 
-#include <cellmodel.h>
-#include "constants.h"
+#include "model/cellmodel.h"
+#include "examples/forestfire/constants.h"
 #include <array>
 
 namespace n_examples {

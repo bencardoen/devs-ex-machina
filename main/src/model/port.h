@@ -8,14 +8,14 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "archive.h"
+#include "serialization/archive.h"
 #include <vector>
 #include <map>
 #include <algorithm>
-#include "message.h"
-#include "zfunc.h"
-#include "globallog.h"
-#include "objectfactory.h"
+#include "network/message.h"
+#include "model/zfunc.h"
+#include "tools/globallog.h"
+#include "tools/objectfactory.h"
 #include <set>
 
 class TestCereal;

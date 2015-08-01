@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "residence.h"
+#include "examples/trafficsystem/residence.h"
 
 namespace n_examples_traffic {
 

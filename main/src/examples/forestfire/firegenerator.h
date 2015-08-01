@@ -8,7 +8,7 @@
 #ifndef SRC_EXAMPLES_FORESTFIRE_FIREGENERATOR_H_
 #define SRC_EXAMPLES_FORESTFIRE_FIREGENERATOR_H_
 
-#include <atomicmodel.h>
+#include "model/atomicmodel.h"
 
 namespace n_examples {
 

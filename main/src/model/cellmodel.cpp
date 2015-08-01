@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include <cellmodel.h>
+#include "model/cellmodel.h"
 
 namespace n_model {
 

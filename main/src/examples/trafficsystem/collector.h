@@ -8,9 +8,9 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_COLLECTOR_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_COLLECTOR_H_
 
-#include "atomicmodel.h"
-#include "state.h"
-#include "car.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
+#include "examples/trafficsystem/car.h"
 #include <vector>
 
 namespace n_examples_traffic {

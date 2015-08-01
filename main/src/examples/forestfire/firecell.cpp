@@ -5,8 +5,8 @@
  *      Author: lttlemoi
  */
 
-#include "firecell.h"
-#include "objectfactory.h"
+#include "examples/forestfire/firecell.h"
+#include "tools/objectfactory.h"
 #include <cmath>
 
 namespace n_examples {

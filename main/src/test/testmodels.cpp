@@ -5,8 +5,8 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "testmodels.h"
-#include "stringtools.h"
+#include "test/testmodels.h"
+#include "tools/stringtools.h"
 #include <sstream>
 #include <limits>
 

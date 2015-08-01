@@ -5,8 +5,8 @@
  *      Author: tim
  */
 
-#include "model.h"
-#include "controller.h"
+#include "model/model.h"
+#include "control/controller.h"
 #include "cereal/types/string.hpp"
 #include "cereal/types/vector.hpp"
 #include "cereal/types/map.hpp"

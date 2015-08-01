@@ -8,9 +8,9 @@
 #ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_DS_POLICEMANDS_H_
 #define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_DS_POLICEMANDS_H_
 
-#include "atomicmodel.h"
-#include "state.h"
-#include "dssharedstate.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
+#include "model/dssharedstate.h"
 #include <assert.h>
 
 namespace n_examples_ds {

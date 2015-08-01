@@ -8,11 +8,11 @@
 #ifndef SRC_TRACERS_XMLTRACER_H_
 #define SRC_TRACERS_XMLTRACER_H_
 
-#include "timestamp.h"
-#include "tracemessage.h"
-#include "objectfactory.h"
-#include "atomicmodel.h"
-#include "tracerbase.h"
+#include "network/timestamp.h"
+#include "tracers/tracemessage.h"
+#include "tools/objectfactory.h"
+#include "model/atomicmodel.h"
+#include "tracers/tracerbase.h"
 
 namespace n_tracers{
 

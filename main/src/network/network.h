@@ -8,8 +8,8 @@
 #ifndef SRC_NETWORK_NETWORK_H_
 #define SRC_NETWORK_NETWORK_H_
 
-#include "message.h"
-#include "msgqueue.h"
+#include "network/message.h"
+#include "network/msgqueue.h"
 #include <vector>
 #include <atomic>
 #include "tools/globallog.h"

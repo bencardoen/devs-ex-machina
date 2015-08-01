@@ -4,14 +4,14 @@
  *  Created on: 28 Mar 2015
  *      Author: Ben Cardoen
  */
-#include "message.h"
-#include "messageentry.h"
-#include "scheduler.h"
-#include "schedulerfactory.h"
-#include "unordered_map"
-#include "objectfactory.h"
-#include "globallog.h"
-#include "gtest/gtest.h"
+#include "network/message.h"
+#include "network/messageentry.h"
+#include "tools/scheduler.h"
+#include "tools/schedulerfactory.h"
+#include <unordered_map>
+#include "tools/objectfactory.h"
+#include "tools/globallog.h"
+#include <gtest/gtest.h>
 #include <queue>
 
 using namespace n_tools;

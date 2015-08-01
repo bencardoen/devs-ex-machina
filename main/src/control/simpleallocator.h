@@ -8,7 +8,7 @@
 #ifndef SRC_CONTROL_SIMPLEALLOCATOR_H_
 #define SRC_CONTROL_SIMPLEALLOCATOR_H_
 
-#include "allocator.h"
+#include "control/allocator.h"
 
 namespace n_control {
 

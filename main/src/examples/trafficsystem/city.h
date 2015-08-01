@@ -1,12 +1,12 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_CITY_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_CITY_H_
-#include "coupledmodel.h"
-#include "collector.h"
-#include "residence.h"
-#include "commercial.h"
-#include "intersection.h"
-#include "constants.h"
-#include "road.h"
+#include "model/coupledmodel.h"
+#include "examples/trafficsystem/collector.h"
+#include "examples/trafficsystem/residence.h"
+#include "examples/trafficsystem/commercial.h"
+#include "examples/trafficsystem/intersection.h"
+#include "examples/trafficsystem/constants.h"
+#include "examples/trafficsystem/road.h"
 #include <vector>
 namespace n_examples_traffic {
 using n_model::CoupledModel;

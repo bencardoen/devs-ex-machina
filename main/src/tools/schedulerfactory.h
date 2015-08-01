@@ -2,7 +2,7 @@
  * @author Ben Cardoen.
  */
 
-#include "scheduler.h"
+#include "tools/scheduler.h"
 
 #ifndef SCHEDULERFACTORY_H
 #define SCHEDULERFACTORY_H

@@ -10,10 +10,10 @@ static_assert(false, "Virus simulation needs the VIRUSTRACER macro set in the co
 			"please add the following setting to the build settings of this build: -DVIRUSTRACER=1");
 #endif
 
-#include "controllerconfig.h"
-#include "coutredirect.h"
-#include "virus.h"
-#include "stringtools.h"
+#include "control/controllerconfig.h"
+#include "tools/coutredirect.h"
+#include "examples/virus/virus.h"
+#include "tools/stringtools.h"
 
 LOG_INIT("virus.log")
 

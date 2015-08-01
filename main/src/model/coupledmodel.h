@@ -8,8 +8,8 @@
 #ifndef COUPLEDMODEL_H_
 #define COUPLEDMODEL_H_
 
-#include "model.h"
-#include "objectfactory.h"
+#include "model/model.h"
+#include "tools/objectfactory.h"
 
 class TestCereal;
 

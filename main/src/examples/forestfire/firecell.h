@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_FORESTFIRE_FIRECELL_H_
 #define SRC_EXAMPLES_FORESTFIRE_FIRECELL_H_
 
-#include <cellmodel.h>
-#include "firecellstate.h"
+#include "model/cellmodel.h"
+#include "examples/forestfire/firecellstate.h"
 
 using namespace n_network;
 

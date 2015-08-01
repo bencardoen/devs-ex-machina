@@ -6,17 +6,17 @@
  */
 
 #include <gtest/gtest.h>
-#include "port.h"
-#include "state.h"
-#include "zfunc.h"
-#include "message.h"
-#include "model.h"
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "core.h"
-#include "modelentry.h"
-#include "messageentry.h"
-#include "trafficsystemc.h"
+#include "model/port.h"
+#include "model/state.h"
+#include "model/zfunc.h"
+#include "network/message.h"
+#include "model/model.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "model/core.h"
+#include "model/modelentry.h"
+#include "network/messageentry.h"
+#include "examples/trafficlight_coupled/trafficsystemc.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 #include <sstream>

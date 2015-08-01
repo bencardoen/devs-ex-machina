@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "globallog.h"
+#include "tools/globallog.h"
 
 #if LOGGING==true
 

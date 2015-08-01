@@ -10,7 +10,7 @@
 
 #include <functional>	//defines std::less<T>
 #include <limits>	//defines std::numeric_limits<T>
-#include "message.h"
+#include "network/message.h"
 
 namespace n_tracers {
 

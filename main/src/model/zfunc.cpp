@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include <zfunc.h>
+#include "model/zfunc.h"
 #include "cereal/types/string.hpp"
 
 namespace n_model {

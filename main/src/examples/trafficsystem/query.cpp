@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "query.h"
+#include "examples/trafficsystem/query.h"
 #include <sstream>
 
 namespace n_examples_traffic {

@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_BUILDING_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_BUILDING_H_
 
-#include "atomicmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
 #include <string>
 #include <vector>
 #include <random>

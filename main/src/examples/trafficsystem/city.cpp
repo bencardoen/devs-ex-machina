@@ -1,4 +1,4 @@
-#include "city.h"
+#include "examples/trafficsystem/city.h"
 #include <sstream>
 namespace n_examples_traffic {
 City::City(std::string name): CoupledModel(name)

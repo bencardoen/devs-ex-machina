@@ -6,7 +6,7 @@
  */
 #include <iostream>
 #include <cassert>
-#include "message.h"
+#include "network/message.h"
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 #include "cereal/types/vector.hpp"

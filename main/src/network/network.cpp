@@ -5,7 +5,7 @@
  *      Author: Ben Cardoen
  */
 
-#include "network.h"
+#include "network/network.h"
 namespace n_network {
 Network::Network(size_t cores)
 	: m_cores(cores), m_queues(m_cores), m_counting(false)

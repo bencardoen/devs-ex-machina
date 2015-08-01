@@ -5,9 +5,9 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "firegenerator.h"
-#include "constants.h"
-#include "objectfactory.h"
+#include "examples/forestfire/firegenerator.h"
+#include "examples/forestfire/constants.h"
+#include "tools/objectfactory.h"
 
 namespace n_examples {
 

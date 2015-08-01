@@ -8,12 +8,12 @@
 #ifndef SRC_TRACERS_CELLTRACER_H_
 #define SRC_TRACERS_CELLTRACER_H_
 
-#include <cellmodel.h>
-#include "timestamp.h"
-#include "tracemessage.h"
-#include "objectfactory.h"
-#include "atomicmodel.h"
-#include "policies.h"
+#include "model/cellmodel.h"
+#include "network/timestamp.h"
+#include "tracers/tracemessage.h"
+#include "tools/objectfactory.h"
+#include "model/atomicmodel.h"
+#include "tracers/policies.h"
 #include <array>
 
 namespace n_tracers{

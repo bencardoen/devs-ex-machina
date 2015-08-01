@@ -8,7 +8,7 @@
 #ifndef SRC_MODEL_DYNAMICCORE_H_
 #define SRC_MODEL_DYNAMICCORE_H_
 
-#include "core.h"
+#include "model/core.h"
 
 namespace n_model {
 

@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELB_H_
 #define SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELB_H_
 
-#include "atomicmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
 
 namespace n_examples_abstract_c {
 

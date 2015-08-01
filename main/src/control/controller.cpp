@@ -5,8 +5,8 @@
  *      Author: matthijs
  */
 
-#include "controller.h"
-#include "flags.h"
+#include "control/controller.h"
+#include "tools/flags.h"
 #include <deque>
 #include <thread>
 #include <chrono>

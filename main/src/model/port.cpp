@@ -5,14 +5,14 @@
  *      Author: Pieter Tim Matthijs Stijn
  */
 
-#include "port.h"
+#include "model/port.h"
 #include "cereal/types/string.hpp"
 #include "cereal/types/map.hpp"
 #include "cereal/types/vector.hpp"
 #include "cereal/types/memory.hpp"
 #include "cereal/types/polymorphic.hpp"
-#include "stringtools.h"
-#include "objectfactory.h"
+#include "tools/stringtools.h"
+#include "tools/objectfactory.h"
 
 namespace n_model {
 

@@ -8,8 +8,8 @@
 #ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
 #define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_
 
-#include "atomicmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
 #include <assert.h>
 
 namespace n_examples_coupled {

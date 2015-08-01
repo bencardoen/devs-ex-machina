@@ -11,11 +11,11 @@
 #include <random>
 #include <chrono>
 #include <algorithm>
-#include "misc.h"
-#include "state.h"
-#include "objectfactory.h"
-#include "atomicmodel.h"
-#include "coupledmodel.h"
+#include "tools/misc.h"
+#include "model/state.h"
+#include "tools/objectfactory.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
 
 namespace n_virus {
 

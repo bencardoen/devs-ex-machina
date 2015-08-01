@@ -8,10 +8,10 @@
 #ifndef STATE_H_
 #define STATE_H_
 
-#include "timestamp.h"
+#include "network/timestamp.h"
 #include "tools/globallog.h"
 #include <assert.h>
-#include <serialization/archive.h>
+#include "serialization/archive.h"
 #include "cereal/types/polymorphic.hpp"
 
 namespace n_model {

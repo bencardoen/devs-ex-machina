@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "coutredirect.h"
+#include "tools/coutredirect.h"
 #include <cassert>
 
 namespace n_tools {

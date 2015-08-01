@@ -5,8 +5,8 @@
  *      Author: pieter
  */
 
-#include "intersection.h"
-#include "constants.h"
+#include "examples/trafficsystem/intersection.h"
+#include "examples/trafficsystem/constants.h"
 #include <stdexcept>
 #include <algorithm>    // std::find
 

@@ -5,9 +5,9 @@
  *      Author: lttlemoi
  */
 
-#include "firespread.h"
-#include "firecell.h"
-#include "firegenerator.h"
+#include "examples/forestfire/firespread.h"
+#include "examples/forestfire/firecell.h"
+#include "examples/forestfire/firegenerator.h"
 
 namespace n_examples {
 

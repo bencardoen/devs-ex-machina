@@ -8,8 +8,8 @@
 #ifndef SRC_NETWORK_MESSAGEENTRY_H_
 #define SRC_NETWORK_MESSAGEENTRY_H_
 
-#include "port.h"
-#include "message.h"
+#include "model/port.h"
+#include "network/message.h"
 
 namespace n_network {
 

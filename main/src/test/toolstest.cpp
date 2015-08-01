@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
 #include <list>
@@ -6,14 +6,14 @@
 #include <queue>
 #include <algorithm>
 #include <random>
-#include "schedulerfactory.h"
+#include "tools/schedulerfactory.h"
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include "globallog.h"
-#include "coutredirect.h"
-#include "listscheduler.h"
-#include "flags.h"
+#include "tools/globallog.h"
+#include "tools/coutredirect.h"
+#include "tools/listscheduler.h"
+#include "tools/flags.h"
 
 using std::cout;
 using std::endl;

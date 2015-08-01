@@ -5,7 +5,7 @@
 #ifndef SYNCHRONIZEDSCHEDULER_H
 #define SYNCHRONIZEDSCHEDULER_H
 
-#include "scheduler.h"
+#include "tools/scheduler.h"
 #include <mutex>
 #include <unordered_map>
 

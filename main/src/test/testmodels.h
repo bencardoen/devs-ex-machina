@@ -8,8 +8,8 @@
 #ifndef SRC_TEST_TESTMODELS_H_
 #define SRC_TEST_TESTMODELS_H_
 
-#include "atomicmodel.h"
-#include "coupledmodel.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
 #include "performance/devstone/devstone.h"
 
 namespace n_testmodel

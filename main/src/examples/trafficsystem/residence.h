@@ -8,7 +8,7 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_RESIDENCE_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_RESIDENCE_H_
 
-#include "building.h"
+#include "examples/trafficsystem/building.h"
 
 namespace n_examples_traffic {
 

@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include "state.h"
+#include "model/state.h"
 #include "cereal/types/string.hpp"
 
 namespace n_model {

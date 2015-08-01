@@ -5,7 +5,7 @@
  *      Author: Ben Cardoen
  */
 
-#include "atomicmodel.h"
+#include "model/atomicmodel.h"
 
 #ifndef SRC_MODEL_TERMINATIONFUNCTION_H_
 #define SRC_MODEL_TERMINATIONFUNCTION_H_

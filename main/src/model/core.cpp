@@ -3,11 +3,11 @@
  *
  *      Author: Ben Cardoen
  */
-#include "core.h"
+#include "model/core.h"
 #include <cassert>
 #include <fstream>
-#include "globallog.h"
-#include "objectfactory.h"
+#include "tools/globallog.h"
+#include "tools/objectfactory.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/unordered_map.hpp"

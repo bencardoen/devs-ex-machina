@@ -10,11 +10,11 @@
 
 #include <cstdlib>
 #include <ctime>
-#include "state.h"
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "objectfactory.h"
-#include "stringtools.h"
+#include "model/state.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "tools/objectfactory.h"
+#include "tools/stringtools.h"
 
 namespace n_devstone {
 

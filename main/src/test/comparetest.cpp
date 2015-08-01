@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 #include <sstream>
-#include "compare.h"
+#include "test/compare.h"
 
 using namespace n_misc;
 

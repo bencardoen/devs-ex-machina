@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "constants.h"
+#include "examples/forestfire/constants.h"
 #include <cassert>
 
 namespace n_examples{

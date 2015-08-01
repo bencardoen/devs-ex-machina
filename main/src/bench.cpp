@@ -5,8 +5,8 @@
  *      Author: ben
  */
 
-#include<iostream>
-#include"controller.h"
+#include <iostream>
+#include "control/controller.h"
 
 LOG_INIT("out.txt")
 

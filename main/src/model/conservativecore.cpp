@@ -5,7 +5,7 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
-#include <conservativecore.h>
+#include "model/conservativecore.h"
 
 namespace n_model {
 

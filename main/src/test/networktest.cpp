@@ -6,9 +6,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "timestamp.h"
-#include "network.h"
-#include "objectfactory.h"
+#include "network/timestamp.h"
+#include "network/network.h"
+#include "tools/objectfactory.h"
 #include <unordered_set>
 #include <thread>
 #include <vector>

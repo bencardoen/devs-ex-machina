@@ -5,10 +5,10 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "tracemessage.h"
-#include "schedulerfactory.h"
-#include "objectfactory.h"
-#include "globallog.h"
+#include "tracers/tracemessage.h"
+#include "tools/schedulerfactory.h"
+#include "tools/objectfactory.h"
+#include "tools/globallog.h"
 #include <thread>
 #include <future>
 

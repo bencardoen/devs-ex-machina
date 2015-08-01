@@ -6,9 +6,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "logger.h"
-#include "compare.h"
-#include "macros.h"
+#include "tools/logger.h"
+#include "test/compare.h"
+#include "tools/macros.h"
 
 using namespace n_tools;
 

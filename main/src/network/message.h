@@ -8,10 +8,10 @@
 #ifndef SRC_NETWORK_MESSAGE_H_
 #define SRC_NETWORK_MESSAGE_H_
 
-#include <serialization/archive.h>
-#include "timestamp.h"
-#include "stringtools.h"
-#include "globallog.h"
+#include "serialization/archive.h"
+#include "network/timestamp.h"
+#include "tools/stringtools.h"
+#include "tools/globallog.h"
 #include <sstream>
 #include <iosfwd>
 

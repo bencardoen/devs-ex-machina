@@ -5,19 +5,19 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <sstream>
 #include <vector>
-#include "tracers.h"
-#include "tracemessage.h"
-#include "policies.h"
-#include "verbosetracer.h"
-#include "xmltracer.h"
-#include "jsontracer.h"
-#include "celltracer.h"
-#include "compare.h"
-#include "macros.h"
-#include "coutredirect.h"
+#include "tracers/tracers.h"
+#include "tracers/tracemessage.h"
+#include "tracers/policies.h"
+#include "tracers/verbosetracer.h"
+#include "tracers/xmltracer.h"
+#include "tracers/jsontracer.h"
+#include "tracers/celltracer.h"
+#include "test/compare.h"
+#include "tools/macros.h"
+#include "tools/coutredirect.h"
 #include "examples/forestfire/firecell.h"
 
 

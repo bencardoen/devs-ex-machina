@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <performance/devstone/devstone.h>
+#include "performance/devstone/devstone.h"
 
 namespace n_devstone {
 

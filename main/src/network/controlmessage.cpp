@@ -5,7 +5,7 @@
  *      Author: ben
  */
 
-#include <controlmessage.h>
+#include "network/controlmessage.h"
 
 namespace n_network {
 

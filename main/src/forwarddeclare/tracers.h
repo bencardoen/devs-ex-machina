@@ -8,8 +8,8 @@
 #ifndef SRC_FORWARDDECLARE_TRACERS_H_
 #define SRC_FORWARDDECLARE_TRACERS_H_
 
-#include "verbosetracer.h"
-#include "policies.h"
+#include "tracers/verbosetracer.h"
+#include "tracers/policies.h"
 
 #ifdef VIRUSTRACER
 #include "examples/virus/virustracer.h"

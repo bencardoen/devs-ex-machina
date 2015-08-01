@@ -14,18 +14,18 @@
 #include <thread>
 #include <unordered_map>
 #include <condition_variable>
-#include "timestamp.h"
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "rootmodel.h"
-#include "port.h"
-#include "locationtable.h"
-#include "allocator.h"
-#include "core.h"
-#include "tracers.h"
-#include "globallog.h"
-#include "dssharedstate.h"
-#include "timeevent.h"
+#include "network/timestamp.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "model/rootmodel.h"
+#include "model/port.h"
+#include "control/locationtable.h"
+#include "control/allocator.h"
+#include "model/core.h"
+#include "tracers/tracers.h"
+#include "tools/globallog.h"
+#include "model/dssharedstate.h"
+#include "control/timeevent.h"
 
 namespace n_control {
 

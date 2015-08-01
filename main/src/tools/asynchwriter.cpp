@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "asynchwriter.h"
+#include "tools/asynchwriter.h"
 #include <cassert>
 
 namespace n_tools{

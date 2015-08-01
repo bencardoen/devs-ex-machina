@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include "commercial.h"
+#include "examples/trafficsystem/commercial.h"
 
 namespace n_examples_traffic {
 

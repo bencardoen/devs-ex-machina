@@ -9,7 +9,7 @@
 #define SRC_CONTROL_LOCATIONTABLE_H_
 
 #include <unordered_map>
-#include "atomicmodel.h"
+#include "model/atomicmodel.h"
 
 namespace n_control {
 

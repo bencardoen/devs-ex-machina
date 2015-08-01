@@ -367,25 +367,9 @@ include_directories(${GTEST_INCLUDE_DIRS})
 MESSAGE( STATUS"Using Boost Include Directories @ path :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
 
-# Note : this allows #include "file.h". Hierarchy assumes $root/main/....
 include_directories(	
 				src 
 				include
-				src/serialization
-				src/test 
-				src/tools
-				src/model
-				src/tracers
-				src/performance/devstone
-				src/performance/benchmarks
-				src/examples/abstract_conservative
-				src/examples/trafficlight_classic
-				src/examples/trafficlight_coupled
-				src/examples/trafficlight_ds
-				src/examples/trafficsystem
-				src/examples/virus
-				src/network
-				src/control
 				)   # Project headers are in same folder as source
 ###############################################################################
 

@@ -5,8 +5,8 @@
  *      Author: tim
  */
 
-#include "coupledmodel.h"
-#include "controller.h"
+#include "model/coupledmodel.h"
+#include "control/controller.h"
 #include "cereal/types/vector.hpp"
 #include "cereal/types/base_class.hpp"
 

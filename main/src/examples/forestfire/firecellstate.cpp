@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include <examples/forestfire/firecellstate.h>
+#include "examples/forestfire/firecellstate.h"
 #include <limits>
 #include <sstream>
 #include <iomanip>

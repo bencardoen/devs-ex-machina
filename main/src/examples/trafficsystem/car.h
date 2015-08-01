@@ -10,7 +10,7 @@
 
 #include <vector>
 #include <string>
-#include "timestamp.h"
+#include "network/timestamp.h"
 
 namespace n_examples_traffic {
 

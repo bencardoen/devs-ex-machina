@@ -4,9 +4,9 @@
  *      Author: Matthijs Van Os - Devs Ex Machina
  */
 
-#include "controllerconfig.h"
-#include "coutredirect.h"
-#include "phold.h"
+#include "control/controllerconfig.h"
+#include "tools/coutredirect.h"
+#include "performance/benchmarks/phold.h"
 
 LOG_INIT("phold.log")
 

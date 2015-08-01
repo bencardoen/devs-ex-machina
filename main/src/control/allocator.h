@@ -9,7 +9,7 @@
 #define SRC_CONTROL_ALLOCATOR_H_
 
 #include <memory>
-#include "atomicmodel.h"
+#include "model/atomicmodel.h"
 
 /*
 namespace n_model {

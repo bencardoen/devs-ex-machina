@@ -8,7 +8,7 @@
 #ifndef SRC_CONTROL_TIMEEVENT_H_
 #define SRC_CONTROL_TIMEEVENT_H_
 
-#include "timestamp.h"
+#include "network/timestamp.h"
 #include <algorithm>
 
 namespace n_control {

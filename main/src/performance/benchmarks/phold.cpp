@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <performance/benchmarks/phold.h>
+#include "performance/benchmarks/phold.h"
 
 namespace n_benchmarks_phold {
 

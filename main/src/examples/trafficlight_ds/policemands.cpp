@@ -5,7 +5,7 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "policemands.h"
+#include "examples/trafficlight_ds/policemands.h"
 
 namespace n_examples_ds {
 

@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_TRAFFICLIGHT_H_
 #define SRC_EXAMPLES_TRAFFICLIGHT_H_
 
-#include "atomicmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
 #include <assert.h>
 
 namespace n_examples {

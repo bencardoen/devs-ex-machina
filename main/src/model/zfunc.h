@@ -8,8 +8,8 @@
 #ifndef SRC_MODEL_ZFUNC_H_
 #define SRC_MODEL_ZFUNC_H_
 
-#include <serialization/archive.h>
-#include "message.h"
+#include "serialization/archive.h"
+#include "network/message.h"
 #include "cereal/types/polymorphic.hpp"
 
 namespace n_model {

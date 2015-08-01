@@ -8,9 +8,9 @@
 #ifndef ROOTMODEL_H_
 #define ROOTMODEL_H_
 
-#include "coupledmodel.h"
-#include "atomicmodel.h"
-#include "globallog.h"
+#include "model/coupledmodel.h"
+#include "model/atomicmodel.h"
+#include "tools/globallog.h"
 
 namespace n_model {
 class RootModel final: public Model	//don't allow users to derive from this class

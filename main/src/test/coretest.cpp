@@ -6,21 +6,21 @@
  */
 
 #include <gtest/gtest.h>
-#include "timestamp.h"
-#include "objectfactory.h"
-#include "trafficlight.h"
-#include "modelc.h"
-#include "trafficlightc.h"
-#include "policemanc.h"
-#include "controller.h"
-#include "conservativecore.h"
-#include "simpleallocator.h"
-#include "tracers.h"
-#include "coutredirect.h"
-#include "trafficsystemc.h"
-#include "controllerconfig.h"
-#include "controller.h"
-#include "compare.h"
+#include "network/timestamp.h"
+#include "tools/objectfactory.h"
+#include "examples/trafficlight_classic/trafficlight.h"
+#include "examples/abstract_conservative/modelc.h"
+#include "examples/trafficlight_coupled/trafficlightc.h"
+#include "examples/trafficlight_coupled/policemanc.h"
+#include "control/controller.h"
+#include "model/conservativecore.h"
+#include "control/simpleallocator.h"
+#include "tracers/tracers.h"
+#include "tools/coutredirect.h"
+#include "examples/trafficlight_coupled/trafficsystemc.h"
+#include "control/controllerconfig.h"
+#include "control/controller.h"
+#include "test/compare.h"
 #include <sstream>
 #include <unordered_set>
 #include <thread>

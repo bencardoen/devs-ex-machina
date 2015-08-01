@@ -8,12 +8,12 @@
 #ifndef SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELC_H_
 #define SRC_EXAMPLES_ABSTRACT_CONSERVATIVE_MODELC_H_
 
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "state.h"
+#include "examples/abstract_conservative/modela.h"
+#include "examples/abstract_conservative/modelb.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "model/state.h"
 #include <assert.h>
-#include "modela.h"
-#include "modelb.h"
 
 namespace n_examples_abstract_c {
 

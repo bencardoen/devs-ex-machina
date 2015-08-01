@@ -8,9 +8,9 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_ROAD_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_ROAD_H_
 
-#include "coupledmodel.h"
-#include "state.h"
-#include "roadsegment.h"
+#include "model/coupledmodel.h"
+#include "model/state.h"
+#include "examples/trafficsystem/roadsegment.h"
 #include <vector>
 
 namespace n_examples_traffic {

@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include "trafficsystemc.h"
+#include "examples/trafficlight_coupled/trafficsystemc.h"
 
 namespace n_examples_coupled {
 

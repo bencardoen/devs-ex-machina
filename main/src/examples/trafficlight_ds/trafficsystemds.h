@@ -8,12 +8,12 @@
 #ifndef MAIN_SRC_EXAMPLES_TRAFFICLIGHT_DS_TRAFFICSYSTEMDS_H_
 #define MAIN_SRC_EXAMPLES_TRAFFICLIGHT_DS_TRAFFICSYSTEMDS_H_
 
-#include "atomicmodel.h"
-#include "coupledmodel.h"
-#include "state.h"
+#include "model/atomicmodel.h"
+#include "model/coupledmodel.h"
+#include "model/state.h"
 #include <assert.h>
-#include "policemands.h"
-#include "trafficlightds.h"
+#include "examples/trafficlight_ds/policemands.h"
+#include "examples/trafficlight_ds/trafficlightds.h"
 
 namespace n_examples_ds {
 

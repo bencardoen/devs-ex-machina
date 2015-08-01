@@ -1,14 +1,14 @@
 #ifndef SCHEDULERFACTORY_TPP
 #define SCHEDULERFACTORY_TPP
 
-#include "synchronizedscheduler.h"
-#include "unsynchronizedscheduler.h"
+#include "tools/synchronizedscheduler.h"
+#include "tools/unsynchronizedscheduler.h"
 #include <boost/heap/binomial_heap.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/heap/skew_heap.hpp>
 #include <boost/heap/d_ary_heap.hpp>
-#include "listscheduler.h"
+#include "tools/listscheduler.h"
 
 namespace n_tools {
 

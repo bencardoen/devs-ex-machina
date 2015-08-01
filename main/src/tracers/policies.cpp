@@ -5,8 +5,8 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
-#include "policies.h"
-#include "globallog.h"
+#include "tracers/policies.h"
+#include "tools/globallog.h"
 #include <sstream>
 
 void n_tracers::FileWriter::initialize(const std::string& fileName, bool append)

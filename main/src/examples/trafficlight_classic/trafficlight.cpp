@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include "trafficlight.h"
+#include "examples/trafficlight_classic/trafficlight.h"
 
 namespace n_examples {
 

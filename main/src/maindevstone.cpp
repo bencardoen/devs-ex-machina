@@ -4,10 +4,10 @@
  *      Author: Matthijs Van Os - Devs Ex Machina
  */
 
-#include "controllerconfig.h"
-#include "coutredirect.h"
-#include "devstone.h"
-#include "stringtools.h"
+#include "control/controllerconfig.h"
+#include "tools/coutredirect.h"
+#include "performance/devstone/devstone.h"
+#include "tools/stringtools.h"
 
 LOG_INIT("devstone.log")
 

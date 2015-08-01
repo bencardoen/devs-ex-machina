@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include "policemanc.h"
+#include "examples/trafficlight_coupled/policemanc.h"
 
 namespace n_examples_coupled {
 

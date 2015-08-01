@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include <modelb.h>
+#include <examples/abstract_conservative/modelb.h>
 
 namespace n_examples_abstract_c {
 

@@ -8,11 +8,11 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_ROADSEGMENT_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_ROADSEGMENT_H_
 
-#include "atomicmodel.h"
-#include "state.h"
-#include "car.h"
-#include "query.h"
-#include "queryack.h"
+#include "model/atomicmodel.h"
+#include "model/state.h"
+#include "examples/trafficsystem/car.h"
+#include "examples/trafficsystem/query.h"
+#include "examples/trafficsystem/queryack.h"
 #include <vector>
 
 namespace n_examples_traffic {

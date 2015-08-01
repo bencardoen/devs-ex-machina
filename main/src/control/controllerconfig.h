@@ -8,15 +8,15 @@
 #ifndef SRC_CONTROL_CONTROLLERCONFIG_H_
 #define SRC_CONTROL_CONTROLLERCONFIG_H_
 
-#include "network.h"
-#include "objectfactory.h"
-#include "controller.h"
-#include "simpleallocator.h"
-#include "tracers.h"
-#include "multicore.h"
-#include "controller.h"
-#include "dynamiccore.h"
-#include "conservativecore.h"
+#include "network/network.h"
+#include "tools/objectfactory.h"
+#include "control/controller.h"
+#include "control/simpleallocator.h"
+#include "tracers/tracers.h"
+#include "model/multicore.h"
+#include "control/controller.h"
+#include "model/dynamiccore.h"
+#include "model/conservativecore.h"
 #include <unordered_set>
 #include <thread>
 #include <sstream>

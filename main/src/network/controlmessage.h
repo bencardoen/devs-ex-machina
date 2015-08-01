@@ -8,7 +8,7 @@
 #ifndef SRC_NETWORK_CONTROLMESSAGE_H_
 #define SRC_NETWORK_CONTROLMESSAGE_H_
 
-#include "timestamp.h"
+#include "network/timestamp.h"
 #include <vector>
 #include <memory>
 #include <algorithm>

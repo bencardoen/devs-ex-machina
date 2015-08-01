@@ -5,9 +5,9 @@
  *      Author: pieter
  */
 
-#include "controllerconfig.h"
-#include "coutredirect.h"
-#include "city.h"
+#include "control/controllerconfig.h"
+#include "tools/coutredirect.h"
+#include "examples/trafficsystem/city.h"
 
 LOG_INIT("traffic.log")
 

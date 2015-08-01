@@ -5,7 +5,7 @@
  *      Author: tim
  */
 
-#include <modela.h>
+#include "examples/abstract_conservative/modela.h"
 
 namespace n_examples_abstract_c {
 

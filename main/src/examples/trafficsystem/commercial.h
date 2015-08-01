@@ -8,8 +8,8 @@
 #ifndef SRC_EXAMPLES_TRAFFICSYSTEM_COMMERCIAL_H_
 #define SRC_EXAMPLES_TRAFFICSYSTEM_COMMERCIAL_H_
 
-#include "building.h"
-#include "car.h"
+#include "examples/trafficsystem/building.h"
+#include "examples/trafficsystem/car.h"
 
 namespace n_examples_traffic {
 

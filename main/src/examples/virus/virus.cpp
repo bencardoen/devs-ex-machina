@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include "virus.h"
+#include "examples/virus/virus.h"
 
 namespace n_virus {
 

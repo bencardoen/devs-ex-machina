@@ -8,7 +8,7 @@
 #ifndef SRC_NETWORK_TIMESTAMP_H_
 #define SRC_NETWORK_TIMESTAMP_H_
 
-#include <serialization/archive.h>
+#include "serialization/archive.h"
 #include <chrono>
 #include <mutex>
 #include <cmath>

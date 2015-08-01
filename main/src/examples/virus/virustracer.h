@@ -8,12 +8,12 @@
 #ifndef SRC_EXAMPLES_VIRUS_VIRUSTRACER_H_
 #define SRC_EXAMPLES_VIRUS_VIRUSTRACER_H_
 
-#include "timestamp.h"
-#include "tracemessage.h"
-#include "objectfactory.h"
-#include "atomicmodel.h"
-#include "policies.h"
-#include "virus.h"
+#include "network/timestamp.h"
+#include "tracers/tracemessage.h"
+#include "tools/objectfactory.h"
+#include "model/atomicmodel.h"
+#include "tracers/policies.h"
+#include "examples/virus/virus.h"
 
 namespace n_virus{
 

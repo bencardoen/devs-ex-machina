@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <locationtable.h>
+#include "control/locationtable.h"
 #include <cassert>
 
 namespace n_control {

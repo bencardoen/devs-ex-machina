@@ -9,7 +9,7 @@
 #define SRC_MODEL_CELLMODEL_H_
 
 #include <utility>
-#include "atomicmodel.h"
+#include "model/atomicmodel.h"
 
 namespace n_model {
 

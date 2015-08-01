@@ -22,7 +22,7 @@
 #endif
 /// @endcond
 
-#include "macros.h"
+#include "tools/macros.h"
 #include <cstring>
 #if LOGGING != false
 #include "logger.h"

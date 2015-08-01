@@ -5,13 +5,13 @@
  *      Author: pieter
  */
 
-#include "building.h"
+#include "examples/trafficsystem/building.h"
 #include <sstream>
 #include <stdlib.h>
 #include <time.h>
-#include "car.h"
-#include "query.h"
-#include "queryack.h"
+#include "examples/trafficsystem/car.h"
+#include "examples/trafficsystem/query.h"
+#include "examples/trafficsystem/queryack.h"
 
 namespace n_examples_traffic {
 

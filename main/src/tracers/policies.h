@@ -11,7 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <assert.h>
-#include "objectfactory.h"
+#include "tools/objectfactory.h"
 
 namespace n_tracers {
 

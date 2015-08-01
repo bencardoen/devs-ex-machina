@@ -5,7 +5,7 @@
  *      Author: matthijs
  */
 
-#include <timeevent.h>
+#include "control/timeevent.h"
 
 namespace n_control {
 

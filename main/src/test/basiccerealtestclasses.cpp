@@ -5,7 +5,7 @@
  *      Author: pieter
  */
 
-#include <basiccerealtestclasses.h>
+#include "test/basiccerealtestclasses.h"
 #include <iostream>
 
 void DerivedClassOne::sayType()

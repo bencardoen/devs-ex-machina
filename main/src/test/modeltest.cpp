@@ -6,14 +6,14 @@
  */
 
 #include <gtest/gtest.h>
-#include "model.h"
-#include "objectfactory.h"
-#include "atomicmodel.h"
-#include "rootmodel.h"
-#include "trafficlight.h"
-#include "port.h"
-#include "coupledmodel.h"
-#include "trafficsystemc.h"
+#include "model/model.h"
+#include "tools/objectfactory.h"
+#include "model/atomicmodel.h"
+#include "model/rootmodel.h"
+#include "examples/trafficlight_classic/trafficlight.h"
+#include "model/port.h"
+#include "model/coupledmodel.h"
+#include "examples/trafficlight_coupled/trafficsystemc.h"
 
 using namespace n_model;
 using namespace n_tools;

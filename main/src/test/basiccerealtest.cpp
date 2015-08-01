@@ -7,7 +7,7 @@
 
 // any archives included prior to 'myclasses.hpp'
 // would also apply to the registration
-#include <basiccerealtestclasses.h>
+#include "test/basiccerealtestclasses.h"
 #include <gtest/gtest.h>
 #include "cereal/archives/portable_binary.hpp"
 #include "cereal/types/polymorphic.hpp"

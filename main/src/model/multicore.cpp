@@ -5,8 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
-#include <multicore.h>
-#include "objectfactory.h"
+#include "model/multicore.h"
+#include "tools/objectfactory.h"
 
 using namespace n_model;
 using n_control::t_location_tableptr;
