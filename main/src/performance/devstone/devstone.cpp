@@ -153,7 +153,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t totalDepth, st
 {
 	// If possible, split layers (CoupledRecursion) over cores in even chunks
 	// eg. depth 7, coreAmt 2 -> core#0: layer 1,2,3,4 core#1: layer 5,6,7
-	int location = (depth>1 && coreAmt!=-1) ? (depth-1) / (totalDepth/coreAmt + totalDepth%2) : -1;
+	int location = (depth>1 && coreAmt!=-1) ? (depth-1) / std::max(int(totalDepth/coreAmt + totalDepth%2), 1) : -1;
 
 	n_model::t_portptr recv = addInPort("in_event1");
 	n_model::t_portptr send = addOutPort("out_event1");
