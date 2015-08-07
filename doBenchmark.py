@@ -9,8 +9,40 @@ from pathlib import Path
 from subprocess import call
 from functools import partial
 
-# try to always use the maximum amount of cores
-maxCores = multiprocessing.cpu_count()
+
+# small helper function for setting bounds on a argparse argument
+def boundedValue(t, minv=None, maxv=None):
+    """
+    params:
+      t     The type
+      min   The min value
+      max   The maximum value
+    """
+    def func(x):
+        x = t(x)
+        if minv is not None and x < minv:
+            raise argparse.ArgumentTypeError("value should not be smaller than {}.".format(minv))
+        if maxv is not None and x > maxv:
+            raise argparse.ArgumentTypeError("value should not be greater than {}.".format(maxv))
+        return x
+    return func
+
+# get the force compilation from the command line arguments
+# -f force compilation
+# -r repeat a number of times
+# -c number of simulation cores
+# TODO add options to do only one particular benchmark
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--force", action="store_true",
+    help="[default: false] force compilation, regardless of whether the executable already exists."
+    )
+parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
+    help="[default: 1] number of iterations. Must be at least 1."
+    )
+parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=multiprocessing.cpu_count(),
+    help="[default: {0}] number of simulation cores for parallel simulation. Note that it is generally not smart to set this value higher than the amount of physical cpu cores. (You have {0}.)".format(multiprocessing.cpu_count())
+    )
+args = parser.parse_args()
 
 # executable names
 devstoneEx = "./build/dxexmachina_devstone"
@@ -18,7 +50,7 @@ pholdEx = "./build/dxexmachina_phold"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
-simtypes = SimType(["classic"], ["opdevs", maxCores], ["cpdevs", maxCores])
+simtypes = SimType(["classic"], ["opdevs", args.cores], ["cpdevs", args.cores])
 
 
 # generators for the benchmark parameters
@@ -45,9 +77,9 @@ def compileDevstone(force=False):
     """
     path = Path(devstoneEx)
     if force or not path.exists():
-        if path.exists():   # the executable already exists. Remove it or make won't do anything
-            path.unlink()
-        call(['make', 'dxexmachina_devstone'], cwd='./build')
+        # if path.exists():   # the executable already exists. Remove it or make won't do anything
+        #     path.unlink()
+        call(['make', '--always-make', 'dxexmachina_devstone'], cwd='./build')
 
 
 def compilePhold(force=False):
@@ -58,27 +90,10 @@ def compilePhold(force=False):
     """
     path = Path(pholdEx)
     if force or not path.exists():
-        if path.exists():   # the executable already exists. Remove it or make won't do anything
-            path.unlink()
-        call(['make', 'dxexmachina_phold'], cwd='./build')
+        # if path.exists():   # the executable already exists. Remove it or make won't do anything
+        #     path.unlink()
+        call(['make', '--always-make', 'dxexmachina_phold'], cwd='./build')
 
-
-# small helper function for setting bounds on a argparse argument
-def boundedValue(t, minv=None, maxv=None):
-    """
-    params:
-      t     The type
-      min   The min value
-      max   The maximum value
-    """
-    def func(x):
-        x = t(x)
-        if minv is not None and x < minv:
-            raise argparse.ArgumentTypeError("value should not be smaller than {}.".format(minv))
-        if maxv is not None and x > maxv:
-            raise argparse.ArgumentTypeError("value should not be greater than {}.".format(maxv))
-        return x
-    return func
 
 if __name__ == '__main__':
     # test if the build folder exists and has a makefile
@@ -86,19 +101,6 @@ if __name__ == '__main__':
         print("note: this script assumes that the cmake script has run at least once and that the './build/Makefile' file exists.")
         print("Please do so and then rerun the benchmark script.")
         quit()
-
-    # get the force compilation from the command line arguments
-    # -f force compilation
-    # -r repeat a number of times
-    # TODO add options to do only one particular benchmark
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--force", action="store_true",
-        help="[default: false] force compilation, regardless of whether the executable already exists."
-        )
-    parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
-        help="[default: 1] number of iterations. Must be at least 1."
-        )
-    args = parser.parse_args()
 
     devc = partial(compileDevstone, args.force)
     pholdc = partial(compilePhold, args.force)
