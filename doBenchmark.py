@@ -42,6 +42,9 @@ parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
 parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=multiprocessing.cpu_count(),
     help="[default: {0}] number of simulation cores for parallel simulation. Note that it is generally not smart to set this value higher than the amount of physical cpu cores. (You have {0}.)".format(multiprocessing.cpu_count())
     )
+parser.add_argument("limited", nargs='*', default=None,
+    help="If set, only execute these benchmarks. Leave out to execute all."
+    )
 args = parser.parse_args()
 
 # executable names
@@ -122,9 +125,14 @@ if __name__ == '__main__':
     defaults.saveSysInfo(sysInfo, folders)
 
     # do the benchmarks!
+    donelist = []
     for bmarkset in [devstone, phold]:
         doCompile = True
         for bmark in bmarkset:
+            if args.limited is not None and bmark.name not in args.limited:
+                continue
+            print("> executing benchmark {}".format(bmark.name))
+            donelist.append(bmark.name)
             data = analyzer.open(bmark, folders)
             for i in range(args.repeat):
                 files = benchmarker.execBenchmark(bmark, driver, folders, doCompile)
@@ -132,3 +140,13 @@ if __name__ == '__main__':
                 doCompile = False
             analyzer.save(data, bmark, folders)
             toCSV(data, folders.plots / "{}.csv".format(bmark.name))
+
+    if args.limited is not None:
+        wrong = set(args.limited) - set(donelist)
+        if len(wrong) > 0:
+            print("> Unknown benchmarks requested:")
+            for i in wrong:
+                print("    {}".format(i))
+            print("> Accepted benchmarks:")
+            for i in chain(devstone, phold):
+                print("    {}".format(i.name))
