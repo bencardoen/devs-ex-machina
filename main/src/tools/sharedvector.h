@@ -8,47 +8,62 @@
 #ifndef SRC_TOOLS_SHAREDVECTOR_H_
 #define SRC_TOOLS_SHAREDVECTOR_H_
 
-namespace n_model {
+#include <vector>
+#include <array>
+#include <deque>
+
+namespace n_tools {
 
 /**
  * Shared Vector of type T, constant sized. (no constexpr, just const).
- * Single writer - Multiple Reader problem with a twist:
- * For N clients, each will only ~write~ his own value, never another.
- * Each will only ever read other values, never his own.
- * This class is used to allow Conservative cores to pass eot values.
- * @brief Provides single operation synchronized access to const sized shared container.
- * @todo : implement movable mutex approach.
+ * Each entry is protected by a dedicated lock, concurrent access to differing
+ * indices will not block.
  */
 template<typename T>
 class SharedVector
 {
 private:
 	std::vector<T> 	m_vector;
-	std::mutex	m_lock;
+
+	// Deque so we can use mutex safely. (will not copy)
+	std::deque<std::mutex> m_locks;
 public:
 	SharedVector()=delete;
 	SharedVector(const SharedVector&) =delete;
-	SharedVector(size_t size, T initvalue):m_vector(size, initvalue){
-		;
+	SharedVector(size_t size, T initvalue):m_vector(size, initvalue),m_locks(size){
 	}
 
 	/**
-	 * Get ~copy~ of value @index.
+	 * Lock entry @index.
+	 * @pre index < size();
+	 */
+	void lockEntry(size_t index){
+		m_locks[index].lock();
+	}
+
+	/**
+	 * Unlock entry @index
+	 * @pre index<size
+	 */
+	void unlockEntry(size_t index){
+		m_locks[index].unlock();
+	}
+
+	/**
+	 * Get value @index.
 	 * @pre index < size().
-	 * @synchronized
 	 */
 	T get(std::size_t index){
-		std::lock_guard<std::mutex> lockvec(m_lock);
+		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		return m_vector[index];
 	}
 
 	/**
 	 * Set current @ index to value.
 	 * @pre index < size().
-	 * @synchronized.
 	 */
 	void set(std::size_t index, const T& value){
-		std::lock_guard<std::mutex> lockvec(m_lock);
+		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		m_vector[index]=value;
 	}
 
@@ -64,6 +79,6 @@ public:
 	~SharedVector(){;}
 };
 
-} /* namespace n_model */
+} /* namespace n_tools */
 
 #endif /* SRC_TOOLS_SHAREDVECTOR_H_ */

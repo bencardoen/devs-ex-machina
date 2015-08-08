@@ -157,32 +157,32 @@ TEST(Port, Basic)
 	EXPECT_TRUE(trafficlight->getPort("INTERRUPT") != nullptr);
 }
 
-//TEST(RootModel, DirectConnectLayered)
-//{
-//	RecordProperty("description", "Tests directConnect with a layered coupled model");
-//	std::shared_ptr<RootModel> root = createObject<RootModel>();
-//	t_coupledmodelptr example = createObject<LayeredCoupled>("LayeredCoupled");
-//	std::vector<t_atomicmodelptr> atomics = root->directConnect(example);
-//
-//	EXPECT_TRUE(atomics.size() == 3);
-//	for (auto a : atomics) {
-//		std::string name = a->getName();
-//		if (name == "policeBoss") {
-//			t_portptr commsOut = a->getPort("POLICECOMMSOUT");
-//			EXPECT_TRUE(commsOut != nullptr);
-//			EXPECT_TRUE(commsOut->isUsingDirectConnect());
-//			std::map<t_portptr, std::vector<t_zfunc> > outs = commsOut->getCoupledOuts();
-//			EXPECT_TRUE(!outs.empty());
-//			t_portptr commsIn = outs.begin()->first;
-//			EXPECT_EQ(commsIn->getName(), "POLICECOMMSIN");
-//		} else if (name == "policeOfficer") {
-//			t_portptr commsIn = a->getPort("POLICECOMMSIN");
-//			EXPECT_TRUE(commsIn != nullptr);
-//			EXPECT_TRUE(commsIn->isUsingDirectConnect());
-//			auto ins = commsIn->getCoupledIns();
-//			EXPECT_TRUE(!ins.empty());
-//			t_portptr commsOut = ins[0];
-//			EXPECT_EQ(commsOut->getName(), "POLICECOMMSOUT");
-//		}
-//	}
-//}
+TEST(RootModel, DirectConnectLayered)
+{
+	RecordProperty("description", "Tests directConnect with a layered coupled model");
+	std::shared_ptr<RootModel> root = createObject<RootModel>();
+	t_coupledmodelptr example = createObject<LayeredCoupled>("LayeredCoupled");
+	std::vector<t_atomicmodelptr> atomics = root->directConnect(example);
+
+	EXPECT_TRUE(atomics.size() == 3);
+	for (auto a : atomics) {
+		std::string name = a->getName();
+		if (name == "policeBoss") {
+			t_portptr commsOut = a->getPort("POLICECOMMSOUT");
+			EXPECT_TRUE(commsOut != nullptr);
+			EXPECT_TRUE(commsOut->isUsingDirectConnect());
+			std::map<t_portptr, std::vector<t_zfunc> > outs = commsOut->getCoupledOuts();
+			EXPECT_TRUE(!outs.empty());
+			t_portptr commsIn = outs.begin()->first;
+			EXPECT_EQ(commsIn->getName(), "POLICECOMMSIN");
+		} else if (name == "policeOfficer") {
+			t_portptr commsIn = a->getPort("POLICECOMMSIN");
+			EXPECT_TRUE(commsIn != nullptr);
+			EXPECT_TRUE(commsIn->isUsingDirectConnect());
+			auto ins = commsIn->getCoupledIns();
+			EXPECT_TRUE(!ins.empty());
+			t_portptr commsOut = ins[0];
+			EXPECT_EQ(commsOut->getName(), "POLICECOMMSOUT");
+		}
+	}
+}

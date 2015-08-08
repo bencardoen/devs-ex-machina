@@ -40,7 +40,7 @@ TEST(Message, TestThreadRaceConditions){
 		dest[0] = 'c';
 	};
 	for(size_t i = 0; i<4; ++i){
-		workers.push_back(std::thread(worker));
+		workers.emplace_back(worker);
 	}
 	for(auto& t : workers)
 		t.join();
