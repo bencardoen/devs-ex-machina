@@ -12,33 +12,32 @@ namespace n_model {
 
 /**
  * Shared Vector of type T, constant sized. (no constexpr, just const).
- * Single writer - Multiple Reader problem with a twist:
- * For N clients, each will only ~write~ his own value, never another.
- * Each will only ever read other values, never his own.
- * This class is used to allow Conservative cores to pass eot values.
- * @brief Provides single operation synchronized access to const sized shared container.
- * @todo : implement movable mutex approach.
+ * Each entry is protected by a dedicated lock, concurrent access to differing
+ * indices will not block.
  */
 template<typename T>
 class SharedVector
 {
 private:
 	std::vector<T> 	m_vector;
-	std::mutex	m_lock;
+	// Have to be very careful here, std::mutex is non movable, non copyable,
+	// since size is invariant after construction, and we only access by &,
+	// we're safe.
+	std::vector<std::mutex> m_locks;
 public:
 	SharedVector()=delete;
 	SharedVector(const SharedVector&) =delete;
-	SharedVector(size_t size, T initvalue):m_vector(size, initvalue){
+	SharedVector(size_t size, T initvalue):m_vector(size, initvalue),m_locks(size){
 		;
 	}
 
 	/**
-	 * Get ~copy~ of value @index.
+	 * Get value @index.
 	 * @pre index < size().
 	 * @synchronized
 	 */
 	T get(std::size_t index){
-		std::lock_guard<std::mutex> lockvec(m_lock);
+		std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		return m_vector[index];
 	}
 
@@ -48,7 +47,7 @@ public:
 	 * @synchronized.
 	 */
 	void set(std::size_t index, const T& value){
-		std::lock_guard<std::mutex> lockvec(m_lock);
+		std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		m_vector[index]=value;
 	}
 
