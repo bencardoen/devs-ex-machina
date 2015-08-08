@@ -8,6 +8,10 @@
 #ifndef SRC_TOOLS_SHAREDVECTOR_H_
 #define SRC_TOOLS_SHAREDVECTOR_H_
 
+#include <vector>
+#include <array>
+#include <deque>
+
 namespace n_tools {
 
 /**
@@ -20,34 +24,46 @@ class SharedVector
 {
 private:
 	std::vector<T> 	m_vector;
-	// Have to be very careful here, std::mutex is non movable, non copyable,
-	// since size is invariant after construction, and we only access by &,
-	// we're safe.
-	std::vector<std::mutex> m_locks;
+
+	// Deque so we can use mutex safely. (will not copy)
+	std::deque<std::mutex> m_locks;
 public:
 	SharedVector()=delete;
 	SharedVector(const SharedVector&) =delete;
 	SharedVector(size_t size, T initvalue):m_vector(size, initvalue),m_locks(size){
-		;
+	}
+
+	/**
+	 * Lock entry @index.
+	 * @pre index < size();
+	 */
+	void lockEntry(size_t index){
+		m_locks[index].lock();
+	}
+
+	/**
+	 * Unlock entry @index
+	 * @pre index<size
+	 */
+	void unlockEntry(size_t index){
+		m_locks[index].unlock();
 	}
 
 	/**
 	 * Get value @index.
 	 * @pre index < size().
-	 * @synchronized
 	 */
 	T get(std::size_t index){
-		std::lock_guard<std::mutex> lockentry{m_locks[index]};
+		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		return m_vector[index];
 	}
 
 	/**
 	 * Set current @ index to value.
 	 * @pre index < size().
-	 * @synchronized.
 	 */
 	void set(std::size_t index, const T& value){
-		std::lock_guard<std::mutex> lockentry{m_locks[index]};
+		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		m_vector[index]=value;
 	}
 

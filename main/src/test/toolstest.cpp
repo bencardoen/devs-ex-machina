@@ -397,22 +397,22 @@ TEST(SharedVector, concurrency){
 	/**
 	 * Try to block as much as possible on the shared vector to trigger races/deadlock.
 	 */
-	constexpr size_t accesses = 100000;
+	size_t accesses = 100000;
 	const size_t num_threads = std::thread::hardware_concurrency();
+	accesses *= num_threads; // avoid ugly division below.
 	if(num_threads < 2){
 		LOG_INFO("Refusing to test threads without threading support.");
 		return;
 	}
-	n_tools::SharedVector<size_t> protected_vector(num_threads, 42);
+	n_tools::SharedVector<size_t> protected_vector(num_threads, 0);
 	std::vector<std::thread> threads;
 	auto worker = [&]()->void{
 		for(size_t i = 0; i<accesses; ++i){
 			const size_t index = i % num_threads;
-			const size_t value = protected_vector.get(i % num_threads);
-			if(value == 42)
-				protected_vector.set(index, 0);
-			else
-				protected_vector.set(index, 42);
+			protected_vector.lockEntry(index);
+			const size_t value = protected_vector.get(index);
+			protected_vector.set(index, value+1);
+			protected_vector.unlockEntry(index);
 		}
 	};
 	for(size_t j = 0; j<num_threads; ++j){
@@ -420,6 +420,9 @@ TEST(SharedVector, concurrency){
 	}
 	for(auto& thr : threads){
 		thr.join();
+	}
+	for(size_t index = 0; index<protected_vector.size(); ++index){
+		EXPECT_EQ(protected_vector.get(index), accesses);
 	}
 }
 

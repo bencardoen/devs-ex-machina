@@ -32,12 +32,14 @@ void Conservativecore::sendMessage(const t_msgptr& msg)
 {
 	m_sent_message = true;
 	t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
+	m_distributed_eot->lockEntry(getCoreID());
 	t_timestamp myeot = m_distributed_eot->get(getCoreID());
 	/// Step 4 in PDF, but do this @ caller side.
 	if (myeot < msgtime) {
 		LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
 		m_distributed_eot->set(getCoreID(), msgtime);
 	}
+	m_distributed_eot->unlockEntry(getCoreID());
 	Multicore::sendMessage(msg);
 }
 
@@ -75,8 +77,9 @@ void Conservativecore::updateEOT()
 
 	t_timestamp neweot = std::min(x,y);
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
-
+	this->m_distributed_eot->lockEntry(getCoreID());
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
+	this->m_distributed_eot->unlockEntry(getCoreID());
 }
 
 /**
@@ -95,7 +98,9 @@ void Conservativecore::updateEIT()
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(const auto& influence_id : m_influencees){
+		this->m_distributed_eot->lockEntry(influence_id);
 		const t_timestamp new_eot = this->m_distributed_eot->get(influence_id);
+		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
 
@@ -121,7 +126,9 @@ void Conservativecore::syncTime(){
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
 	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
 	if(this->isIdle()){
+		this->m_distributed_eot->lockEntry(getCoreID());
 		this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
+		this->m_distributed_eot->unlockEntry(getCoreID());
 	}
 }
 
