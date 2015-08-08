@@ -15,7 +15,7 @@ namespace n_model {
 /**
  * Stores the maximum of EOT values per kernel.
  */
-typedef std::shared_ptr<SharedVector<t_timestamp>> t_eotvector;
+typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_eotvector;
 
 
 /**

@@ -12,6 +12,7 @@
 #include <chrono>
 #include "tools/globallog.h"
 #include "tools/coutredirect.h"
+#include "tools/sharedvector.h"
 #include "tools/listscheduler.h"
 #include "tools/flags.h"
 
@@ -392,4 +393,33 @@ TEST(Flags, basic){
 	EXPECT_TRUE(!n_tools::flag_is_set(value, STOP));
 }
 
+TEST(SharedVector, concurrency){
+	/**
+	 * Try to block as much as possible on the shared vector to trigger races/deadlock.
+	 */
+	constexpr size_t accesses = 100000;
+	const size_t num_threads = std::thread::hardware_concurrency();
+	if(num_threads < 2){
+		LOG_INFO("Refusing to test threads without threading support.");
+		return;
+	}
+	n_tools::SharedVector<size_t> protected_vector(num_threads, 42);
+	std::vector<std::thread> threads;
+	auto worker = [&]()->void{
+		for(size_t i = 0; i<accesses; ++i){
+			const size_t index = i % num_threads;
+			const size_t value = protected_vector.get(i % num_threads);
+			if(value == 42)
+				protected_vector.set(index, 0);
+			else
+				protected_vector.set(index, 42);
+		}
+	};
+	for(size_t j = 0; j<num_threads; ++j){
+		threads.emplace_back(worker);
+	}
+	for(auto& thr : threads){
+		thr.join();
+	}
+}
 

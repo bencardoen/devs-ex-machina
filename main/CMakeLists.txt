@@ -71,7 +71,7 @@ endif()
 
 
 ### Debug #####################################################################
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -g -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE -fsanitize=undefined")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE")
 ###############################################################################
 
 

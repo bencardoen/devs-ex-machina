@@ -8,7 +8,7 @@
 #ifndef SRC_TOOLS_SHAREDVECTOR_H_
 #define SRC_TOOLS_SHAREDVECTOR_H_
 
-namespace n_model {
+namespace n_tools {
 
 /**
  * Shared Vector of type T, constant sized. (no constexpr, just const).
@@ -63,6 +63,6 @@ public:
 	~SharedVector(){;}
 };
 
-} /* namespace n_model */
+} /* namespace n_tools */
 
 #endif /* SRC_TOOLS_SHAREDVECTOR_H_ */
