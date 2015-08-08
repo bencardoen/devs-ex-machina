@@ -2,7 +2,10 @@
  * DEVStone.h
  *
  *  Created on: 13 Apr 2015
- *      Author: matthijs
+ *      Author: Devs Ex Machina
+ *
+ * This file contains the integer implementation of the devstone benchmark.
+ * Note that all timestamps have been multiplied by a factor of 100 to allow for randomized time advance.
  */
 
 #ifndef SRC_DEVSTONE_DEVSTONE_DEVSTONE_H_
@@ -18,13 +21,16 @@
 
 namespace n_devstone {
 
+// devstone uses event counters.
+// The messages are "Events", which are just numbers.
+typedef std::size_t Event;
 
 class ProcessorState : public n_model::State
 {
 public:
 	size_t m_event1_counter;
-	std::string m_event1;
-	std::vector<std::string> m_queue;
+	Event m_event1;
+	std::vector<Event> m_queue;
 public:
 	ProcessorState();
 	virtual ~ProcessorState();
@@ -42,6 +48,7 @@ class Processor : public n_model::AtomicModel
 {
 private:
 	bool m_randomta;
+	n_model::t_portptr m_out;
 public:
 	Processor(std::string name, bool randomta);
 	virtual ~Processor();
@@ -49,6 +56,7 @@ public:
 	virtual n_model::t_timestamp timeAdvance() const;
 	virtual void intTransition();
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
+	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual std::vector<n_network::t_msgptr> output() const;
 
 	ProcessorState& procstate();
@@ -57,6 +65,8 @@ public:
 
 class Generator : public n_model::AtomicModel
 {
+private:
+	n_model::t_portptr m_out;
 public:
 	Generator();
 	virtual ~Generator();
@@ -69,7 +79,7 @@ public:
 class CoupledRecursion : public n_model::CoupledModel
 {
 public:
-	CoupledRecursion(std::size_t width, std::size_t totalDepth, std::size_t depth, bool randomta, int coreAmt);
+	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta);
 	virtual ~CoupledRecursion();
 };
 
@@ -78,12 +88,17 @@ class DEVStone : public n_model::CoupledModel
 {
 public:
 	/**
-	 * @attention if the coreAmt argument is specified, a simple optimization in the placement of atomics will be
-	 * 	performed. Leave this empty should you wish to use a custom allocator!
+	 * @param width		The width of the devstone model.
+	 * @param depth		The number of layers in the devstone model
+	 * @param randomta	Whether or not to use randomized time advance.
+	 * 			If true, the time advance will fluctuate between 75 and 125.
+	 * 			If false, the time advance will be fixed at 100.
 	 */
-	DEVStone(std::size_t width, std::size_t depth, bool randomta, int coreAmt = -1);
+	DEVStone(std::size_t width, std::size_t depth, bool randomta);
 	virtual ~DEVStone();
 };
+
+//TODO write an allocator for devstone
 
 } /* namespace n_performance */
 

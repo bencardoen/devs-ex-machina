@@ -8,8 +8,32 @@
 #include "tools/coutredirect.h"
 #include "performance/devstone/devstone.h"
 #include "tools/stringtools.h"
+#include "control/allocator.h"
 
 LOG_INIT("devstone.log")
+
+class DevstoneAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+	std::size_t m_curn;
+	std::size_t m_coren;
+public:
+	DevstoneAlloc(std::size_t elemNum, std::size_t corenum): m_maxn(elemNum), m_curn(0), m_coren(corenum){
+
+	}
+	virtual size_t allocate(n_model::t_atomicmodelptr& ptr){
+		std::size_t res = 0;
+		if(m_curn > (m_maxn/m_coren)*m_coren){
+			res = m_coren-1u;
+		} else {
+			res = m_curn*m_coren/m_maxn;
+		}
+		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
+		++m_curn;
+		return res;
+	}
+};
 
 /**
  * The executable takes up to 4 arguments (in this order):
@@ -58,15 +82,16 @@ int main(int argc, char** args)
 	conf.coreAmount = coreAmt;
 	conf.saveInterval = 5;
 	conf.zombieIdleThreshold = 10;
+	conf.allocator = n_tools::createObject<DevstoneAlloc>(width*depth + 1u, coreAmt);
 
 	std::ofstream filestream("./devstone.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
-		t_timestamp endTime(1000, 0);
+		t_timestamp endTime(100000, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false, coreAmt);
+		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
