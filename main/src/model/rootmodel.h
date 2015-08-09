@@ -22,11 +22,11 @@ private:
 public:
 	RootModel();
 	virtual ~RootModel();
-	void setComponents(t_coupledmodelptr& model);
+	void setComponents(const t_coupledmodelptr& model);
 	/**
 	 * @precondition All atomic models have a unique name
 	 */
-	const std::vector<t_atomicmodelptr>& directConnect(t_coupledmodelptr&);
+	const std::vector<t_atomicmodelptr>& directConnect(const t_coupledmodelptr&);
 	void undoDirectConnect();
 
 	std::vector<t_atomicmodelptr> getComponents();

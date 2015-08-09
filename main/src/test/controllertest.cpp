@@ -168,9 +168,9 @@ TEST(Controller, DSDevs_full)
 	RecordProperty("description", "Full dynamic structured test");
 
 	ControllerConfig conf;
-	conf.name = "DSDevsSim";
-	conf.simType = Controller::DSDEVS;
-	conf.saveInterval = 30;
+	conf.m_name = "DSDevsSim";
+	conf.m_simType = Controller::DSDEVS;
+	conf.m_saveInterval = 30;
 
 	std::ofstream filestream(TESTFOLDER "controller/dstest.txt");
 	{
@@ -232,8 +232,8 @@ TEST(Controller, ControllerConfig)
 	RecordProperty("description", "Setting up a simulation using the ControllerConfig object");
 
 	ControllerConfig conf;
-	conf.name = "SimpleSim";
-	conf.saveInterval = 30;
+	conf.m_name = "SimpleSim";
+	conf.m_saveInterval = 30;
 
 	std::ofstream filestream(TESTFOLDER "controller/configtest.txt");
 	{
@@ -293,10 +293,10 @@ TEST(Pause, Pause)
 	RecordProperty("description", "Tests pause functionality of simulator");
 
 	ControllerConfig conf;
-	conf.name = "SimpleSim";
-	conf.saveInterval = 30;
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+	conf.m_name = "SimpleSim";
+	conf.m_saveInterval = 30;
+	conf.m_simType = Controller::PDEVS;
+	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/pausetest.txt");
 	{
@@ -318,10 +318,10 @@ TEST(Pause, RepeatPause)
 	RecordProperty("description", "Tests repeating pause");
 
 	ControllerConfig conf;
-	conf.name = "SimpleSim";
-	conf.saveInterval = 30;
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+	conf.m_name = "SimpleSim";
+	conf.m_saveInterval = 30;
+	conf.m_simType = Controller::PDEVS;
+	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/pausetest2.txt");
 	{
@@ -343,8 +343,8 @@ TEST(Save, ClassicSave)
 	RecordProperty("description", "Tests saving a simple simulation");
 
 	ControllerConfig conf;
-	conf.name = "SimpleSim";
-	conf.saveInterval = 1;
+	conf.m_name = "SimpleSim";
+	conf.m_saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "controller/savetestc.txt");
 	{
@@ -366,8 +366,8 @@ TEST(Save, ClassicLoad)
 	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
 
 	ControllerConfig conf;
-	conf.name = "LoadedSim";
-	conf.saveInterval = 1;
+	conf.m_name = "LoadedSim";
+	conf.m_saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "controller/loadtestc.txt");
 	{
@@ -385,10 +385,10 @@ TEST(Save, ParallelSave)
 	RecordProperty("description", "Tests saving a simple simulation");
 
 	ControllerConfig conf;
-	conf.name = "SimpleSim";
-	conf.saveInterval = 1;
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+	conf.m_name = "SimpleSim";
+	conf.m_saveInterval = 1;
+	conf.m_simType = Controller::PDEVS;
+	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/savetestp.txt");
 	{
@@ -410,10 +410,10 @@ TEST(Save, ParallelLoad)
 	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
 
 	ControllerConfig conf;
-	conf.name = "LoadedSim";
-	conf.saveInterval = 30;
-	conf.simType = Controller::PDEVS;
-	conf.coreAmount = 2;
+	conf.m_name = "LoadedSim";
+	conf.m_saveInterval = 30;
+	conf.m_simType = Controller::PDEVS;
+	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/loadtestp.txt");
 	{

@@ -104,12 +104,12 @@ public:
 	/**
 	 * @brief Set an atomic model as the main model using the given allocator
 	 */
-	void addModel(t_atomicmodelptr& atomic);
+	void addModel(const t_atomicmodelptr& atomic);
 
 	/**
 	 * @brief Set a coupled model as the main model using the given allocator
 	 */
-	void addModel(t_coupledmodelptr& coupled);
+	void addModel(const t_coupledmodelptr& coupled);
 
 	/**
 	 * @brief Serialize all models
@@ -204,7 +204,7 @@ public:
 	 * @brief Remove a port during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
 	 */
-	void dsRemovePort(n_model::t_portptr& port);
+	void dsRemovePort(const n_model::t_portptr& port);
 	/**
 	 * @brief add a model during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
@@ -214,7 +214,7 @@ public:
 	 * @brief remove a model during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
 	 */
-	void dsUnscheduleModel(n_model::t_atomicmodelptr& model);
+	void dsUnscheduleModel(const n_model::t_atomicmodelptr& model);
 	/**
 	 * @brief Undo direct connect during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.
@@ -260,7 +260,7 @@ private:
 	/**
 	 * @brief Add an atomic model to a specific core
 	 */
-	void addModel(t_atomicmodelptr& atomic, std::size_t coreID);
+	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
 
 	/**
 	 * @brief Handle all time events until now, returns whether the simulation should continue

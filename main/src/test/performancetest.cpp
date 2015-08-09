@@ -24,8 +24,8 @@ TEST(Performance, DEVStone)
 	RecordProperty("description", "Runs DEVStone");
 
 	ControllerConfig conf;
-	conf.name = "DEVStone";
-	conf.saveInterval = 1;
+	conf.m_name = "DEVStone";
+	conf.m_saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "performance/devstone.txt");
 	{
@@ -47,8 +47,8 @@ TEST(Performance, PHOLD)
 	RecordProperty("description", "Runs the PHOLD benchmark");
 
 	ControllerConfig conf;
-	conf.name = "PHOLDBench";
-	conf.saveInterval = 1;
+	conf.m_name = "PHOLDBench";
+	conf.m_saveInterval = 1;
 
 	std::ofstream filestream(TESTFOLDER "/performance/phold.txt");
 	{

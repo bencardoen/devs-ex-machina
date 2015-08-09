@@ -36,7 +36,7 @@ public:
 	 * @brief Returns on which Core to place a Model
 	 * @param model the AtomicModel to be allocated
 	 */
-	size_t allocate(n_model::t_atomicmodelptr& m)
+	size_t allocate(const n_model::t_atomicmodelptr& m)override
 	{
 		int corenum = m->getCorenumber();
 		if(!m_allowUserOverride || corenum == -1) {	// If user override is not allowed, or if it is but the
