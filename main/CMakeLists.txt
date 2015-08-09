@@ -83,7 +83,7 @@ endif()
 # Only use this for production code
 #
 # Note : fPIC flag is needed if you built GTest with fPIE/fPIC\
-SET(OPTIMIZATION_FLAG "-O2")
+SET(OPTIMIZATION_FLAG "-O3")
 if (${APPLE})
 	SET(OPTIMIZATION_FLAG "-O1")
 endif()
