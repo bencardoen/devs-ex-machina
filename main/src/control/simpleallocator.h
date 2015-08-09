@@ -49,6 +49,23 @@ public:
 		m->setCorenumber(corenum);
 		return corenum;
 	}
+
+	void allocateAll(const std::vector<n_model::t_atomicmodelptr>& atomics)override{
+		LOG_INFO("Allocator processing ", atomics.size(), " atomics over " ,m_cores, " cores");
+		for(const auto& atomicp : atomics){
+			const int stalenr = atomicp->getCorenumber();
+			int corenr = 0;
+			if(!m_allowUserOverride || stalenr == -1) {	// If user override is not allowed, or if it is but the
+				corenr = m_i;				//  user didn't specify a particular core, we pick a
+				m_i = (m_i + 1) % m_cores;		//  destination ourselves
+			} else {
+				corenr %= m_cores;	// Make absolutely sure the model always ends up on a real core
+							//  e.g. if the user lowered the amount of cores on a loaded simulation
+			}
+			atomicp->setCorenumber(corenr);
+			LOG_INFO("Allocator assigned ", atomicp->getName(), " from ", stalenr, " to ", corenr);
+		}
+	}
 };
 
 } /* namespace n_control */

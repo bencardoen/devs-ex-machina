@@ -37,11 +37,12 @@ using namespace n_examples;
 /*
  * Function to test part of the functionality present in Controller's addModel methods
  */
-void testAddModel(t_atomicmodelptr& model, std::shared_ptr<Allocator> allocator,
+void testAddModel(const std::vector<t_atomicmodelptr>& models, std::shared_ptr<Allocator> allocator,
         std::shared_ptr<n_control::LocationTable> locTab)
 {
-	size_t coreID = allocator->allocate(model);
-	locTab->registerModel(model, coreID);
+	allocator->allocateAll(models);
+	for(const auto& m : models)
+		locTab->registerModel(m, m->getCorenumber());
 }
 
 TEST(Controller, allocation)
@@ -57,10 +58,8 @@ TEST(Controller, allocation)
 	t_atomicmodelptr m3 = createObject<TrafficLight>("Thd");
 	t_atomicmodelptr m4 = createObject<TrafficLight>("Fth");
 
-	testAddModel(m1, allocator, locTab);
-	testAddModel(m2, allocator, locTab);
-	testAddModel(m3, allocator, locTab);
-	testAddModel(m4, allocator, locTab);
+	const std::vector<t_atomicmodelptr> models= {m1,m2,m3,m4};
+	testAddModel(models, allocator, locTab);
 
 	EXPECT_EQ(locTab->lookupModel("Fst"), 0u);
 	EXPECT_EQ(locTab->lookupModel("Snd"), 1u);

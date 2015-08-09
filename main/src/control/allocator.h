@@ -9,13 +9,8 @@
 #define SRC_CONTROL_ALLOCATOR_H_
 
 #include <memory>
+#include <vector>
 #include "model/atomicmodel.h"
-
-/*
-namespace n_model {
-class AtomicModel;
-typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
-}*/
 
 namespace n_control {
 
@@ -32,7 +27,9 @@ public:
 	 * @param model the AtomicModel to be allocated
 	 * @deprecated
 	 */
-	virtual size_t allocate(const n_model::t_atomicmodelptr&) = 0;
+	virtual size_t allocate(const n_model::t_atomicmodelptr&)__attribute__((deprecated)) = 0;
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>&)=0;
 
 	virtual ~Allocator();
 };
