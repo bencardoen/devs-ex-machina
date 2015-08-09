@@ -26,11 +26,7 @@ public:
 
 	/**
 	 * @brief Return the location of a Model
-	 */
-	std::size_t operator[](const std::string& modelName);
-
-	/**
-	 * @brief Return the location of a Model
+	 * @throws out_of_range if modelName is not registered.
 	 */
 	std::size_t lookupModel(const std::string& modelName);
 
@@ -40,7 +36,7 @@ public:
 	 * @param core the ID of the core on which the model is located
 	 * @pre core < m_amountCores (assert)
 	 */
-	void registerModel(const t_atomicmodelptr model, std::size_t core);
+	void registerModel(const t_atomicmodelptr& model, std::size_t core);
 
 
 private:

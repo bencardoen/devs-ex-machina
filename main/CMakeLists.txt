@@ -9,10 +9,12 @@ cmake_minimum_required(VERSION 2.8)
 #   @author Ben Cardoen, Tim Tuijn                                            #
 ###############################################################################
 
+
 ### PROJECT NAME ##############################################################
 SET(PROJECT_NAME "dxexmachina")
 project(${PROJECT_NAME})
 ###############################################################################
+
 
 ### DEPENDENCIES ##############################################################
 # Use CMAKE to discover listed dependencies. If found, these set the
@@ -28,6 +30,7 @@ find_package(GTest REQUIRED)
 find_package(Doxygen)
 ###############################################################################
 
+
 ### DOCUMENTATION #############################################################
 # add a target to generate API documentation with Doxygen
 if(DOXYGEN_FOUND)
@@ -40,78 +43,127 @@ add_custom_target(doc
 endif(DOXYGEN_FOUND)
 ###############################################################################
 
+
 ### COMPILER ##################################################################
 # NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
-SET(flagstdc11 "-std=c++11")
-
-# Check for Windows Cygwin installation, if so we must use -std=gnu++11 instead of -std=c++11
-if (${CYGWIN})
-    SET(flagstdc11 "-std=gnu++11")
-endif()
+SET(flagstdc11 "")
 
 # Check for Mac OS X, if so we must link with libc++ library instead of default library
 if (${APPLE})
 	SET(flagstdc11 "${flagstdc11} -stdlib=libc++")
 endif()
 
+### Debug #####################################################################
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE")
+###############################################################################
+
+### Profiling -- Clang and G++ ###############################################
+SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
+###############################################################################
+
+### Threadsanitizer ###########################################################
 # If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     CHECK_CXX_ACCEPTS_FLAG(-fsanitize=thread FSANITIZE_SUPPORTED)
     if (FSANITIZE_SUPPORTED)
 		MESSAGE( STATUS"Working with Clang: enabling threadsanitizer if build==Debug")
-    	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIE  -fsanitize=thread" )
+    	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=thread" )
     else()
     	MESSAGE( STATUS"Working with Clang: threadsanitizer not supported")
     endif()
 endif()
+###############################################################################
 
 ### Print everything CMake does to cout to verify the options are sane.
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 ###############################################################################
 
 
-### Debug #####################################################################
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE")
-###############################################################################
-
-
-### Profiling -- Clang and G++ ###############################################
-SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
-###############################################################################
-
-
 ### Release build - All compilers#############################################
 # Only use this for production code
 #
-# Note : fPIC flag is needed if you built GTest with fPIE/fPIC
-#SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -march=native -g ${flagstdc11} ")
-SET(OPTIMIZATION_FLAG "-O0")
+# Note : fPIC flag is needed if you built GTest with fPIE/fPIC\
+SET(OPTIMIZATION_FLAG "-O3")
 if (${APPLE})
 	SET(OPTIMIZATION_FLAG "-O1")
 endif()
-SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAG} -fPIC -march=native -g ${flagstdc11}")
+SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAG} -fPIE -march=native -g ${flagstdc11}")
 ###############################################################################
 
+add_library( 
+	DEVSEXMACHINACORE_DEBUG
+	OBJECT
+	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/cellmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+	src/control/timeevent.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+	)
+add_library( 
+	DEVSEXMACHINACORE_RELEASE
+	OBJECT
+	src/tools/logger.cpp
+ 	src/tools/globallog.cpp
+ 	src/tools/coutredirect.cpp
+ 	src/tools/asynchwriter.cpp
+ 	src/model/atomicmodel.cpp
+ 	src/model/cellmodel.cpp
+ 	src/model/coupledmodel.cpp
+ 	src/model/rootmodel.cpp
+ 	src/model/model.cpp
+ 	src/model/state.cpp
+ 	src/model/port.cpp
+ 	src/model/core.cpp
+ 	src/model/dynamiccore.cpp
+ 	src/model/multicore.cpp
+ 	src/model/conservativecore.cpp
+ 	src/model/zfunc.cpp
+ 	src/control/allocator.cpp
+ 	src/control/controller.cpp
+ 	src/control/controllerconfig.cpp
+ 	src/control/locationtable.cpp
+	src/control/timeevent.cpp
+ 	src/network/message.cpp
+ 	src/network/controlmessage.cpp
+ 	src/network/network.cpp
+ 	src/tracers/policies.cpp
+ 	src/tracers/tracemessage.cpp
+	)
 
-### SOURCES ###################################################################
+# 2 packages of the devs simulator that compile on log level 15 and 0
+SET_TARGET_PROPERTIES(
+	DEVSEXMACHINACORE_DEBUG PROPERTIES EXCLUDE_FROM_ALL 1
+		COMPILE_FLAGS "-DLOG_LEVEL=15"
+		)
+SET_TARGET_PROPERTIES(
+	DEVSEXMACHINACORE_RELEASE PROPERTIES EXCLUDE_FROM_ALL 1
+		COMPILE_FLAGS "-DLOG_LEVEL=0"
+		)
+
 
 add_executable(${PROJECT_NAME}
-	src/tools/logger.cpp
-	src/tools/globallog.cpp
-	src/tools/coutredirect.cpp
-	src/tools/asynchwriter.cpp
-	src/model/atomicmodel.cpp
-	src/model/cellmodel.cpp
-	src/model/coupledmodel.cpp
-	src/model/rootmodel.cpp
-	src/model/model.cpp
-	src/model/state.cpp
-	src/model/port.cpp
-	src/model/core.cpp
-	src/model/dynamiccore.cpp
-	src/model/multicore.cpp
-	src/model/conservativecore.cpp
-	src/model/zfunc.cpp
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
 	src/examples/abstract_conservative/modela.cpp
 	src/examples/abstract_conservative/modelb.cpp
 	src/examples/abstract_conservative/modelc.cpp
@@ -140,16 +192,6 @@ add_executable(${PROJECT_NAME}
 	#src/examples/trafficsystem/collector.cpp
 	src/performance/devstone/devstone.cpp
 	src/performance/benchmarks/phold.cpp
-	src/control/allocator.cpp
-	src/control/controller.cpp
-	src/control/controllerconfig.cpp
-	src/control/locationtable.cpp
-	src/control/timeevent.cpp
-	src/network/message.cpp
-	src/network/controlmessage.cpp
-	src/network/network.cpp
-	src/tracers/policies.cpp
-	src/tracers/tracemessage.cpp
 	src/test/basiccerealtestclasses.cpp
 	src/test/toolstest.cpp
 	src/test/coretest.cpp
@@ -167,142 +209,59 @@ add_executable(${PROJECT_NAME}
 	src/test/testmodels.cpp
  	src/main.cpp
  	)
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
+					COMPILE_FLAGS "-DLOG_LEVEL=15"
+					)
+
 
  add_executable(${PROJECT_NAME}_benchfire
- 	src/tools/logger.cpp
- 	src/tools/globallog.cpp
- 	src/tools/coutredirect.cpp
- 	src/tools/asynchwriter.cpp
- 	src/model/atomicmodel.cpp
- 	src/model/cellmodel.cpp
- 	src/model/coupledmodel.cpp
- 	src/model/rootmodel.cpp
- 	src/model/model.cpp
- 	src/model/state.cpp
- 	src/model/port.cpp
- 	src/model/core.cpp
- 	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
- 	src/model/conservativecore.cpp
- 	src/model/zfunc.cpp
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
  	src/examples/forestfire/constants.cpp
  	src/examples/forestfire/firecell.cpp
  	src/examples/forestfire/firecellstate.cpp
  	src/examples/forestfire/firegenerator.cpp
  	src/examples/forestfire/firespread.cpp
- 	src/control/allocator.cpp
- 	src/control/controller.cpp
- 	src/control/controllerconfig.cpp
- 	src/control/locationtable.cpp
-	src/control/timeevent.cpp
- 	src/network/message.cpp
- 	src/network/controlmessage.cpp
- 	src/network/network.cpp
- 	src/tracers/policies.cpp
- 	src/tracers/tracemessage.cpp
-  	src/mainbenchfire.cpp
+ 	src/mainbenchfire.cpp
   	)
-
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=0"
  					)
+
 
 add_executable(${PROJECT_NAME}_devstone
- 	src/tools/logger.cpp
- 	src/tools/globallog.cpp
- 	src/tools/coutredirect.cpp
- 	src/tools/asynchwriter.cpp
- 	src/model/atomicmodel.cpp
- 	src/model/coupledmodel.cpp
- 	src/model/rootmodel.cpp
- 	src/model/model.cpp
- 	src/model/state.cpp
- 	src/model/port.cpp
- 	src/model/core.cpp
- 	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
- 	src/model/conservativecore.cpp
- 	src/model/zfunc.cpp
+	# The following target determines if the Debug/Release package is used
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
  	src/performance/devstone/devstone.cpp
- 	src/control/allocator.cpp
- 	src/control/controller.cpp
- 	src/control/controllerconfig.cpp
- 	src/control/locationtable.cpp
-	src/control/timeevent.cpp
- 	src/network/message.cpp
- 	src/network/controlmessage.cpp
- 	src/network/network.cpp
- 	src/tracers/policies.cpp
- 	src/tracers/tracemessage.cpp
-  	src/maindevstone.cpp
+ 	src/maindevstone.cpp
   	)
-
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=0"
  					)
+
 
 add_executable(${PROJECT_NAME}_phold
- 	src/tools/logger.cpp
- 	src/tools/globallog.cpp
- 	src/tools/coutredirect.cpp
- 	src/tools/asynchwriter.cpp
- 	src/model/atomicmodel.cpp
- 	src/model/coupledmodel.cpp
- 	src/model/rootmodel.cpp
- 	src/model/model.cpp
- 	src/model/state.cpp
- 	src/model/port.cpp
- 	src/model/core.cpp
- 	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
- 	src/model/conservativecore.cpp
- 	src/model/zfunc.cpp
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
  	src/performance/benchmarks/phold.cpp
- 	src/control/allocator.cpp
- 	src/control/controller.cpp
- 	src/control/controllerconfig.cpp
- 	src/control/locationtable.cpp
-	src/control/timeevent.cpp
- 	src/network/message.cpp
- 	src/network/controlmessage.cpp
- 	src/network/network.cpp
- 	src/tracers/policies.cpp
- 	src/tracers/tracemessage.cpp
   	src/mainphold.cpp
   	)
-
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=0"
  					)
- 					
+
+add_executable(${PROJECT_NAME}_virus
+ 	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
+ 	src/examples/virus/virus.cpp
+ 	src/examples/virus/virustracer.cpp
+  	src/mainvirus.cpp
+  	)
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
+ 					COMPILE_FLAGS "-DLOG_LEVEL=15 -DVIRUSTRACER=1 -w"
+ 					)
+
 add_executable(${PROJECT_NAME}_traffic
- 	src/tools/logger.cpp
- 	src/tools/globallog.cpp
- 	src/tools/coutredirect.cpp
- 	src/tools/asynchwriter.cpp
- 	src/model/atomicmodel.cpp
- 	src/model/coupledmodel.cpp
- 	src/model/rootmodel.cpp
- 	src/model/model.cpp
- 	src/model/state.cpp
- 	src/model/port.cpp
- 	src/model/core.cpp
- 	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
- 	src/model/conservativecore.cpp
- 	src/model/zfunc.cpp
- 	src/control/allocator.cpp
- 	src/control/controller.cpp
- 	src/control/controllerconfig.cpp
- 	src/control/locationtable.cpp
-	src/control/timeevent.cpp
- 	src/network/message.cpp
- 	src/network/controlmessage.cpp
- 	src/network/network.cpp
- 	src/tracers/policies.cpp
- 	src/tracers/tracemessage.cpp
- 	src/examples/trafficsystem/car.cpp
-	src/examples/trafficsystem/city.cpp
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
+	src/examples/trafficsystem/car.cpp
+	src/examples/trafficsystem/city_small.cpp
 	src/examples/trafficsystem/query.cpp
 	src/examples/trafficsystem/queryack.cpp
 	src/examples/trafficsystem/building.cpp
@@ -312,52 +271,11 @@ add_executable(${PROJECT_NAME}_traffic
 	src/examples/trafficsystem/road.cpp
 	src/examples/trafficsystem/intersection.cpp
 	src/examples/trafficsystem/collector.cpp
-  	src/maintraffic.cpp
-  	)
-
+	src/maintraffic.cpp
+	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=0"
- 					)
-
-add_executable(${PROJECT_NAME}_virus
- 	src/tools/logger.cpp
- 	src/tools/globallog.cpp
- 	src/tools/coutredirect.cpp
- 	src/tools/asynchwriter.cpp
- 	src/model/atomicmodel.cpp
- 	src/model/coupledmodel.cpp
- 	src/model/rootmodel.cpp
- 	src/model/model.cpp
- 	src/model/state.cpp
- 	src/model/port.cpp
- 	src/model/core.cpp
- 	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
- 	src/model/conservativecore.cpp
- 	src/model/zfunc.cpp
- 	src/examples/virus/virus.cpp
- 	src/examples/virus/virustracer.cpp
- 	src/control/allocator.cpp
- 	src/control/controller.cpp
- 	src/control/controllerconfig.cpp
- 	src/control/locationtable.cpp
-	src/control/timeevent.cpp
- 	src/network/message.cpp
- 	src/network/controlmessage.cpp
- 	src/network/network.cpp
- 	src/tracers/policies.cpp
- 	src/tracers/tracemessage.cpp
-  	src/mainvirus.cpp
-  	)
-
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL=15 -DVIRUSTRACER=1 -w"
- 					)
-
-# SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES
-# 					COMPILE_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL=15 "#-o3"# -flto"
-# 					)
-###############################################################################
+					COMPILE_FLAGS "-DLOG_LEVEL=0"
+					)
 
 
 ### INCLUDE PATHS ############################################################
@@ -393,3 +311,7 @@ target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 ###############################################################################
+
+
+
+

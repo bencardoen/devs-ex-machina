@@ -57,9 +57,6 @@ then
     echo "$SCRIPT  Overriding Compiler choice with value :: $2"
 fi
 
-# Fix root path testfiles. (filecompare trips over win<>*nix)
-find testfiles -type f -execdir dos2unix -q {} \;
-
 # If stale build is found, try to remove it.
 if [ -d "$BUILD_DIR" ]
 	then
@@ -83,9 +80,6 @@ cd $BUILD_DIR
 # Copy testfiles to generated directory so that eclipse finds them (eclipse cwd is BUILD_DIR)
 mkdir "testfiles"
 cp -r ../testfiles/* testfiles/
-
-# Apply dos2unix to avoid errors in filecmp across systems. (in theory line 46 covers this, but it has failed before)
-find testfiles -type f -execdir dos2unix -q {} \;
 
 echo "$SCRIPT Generating CMake Build."
 ## Generate Eclipse IDE project files

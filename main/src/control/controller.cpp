@@ -100,7 +100,7 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 	m_isLoadedSim = true;
 }
 
-void Controller::addModel(t_atomicmodelptr& atomic)
+void Controller::addModel(const t_atomicmodelptr& atomic)
 {
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	if (m_hasMainModel) { // old models need to be replaced
@@ -119,13 +119,13 @@ void Controller::addModel(t_atomicmodelptr& atomic)
 	}
 }
 
-void Controller::addModel(t_atomicmodelptr& atomic, std::size_t coreID)
+void Controller::addModel(const t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
 	m_locTab->registerModel(atomic, coreID);
 }
 
-void Controller::addModel(t_coupledmodelptr& coupled)
+void Controller::addModel(const t_coupledmodelptr& coupled)
 {
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
 	assert(coupled != nullptr && "Cannot add nullptr as origin coupled model.");
@@ -445,7 +445,7 @@ void Controller::handleTimeEventsSingle(const t_timestamp& now)
 	LOG_INFO("CONTROLLER: Handling any events");
 	std::vector<TimeEvent> worklist = m_events.popUntil(now);
 	uint pause = 0;
-	for (TimeEvent& event : worklist) {
+	for (const TimeEvent& event : worklist) {
 		switch (event.m_type) {
 		case TimeEvent::Type::PAUSE:
 			LOG_INFO("CONTROLLER: Pausing at ", n_tools::toString(event.m_time.getTime()), " for ",
@@ -548,7 +548,7 @@ void Controller::dsRemoveConnection(const n_model::t_portptr&, const n_model::t_
 	dsUndoDirectConnect();
 }
 
-void Controller::dsRemovePort(n_model::t_portptr&)
+void Controller::dsRemovePort(const n_model::t_portptr&)
 {
 	assert(isInDSPhase() && "Controller::dsRemovePort called while not in the DS phase.");
 	dsUndoDirectConnect();
@@ -581,7 +581,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
 }
 
-void Controller::dsUnscheduleModel(n_model::t_atomicmodelptr& model)
+void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
 {
 	assert(isInDSPhase() && "Controller::dsUnscheduleModel called while not in the DS phase.");
 	dsUndoDirectConnect();

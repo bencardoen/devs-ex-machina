@@ -20,7 +20,7 @@ RootModel::~RootModel()
 {
 }
 
-void RootModel::setComponents(t_coupledmodelptr& model)
+void RootModel::setComponents(const t_coupledmodelptr& model)
 {
 	std::deque<t_coupledmodelptr> toDo;
 	toDo.push_back(model);
@@ -39,7 +39,7 @@ void RootModel::setComponents(t_coupledmodelptr& model)
 	}
 }
 
-const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(t_coupledmodelptr& model)
+const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_coupledmodelptr& model)
 {
 	if (m_directConnected)
 		return m_components;

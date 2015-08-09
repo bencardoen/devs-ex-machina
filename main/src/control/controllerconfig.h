@@ -23,8 +23,6 @@
 #include <vector>
 #include <chrono>
 
-using namespace n_tools;
-
 namespace n_control {
 
 /**
@@ -41,21 +39,21 @@ struct ControllerConfig
 	 * The name of the controller
 	 * By default: @c MySimulation
 	 */
-	std::string name;
+	std::string m_name;
 
 	/**
 	 * The type of simulation
 	 * See Controller::SimType
 	 * By default: @c CLASSIC
 	 */
-	Controller::SimType simType;
+	Controller::SimType m_simType;
 
 	/**
 	 * The amount of cores the simulation will run on
 	 * By default: @c 1
 	 * @attention : This parameter is specific only to PDEVS, in other cases it will be disregarded
 	 */
-	size_t coreAmount;
+	std::size_t m_coreAmount;
 
 	/**
 	 * Behavior of the PDEVS simulation
@@ -65,20 +63,20 @@ struct ControllerConfig
 	enum PDEVSBehavior {
 		OPTIMISTIC,
 		CONSERVATIVE
-	} pdevsType;
+	} m_pdevsType;
 
 	/**
 	 * How many times the simulation will go over the list of cores before tracing and saving everything
 	 * By default: @c 5
 	 * @attention : This parameter is specific only to Classic DEVS, in other cases it will be disregarded
 	 */
-	size_t saveInterval;
+	std::size_t m_saveInterval;
 
 	/**
 	 * The component that will decide on which core to place each model
 	 * By default: @c SimpleAllocator
 	 */
-	std::shared_ptr<Allocator> allocator;
+	std::shared_ptr<Allocator> m_allocator;
 
 	/**
 	 * The tracerset used by the simulator.
@@ -86,7 +84,7 @@ struct ControllerConfig
 	 * @attention: If this parameter is not set, a new TracerSet will be created using the default constructor.
 	 * @see Tracers
 	 */
-	n_tracers::t_tracersetptr tracerset;
+	n_tracers::t_tracersetptr m_tracerset;
 
 	/**
 	 * Forces cores to go into IDLE mode after a certain amount of cycles should they enter a "zombie" state after
@@ -98,7 +96,7 @@ struct ControllerConfig
 	 * 	By our tests, the chance of failure given a threshold of 0 (immediately idle) is 1-2%, a threshold of
 	 * 	100 less than 0.1%
 	 */
-	int zombieIdleThreshold;
+	int m_zombieIdleThreshold;
 
 	ControllerConfig();
 	virtual ~ControllerConfig();
