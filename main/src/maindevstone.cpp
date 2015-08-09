@@ -16,21 +16,23 @@ class DevstoneAlloc: public n_control::Allocator
 {
 private:
 	std::size_t m_maxn;
-	std::size_t m_curn;
 	std::size_t m_coren;
 public:
-	DevstoneAlloc(std::size_t elemNum, std::size_t corenum): m_maxn(elemNum), m_curn(0), m_coren(corenum){
+	DevstoneAlloc(std::size_t elemNum, std::size_t corenum): m_maxn(elemNum), m_coren(corenum){
 
 	}
-	virtual size_t allocate(n_model::t_atomicmodelptr& ptr){
+	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
+		if(p == nullptr) return 0;
 		std::size_t res = 0;
-		if(m_curn > (m_maxn/m_coren)*m_coren){
-			res = m_coren-1u;
-		} else {
-			res = m_curn*m_coren/m_maxn;
-		}
+		std::size_t curn = p->m_num;
+//		if(curn > (m_maxn/m_coren)*m_coren){
+//			res = m_coren-1u;
+//		} else {
+			res = curn*m_coren/m_maxn;
+//		}
+		if(res >= m_coren) res = m_coren-1;
 		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
-		++m_curn;
 		return res;
 	}
 };
@@ -75,18 +77,18 @@ int main(int argc, char** args)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.name = "DEVStone";
-	conf.simType = simType;
+	conf.m_name = "DEVStone";
+	conf.m_simType = simType;
 	if (type == "cpdevs")
-		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
-	conf.coreAmount = coreAmt;
-	conf.saveInterval = 5;
-	conf.zombieIdleThreshold = 10;
-	conf.allocator = n_tools::createObject<DevstoneAlloc>(width*depth + 1u, coreAmt);
+		conf.m_pdevsType = n_control::ControllerConfig::CONSERVATIVE;
+	conf.m_coreAmount = coreAmt;
+	conf.m_saveInterval = 5;
+	conf.m_zombieIdleThreshold = 10;
+	conf.m_allocator = n_tools::createObject<DevstoneAlloc>(width*depth + 1u, coreAmt);
 
 	std::ofstream filestream("./devstone.txt");
 	{
-		CoutRedirect myRedirect(filestream);
+		n_tools::CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
 		t_timestamp endTime(100000, 0);
 		ctrl->setTerminationTime(endTime);

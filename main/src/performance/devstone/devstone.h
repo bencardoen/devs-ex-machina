@@ -47,9 +47,11 @@ public:
 class Processor : public n_model::AtomicModel
 {
 private:
+	static std::size_t m_numcounter;
 	bool m_randomta;
 	n_model::t_portptr m_out;
 public:
+	const std::size_t m_num;
 	Processor(std::string name, bool randomta);
 	virtual ~Processor();
 

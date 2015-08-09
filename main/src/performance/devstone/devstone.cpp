@@ -46,11 +46,14 @@ std::shared_ptr<ProcessorState> ProcessorState::copy() const
  * Processor
  */
 
+std::size_t Processor::m_numcounter = 1;
+
 Processor::Processor(std::string name, bool randomta)
-	: AtomicModel(name), m_randomta(randomta), m_out(addOutPort("out_event1"))
+	: AtomicModel(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(m_numcounter++)
 {
 	addInPort("in_event1");
 	setState(n_tools::createObject<ProcessorState>());
+	LOG_DEBUG("Created devstone processor ", name);
 }
 
 Processor::~Processor()
