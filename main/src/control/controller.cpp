@@ -84,8 +84,11 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 		iarchivemodel(m_coupledOrigin);
 		m_root->setComponents(m_coupledOrigin);
 		for (t_atomicmodelptr& model : m_root->getComponents()) {
-			size_t coreID = m_allocator->allocate(model);
-			addModel(model, coreID);
+			//size_t coreID = m_allocator->allocate(model);
+			// Save implies allocation is done.
+			int coreid = model->getCorenumber();
+			assert(coreid >= 0 && ( (std::size_t) coreid < m_cores.size()));
+			addModel(model, coreid);
 			if (m_simType != SimType::PDEVS)
 				model->setKeepOldStates(false);
 			else
@@ -108,8 +111,10 @@ void Controller::addModel(const t_atomicmodelptr& atomic)
 		emptyAllCores();
 		m_hasMainModel = false;
 	}
-	size_t coreID = m_allocator->allocate(atomic);
-	addModel(atomic, coreID);
+	//size_t coreID = m_allocator->allocate(atomic);		// De we still need 1 atomic usecase ??
+	const std::vector<t_atomicmodelptr> models = {atomic};		// anyway, let's not leave landmines
+	m_allocator->allocateAll(models);
+	addModel(atomic, atomic->getCorenumber());
 
 	if (m_simType == SimType::DSDEVS)
 		atomic->setController(this);
@@ -137,14 +142,17 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 	m_coupledOrigin = coupled;
 	m_root->directConnect(coupled);
 
-	for (t_atomicmodelptr& model : m_root->getComponents()) {
-		size_t coreID = m_allocator->allocate(model);
-		addModel(model, coreID);
+	const std::vector<t_atomicmodelptr> atomics = m_root->getComponents();
+	m_allocator->allocateAll(atomics);
+
+	for (const t_atomicmodelptr& atomic : atomics) {
+		//size_t coreID = m_allocator->allocate(model);
+		addModel(atomic, atomic->getCorenumber());
 		if (m_simType != SimType::PDEVS)
-			model->setKeepOldStates(false);
+			atomic->setKeepOldStates(false);
 		else
-			model->setKeepOldStates(true);
-		LOG_DEBUG("Controller::addModel added model with name ", model->getName());
+			atomic->setKeepOldStates(true);
+		LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
 	}
 	if (m_simType == SimType::DSDEVS)
 		coupled->setController(this);
