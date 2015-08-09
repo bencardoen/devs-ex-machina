@@ -35,6 +35,11 @@ public:
 		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
 		return res;
 	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber(allocate(ptr));
+	}
 };
 
 /**
