@@ -115,6 +115,12 @@ void Multicore::getMessages()
 	// after simulation.
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+	if(messages.size()!= 0){
+		if(this->isIdle()){
+			this->setIdle(false);
+			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
+		}
+	}
 	this->sortIncoming(messages);
 }
 
