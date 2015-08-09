@@ -7,6 +7,9 @@
 
 #include "performance/devstone/devstone.h"
 #include "tools/stringtools.h"
+#include <limits>
+
+const std::size_t inf = std::numeric_limits<std::size_t>::max();
 
 namespace n_devstone {
 
@@ -15,7 +18,7 @@ namespace n_devstone {
  */
 
 ProcessorState::ProcessorState()
-	: State(""), m_event1_counter(-1), m_event1(0)
+	: State(""), m_event1_counter(inf), m_event1(0)
 {
 }
 
@@ -57,7 +60,7 @@ Processor::~Processor()
 n_model::t_timestamp Processor::timeAdvance() const
 {
 	const auto& procState = procstate();
-	if (procState.m_event1_counter == size_t(-1)) {
+	if (procState.m_event1_counter == inf) {
 		return n_network::t_timestamp::infinity();
 	} else {
 		return n_network::t_timestamp(procState.m_event1_counter);
@@ -69,21 +72,23 @@ void Processor::intTransition()
 	const auto newState = procstate().copy();
 	newState->m_event1_counter = 0u;
 	if (newState->m_queue.empty()) {
-		newState->m_event1_counter = size_t(-1u);
+		newState->m_event1_counter = inf;
 		newState->m_event1 = Event(0u);
 	} else {
 		newState->m_event1 = newState->m_queue.back();
 		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? 75u + (rand() / (RAND_MAX / 50u)) : 100u;
+		newState->m_event1_counter = (m_randomta) ? (75u + (rand() / (RAND_MAX / 50u))) : 100u;
 	}
+	LOG_DEBUG("internal event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
 }
 
 void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	const auto newState = procstate().copy();
-	newState->m_event1_counter -= m_elapsed.getTime();
-	LOG_DEBUG("event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed);
+	LOG_DEBUG("externala event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed, " =inf ", newState->m_event1_counter == inf);
+	newState->m_event1_counter = (newState->m_event1_counter == inf)? inf: (newState->m_event1_counter - m_elapsed.getTime());
+	LOG_DEBUG("externalb event counter of ", getName(), ", new value = ", newState->m_event1_counter);
 	//We can only have 1 message
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
 	if (newState->m_event1 != Event(0)) {
@@ -91,8 +96,9 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 	} else {
 		newState->m_event1 = ev1;
 		//TODO devstone randomized counter float
-		newState->m_event1_counter = (m_randomta) ? 75u + (rand() / (RAND_MAX / 50u)) : 100u;
+		newState->m_event1_counter = (m_randomta) ? (75u + (rand() / (RAND_MAX / 50u))) : 100u;
 	}
+	LOG_DEBUG("confluent event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
 }
 
@@ -103,7 +109,7 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	LOG_DEBUG("event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed);
 	//We can only have 1 message
 	if (newState->m_queue.empty()) {
-		newState->m_event1_counter = size_t(-1u);
+		newState->m_event1_counter = inf;
 		newState->m_event1 = Event(0u);
 	} else {
 		newState->m_event1 = newState->m_queue.back();
