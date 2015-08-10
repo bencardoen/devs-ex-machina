@@ -8,8 +8,39 @@
 #include "tools/coutredirect.h"
 #include "performance/devstone/devstone.h"
 #include "tools/stringtools.h"
+#include "control/allocator.h"
 
 LOG_INIT("devstone.log")
+
+class DevstoneAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+	std::size_t m_coren;
+public:
+	DevstoneAlloc(std::size_t elemNum, std::size_t corenum): m_maxn(elemNum), m_coren(corenum){
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
+		if(p == nullptr) return 0;
+		std::size_t res = 0;
+		std::size_t curn = p->m_num;
+//		if(curn > (m_maxn/m_coren)*m_coren){
+//			res = m_coren-1u;
+//		} else {
+			res = curn*m_coren/m_maxn;
+//		}
+		if(res >= m_coren) res = m_coren-1;
+		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
+		return res;
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber(allocate(ptr));
+	}
+};
 
 /**
  * The executable takes up to 4 arguments (in this order):
@@ -51,22 +82,23 @@ int main(int argc, char** args)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.name = "DEVStone";
-	conf.simType = simType;
+	conf.m_name = "DEVStone";
+	conf.m_simType = simType;
 	if (type == "cpdevs")
-		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
-	conf.coreAmount = coreAmt;
-	conf.saveInterval = 5;
-	conf.zombieIdleThreshold = 10;
+		conf.m_pdevsType = n_control::ControllerConfig::CONSERVATIVE;
+	conf.m_coreAmount = coreAmt;
+	conf.m_saveInterval = 5;
+	conf.m_zombieIdleThreshold = 10;
+	conf.m_allocator = n_tools::createObject<DevstoneAlloc>(width*depth + 1u, coreAmt);
 
 	std::ofstream filestream("./devstone.txt");
 	{
-		CoutRedirect myRedirect(filestream);
+		n_tools::CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
-		t_timestamp endTime(1000, 0);
+		t_timestamp endTime(100000, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false, coreAmt);
+		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
