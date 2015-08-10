@@ -51,8 +51,8 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
-	this->m_network->acceptMessage(amsg);
 	this->countMessage(amsg);					// Make sure Mattern is notified
+	this->m_network->acceptMessage(amsg);
 }
 
 void Multicore::paintMessage(const t_msgptr& msg)
@@ -128,9 +128,8 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	// Locking could be done inside the for loop, but would make disecting logs much more difficult.
 	this->lockMessages();
-	// Reversing the processing order drastically reduces revert.
-	// Consider time = 5, messages ={4,3,2,1} = 4x revert, but only once (to 1) needed.
-	for( auto i = messages.rbegin(); i != messages.rend(); i++) {
+	// messages are in order. First message is the earliest and will possibly trigger the largest revert.
+	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
 		if(this->containsModel(message->getDestinationModel())){
 			this->receiveMessage(message);
