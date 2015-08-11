@@ -12,9 +12,9 @@
 #include "tools/objectfactory.h"
 #include "control/controller.h"
 #include "control/simpleallocator.h"
+#include "control/controller.h"
 #include "tracers/tracers.h"
 #include "model/multicore.h"
-#include "control/controller.h"
 #include "model/dynamiccore.h"
 #include "model/conservativecore.h"
 #include <unordered_set>
@@ -42,33 +42,24 @@ struct ControllerConfig
 	std::string m_name;
 
 	/**
-	 * The type of simulation
-	 * See Controller::SimType
+	 * @brief The type of simulation.
+	 * @See Controller::SimType
 	 * By default: @c CLASSIC
 	 */
-	Controller::SimType m_simType;
+	SimType m_simType;
 
 	/**
 	 * The amount of cores the simulation will run on
 	 * By default: @c 1
-	 * @attention : This parameter is specific only to PDEVS, in other cases it will be disregarded
+	 * @attention: This parameter is only used for a parallel simulation.
+	 * @note: If only one core is available, the simulation will default to classic non-parallel mode.
 	 */
 	std::size_t m_coreAmount;
 
 	/**
-	 * Behavior of the PDEVS simulation
-	 * By default: @c OPTIMISTIC
-	 * @attention : This parameter is specific only to PDEVS, in other cases it will be disregarded
-	 */
-	enum PDEVSBehavior {
-		OPTIMISTIC,
-		CONSERVATIVE
-	} m_pdevsType;
-
-	/**
 	 * How many times the simulation will go over the list of cores before tracing and saving everything
 	 * By default: @c 5
-	 * @attention : This parameter is specific only to Classic DEVS, in other cases it will be disregarded
+	 * @attention : This parameter is only used for non-parallel simulations.
 	 */
 	std::size_t m_saveInterval;
 

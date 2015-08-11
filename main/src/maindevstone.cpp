@@ -16,27 +16,24 @@ class DevstoneAlloc: public n_control::Allocator
 {
 private:
 	std::size_t m_maxn;
-	std::size_t m_coren;
 public:
-	DevstoneAlloc(std::size_t elemNum, std::size_t corenum): m_maxn(elemNum), m_coren(corenum){
+	DevstoneAlloc(): m_maxn(0){
 
 	}
 	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
 		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
-		if(p == nullptr) return 0;
-		std::size_t res = 0;
-		std::size_t curn = p->m_num;
-//		if(curn > (m_maxn/m_coren)*m_coren){
-//			res = m_coren-1u;
-//		} else {
-			res = curn*m_coren/m_maxn;
-//		}
-		if(res >= m_coren) res = m_coren-1;
+		if(p == nullptr)
+			return 0;
+		std::size_t res = p->m_num*coreAmount()/m_maxn;
+		if(res >= coreAmount())
+			res = coreAmount()-1;
 		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
 		return res;
 	}
 
 	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
 		for(const n_model::t_atomicmodelptr& ptr: models)
 			ptr->setCorenumber(allocate(ptr));
 	}
@@ -57,7 +54,7 @@ int main(int argc, char** args)
 {
 	// default values:
 	std::string type;
-	n_control::Controller::SimType simType = n_control::Controller::CLASSIC;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
 	int widthpos = 2;
 	int depthpos = 3;
 	int coreAmt = 1;
@@ -67,7 +64,7 @@ int main(int argc, char** args)
 	if(argc >= 2) {
 		type = args[1];
 		if(type == "pdevs" || type == "opdevs" || type == "cpdevs") {
-			simType = n_control::Controller::PDEVS;
+			simType = (type == "cpdevs")? n_control::SimType::CONSERVATIVE : n_control::SimType::OPTIMISTIC;
 			if(argc >= 3)
 				coreAmt = n_tools::toInt(args[2]);
 				++depthpos;
@@ -84,12 +81,10 @@ int main(int argc, char** args)
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = simType;
-	if (type == "cpdevs")
-		conf.m_pdevsType = n_control::ControllerConfig::CONSERVATIVE;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>(width*depth + 1u, coreAmt);
+	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
 
 	std::ofstream filestream("./devstone.txt");
 	{
