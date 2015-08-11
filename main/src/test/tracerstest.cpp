@@ -655,7 +655,7 @@ TEST(tracing, messageManagement){
 			else if(!((i+2)%3))
 				tracer.tracesExternal(model, i%4);
 			if(!(i%11) && i){
-				n_tracers::revertTo(t_timestamp(i-11u), (i%5u)? ((i%5)-1u) : std::numeric_limits<std::size_t>::max());
+				n_tracers::revertTo(t_timestamp(i-11u), (i%5u)? ((i%5)-1u) : t_timestamp::MAXCAUSAL);
 				LOG_DEBUG("TracerTest: revertTo trie ", i);
 			}
 		}

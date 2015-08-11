@@ -7,6 +7,7 @@
 #ifndef STRINGTOOLS_H_
 #define STRINGTOOLS_H_
 #include <string>
+#include <sstream>
 
 namespace n_tools {
 
@@ -80,7 +81,13 @@ inline std::string toString(int i)
 	return number;
 #endif
 }
-//@}
+
+inline std::string toString(double d){
+        std::stringstream ss;
+        ss << d;
+        return ss.str();
+}
+
 
 /**
  * @brief Convert string to integer (Windows friendly)

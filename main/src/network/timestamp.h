@@ -20,15 +20,9 @@
 
 namespace n_network {
 
-// Declare Comparison for integral, floating point types using SFINAE && enable_if
-
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-bool nearly_equal(const T& left, const T& right)
-{
-	// Use an epsilon value of approx 2e-12 (not perfect).
-	static constexpr T eps = std::numeric_limits<T>::epsilon() * 1000;
-	return (std::fabs(left - right) < eps);
-}
+bool nearly_equal(const T& left, const T& right);
+// Definition requires Epsilon, which is defined in fwddeclare, see below.
 
 template<class T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
 bool nearly_equal(const T& left, const T& right)
@@ -190,6 +184,14 @@ public:
 	{
 		archive(m_timestamp, m_causal);
 	}
+        
+        /**
+         * Return true if the time part of the timestamp is infinite.
+        * @attention not the same as ==infinity(), since that also checks causality.
+        */
+        friend bool isInfinity(const Time& arg){
+                return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
+        }
 
 	/**
 	 * Unserialize this object to the given archive
@@ -200,6 +202,9 @@ public:
 	{
 		archive(m_timestamp, m_causal);
 	}
+        
+        static constexpr t_time MAXTIME = std::numeric_limits<Time::t_time>::max();
+        static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
 };
 
 } /* namespace n_network */
@@ -207,6 +212,15 @@ public:
 #include "forwarddeclare/timestamp.h"
 
 namespace n_network {
+
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+bool nearly_equal(const T& left, const T& right)
+{
+	//static constexpr T eps = std::numeric_limits<T>::epsilon() * 1000;
+        /* Epsilon double is 2.e-16, but only useful near [0,1]*/
+        //static constexpr T EPS = 2e-12;
+	return (std::fabs(left - right) < EPSILON_FPTIME);
+}
 
 /**
  * Convenience function : make a TimeStamp object reflecting the current time.
@@ -232,14 +246,6 @@ inline t_timestamp makeCausalTimeStamp(const t_timestamp& before)
 inline t_timestamp makeLatest(const t_timestamp& now)
 {
 	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
-}
-
-/**
- * Return true if the time part of the timestamp is infinite.
- * @attention not the same as ==infinity(), since that also checks causality.
- */
-inline bool isInfinity(const t_timestamp& arg){
-	return(arg.getTime() == std::numeric_limits<t_timestamp::t_time>::max());
 }
 
 } /* namespace n_network */

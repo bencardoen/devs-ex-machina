@@ -12,6 +12,8 @@
 #include <unordered_set>
 #include <thread>
 #include <vector>
+#include <algorithm>
+#include <unordered_set>
 #include <chrono>
 
 using namespace n_network;
@@ -73,8 +75,8 @@ TEST(Time, HashingOperators)
 	bool x = nearly_equal<double>(a, b);
 	EXPECT_TRUE(x);
 
-	t_timestamp lesstime = Time<size_t, size_t>(2, 0);
-	t_timestamp moretime = Time<size_t, size_t>(3, 0);
+	t_timestamp lesstime = t_timestamp(2, 0);
+	t_timestamp moretime = t_timestamp(3, 0);
 	EXPECT_TRUE(lesstime < moretime);
 	EXPECT_TRUE(lesstime <= moretime);
 	EXPECT_TRUE(moretime > lesstime);
@@ -136,7 +138,7 @@ void benchNetworkSpeed()
 		LOG_WARNING("No threads available for threaded test.");
 		return;
 	}
-	constexpr size_t msgcount = 200;
+	constexpr size_t msgcount = 20000;
 	n_network::Network n(cores);
 	std::vector<std::thread> workers;
 	std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -165,3 +167,56 @@ TEST(Network, speed)
 	//benchNetworkSpeed();
 }
 
+TEST(Time, FloatingPoint){
+        constexpr size_t testsizefp=1000;
+        constexpr size_t testsizecs=100;
+        constexpr double stepsize = 1e-9;       // MASSIVE collissions.
+        typedef Time<double, size_t> fptime;
+        std::unordered_set<fptime> times;
+        std::vector<fptime> times_backup;
+        // Test hashing operator
+        double fpvalue = 0;
+        for(size_t i = 0; i<testsizefp;++i){
+                size_t causal = 0;
+                for(size_t j = 0; j< testsizecs; ++j){
+                        const fptime testvalue(fpvalue, causal);
+                        bool insert = times.insert(testvalue).second;
+                        times_backup.push_back(testvalue);
+                        EXPECT_TRUE(insert);
+                        fpvalue += stepsize;
+                        ++causal;
+                }
+        }
+        EXPECT_EQ(times.size(), testsizefp*testsizecs);
+        for(const auto& timeval : times_backup){
+                EXPECT_TRUE(times.find(timeval)!=times.end());
+        }
+        // Test equality.
+        auto newend = std::unique(times_backup.begin(), times_backup.end());
+        // If any duplicates are found, newend is no longer equal to end.
+        EXPECT_EQ(newend, times_backup.end());
+        fptime left(1.0, 0);
+        // Difference is less than defined epsilon.
+        double tval = 1.0+2e-13;
+        fptime right (tval, 0);
+        EXPECT_TRUE(left == right);
+        EXPECT_TRUE(left <= right);
+        EXPECT_FALSE(left > right);
+        EXPECT_FALSE(left < right);
+        EXPECT_FALSE(left != right);
+        EXPECT_TRUE(left >= right);
+        // Try cancellation effects.
+        EXPECT_TRUE(fptime(0,0) == left-right);
+        EXPECT_FALSE(left == (left-right));
+        
+        right = fptime(1.0+2.1e-12, 0); // Larger than epsilon
+        EXPECT_FALSE(left == right);
+        EXPECT_TRUE(left <= right);
+        EXPECT_FALSE(left > right);
+        EXPECT_TRUE(left < right);
+        EXPECT_TRUE(left != right);
+        EXPECT_FALSE(left >= right);
+        // Try cancellation effects.
+        EXPECT_FALSE(fptime(0,0) == left-right);
+        EXPECT_FALSE(left == (left-right));
+}
