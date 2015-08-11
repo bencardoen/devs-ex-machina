@@ -32,7 +32,7 @@ int main(int argc, char** args)
 {
 	// default values:
 	std::string type;
-	n_control::Controller::SimType simType = n_control::Controller::CLASSIC;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
 	int offset = 0;
 	int coreAmt = 1;
 	std::size_t poolsize = 34;
@@ -41,7 +41,7 @@ int main(int argc, char** args)
 	if(argc >= 2) {
 		type = args[1];
 		if(type == "pdevs" || type == "opdevs" || type == "cpdevs") {
-			simType = n_control::Controller::PDEVS;
+			simType = (type == "cpdevs")? n_control::SimType::CONSERVATIVE : n_control::SimType::OPTIMISTIC;
 			if(argc >= 3)
 				coreAmt = n_tools::toInt(args[2]);
 				++offset;
@@ -55,15 +55,13 @@ int main(int argc, char** args)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.name = "Virus";
-	conf.simType = simType;
-	if (type == "cpdevs")
-		conf.pdevsType = n_control::ControllerConfig::CONSERVATIVE;
-	conf.coreAmount = coreAmt;
-	conf.saveInterval = 5;
-	conf.tracerset = createObject<n_tracers::t_tracerset>();
-	conf.tracerset->getByID<0>().initialize("./virus.txt");
-	conf.tracerset->getByID<1>().initialize("./virus", ".dot");
+	conf.m_name = "Virus";
+	conf.m_simType = simType;
+	conf.m_coreAmount = coreAmt;
+	conf.m_saveInterval = 5;
+	conf.m_tracerset = createObject<n_tracers::t_tracerset>();
+	conf.m_tracerset->getByID<0>().initialize("./virus.txt");
+	conf.m_tracerset->getByID<1>().initialize("./virus", ".dot");
 //	conf.tracerset->getByID<1>().initialize();
 	//create the controller
 	auto ctrl = conf.createController();
