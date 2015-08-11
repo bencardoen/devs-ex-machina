@@ -63,6 +63,24 @@ public:
 	 */
 	void setSimType(SimType type);
 
+	/**
+	 * @return the configured amount of simulation cores.
+	 * @see setCoreAmount
+	 */
+	inline std::size_t coreAmount() const
+	{
+		return m_numcores;
+	}
+
+	/**
+	 * @return the configured simulation type
+	 * @see setSimType
+	 */
+	inline SimType simType() const
+	{
+		return m_simtype;
+	}
+
 	virtual ~Allocator();
 };
 
