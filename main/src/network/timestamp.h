@@ -21,8 +21,13 @@
 namespace n_network {
 
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-bool nearly_equal(const T& left, const T& right);
-// Definition requires Epsilon, which is defined in fwddeclare, see below.
+bool nearly_equal(const T& left, const T& right)
+{
+	//static constexpr T eps = std::numeric_limits<T>::epsilon() * 1000;
+        /* Epsilon double is 2.e-16, but only useful near [0,1]*/
+        static constexpr T EPS = 2e-12;
+	return (std::fabs(left - right) < EPS);
+}
 
 template<class T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
 bool nearly_equal(const T& left, const T& right)
@@ -212,15 +217,6 @@ public:
 #include "forwarddeclare/timestamp.h"
 
 namespace n_network {
-
-template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
-bool nearly_equal(const T& left, const T& right)
-{
-	//static constexpr T eps = std::numeric_limits<T>::epsilon() * 1000;
-        /* Epsilon double is 2.e-16, but only useful near [0,1]*/
-        //static constexpr T EPS = 2e-12;
-	return (std::fabs(left - right) < EPSILON_FPTIME);
-}
 
 /**
  * Convenience function : make a TimeStamp object reflecting the current time.
