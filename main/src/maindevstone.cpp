@@ -57,7 +57,7 @@ int main(int argc, char** args)
 {
 	// default values:
 	std::string type;
-	n_control::Controller::SimType simType = n_control::Controller::CLASSIC;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
 	int widthpos = 2;
 	int depthpos = 3;
 	int coreAmt = 1;
@@ -67,7 +67,7 @@ int main(int argc, char** args)
 	if(argc >= 2) {
 		type = args[1];
 		if(type == "pdevs" || type == "opdevs" || type == "cpdevs") {
-			simType = n_control::Controller::PDEVS;
+			simType = (type == "cpdevs")? n_control::SimType::CONSERVATIVE : n_control::SimType::OPTIMISTIC;
 			if(argc >= 3)
 				coreAmt = n_tools::toInt(args[2]);
 				++depthpos;
@@ -84,8 +84,6 @@ int main(int argc, char** args)
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = simType;
-	if (type == "cpdevs")
-		conf.m_pdevsType = n_control::ControllerConfig::CONSERVATIVE;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;
 	conf.m_zombieIdleThreshold = 10;

@@ -168,7 +168,7 @@ TEST(Controller, DSDevs_full)
 
 	ControllerConfig conf;
 	conf.m_name = "DSDevsSim";
-	conf.m_simType = Controller::DSDEVS;
+	conf.m_simType = SimType::DYNAMIC;
 	conf.m_saveInterval = 30;
 
 	std::ofstream filestream(TESTFOLDER "controller/dstest.txt");
@@ -294,7 +294,7 @@ TEST(Pause, Pause)
 	ControllerConfig conf;
 	conf.m_name = "SimpleSim";
 	conf.m_saveInterval = 30;
-	conf.m_simType = Controller::PDEVS;
+	conf.m_simType = SimType::OPTIMISTIC;
 	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/pausetest.txt");
@@ -319,7 +319,7 @@ TEST(Pause, RepeatPause)
 	ControllerConfig conf;
 	conf.m_name = "SimpleSim";
 	conf.m_saveInterval = 30;
-	conf.m_simType = Controller::PDEVS;
+	conf.m_simType = SimType::OPTIMISTIC;
 	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/pausetest2.txt");
@@ -386,7 +386,7 @@ TEST(Save, ParallelSave)
 	ControllerConfig conf;
 	conf.m_name = "SimpleSim";
 	conf.m_saveInterval = 1;
-	conf.m_simType = Controller::PDEVS;
+	conf.m_simType = SimType::OPTIMISTIC;
 	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/savetestp.txt");
@@ -411,7 +411,7 @@ TEST(Save, ParallelLoad)
 	ControllerConfig conf;
 	conf.m_name = "LoadedSim";
 	conf.m_saveInterval = 30;
-	conf.m_simType = Controller::PDEVS;
+	conf.m_simType = SimType::OPTIMISTIC;
 	conf.m_coreAmount = 2;
 
 	std::ofstream filestream(TESTFOLDER "controller/loadtestp.txt");

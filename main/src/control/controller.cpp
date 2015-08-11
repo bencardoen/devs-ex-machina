@@ -21,7 +21,7 @@ namespace n_control {
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
         std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab, n_tracers::t_tracersetptr& tracers,
         size_t saveInterval)
-	: m_simType(CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
+	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
 {
@@ -89,13 +89,10 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 			int coreid = model->getCorenumber();
 			assert(coreid >= 0 && ( (std::size_t) coreid < m_cores.size()));
 			addModel(model, coreid);
-			if (m_simType != SimType::PDEVS)
-				model->setKeepOldStates(false);
-			else
-				model->setKeepOldStates(true);
+			model->setKeepOldStates(isParallel(m_simType));
 			LOG_DEBUG("Controller::addModel added model with name ", model->getName());
 		}
-		if (m_simType == SimType::DSDEVS)
+		if (m_simType == SimType::DYNAMIC)
 			m_coupledOrigin->setController(this);
 		m_hasMainModel = true;
 	}
@@ -116,7 +113,7 @@ void Controller::addModel(const t_atomicmodelptr& atomic)
 	m_allocator->allocateAll(models);
 	addModel(atomic, atomic->getCorenumber());
 
-	if (m_simType == SimType::DSDEVS)
+	if (m_simType == SimType::DYNAMIC)
 		atomic->setController(this);
 	if(!m_hasMainModel) {
 		m_atomicOrigin = atomic;
@@ -148,13 +145,10 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 	for (const t_atomicmodelptr& atomic : atomics) {
 		//size_t coreID = m_allocator->allocate(model);
 		addModel(atomic, atomic->getCorenumber());
-		if (m_simType != SimType::PDEVS)
-			atomic->setKeepOldStates(false);
-		else
-			atomic->setKeepOldStates(true);
+		atomic->setKeepOldStates(isParallel(m_simType));
 		LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
 	}
-	if (m_simType == SimType::DSDEVS)
+	if (m_simType == SimType::DYNAMIC)
 		coupled->setController(this);
 	m_hasMainModel = true;
 }
@@ -176,19 +170,19 @@ void Controller::setSimType(SimType type)
 void Controller::setClassicDEVS()
 {
 	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = CLASSIC;
+	m_simType = SimType::CLASSIC;
 }
 
 void Controller::setPDEVS()
 {
 	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = PDEVS;
+	m_simType = SimType::OPTIMISTIC;	//TODO fix setPDEVS
 }
 
 void Controller::setDSDEVS()
 {
 	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = DSDEVS;
+	m_simType = SimType::DYNAMIC;
 }
 
 void Controller::setTerminationTime(t_timestamp time)
@@ -256,13 +250,14 @@ void Controller::simulate()
 
 	// run simulation
 	switch (m_simType) {
-	case CLASSIC:
+	case SimType::CLASSIC:
 		simDEVS();
 		break;
-	case PDEVS:
+	case SimType::OPTIMISTIC:
+	case SimType::CONSERVATIVE:
 		simPDEVS();
 		break;
-	case DSDEVS:
+	case SimType::DYNAMIC:
 		simDSDEVS();
 		break;
 	}

@@ -26,6 +26,7 @@
 #include "tools/globallog.h"
 #include "model/dssharedstate.h"
 #include "control/timeevent.h"
+#include "control/simtype.h"
 
 namespace n_control {
 
@@ -39,15 +40,6 @@ using n_model::t_coupledmodelptr;
  */
 class Controller
 {
-public:
-	/// @brief The type of simulation
-	enum SimType
-	{
-		CLASSIC, 	///< Classic DEVS
-		PDEVS, 		///< Parallel DEVS
-		DSDEVS 		///< Dynamic Structure DEVS
-	};
-
 private:
 	SimType m_simType;
 	bool m_hasMainModel;
