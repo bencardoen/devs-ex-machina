@@ -12,6 +12,12 @@
 
 LOG_INIT("devstone.log")
 
+#ifdef FPTIME
+#define ENDTIME 1000.0
+#else
+#define ENDTIME 100000
+#endif
+
 class DevstoneAlloc: public n_control::Allocator
 {
 private:
@@ -90,7 +96,7 @@ int main(int argc, char** args)
 	{
 		n_tools::CoutRedirect myRedirect(filestream);
 		auto ctrl = conf.createController();
-		t_timestamp endTime(100000, 0);
+		t_timestamp endTime(ENDTIME, 0);
 		ctrl->setTerminationTime(endTime);
 
 		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);

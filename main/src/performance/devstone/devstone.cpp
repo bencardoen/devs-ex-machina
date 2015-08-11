@@ -9,9 +9,22 @@
 #include "tools/stringtools.h"
 #include <limits>
 
-const std::size_t inf = std::numeric_limits<std::size_t>::max();
+#ifdef FPTIME
+#define T_0 0.0
+#define T_50 0.5
+#define T_75 0.75
+#define T_100 1.0
+#else
+#define T_0 0u
+#define T_50 50u
+#define T_75 75u
+#define T_100 100u
+#endif
+
+
 
 namespace n_devstone {
+const t_counter inf = std::numeric_limits<t_counter>::max();
 
 /*
  * ProcessorState
@@ -73,14 +86,14 @@ n_model::t_timestamp Processor::timeAdvance() const
 void Processor::intTransition()
 {
 	const auto newState = procstate().copy();
-	newState->m_event1_counter = 0u;
+	newState->m_event1_counter = T_0;
 	if (newState->m_queue.empty()) {
 		newState->m_event1_counter = inf;
 		newState->m_event1 = Event(0u);
 	} else {
 		newState->m_event1 = newState->m_queue.back();
 		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? (75u + (rand() / (RAND_MAX / 50u))) : 100u;
+		newState->m_event1_counter = (m_randomta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
 	}
 	LOG_DEBUG("internal event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
@@ -99,7 +112,7 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 	} else {
 		newState->m_event1 = ev1;
 		//TODO devstone randomized counter float
-		newState->m_event1_counter = (m_randomta) ? (75u + (rand() / (RAND_MAX / 50u))) : 100u;
+		newState->m_event1_counter = (m_randomta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
 	}
 	LOG_DEBUG("confluent event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
@@ -108,7 +121,7 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	const auto newState = procstate().copy();
-	newState->m_event1_counter = 0u;
+	newState->m_event1_counter = T_0;
 	LOG_DEBUG("event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed);
 	//We can only have 1 message
 	if (newState->m_queue.empty()) {
@@ -117,7 +130,7 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	} else {
 		newState->m_event1 = newState->m_queue.back();
 		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? 75u + (rand() / (RAND_MAX / 50u)) : 100u;
+		newState->m_event1_counter = (m_randomta) ? T_75 + (rand() / (RAND_MAX / T_50)) : T_100;
 	}
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
 	if (newState->m_event1 != Event(0)) {
@@ -125,7 +138,7 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	} else {
 		newState->m_event1 = ev1;
 		//TODO devstone randomized counter float
-		newState->m_event1_counter = (m_randomta) ? 75u + (rand() / (RAND_MAX / 50u)) : 100u;
+		newState->m_event1_counter = (m_randomta) ? T_75 + (rand() / (RAND_MAX / T_50)) : T_100;
 	}
 	setState(newState);
 }
@@ -163,7 +176,7 @@ Generator::~Generator()
 
 n_model::t_timestamp Generator::timeAdvance() const
 {
-	return n_network::t_timestamp(100u);
+	return n_network::t_timestamp(T_100);
 }
 
 void Generator::intTransition()

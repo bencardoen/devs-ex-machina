@@ -24,11 +24,16 @@ namespace n_devstone {
 // devstone uses event counters.
 // The messages are "Events", which are just numbers.
 typedef std::size_t Event;
+#ifdef FPTIME
+typedef double t_counter;
+#else
+typedef std::size_t t_counter;
+#endif
 
 class ProcessorState : public n_model::State
 {
 public:
-	size_t m_event1_counter;
+	t_counter m_event1_counter;
 	Event m_event1;
 	std::vector<Event> m_queue;
 public:
@@ -99,8 +104,6 @@ public:
 	DEVStone(std::size_t width, std::size_t depth, bool randomta);
 	virtual ~DEVStone();
 };
-
-//TODO write an allocator for devstone
 
 } /* namespace n_performance */
 
