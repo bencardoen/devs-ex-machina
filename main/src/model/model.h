@@ -236,7 +236,7 @@ public:
 	 */
 	bool getKeepOldStates() const;
 
-
+//-------------serialization---------------------
 	/**
 	 * Serialize this object to the given archive
 	 *
@@ -258,6 +258,21 @@ public:
 	 * @param construct A helper struct for constructing the original object
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Model>& construct);
+
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+public:
+	/**
+	 * @brief Prints some basic stats.
+	 * @param out The output will be printed to this stream.
+	 */
+	virtual void printStats(std::ostream& out = std::cout) const
+	{
+		for(const auto& i: m_oPorts)
+			i.second->printStats(out);
+	}
+//#endif
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

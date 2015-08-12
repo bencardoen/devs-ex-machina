@@ -111,6 +111,7 @@ public:
 
 	void setController(n_control::Controller* newControl) override;
 
+//-------------serialization---------------------
 	/**
 	 * Serialize this object to the given archive
 	 *
@@ -132,6 +133,21 @@ public:
 	 * @param construct A helper struct for constructing the original object
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct);
+
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+public:
+	/**
+	 * @brief Prints some basic stats.
+	 * @param out The output will be printed to this stream.
+	 */
+	virtual void printStats(std::ostream& out = std::cout) const
+	{
+		for(const auto& i: m_components)
+			i->printStats(out);
+	}
+//#endif
 };
 
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;

@@ -64,17 +64,20 @@ int main(int argc, char** args)
 	conf.m_saveInterval = 5;
 	conf.m_zombieIdleThreshold = 10;
 
-	std::ofstream filestream("./phold.txt");
-	{
-		n_tools::CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(1000, 0);
-		ctrl->setTerminationTime(endTime);
+	auto ctrl = conf.createController();
+	t_timestamp endTime(1000, 0);
+	ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-		        percentageRemotes);
-		ctrl->addModel(d);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
+	        percentageRemotes);
+	ctrl->addModel(d);
+	{
+		std::ofstream filestream("./phold.txt");
+		n_tools::CoutRedirect myRedirect(filestream);
 
 		ctrl->simulate();
 	}
+//#ifdef USESTAT
+	d->printStats(std::cout);
+//#endif
 }
