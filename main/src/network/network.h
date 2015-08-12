@@ -69,6 +69,15 @@ public:
 	 * @return true if there are transient message from time of call to time of return.
 	 */
 	bool networkHasMessages();
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+	void printStats(std::ostream& out = std::cout) const
+	{
+		for(const auto& i:m_queues)
+			i.printStats(out);
+	}
+//#endif
 };
 
 

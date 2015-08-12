@@ -11,6 +11,7 @@
 #include <deque>
 #include <memory>
 #include <vector>
+#include "tools/statistic.h"
 
 namespace n_network {
 
@@ -41,6 +42,9 @@ public:
 	std::vector<Q>
 	purge(){
 		std::lock_guard<std::mutex> lock(m_lock);
+//#ifdef USESTAT
+		m_msgcountstat += m_queue.size();
+//#endif
 		auto contents(std::move(m_queue));
 		m_queue.clear();
 		return contents;
@@ -54,7 +58,32 @@ public:
 		std::lock_guard<std::mutex> lock(m_lock);	// lock because size could change
 		return m_queue.size();
 	}
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+private:
+	n_tools::t_intstat m_msgcountstat;
+	static std::size_t m_counter;
+public:
+	Msgqueue(): m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(++m_counter), "messages")
+{
+}
+	/**
+	 * @brief Prints some basic stats.
+	 * @param out The output will be printed to this stream.
+	 */
+	void printStats(std::ostream& out = std::cout) const
+	{
+		out << m_msgcountstat << '\n';
+	}
+//#endif
 };
+
+//#ifdef USESTAT
+template<typename Q>
+std::size_t Msgqueue<Q>::m_counter = 0;
+//#endif
+
 
 } /* namespace n_network */
 

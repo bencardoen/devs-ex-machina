@@ -634,6 +634,19 @@ public:
 	 * @param construct A helper struct for constructing the original object
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
+
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+	std::size_t coreid() const
+	{
+		return m_coreid;
+	}
+	virtual void printStats(std::ostream& = std::cout) const
+	{
+		//noop
+	}
+//#endif
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

@@ -285,6 +285,16 @@ public:
 
 	t_timestamp
 	getTerminationTime()override;
+
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+	virtual void printStats(std::ostream& out = std::cout) const
+	{
+		if(coreid() == 0)
+			m_network->printStats(out);
+	}
+//#endif
 };
 
 } /* namespace n_model */

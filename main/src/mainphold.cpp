@@ -78,6 +78,7 @@ int main(int argc, char** args)
 		ctrl->simulate();
 	}
 //#ifdef USESTAT
+	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
 //#endif
 }

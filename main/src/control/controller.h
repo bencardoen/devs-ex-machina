@@ -284,6 +284,17 @@ private:
 	void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 	        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
 	        Controller&);
+
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+public:
+	void printStats(std::ostream& out = std::cout) const
+	{
+		for(const auto& i:m_cores)
+			i.second->printStats(out);
+	}
+//#endif
 };
 
 /**
