@@ -44,6 +44,7 @@ void Multicore::sendMessage(const t_msgptr& msg)
 void Multicore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
+        this->m_stats->m_amsg_sent+=1;
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
 	        msg->getDestinationPort(), msg->getSourcePort(), "");// Use explicit copy accessors to void any chance for races.
 	this->paintMessage(amsg);		// Antimessage should have same color as core!!
@@ -103,6 +104,8 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	if (msg->getColor() == MessageColor::WHITE) {
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
+                        int oldval = this->m_mcount_vector.getVector()[this->getCoreID()];
+                        LOG_ERROR("\tMCORE :: ", this->getCoreID(), " decrementing count vector from : ", oldval);
 			this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
 		}
 		this->m_wake_on_msg.notify_all();
@@ -160,7 +163,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
 		}
 		if (v_value + msgcount <= 0){
-			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0 ");
+			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
 		}
 		// Sleep in cvar, else we starve the sim thread.
@@ -249,9 +252,8 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 			this->setColor(MessageColor::RED);
 		}
 		// We wait until we have received all messages
+                LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
 		waitUntilOK(msg, rungvt);
-
-		LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
 
 		// Equivalent to sending message, controlmessage is passed to next core.
 		t_timestamp msg_tmin = msg->getTmin();
