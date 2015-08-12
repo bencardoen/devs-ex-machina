@@ -3,9 +3,10 @@
  *
  *      Author: Ben Cardoen
  */
-#include "model/core.h"
 #include <cassert>
 #include <fstream>
+#include <stdexcept>
+#include "model/core.h"
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
 #include "cereal/archives/binary.hpp"
@@ -23,6 +24,19 @@ n_model::Core::~Core()
 	}
 	m_models.clear();
 	m_received_messages->clear();
+}
+
+void
+n_model::Core::collectStats(){;}
+
+void
+n_model::Core::checkInvariants(){
+        if(this->m_scheduler->size() > this->m_models.size()){
+                const std::string msg = "Scheduler contains more models than present in core !!";
+                LOG_ERROR(msg);
+                LOG_FLUSH;
+                throw std::logic_error(msg);
+        }
 }
 
 n_model::Core::Core()
@@ -128,6 +142,7 @@ bool n_model::Core::containsModel(const std::string& mname) const
 
 void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 {
+        checkInvariants();
 	if (this->m_models.find(name) != this->m_models.end()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
 		if(isInfinity(t)){
@@ -148,6 +163,7 @@ void n_model::Core::scheduleModel(std::string name, t_timestamp t)
 		LOG_ERROR("\tCORE :: ", this->getCoreID(), " !!LOGIC ERROR!! Model with name "
 			, name, " not in core, can't reschedule.");
 	}
+        checkInvariants();
 }
 
 void n_model::Core::init()
@@ -221,13 +237,15 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (const auto& imminent : imminents) {
 		t_atomicmodelptr urgent = this->m_models[imminent];
-		const auto& found = mail.find(imminent);
+		auto found = mail.find(imminent);
 		if (found == mail.end()) {				// Internal
+			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", urgent->getName());
 			urgent->doIntTransition();
 			urgent->setTime(noncausaltime);
 			this->postTransition(urgent);
 			this->traceInt(urgent);
 		} else {
+			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", urgent->getName());
 			urgent->setTimeElapsed(0);
 			urgent->doConfTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
@@ -239,6 +257,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 	}
 
 	for (const auto& remaining : mail) {				// External
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " delivering " , remaining.second.size(), " messages to ", remaining.first);
 		const t_atomicmodelptr& model = this->m_models[remaining.first];
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
@@ -578,8 +597,8 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 	 *  If we're at time [x,z] and we receive a message [x,y], this message need not
 	 *  trigger a revert since we will handle all messages from [x,0] up to [x,oo] in this turn.
 	 */
-	if (msg->getTimeStamp().getTime() < this->getTime().getTime()) {
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time < than now : ", this->getTime(),
+	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {
+		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
 		this->revert(msg->getTimeStamp().getTime());
 	}

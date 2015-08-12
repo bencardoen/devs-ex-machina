@@ -15,7 +15,7 @@ LOG_INIT("devstone.log")
 #ifdef FPTIME
 #define ENDTIME 1000.0
 #else
-#define ENDTIME 100000
+#define ENDTIME 10000
 #endif
 
 class DevstoneAlloc: public n_control::Allocator
