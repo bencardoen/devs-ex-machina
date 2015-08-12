@@ -21,6 +21,7 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
+enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS};
 
 /**
  * Typedefs used by core.
@@ -671,6 +672,38 @@ struct statistics_collector{
                 os << "Core id="<<m_coreid<<","<<m_reverts << ",reverts" << std::endl;
                 }catch(...){
                         LOG_ERROR("Exception caught in collectstats()");
+                }
+        }
+        void logStat(enum STAT_TYPE st){
+                // TODO ifdef here ?
+                switch(st){
+                case MSGRCVD:{
+                        ++m_msgs_rcvd;
+                        break;
+                }
+                case MSGSENT:{
+                        ++m_msgs_sent;
+                        break;
+                }
+                case AMSGRCVD:{
+                        ++m_amsg_rcvd;
+                        break;
+                }
+                case AMSGSENT:{
+                        ++m_amsg_sent;
+                        break;
+                }
+                case TURNS:{
+                        ++m_turns;
+                        break;
+                }
+                case REVERTS:{
+                        ++m_reverts;
+                        break;
+                }
+                default:
+                        LOG_ERROR("No such logstat type");
+                        break;
                 }
         }
 };
