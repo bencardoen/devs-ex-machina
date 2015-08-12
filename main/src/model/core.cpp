@@ -291,7 +291,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 	for (const auto & message : messages) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
-                        this->m_stats->m_msgs_sent += 1;
+                        this->m_stats->logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
 			this->queuePendingMessage(message);
@@ -418,7 +418,7 @@ void n_model::Core::runSmallStep()
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
         
-        this->m_stats->m_turns+=1;
+        this->m_stats->logStat(TURNS);
 
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
@@ -597,10 +597,10 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 
 void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
-        this->m_stats->m_msgs_rcvd+=1;
+        this->m_stats->logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
 	if (msg->isAntiMessage()) {
-                this->m_stats->m_amsg_rcvd+=1;
+                this->m_stats->logStat(AMSGRCVD);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
@@ -610,7 +610,7 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
-                this->m_stats->m_reverts+=1;
+                this->m_stats->logStat(REVERTS);
 		this->revert(msg->getTimeStamp().getTime());
 	}
 }

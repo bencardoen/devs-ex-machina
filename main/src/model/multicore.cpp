@@ -44,7 +44,7 @@ void Multicore::sendMessage(const t_msgptr& msg)
 void Multicore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
-        this->m_stats->m_amsg_sent+=1;
+        this->m_stats->logStat(AMSGSENT);
 	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
 	        msg->getDestinationPort(), msg->getSourcePort(), "");// Use explicit copy accessors to void any chance for races.
 	this->paintMessage(amsg);		// Antimessage should have same color as core!!
