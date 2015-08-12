@@ -78,15 +78,21 @@ void Multicore::markMessageStored(const t_msgptr& msg)
 
 void Multicore::countMessage(const t_msgptr& msg)
 {	// ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
-	std::lock_guard<std::mutex> lock(this->m_vlock);
 	if (this->getColor() == MessageColor::WHITE) { // Or use the color from the message (should be the same!)
 		size_t j = msg->getDestinationCore();
-		this->m_mcount_vector.getVector()[j] += 1;
+                {
+                        std::lock_guard<std::mutex> lock(this->m_vlock);
+                        int oldval = this->m_mcount_vector.getVector()[j];
+                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector from : ", oldval);
+                        this->m_mcount_vector.getVector()[j] += 1;
+                }
 	} else {
 		// Locks this Tred because we might want to use it during the receiving
 		// of a control message
 		std::lock_guard<std::mutex> lock(this->m_tredlock);
+                t_timestamp oldtred = m_tred;
 		m_tred = std::min(m_tred, msg->getTimeStamp());
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after receiving msg.");
 	}
 }
 
@@ -105,7 +111,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
                         int oldval = this->m_mcount_vector.getVector()[this->getCoreID()];
-                        LOG_ERROR("\tMCORE :: ", this->getCoreID(), " decrementing count vector from : ", oldval);
+                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector from : ", oldval);
 			this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
 		}
 		this->m_wake_on_msg.notify_all();
