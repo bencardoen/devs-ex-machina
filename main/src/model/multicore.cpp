@@ -82,9 +82,8 @@ void Multicore::countMessage(const t_msgptr& msg)
 		size_t j = msg->getDestinationCore();
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
-                        int oldval = this->m_mcount_vector.getVector()[j];
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector from : ", oldval);
-                        this->m_mcount_vector.getVector()[j] += 1;
+                        const int val = ++(this->m_mcount_vector.getVector()[j]);
+                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector to : ", val);
                 }
 	} else {
 		// Locks this Tred because we might want to use it during the receiving
@@ -135,9 +134,8 @@ void Multicore::getMessages()
 
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
-	// Locking could be done inside the for loop, but would make disecting logs much more difficult.
+	// Locking could be done inside the for loop, but would make dissecting logs much more difficult.
 	this->lockMessages();
-	// messages are in order. First message is the earliest and will possibly trigger the largest revert.
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
 		if(this->containsModel(message->getDestinationModel())){
@@ -169,7 +167,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
 		}
 		if (v_value + msgcount <= 0){
-			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
+			LOG_DEBUG("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
 		}
 		// Sleep in cvar, else we starve the sim thread.
@@ -197,6 +195,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 
 		msg->setTmin(this->getTime());
 		msg->setTred(t_timestamp::infinity());
+                LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
 
 		t_count& count = msg->getCountVector();
 		// We want to make sure our count vector starts with 0
@@ -219,13 +218,16 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		// approximation is found.
 
 		// Wait until we have received all messages
+                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : process init received control message, waiting for pending messages.");
 		this->waitUntilOK(msg, rungvt);
+                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
 		// If all items in count vectors are zero
 		if (msg->countIsZero()) {
-			LOG_INFO("MCORE :: ", this->getCoreID(), " process init received control message, found GVT!");
+			LOG_INFO("MCORE :: ", this->getCoreID(), " found GVT!");
 
 			// We found GVT!
 			t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
 			// Put this info in the message
 			msg->setGvtFound(true);
 			msg->setGvt(GVT_approx);
@@ -233,12 +235,12 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 			return;
 		} else {
 			// if 3d round? exit?
-			LOG_INFO("MCORE :: ", this->getCoreID(),
-			        " process init received control message, starting 2nd round");
-
+			LOG_DEBUG("MCORE :: ", this->getCoreID(),
+			        " process init received control message, starting 2nd round ");
 			// We start a second round
 			msg->setTmin(this->getTime());
 			msg->setTred(std::min(msg->getTred(), this->getTred()));
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
 			t_count& count = msg->getCountVector();
 			std::lock_guard<std::mutex> lock(this->m_vlock);
 			for (size_t i = 0; i < count.size(); ++i) {
@@ -266,6 +268,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		t_timestamp msg_tred = msg->getTred();
 		msg->setTmin(std::min(msg_tmin, this->getTime()));
 		msg->setTred(std::min(msg_tred, this->getTred()));
+                LOG_DEBUG("MCore:: ", this->getCoreID(), " Updating tmin to ", msg->getTmin(), " tred = ", msg->getTred());
 		t_count& Count = msg->getCountVector();
 		std::lock_guard<std::mutex> lock(this->m_vlock);
 		for (size_t i = 0; i < Count.size(); ++i) {
