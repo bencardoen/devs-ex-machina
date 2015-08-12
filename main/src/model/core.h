@@ -27,6 +27,8 @@ using n_network::t_timestamp;
  */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
+struct statistics_collector;
+typedef std::shared_ptr<statistics_collector> t_stat_ptr;
 
 /**
  * @brief A Core is a node in a Devs simulator. It manages (multiple) atomic models and drives their transitions.
@@ -167,7 +169,8 @@ protected:
 	*/
 	t_scheduler m_scheduler;
 
-
+        t_stat_ptr m_stats;
+        
 	/**
 	 * Model storage.
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
@@ -635,6 +638,30 @@ public:
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
 };
+
+struct statistics_collector{
+        std::size_t     m_amsg_sent;
+        std::size_t     m_amsg_rcvd;
+        std::size_t     m_turns;
+        std::size_t     m_reverts;
+        std::size_t     m_msgs_sent;
+        std::size_t     m_msgs_rcvd;
+        std::size_t     m_coreid;
+        statistics_collector():m_amsg_sent(0),m_amsg_rcvd(0),m_turns(0),m_reverts(0),m_msgs_sent(0),m_msgs_rcvd(0){;}
+        void collectStats(std::ostream& os)noexcept{
+                try{
+                os << "Core id="<<m_coreid<<","<<m_amsg_sent << ",antimessages_sent" << std::endl;
+                os << "Core id="<<m_coreid<<","<<m_amsg_rcvd << ",antimessages_rcvd" << std::endl;
+                os << "Core id="<<m_coreid<<","<<m_turns << ",turns" << std::endl;
+                os << "Core id="<<m_coreid<<","<<m_msgs_sent << ",messages_sent" << std::endl;
+                os << "Core id="<<m_coreid<<","<<m_msgs_rcvd << ",messages_rcvd" << std::endl;
+                os << "Core id="<<m_coreid<<","<<m_reverts << ",reverts" << std::endl;
+                }catch(...){
+                        LOG_ERROR("Exception caught in collectstats()");
+                }
+        }
+};
+typedef std::shared_ptr<statistics_collector> t_stat_ptr;
 
 typedef std::shared_ptr<Core> t_coreptr;
 
