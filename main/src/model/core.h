@@ -9,6 +9,7 @@
 #include "network/messageentry.h"
 #include "network/controlmessage.h"
 #include "tracers/tracers.h"
+#include "tools/statistic.h"
 #include <set>
 #include <condition_variable>
 
@@ -30,6 +31,73 @@ typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 struct statistics_collector;
 typedef std::shared_ptr<statistics_collector> t_stat_ptr;
+
+struct statistics_collector{
+        n_tools::t_intstat     m_amsg_sent;
+        n_tools::t_intstat     m_amsg_rcvd;
+        n_tools::t_intstat     m_turns;
+        n_tools::t_intstat     m_reverts;
+        n_tools::t_intstat     m_msgs_sent;
+        n_tools::t_intstat     m_msgs_rcvd;
+        static std::string getName(std::size_t id, std::string name){
+        	return std::string("_core") + n_tools::toString(id) + "/" + name;
+        }
+        statistics_collector(std::size_t id):
+        	m_amsg_sent(getName(id, "anti send"), "messages"),
+        	m_amsg_rcvd(getName(id, "anti received"), "messages"),
+        	m_turns(getName(id, "turns"), ""),
+        	m_reverts(getName(id, "reverts"), ""),
+        	m_msgs_sent(getName(id, "send"), "messages"),
+        	m_msgs_rcvd(getName(id, "received"), "messages")
+        {;}
+        void printStats(std::ostream& out = std::cout) const noexcept
+        {
+                try{
+			out <<m_amsg_sent << '\n';
+			out <<m_amsg_rcvd << '\n';
+			out <<m_turns << '\n';
+			out <<m_msgs_sent << '\n';
+			out <<m_msgs_rcvd << '\n';
+			out <<m_reverts << '\n';
+                }catch(...){
+                        LOG_ERROR("Exception caught in printStats()");
+                }
+        }
+        void logStat(enum STAT_TYPE st){
+//#ifdef USESTAT
+                // TODO ifdef here ?
+                switch(st){
+                case MSGRCVD:{
+                        ++m_msgs_rcvd;
+                        break;
+                }
+                case MSGSENT:{
+                        ++m_msgs_sent;
+                        break;
+                }
+                case AMSGRCVD:{
+                        ++m_amsg_rcvd;
+                        break;
+                }
+                case AMSGSENT:{
+                        ++m_amsg_sent;
+                        break;
+                }
+                case TURNS:{
+                        ++m_turns;
+                        break;
+                }
+                case REVERTS:{
+                        ++m_reverts;
+                        break;
+                }
+                default:
+                        LOG_ERROR("No such logstat type");
+                        break;
+                }
+//#endif
+        }
+};
 
 /**
  * @brief A Core is a node in a Devs simulator. It manages (multiple) atomic models and drives their transitions.
@@ -155,22 +223,12 @@ private:
         virtual
         void
         checkInvariants();
-        
-        /**
-         * Write statistics about this instance.
-         * @pre call once, at destruction.
-         */
-        virtual
-        void
-        collectStats();
 
 protected:
 	/**
 	* Stores the model(entries) in ascending (urgent first) scheduled time.
 	*/
 	t_scheduler m_scheduler;
-
-        t_stat_ptr m_stats;
         
 	/**
 	 * Model storage.
@@ -642,72 +700,19 @@ public:
 
 //-------------statistics gathering--------------
 //#ifdef USESTAT
+protected:
+	statistics_collector m_stats;
+public:
 	std::size_t coreid() const
 	{
 		return m_coreid;
 	}
-	virtual void printStats(std::ostream& = std::cout) const
+	virtual void printStats(std::ostream& out = std::cout) const
 	{
-		//noop
+		m_stats.printStats(out);
 	}
 //#endif
 };
-
-struct statistics_collector{
-        std::size_t     m_amsg_sent;
-        std::size_t     m_amsg_rcvd;
-        std::size_t     m_turns;
-        std::size_t     m_reverts;
-        std::size_t     m_msgs_sent;
-        std::size_t     m_msgs_rcvd;
-        std::size_t     m_coreid;
-        statistics_collector():m_amsg_sent(0),m_amsg_rcvd(0),m_turns(0),m_reverts(0),m_msgs_sent(0),m_msgs_rcvd(0){;}
-        void collectStats(std::ostream& os)noexcept{
-                try{
-                os << "Core id="<<m_coreid<<","<<m_amsg_sent << ",antimessages_sent" << std::endl;
-                os << "Core id="<<m_coreid<<","<<m_amsg_rcvd << ",antimessages_rcvd" << std::endl;
-                os << "Core id="<<m_coreid<<","<<m_turns << ",turns" << std::endl;
-                os << "Core id="<<m_coreid<<","<<m_msgs_sent << ",messages_sent" << std::endl;
-                os << "Core id="<<m_coreid<<","<<m_msgs_rcvd << ",messages_rcvd" << std::endl;
-                os << "Core id="<<m_coreid<<","<<m_reverts << ",reverts" << std::endl;
-                }catch(...){
-                        LOG_ERROR("Exception caught in collectstats()");
-                }
-        }
-        void logStat(enum STAT_TYPE st){
-                // TODO ifdef here ?
-                switch(st){
-                case MSGRCVD:{
-                        ++m_msgs_rcvd;
-                        break;
-                }
-                case MSGSENT:{
-                        ++m_msgs_sent;
-                        break;
-                }
-                case AMSGRCVD:{
-                        ++m_amsg_rcvd;
-                        break;
-                }
-                case AMSGSENT:{
-                        ++m_amsg_sent;
-                        break;
-                }
-                case TURNS:{
-                        ++m_turns;
-                        break;
-                }
-                case REVERTS:{
-                        ++m_reverts;
-                        break;
-                }
-                default:
-                        LOG_ERROR("No such logstat type");
-                        break;
-                }
-        }
-};
-typedef std::shared_ptr<statistics_collector> t_stat_ptr;
 
 typedef std::shared_ptr<Core> t_coreptr;
 

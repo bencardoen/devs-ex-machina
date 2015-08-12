@@ -24,15 +24,6 @@ n_model::Core::~Core()
 	}
 	m_models.clear();
 	m_received_messages->clear();
-        // Enable to print stats to cout. @see collectStats().
-        //this->collectStats();
-}
-
-void
-n_model::Core::collectStats(){
-        if(this->m_stats)
-                this->m_stats->collectStats(std::cout);
-        // Todo , invoke on composites (models etc)
 }
 
 void
@@ -45,23 +36,21 @@ n_model::Core::checkInvariants(){
         }
 }
 
-n_model::Core::Core()
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(0), m_live(false), m_termtime(t_timestamp::infinity()), m_terminated(
-	        false), m_idle(false), m_zombie_rounds(0), m_terminated_functor(false)
+n_model::Core::Core():
+	Core(0)
 {
-	m_received_messages = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
-	m_scheduler = n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
-	m_termination_function = n_tools::createObject<n_model::TerminationFunctor>();
-        m_stats = n_tools::createObject<statistics_collector>();
 }
 
 n_model::Core::Core(std::size_t id)
-	: Core()
+	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
+	  m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
+		m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
+		m_scheduler(n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false)),
+		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false)),
+		m_stats(m_coreid)
 {
-	m_coreid = id;
 	assert(m_time == t_timestamp(0, 0));
 	assert(m_live == false);
-        m_stats->m_coreid=this->m_coreid;
 }
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
@@ -291,7 +280,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 	for (const auto & message : messages) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
-                        this->m_stats->logStat(MSGSENT);
+                        m_stats.logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
 			this->queuePendingMessage(message);
@@ -418,7 +407,7 @@ void n_model::Core::runSmallStep()
 	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
         
-        this->m_stats->logStat(TURNS);
+        m_stats.logStat(TURNS);
 
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
@@ -597,10 +586,10 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 
 void n_model::Core::receiveMessage(const t_msgptr& msg)
 {
-        this->m_stats->logStat(MSGRCVD);
+        m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
 	if (msg->isAntiMessage()) {
-                this->m_stats->logStat(AMSGRCVD);
+                m_stats.logStat(AMSGRCVD);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
@@ -610,7 +599,7 @@ void n_model::Core::receiveMessage(const t_msgptr& msg)
 	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
-                this->m_stats->logStat(REVERTS);
+                m_stats.logStat(REVERTS);
 		this->revert(msg->getTimeStamp().getTime());
 	}
 }

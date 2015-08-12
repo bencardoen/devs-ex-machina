@@ -293,6 +293,7 @@ public:
 	{
 		if(coreid() == 0)
 			m_network->printStats(out);
+		Core::printStats(out);
 	}
 //#endif
 };
