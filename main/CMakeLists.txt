@@ -230,12 +230,12 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
 
 add_executable(${PROJECT_NAME}_devstone
 	# The following target determines if the Debug/Release package is used
-	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
  	src/performance/devstone/devstone.cpp
  	src/maindevstone.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "-DLOG_LEVEL=0"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=15"
  					)
 
 

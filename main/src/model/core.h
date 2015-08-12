@@ -144,6 +144,22 @@ private:
 	 */
 	void
 	scheduleModel(std::string name, t_timestamp t);
+        
+        /**
+         * Check that the internal state of the core is still sane.
+         * @throw std::logic_error
+         */
+        virtual
+        void
+        checkInvariants();
+        
+        /**
+         * Write statistics about this instance.
+         * @pre call once, at destruction.
+         */
+        virtual
+        void
+        collectStats();
 
 protected:
 	/**
