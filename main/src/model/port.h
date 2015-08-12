@@ -18,6 +18,9 @@
 #include "tools/objectfactory.h"
 #include <set>
 
+
+#include "tools/statistic.h"
+
 class TestCereal;
 
 namespace n_model {
@@ -266,6 +269,7 @@ public:
 	 */
 	void addInfluencees(std::set<std::string>& influences) const;
 
+//-------------serialization---------------------
 	/**
 	 * Serialize this object to the given archive
 	 *
@@ -287,6 +291,23 @@ public:
 	 * @param construct A helper struct for constructing the original object
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
+
+//-------------statistics gathering--------------
+//#ifdef USESTAT
+private:
+	//counters for statistics
+	std::map<t_portptr, n_tools::t_intstat> m_sendstat;
+public:
+	/**
+	 * @brief Prints some basic stats.
+	 * @param out The output will be printed to this stream.
+	 */
+	inline void printStats(std::ostream& out = std::cout) const
+	{
+		for(const auto& i: m_sendstat)
+			out << i.second << '\n';
+	}
+//#endif
 };
 
 
@@ -324,6 +345,9 @@ std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
 			for (t_zfunc& zFunction : pair.second) {
 				container.push_back(
 				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
+//#ifdef USESTAT
+				++m_sendstat[pair.first];
+//#endif
 			}
 		}
 	}

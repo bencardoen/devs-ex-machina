@@ -10,6 +10,8 @@
 #include "tools/stringtools.h"
 #include "control/allocator.h"
 
+#include "tools/statistic.h"
+
 LOG_INIT("devstone.log")
 
 #ifdef FPTIME
@@ -92,16 +94,18 @@ int main(int argc, char** args)
 	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
 
-	std::ofstream filestream("./devstone.txt");
+	auto ctrl = conf.createController();
+	t_timestamp endTime(ENDTIME, 0);
+	ctrl->setTerminationTime(endTime);
+
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
+	ctrl->addModel(d);
 	{
+		std::ofstream filestream("./devstone.txt");
 		n_tools::CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(ENDTIME, 0);
-		ctrl->setTerminationTime(endTime);
-
-		t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
-		ctrl->addModel(d);
-
 		ctrl->simulate();
 	}
+//#ifdef USESTAT
+	d->printStats(std::cout);
+//#endif
 }

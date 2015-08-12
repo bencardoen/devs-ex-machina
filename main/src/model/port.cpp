@@ -91,6 +91,10 @@ void Port::setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function)
 	std::map<std::shared_ptr<Port>, std::vector<t_zfunc>>::iterator it = m_coupled_outs.find(port);
 	if (it == m_coupled_outs.end()) {
 		m_coupled_outs.emplace(port, std::vector<t_zfunc>( { function }));
+//#ifdef USESTAT
+		std::string statname = getHostName() + "/" + getName() + "->" + port->getHostName() + "/" + port->getName();
+		m_sendstat.emplace(port, n_tools::t_intstat(statname, "messages"));
+//#endif
 		return;
 	}
 	it->second.push_back(function);
