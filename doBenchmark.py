@@ -65,7 +65,7 @@ def devstonegen(simtype):
 
 def pholdgen(simtype):
     for depth in [1, 2, 4, 8, 16]:
-        for width in [1, 2]:#, 4, 8, 16]:
+        for width in [2, 4]:#, 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
                     yield list(chain([pholdEx], simtype, [width, depth, iterations, remotes]))
@@ -126,10 +126,11 @@ if __name__ == '__main__':
 
     # do the benchmarks!
     donelist = []
+    print("args.limited: ", args.limited)
     for bmarkset in [devstone, phold]:
         doCompile = True
         for bmark in bmarkset:
-            if args.limited is not None and bmark.name not in args.limited:
+            if len(args.limited) > 0 and bmark.name not in args.limited:
                 continue
             print("> executing benchmark {}".format(bmark.name))
             donelist.append(bmark.name)
@@ -141,7 +142,7 @@ if __name__ == '__main__':
             analyzer.save(data, bmark, folders)
             toCSV(data, folders.plots / "{}.csv".format(bmark.name))
 
-    if args.limited is not None:
+    if len(args.limited) > 0:
         wrong = set(args.limited) - set(donelist)
         if len(wrong) > 0:
             print("> Unknown benchmarks requested:")
@@ -150,3 +151,7 @@ if __name__ == '__main__':
             print("> Accepted benchmarks:")
             for i in chain(devstone, phold):
                 print("    {}".format(i.name))
+    if len(defaults.timeouts) > 0:
+        print("A total of {} benchmarks timed out after a waiting period of {} seconds:".format(len(defaults.timeouts), defaults.timeout))
+        for i in defaults.timeouts:
+            print("  {}".format(i))

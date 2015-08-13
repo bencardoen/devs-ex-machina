@@ -128,6 +128,10 @@ timeout = 50
 Waiting time in seconds before a subprocess is aborted. Note that no data will be collected from this instance.
 """
 
+timeouts = []
+"""
+List of arguments that resulted into a timeout
+"""
 
 def defaultExec(args, path):
     """
@@ -141,6 +145,7 @@ def defaultExec(args, path):
         call(fmtcommand.split(), timeout=timeout)
     except TimeoutExpired:
         print("subprocess timed out after more than {} seconds.".format(timeout))
+        timeouts.append(args)
 
 defaultDriver = BenchmarkDriver(defaultFilegen, defaultFoldergen, defaultExec)
 
