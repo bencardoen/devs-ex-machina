@@ -10,6 +10,12 @@
 
 LOG_INIT("phold.log")
 
+#ifdef FPTIME
+#define ENDTIME 1000.0
+#else
+#define ENDTIME 10000
+#endif
+
 /**
  * The executable takes up to 6 arguments (in this order):
  * - The type of simulation:
@@ -33,7 +39,7 @@ int main(int argc, char** args)
 	std::size_t nodes = 1;
 	std::size_t apn = 10;
 	std::size_t iter = 0;
-	float percentageRemotes = 0.1;
+	std::size_t percentageRemotes = 10;
 
 	if (argc >= 2) {
 		type = args[1];
@@ -54,7 +60,9 @@ int main(int argc, char** args)
 		iter = n_tools::toInt(args[offset + 4]);
 	}
 	if (argc >= offset + 6) {
-		percentageRemotes = n_tools::toInt(args[offset + 5]) / 100;
+		int temp = n_tools::toInt(args[offset + 5]);	//allows parsing negative values
+		assert(temp >= 0 && temp <= 100 && "The amount of remotes must be a number in the range [0, 100].");
+		percentageRemotes = temp;
 	}
 
 	n_control::ControllerConfig conf;
@@ -65,7 +73,7 @@ int main(int argc, char** args)
 	conf.m_zombieIdleThreshold = 10;
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(1000, 0);
+	t_timestamp endTime(ENDTIME, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,

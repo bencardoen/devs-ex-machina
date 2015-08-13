@@ -16,11 +16,19 @@
 
 namespace n_benchmarks_phold {
 
+// devstone uses event counters.
+// The messages are "Events", which are just numbers.
+#ifdef FPTIME
+typedef double EventTime;
+#else
+typedef std::size_t EventTime;
+#endif
+
 struct EventPair
 {
-	EventPair(size_t mn, size_t pt) : m_modelNumber(mn), m_procTime(pt) {};
+	EventPair(size_t mn, EventTime pt) : m_modelNumber(mn), m_procTime(pt) {};
 	size_t m_modelNumber;
-	size_t m_procTime;
+	EventTime m_procTime;
 };
 
 class PHOLDModelState: public n_model::State
@@ -32,6 +40,8 @@ public:
 	std::deque<EventPair> m_events;
 };
 
+typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
+
 class HeavyPHOLDProcessor: public n_model::AtomicModel
 {
 private:
@@ -41,6 +51,7 @@ private:
 	std::vector<size_t> m_remote;
 	int m_messageCount;
 	std::vector<n_model::t_portptr> m_outs;
+	mutable t_randgen m_rand;	//This object could be a global object, but then we'd need to lock it during parallel simulation.
 public:
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber, std::vector<size_t> local,
 	        std::vector<size_t> remote, size_t percentageRemotes);
@@ -52,14 +63,14 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual std::vector<n_network::t_msgptr> output() const;
 
-	size_t getProcTime(size_t event) const;
+	EventTime getProcTime(size_t event) const;
 	size_t getNextDestination(size_t event) const;
 };
 
 class PHOLD: public n_model::CoupledModel
 {
 public:
-	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, float percentageRemotes);
+	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes);
 	virtual ~PHOLD();
 };
 

@@ -6,8 +6,25 @@
  */
 
 #include <performance/phold/phold.h>
+#include <random>
+
+#ifdef FPTIME
+#define T_0 0.01
+#define T_100 1.0
+#else
+#define T_0 1
+#define T_100 100
+#endif
 
 namespace n_benchmarks_phold {
+
+
+std::size_t getRand(std::size_t event, t_randgen& randgen)
+{
+	static std::uniform_int_distribution<std::size_t> dist(0, 60000);
+	randgen.seed(event);
+	return dist(randgen);
+}
 
 /*
  * PHOLDModelState
@@ -43,22 +60,30 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 {
 }
 
-size_t HeavyPHOLDProcessor::getProcTime(size_t event) const
+EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 {
-	srand(event);
-	return rand() % 101; //TODO determine proper rand value, since we don't use floats
+#ifdef FPTIME
+	static std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+#else
+	static std::uniform_int_distribution<EventTime> dist(T_0, T_100);
+#endif
+	m_rand.seed(event);
+	return dist(m_rand);
 }
 
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 {
 	LOG_INFO("[PHOLD] - Getting next destination. [Local=",m_local.size(),"] [Remote=",m_remote.size(),"]");
-	srand(event);
-	if (rand() % 101 > (int)(m_percentageRemotes*100) || m_remote.empty()) {
-		size_t chosen = m_local[rand() % m_local.size()];
+	static std::uniform_int_distribution<std::size_t> dist(0, 100);
+	std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
+	std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
+	m_rand.seed(event);
+	if (dist(m_rand) > m_percentageRemotes || m_remote.empty()) {
+		size_t chosen = m_local[distLocal(m_rand)];
 		LOG_INFO("[PHOLD] - Picked local: ", chosen);
 		return chosen;
 	} else {
-		size_t chosen = m_remote[rand() % m_remote.size()];
+		size_t chosen = m_remote[distRemote(m_rand)];
 		LOG_INFO("[PHOLD] - Picked remote: ", chosen);
 		return chosen;
 	}
@@ -133,7 +158,7 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 		EventPair& i = state->m_events[0];
 		srand(i.m_modelNumber);
 		size_t dest = getNextDestination(i.m_modelNumber);
-		size_t r = rand() % 60000;
+		size_t r = getRand(i.m_modelNumber, m_rand);
 		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
 		auto messages = m_outs[dest]->createMessages(r);
 		LOG_INFO("[PHOLD] - ",getName()," Ports created ", messages.size(), " messages.");
@@ -146,7 +171,7 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
  * PHOLD
  */
 
-PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, float percentageRemotes)
+PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes)
 	: n_model::CoupledModel("PHOLD")
 {
 	std::vector<n_model::t_atomicmodelptr> processors;
