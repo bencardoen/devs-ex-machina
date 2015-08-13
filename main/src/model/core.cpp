@@ -121,6 +121,7 @@ void n_model::Core::addModelDS(t_atomicmodelptr model)
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
 	t_timestamp ta = model->timeAdvance();
+	assert(!(ta.getTime() == t_timestamp::t_time()) && "TimeAdvance value must not be 0.");
 	t_timestamp nextT = m_time + ta;
 	LOG_DEBUG("scheduling: ", model->getName(), " at ", m_time, " + ", ta, " = ", nextT);
 	scheduleModel(model->getName(), nextT);
@@ -320,6 +321,7 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 		assert(this->containsModel(old) && " Trying to reschedule model not in this core ?!");
 		t_atomicmodelptr model = this->m_models[old];
 		t_timestamp ta = model->timeAdvance();
+		assert(!(ta.getTime() == t_timestamp::t_time()) && "TimeAdvance value must not be 0.");
 		if (!isInfinity(ta)) {
 			t_timestamp next = ta + this->m_time;
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
