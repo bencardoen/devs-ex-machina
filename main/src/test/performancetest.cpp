@@ -6,13 +6,13 @@
  */
 
 #include <gtest/gtest.h>
+#include <performance/phold/phold.h>
 #include <iostream>
 #include "test/compare.h"
 #include "tools/coutredirect.h"
 #include "control/controllerconfig.h"
 #include "tools/objectfactory.h"
 #include "performance/devstone/devstone.h"
-#include "performance/benchmarks/phold.h"
 
 using namespace n_control;
 using namespace n_devstone;

@@ -5,8 +5,8 @@
  *      Author: matthijs
  */
 
-#ifndef SRC_PERFORMANCE_BENCHMARKS_PHOLD_H_
-#define SRC_PERFORMANCE_BENCHMARKS_PHOLD_H_
+#ifndef SRC_PERFORMANCE_PHOLD_PHOLD_H_
+#define SRC_PERFORMANCE_PHOLD_PHOLD_H_
 
 #include <stdlib.h>
 #include <thread>
@@ -65,4 +65,4 @@ public:
 
 } /* namespace n_benchmarks_phold */
 
-#endif /* SRC_PERFORMANCE_BENCHMARKS_PHOLD_H_ */
+#endif /* SRC_PERFORMANCE_PHOLD_PHOLD_H_ */

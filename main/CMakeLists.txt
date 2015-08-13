@@ -191,7 +191,7 @@ add_executable(${PROJECT_NAME}
 	#src/examples/trafficsystem/intersection.cpp
 	#src/examples/trafficsystem/collector.cpp
 	src/performance/devstone/devstone.cpp
-	src/performance/benchmarks/phold.cpp
+	src/performance/phold/phold.cpp
 	src/test/basiccerealtestclasses.cpp
 	src/test/toolstest.cpp
 	src/test/coretest.cpp
@@ -241,7 +241,7 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
 
 add_executable(${PROJECT_NAME}_phold
 	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
- 	src/performance/benchmarks/phold.cpp
+ 	src/performance/phold/phold.cpp
   	src/mainphold.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
