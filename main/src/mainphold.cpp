@@ -16,6 +16,32 @@ LOG_INIT("phold.log")
 #define ENDTIME 10000
 #endif
 
+// The problem with phold is that it will always generate a lot reverts
+// this is the reason why classic, unparallel simulation will be a lot faster than parallel.
+class PHoldAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+	std::size_t m_n;
+public:
+	PHoldAlloc(): m_maxn(0), m_n(0)
+	{
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+		if(simType() == n_control::SimType::CONSERVATIVE)
+			return (m_n++)%coreAmount();
+		return ((m_n++)/10)%(coreAmount());
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber(allocate(ptr));
+	}
+};
+
 /**
  * The executable takes up to 6 arguments (in this order):
  * - The type of simulation:
@@ -71,6 +97,7 @@ int main(int argc, char** args)
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;
 	conf.m_zombieIdleThreshold = 10;
+	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(ENDTIME, 0);
