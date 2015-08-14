@@ -109,9 +109,8 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	if (msg->getColor() == MessageColor::WHITE) {
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
-                        int oldval = this->m_mcount_vector.getVector()[this->getCoreID()];
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector from : ", oldval);
-			this->m_mcount_vector.getVector()[this->getCoreID()] -= 1;
+                        const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
+                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector to : ", value_cnt_vector);
 		}
 		this->m_wake_on_msg.notify_all();
 	}
@@ -234,7 +233,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 			// Stop
 			return;
 		} else {
-			if(round == 1){
+			if(round == 2){ // 3rd round, can't go on.
                                 LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
                                 return;
                         }

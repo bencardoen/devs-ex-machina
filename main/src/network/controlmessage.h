@@ -80,6 +80,10 @@ public:
 		m_gvt_found = gvtFound;
 	}
         
+        /**
+         * Write the full state of this controlmessage to LOG.
+         * Required if we're to have any hope of debugging GVT>
+         */
         void logMessageState();
 };
 

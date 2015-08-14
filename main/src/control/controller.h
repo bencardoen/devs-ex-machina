@@ -89,6 +89,10 @@ private:
 	 */
 	std::atomic<bool> 	m_rungvt;
         
+        /// Add keyword inline, if we can't use __attribute(pure)__, 
+        /// inline + ifdef will convince compiler the function is empty, and throw it
+        // away if we're nog statlogging.
+        inline
         void logStat(enum CTRLSTAT_TYPE);
 
 public:
