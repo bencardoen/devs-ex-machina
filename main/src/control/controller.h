@@ -27,6 +27,7 @@
 #include "model/dssharedstate.h"
 #include "control/timeevent.h"
 #include "control/simtype.h"
+#include "tools/statistic.h"
 
 namespace n_control {
 
@@ -288,9 +289,18 @@ private:
 
 //-------------statistics gathering--------------
 //#ifdef USESTAT
+private:
+	n_tools::t_intstat m_gvtStarted;
+	n_tools::t_intstat m_gvtSecondRound;
+	n_tools::t_intstat m_gvtFailed;
+	n_tools::t_intstat m_gvtFound;
 public:
 	void printStats(std::ostream& out = std::cout) const
 	{
+		out << m_gvtStarted << '\n';
+		out << m_gvtSecondRound << '\n';
+		out << m_gvtFound << '\n';
+		out << m_gvtFailed << '\n';
 		for(const auto& i:m_cores)
 			i.second->printStats(out);
 	}

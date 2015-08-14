@@ -24,6 +24,12 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
+//#ifdef USESTAT
+	, m_gvtStarted("_controller/gvt started", ""),
+	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
+	m_gvtFailed("_controller/gvt failed", ""),
+	m_gvtFound("_controller/gvt found", "")
+//#endif
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 	m_zombieIdleThreshold.store(-1);
@@ -715,6 +721,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;
 	}
+	//#ifdef USESTAT
+	++cont.m_gvtStarted;
+	//#endif
 	const std::size_t corecount = cont.m_cores.size();
 	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
 	        t_timestamp::infinity());
@@ -731,6 +740,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 	first->receiveControl(cmsg, false, gvtsafe);
 
 	if (cmsg->isGvtFound()) {
+		//#ifdef USESTAT
+		++cont.m_gvtFound;
+		//#endif
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
 		for (const auto& ucore : cont.m_cores)
 			ucore.second->setGVT(cmsg->getGvt());
@@ -741,6 +753,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 		}
 	} else {
+		//#ifdef USESTAT
+		++cont.m_gvtSecondRound;
+		//#endif
 		if (gvtsafe == false) {
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
@@ -748,6 +763,11 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		for (std::size_t j = 1; j < corecount; ++j)
 			cont.m_cores[j]->receiveControl(cmsg, false, gvtsafe);
 		if (cmsg->isGvtFound()) {
+			//#ifdef USESTAT
+			++cont.m_gvtFound;
+			//#endif
+			LOG_INFO("Controller: found GVT after second round, gvt=", cmsg->getGvt(), " updating cores.");
+
 			for (const auto& ucore : cont.m_cores)
 				ucore.second->setGVT(cmsg->getGvt());
 			n_tracers::traceUntil(cmsg->getGvt());
@@ -757,7 +777,10 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 				gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 			}
 		} else {
-			LOG_WARNING("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+			//#ifdef USESTAT
+			++cont.m_gvtFailed;
+			//#endif
+			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Not doing anything.");
 		}
 	}
 }
