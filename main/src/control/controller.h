@@ -36,6 +36,8 @@ using n_model::t_coreptr;
 using n_model::t_atomicmodelptr;
 using n_model::t_coupledmodelptr;
 
+enum CTRLSTAT_TYPE{GVT_2NDRND,GVT_FOUND,GVT_START,GVT_FAILED};
+
 /**
  * @brief Provides control over a simulation
  */
@@ -86,6 +88,8 @@ private:
 	 * False means interrupt at earliest possible time to do so cleanly.
 	 */
 	std::atomic<bool> 	m_rungvt;
+        
+        void logStat(enum CTRLSTAT_TYPE);
 
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,

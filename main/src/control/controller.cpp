@@ -39,6 +39,39 @@ Controller::~Controller()
 {
 }
 
+//enum CTRLSTAT_TYPE{GVT_2NDRND,GVT_FOUND,GVT_START,GVT_FAILED};
+
+void Controller::logStat(CTRLSTAT_TYPE ev)
+{
+//#ifdef USESTAT
+
+        switch(ev){
+        case GVT_2NDRND:{
+                ++m_gvtSecondRound;
+                break;
+        }
+        case GVT_FAILED:{
+                ++m_gvtFailed;
+                break;
+        }
+        case GVT_START:{
+                ++m_gvtStarted;
+                break;
+        }
+        case GVT_FOUND:{
+                ++m_gvtFound;
+                break;
+        }
+        default:
+                LOG_ERROR("No such stattype");
+        //case GVT
+        }
+//#else // TODO use compiler attribute pure, allows compiler to ignore fcall().
+        // see http://stackoverflow.com/questions/6623879/c-optimizing-function-with-no-side-effects
+//#endif
+}
+
+
 void Controller::save(const std::string& fname, const t_timestamp& time)
 {
 	if (fname == "")
@@ -721,28 +754,27 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		LOG_INFO("Controller:  rungvt set to false by some Core thread, stopping GVT.");
 		return;
 	}
-	//#ifdef USESTAT
-	++cont.m_gvtStarted;
-	//#endif
+        cont.logStat(GVT_START);
 	const std::size_t corecount = cont.m_cores.size();
 	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
 	        t_timestamp::infinity());
 
-	for (size_t i = 0; i < corecount; ++i) {
-		cont.m_cores[i]->receiveControl(cmsg, (i == 0), gvtsafe);
+        /// Let Pinit start first round
+        t_coreptr first = cont.m_cores[0];
+        first->receiveControl(cmsg, 0, gvtsafe);
+	for (size_t i = 1; i < corecount; ++i) {
+		cont.m_cores[i]->receiveControl(cmsg, 0, gvtsafe);
 		if (gvtsafe == false) {
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
 	}
+        
 	/// First round done, let Pinit check if we have found a gvt.
-	t_coreptr first = cont.m_cores[0];
-	first->receiveControl(cmsg, false, gvtsafe);
+	first->receiveControl(cmsg, 1, gvtsafe);
 
 	if (cmsg->isGvtFound()) {
-		//#ifdef USESTAT
-		++cont.m_gvtFound;
-		//#endif
+		cont.logStat(GVT_FOUND);
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
 		for (const auto& ucore : cont.m_cores)
 			ucore.second->setGVT(cmsg->getGvt());
@@ -753,19 +785,18 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 		}
 	} else {
-		//#ifdef USESTAT
-		++cont.m_gvtSecondRound;
-		//#endif
+                ///// 2nd round initiated.
+		cont.logStat(GVT_2NDRND);
 		if (gvtsafe == false) {
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
 		for (std::size_t j = 1; j < corecount; ++j)
-			cont.m_cores[j]->receiveControl(cmsg, false, gvtsafe);
+			cont.m_cores[j]->receiveControl(cmsg, 1, gvtsafe);
+                first->receiveControl(cmsg, 2, gvtsafe);  // Controlmessage must be passed to Invoking core again.
+                
 		if (cmsg->isGvtFound()) {
-			//#ifdef USESTAT
-			++cont.m_gvtFound;
-			//#endif
+			cont.logStat(GVT_FOUND);
 			LOG_INFO("Controller: found GVT after second round, gvt=", cmsg->getGvt(), " updating cores.");
 
 			for (const auto& ucore : cont.m_cores)
@@ -777,10 +808,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 				gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
 			}
 		} else {
-			//#ifdef USESTAT
-			++cont.m_gvtFailed;
-			//#endif
+			cont.logStat(GVT_FAILED);
 			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+                        cmsg->logMessageState();
 		}
 	}
 }

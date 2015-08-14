@@ -212,10 +212,11 @@ public:
 
 	/**
 	 * Step 1.7/1.6 in Mattern's algorithm.
+         * @param round : an integer denoting the round in the algorithm starting @0, so 1==2nd round.
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg&, bool first, std::atomic<bool>& rungvt)override;
+	receiveControl(const t_controlmsg&, int round, std::atomic<bool>& rungvt)override;
 
 	/**
 	 * Call superclass receive message, then decrements vcount (alg 1.5)

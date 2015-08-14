@@ -29,8 +29,6 @@ enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS};
  */
 typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
-struct statistics_collector;
-typedef std::shared_ptr<statistics_collector> t_stat_ptr;
 
 struct statistics_collector{
         n_tools::t_intstat     m_amsg_sent;
@@ -629,7 +627,7 @@ public:
 	 */
 	virtual
 	void
-	receiveControl(const t_controlmsg& /*controlmessage*/, bool /*first*/, std::atomic<bool>& /*rungvt*/){
+	receiveControl(const t_controlmsg& /*controlmessage*/, int /*first*/, std::atomic<bool>& /*rungvt*/){
 		assert(false);
 	}
 

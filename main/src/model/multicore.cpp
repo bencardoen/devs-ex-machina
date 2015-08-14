@@ -178,7 +178,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 	}
 }
 
-void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<bool>& rungvt)
+void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt)
 {
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
@@ -186,7 +186,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
 		return;
 	}
-	if (this->getCoreID() == 0 && first) {
+	if (this->getCoreID() == 0 && round==0) {
 		LOG_INFO("MCore:: ", this->getCoreID(), " GVT received first control message, starting first round");
 		// If this processor is Pinit and is the first to be called in the GVT calculation
 		// Might want to put this in a different function?
@@ -234,9 +234,12 @@ void Multicore::receiveControl(const t_controlmsg& msg, bool first, std::atomic<
 			// Stop
 			return;
 		} else {
-			// if 3d round? exit?
+			if(round == 1){
+                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
+                                return;
+                        }
 			LOG_DEBUG("MCORE :: ", this->getCoreID(),
-			        " process init received control message, starting 2nd round ");
+			        " process init received control message, starting 2nd round");
 			// We start a second round
 			msg->setTmin(this->getTime());
 			msg->setTred(std::min(msg->getTred(), this->getTred()));

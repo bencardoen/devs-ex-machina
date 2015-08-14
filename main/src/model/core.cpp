@@ -648,7 +648,7 @@ void n_model::Core::setGVT(const t_timestamp& newgvt)
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
 		return;
 	}
-	if (newgvt.getTime() <= this->getGVT().getTime()) {
+	if (newgvt.getTime() < this->getGVT().getTime()) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
 		        this->getGVT(), " ignoring ");
 		return;

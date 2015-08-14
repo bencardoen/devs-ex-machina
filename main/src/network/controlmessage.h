@@ -2,7 +2,7 @@
  * controlmessage.h
  *
  *  Created on: 10 Apr 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen - Tim Tuijn
  */
 
 #ifndef SRC_NETWORK_CONTROLMESSAGE_H_
@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include "tools/globallog.h"
 
 typedef std::vector<int> t_count;
 
@@ -78,6 +79,8 @@ public:
 	{
 		m_gvt_found = gvtFound;
 	}
+        
+        void logMessageState();
 };
 
 typedef std::shared_ptr<ControlMessage> t_controlmsg;
