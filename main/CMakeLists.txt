@@ -54,7 +54,7 @@ if (${APPLE})
 endif()
 
 ### Debug #####################################################################
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -Wall -Wextra -pedantic -fPIE")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -DSAFETY_CHECKS -Wall -Wextra -pedantic -fPIE")
 ###############################################################################
 
 ### Profiling -- Clang and G++ ###############################################
@@ -240,12 +240,12 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
 
 
 add_executable(${PROJECT_NAME}_phold
-	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
  	src/performance/phold/phold.cpp
   	src/mainphold.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "-DLOG_LEVEL=0"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=15"
  					)
 
 add_executable(${PROJECT_NAME}_virus

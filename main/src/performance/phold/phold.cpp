@@ -167,6 +167,14 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 	return std::vector<n_network::t_msgptr>();
 }
 
+
+n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
+{
+	LOG_WARNING(
+		"ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel::lookahead()'");
+	return n_network::t_timestamp(T_0);
+}
+
 /*
  * PHOLD
  */
