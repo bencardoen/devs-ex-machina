@@ -77,8 +77,15 @@ void Multicore::markMessageStored(const t_msgptr& msg)
 }
 
 void Multicore::countMessage(const t_msgptr& msg)
-{	// ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
-	if (this->getColor() == MessageColor::WHITE) { // Or use the color from the message (should be the same!) /// FIXME
+{
+        /**
+         * ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
+         * this->getColor() should be equal to the msg color, however, the message can
+         * be made slightly before the GVT code updates the color, resulting in a mismatch,
+         * which will then fail the algorithm with negative values. (issue #1)
+         * We can either force an update (locked), or just do as the algorithm says and use msgcolor.
+         */
+	if (msg->getColor() == MessageColor::WHITE) { // Don't use Core->color, alg specifies color = msgcolor here.
 		size_t j = msg->getDestinationCore();
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
@@ -201,15 +208,10 @@ Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
         if (msg->countIsZero()) {  /// Case found GVT
                 LOG_INFO("MCORE :: ", this->getCoreID(), " found GVT!");
-
-                // We found GVT!
                 t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
                 LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
-                // Put this info in the message
                 msg->setGvtFound(true);
                 msg->setGvt(GVT_approx);
-                // Stop
-                return;
         } else {                /// C vector is != 0
                 if(round == 1){ 
                         LOG_DEBUG("MCORE :: ", this->getCoreID(), " process init received control message, starting 2nd round");
@@ -225,8 +227,9 @@ Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool
                 }
                 else{
                         // We still can only get here iff V+C <= 0 for all cores (including this one)
-                        // If the msgcount vector has only 0 or negative values, we're still ok.
-                        if(msg->countLeQZero()){
+                        // Either the algorithm failed with 2 colors, a race occurred, or a Core terminated.
+                        // The benign cases (terminated && race with C<0 can be solved by enabling this workaroud.)
+                        if(/*msg->countLeQZero()*/ false){
                                 t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
                                 LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
                                 // Put this info in the message
