@@ -266,4 +266,9 @@ DEVStone::~DEVStone()
 {
 }
 
+n_network::t_timestamp Generator::lookAhead() const
+{
+	return n_network::t_timestamp::infinity();
+}
+
 } /* namespace n_devstone */

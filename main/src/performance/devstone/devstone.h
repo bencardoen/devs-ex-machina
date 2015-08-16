@@ -82,6 +82,7 @@ public:
 	virtual n_model::t_timestamp timeAdvance() const;
 	virtual void intTransition();
 	virtual std::vector<n_network::t_msgptr> output() const;
+	virtual n_network::t_timestamp lookAhead() const;
 };
 
 class CoupledRecursion : public n_model::CoupledModel
