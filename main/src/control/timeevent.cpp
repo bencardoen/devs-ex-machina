@@ -9,12 +9,12 @@
 
 namespace n_control {
 
-TimeEvent::TimeEvent(n_network::t_timestamp t, size_t d, bool r)
+TimeEvent::TimeEvent(t_timestamp t, size_t d, bool r)
 	: m_type(PAUSE), m_time(t), m_interval(t), m_duration(d), m_repeating(r)
 {
 }
 
-TimeEvent::TimeEvent(n_network::t_timestamp t, std::string pf, bool r)
+TimeEvent::TimeEvent(t_timestamp t, std::string pf, bool r)
 	: m_type(SAVE), m_time(t), m_interval(t), m_duration(0), m_prefix(pf), m_repeating(r)
 {
 }
@@ -36,7 +36,7 @@ void TimeEventQueue::push(TimeEvent te)
 	std::sort(m_queue.begin(), m_queue.end());
 }
 
-int TimeEventQueue::countTodo(const n_network::t_timestamp& now) const
+int TimeEventQueue::countTodo(const t_timestamp& now) const
 {
 	int amnt = 0;
 	for (const TimeEvent& te : m_queue) {
@@ -47,7 +47,7 @@ int TimeEventQueue::countTodo(const n_network::t_timestamp& now) const
 	return amnt;
 }
 
-std::vector<TimeEvent> TimeEventQueue::popUntil(const n_network::t_timestamp& now)
+std::vector<TimeEvent> TimeEventQueue::popUntil(const t_timestamp& now)
 {
 	std::vector<TimeEvent> worklist;
 	while (!m_queue.empty()) {
@@ -65,7 +65,7 @@ std::vector<TimeEvent> TimeEventQueue::popUntil(const n_network::t_timestamp& no
 	return worklist;
 }
 
-bool TimeEventQueue::todo(const n_network::t_timestamp& now) const
+bool TimeEventQueue::todo(const t_timestamp& now) const
 {
 	return (!m_queue.empty() && m_queue.back().m_time <= now);
 }

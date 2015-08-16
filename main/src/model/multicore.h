@@ -126,7 +126,7 @@ private:
 	handleAntiMessage(const t_msgptr& msg);
 
 	/**
-	 * Waits until all (white) sent messages were received and we can move on with our GVT algorithm
+	 * Waits until all send messages were received and we can move on with our GVT algorithm
 	 * @param msg the received control message
 	 */
 	void
@@ -140,34 +140,18 @@ private:
 	void
 	paintMessage(const t_msgptr& msg)override;
 
-        /**        
-         * @synchronized
-         */
 	void
-	setTred(const t_timestamp&);
+	setTred(t_timestamp);
 
-        /**        
-         * @synchronized
-         */
 	t_timestamp
 	getTred();
         
-        /**
-         * Delegate, handles GVT calculation for a non-controller Core.
-         */
         void
         receiveControlWorker(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
-        /**
-         * Delegate, initiates the GVT calculation by the controller Core.
-         */
         void
         startGVTProcess(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
-        /**
-         * Delegate, decide at the end of a round if GVT calculation is complete, if not
-         * either report error (round 2), or start round 2 (1).
-         */
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
@@ -192,8 +176,8 @@ public:
 	virtual ~Multicore();
 
 	/**
-	 * Pulls messages from network into mailbag.
-         * 
+	 * Pulls messages from network into mailbag (sorted by destination name
+	 * @attention does not yet lock on messages acces
 	 */
 	void getMessages()override;
 
@@ -226,7 +210,6 @@ public:
 
 	/**
 	 * Set core color. (Mattern's)
-         * @attention : synchronized, so concurrent setting/getting is safe, but read-decide-write is not.
 	 */
 	void
 	setColor(MessageColor c)override;

@@ -2,7 +2,7 @@
  * state.cpp
  *
  *  Created on: Mar 22, 2015
- *      Author: Tim Tuijn
+ *      Author: tim
  */
 
 #include "model/state.h"

@@ -125,6 +125,8 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 
 void Multicore::getMessages()
 {
+	// TODO : in principle, we could reduce threading issues by detecting live here (earlier) iso
+	// after simulation.
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	if(messages.size()!= 0){
@@ -138,6 +140,7 @@ void Multicore::getMessages()
 
 void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
+	// Locking could be done inside the for loop, but would make dissecting logs much more difficult.
 	this->lockMessages();
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
@@ -169,7 +172,6 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			std::lock_guard<std::mutex> lock(m_vlock);
 			v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
 		}
-                // Extending lock to cover calculation will not change result.
 		if (v_value + msgcount <= 0){
 			LOG_DEBUG("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
@@ -180,7 +182,6 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			this->m_wake_on_msg.wait(cvunique);
 		}
 	}
-        /// If issue#1 is traceable to this function, return unique_lock to vlock to ensure V stays locked.
 }
 
 void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt)
@@ -249,12 +250,17 @@ void
 Multicore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
 {
         // ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
-        if (this->getColor() == MessageColor::WHITE) {	// Make sure Core is configured ok for calc.
+        if (this->getColor() == MessageColor::WHITE) {	// Locked
+                // Probably not necessary, because messages can't be white during GVT calculation
+                // when red messages are present, better safe than sorry though
                 this->setTred(t_timestamp::infinity());
                 this->setColor(MessageColor::RED);
         }
+        // We wait until we have received all messages
         LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
         waitUntilOK(msg, rungvt);
+
+        // Equivalent to sending message, controlmessage is passed to next core.
         t_timestamp msg_tmin = msg->getTmin();
         t_timestamp msg_tred = msg->getTred();
         msg->setTmin(std::min(msg_tmin, this->getTime()));
@@ -266,6 +272,8 @@ Multicore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::ato
                 Count[i] += this->m_mcount_vector.getVector()[i];
                 this->m_mcount_vector.getVector()[i] = 0;
         }
+
+        // Send message to next process in ring
         return;
 }
 
@@ -303,12 +311,13 @@ void Multicore::setGVT(const t_timestamp& candidate)
 		        this->getGVT());
 		return;
 	}
-	
+	// Have to erase msgs older than gvt, inform models, require Msglock, SimLock (model != synced)
+	// Simlock => msglock.
 	this->lockSimulatorStep();
 	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {
-		if ((*senditer)->getTimeStamp() > this->getGVT()) {     // TODO, .getTime() instead of > ?
+		if ((*senditer)->getTimeStamp() > this->getGVT()) {
 			break;
 		}
 	}
@@ -421,7 +430,7 @@ n_model::Multicore::getTred(){
 }
 
 void
-n_model::Multicore::setTred(const t_timestamp& val){
+n_model::Multicore::setTred(t_timestamp val){
 	std::lock_guard<std::mutex> lock(m_tredlock);
 	this->m_tred = val;
 }

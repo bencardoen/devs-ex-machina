@@ -99,10 +99,7 @@ public:
 	 */
 	void increaseCausality(const X& offset)
 	{
-                if(MAXCAUSAL-this->m_causal < offset)
-                        this->m_causal += offset;
-                else
-                        this->m_causal = MAXCAUSAL;
+		this->m_causal += offset;
 	}
 
 	friend std::ostream&
@@ -213,8 +210,7 @@ public:
         
         static constexpr t_time MAXTIME = std::numeric_limits<Time::t_time>::max();
         static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
-        
-};  
+};
 
 } /* namespace n_network */
 //load the typedef from a different file

@@ -78,11 +78,12 @@ public:
 	 * @param message A vector of messagepointers that represent events
 	 * @warning This function MUST be implemented in the simulated model
 	 */
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & /*message*/)
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message)
 	{
 		LOG_ERROR(
 		        "ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
 		assert(false);
+		message.capacity();
 	}
 	;
 

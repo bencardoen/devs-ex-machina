@@ -13,7 +13,7 @@
 
 namespace n_control {
 
-
+using namespace n_network;
 
 /**
  * @brief An event occurring at some time during the simulation.
@@ -33,13 +33,13 @@ struct TimeEvent
 	/*
 	 * Time at which the event occurs (next)
 	 */
-	n_network::t_timestamp m_time;
+	t_timestamp m_time;
 
 	/*
 	 * For repeating events: rate at which an event occurs.
 	 * Is set to the same value as m_time in constructor
 	 */
-	n_network::t_timestamp m_interval;
+	t_timestamp m_interval;
 
 	/*
 	 * For PAUSE events: duration of the pause
@@ -59,12 +59,12 @@ struct TimeEvent
 	/**
 	 * @brief Ctor for PAUSE TimeEvents
 	 */
-	TimeEvent(n_network::t_timestamp t, size_t d, bool r);
+	TimeEvent(t_timestamp t, size_t d, bool r);
 
 	/**
 	 * @brief Ctor for SAVE TimeEvents
 	 */
-	TimeEvent(n_network::t_timestamp t, std::string pf, bool r);
+	TimeEvent(t_timestamp t, std::string pf, bool r);
 
 	/**
 	 * @brief Operator which sorts TimeEvents in ASCENDING m_time order
@@ -93,17 +93,17 @@ public:
 	/**
 	 * @brief Checks if any still unhandled events are pending
 	 */
-	bool todo(const n_network::t_timestamp& now) const;
+	bool todo(const t_timestamp& now) const;
 
 	/**
 	 * @brief Count how many unhandled events are waiting in the queue
 	 */
-	int countTodo(const n_network::t_timestamp& now) const;
+	int countTodo(const t_timestamp& now) const;
 
 	/**
 	 * @brief Pops and returns any unhandled time events from the queue
 	 */
-	std::vector<TimeEvent> popUntil(const n_network::t_timestamp& now);
+	std::vector<TimeEvent> popUntil(const t_timestamp& now);
 };
 
 } /* namespace n_control */
