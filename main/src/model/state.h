@@ -33,8 +33,6 @@ public:
 
 	State() = default;
 
-	void setNull();
-
 	virtual std::string toString()
 	{
 		return m_state;
