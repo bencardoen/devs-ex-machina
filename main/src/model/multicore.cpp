@@ -78,7 +78,7 @@ void Multicore::markMessageStored(const t_msgptr& msg)
 
 void Multicore::countMessage(const t_msgptr& msg)
 {	// ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
-	if (this->getColor() == MessageColor::WHITE) { // Or use the color from the message (should be the same!)
+	if (this->getColor() == MessageColor::WHITE) { // Or use the color from the message (should be the same!) /// FIXME
 		size_t j = msg->getDestinationCore();
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
@@ -186,115 +186,117 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 		return;
 	}
 	if (this->getCoreID() == 0 && round==0) {
-		LOG_INFO("MCore:: ", this->getCoreID(), " GVT received first control message, starting first round");
-		// If this processor is Pinit and is the first to be called in the GVT calculation
-		// Might want to put this in a different function?
-		this->setColor(MessageColor::RED);
-		this->setTred(t_timestamp::infinity());
-
-		msg->setTmin(this->getTime());
-		msg->setTred(t_timestamp::infinity());
-                LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
-
-		t_count& count = msg->getCountVector();
-		// We want to make sure our count vector starts with 0
-		std::fill(count.begin(), count.end(), 0);
-		// Lock because we will change our V vector
-		std::lock_guard<std::mutex> lock(this->m_vlock);
-		for (size_t i = 0; i < count.size(); i++) {
-			count[i] += this->m_mcount_vector.getVector()[i];
-			this->m_mcount_vector.getVector()[i] = 0;
-		}
-		// Send message to next process in ring
-		return;
-
+		startGVTProcess(msg, round, rungvt);
 	} else if (this->getCoreID() == 0) {            // Round 1,2,3...
-		// Else if Pinit gets the control message back after a complete first round
-		// Pinit must be red! Pinit will start a second round if necessary (if count != 0)
-		// Note that Msg_count and Msg_tred must be accumulated over both rounds, whereas
-		// Msg_tmin is calculated individually for each round. If initiator gets back control
-		// message after second round, Msg_count is guaranteed to be zero vector and GVT
-		// approximation is found.
-
-		// Wait until we have received all messages
-                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : process init received control message, waiting for pending messages.");
-		this->waitUntilOK(msg, rungvt);
-                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
-		// If all items in count vectors are zero
-		if (msg->countIsZero()) {
-			LOG_INFO("MCORE :: ", this->getCoreID(), " found GVT!");
-
-			// We found GVT!
-			t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
-			// Put this info in the message
-			msg->setGvtFound(true);
-			msg->setGvt(GVT_approx);
-			// Stop
-			return;
-		} else {
-			if(round == 2){ // 3rd round, can't go on.
-                                // We still can only get here iff V+C <= 0 for all cores (including this one)
-                                // If the msgcount vector has only 0 or negative values, we're still ok.
-                                if(msg->countLeQZero()){
-                                        t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
-                                        // Put this info in the message
-                                        msg->setGvtFound(true);
-                                        msg->setGvt(GVT_approx);
-                                        LOG_DEBUG(" GVT Found with non-zero vector ");
-                                        msg->logMessageState();
-                                }
-                                else{
-                                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
-                                        return;
-                                }
-                        }
-                        /// CASE Controller process, round == 1, 2nd round needed.
-			LOG_DEBUG("MCORE :: ", this->getCoreID(),
-			        " process init received control message, starting 2nd round");
-			// We start a second round
-			msg->setTmin(this->getTime());
-			msg->setTred(std::min(msg->getTred(), this->getTred()));
-                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
-			t_count& count = msg->getCountVector();
-			std::lock_guard<std::mutex> lock(this->m_vlock);
-			for (size_t i = 0; i < count.size(); ++i) {
-				count[i] += this->m_mcount_vector.getVector()[i];
-				this->m_mcount_vector.getVector()[i] = 0;
-			}
-			// Send message to next process in ring
-			return;
-		}
-
+                finalizeGVTRound(msg, round, rungvt);
 	} else {
-		// ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
-		if (this->getColor() == MessageColor::WHITE) {	// Locked
-			// Probably not necessary, because messages can't be white during GVT calculation
-			// when red messages are present, better safe than sorry though
-			this->setTred(t_timestamp::infinity());
-			this->setColor(MessageColor::RED);
-		}
-		// We wait until we have received all messages
-                LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
-		waitUntilOK(msg, rungvt);
+		receiveControlWorker(msg, round, rungvt);
+	}
+}
 
-		// Equivalent to sending message, controlmessage is passed to next core.
-		t_timestamp msg_tmin = msg->getTmin();
-		t_timestamp msg_tred = msg->getTred();
-		msg->setTmin(std::min(msg_tmin, this->getTime()));
-		msg->setTred(std::min(msg_tred, this->getTred()));
-                LOG_DEBUG("MCore:: ", this->getCoreID(), " Updating tmin to ", msg->getTmin(), " tred = ", msg->getTred());
-		t_count& Count = msg->getCountVector();
-		std::lock_guard<std::mutex> lock(this->m_vlock);
-		for (size_t i = 0; i < Count.size(); ++i) {
-			Count[i] += this->m_mcount_vector.getVector()[i];
-			this->m_mcount_vector.getVector()[i] = 0;
-		}
+void
+Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt){
+        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : process init received control message, waiting for pending messages.");
+        this->waitUntilOK(msg, rungvt);
+        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
+        if (msg->countIsZero()) {  /// Case found GVT
+                LOG_INFO("MCORE :: ", this->getCoreID(), " found GVT!");
 
-		// Send message to next process in ring
+                // We found GVT!
+                t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
+                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
+                // Put this info in the message
+                msg->setGvtFound(true);
+                msg->setGvt(GVT_approx);
+                // Stop
+                return;
+        } else {                /// C vector is != 0
+                if(round == 1){ 
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " process init received control message, starting 2nd round");
+                        msg->setTmin(this->getTime());
+                        msg->setTred(std::min(msg->getTred(), this->getTred()));
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
+                        t_count& count = msg->getCountVector();
+                        std::lock_guard<std::mutex> lock(this->m_vlock);
+                        for (size_t i = 0; i < count.size(); ++i) {
+                                count[i] += this->m_mcount_vector.getVector()[i];
+                                this->m_mcount_vector.getVector()[i] = 0;
+                        }
+                }
+                else{
+                        // We still can only get here iff V+C <= 0 for all cores (including this one)
+                        // If the msgcount vector has only 0 or negative values, we're still ok.
+                        if(msg->countLeQZero()){
+                                t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
+                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
+                                // Put this info in the message
+                                msg->setGvtFound(true);
+                                msg->setGvt(GVT_approx);
+                                LOG_DEBUG(" GVT Found with non-zero vector ");
+                                msg->logMessageState(); 
+                        }
+                        else{   // Algorithm failure. Controller will log message state for us.
+                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
+                        }
+                }
+                /// There is no cleanup to be done, startGVT initializes core/msg.
+        }
+}
+
+void
+Multicore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
+{
+        // ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
+        if (this->getColor() == MessageColor::WHITE) {	// Locked
+                // Probably not necessary, because messages can't be white during GVT calculation
+                // when red messages are present, better safe than sorry though
+                this->setTred(t_timestamp::infinity());
+                this->setColor(MessageColor::RED);
+        }
+        // We wait until we have received all messages
+        LOG_INFO("MCore:: ", this->getCoreID(), " process received control message");
+        waitUntilOK(msg, rungvt);
+
+        // Equivalent to sending message, controlmessage is passed to next core.
+        t_timestamp msg_tmin = msg->getTmin();
+        t_timestamp msg_tred = msg->getTred();
+        msg->setTmin(std::min(msg_tmin, this->getTime()));
+        msg->setTred(std::min(msg_tred, this->getTred()));
+        LOG_DEBUG("MCore:: ", this->getCoreID(), " Updating tmin to ", msg->getTmin(), " tred = ", msg->getTred());
+        t_count& Count = msg->getCountVector();
+        std::lock_guard<std::mutex> lock(this->m_vlock);
+        for (size_t i = 0; i < Count.size(); ++i) {
+                Count[i] += this->m_mcount_vector.getVector()[i];
+                this->m_mcount_vector.getVector()[i] = 0;
+        }
+
+        // Send message to next process in ring
+        return;
+}
+
+void
+Multicore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
+{
+        if(rungvt==false){
+		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
 		return;
 	}
+        LOG_INFO("MCore:: ", this->getCoreID(), " GVT received first control message, starting first round");
+        this->setColor(MessageColor::RED);
+        msg->setTmin(this->getTime());
+        msg->setTred(t_timestamp::infinity());
+        LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
+        t_count& count = msg->getCountVector();
+        // We want to make sure our count vector starts with 0
+        std::fill(count.begin(), count.end(), 0);
+        // Lock because we will change our V vector
+        std::lock_guard<std::mutex> lock(this->m_vlock);
+        for (size_t i = 0; i < count.size(); i++) {
+                count[i] += this->m_mcount_vector.getVector()[i];
+                this->m_mcount_vector.getVector()[i] = 0;
+        }
+        // Send message to next process in ring
+        return;
 }
 
 void Multicore::setGVT(const t_timestamp& candidate)

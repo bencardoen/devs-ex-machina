@@ -145,6 +145,16 @@ private:
 
 	t_timestamp
 	getTred();
+        
+        void
+        receiveControlWorker(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
+        
+        void
+        startGVTProcess(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
+        
+        void
+        finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
+        
 protected:
 	std::size_t 	m_cores;
 
