@@ -149,6 +149,13 @@ std::vector<n_network::t_msgptr> Processor::output() const
 	return m_out->createMessages(procState.m_event1);
 }
 
+n_network::t_timestamp Processor::lookAhead() const
+{
+	if(m_randomta)
+		return n_network::t_timestamp(T_0);
+	return n_network::t_timestamp(T_100);
+}
+
 const ProcessorState& Processor::procstate() const
 {
 	return *(std::dynamic_pointer_cast<ProcessorState>(getState()));
