@@ -55,10 +55,17 @@ public:
 	 * Checks if all items in the count vector are equal to 0
 	 * @return true or false
 	 */
+        inline
 	bool countIsZero()
 	{
 		return std::all_of(m_count.cbegin(), m_count.cend(), [](int i){ return i == 0;});
 	}
+        
+        inline
+        bool countLeQZero()
+        {
+                return std::all_of(m_count.cbegin(), m_count.cend(), [](int i){ return i <= 0;});
+        }
 
 	const t_timestamp& getGvt() const
 	{

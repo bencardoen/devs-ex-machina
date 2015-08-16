@@ -52,7 +52,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
-	this->countMessage(amsg);					// Make sure Mattern is notified
+	//this->countMessage(amsg);					// Make sure Mattern is notified
 	this->m_network->acceptMessage(amsg);
 }
 
@@ -106,7 +106,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 	}
 
 	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
-	if (msg->getColor() == MessageColor::WHITE) {
+	if (msg->getColor() == MessageColor::WHITE && !msg->isAntiMessage()) {
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
@@ -208,7 +208,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 		// Send message to next process in ring
 		return;
 
-	} else if (this->getCoreID() == 0) {
+	} else if (this->getCoreID() == 0) {            // Round 1,2,3...
 		// Else if Pinit gets the control message back after a complete first round
 		// Pinit must be red! Pinit will start a second round if necessary (if count != 0)
 		// Note that Msg_count and Msg_tred must be accumulated over both rounds, whereas
@@ -234,9 +234,23 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 			return;
 		} else {
 			if(round == 2){ // 3rd round, can't go on.
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
-                                return;
+                                // We still can only get here iff V+C <= 0 for all cores (including this one)
+                                // If the msgcount vector has only 0 or negative values, we're still ok.
+                                if(msg->countLeQZero()){
+                                        t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
+                                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
+                                        // Put this info in the message
+                                        msg->setGvtFound(true);
+                                        msg->setGvt(GVT_approx);
+                                        LOG_DEBUG(" GVT Found with non-zero vector ");
+                                        msg->logMessageState();
+                                }
+                                else{
+                                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
+                                        return;
+                                }
                         }
+                        /// CASE Controller process, round == 1, 2nd round needed.
 			LOG_DEBUG("MCORE :: ", this->getCoreID(),
 			        " process init received control message, starting 2nd round");
 			// We start a second round
