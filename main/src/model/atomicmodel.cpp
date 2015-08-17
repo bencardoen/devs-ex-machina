@@ -248,5 +248,4 @@ void AtomicModel::setCorenumber(int corenumber)
 {
 	m_corenumber = corenumber;
 }
-
 }

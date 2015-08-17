@@ -188,6 +188,18 @@ public:
 	 */
 	t_timestamp
 	getEit();
+        
+        
+
+        /**
+         * Allow revert in conservative iff totime==this.getTime().
+         * Used in the following scenario:
+         * Advance model until time>= eit, transition @ eit, then receive
+         * message with timestamp @eit, which fails. (internal + external in 2 turns instead of 1 confluent)
+         * @param 
+         */
+        void revert(const t_timestamp& totime)override;
+
 };
 
 } /* namespace n_model */
