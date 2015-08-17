@@ -210,14 +210,4 @@ t_timestamp Conservativecore::getEit(){
 	return m_eit;
 }
 
-void
-Conservativecore::revert(const t_timestamp& totime){
-        if(this->getTime().getTime() == totime.getTime()){
-                LOG_DEBUG("CCORE :: ", this->getCoreID(), " invoking revert on conservativecore with equal time.");
-                Multicore::revert(totime);
-        }else{
-                throw std::logic_error("Revert before current time, algorithm failed");
-        }                
-}
-
 } /* namespace n_model */
