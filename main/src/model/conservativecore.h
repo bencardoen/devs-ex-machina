@@ -4,6 +4,7 @@
  *  Created on: 4 May 2015
  *      Author: Ben Cardoen -- Tim Tuijn
  */
+#include <unordered_map>
 #include "model/multicore.h"
 #include "tools/sharedvector.h"
 
@@ -109,6 +110,12 @@ private:
 	 */
 	void
 	updateEIT();
+        
+        /**
+         * If time == eit, only generate output for imminent models, but do not transition.
+         */
+        void
+        runSmallStepStalled();
 
 public:
 	Conservativecore() = delete;
@@ -177,6 +184,14 @@ public:
 	 */
 	void
 	initExistingSimulation(const t_timestamp& loaddate)override;
+        
+        /**
+	 * Collect output from imminent models, sort them in the mailbag by destination name.
+         * Marks those models that have generated output, since we may visit them several times.
+	 * @attention : generated messages (events) are timestamped by the current core time.
+	 */
+	virtual void
+	collectOutput(std::set<std::string>& imminents)override;
 
 	/**
 	 * Allow a subclass to query a model after it has transitioned.
@@ -193,6 +208,9 @@ public:
 	t_timestamp
 	getEit()const;
         
+        virtual
+	void
+	runSmallStep()override;
 };
 
 } /* namespace n_model */

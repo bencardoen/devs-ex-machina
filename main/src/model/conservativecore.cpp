@@ -212,4 +212,59 @@ void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
 
+void Conservativecore::runSmallStep(){
+        this->lockSimulatorStep();
+        if(this->getEit().getTime() == this->getTime().getTime()){
+                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT=TIME ");
+                /// TODO Replace with 'light' small step
+                this->runSmallStepStalled();
+                this->unlockSimulatorStep();
+                //Core::runSmallStep();   // Locks & unlocks simstep on it's own.
+        }
+        else{
+                this->unlockSimulatorStep();
+                Core::runSmallStep();   // Locks & unlocks simstep on it's own.
+        }
+}
+
+void Conservativecore::collectOutput(std::set<std::string>& imminents){
+        // Two cases, either we have collected output already, in which case we need to remove the entry from the set
+        // Or we haven't in which case the entry stays put, and we mark it for the next round.
+        std::set<std::string> sortedimminents;
+        for(const auto& imminent : imminents){
+                auto found = m_generated_output_at.find(imminent);
+                if(found != m_generated_output_at.end()){
+                        // Have an entry, check timestamps (possible stale entries)
+                        if(found->second.getTime()!=this->getTime().getTime()){
+                                sortedimminents.insert(imminent);
+                                m_generated_output_at[imminent]=this->getTime();
+                        }else{
+                                // Don't move to new imminents, we need to ignore.
+                                ;
+                        }
+                }
+                else{
+                        // Not yet done, so mark for next turn.
+                        sortedimminents.insert(imminent);
+                        m_generated_output_at[imminent]=this->getTime();
+                }
+        }
+        Core::collectOutput(sortedimminents);
+}
+
+void Conservativecore::runSmallStepStalled()
+{
+
+        std::set<std::string> imminents = this->getImminent();  // Need to get scheduled time, since they are imminent, this should be at now + priority, but that fails for double.
+        collectOutput(imminents); // only collects output once
+        for(const auto& imm : imminents){
+                t_atomicmodelptr mdl = this->m_models[imm];
+                t_timestamp last_scheduled = mdl->getTimeLast();
+                this->scheduleModel(mdl->getName(), last_scheduled);
+        }
+        this->updateEOT();
+        this->updateEIT();
+}
+
+
 } /* namespace n_model */

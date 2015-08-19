@@ -203,16 +203,6 @@ private:
 	virtual
 	void
 	unlockMessages(){;}
-
-	/**
-	 * Schedule model.name @ time t.
-	 * @pre name is a model in this core.
-	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
-	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
-	 * can still be wrong. (see coretest.cpp revertedgecases).
-	 */
-	void
-	scheduleModel(std::string name, t_timestamp t);
         
         /**
          * Check that the internal state of the core is still sane.
@@ -227,6 +217,16 @@ protected:
 	* Stores the model(entries) in ascending (urgent first) scheduled time.
 	*/
 	t_scheduler m_scheduler;
+        
+        /**
+	 * Schedule model.name @ time t.
+	 * @pre name is a model in this core.
+	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
+	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
+	 * can still be wrong. (see coretest.cpp revertedgecases).
+	 */
+	void
+	scheduleModel(std::string name, t_timestamp t);
         
 	/**
 	 * Model storage.
