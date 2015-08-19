@@ -30,16 +30,18 @@ Conservativecore::setEit(const t_timestamp& neweit){
 
 void Conservativecore::sendMessage(const t_msgptr& msg)
 {
-	m_sent_message = true;
-	t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
-	m_distributed_eot->lockEntry(getCoreID());
-	t_timestamp myeot = m_distributed_eot->get(getCoreID());
-	/// Step 4 in PDF, but do this @ caller side.
-	if (myeot < msgtime) {
-		LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
-		m_distributed_eot->set(getCoreID(), msgtime);
-	}
-	m_distributed_eot->unlockEntry(getCoreID());
+        if(!msg->isAntiMessage()){
+                m_sent_message = true;
+                t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
+                m_distributed_eot->lockEntry(getCoreID());
+                t_timestamp myeot = m_distributed_eot->get(getCoreID());
+                /// Step 4 in PDF, but do this @ caller side.
+                if (myeot < msgtime) {
+                        LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
+                        m_distributed_eot->set(getCoreID(), msgtime);
+                }
+                m_distributed_eot->unlockEntry(getCoreID());
+        }
 	Multicore::sendMessage(msg);
 }
 
@@ -75,26 +77,30 @@ void Conservativecore::updateEOT()
 		}
 	}
 
-	t_timestamp neweot = std::min(x,y);
+	const t_timestamp neweot = std::min(x,y);
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
 	this->m_distributed_eot->lockEntry(getCoreID());
+        const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
+        LOG_INFO("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x, " y = ", y);
 }
 
 /**
  * Step 4/5 of CNPDEVS.
- * a) For all messages from the network, for each core, get max timestamp.
+ * a) For all messages from the network, for each core, get max timestamp &| eot value
  * b) From those values, get the minimum and set that value to our own EIT.
  * We don't need step a, this is already done by sendMessage/sharedVector, so we only need to collect the maxima
  * and update EIT with the min value.
+ * Special cases to consider:
+ *      no eot : eit=oo (ok)
+ *      1 eot value @ oo, should not happen, still result is ok (eit=oo).
+ * The algorithm never has to take into account messagetime, since eot reflects sending messages,
+ * we only need to register the min of all maxima, and earliest output time reflects the earliest point in time
+ * where the core will generate a new message (disregarding those in transit/pending completely).
  */
 void Conservativecore::updateEIT()
 {
-	/**Implementation alg:
-	 * 	-> for all kernels we depend on, get their max EOT
-	 * 	-> from that set, get the min, that's our new EIT
-	 */
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(const auto& influence_id : m_influencees){
@@ -103,9 +109,9 @@ void Conservativecore::updateEIT()
 		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
-
+        
+        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", this->getEit());
 	this->setEit(min_eot_others);
-	LOG_INFO("Core:: ", this->getCoreID(), " new EIT == ", min_eot_others);
 }
 
 void Conservativecore::syncTime(){
@@ -204,10 +210,6 @@ void Conservativecore::postTransition(const t_atomicmodelptr& model){
 
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
-}
-
-t_timestamp Conservativecore::getEit(){
-	return m_eit;
 }
 
 } /* namespace n_model */

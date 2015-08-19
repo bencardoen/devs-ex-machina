@@ -51,8 +51,6 @@ private:
 	 */
 	t_timestamp	m_eit;
 
-	t_timestamp getEit()const;
-
 	void setEit(const t_timestamp& neweit);
 
 	/**
@@ -66,6 +64,12 @@ private:
 	 * Record if we sent a message in the last simulation round.
 	 */
 	bool		m_sent_message;
+        
+        /**
+         * In case we're stalled, remember who has sent output and who hasn't to make
+         * sure we don't send duplicate messages.
+         */
+        std::unordered_map<std::string, t_timestamp>    m_generated_output_at;
 
 	/**
 	 * Store the cores that influence this core.
@@ -187,7 +191,8 @@ public:
 	 * Return current Earliest input time.
 	 */
 	t_timestamp
-	getEit();
+	getEit()const;
+        
 };
 
 } /* namespace n_model */
