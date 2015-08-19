@@ -103,7 +103,7 @@ void Conservativecore::updateEIT()
 		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
-        // TODO use getMessages() and take that timestamp into account as well.
+
 	this->setEit(min_eot_others);
 	LOG_INFO("Core:: ", this->getCoreID(), " new EIT == ", min_eot_others);
 }
@@ -140,19 +140,13 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	 */
 	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
 
-        t_timestamp adjustedtime = this->getTime();
-        if(newtime.getTime() > this->getEit().getTime()){
-                LOG_INFO("CCORE :: ", this->getCoreID(), " newtime >= eit , refusing advance");
-                // adjustedtime stays the same.
-        }
-        else{
-                // newtime <= eit, use newtime
-                adjustedtime = std::min(newtime, this->getEit());
-                LOG_INFO("CCORE :: ", this->getCoreID(), " newtime < eit , advacing to ", adjustedtime );
-        }
+	t_timestamp corrected = std::min(this->getEit(), newtime);
+
+	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime);
+
 	// Core::setTime is not locked, which is an issue if we run GVT async.
 	// vv is a synchronized setter.
-	Multicore::setTime(adjustedtime);
+	Multicore::setTime(corrected);
 }
 
 void Conservativecore::init(){
