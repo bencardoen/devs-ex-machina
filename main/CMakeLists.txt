@@ -12,6 +12,10 @@ cmake_minimum_required(VERSION 2.8)
 
 ### PROJECT NAME ##############################################################
 SET(PROJECT_NAME "dxexmachina")
+SET(PROJECT_ROOT "${CMAKE_BINARY_DIR}/../")
+get_filename_component(PROJECT_ROOT "${PROJECT_ROOT}" ABSOLUTE)
+MESSAGE( STATUS "CMAKE_BINARY_DIR:         " ${CMAKE_BINARY_DIR} )
+MESSAGE( STATUS "PROJECT_ROOT:             " ${PROJECT_ROOT} )
 project(${PROJECT_NAME})
 ###############################################################################
 
@@ -158,7 +162,7 @@ SET_TARGET_PROPERTIES(
 		)
 SET_TARGET_PROPERTIES(
 	DEVSEXMACHINACORE_RELEASE PROPERTIES EXCLUDE_FROM_ALL 1
-		COMPILE_FLAGS "-DLOG_LEVEL=0"
+		COMPILE_FLAGS "-DLOG_LEVEL=0 -o3"
 		)
 
 
@@ -230,12 +234,12 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
 
 add_executable(${PROJECT_NAME}_devstone
 	# The following target determines if the Debug/Release package is used
-	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
  	src/performance/devstone/devstone.cpp
  	src/maindevstone.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "-DLOG_LEVEL=15"
+ 					COMPILE_FLAGS "-DLOG_LEVEL=0 -o3"
  					)
 
 
@@ -277,6 +281,31 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
 					COMPILE_FLAGS "-DLOG_LEVEL=0"
 					)
 
+##############################################################################
+### adevs targets ############################################################
+# adevs has its own makefile. Therefore, use that make system instead of writing our own.
+# as a plus: try not to put the adevs library in the same folder as the adevs sources.
+set(ADEVS_ROOT ${PROJECT_ROOT}/adevs)
+set(ADEVS_LIBRARY ${ADEVS_ROOT}/lib/libadevs.a)
+add_custom_target(build_adevs
+                   COMMAND make							# build the library
+                   COMMAND mkdir -p ../lib				# ceate the folder for the librar
+                   COMMAND mv ./libadevs.a -t ../lib/	# move the library to that folder
+                   COMMAND make clean					# clean the build files
+                   WORKING_DIRECTORY ${ADEVS_ROOT}/src/	# the makefile is here
+                   )
+add_library(adevs STATIC IMPORTED)
+add_dependencies(adevs build_adevs)
+set_property(TARGET adevs APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(adevs PROPERTIES
+  IMPORTED_LOCATION_NOCONFIG "${ADEVS_LIBRARY}")
+# now, adevs can be linked to like any other library
+add_executable(adevs_devstone
+	${ADEVS_ROOT}/benchmarks/devstone.cpp
+	)
+SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
+					COMPILE_FLAGS "-o3"
+					)
 
 ### INCLUDE PATHS ############################################################
 # These are found by the section above.
@@ -288,13 +317,15 @@ MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
 include_directories(	
 				src 
 				include
+				${ADEVS_ROOT}/include
 				)   # Project headers are in same folder as source
 ###############################################################################
 
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
@@ -304,12 +335,13 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS})
+target_link_libraries( ${PROJECT_NAME} ${GTESTLIBS})
 target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
+target_link_libraries( adevs_devstone ${LIBS} adevs)
 ###############################################################################
 
 
