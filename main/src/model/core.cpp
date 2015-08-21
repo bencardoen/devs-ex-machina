@@ -272,6 +272,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
+                validateTA(queried);
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");

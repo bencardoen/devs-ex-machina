@@ -153,7 +153,14 @@ n_network::t_timestamp Processor::lookAhead() const
 {
 	if(m_randomta)
 		return n_network::t_timestamp(T_0);
-	return n_network::t_timestamp(T_100);
+        else{
+                const auto& procState = procstate();
+                if (procState.m_event1_counter == inf) {
+                        return n_network::t_timestamp();
+                }else{
+                       return n_network::t_timestamp(T_100);
+                }
+        }
 }
 
 const ProcessorState& Processor::procstate() const
