@@ -31,7 +31,7 @@ def boundedValue(t, minv=None, maxv=None):
 # -f force compilation
 # -r repeat a number of times
 # -c number of simulation cores
-# TODO add options to do only one particular benchmark
+# limited state the names of the benchmarks you want to use
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--force", action="store_true",
     help="[default: false] force compilation, regardless of whether the executable already exists."
@@ -50,6 +50,8 @@ args = parser.parse_args()
 # executable names
 devstoneEx = "./build/dxexmachina_devstone"
 pholdEx = "./build/dxexmachina_phold"
+adevstoneEx = "./build/adevs_devstone"
+adevpholdEx = "./build/adevs_phold"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
@@ -57,13 +59,13 @@ simtypes = SimType(["classic"], ["opdevs", args.cores], ["cpdevs", args.cores])
 
 
 # generators for the benchmark parameters
-def devstonegen(simtype):
+def dxdevstonegen(simtype):
     for depth in [1, 2, 3]:#, 4, 8, 16]:
         for width in [2, 3, 4]:#, 8, 16]:
             yield list(chain([devstoneEx], simtype, [width, depth]))
 
 
-def pholdgen(simtype):
+def dxpholdgen(simtype):
     for depth in [1, 2, 4, 8, 16]:
         for width in [2, 4]:#, 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
@@ -71,31 +73,28 @@ def pholdgen(simtype):
                     yield list(chain([pholdEx], simtype, [width, depth, iterations, remotes]))
 
 
+def adevstonegen(simtype):
+    if simtype == simtypes.optimistic:
+        raise ValueError("Can't have optimistic parallel simulation in adevs.")
+    for depth in [1, 2, 3]:#, 4, 8, 16]:
+        for width in [2, 3, 4]:#, 8, 16]:
+            yield list(chain([adevstoneEx], simtype, ['-w', width, '-d', depth])) # ['-t', endTime], ['-r'] if randTa else []
+
+
+
 # compilation functions
-def compileDevstone(force=False):
+def unifiedCompiler(target, force=False):
     """
-    Compiles the devstone executable, if it doesn't exist already.
+    Compiles the requested target executable, if it doesn't exist already.
     params:
-      force [default=False] use a true value to force compilation
+      target    The name of the cmake target
+      force     [default=False] use a true value to force compilation
     """
     path = Path(devstoneEx)
     if force or not path.exists():
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
-        call(['make', '--always-make', 'dxexmachina_devstone'], cwd='./build')
-
-
-def compilePhold(force=False):
-    """
-    Compiles the devstone executable, if it doesn't exist already.
-    params:
-      force [default=False] use a true value to force compilation
-    """
-    path = Path(pholdEx)
-    if force or not path.exists():
-        # if path.exists():   # the executable already exists. Remove it or make won't do anything
-        #     path.unlink()
-        call(['make', '--always-make', 'dxexmachina_phold'], cwd='./build')
+        call(['make', '--always-make', target], cwd='./build')
 
 
 if __name__ == '__main__':
@@ -105,17 +104,24 @@ if __name__ == '__main__':
         print("Please do so and then rerun the benchmark script.")
         quit()
 
-    devc = partial(compileDevstone, args.force)
-    pholdc = partial(compilePhold, args.force)
-    devstone = SimType(
-        defaults.Benchmark('devstone/classic', devc, partial(devstonegen, simtypes.classic), "devstone, classic"),
-        defaults.Benchmark('devstone/optimistic', devc, partial(devstonegen, simtypes.optimistic), "devstone, optimistic"),
-        defaults.Benchmark('devstone/conservative', devc, partial(devstonegen, simtypes.conservative), "devstone, conservative"),
+    dxdevc = partial(unifiedCompiler, 'dxexmachina_devstone', args.force)
+    dxpholdc = partial(unifiedCompiler, 'dxexmachina_phold', args.force)
+    adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
+    apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
+    dxdevstone = SimType(
+        defaults.Benchmark('devstone/classic', dxdevc, partial(dxdevstonegen, simtypes.classic), "dxexmachina devstone, classic"),
+        defaults.Benchmark('devstone/optimistic', dxdevc, partial(dxdevstonegen, simtypes.optimistic), "dxexmachina devstone, optimistic"),
+        defaults.Benchmark('devstone/conservative', dxdevc, partial(dxdevstonegen, simtypes.conservative), "dxexmachina devstone, conservative"),
         )
-    phold = SimType(
-        defaults.Benchmark('phold/classic', pholdc, partial(pholdgen, simtypes.classic), "phold, classic"),
-        defaults.Benchmark('phold/optimistic', pholdc, partial(pholdgen, simtypes.optimistic), "phold, optimistic"),
-        defaults.Benchmark('phold/conservative', pholdc, partial(pholdgen, simtypes.conservative), "phold, conservative"),
+    dxphold = SimType(
+        defaults.Benchmark('phold/classic', dxpholdc, partial(dxpholdgen, simtypes.classic), "dxexmachina phold, classic"),
+        defaults.Benchmark('phold/optimistic', dxpholdc, partial(dxpholdgen, simtypes.optimistic), "dxexmachina phold, optimistic"),
+        defaults.Benchmark('phold/conservative', dxpholdc, partial(dxpholdgen, simtypes.conservative), "dxexmachina phold, conservative"),
+        )
+    adevstone = SimType(
+        defaults.Benchmark('adevstone/classic', adevc, partial(adevstonegen, simtypes.classic), "adevs devstone, classic"),
+        None,
+        defaults.Benchmark('adevstone/conservative', adevc, partial(adevstonegen, simtypes.conservative), "adevs devstone, conservative"),
         )
     # do all the preparation stuff
     driver = defaults.defaultDriver
@@ -127,10 +133,10 @@ if __name__ == '__main__':
     # do the benchmarks!
     donelist = []
     print("args.limited: ", args.limited)
-    for bmarkset in [devstone, phold]:
+    for bmarkset in [dxdevstone, dxphold, adevstone]:
         doCompile = True
         for bmark in bmarkset:
-            if len(args.limited) > 0 and bmark.name not in args.limited:
+            if bmark is None or (len(args.limited) > 0 and bmark.name not in args.limited):
                 continue
             print("> executing benchmark {}".format(bmark.name))
             donelist.append(bmark.name)
@@ -149,8 +155,9 @@ if __name__ == '__main__':
             for i in wrong:
                 print("    {}".format(i))
             print("> Accepted benchmarks:")
-            for i in chain(devstone, phold):
-                print("    {}".format(i.name))
+            for i in chain(dxdevstone, dxphold, adevstone):
+                if i is not None:
+                    print("    {}".format(i.name))
     if len(defaults.timeouts) > 0:
         print("A total of {} benchmarks timed out after a waiting period of {} seconds:".format(len(defaults.timeouts), defaults.timeout))
         for i in defaults.timeouts:

@@ -257,12 +257,19 @@ int main(int argc, char** argv)
 	bool randTa = false;
 
 	bool hasError = false;
+	bool isClassic = true;
+
 	for(int i = 1; i < argc; ++argvc, ++i){
 		char c = getOpt(*argvc);
 		if(!c){
-			std::cout << "Unknown argument: " << *argvc;
-			hasError = true;
-			continue;
+			if(!strcmp(*argvc, "classic")){
+				isClassic = true;
+				continue;
+			} else {
+				std::cout << "Unknown argument: " << *argvc << '\n';
+				hasError = true;
+				continue;
+			}
 		}
 		switch(c){
 		case optETime:
@@ -270,7 +277,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				eTime = toData<double>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime;
+				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
 			break;
 		case optWidth:
@@ -278,7 +285,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				width = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime;
+				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
 			break;
 		case optDepth:
@@ -286,7 +293,7 @@ int main(int argc, char** argv)
 			if(i < argc-1){
 				depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime;
+				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
 			break;
 		case optRand:
@@ -297,7 +304,7 @@ int main(int argc, char** argv)
 			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r]\n";
 			return 0;
 		default:
-			std::cout << "Unknown argument: " << *argvc;
+			std::cout << "Unknown argument: " << *argvc << '\n';
 			hasError = true;
 			continue;
 		}
@@ -305,13 +312,13 @@ int main(int argc, char** argv)
 	if(hasError)
 		return -1;
 
-
-	adevs::Devs<t_event>* model = new DEVSTone(width, depth, randTa);
-	adevs::Simulator<t_event> sim(model);
-	adevs::EventListener<t_event>* listener = new Listener();
-	sim.addEventListener(listener);
-	sim.execUntil(eTime);
-	delete listener;
-	delete model;
-	std::cout << "done!\n";
+	if(isClassic){
+		adevs::Devs<t_event>* model = new DEVSTone(width, depth, randTa);
+		adevs::Simulator<t_event> sim(model);
+		adevs::EventListener<t_event>* listener = new Listener();
+		sim.addEventListener(listener);
+		sim.execUntil(eTime);
+		delete listener;
+		delete model;
+	}
 }
