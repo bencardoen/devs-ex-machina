@@ -140,7 +140,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	 */
 	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
 
-	t_timestamp corrected = std::min( this->getEit(), newtime);
+	t_timestamp corrected = std::min(this->getEit(), newtime);
 
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime);
 
@@ -186,7 +186,8 @@ void Conservativecore::buildInfluenceeMap(){
 	}
 	for(const auto& modelname : influencees){
 		std::size_t influencee_core = this->m_loctable->lookupModel(modelname);
-		this->m_influencees.insert(influencee_core);
+                if(influencee_core != this->getCoreID())                // Dependency on self is implied.
+                        this->m_influencees.insert(influencee_core);
 	}
 	LOG_INFO("CCORE :: ", this->getCoreID(), " influencee map == ");
 	for(const auto& coreid : m_influencees){
