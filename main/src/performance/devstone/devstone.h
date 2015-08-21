@@ -53,8 +53,8 @@ class Processor : public n_model::AtomicModel
 {
 private:
 	static std::size_t m_numcounter;
-	bool m_randomta;
-	n_model::t_portptr m_out;
+	const bool m_randomta;
+	const n_model::t_portptr m_out;
 public:
 	const std::size_t m_num;
 	Processor(std::string name, bool randomta);
@@ -74,7 +74,7 @@ public:
 class Generator : public n_model::AtomicModel
 {
 private:
-	n_model::t_portptr m_out;
+	const n_model::t_portptr m_out;
 public:
 	Generator();
 	virtual ~Generator();

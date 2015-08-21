@@ -259,7 +259,8 @@ DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
 
 	connectPorts(gen->getPort("out_event1"), recurse->getPort("in_event1"));
 
-	srand (static_cast <unsigned> (time(0))); // seed once in this simulation
+	if(randomta)
+		srand (static_cast <unsigned> (time(0))); // seed once in this simulation
 }
 
 DEVStone::~DEVStone()
