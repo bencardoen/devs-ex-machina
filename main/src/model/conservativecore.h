@@ -21,17 +21,13 @@ typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_eotvector;
 
 /**
  * A refresher on the simulation logic:
- * 	-> getMessages() //from network.
+ * 	-> getMessages() //from network, local messages are handled in collectOutput().
  * 		-> queue locally for processing
- * 	IF ¬IDLE
  * 	-> getImminent()						// Steps 1&2 are implied here, control time <=eit
  * 	-> doOutput on imminent
  *		-> send non local output, queue the rest		// Intercepted here @sendmessage
  *	-> getPendingMail() // get messages with time < current
  *	-> transition(imminent + mail)					// +add Lookahead
- *
- *
- *
  *	-> syncTime, but override so that we don't move beyond eit.	// Step 4,5, calc&set EOT/EIT, intercept time
  */
 
@@ -113,6 +109,13 @@ private:
         
         /**
          * If time == eit, only generate output for imminent models, but do not transition.
+         * We can only get in this state if we have either a msg with timestamp == now and/or
+         * a model imminent @ now. We're not allowed to transition, only to generate output (which will
+         * advance our EOT, and therefore advance other's eit.
+         * By the same reasoning, our eit will advance (eventually).
+         * In this simulation round we do not query the network for new messages (which we're not allowed to
+         * hand off to models), and we do not advance time (since time==eit, and our imminent model and or message is still
+         * pending @ time=now.
          */
         void
         runSmallStepStalled();

@@ -78,7 +78,6 @@ void Conservativecore::updateEOT()
 	}
 
 	const t_timestamp neweot = std::min(x,y);
-	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
@@ -131,9 +130,10 @@ void Conservativecore::syncTime(){
 
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
 	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
-	if(this->isIdle()){
+	if(this->getTime()>=this->getTerminationTime()){        // isIdle is dangerous here.
 		this->m_distributed_eot->lockEntry(getCoreID());
-		this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
+                this->m_distributed_eot->set(this->getCoreID(), t_timestamp::infinity());
+		//this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
 		this->m_distributed_eot->unlockEntry(getCoreID());
 	}
 }
@@ -148,7 +148,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 	t_timestamp corrected = std::min(this->getEit(), newtime);
 
-	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime);
+	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
 
 	// Core::setTime is not locked, which is an issue if we run GVT async.
 	// vv is a synchronized setter.
@@ -213,17 +213,21 @@ void Conservativecore::resetLookahead(){
 }
 
 void Conservativecore::runSmallStep(){
-        this->lockSimulatorStep();
+        
+        this->lockSimulatorStep();                      //L
+        // TODO DEBUG
+        
         if(this->getEit().getTime() == this->getTime().getTime()){
-                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT=TIME ");
-                /// TODO Replace with 'light' small step
+                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
+    
                 this->runSmallStepStalled();
-                this->unlockSimulatorStep();
-                //Core::runSmallStep();   // Locks & unlocks simstep on it's own.
+    
+                this->unlockSimulatorStep();            // UL
         }
         else{
-                this->unlockSimulatorStep();
-                Core::runSmallStep();   // Locks & unlocks simstep on it's own.
+                this->unlockSimulatorStep();            // UL
+                
+                Core::runSmallStep();   //  L -> UL
         }
 }
 
@@ -236,32 +240,35 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
                 if(found != m_generated_output_at.end()){
                         // Have an entry, check timestamps (possible stale entries)
                         if(found->second.getTime()!=this->getTime().getTime()){
+                                // Stale entry, need to collect output and mark model at current time.
                                 sortedimminents.insert(imminent);
                                 m_generated_output_at[imminent]=this->getTime();
                         }else{
-                                // Don't move to new imminents, we need to ignore.
+                                // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
                                 ;
                         }
                 }
                 else{
-                        // Not yet done, so mark for next turn.
+                        // No entry, so make one at current time.
                         sortedimminents.insert(imminent);
                         m_generated_output_at[imminent]=this->getTime();
                 }
         }
+        // Base function handles all the rest (message routing etc..)
         Core::collectOutput(sortedimminents);
 }
 
 void Conservativecore::runSmallStepStalled()
 {
-
-        std::set<std::string> imminents = this->getImminent();  // Need to get scheduled time, since they are imminent, this should be at now + priority, but that fails for double.
+        std::set<std::string> imminents = this->getImminent();
         collectOutput(imminents); // only collects output once
         for(const auto& imm : imminents){
-                t_atomicmodelptr mdl = this->m_models[imm];
-                t_timestamp last_scheduled = mdl->getTimeLast();
+                const t_atomicmodelptr mdl = this->m_models[imm];
+                const t_timestamp last_scheduled = mdl->getTimeLast();
                 this->scheduleModel(mdl->getName(), last_scheduled);
         }
+        // TODO : if nothing has been done, do you update EOT (risk of getting unintended oo)
+        //if(imminents.size()!=0)
         this->updateEOT();
         this->updateEIT();
 }

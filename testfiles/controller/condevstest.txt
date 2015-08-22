@@ -19,6 +19,11 @@ __  Current Time: 10____________________
 			port <A>:
 		Next scheduled internal transition at time 20
 
+	INTERNAL TRANSITION in model modelB
+		New State: 1
+		Output Port Configuration:
+		Next scheduled internal transition at time 20
+
 __  Current Time: 20____________________
 
 
@@ -27,6 +32,11 @@ __  Current Time: 20____________________
 		Output Port Configuration:
 			port <A>:
 		Next scheduled internal transition at time 30
+
+	INTERNAL TRANSITION in model modelB
+		New State: 2
+		Output Port Configuration:
+		Next scheduled internal transition at time inf
 
 __  Current Time: 30____________________
 
@@ -39,7 +49,7 @@ __  Current Time: 30____________________
 		Next scheduled internal transition at time 40
 
 	EXTERNAL TRANSITION in model modelB
-		New State: 0
+		New State: 3
 		Input Port Configuration:
 			port <B>:
 				start
@@ -55,7 +65,7 @@ __  Current Time: 40____________________
 		Next scheduled internal transition at time 50
 
 	INTERNAL TRANSITION in model modelB
-		New State: 1
+		New State: 4
 		Output Port Configuration:
 		Next scheduled internal transition at time 50
 
@@ -69,7 +79,7 @@ __  Current Time: 50____________________
 		Next scheduled internal transition at time 60
 
 	INTERNAL TRANSITION in model modelB
-		New State: 2
+		New State: 5
 		Output Port Configuration:
 		Next scheduled internal transition at time inf
 
@@ -84,7 +94,7 @@ __  Current Time: 60____________________
 		Next scheduled internal transition at time 70
 
 	EXTERNAL TRANSITION in model modelB
-		New State: 3
+		New State: 6
 		Input Port Configuration:
 			port <B>:
 				start
