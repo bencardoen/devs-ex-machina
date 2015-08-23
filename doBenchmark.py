@@ -80,7 +80,12 @@ def adevstonegen(simtype):
         for width in [2, 3, 4]:#, 8, 16]:
             yield list(chain([adevstoneEx], simtype, ['-w', width, '-d', depth])) # ['-t', endTime], ['-r'] if randTa else []
 
-
+def apholdgen(simtype):
+    for depth in [1, 2, 4, 8, 16]:
+        for width in [2, 4]:#, 8, 16, 32]:
+            for iterations in [16, 64, 256, 1024]:
+                for remotes in [10]:
+                    yield list(chain([pholdEx], simtype, ['n', width, 's', depth, '-i', iterations, '-r', remotes]))
 
 # compilation functions
 def unifiedCompiler(target, force=False):
@@ -123,6 +128,12 @@ if __name__ == '__main__':
         None,
         defaults.Benchmark('adevstone/conservative', adevc, partial(adevstonegen, simtypes.conservative), "adevs devstone, conservative"),
         )
+    aphold = SimType(
+        defaults.Benchmark('aphold/classic', apholdc, partial(apholdgen, simtypes.classic), "adevs phold, classic"),
+        None,
+        defaults.Benchmark('aphold/conservative', apholdc, partial(apholdgen, simtypes.conservative), "adevs phold, conservative"),
+        )
+    allBenchmark = [dxdevstone, dxphold, adevstone, aphold]
     # do all the preparation stuff
     driver = defaults.defaultDriver
     analyzer = defaults.perfAnalyzer
@@ -133,7 +144,7 @@ if __name__ == '__main__':
     # do the benchmarks!
     donelist = []
     print("args.limited: ", args.limited)
-    for bmarkset in [dxdevstone, dxphold, adevstone]:
+    for bmarkset in allBenchmark:
         doCompile = True
         for bmark in bmarkset:
             if bmark is None or (len(args.limited) > 0 and bmark.name not in args.limited):
@@ -155,7 +166,7 @@ if __name__ == '__main__':
             for i in wrong:
                 print("    {}".format(i))
             print("> Accepted benchmarks:")
-            for i in chain(dxdevstone, dxphold, adevstone):
+            for i in chain(*allBenchmark):
                 if i is not None:
                     print("    {}".format(i.name))
     if len(defaults.timeouts) > 0:

@@ -307,6 +307,13 @@ SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
 					COMPILE_FLAGS "-o3"
 					)
 
+add_executable(adevs_phold
+	${ADEVS_ROOT}/benchmarks/phold.cpp
+	)
+SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
+					COMPILE_FLAGS "-o3"
+					)
+
 ### INCLUDE PATHS ############################################################
 # These are found by the section above.
 include_directories(${Boost_INCLUDE_DIRS})             
@@ -342,6 +349,7 @@ target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
+target_link_libraries( adevs_phold ${LIBS} adevs)
 ###############################################################################
 
 
