@@ -157,6 +157,9 @@ private:
         
 protected:
 	std::size_t 	m_cores;
+        
+        t_timestamp
+        getLastMsgSentTime();
 
 public:
 	Multicore()=delete;

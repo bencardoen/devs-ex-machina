@@ -56,11 +56,6 @@ private:
 	 * A core only reads influencing core eots, and only writes its own.
 	 */
 	t_eotvector	m_distributed_eot;
-
-	/**
-	 * Record if we sent a message in the last simulation round.
-	 */
-	bool		m_sent_message;
         
         /**
          * In case we're stalled, remember who has sent output and who hasn't to make
@@ -132,14 +127,6 @@ public:
 		const n_control::t_location_tableptr& ltable, size_t cores,
 		const t_eotvector& vc);
 	virtual ~Conservativecore();
-
-	/**
-	 * If the current EOT < than msg timestamp, update the value and remember we've sent
-	 * a message.
-	 * Required for CNPDEVS
-	 */
-	void
-	sendMessage(const t_msgptr& msg)override;
 
 	/**
 	 * In theory, in a distributed setting we need access to getMessages() to get an EOT value.

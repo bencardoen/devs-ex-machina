@@ -12,7 +12,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc), m_sent_message(false),m_min_lookahead(t_timestamp::infinity())
+	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_min_lookahead(t_timestamp::infinity())
 {
 	;
 }
@@ -26,23 +26,6 @@ t_timestamp Conservativecore::getEit()const {return m_eit;}
 void
 Conservativecore::setEit(const t_timestamp& neweit){
 	this->m_eit = neweit;
-}
-
-void Conservativecore::sendMessage(const t_msgptr& msg)
-{
-        if(!msg->isAntiMessage()){
-                m_sent_message = true;
-                t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
-                m_distributed_eot->lockEntry(getCoreID());
-                t_timestamp myeot = m_distributed_eot->get(getCoreID());
-                /// Step 4 in PDF, but do this @ caller side.
-                if (myeot < msgtime) {
-                        LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
-                        m_distributed_eot->set(getCoreID(), msgtime);
-                }
-                m_distributed_eot->unlockEntry(getCoreID());
-        }
-	Multicore::sendMessage(msg);
 }
 
 /** Step 3 of CNPDEVS
@@ -64,8 +47,8 @@ void Conservativecore::updateEOT()
 	}
 
 	t_timestamp y = t_timestamp::infinity();
-	if(this->m_sent_message){
-		this->m_sent_message = false;		// Reset sent flag, else we won't have a clue.
+        t_timestamp lastmsgtime = this->getLastMsgSentTime();
+	if(lastmsgtime.getTime()==this->getTime().getTime()){
 		if(this->m_eit.getTime()==std::numeric_limits<t_timestamp::t_time>::max()){	// Be very careful here, eit=oo does not imply
 			y = t_timestamp(this->getTime().getTime(), 1);				// that we're sending with timestamp oo, a detail
 		}else{										// that's missing from the pdf.
@@ -80,6 +63,9 @@ void Conservativecore::updateEOT()
 	const t_timestamp neweot = std::min(x,y);
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        if(!isInfinity(oldeot)  && oldeot > neweot){
+                LOG_WARNING("MCORE:: ",this->getCoreID(), " eot moving backward in time. BUGON");
+        }
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
         LOG_INFO("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x, " y = ", y);
