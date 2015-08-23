@@ -976,7 +976,7 @@ TEST(Conservativecore, GVT){
         EXPECT_EQ(c1->getEit().getTime(), 200u);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			// time : 0->58, EIT=200, EOT=58
-        EXPECT_EQ(eotvector->get(1).getTime(), 58u);
+        EXPECT_EQ(eotvector->get(1).getTime(), 0u);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			// time 58->108, EIT=200, EOT=108
         LOG_INFO("--------------------------------------------------");
@@ -1084,8 +1084,8 @@ TEST(Conservativecore, Abstract){
 	EXPECT_TRUE(isInfinity(c0->getEit()));			// unchanged
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();					// 
-	EXPECT_EQ(eotvector->get(1), t_timestamp(40u,0u));		// Eot = min(x,y), x=40 (eit+lookahead)
-	EXPECT_EQ(c1->getEit().getTime(), 30u);			// Eit = 30
+	EXPECT_EQ(eotvector->get(1), t_timestamp(30u,0u));		
+	EXPECT_EQ(c1->getEit().getTime(), 30u);			// 
 	
         LOG_INFO("--------------------------------------------------");
 	c0->runSmallStep();					//
@@ -1094,7 +1094,7 @@ TEST(Conservativecore, Abstract){
 	EXPECT_TRUE(c0->getTime().getTime()==50);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();					// 
-	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// 
+	EXPECT_EQ(eotvector->get(1).getTime(), 30u);		// 
 	EXPECT_EQ(c1->getEit().getTime(), 50u);			// 
 	EXPECT_EQ(c1->getTime().getTime(),30u);
 	// A:4, B:3
@@ -1130,7 +1130,7 @@ TEST(Conservativecore, Abstract){
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();					// 
 								// 
-	EXPECT_EQ(eotvector->get(1).getTime(), 70u);		// 
+	EXPECT_EQ(eotvector->get(1).getTime(), 60u);		// 
 	EXPECT_TRUE(isInfinity(c1->getEit()));			// 
 	EXPECT_EQ(c1->getTime().getTime(),60u);			// 
 	
