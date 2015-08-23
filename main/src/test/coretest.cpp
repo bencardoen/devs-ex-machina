@@ -975,24 +975,24 @@ TEST(Conservativecore, GVT){
 	EXPECT_EQ(eotvector->get(1).getTime(),0u); 
         EXPECT_EQ(c1->getEit().getTime(), 200u);
         LOG_INFO("--------------------------------------------------");
-	c1->runSmallStep();			// time : 0->58, EIT=200, EOT=58
+	c1->runSmallStep();			
         EXPECT_EQ(eotvector->get(1).getTime(), 0u);
         LOG_INFO("--------------------------------------------------");
-	c1->runSmallStep();			// time 58->108, EIT=200, EOT=108
+	c1->runSmallStep();			
         LOG_INFO("--------------------------------------------------");
-	c1->runSmallStep();			// time 108 -> 118
+	c1->runSmallStep();			
         EXPECT_EQ(c1->getTime().getTime(),118u);
         LOG_INFO("--------------------------------------------------");
-        c1->runSmallStep();                     // time 118->178
+        c1->runSmallStep();                     
         EXPECT_EQ(c1->getTime().getTime(),178u);
         LOG_INFO("--------------------------------------------------");
-	c1->runSmallStep();			// want to advance from 178->228, but EIT=200, time =200
+	c1->runSmallStep();			
         EXPECT_EQ(c1->getTime().getTime(),200u);
         LOG_INFO("--------------------------------------------------");
-	c0->runSmallStep();			// EIT = oo, EOT[0]=200
+	c0->runSmallStep();			
 	EXPECT_EQ(eotvector->get(0).getTime(), 200u);
         LOG_INFO("--------------------------------------------------");
-	c1->runSmallStep();			// still stuck @200
+	c1->runSmallStep();			
 	EXPECT_EQ(eotvector->get(1).getTime(), 228u);   // core is stuck @ 200, but EOT = 228, Core 1's next scheduled time is 228.
         LOG_INFO("--------------------------------------------------");
 	std::atomic<bool> rungvt(true);
