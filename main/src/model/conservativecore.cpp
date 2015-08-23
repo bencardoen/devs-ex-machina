@@ -30,16 +30,18 @@ Conservativecore::setEit(const t_timestamp& neweit){
 
 void Conservativecore::sendMessage(const t_msgptr& msg)
 {
-	m_sent_message = true;
-	t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
-	m_distributed_eot->lockEntry(getCoreID());
-	t_timestamp myeot = m_distributed_eot->get(getCoreID());
-	/// Step 4 in PDF, but do this @ caller side.
-	if (myeot < msgtime) {
-		LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
-		m_distributed_eot->set(getCoreID(), msgtime);
-	}
-	m_distributed_eot->unlockEntry(getCoreID());
+        if(!msg->isAntiMessage()){
+                m_sent_message = true;
+                t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
+                m_distributed_eot->lockEntry(getCoreID());
+                t_timestamp myeot = m_distributed_eot->get(getCoreID());
+                /// Step 4 in PDF, but do this @ caller side.
+                if (myeot < msgtime) {
+                        LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
+                        m_distributed_eot->set(getCoreID(), msgtime);
+                }
+                m_distributed_eot->unlockEntry(getCoreID());
+        }
 	Multicore::sendMessage(msg);
 }
 
@@ -75,26 +77,29 @@ void Conservativecore::updateEOT()
 		}
 	}
 
-	t_timestamp neweot = std::min(x,y);
-	LOG_INFO("CCore:: ", this->getCoreID(), " updating eot to ", neweot, " x = ", x, " y = ", y);
+	const t_timestamp neweot = std::min(x,y);
 	this->m_distributed_eot->lockEntry(getCoreID());
+        const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
+        LOG_INFO("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x, " y = ", y);
 }
 
 /**
  * Step 4/5 of CNPDEVS.
- * a) For all messages from the network, for each core, get max timestamp.
+ * a) For all messages from the network, for each core, get max timestamp &| eot value
  * b) From those values, get the minimum and set that value to our own EIT.
  * We don't need step a, this is already done by sendMessage/sharedVector, so we only need to collect the maxima
  * and update EIT with the min value.
+ * Special cases to consider:
+ *      no eot : eit=oo (ok)
+ *      1 eot value @ oo, should not happen, still result is ok (eit=oo).
+ * The algorithm never has to take into account messagetime, since eot reflects sending messages,
+ * we only need to register the min of all maxima, and earliest output time reflects the earliest point in time
+ * where the core will generate a new message (disregarding those in transit/pending completely).
  */
 void Conservativecore::updateEIT()
 {
-	/**Implementation alg:
-	 * 	-> for all kernels we depend on, get their max EOT
-	 * 	-> from that set, get the min, that's our new EIT
-	 */
 	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(const auto& influence_id : m_influencees){
@@ -103,9 +108,9 @@ void Conservativecore::updateEIT()
 		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
-
+        
+        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", this->getEit());
 	this->setEit(min_eot_others);
-	LOG_INFO("Core:: ", this->getCoreID(), " new EIT == ", min_eot_others);
 }
 
 void Conservativecore::syncTime(){
@@ -125,9 +130,10 @@ void Conservativecore::syncTime(){
 
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
 	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
-	if(this->isIdle()){
+	if(this->getTime()>=this->getTerminationTime()){        // isIdle is dangerous here.
 		this->m_distributed_eot->lockEntry(getCoreID());
-		this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
+                this->m_distributed_eot->set(this->getCoreID(), t_timestamp::infinity());
+		//this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
 		this->m_distributed_eot->unlockEntry(getCoreID());
 	}
 }
@@ -142,7 +148,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 	t_timestamp corrected = std::min(this->getEit(), newtime);
 
-	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime);
+	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
 
 	// Core::setTime is not locked, which is an issue if we run GVT async.
 	// vv is a synchronized setter.
@@ -206,8 +212,66 @@ void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
 
-t_timestamp Conservativecore::getEit(){
-	return m_eit;
+void Conservativecore::runSmallStep(){
+        
+        this->lockSimulatorStep();                      //L
+        // TODO DEBUG
+        
+        if(this->getEit().getTime() == this->getTime().getTime()){
+                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
+    
+                this->runSmallStepStalled();
+    
+                this->unlockSimulatorStep();            // UL
+        }
+        else{
+                this->unlockSimulatorStep();            // UL
+                
+                Core::runSmallStep();   //  L -> UL
+        }
 }
+
+void Conservativecore::collectOutput(std::set<std::string>& imminents){
+        // Two cases, either we have collected output already, in which case we need to remove the entry from the set
+        // Or we haven't in which case the entry stays put, and we mark it for the next round.
+        std::set<std::string> sortedimminents;
+        for(const auto& imminent : imminents){
+                auto found = m_generated_output_at.find(imminent);
+                if(found != m_generated_output_at.end()){
+                        // Have an entry, check timestamps (possible stale entries)
+                        if(found->second.getTime()!=this->getTime().getTime()){
+                                // Stale entry, need to collect output and mark model at current time.
+                                sortedimminents.insert(imminent);
+                                m_generated_output_at[imminent]=this->getTime();
+                        }else{
+                                // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
+                                ;
+                        }
+                }
+                else{
+                        // No entry, so make one at current time.
+                        sortedimminents.insert(imminent);
+                        m_generated_output_at[imminent]=this->getTime();
+                }
+        }
+        // Base function handles all the rest (message routing etc..)
+        Core::collectOutput(sortedimminents);
+}
+
+void Conservativecore::runSmallStepStalled()
+{
+        std::set<std::string> imminents = this->getImminent();
+        collectOutput(imminents); // only collects output once
+        for(const auto& imm : imminents){
+                const t_atomicmodelptr mdl = this->m_models[imm];
+                const t_timestamp last_scheduled = mdl->getTimeLast();
+                this->scheduleModel(mdl->getName(), last_scheduled);
+        }
+        // TODO : if nothing has been done, do you update EOT (risk of getting unintended oo)
+        //if(imminents.size()!=0)
+        this->updateEOT();
+        this->updateEIT();
+}
+
 
 } /* namespace n_model */
