@@ -5,6 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
+#include <thread>
+#include <chrono>
 #include "model/conservativecore.h"
 
 namespace n_model {
@@ -12,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc), m_sent_message(false),m_min_lookahead(t_timestamp::infinity())
+	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_min_lookahead(t_timestamp::infinity())
 {
 	;
 }
@@ -28,61 +30,51 @@ Conservativecore::setEit(const t_timestamp& neweit){
 	this->m_eit = neweit;
 }
 
-void Conservativecore::sendMessage(const t_msgptr& msg)
-{
-        if(!msg->isAntiMessage()){
-                m_sent_message = true;
-                t_timestamp msgtime = msg->getTimeStamp();	// Is same as getTime(), but be explicit (and getTime is locked)
-                m_distributed_eot->lockEntry(getCoreID());
-                t_timestamp myeot = m_distributed_eot->get(getCoreID());
-                /// Step 4 in PDF, but do this @ caller side.
-                if (myeot < msgtime) {
-                        LOG_DEBUG("Updating EOT for ", this->getCoreID(), " from ", myeot, " to ", msgtime);
-                        m_distributed_eot->set(getCoreID(), msgtime);
-                }
-                m_distributed_eot->unlockEntry(getCoreID());
-        }
-	Multicore::sendMessage(msg);
-}
-
 /** Step 3 of CNPDEVS
-	 * Pseudocode :
-	 * 	EOT(myid) = std::min(x,y)
-	 * 		x = eit + lookahead_min
-	 * 		y = 	if(sent_message)	eit,1
-	 * 			else			top of scheduler (next event)
-	 * 			none of the above : oo
-	 */
+*     This assumes we're at eit, which we won't always be.
+*     So for us, use min(time, eit) wherever alg uses eit.
+* Pseudocode :
+* 	EOT(myid) = std::min(x,y)
+* 		x = eit + lookahead_min
+* 		y = 	if(sent_message)	eit,1
+* 			else			top of scheduler (next event)
+*                       // what if : not sent message, time = 50, msg waiting @70, next event = 90
+*                       --> y = min(sent_msg, next_imminent, next_pendingmsg);
+* 			none of the above : oo
+*/
 void Conservativecore::updateEOT()
 {
-	t_timestamp x;
-	/// Edge case : EIT=oo (non-dependent kernel), DO NOT add lookahead to inf, but use time().
-	if(isInfinity(this->m_eit) || isInfinity(this->m_min_lookahead)){
-		x = t_timestamp::infinity();
-	}else{
-		x=t_timestamp(m_eit.getTime() + this->m_min_lookahead.getTime(), 0);	//  this can still overflow, but then we're dead anyway.
+        // Lookahead based
+	t_timestamp x = t_timestamp::infinity();
+        // If we've generated output, eot=time
+        t_timestamp y_sent = t_timestamp::infinity();
+        // Next possible event
+	t_timestamp y_imminent = t_timestamp::infinity();
+        t_timestamp y_pending = t_timestamp::infinity();
+        
+	if(! isInfinity(this->m_min_lookahead)){
+		x=this->getTime() + this->m_min_lookahead;	//  this can still overflow, but then we're dead anyway.
 	}
 
-	t_timestamp y = t_timestamp::infinity();
-	if(this->m_sent_message){
-		this->m_sent_message = false;		// Reset sent flag, else we won't have a clue.
-		if(this->m_eit.getTime()==std::numeric_limits<t_timestamp::t_time>::max()){	// Be very careful here, eit=oo does not imply
-			y = t_timestamp(this->getTime().getTime(), 1);				// that we're sending with timestamp oo, a detail
-		}else{										// that's missing from the pdf.
-			y = t_timestamp(this->m_eit.getTime(), 1);
-		}
-	}else{
-		if(!this->m_scheduler->empty()){
-			y = this->m_scheduler->top().getTime();
-		}
-	}
+	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
+		y_sent=this->getTime();
+        
+        if(!this->m_scheduler->empty())
+                y_imminent = this->m_scheduler->top().getTime();
+        
+        y_pending = this->getFirstMessageTime();                // Message lock
 
-	const t_timestamp neweot = std::min(x,y);
+	const t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+        
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        if(!isInfinity(oldeot)  && oldeot > neweot){
+                LOG_ERROR("MCORE:: ",this->getCoreID(), " eot moving backward in time, BUG.");
+        }
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
-        LOG_INFO("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x, " y = ", y);
+        LOG_DEBUG("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
+        LOG_DEBUG("CCore:: ", this->getCoreID(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
 }
 
 /**
@@ -108,8 +100,17 @@ void Conservativecore::updateEIT()
 		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
+        const t_timestamp oldeot = this->getEit();
+        /** If our current time is at eit, and the new calculation again finds the same value,
+         *  go to sleep for a short while instead of wasting rounds.
+         *  We have several options here : each stalled round identical sleep,
+         *  an exponential backoff each time we hit this path, or condition variable (very complex, only wake on eot entry we listen to). 
+         */
         
-        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", this->getEit());
+        if(this->getTime().getTime()==min_eot_others.getTime()){
+                std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        }
+        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", oldeot);
 	this->setEit(min_eot_others);
 }
 
@@ -195,7 +196,7 @@ void Conservativecore::buildInfluenceeMap(){
                 if(influencee_core != this->getCoreID())                // Dependency on self is implied.
                         this->m_influencees.insert(influencee_core);
 	}
-	LOG_INFO("CCORE :: ", this->getCoreID(), " influencee map == ");
+	
 	for(const auto& coreid : m_influencees){
 		LOG_INFO("CCORE :: ", this->getCoreID() , " influenced by " ,  coreid);
 	}
@@ -215,10 +216,10 @@ void Conservativecore::resetLookahead(){
 void Conservativecore::runSmallStep(){
         
         this->lockSimulatorStep();                      //L
-        // TODO DEBUG
         
         if(this->getEit().getTime() == this->getTime().getTime()){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
+                m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
     
                 this->runSmallStepStalled();
     
@@ -267,8 +268,9 @@ void Conservativecore::runSmallStepStalled()
                 const t_timestamp last_scheduled = mdl->getTimeLast();
                 this->scheduleModel(mdl->getName(), last_scheduled);
         }
-        // TODO : if nothing has been done, do you update EOT (risk of getting unintended oo)
-        //if(imminents.size()!=0)
+        /**
+         * If we have no imminents, our EOT value can still have changed
+         */
         this->updateEOT();
         this->updateEIT();
 }

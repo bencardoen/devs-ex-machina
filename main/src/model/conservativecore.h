@@ -56,11 +56,6 @@ private:
 	 * A core only reads influencing core eots, and only writes its own.
 	 */
 	t_eotvector	m_distributed_eot;
-
-	/**
-	 * Record if we sent a message in the last simulation round.
-	 */
-	bool		m_sent_message;
         
         /**
          * In case we're stalled, remember who has sent output and who hasn't to make
@@ -86,15 +81,17 @@ private:
 	t_timestamp		m_min_lookahead;
 
 	/**
-	 * Reset lookahead to inf, invoked after each sim run.
+	 * Reset lookahead to inf, after at least one model has changed state we need to get a
+         * new minimal lookahead.
 	 */
 	void
 	resetLookahead();
 
 	/**
 	 * Step 3 of algorithm CNPDEVS
-	 * Update our own EOT value with either:
-	 * 	EIT, EIT+lookahead, EIT+nextscheduled
+	 * Calculate the earliest output time of this Core (eot min of models), and publish the
+         * new value. 
+         * @attention : eot is a monotone ascending function (except oo).
 	 */
 	void
 	updateEOT();
@@ -132,14 +129,6 @@ public:
 		const n_control::t_location_tableptr& ltable, size_t cores,
 		const t_eotvector& vc);
 	virtual ~Conservativecore();
-
-	/**
-	 * If the current EOT < than msg timestamp, update the value and remember we've sent
-	 * a message.
-	 * Required for CNPDEVS
-	 */
-	void
-	sendMessage(const t_msgptr& msg)override;
 
 	/**
 	 * In theory, in a distributed setting we need access to getMessages() to get an EOT value.
@@ -211,6 +200,10 @@ public:
 	t_timestamp
 	getEit()const;
         
+        /**
+         * If we're at eit==time, only generate output (once) for imminent models.
+         * Else, perform a standard simulation step.
+         */
         virtual
 	void
 	runSmallStep()override;

@@ -157,6 +157,9 @@ private:
         
 protected:
 	std::size_t 	m_cores;
+        
+        t_timestamp
+        getLastMsgSentTime();
 
 public:
 	Multicore()=delete;
@@ -302,7 +305,7 @@ public:
 //#ifdef USESTAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
-		if(coreid() == 0)
+		if(getCoreID() == 0)
 			m_network->printStats(out);
 		Core::printStats(out);
 	}

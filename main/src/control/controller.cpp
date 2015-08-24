@@ -385,10 +385,11 @@ void Controller::simPDEVS()
 		                std::ref(veclock), deadlockVal, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
-
+        
 	do {
 		this->startGVTThread();	// Starts and joins GVT threads.
 	} while (handleTimeEventsParallel(cv, cvlock));
+        
 	// Explanation of the above:
 	//  The event queue is checked for occurring events each time a GVT is calculated
 	//  If there are any, the simulation needs to be halted in any case so the GVT thread is stopped

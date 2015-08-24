@@ -22,7 +22,7 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS};
+enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS};
 
 /**
  * Typedefs used by core.
@@ -34,6 +34,7 @@ struct statistics_collector{
         n_tools::t_intstat     m_amsg_sent;
         n_tools::t_intstat     m_amsg_rcvd;
         n_tools::t_intstat     m_turns;
+        n_tools::t_intstat     m_turns_stalled;
         n_tools::t_intstat     m_reverts;
         n_tools::t_intstat     m_msgs_sent;
         n_tools::t_intstat     m_msgs_rcvd;
@@ -44,6 +45,7 @@ struct statistics_collector{
         	m_amsg_sent(getName(id, "anti send"), "messages"),
         	m_amsg_rcvd(getName(id, "anti received"), "messages"),
         	m_turns(getName(id, "turns"), ""),
+                m_turns_stalled(getName(id, "stalled"), "turns"),
         	m_reverts(getName(id, "reverts"), ""),
         	m_msgs_sent(getName(id, "send"), "messages"),
         	m_msgs_rcvd(getName(id, "received"), "messages")
@@ -54,6 +56,7 @@ struct statistics_collector{
 			out <<m_amsg_sent << '\n';
 			out <<m_amsg_rcvd << '\n';
 			out <<m_turns << '\n';
+                        out <<m_turns_stalled << '\n';
 			out <<m_msgs_sent << '\n';
 			out <<m_msgs_rcvd << '\n';
 			out <<m_reverts << '\n';
@@ -63,7 +66,6 @@ struct statistics_collector{
         }
         void logStat(enum STAT_TYPE st){
 //#ifdef USESTAT
-                // TODO ifdef here ?
                 switch(st){
                 case MSGRCVD:{
                         ++m_msgs_rcvd;
@@ -87,6 +89,10 @@ struct statistics_collector{
                 }
                 case REVERTS:{
                         ++m_reverts;
+                        break;
+                }
+                case STALLEDROUNDS:{
+                        ++m_turns_stalled;
                         break;
                 }
                 default:
@@ -701,10 +707,6 @@ public:
 protected:
 	statistics_collector m_stats;
 public:
-	std::size_t coreid() const
-	{
-		return m_coreid;
-	}
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		m_stats.printStats(out);
