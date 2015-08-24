@@ -304,14 +304,16 @@ add_executable(adevs_devstone
 	${ADEVS_ROOT}/benchmarks/devstone.cpp
 	)
 SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-o3"
+					COMPILE_FLAGS "-o3 -fopenmp"
+					LINK_FLAGS "-fopenmp"
 					)
 
 add_executable(adevs_phold
 	${ADEVS_ROOT}/benchmarks/phold.cpp
 	)
 SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-o3"
+					COMPILE_FLAGS "-o3 -fopenmp"
+					LINK_FLAGS "-fopenmp"
 					)
 
 ### INCLUDE PATHS ############################################################

@@ -223,6 +223,8 @@ public:
 			std::cout << "  (proc " << proc->m_counter << ")";
 		std::cout << '\n';
 	}
+
+	virtual ~Listener(){}
 };
 
 template<typename T>
@@ -249,6 +251,7 @@ int main(int argc, char** argv)
 	const char optDepth = 'd';
 	const char optHelp = 'h';
 	const char optRand = 'r';
+	const char optCores = 'c';
 	char** argvc = argv+1;
 
 	double eTime = 50;
@@ -258,12 +261,16 @@ int main(int argc, char** argv)
 
 	bool hasError = false;
 	bool isClassic = true;
+	std::size_t coreAmt = 4;
 
 	for(int i = 1; i < argc; ++argvc, ++i){
 		char c = getOpt(*argvc);
 		if(!c){
 			if(!strcmp(*argvc, "classic")){
 				isClassic = true;
+				continue;
+			} else if(!strcmp(*argvc, "cpdevs")){
+				isClassic = false;
 				continue;
 			} else {
 				std::cout << "Unknown argument: " << *argvc << '\n';
@@ -272,6 +279,19 @@ int main(int argc, char** argv)
 			}
 		}
 		switch(c){
+		case optCores:
+			++i;
+			if(i < argc){
+				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
+				if(coreAmt == 0){
+					std::cout << "Invalid argument for option -" << optETime << '\n';
+					hasError = true;
+				}
+
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
 		case optETime:
 			++i;
 			if(i < argc){
@@ -301,7 +321,7 @@ int main(int argc, char** argv)
 			srand(0);
 			break;
 		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r]\n";
+			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
 			return 0;
 		default:
 			std::cout << "Unknown argument: " << *argvc << '\n';
@@ -309,16 +329,23 @@ int main(int argc, char** argv)
 			continue;
 		}
 	}
-	if(hasError)
+	if(hasError){
+		std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
 		return -1;
+	}
 
+	adevs::Devs<t_event>* model = new DEVSTone(width, depth, randTa);
+	adevs::EventListener<t_event>* listener = new Listener();
 	if(isClassic){
-		adevs::Devs<t_event>* model = new DEVSTone(width, depth, randTa);
 		adevs::Simulator<t_event> sim(model);
-		adevs::EventListener<t_event>* listener = new Listener();
 		sim.addEventListener(listener);
 		sim.execUntil(eTime);
-		delete listener;
-		delete model;
+	} else {
+		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
+		adevs::ParSimulator<t_event> sim(model);
+		sim.addEventListener(listener);
+		sim.execUntil(eTime);
 	}
+	delete listener;
+	delete model;
 }
