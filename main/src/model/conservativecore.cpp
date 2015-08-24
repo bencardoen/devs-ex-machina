@@ -5,6 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
+#include <thread>
+#include <chrono>
 #include "model/conservativecore.h"
 
 namespace n_model {
@@ -98,8 +100,17 @@ void Conservativecore::updateEIT()
 		this->m_distributed_eot->unlockEntry(influence_id);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
+        const t_timestamp oldeot = this->getEit();
+        /** If our current time is at eit, and the new calculation again finds the same value,
+         *  go to sleep for a short while instead of wasting rounds.
+         *  We have several options here : each stalled round identical sleep,
+         *  an exponential backoff each time we hit this path, or condition variable (very complex, only wake on eot entry we listen to). 
+         */
         
-        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", this->getEit());
+        if(this->getTime().getTime()==min_eot_others.getTime()){
+                std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        }
+        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", oldeot);
 	this->setEit(min_eot_others);
 }
 
