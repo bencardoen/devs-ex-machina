@@ -14,6 +14,7 @@
 #include <limits>
 
 #define T_0 0.0
+#define T_1 0.0000000001
 #define T_50 0.5
 #define T_75 0.75
 #define T_100 1.0
@@ -125,6 +126,13 @@ public:
 	void gc_output(adevs::Bag<t_event>&)
 	{
 	}
+
+	double lookahead()
+	{
+		if(m_event1_counter == inf)
+			return T_1;	//does not allow lookahead of 0, so we'll have to cheat.
+		return T_100;
+	}
 };
 
 std::size_t Processor::procCounter = 0;
@@ -158,35 +166,48 @@ class Generator: public adevs::Atomic<t_event>
 	void gc_output(adevs::Bag<t_event>&)
 	{
 	}
+
+	double lookahead()
+	{
+		return T_INF;
+	}
 };
 
 class CoupledRecursion: public adevs::Digraph<std::size_t>
 {
 public:
+	std::vector<Component*> m_components;
 	/// Assigns the model component set to c
 	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta):
 		adevs::Digraph<std::size_t>()
 	{
 		assert(width > 0 && "The width must me at least 1.");
-		std::vector<Component*> components;
 		if(depth > 1)
 		{
 			Component* c = new CoupledRecursion(width, depth-1, randomta);
-			components.push_back(c);
+			m_components.push_back(c);
 			add(c);
 		}
 		for(std::size_t i = 0; i < width; ++i){
 			Component* c = new Processor(randomta);
-			components.push_back(c);
+			m_components.push_back(c);
 			add(c);
 		}
-		couple(this, inPort, components.front(), inPort);
-		auto i = components.begin();
+		couple(this, inPort, m_components.front(), inPort);
+		auto i = m_components.begin();
 		auto i2 = i + 1;
-		for(; i2 != components.end(); ++i,++i2){
+		for(; i2 != m_components.end(); ++i,++i2){
 			couple(*i, outPort, *i2, inPort);
 		}
-		couple(components.back(), outPort, this, outPort);
+		couple(m_components.back(), outPort, this, outPort);
+	}
+
+	double lookahead()
+	{
+		double minv = T_INF;
+		for(auto i:m_components)
+			minv = std::min(i->lookahead(), minv);
+		return minv;
 	}
 };
 
@@ -194,13 +215,19 @@ public:
 class DEVSTone: public adevs::Digraph<std::size_t>
 {
 public:
-	DEVSTone(std::size_t width, std::size_t depth, bool randomta)
+	Component* m_gen;
+	Component* m_proc;
+	DEVSTone(std::size_t width, std::size_t depth, bool randomta):
+		m_gen(new Generator()), m_proc(new CoupledRecursion(width, depth, randomta))
 	{
-		Component* gen = new Generator();
-		Component* proc = new CoupledRecursion(width, depth, randomta);
-		add(gen);
-		add(proc);
-		couple(gen, outPort, proc, inPort);
+		add(m_gen);
+		add(m_proc);
+		couple(m_gen, outPort, m_proc, inPort);
+	}
+
+	double lookahead()
+	{
+		return std::min(m_gen->lookahead(), m_proc->lookahead());
 	}
 };
 
