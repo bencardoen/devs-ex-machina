@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_min_lookahead(t_timestamp::infinity())
+	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity())
 {
 	;
 }
@@ -273,6 +273,13 @@ void Conservativecore::runSmallStepStalled()
          */
         this->updateEOT();
         this->updateEIT();
+}
+
+void
+Conservativecore::sendMessage(const t_msgptr& msg){
+        // At output collection, timestamp is set (color etc is of no interest to us here (and is not yet set)).
+        this->m_last_sent_msgtime = msg->getTimeStamp();
+        Multicore::sendMessage(msg);
 }
 
 

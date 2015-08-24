@@ -102,18 +102,6 @@ void Multicore::countMessage(const t_msgptr& msg)
 	}
 }
 
-t_timestamp Multicore::getLastMsgSentTime(){
-        t_timestamp last = t_timestamp::infinity();
-        this->lockMessages();
-        if(this->m_sent_messages.size() != 0){
-                const t_msgptr lmsg = m_sent_messages.back();
-                last = lmsg->getTimeStamp();
-        }
-        this->unlockMessages();
-        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Last time sent msg == ", last);
-        return last;
-}
-
 void Multicore::receiveMessage(const t_msgptr& msg)
 {
 	Core::receiveMessage(msg);	// Trigger antimessage handling etc (and possibly revert)
