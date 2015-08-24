@@ -76,16 +76,28 @@ def dxpholdgen(simtype):
 def adevstonegen(simtype):
     if simtype == simtypes.optimistic:
         raise ValueError("Can't have optimistic parallel simulation in adevs.")
+    elif simtype == simtypes.classic:
+        usesim = simtype
+    else:
+        usesim = (simtype[0], '-c', simtype[1])
+
     for depth in [1, 2, 3]:#, 4, 8, 16]:
         for width in [2, 3, 4]:#, 8, 16]:
-            yield list(chain([adevstoneEx], simtype, ['-w', width, '-d', depth])) # ['-t', endTime], ['-r'] if randTa else []
+            yield list(chain([adevstoneEx], usesim, ['-w', width, '-d', depth])) # ['-t', endTime], ['-r'] if randTa else []
 
 def apholdgen(simtype):
+    if simtype == simtypes.optimistic:
+        raise ValueError("Can't have optimistic parallel simulation in adevs.")
+    elif simtype == simtypes.classic:
+        usesim = simtype
+    else:
+        usesim = (simtype[0], '-c', simtype[1])
+
     for depth in [1, 2, 4, 8, 16]:
         for width in [2, 4]:#, 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
-                    yield list(chain([pholdEx], simtype, ['n', width, 's', depth, '-i', iterations, '-r', remotes]))
+                    yield list(chain([adevpholdEx], usesim, ['-n', width, '-s', depth, '-i', iterations, '-r', remotes]))
 
 # compilation functions
 def unifiedCompiler(target, force=False):
