@@ -305,7 +305,7 @@ public:
 //#ifdef USESTAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
-		if(coreid() == 0)
+		if(getCoreID() == 0)
 			m_network->printStats(out);
 		Core::printStats(out);
 	}

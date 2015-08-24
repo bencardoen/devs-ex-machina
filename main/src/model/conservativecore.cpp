@@ -205,10 +205,10 @@ void Conservativecore::resetLookahead(){
 void Conservativecore::runSmallStep(){
         
         this->lockSimulatorStep();                      //L
-        // TODO DEBUG
         
         if(this->getEit().getTime() == this->getTime().getTime()){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
+                m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
     
                 this->runSmallStepStalled();
     

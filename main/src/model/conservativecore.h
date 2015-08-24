@@ -81,15 +81,17 @@ private:
 	t_timestamp		m_min_lookahead;
 
 	/**
-	 * Reset lookahead to inf, invoked after each sim run.
+	 * Reset lookahead to inf, after at least one model has changed state we need to get a
+         * new minimal lookahead.
 	 */
 	void
 	resetLookahead();
 
 	/**
 	 * Step 3 of algorithm CNPDEVS
-	 * Update our own EOT value with either:
-	 * 	EIT, EIT+lookahead, EIT+nextscheduled
+	 * Calculate the earliest output time of this Core (eot min of models), and publish the
+         * new value. 
+         * @attention : eot is a monotone ascending function (except oo).
 	 */
 	void
 	updateEOT();
@@ -198,6 +200,10 @@ public:
 	t_timestamp
 	getEit()const;
         
+        /**
+         * If we're at eit==time, only generate output (once) for imminent models.
+         * Else, perform a standard simulation step.
+         */
         virtual
 	void
 	runSmallStep()override;
