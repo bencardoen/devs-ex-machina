@@ -15,9 +15,9 @@
 LOG_INIT("devstone.log")
 
 #ifdef FPTIME
-#define ENDTIME 1000.0
+double ENDTIME = 1000.0;
 #else
-#define ENDTIME 10000
+std::size_t ENDTIME = 10000;
 #endif
 
 class DevstoneAlloc: public n_control::Allocator
@@ -47,6 +47,22 @@ public:
 	}
 };
 
+
+template<typename T>
+T toData(std::string str)
+{
+	T num;
+	std::istringstream ss(str);
+	ss >> num;
+	return num;
+}
+
+char getOpt(char* argv){
+	if(strlen(argv) == 2 && argv[0] == '-')
+		return argv[1];
+	return 0;
+}
+
 /**
  * The executable takes up to 4 arguments (in this order):
  * - The type of simulation:
@@ -58,32 +74,97 @@ public:
  * - The width (amount of processors per coupled model)
  * - The depth (amount of linked coupled models)
  */
-int main(int argc, char** args)
+int main(int argc, char** argv)
 {
 	// default values:
-	std::string type;
-	n_control::SimType simType = n_control::SimType::CLASSIC;
-	int widthpos = 2;
-	int depthpos = 3;
-	int coreAmt = 1;
+	const char optETime = 't';
+	const char optWidth = 'w';
+	const char optDepth = 'd';
+	const char optHelp = 'h';
+	const char optRand = 'r';
+	const char optCores = 'c';
+	char** argvc = argv+1;
+
+	n_network::t_timestamp::t_time eTime = ENDTIME;
 	std::size_t width = 2;
 	std::size_t depth = 3;
+	bool randTa = false;
 
-	if(argc >= 2) {
-		type = args[1];
-		if(type == "pdevs" || type == "opdevs" || type == "cpdevs") {
-			simType = (type == "cpdevs")? n_control::SimType::CONSERVATIVE : n_control::SimType::OPTIMISTIC;
-			if(argc >= 3)
-				coreAmt = n_tools::toInt(args[2]);
-				++depthpos;
-				++widthpos;
+	bool hasError = false;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
+	std::size_t coreAmt = 4;
+
+	for(int i = 1; i < argc; ++argvc, ++i){
+		char c = getOpt(*argvc);
+		if(!c){
+			if(!strcmp(*argvc, "classic")){
+				simType = n_control::SimType::CLASSIC;
+				continue;
+			} else if(!strcmp(*argvc, "cpdevs")){
+				simType = n_control::SimType::CONSERVATIVE;
+				continue;
+			} else if(!strcmp(*argvc, "opdevs") || !strcmp(*argvc, "pdevs")){
+				simType = n_control::SimType::OPTIMISTIC;
+				continue;
+			} else {
+				std::cout << "Unknown argument: " << *argvc << '\n';
+				hasError = true;
+				continue;
+			}
+		}
+		switch(c){
+		case optCores:
+			++i;
+			if(i < argc){
+				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
+				if(coreAmt == 0){
+					std::cout << "Invalid argument for option -" << optETime << '\n';
+					hasError = true;
+				}
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optETime:
+			++i;
+			if(i < argc){
+				eTime = toData<n_network::t_timestamp::t_time>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optWidth:
+			++i;
+			if(i < argc){
+				width = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optDepth:
+			++i;
+			if(i < argc-1){
+				depth = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optRand:
+			randTa = true;
+			srand(0);
+			break;
+		case optHelp:
+			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+			return 0;
+		default:
+			std::cout << "Unknown argument: " << *argvc << '\n';
+			hasError = true;
+			continue;
 		}
 	}
-	if(argc >= widthpos+1) {
-		width = n_tools::toInt(args[widthpos]);
-	}
-	if(argc >= depthpos+1) {
-		depth = n_tools::toInt(args[depthpos]);
+	if(hasError){
+		std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+		return -1;
 	}
 
 	n_control::ControllerConfig conf;
@@ -95,10 +176,10 @@ int main(int argc, char** args)
 	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(ENDTIME, 0);
+	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, false);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
 	ctrl->addModel(d);
 	{
 		std::ofstream filestream("./devstone.txt");
