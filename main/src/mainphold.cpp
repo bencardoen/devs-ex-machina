@@ -119,7 +119,6 @@ int main(int argc, char** argv)
 					std::cout << "Invalid argument for option -" << optETime << '\n';
 					hasError = true;
 				}
-
 			} else {
 				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
 			break;
 		case optDepth:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				apn = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optETime << '\n';
@@ -150,7 +149,7 @@ int main(int argc, char** argv)
 			break;
 		case optRemote:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				percentageRemotes = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optRemote << '\n';
@@ -158,7 +157,7 @@ int main(int argc, char** argv)
 			break;
 		case optIter:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				iter = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optIter << '\n';
@@ -187,7 +186,7 @@ int main(int argc, char** argv)
 	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(ENDTIME, 0);
+	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,

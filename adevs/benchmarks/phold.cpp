@@ -333,7 +333,7 @@ int main(int argc, char** argv)
 			break;
 		case optDepth:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				subnodes = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optETime << '\n';
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 			break;
 		case optRemote:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				remotes = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optRemote << '\n';
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
 			break;
 		case optIter:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				iter = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optIter << '\n';

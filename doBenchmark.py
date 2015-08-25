@@ -63,6 +63,7 @@ def devstonegen(simtype, executable):
     for depth in [1, 2, 3]:  # , 4, 8, 16]:
         for width in [2, 3, 4]:  # , 8, 16]:
             yield list(chain([executable], simtype, ['-w', width, '-d', depth]))  # ['-t', endTime], ['-r'] if randTa else []
+            return
 
 
 def pholdgen(simtype, executable):
@@ -71,6 +72,7 @@ def pholdgen(simtype, executable):
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
                     yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes]))  # ['-t', endTime]
+                    return
 
 
 # compilation functions
@@ -110,14 +112,14 @@ if __name__ == '__main__':
         defaults.Benchmark('phold/conservative', dxpholdc, partial(pholdgen, simtypes.conservative, pholdEx), "dxexmachina phold, conservative"),
         )
     adevstone = SimType(
-        defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.conservative, adevstoneEx), "adevs devstone, classic"),
+        defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
         None,
         defaults.Benchmark('adevstone/conservative', adevc, partial(devstonegen, simtypes.conservative, adevstoneEx), "adevs devstone, conservative"),
         )
     aphold = SimType(
         defaults.Benchmark('aphold/classic', apholdc, partial(pholdgen, simtypes.classic, adevpholdEx), "adevs phold, classic"),
         None,
-        defaults.Benchmark('aphold/conservative', apholdc, partial(pholdgen, simtypes.classic, adevpholdEx), "adevs phold, conservative"),
+        defaults.Benchmark('aphold/conservative', apholdc, partial(pholdgen, simtypes.conservative, adevpholdEx), "adevs phold, conservative"),
         )
     allBenchmark = [dxdevstone, dxphold, adevstone, aphold]
     # do all the preparation stuff

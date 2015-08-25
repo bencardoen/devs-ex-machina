@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 			break;
 		case optDepth:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optETime << '\n';

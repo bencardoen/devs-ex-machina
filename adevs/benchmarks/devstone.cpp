@@ -381,7 +381,7 @@ int main(int argc, char** argv)
 			break;
 		case optDepth:
 			++i;
-			if(i < argc-1){
+			if(i < argc){
 				depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optETime << '\n';
@@ -415,11 +415,12 @@ int main(int argc, char** argv)
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
 		allocate(coreAmt, model);
 		adevs::LpGraph lpg;
-		for(int i = 1; i < coreAmt; ++i)
+		for(std::size_t i = 1; i < coreAmt; ++i)
 			lpg.addEdge(i-1, i);
 		adevs::ParSimulator<t_event> sim(model, lpg);
 		sim.addEventListener(listener);
 		sim.execUntil(eTime);
+		std::cout << "we're done here!\n";
 	}
 	delete listener;
 	delete model;
