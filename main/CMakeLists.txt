@@ -344,7 +344,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${GTESTLIBS})
+target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
