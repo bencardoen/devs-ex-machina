@@ -49,6 +49,8 @@ private:
 	t_timestamp	m_eit;
 
 	void setEit(const t_timestamp& neweit);
+        
+        t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
 
 	/**
 	 * Shared vector of all eots of all cores.
@@ -79,6 +81,12 @@ private:
 	 * Minimum lookahead for all transitioned models in a simulation step.
 	 */
 	t_timestamp		m_min_lookahead;
+        
+        /**
+         * Timestamp of the last message we've sent to any other core.
+         * Needed for eot calculation.
+         */
+        t_timestamp             m_last_sent_msgtime;
 
 	/**
 	 * Reset lookahead to inf, after at least one model has changed state we need to get a
@@ -207,6 +215,13 @@ public:
         virtual
 	void
 	runSmallStep()override;
+        
+        /**
+         * Records timestamp for eot, leaves actual handling to superclass.
+         */
+        virtual void sendMessage(const t_msgptr&)override;
+
+        
 };
 
 } /* namespace n_model */

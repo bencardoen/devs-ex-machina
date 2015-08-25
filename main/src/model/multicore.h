@@ -32,6 +32,8 @@ protected:
 	 * Location table
 	 */
 	n_control::t_location_tableptr	m_loctable;
+        
+	std::size_t 	m_cores;
 
 private:
 	/**
@@ -154,12 +156,6 @@ private:
         
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
-        
-protected:
-	std::size_t 	m_cores;
-        
-        t_timestamp
-        getLastMsgSentTime();
 
 public:
 	Multicore()=delete;
