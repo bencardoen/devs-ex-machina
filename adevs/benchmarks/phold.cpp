@@ -252,7 +252,19 @@ char getOpt(char* argv){
 }
 
 
-
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
+	"options:\n"
+	"  -h             show help and exit\n"
+	"  -t ENDTIME     set the endtime of the simulation\n"
+	"  -n NODES       number of phold nodes\n"
+	"  -s SUBNODES    number of subnodes per phold node\n"
+	"  -r REMOTES     percentage of remote connections\n"
+	"  -i ITER        amount of useless work to simulate complex calculations\n"
+	"  -c COREAMT     amount of simulation cores, ignored in classic mode\n"
+	"  classic        Run single core simulation.\n"
+	"  cpdevs         Run conservative parallel simulation.\n"
+	"note:\n"
+	"  If the same option is set multiple times, only the last value is taken.\n";
 int main(int argc, char** argv)
 {
 	const char optETime = 't';
@@ -344,7 +356,7 @@ int main(int argc, char** argv)
 			}
 			break;
 		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT]\n";
+			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
 		default:
 			std::cout << "Unknown argument: " << *argvc << '\n';
@@ -353,7 +365,7 @@ int main(int argc, char** argv)
 		}
 	}
 	if(hasError){
-		std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT]\n";
+		std::cout << "usage: \n\t" << argv[0] << helpstr;
 		return -1;
 	}
 

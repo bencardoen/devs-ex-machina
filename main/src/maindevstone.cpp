@@ -14,12 +14,6 @@
 
 LOG_INIT("devstone.log")
 
-#ifdef FPTIME
-double ENDTIME = 1000.0;
-#else
-std::size_t ENDTIME = 10000;
-#endif
-
 class DevstoneAlloc: public n_control::Allocator
 {
 private:
@@ -64,16 +58,31 @@ char getOpt(char* argv){
 }
 
 /**
- * The executable takes up to 4 arguments (in this order):
- * - The type of simulation:
- * 	+ "classic" 	- Classic DEVS
- * 	+ "pdevs" 	- Optimistic Parallel DEVS
- * 	+ "opdevs"	- Optimistic Parallel DEVS
- * 	+ "cpdevs"	- Conservative Parallel DEVS
- * 	-> If you choose for a parallel simulation, your next argument should specify the amount of cores!
- * - The width (amount of processors per coupled model)
- * - The depth (amount of linked coupled models)
+ * cmd args:
+ * [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]
+ * 	-h: show help and exit
+ * 	-t ENDTIME set the endtime of the simulation
+ * 	-w WIDTH the with of the devstone model
+ * 	-d DEPTH the depth of the devstone model
+ * 	-c COREAMT amount of simulation cores, ignored in classic mode
+ * 	classic run single core simulation
+ * 	cpdevs run conservative parallel simulation
+ * 	opdevs|pdevs run optimistic parallel simulation
+ * The last value entered for an option will overwrite any previous values for that option.
  */
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+	"options:\n"
+	"  -h           show help and exit\n"
+	"  -t ENDTIME   set the endtime of the simulation\n"
+	"  -w WIDTH     the with of the devstone model\n"
+	"  -d DEPTH     the depth of the devstone model\n"
+	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
+	"  classic      Run single core simulation.\n"
+	"  cpdevs       Run conservative parallel simulation.\n"
+	"  opdevs|pdevs Run optimistic parallel simulation.\n"
+	"note:\n"
+	"  If the same option is set multiple times, only the last value is taken.\n";
+
 int main(int argc, char** argv)
 {
 	// default values:
@@ -85,7 +94,11 @@ int main(int argc, char** argv)
 	const char optCores = 'c';
 	char** argvc = argv+1;
 
-	n_network::t_timestamp::t_time eTime = ENDTIME;
+#ifdef FPTIME
+	n_network::t_timestamp::t_time eTime = 1000.0;
+#else
+	n_network::t_timestamp::t_time eTime = 10000;
+#endif
 	std::size_t width = 2;
 	std::size_t depth = 3;
 	bool randTa = false;
@@ -154,7 +167,7 @@ int main(int argc, char** argv)
 			srand(0);
 			break;
 		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
 		default:
 			std::cout << "Unknown argument: " << *argvc << '\n';
@@ -163,7 +176,7 @@ int main(int argc, char** argv)
 		}
 	}
 	if(hasError){
-		std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+		std::cout << "usage: \n\t" << argv[0] << helpstr;
 		return -1;
 	}
 

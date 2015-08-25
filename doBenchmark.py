@@ -55,49 +55,23 @@ adevpholdEx = "./build/adevs_phold"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
-simtypes = SimType(["classic"], ["opdevs", args.cores], ["cpdevs", args.cores])
+simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', args.cores])
 
 
 # generators for the benchmark parameters
-def dxdevstonegen(simtype):
-    for depth in [1, 2, 3]:#, 4, 8, 16]:
-        for width in [2, 3, 4]:#, 8, 16]:
-            yield list(chain([devstoneEx], simtype, [width, depth]))
+def devstonegen(simtype, executable):
+    for depth in [1, 2, 3]:  # , 4, 8, 16]:
+        for width in [2, 3, 4]:  # , 8, 16]:
+            yield list(chain([executable], simtype, ['-w', width, '-d', depth]))  # ['-t', endTime], ['-r'] if randTa else []
 
 
-def dxpholdgen(simtype):
-    for depth in [1, 2, 4, 8, 16]:
-        for width in [2, 4]:#, 8, 16, 32]:
+def pholdgen(simtype, executable):
+    for apn in [2, 4, 8, 16]:
+        for nodes in [2, 4]:  # , 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
-                    yield list(chain([pholdEx], simtype, [width, depth, iterations, remotes]))
+                    yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes]))  # ['-t', endTime]
 
-
-def adevstonegen(simtype):
-    if simtype == simtypes.optimistic:
-        raise ValueError("Can't have optimistic parallel simulation in adevs.")
-    elif simtype == simtypes.classic:
-        usesim = simtype
-    else:
-        usesim = (simtype[0], '-c', simtype[1])
-
-    for depth in [1, 2, 3]:#, 4, 8, 16]:
-        for width in [2, 3, 4]:#, 8, 16]:
-            yield list(chain([adevstoneEx], usesim, ['-w', width, '-d', depth])) # ['-t', endTime], ['-r'] if randTa else []
-
-def apholdgen(simtype):
-    if simtype == simtypes.optimistic:
-        raise ValueError("Can't have optimistic parallel simulation in adevs.")
-    elif simtype == simtypes.classic:
-        usesim = simtype
-    else:
-        usesim = (simtype[0], '-c', simtype[1])
-
-    for depth in [1, 2, 4, 8, 16]:
-        for width in [2, 4]:#, 8, 16, 32]:
-            for iterations in [16, 64, 256, 1024]:
-                for remotes in [10]:
-                    yield list(chain([adevpholdEx], usesim, ['-n', width, '-s', depth, '-i', iterations, '-r', remotes]))
 
 # compilation functions
 def unifiedCompiler(target, force=False):
@@ -126,24 +100,24 @@ if __name__ == '__main__':
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
     dxdevstone = SimType(
-        defaults.Benchmark('devstone/classic', dxdevc, partial(dxdevstonegen, simtypes.classic), "dxexmachina devstone, classic"),
-        defaults.Benchmark('devstone/optimistic', dxdevc, partial(dxdevstonegen, simtypes.optimistic), "dxexmachina devstone, optimistic"),
-        defaults.Benchmark('devstone/conservative', dxdevc, partial(dxdevstonegen, simtypes.conservative), "dxexmachina devstone, conservative"),
+        defaults.Benchmark('devstone/classic', dxdevc, partial(devstonegen, simtypes.classic, devstoneEx), "dxexmachina devstone, classic"),
+        defaults.Benchmark('devstone/optimistic', dxdevc, partial(devstonegen, simtypes.optimistic, devstoneEx), "dxexmachina devstone, optimistic"),
+        defaults.Benchmark('devstone/conservative', dxdevc, partial(devstonegen, simtypes.conservative, devstoneEx), "dxexmachina devstone, conservative"),
         )
     dxphold = SimType(
-        defaults.Benchmark('phold/classic', dxpholdc, partial(dxpholdgen, simtypes.classic), "dxexmachina phold, classic"),
-        defaults.Benchmark('phold/optimistic', dxpholdc, partial(dxpholdgen, simtypes.optimistic), "dxexmachina phold, optimistic"),
-        defaults.Benchmark('phold/conservative', dxpholdc, partial(dxpholdgen, simtypes.conservative), "dxexmachina phold, conservative"),
+        defaults.Benchmark('phold/classic', dxpholdc, partial(pholdgen, simtypes.classic, pholdEx), "dxexmachina phold, classic"),
+        defaults.Benchmark('phold/optimistic', dxpholdc, partial(pholdgen, simtypes.optimistic, pholdEx), "dxexmachina phold, optimistic"),
+        defaults.Benchmark('phold/conservative', dxpholdc, partial(pholdgen, simtypes.conservative, pholdEx), "dxexmachina phold, conservative"),
         )
     adevstone = SimType(
-        defaults.Benchmark('adevstone/classic', adevc, partial(adevstonegen, simtypes.classic), "adevs devstone, classic"),
+        defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.conservative, adevstoneEx), "adevs devstone, classic"),
         None,
-        defaults.Benchmark('adevstone/conservative', adevc, partial(adevstonegen, simtypes.conservative), "adevs devstone, conservative"),
+        defaults.Benchmark('adevstone/conservative', adevc, partial(devstonegen, simtypes.conservative, adevstoneEx), "adevs devstone, conservative"),
         )
     aphold = SimType(
-        defaults.Benchmark('aphold/classic', apholdc, partial(apholdgen, simtypes.classic), "adevs phold, classic"),
+        defaults.Benchmark('aphold/classic', apholdc, partial(pholdgen, simtypes.classic, adevpholdEx), "adevs phold, classic"),
         None,
-        defaults.Benchmark('aphold/conservative', apholdc, partial(apholdgen, simtypes.conservative), "adevs phold, conservative"),
+        defaults.Benchmark('aphold/conservative', apholdc, partial(pholdgen, simtypes.classic, adevpholdEx), "adevs phold, conservative"),
         )
     allBenchmark = [dxdevstone, dxphold, adevstone, aphold]
     # do all the preparation stuff
@@ -155,7 +129,6 @@ if __name__ == '__main__':
 
     # do the benchmarks!
     donelist = []
-    print("args.limited: ", args.limited)
     for bmarkset in allBenchmark:
         doCompile = True
         for bmark in bmarkset:

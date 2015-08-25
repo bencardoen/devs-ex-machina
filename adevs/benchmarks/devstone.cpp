@@ -303,6 +303,17 @@ void allocate(std::size_t numcores, DEVSTone* d){
 }
 
 
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs]\n"
+	"options:\n"
+	"  -h           show help and exit\n"
+	"  -t ENDTIME   set the endtime of the simulation\n"
+	"  -w WIDTH     the with of the devstone model\n"
+	"  -d DEPTH     the depth of the devstone model\n"
+	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
+	"  classic      Run single core simulation.\n"
+	"  cpdevs       Run conservative parallel simulation.\n"
+	"note:\n"
+	"  If the same option is set multiple times, only the last value is taken.\n";
 
 int main(int argc, char** argv)
 {
@@ -381,7 +392,7 @@ int main(int argc, char** argv)
 			srand(0);
 			break;
 		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
 		default:
 			std::cout << "Unknown argument: " << *argvc << '\n';
@@ -390,7 +401,7 @@ int main(int argc, char** argv)
 		}
 	}
 	if(hasError){
-		std::cout << "usage: \n\t" << argv[0] << "[-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT]\n";
+		std::cout << "usage: \n\t" << argv[0] << helpstr;
 		return -1;
 	}
 
