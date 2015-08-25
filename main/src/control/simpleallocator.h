@@ -19,13 +19,13 @@ class SimpleAllocator: public Allocator
 {
 private:
 	size_t m_i;
-	size_t m_cores;
 	bool m_allowUserOverride;
 
 public:
 	SimpleAllocator(size_t c, bool allowOverride = true)
-		: m_i(0), m_cores(c), m_allowUserOverride(allowOverride)
+		: m_i(0), m_allowUserOverride(allowOverride)
 	{
+		setCoreAmount(c);
 	}
 
 	virtual ~SimpleAllocator()
@@ -41,9 +41,9 @@ public:
 		int corenum = m->getCorenumber();
 		if(!m_allowUserOverride || corenum == -1) {	// If user override is not allowed, or if it is but the
 			corenum = m_i;				//  user didn't specify a particular core, we pick a
-			m_i = (m_i + 1) % m_cores;		//  destination ourselves
+			m_i = (m_i + 1) % coreAmount();		//  destination ourselves
 		} else {
-			corenum %= m_cores;	// Make absolutely sure the model always ends up on a real core
+			corenum %= coreAmount();	// Make absolutely sure the model always ends up on a real core
 						//  e.g. if the user lowered the amount of cores on a loaded simulation
 		}
 		m->setCorenumber(corenum);
@@ -51,15 +51,15 @@ public:
 	}
 
 	void allocateAll(const std::vector<n_model::t_atomicmodelptr>& atomics)override{
-		LOG_INFO("Allocator processing ", atomics.size(), " atomics over " ,m_cores, " cores");
+		LOG_INFO("Allocator processing ", atomics.size(), " atomics over ", coreAmount(), " cores");
 		for(const auto& atomicp : atomics){
 			const int stalenr = atomicp->getCorenumber();
 			int corenr = 0;
 			if(!m_allowUserOverride || stalenr == -1) {	// If user override is not allowed, or if it is but the
 				corenr = m_i;				//  user didn't specify a particular core, we pick a
-				m_i = (m_i + 1) % m_cores;		//  destination ourselves
+				m_i = (m_i + 1) % coreAmount();		//  destination ourselves
 			} else {
-				corenr %= m_cores;	// Make absolutely sure the model always ends up on a real core
+				corenr %= coreAmount();	// Make absolutely sure the model always ends up on a real core
 							//  e.g. if the user lowered the amount of cores on a loaded simulation
 			}
 			atomicp->setCorenumber(corenr);

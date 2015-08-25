@@ -15,7 +15,7 @@ import hashlib
 import platform
 import multiprocessing
 import locale
-from subprocess import call, TimeoutExpired
+from subprocess import call, TimeoutExpired, DEVNULL
 from collections import Iterable
 
 
@@ -133,6 +133,7 @@ timeouts = []
 List of arguments that resulted into a timeout
 """
 
+
 def defaultExec(args, path):
     """
     Default implementation of BenchmarkDriver.execute
@@ -142,7 +143,7 @@ def defaultExec(args, path):
     fmtcommand = "perf stat -o {} {}".format(str(path), args)
     print(fmtcommand)
     try:
-        call(fmtcommand.split(), timeout=timeout)
+        call(fmtcommand.split(), timeout=timeout)  # , stdout=DEVNULL)
     except TimeoutExpired:
         print("subprocess timed out after more than {} seconds.".format(timeout))
         timeouts.append(args)

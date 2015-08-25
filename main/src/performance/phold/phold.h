@@ -45,8 +45,8 @@ typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random 
 class HeavyPHOLDProcessor: public n_model::AtomicModel
 {
 private:
-	size_t m_percentageRemotes;
-	size_t m_iter;
+	const size_t m_percentageRemotes;
+	const size_t m_iter;
 	std::vector<size_t> m_local;
 	std::vector<size_t> m_remote;
 	int m_messageCount;

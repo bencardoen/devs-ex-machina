@@ -10,11 +10,6 @@
 
 LOG_INIT("phold.log")
 
-#ifdef FPTIME
-#define ENDTIME 1000.0
-#else
-#define ENDTIME 10000
-#endif
 
 // The problem with phold is that it will always generate a lot reverts
 // this is the reason why classic, unparallel simulation will be a lot faster than parallel.
@@ -29,9 +24,8 @@ public:
 
 	}
 	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
-		if(simType() == n_control::SimType::CONSERVATIVE)
-			return (m_n++)%coreAmount();
-		return ((m_n++)/10)%(coreAmount());
+		//all models may send to each other. There isn't really an optimal configuration.
+		return (m_n++)%coreAmount();
 	}
 
 	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
@@ -42,53 +36,145 @@ public:
 	}
 };
 
-/**
- * The executable takes up to 6 arguments (in this order):
- * - The type of simulation:
- * 	+ "classic" 	- Classic DEVS
- * 	+ "pdevs" 	- Optimistic Parallel DEVS
- * 	+ "opdevs"	- Optimistic Parallel DEVS
- * 	+ "cpdevs"	- Conservative Parallel DEVS
- * 	-> If you choose for a parallel simulation, your next argument should specify the amount of cores!
- * - the amount of nodes of the PHOLD
- * - the amount of atomic models per node
- * - the amount of iterations
- * - the @b percentage of remotes (example: if you want 42% remotes, enter 42)
- */
-int main(int argc, char** args)
+
+
+template<typename T>
+T toData(std::string str)
 {
-	// default values:
-	int offset = 0; // Parallel sim adds extra argument
-	std::string type;
-	n_control::SimType simType = n_control::SimType::CLASSIC;
-	int coreAmt = 1;
+	T num;
+	std::istringstream ss(str);
+	ss >> num;
+	return num;
+}
+
+char getOpt(char* argv){
+	if(strlen(argv) == 2 && argv[0] == '-')
+		return argv[1];
+	return 0;
+}
+
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+	"options:\n"
+	"  -h             show help and exit\n"
+	"  -t ENDTIME     set the endtime of the simulation\n"
+	"  -n NODES       number of phold nodes\n"
+	"  -s SUBNODES    number of subnodes per phold node\n"
+	"  -r REMOTES     percentage of remote connections\n"
+	"  -i ITER        amount of useless work to simulate complex calculations\n"
+	"  -c COREAMT     amount of simulation cores, ignored in classic mode\n"
+	"  classic        Run single core simulation.\n"
+	"  cpdevs         Run conservative parallel simulation.\n"
+	"  opdevs|pdevs   Run optimistic parallel simulation.\n"
+	"note:\n"
+	"  If the same option is set multiple times, only the last value is taken.\n";
+int main(int argc, char** argv)
+{
+	const char optETime = 't';
+	const char optWidth = 'n';
+	const char optDepth = 's';
+	const char optHelp = 'h';
+	const char optIter = 'i';
+	const char optRemote = 'r';
+	const char optCores = 'c';
+	char** argvc = argv+1;
+
+#ifdef FPTIME
+	n_network::t_timestamp::t_time eTime = 500.0;
+#else
+	n_network::t_timestamp::t_time eTime = 50;
+#endif
 	std::size_t nodes = 1;
 	std::size_t apn = 10;
-	std::size_t iter = 0;
 	std::size_t percentageRemotes = 10;
+	std::size_t iter = 0;
 
-	if (argc >= 2) {
-		type = args[1];
-		if (type == "pdevs" || type == "opdevs" || type == "cpdevs") {
-			simType = (type == "cpdevs")? n_control::SimType::CONSERVATIVE : n_control::SimType::OPTIMISTIC;
-			if (argc >= 3)
-				coreAmt = n_tools::toInt(args[2]);
-			++offset;
+	bool hasError = false;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
+	std::size_t coreAmt = 4;
+
+	for(int i = 1; i < argc; ++argvc, ++i){
+		char c = getOpt(*argvc);
+		if(!c){
+			if(!strcmp(*argvc, "classic")){
+				simType = n_control::SimType::CLASSIC;
+				continue;
+			} else if(!strcmp(*argvc, "cpdevs")){
+				simType = n_control::SimType::CONSERVATIVE;
+				continue;
+			} else if(!strcmp(*argvc, "opdevs") || !strcmp(*argvc, "pdevs")){
+				simType = n_control::SimType::OPTIMISTIC;
+				continue;
+			} else {
+				std::cout << "Unknown argument: " << *argvc << '\n';
+				hasError = true;
+				continue;
+			}
+		}
+		switch(c){
+		case optCores:
+			++i;
+			if(i < argc){
+				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
+				if(coreAmt == 0){
+					std::cout << "Invalid argument for option -" << optETime << '\n';
+					hasError = true;
+				}
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optETime:
+			++i;
+			if(i < argc){
+				eTime = toData<n_network::t_timestamp::t_time>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optWidth:
+			++i;
+			if(i < argc){
+				nodes = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optDepth:
+			++i;
+			if(i < argc){
+				apn = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optETime << '\n';
+			}
+			break;
+		case optRemote:
+			++i;
+			if(i < argc){
+				percentageRemotes = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optRemote << '\n';
+			}
+			break;
+		case optIter:
+			++i;
+			if(i < argc){
+				iter = toData<std::size_t>(std::string(*(++argvc)));
+			} else {
+				std::cout << "Missing argument for option -" << optIter << '\n';
+			}
+			break;
+		case optHelp:
+			std::cout << "usage: \n\t" << argv[0] << helpstr;
+			return 0;
+		default:
+			std::cout << "Unknown argument: " << *argvc << '\n';
+			hasError = true;
+			continue;
 		}
 	}
-	if (argc >= offset + 3) {
-		nodes = n_tools::toInt(args[offset + 2]);
-	}
-	if (argc >= offset + 4) {
-		apn = n_tools::toInt(args[offset + 3]);
-	}
-	if (argc >= offset + 5) {
-		iter = n_tools::toInt(args[offset + 4]);
-	}
-	if (argc >= offset + 6) {
-		int temp = n_tools::toInt(args[offset + 5]);	//allows parsing negative values
-		assert(temp >= 0 && temp <= 100 && "The amount of remotes must be a number in the range [0, 100].");
-		percentageRemotes = temp;
+	if(hasError){
+		std::cout << "usage: \n\t" << argv[0] << helpstr;
+		return -1;
 	}
 
 	n_control::ControllerConfig conf;
@@ -100,7 +186,7 @@ int main(int argc, char** args)
 	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(ENDTIME, 0);
+	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
