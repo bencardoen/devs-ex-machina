@@ -269,6 +269,39 @@ char getOpt(char* argv){
 	return 0;
 }
 
+void allocate(std::size_t numCores, std::size_t pCount, Processor* p){
+	if(p != nullptr){
+		std::size_t core = p->m_counter*numCores/pCount;
+		p->setProc(core);
+		std::cout << "assigned processor_" << p->m_counter << " to core " << core << '\n';
+	}
+}
+void allocate(std::size_t, std::size_t, Generator* g){
+	g->setProc(0);
+}
+void findProcessors(std::vector<Processor*>& procs, adevs::Devs<t_event>* c){
+	Processor* p = dynamic_cast<Processor*>(c);
+	if(p != nullptr){
+		procs.push_back(p);
+		std::cout << "found processor " << p->m_counter << '\n';
+	}
+	else {
+		CoupledRecursion* r = dynamic_cast<CoupledRecursion*>(c);
+		if(r != nullptr){
+			for(adevs::Devs<t_event>* i:r->m_components)
+				findProcessors(procs, i);
+		}
+	}
+}
+void allocate(std::size_t numcores, DEVSTone* d){
+	allocate(0, 0, dynamic_cast<Generator*>(d->m_gen));
+	//get a list of all processors
+	std::vector<Processor*> procs;
+	findProcessors(procs, d->m_proc);
+	for(Processor* i: procs)
+		allocate(numcores, procs.size(), i);
+}
+
 
 
 int main(int argc, char** argv)
@@ -361,7 +394,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	adevs::Devs<t_event>* model = new DEVSTone(width, depth, randTa);
+	DEVSTone* model = new DEVSTone(width, depth, randTa);
 	adevs::EventListener<t_event>* listener = new Listener();
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
@@ -369,7 +402,11 @@ int main(int argc, char** argv)
 		sim.execUntil(eTime);
 	} else {
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
-		adevs::ParSimulator<t_event> sim(model);
+		allocate(coreAmt, model);
+		adevs::LpGraph lpg;
+		for(int i = 1; i < coreAmt; ++i)
+			lpg.addEdge(i-1, i);
+		adevs::ParSimulator<t_event> sim(model, lpg);
 		sim.addEventListener(listener);
 		sim.execUntil(eTime);
 	}
