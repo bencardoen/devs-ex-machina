@@ -62,8 +62,10 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 def devstonegen(simtype, executable):
     for depth in [1, 2, 3]:  # , 4, 8, 16]:
         for width in [2, 3, 4]:  # , 8, 16]:
+            if simtype is not simtypes.classic and (depth*width+1) < simtype[2]:
+                continue
             yield list(chain([executable], simtype, ['-w', width, '-d', depth]))  # ['-t', endTime], ['-r'] if randTa else []
-            return
+            # return
 
 
 def pholdgen(simtype, executable):
@@ -72,7 +74,7 @@ def pholdgen(simtype, executable):
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
                     yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes]))  # ['-t', endTime]
-                    return
+                    # return
 
 
 # compilation functions
