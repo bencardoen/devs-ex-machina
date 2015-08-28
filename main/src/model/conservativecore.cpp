@@ -16,7 +16,10 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
 	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity())
 {
-	;
+        /// Make sure our nulltime is set correctly
+        m_distributed_time->lockEntry(this->getCoreID());
+        m_distributed_time->set(this->getCoreID(), t_timestamp::infinity());
+        m_distributed_time->unlockEntry(this->getCoreID());
 }
 
 Conservativecore::~Conservativecore()
@@ -341,9 +344,7 @@ bool Conservativecore::checkNullRelease(){
          * If all nulltimes are equal, but our own isn't we need at least 1 stalled round, 
          * so again return false.
          */
-        return false;
         
-        /** Uncomment implementation after checking the tests.
         t_timestamp::t_time current_time = this->getTime().getTime();
         for(const auto& influencing : this->m_influencees){
                 
@@ -351,7 +352,7 @@ bool Conservativecore::checkNullRelease(){
                 t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing).getTime();
                 this->m_distributed_time->unlockEntry(influencing);
                 
-                if(nulltime < current_time){
+                if(nulltime < current_time || isInfinity(t_timestamp(nulltime, 0))){
                         return false;
                 }        
         }
@@ -364,7 +365,7 @@ bool Conservativecore::checkNullRelease(){
                 return false;
         
         return true;
-        */
+        
 }
 
 void

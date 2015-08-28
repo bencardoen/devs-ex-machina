@@ -263,7 +263,7 @@ TEST(Controller, CONDEVS)
 		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-                t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+                t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
 		auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector, timevector);
 		auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector, timevector);
 
