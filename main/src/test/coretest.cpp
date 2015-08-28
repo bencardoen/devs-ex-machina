@@ -940,7 +940,7 @@ TEST(Conservativecore, GVT){
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-        t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+        t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
 	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector, timevector);
 	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector, timevector);
 	coreMap[0] = c0;
@@ -977,15 +977,15 @@ TEST(Conservativecore, GVT){
         EXPECT_EQ(c1->getEit().getTime(), 200u);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			
-        EXPECT_EQ(eotvector->get(1).getTime(), 0u);
+        EXPECT_EQ(eotvector->get(1).getTime(), 58u);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			
-        EXPECT_EQ(c1->getTime().getTime(),118u);
+        EXPECT_EQ(c1->getTime().getTime(),178u);
         LOG_INFO("--------------------------------------------------");
         c1->runSmallStep();                     
-        EXPECT_EQ(c1->getTime().getTime(),178u);
+        EXPECT_EQ(c1->getTime().getTime(),200u);
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();			
         EXPECT_EQ(c1->getTime().getTime(),200u);
@@ -1016,7 +1016,7 @@ TEST(Conservativecore, Abstract){
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-        t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
+        t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
 	auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector, timevector);
 	auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector, timevector);
 	coreMap[0] = c0;
