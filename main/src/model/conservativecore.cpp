@@ -69,12 +69,12 @@ void Conservativecore::updateEOT()
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
         if(!isInfinity(oldeot)  && oldeot > neweot){
-                LOG_ERROR("MCORE:: ",this->getCoreID(), " eot moving backward in time, BUG.");
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
         }
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
-        LOG_DEBUG("CCore:: ", this->getCoreID(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
-        LOG_DEBUG("CCore:: ", this->getCoreID(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
 }
 
 /**
@@ -92,7 +92,7 @@ void Conservativecore::updateEOT()
  */
 void Conservativecore::updateEIT()
 {
-	LOG_INFO("CCore:: ", this->getCoreID(), " updating EIT:: eit_now = ", this->m_eit);
+	LOG_INFO("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(const auto& influence_id : m_influencees){
 		this->m_distributed_eot->lockEntry(influence_id);

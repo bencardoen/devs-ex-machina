@@ -25,6 +25,9 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 {
 	auto tracers = m_tracerset? m_tracerset : createObject<n_tracers::t_tracerset>();
 
+	LOG_DEBUG("# of cores: ", m_coreAmount);
+	LOG_DEBUG("save interval: ", m_saveInterval);
+	LOG_DEBUG("zombie thresshold: ", m_zombieIdleThreshold);
 	// parallel simulation with only one simulation core should turn into a classic simulation
 	if(isParallel(m_simType) && m_coreAmount == 1)
 		m_simType = SimType::CLASSIC;

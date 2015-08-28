@@ -23,7 +23,7 @@ public:
 	{
 
 	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
 		//all models may send to each other. There isn't really an optimal configuration.
 		return (m_n++)%coreAmount();
 	}
@@ -31,8 +31,11 @@ public:
 	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
 		m_maxn = models.size();
 		assert(m_maxn && "Total amount of models can't be zero.");
-		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber(allocate(ptr));
+		for(const n_model::t_atomicmodelptr& ptr: models){
+			std::size_t val = allocate(ptr);
+			ptr->setCorenumber(val);
+			LOG_DEBUG("Assigning model ", ptr->getName(), " to core ", val);
+		}
 	}
 };
 

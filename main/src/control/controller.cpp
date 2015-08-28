@@ -283,6 +283,8 @@ void Controller::simulate()
 		return;
 	}
 
+	LOG_DEBUG("simulating to ending time: ", m_checkTermTime? m_terminationTime:t_timestamp::infinity());
+
 	m_tracers->startTrace();
 
 	m_isSimulating = true;

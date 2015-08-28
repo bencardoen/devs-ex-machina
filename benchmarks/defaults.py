@@ -143,7 +143,7 @@ def defaultExec(args, path):
     fmtcommand = "perf stat -o {} {}".format(str(path), args)
     print(fmtcommand)
     try:
-        call(fmtcommand.split(), timeout=timeout)  # , stdout=DEVNULL)
+        call(fmtcommand.split(), timeout=timeout, stdout=DEVNULL)
     except TimeoutExpired:
         print("subprocess timed out after more than {} seconds.".format(timeout))
         timeouts.append(args)
