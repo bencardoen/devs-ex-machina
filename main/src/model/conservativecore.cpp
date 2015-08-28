@@ -165,30 +165,28 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
-		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
+		this->queuePendingMessage(msg); // do not store antimessage
 	}
 	
-        const t_timestamp::t_time currenttime= this->getTime().getTime();
-        /// Revert if time msg <= current time
-        if (msg->getTimeStamp().getTime() < currenttime){
+        const t_timestamp::t_time currenttime= this->getTime().getTime();       // Avoid x times locked getter
+        const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
+        const t_timestamp::t_time eittime = this->getEit().getTime();
+
+        if (msgtime < currenttime){
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
-                this->revert(msg->getTimeStamp().getTime());
+                this->revert(msgtime);
         }else{
-                // If we're stalled, it is legal to receive a message @ current time since we haven't transitioned at that
-                // time yet.
-                if (msg->getTimeStamp().getTime() == this->getTime().getTime()) {
-                        if(currenttime != this->getEit().getTime()){
-                                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
+                if (msgtime == currenttime && currenttime != eittime) {
+                                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
                                         " msg follows: ", msg->toString());
                                 m_stats.logStat(REVERTS);
-                                this->revert(msg->getTimeStamp().getTime());
-                        }
+                                this->revert(msgtime);
                 }
-                // Time == equal to eit, haven't transitioned yet so we're safe to receive a message at current time.
+                // Stalled round && equal time is ok (have not yet transitioned)
+                // msgtime > currenttime is always fine.
         }
-        // Else : time > current time, already queued.
 
         // For now, make sure GVT keeps working.
 	Multicore::registerReceivedMessage(msg);
@@ -317,6 +315,23 @@ void Conservativecore::runSmallStepStalled()
          */
         this->updateEOT();
         this->updateEIT();
+}
+
+bool Conservativecore::checkNullRelease(){
+        t_timestamp::t_time current_time = this->getTime().getTime();
+        for(const auto& influencing : this->m_influencees){
+                t_timestamp::t_time nulltime;
+                {
+                        this->m_distributed_time->lockEntry(influencing);
+                        nulltime = this->m_distributed_time->get(influencing).getTime();
+                        this->m_distributed_time->unlockEntry(influencing);
+                }
+                if(nulltime < current_time){
+                        return false;
+                }        
+        }
+        // == will occur in deadlock, but due to timing > is quite possible (the above code runs on all cores).
+        return true;
 }
 
 void
