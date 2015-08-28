@@ -6,7 +6,7 @@ import argparse
 from collections import namedtuple
 from itertools import chain
 from pathlib import Path
-from subprocess import call
+from subprocess import call, DEVNULL
 from functools import partial
 
 
@@ -36,6 +36,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--force", action="store_true",
     help="[default: false] force compilation, regardless of whether the executable already exists."
     )
+parser.add_argument("--showSTDOUT", action="store_true",
+    help="Allow subprocesses, such as compilation scripts and benchmarks, to send output to stdout."
+    )
 parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
     help="[default: 1] number of iterations. Must be at least 1."
     )
@@ -46,6 +49,7 @@ parser.add_argument("limited", nargs='*', default=None,
     help="If set, only execute these benchmarks. Leave out to execute all."
     )
 args = parser.parse_args()
+defaults.args = args
 
 # executable names
 devstoneEx = "./build/dxexmachina_devstone"
@@ -89,7 +93,9 @@ def unifiedCompiler(target, force=False):
     if force or not path.exists():
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
-        call(['make', '--always-make', target], cwd='./build')
+        print("Compiling target {}".format(target))
+        call(['make', '--always-make', target], cwd='./build', stdout=None if args.showSTDOUT else DEVNULL)
+        print("  -> Compilation done.")
 
 
 if __name__ == '__main__':

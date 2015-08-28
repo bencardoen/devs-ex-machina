@@ -19,6 +19,10 @@ from subprocess import call, TimeoutExpired, DEVNULL
 from collections import Iterable
 
 
+# global object for passing command line arguments.
+args = None
+
+
 # first, get user locale by forcing it to load it instead of the C locale
 locale.setlocale(locale.LC_ALL, '')
 # custom parsing function for floats
@@ -134,19 +138,19 @@ List of arguments that resulted into a timeout
 """
 
 
-def defaultExec(args, path):
+def defaultExec(arg, path):
     """
     Default implementation of BenchmarkDriver.execute
     """
-    if isinstance(args, Iterable):
-        args = " ".join(map(str, args))
-    fmtcommand = "perf stat -o {} {}".format(str(path), args)
+    if isinstance(arg, Iterable):
+        arg = " ".join(map(str, arg))
+    fmtcommand = "perf stat -o {} {}".format(str(path), arg)
     print(fmtcommand)
     try:
-        call(fmtcommand.split(), timeout=timeout, stdout=DEVNULL)
+        call(fmtcommand.split(), timeout=timeout, stdout=DEVNULL if (args is None or not args.showSTDOUT) else None)
     except TimeoutExpired:
         print("subprocess timed out after more than {} seconds.".format(timeout))
-        timeouts.append(args)
+        timeouts.append(arg)
 
 defaultDriver = BenchmarkDriver(defaultFilegen, defaultFoldergen, defaultExec)
 
