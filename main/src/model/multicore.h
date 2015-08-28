@@ -27,15 +27,6 @@ private:
 	 */
 	t_networkptr			m_network;
 
-protected:
-	/**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
-        
-	std::size_t 	m_cores;
-
-private:
 	/**
 	 * This core's current color state.
 	 */
@@ -117,17 +108,6 @@ private:
 	sendAntiMessage(const t_msgptr& msg);
 
 	/**
-	 * Handle antimessage
-	 * Given antimessage x ~ y (original message), if y is queued but not yet processed, annihilate and do nothing.
-	 * If y is processed, trigger a revert.
-	 * If y is not yet received : store x and destroy y if it arrives.
-	 * @param msg the antimessage
-	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
-	 */
-	void
-	handleAntiMessage(const t_msgptr& msg);
-
-	/**
 	 * Waits until all send messages were received and we can move on with our GVT algorithm
 	 * @param msg the received control message
 	 */
@@ -156,7 +136,34 @@ private:
         
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
+        
+        
+protected:
+	/**
+	 * Location table
+	 */
+	n_control::t_location_tableptr	m_loctable;
+        
+	std::size_t 	m_cores;
+        
+        /**
+	 * Handle antimessage
+	 * Given antimessage x ~ y (original message), if y is queued but not yet processed, annihilate and do nothing.
+	 * If y is processed, trigger a revert.
+	 * If y is not yet received : store x and destroy y if it arrives.
+	 * @param msg the antimessage
+	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
+	 */
+	void
+	handleAntiMessage(const t_msgptr& msg);
 
+        /**
+         * Allow msg to be traced by (among others the GVT algorithm)
+         * @param msg
+         */
+        void
+        registerReceivedMessage(const t_msgptr& msg);
+        
 public:
 	Multicore()=delete;
 	/**

@@ -596,24 +596,9 @@ void n_model::Core::rescheduleAll(const t_timestamp& totime)
 	}
 }
 
-void n_model::Core::receiveMessage(const t_msgptr& msg)
+void n_model::Core::receiveMessage(const t_msgptr& )
 {
-        m_stats.logStat(MSGRCVD);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
-	if (msg->isAntiMessage()) {
-                m_stats.logStat(AMSGRCVD);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
-		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
-	} else {
-		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
-	}
-	
-	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
-		        " msg follows: ", msg->toString());
-                m_stats.logStat(REVERTS);
-		this->revert(msg->getTimeStamp().getTime());
-	}
+;
 }
 
 void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)

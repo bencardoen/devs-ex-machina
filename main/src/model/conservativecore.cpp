@@ -12,9 +12,9 @@
 namespace n_model {
 
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
-        const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc)
+        const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc, const t_timevector& tc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity())
+	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity())
 {
 	;
 }
@@ -156,6 +156,44 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	Multicore::setTime(corrected);
 }
 
+void Conservativecore::receiveMessage(const t_msgptr& msg){
+        m_stats.logStat(MSGRCVD);
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
+        
+        if (msg->isAntiMessage()) {
+                m_stats.logStat(AMSGRCVD);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
+		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
+	} else {
+		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
+	}
+	
+        const t_timestamp::t_time currenttime= this->getTime().getTime();
+        /// Revert if time msg <= current time
+        if (msg->getTimeStamp().getTime() < currenttime){
+                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
+		        " msg follows: ", msg->toString());
+                m_stats.logStat(REVERTS);
+                this->revert(msg->getTimeStamp().getTime());
+        }else{
+                // If we're stalled, it is legal to receive a message @ current time since we haven't transitioned at that
+                // time yet.
+                if (msg->getTimeStamp().getTime() == this->getTime().getTime()) {
+                        if(currenttime != this->getEit().getTime()){
+                                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
+                                        " msg follows: ", msg->toString());
+                                m_stats.logStat(REVERTS);
+                                this->revert(msg->getTimeStamp().getTime());
+                        }
+                }
+                // Time == equal to eit, haven't transitioned yet so we're safe to receive a message at current time.
+        }
+        // Else : time > current time, already queued.
+
+        // For now, make sure GVT keeps working.
+	Multicore::registerReceivedMessage(msg);
+}
+
 void Conservativecore::init(){
 	/// Get first time, offset all models if required
 	Core::init();
@@ -257,6 +295,12 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
         }
         // Base function handles all the rest (message routing etc..)
         Core::collectOutput(sortedimminents);
+        // Next, we're stalled, but can be entering deadlock. Signal out current Time so the tiebreaker can
+        // be found and break the lock.
+        m_distributed_time->lockEntry(this->getCoreID());
+        m_distributed_time->set(this->getCoreID(), this->getTime());
+        m_distributed_time->unlockEntry(this->getCoreID());
+        LOG_DEBUG("CCORE :: ", this->getCoreID(), " Stalled round output generation, broadcasting time :: ", this->getTime());
 }
 
 void Conservativecore::runSmallStepStalled()

@@ -104,15 +104,31 @@ void Multicore::countMessage(const t_msgptr& msg)
 
 void Multicore::receiveMessage(const t_msgptr& msg)
 {
-	Core::receiveMessage(msg);	// Trigger antimessage handling etc (and possibly revert)
-
-	// If we receive a message from our own, we don't want that to be counted in the V vector
-	if (msg->getSourceCore() == this->getCoreID()){
-		LOG_ERROR("\tMCORE :: ", this->getCoreID(), " got message with Source == my id ?? ", msg->toString());
-		return;
+	m_stats.logStat(MSGRCVD);
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
+        
+        if (msg->isAntiMessage()) {
+                m_stats.logStat(AMSGRCVD);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
+		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
+	} else {
+		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
+	}
+	
+	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
+		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
+		        " msg follows: ", msg->toString());
+                m_stats.logStat(REVERTS);
+                this->revert(msg->getTimeStamp().getTime());
 	}
 
-	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
+	this->registerReceivedMessage(msg);             // Mattern/GVT
+}
+
+
+void Multicore::registerReceivedMessage(const t_msgptr& msg)
+{
+        	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	if (msg->getColor() == MessageColor::WHITE && !msg->isAntiMessage()) {
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
@@ -122,6 +138,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 		this->m_wake_on_msg.notify_all();
 	}
 }
+
 
 void Multicore::getMessages()
 {

@@ -18,6 +18,8 @@ namespace n_model {
  */
 typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_eotvector;
 
+typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_timevector;
+
 
 /**
  * A refresher on the simulation logic:
@@ -49,8 +51,6 @@ private:
 	t_timestamp	m_eit;
 
 	void setEit(const t_timestamp& neweit);
-        
-        t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
 
 	/**
 	 * Shared vector of all eots of all cores.
@@ -58,6 +58,12 @@ private:
 	 * A core only reads influencing core eots, and only writes its own.
 	 */
 	t_eotvector	m_distributed_eot;
+        
+        /**
+         * Stores current time set right after output is generated (but transition may or may not have occurred).
+         * Required for deadlock resolution.
+         */
+        t_timevector    m_distributed_time;
         
         /**
          * In case we're stalled, remember who has sent output and who hasn't to make
@@ -87,6 +93,19 @@ private:
          * Needed for eot calculation.
          */
         t_timestamp             m_last_sent_msgtime;
+        
+        /**
+         * If time==eit, we're waiting for at least 1 core with eot==eit. If that core is in it's turn ( possibly indirectly)
+         * waiting for us, we break deadlock by simulating this turn iff all our influencing cores have notified us that they
+         * have generated all output at the current time.
+         * @return true if all influencing cores have output time == our time.
+         */
+        bool 
+        testDeadlock(){;}
+        
+        
+        virtual
+        void receiveMessage(const t_msgptr& msg)override;
 
 	/**
 	 * Reset lookahead to inf, after at least one model has changed state we need to get a
@@ -124,6 +143,8 @@ private:
          */
         void
         runSmallStepStalled();
+        
+        t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
 
 public:
 	Conservativecore() = delete;
@@ -135,7 +156,7 @@ public:
 	 */
 	Conservativecore(const t_networkptr& n , std::size_t coreid ,
 		const n_control::t_location_tableptr& ltable, size_t cores,
-		const t_eotvector& vc);
+		const t_eotvector& vc, const t_timevector& tc);
 	virtual ~Conservativecore();
 
 	/**
