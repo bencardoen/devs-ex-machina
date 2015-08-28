@@ -85,7 +85,7 @@ def unifiedCompiler(target, force=False):
       target    The name of the cmake target
       force     [default=False] use a true value to force compilation
     """
-    path = Path(devstoneEx)
+    path = Path('./build')/target
     if force or not path.exists():
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
