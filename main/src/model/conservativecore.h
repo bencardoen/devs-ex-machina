@@ -38,6 +38,11 @@ private:
 	t_timestamp	m_eit;
 
 	void setEit(const t_timestamp& neweit);
+        
+        /**
+         * @return true if current time == eit
+         */
+        bool timeStalled();
 
 	/**
 	 * Shared vector of all eots of all cores.
@@ -87,11 +92,18 @@ private:
         
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
-         * >= our time.
+         * >= our time, and we ourselves have produced all output at current time.
          * @return true This core can safely transition at the current time.
          */
         bool 
         checkNullRelease();
+        
+        /**
+         * Whenever we're stalled but not yet deadlocked, sleep or idle or ....
+         * @attention: do not call in locked sections.
+         */
+        void
+        invokeStallingBehaviour();
         
         /**
          * Queue message, revert if time <= current time or if time < current time and stalled.

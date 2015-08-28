@@ -101,15 +101,7 @@ void Conservativecore::updateEIT()
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
         const t_timestamp oldeot = this->getEit();
-        /** If our current time is at eit, and the new calculation again finds the same value,
-         *  go to sleep for a short while instead of wasting rounds.
-         *  We have several options here : each stalled round identical sleep,
-         *  an exponential backoff each time we hit this path, or condition variable (very complex, only wake on eot entry we listen to). 
-         */
         
-        if(this->getTime().getTime()==min_eot_others.getTime()){
-                std::this_thread::sleep_for(std::chrono::milliseconds(60));
-        }
         LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", oldeot);
 	this->setEit(min_eot_others);
 }
@@ -238,6 +230,12 @@ void Conservativecore::buildInfluenceeMap(){
 	}
 }
 
+void Conservativecore::invokeStallingBehaviour()
+{
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+}
+
+
 void Conservativecore::postTransition(const t_atomicmodelptr& model){
 	t_timestamp current_min = this->m_min_lookahead;
 	t_timestamp model_la = model->lookAhead();
@@ -249,19 +247,38 @@ void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
 
+bool Conservativecore::timeStalled(){
+        return (this->getTime().getTime()==this->getEit().getTime());
+}
+
 void Conservativecore::runSmallStep(){
         
         this->lockSimulatorStep();                      //L
         
-        if(this->getEit().getTime() == this->getTime().getTime()){
+        /**
+         * EIT == TIME : stall
+         *      if this is the first time this happens
+         *              generate output & mark nulltime as current ( iow runSmallStepStalled)
+         *      else 
+         *              // possible (but not guaranteed) deadlock
+         *              if(all null message time >= our time)// we're safe to simulate further 
+         *                      runSmallStep()
+         *              else 
+         *                      wait until the above becomes true : runSmallStepStalled (else eot /eit is not updated
+         * TIME < EIT : normal round
+         */
+        if(timeStalled() && !checkNullRelease()){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
-    
                 this->runSmallStepStalled();
-    
+
                 this->unlockSimulatorStep();            // UL
+                
+                // RST updates eit, so recheck.
+                if(timeStalled())       
+                        invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
         }
-        else{
+        else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
                 this->unlockSimulatorStep();            // UL
                 
                 Core::runSmallStep();   //  L -> UL
@@ -318,20 +335,36 @@ void Conservativecore::runSmallStepStalled()
 }
 
 bool Conservativecore::checkNullRelease(){
+        /**
+         * If we find any influencing core with an output time (null msg time) not
+         * equal to our own, we can't advance. (ret false)
+         * If all nulltimes are equal, but our own isn't we need at least 1 stalled round, 
+         * so again return false.
+         */
+        return false;
+        
+        /** Uncomment implementation after checking the tests.
         t_timestamp::t_time current_time = this->getTime().getTime();
         for(const auto& influencing : this->m_influencees){
-                t_timestamp::t_time nulltime;
-                {
-                        this->m_distributed_time->lockEntry(influencing);
-                        nulltime = this->m_distributed_time->get(influencing).getTime();
-                        this->m_distributed_time->unlockEntry(influencing);
-                }
+                
+                this->m_distributed_time->lockEntry(influencing);
+                t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing).getTime();
+                this->m_distributed_time->unlockEntry(influencing);
+                
                 if(nulltime < current_time){
                         return false;
                 }        
         }
-        // == will occur in deadlock, but due to timing > is quite possible (the above code runs on all cores).
+        
+        
+        this->m_distributed_time->lockEntry(this->getCoreID());
+        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
+        this->m_distributed_time->unlockEntry(this->getCoreID());
+        if(own_null != current_time)
+                return false;
+        
         return true;
+        */
 }
 
 void
