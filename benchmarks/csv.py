@@ -16,6 +16,8 @@ def _addDataLine(arg, res, f, delim=';', argparse=lambda x: "\"{}\"".format(" ".
     """
     # convert the arguments to something we can actually write to the file
     argstr = argparse(arg)
+    if type(argstr) is not str:
+        argstr = delim.join(map(str, argstr))
     # keep a list of lists that will contain all the data points
     values = []
     for _, val in sorted(res.items()):
@@ -33,11 +35,11 @@ def _addDataLine(arg, res, f, delim=';', argparse=lambda x: "\"{}\"".format(" ".
         f.write('\n')
 
 
-def _addHeaderLine(res, f, delim=';'):
+def _addHeaderLine(res, f, delim=';', argColumns="\"command\""):
     """
     Adds a header line.
     """
-    f.write("\"command\"")
+    f.write(argColumns)
     for name, val in sorted(res.items()):
         if val is None:
             continue
@@ -56,7 +58,7 @@ def _addHeaderLine(res, f, delim=';'):
     f.write('\n')
 
 
-def toCSV(data, path, delim=';'):
+def toCSV(data, path, delim=';', argColumns="\"command\"", argParse=lambda x: "\"{}\"".format(" ".join(map(str, x)))):
     """
     Saves the data to path in csv format.
     """
@@ -64,7 +66,7 @@ def toCSV(data, path, delim=';'):
     with path.open('w') as f:
         args = data["args"]
         results = data["results"]
-        _addHeaderLine(results[0], f, delim)
+        _addHeaderLine(results[0], f, delim, argColumns)
         for arg, res in zip(args, results):
             # now we have all the data per set of arguments
-            _addDataLine(arg, res, f, delim)
+            _addDataLine(arg, res, f, delim, argParse)

@@ -66,10 +66,11 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 def devstonegen(simtype, executable):
     for depth in [1, 2, 3]:  # , 4, 8, 16]:
         for width in [2, 3, 4]:  # , 8, 16]:
-            if simtype is not simtypes.classic and (depth*width+1) < simtype[2]:
-                continue
-            yield list(chain([executable], simtype, ['-w', width, '-d', depth]))  # ['-t', endTime], ['-r'] if randTa else []
-            # return
+            for endTime in [50]:
+                if simtype is not simtypes.classic and (depth*width+1) < simtype[2]:
+                    continue
+                yield list(chain([executable], simtype, ['-w', width, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
+                # return
 
 
 def pholdgen(simtype, executable):
@@ -77,9 +78,13 @@ def pholdgen(simtype, executable):
         for nodes in [2, 4]:  # , 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
-                    yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes]))  # ['-t', endTime]
-                    # return
+                    for endTime in [50]:
+                        yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
+                        # return
 
+csvDelim = ';'
+devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
+pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
 
 # compilation functions
 def unifiedCompiler(target, force=False):
@@ -130,6 +135,7 @@ if __name__ == '__main__':
         defaults.Benchmark('aphold/conservative', apholdc, partial(pholdgen, simtypes.conservative, adevpholdEx), "adevs phold, conservative"),
         )
     allBenchmark = [dxdevstone, dxphold, adevstone, aphold]
+    bmarkArgParses = [devsArg, pholdArg, devsArg, pholdArg]
     # do all the preparation stuff
     driver = defaults.defaultDriver
     analyzer = defaults.perfAnalyzer
@@ -139,7 +145,7 @@ if __name__ == '__main__':
 
     # do the benchmarks!
     donelist = []
-    for bmarkset in allBenchmark:
+    for bmarkset, argp in zip(allBenchmark, bmarkArgParses):
         doCompile = True
         for bmark in bmarkset:
             if bmark is None or (len(args.limited) > 0 and bmark.name not in args.limited):
@@ -152,7 +158,7 @@ if __name__ == '__main__':
                 data = analyzer.read(files, data)
                 doCompile = False
             analyzer.save(data, bmark, folders)
-            toCSV(data, folders.plots / "{}.csv".format(bmark.name))
+            toCSV(data, folders.plots / "{}.csv".format(bmark.name), *argp)
 
     if len(args.limited) > 0:
         wrong = set(args.limited) - set(donelist)
