@@ -15,9 +15,15 @@
 #include <deque>
 #include <random>
 
+#ifdef FPTIME
 #define T_0 0.01	//timeadvance may NEVER be 0!
 #define T_100 1.0
 #define T_INF 2.0
+#else
+#define T_0 1.0	//timeadvance may NEVER be 0!
+#define T_100 100.0
+#define T_INF 200.0
+#endif
 
 typedef double t_eventTime;
 typedef std::size_t t_payload;

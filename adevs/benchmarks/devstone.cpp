@@ -13,11 +13,19 @@
 #include <string>
 #include <limits>
 
+#ifdef FPTIME
+//#define T_0 0.0
+//#define T_1 0.0000000001
+//#define T_50 0.5
+//#define T_75 0.75
+//#define T_100 1.0
+# else
 #define T_0 0.0
-#define T_1 0.0000000001
-#define T_50 0.5
-#define T_75 0.75
-#define T_100 1.0
+#define T_1 1.0
+#define T_50 50.0
+#define T_75 75.0
+#define T_100 100.0
+#endif
 #define T_INF DBL_MAX
 
 typedef adevs::PortValue<std::size_t, int> t_event;
