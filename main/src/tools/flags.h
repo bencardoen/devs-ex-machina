@@ -15,7 +15,7 @@ namespace n_tools{
  * @pre flag is power of 2
  */
 template<typename T=std::size_t>
-bool flag_is_set(const T& testvalue, const T& flag){
+constexpr bool flag_is_set(const T& testvalue, const T& flag){
 	return ((testvalue & flag)==flag);
 }
 

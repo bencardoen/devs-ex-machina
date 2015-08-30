@@ -492,7 +492,6 @@ public:
 	 * @param imminent modelnames with firing time <= to current time
 	 * @param mail collected from local/network by collectOutput/getMessages
 	 */
-	virtual
 	void
 	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 

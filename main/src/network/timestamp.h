@@ -52,7 +52,7 @@ private:
 	 */
 	T m_timestamp;
 
-	inline
+	constexpr
 	bool timeStampsEqual(const T& lhs, const T& rhs) const
 	{
 		return (lhs.m_timestamp == rhs.m_timestamp);
@@ -67,29 +67,25 @@ public:
 	typedef T t_time;
 	typedef X t_causal;
 
-	static inline Time infinity()
+	static constexpr Time infinity()
 	{
 		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
 	}
 
-	Time(): m_timestamp(0), m_causal(0){}// = default;
-	Time(t_time time, t_causal causal = 0)
+	constexpr Time(): m_timestamp(0), m_causal(0){}// = default;
+	constexpr Time(t_time time, t_causal causal = 0)
 		: m_timestamp(time), m_causal(causal)
-	{
-		;
-	}
-	virtual ~Time()
 	{
 		;
 	}
 	// Assignment, move and copy are correct for POD.
 
-	t_time getTime() const
+	constexpr t_time getTime() const
 	{
 		return this->m_timestamp;
 	}
 
-	t_causal getCausality() const
+	constexpr t_causal getCausality() const
 	{
 		return this->m_causal;
 	}
@@ -117,43 +113,42 @@ public:
 	}
 
 	friend
-	bool operator<(const Time& lhs, const Time& rhs)
+	constexpr bool operator<(const Time& lhs, const Time& rhs)
 	{
-		if (nearly_equal<t_time>(lhs.getTime(), rhs.getTime()))
-			return lhs.m_causal < rhs.m_causal;
-		else
-			return lhs.m_timestamp < rhs.m_timestamp;
+		return (nearly_equal<t_time>(lhs.getTime(), rhs.getTime()))?
+			(lhs.m_causal < rhs.m_causal) :
+			(lhs.m_timestamp < rhs.m_timestamp);
 	}
 
 	friend
-	bool operator>(const Time& lhs, const Time& rhs)
+	constexpr bool operator>(const Time& lhs, const Time& rhs)
 	{
 		// a > b implies b < a
 		return (rhs < lhs);
 	}
 
 	friend
-	bool operator>=(const Time& lhs, const Time& rhs)
+	constexpr bool operator>=(const Time& lhs, const Time& rhs)
 	{
 		// a >= b implies not(a<b)
 		return (not (lhs < rhs));
 	}
 
 	friend
-	bool operator<=(const Time&lhs, const Time&rhs)
+	constexpr bool operator<=(const Time&lhs, const Time&rhs)
 	{
 		// a <= b  implies (not a>b)
 		return (not (lhs > rhs));
 	}
 
 	friend
-	bool operator==(const Time& lhs, const Time& rhs)
+	constexpr bool operator==(const Time& lhs, const Time& rhs)
 	{
 		return (nearly_equal<t_time>(lhs.getTime(), rhs.getTime()) && lhs.m_causal == rhs.m_causal);
 	}
 
 	friend
-	bool operator!=(const Time& lhs, const Time& rhs)
+	constexpr bool operator!=(const Time& lhs, const Time& rhs)
 	{
 		return (not (lhs == rhs));
 	}
@@ -162,22 +157,24 @@ public:
 	 * Addition of time object
 	 * @return (Time (left+right), max(left,right))
 	 */
-	friend Time operator+(const Time& lhs, const Time& rhs)
+	friend
+	constexpr Time operator+(const Time& lhs, const Time& rhs)
 	{
-		if(isInfinity(rhs) || isInfinity(lhs))
-			return infinity();
-		return Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
+		return (isInfinity(rhs) || isInfinity(lhs))?
+			infinity() :
+			Time(lhs.m_timestamp + rhs.m_timestamp, std::max(lhs.m_causal, rhs.m_causal));
 	}
 
 	/**
 	 * Subtraction of time object
 	 * @return (Time (left+right), max(left,right))
 	 */
-	friend Time operator-(const Time& lhs, const Time& rhs)
+	friend
+	constexpr Time operator-(const Time& lhs, const Time& rhs)
 	{
-		if(isInfinity(rhs) || isInfinity(lhs))
-			return infinity();
-		return Time(lhs.m_timestamp - rhs.m_timestamp, std::min(lhs.m_causal, rhs.m_causal));
+		return (isInfinity(rhs) || isInfinity(lhs))?
+			infinity():
+			Time(lhs.m_timestamp - rhs.m_timestamp, std::min(lhs.m_causal, rhs.m_causal));
 	}
 
 	/**
@@ -194,7 +191,8 @@ public:
          * Return true if the time part of the timestamp is infinite.
         * @attention not the same as ==infinity(), since that also checks causality.
         */
-        friend bool isInfinity(const Time& arg){
+        friend
+        constexpr bool isInfinity(const Time& arg){
                 return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
         }
 
@@ -233,13 +231,12 @@ inline t_timestamp makeTimeStamp(size_t causal = 0)
  * Given a t_timestamp, make another with identical time field, but happening after the
  * original.
  */
-inline t_timestamp makeCausalTimeStamp(const t_timestamp& before)
+inline constexpr t_timestamp makeCausalTimeStamp(const t_timestamp& before)
 {
-	t_timestamp after(before.getTime(), before.getCausality() + 1);
-	return after;
+	return t_timestamp(before.getTime(), before.getCausality() + 1);
 }
 
-inline t_timestamp makeLatest(const t_timestamp& now)
+inline constexpr t_timestamp makeLatest(const t_timestamp& now)
 {
 	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
 }
@@ -250,15 +247,15 @@ namespace std {
 template<typename T, typename X>
 struct hash<n_network::Time<T, X>>
 {
-	size_t operator()(const n_network::Time<T, X>& item) const
+	constexpr size_t operator()(const n_network::Time<T, X>& item) const
 	{
-		constexpr int prime = 17;
+#define prime 17
 		// Could left shift, but what if time is Floating point ??
 		// use enable_if floating point to get better results here.
 		// @warning : test with -fsanitize=integer (mind overflow).
-		size_t result = hash<T>()(item.getTime()) * prime;
-		result += hash<X>()(item.getCausality()) * prime;	// second field is very small.
-		return result;
+		// second field is very small.
+		return hash<T>()(item.getTime()) * prime + hash<X>()(item.getCausality()) * prime;
+#undef prime
 	}
 };
 }

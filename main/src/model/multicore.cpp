@@ -21,8 +21,8 @@ Multicore::~Multicore()
 }
 
 Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
-	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
-	        t_timestamp::infinity()),m_cores(cores)
+	: Core(coreid), m_network(net), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
+	        t_timestamp::infinity()), m_loctable(ltable), m_cores(cores)
 {
 }
 
@@ -31,11 +31,11 @@ void Multicore::sendMessage(const t_msgptr& msg)
 	// We're locked on msglock.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
 	if(coreid >= m_cores || coreid == this->getCoreID()){
-		LOG_ERROR("\tMCORE :: ", this->getCoreID(), " failed lookup for msg ", msg->toString());
+		LOG_ERROR("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " failed lookup for msg ", msg->toString());
 		return;
 	}
 	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message ", msg->toString());
+	LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
 	this->countMessage(msg);					// Make sure Mattern is notified
@@ -51,7 +51,7 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	amsg->setAntiMessage(true);
 	amsg->setDestinationCore(msg->getDestinationCore());
 	amsg->setSourceCore(msg->getSourceCore());
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
+	LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " sending antimessage : ", amsg->toString());
 	//this->countMessage(amsg);					// Make sure Mattern is notified
 	this->m_network->acceptMessage(amsg);
 }
@@ -64,7 +64,7 @@ void Multicore::paintMessage(const t_msgptr& msg)
 void Multicore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
-	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
+	LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " handling antimessage ", msg->toString());
 	if (this->m_received_messages->contains(MessageEntry(msg))) {
 		this->m_received_messages->erase(MessageEntry(msg));
 	}
@@ -72,7 +72,7 @@ void Multicore::handleAntiMessage(const t_msgptr& msg)
 
 void Multicore::markMessageStored(const t_msgptr& msg)
 {
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
+	LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
 }
 
@@ -90,7 +90,7 @@ void Multicore::countMessage(const t_msgptr& msg)
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int val = ++(this->m_mcount_vector.getVector()[j]);
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector to : ", val);
+                        LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT :: incrementing count vector to : ", val);
                 }
 	} else {
 		// Locks this Tred because we might want to use it during the receiving
@@ -98,25 +98,25 @@ void Multicore::countMessage(const t_msgptr& msg)
 		std::lock_guard<std::mutex> lock(this->m_tredlock);
                 t_timestamp oldtred = m_tred;
 		m_tred = std::min(m_tred, msg->getTimeStamp());
-                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after receiving msg.");
+                LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after receiving msg.");
 	}
 }
 
 void Multicore::receiveMessage(const t_msgptr& msg)
 {
 	m_stats.logStat(MSGRCVD);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
+	LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " receiving message \n", msg->toString());
         
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
+		LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
 		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
 	}
 	
 	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
+		LOG_INFO("\tMCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
                 this->revert(msg->getTimeStamp().getTime());
@@ -133,7 +133,7 @@ void Multicore::registerReceivedMessage(const t_msgptr& msg)
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector to : ", value_cnt_vector);
+                        LOG_DEBUG("\tMCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT :: decrementing count vector to : ", value_cnt_vector);
 		}
 		this->m_wake_on_msg.notify_all();
 	}
@@ -145,11 +145,11 @@ void Multicore::getMessages()
 	// TODO : in principle, we could reduce threading issues by detecting live here (earlier) iso
 	// after simulation.
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+	LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " received ", messages.size(), " messages. ");
 	if(messages.size()!= 0){
 		if(this->isIdle()){
 			this->setIdle(false);
-			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
+			LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " changing state from idle to non-idle since we have messages to process");
 		}
 	}
 	this->sortIncoming(messages);
@@ -181,7 +181,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 	while (true) {
 
 		if(rungvt == false){
-			LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a Core thread, stopping GVT.");
+			LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " rungvt set to false by a Core thread, stopping GVT.");
 			return;
 		}
 		int v_value = 0;
@@ -190,7 +190,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 			v_value = this->m_mcount_vector.getVector()[this->getCoreID()];
 		}
 		if (v_value + msgcount <= 0){
-			LOG_DEBUG("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
+			LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
 		}
 		// Sleep in cvar, else we starve the sim thread.
@@ -206,7 +206,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
 	if(rungvt==false){
-		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
+		LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " rungvt set to false by a thread, stopping GVT.");
 		return;
 	}
 	if (this->getCoreID() == 0 && round==0) {
@@ -220,21 +220,21 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 
 void
 Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt){
-        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : process init received control message, waiting for pending messages.");
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT : process init received control message, waiting for pending messages.");
         this->waitUntilOK(msg, rungvt);
-        LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT : All messages received, checking vectors. ");
         if (msg->countIsZero()) {  /// Case found GVT
-                LOG_INFO("MCORE :: ", this->getCoreID(), " found GVT!");
+                LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found GVT!");
                 t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
                 msg->setGvtFound(true);
                 msg->setGvt(GVT_approx);
         } else {                /// C vector is != 0
                 if(round == 1){ 
-                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " process init received control message, starting 2nd round");
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " process init received control message, starting 2nd round");
                         msg->setTmin(this->getTime());
                         msg->setTred(std::min(msg->getTred(), this->getTred()));
-                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
                         t_count& count = msg->getCountVector();
                         std::lock_guard<std::mutex> lock(this->m_vlock);
                         for (size_t i = 0; i < count.size(); ++i) {
@@ -248,15 +248,15 @@ Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool
                         // The benign cases (terminated && race with C<0 can be solved by enabling this workaroud.)
                         if(/*msg->countLeQZero()*/ false){
                                 t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
+                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
                                 // Put this info in the message
                                 msg->setGvtFound(true);
                                 msg->setGvt(GVT_approx);
-                                LOG_DEBUG(" GVT Found with non-zero vector ");
+                                LOG_DEBUG("   -> GVT Found with non-zero vector ");
                                 msg->logMessageState(); 
                         }
                         else{   // Algorithm failure. Controller will log message state for us.
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
+                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
                         }
                 }
                 /// There is no cleanup to be done, startGVT initializes core/msg.
@@ -305,7 +305,7 @@ Multicore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::atomic<b
         this->setColor(MessageColor::RED);
         msg->setTmin(this->getTime());
         msg->setTred(t_timestamp::infinity());
-        LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
+        LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
         t_count& count = msg->getCountVector();
         // We want to make sure our count vector starts with 0
         std::fill(count.begin(), count.end(), 0);
@@ -324,7 +324,7 @@ void Multicore::setGVT(const t_timestamp& candidate)
 	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 	Core::setGVT(newgvt);
 	if (newgvt < this->getGVT() || isInfinity(newgvt)) {
-		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
+		LOG_WARNING("MCORE:: ", this->getCoreID(), " time: ", getTime(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
 		return;
 	}
@@ -355,9 +355,9 @@ void Multicore::setGVT(const t_timestamp& candidate)
 
 void n_model::Multicore::lockSimulatorStep()
 {
-	LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " trying to lock simulator core");
 	this->m_locallock.lock();
-	LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), "simulator core locked");
 }
 
 void n_model::Multicore::unlockSimulatorStep()

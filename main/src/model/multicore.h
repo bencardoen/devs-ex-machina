@@ -144,7 +144,7 @@ protected:
 	 */
 	n_control::t_location_tableptr	m_loctable;
         
-	std::size_t 	m_cores;
+	const std::size_t 	m_cores;
         
         /**
 	 * Handle antimessage

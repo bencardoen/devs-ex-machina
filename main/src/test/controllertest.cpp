@@ -288,7 +288,7 @@ TEST(Controller, CONDEVS)
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/condevstest.txt", TESTFOLDER "controller/condevstest.corr"), 0);
 }
 
-TEST(Pause, Pause)
+TEST(Pause, DISABLED_Pause)
 {
 	RecordProperty("description", "Tests pause functionality of simulator");
 
@@ -313,7 +313,7 @@ TEST(Pause, Pause)
 	}
 }
 
-TEST(Pause, RepeatPause)
+TEST(Pause, DISABLED_RepeatPause)
 {
 	RecordProperty("description", "Tests repeating pause");
 
