@@ -348,7 +348,7 @@ struct isString<std::string>: public std::true_type{};
  */
 template<typename T>
 typename std::enable_if<!isString<T>::value, const T&>::type getMsgPayload(const t_msgptr& msg){
-	return std::dynamic_pointer_cast<n_network::SpecializedMessage<T>>(msg)->getData();
+	return std::static_pointer_cast<n_network::SpecializedMessage<T>>(msg)->getData();
 }
 
 /**
