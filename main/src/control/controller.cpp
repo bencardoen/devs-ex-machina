@@ -613,17 +613,17 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 			dsScheduleModel(sub);
 		return;
 	}
-	t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(model);
-	if (atomic) {
+	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel>(model);
+//	if (atomic) {
 		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs
 		m_cores.begin()->second->addModelDS(atomic);
 		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
-		return;
-	}
-	model->setController(this);
-	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
+//		return;
+//	}
+//	model->setController(this);
+//	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
 }
 
 void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)

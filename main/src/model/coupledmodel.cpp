@@ -77,7 +77,7 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 			m_control->dsUnscheduleModel(adevs);
 			return;
 		}
-		t_coupledmodelptr cdevs = std::dynamic_pointer_cast<CoupledModel>(model);
+		t_coupledmodelptr cdevs = std::static_pointer_cast<CoupledModel>(model);
 		if(cdevs != nullptr){
 			LOG_DEBUG("Removed coupled model '", model->getName(), "' while in DSDEVS");
 			cdevs->unscheduleChildren();
@@ -182,7 +182,7 @@ void CoupledModel::unscheduleChildren()
 			m_control->dsUnscheduleModel(adevs);
 			continue;
 		}
-		t_coupledmodelptr cdevs = std::dynamic_pointer_cast<CoupledModel>(model);
+		t_coupledmodelptr cdevs = std::static_pointer_cast<CoupledModel>(model);
 		if(cdevs != nullptr){
 			cdevs->unscheduleChildren();
 			continue;

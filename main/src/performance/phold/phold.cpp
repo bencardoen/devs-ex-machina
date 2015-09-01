@@ -92,7 +92,7 @@ size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 n_model::t_timestamp HeavyPHOLDProcessor::timeAdvance() const
 {
 	LOG_INFO("[PHOLD] - ",getName()," does TIMEADVANCE");
-	std::shared_ptr<PHOLDModelState> state = std::dynamic_pointer_cast<PHOLDModelState>(getState());
+	std::shared_ptr<PHOLDModelState> state = std::static_pointer_cast<PHOLDModelState>(getState());
 	if (!state->m_events.empty()) {
 		LOG_INFO("[PHOLD] - ",getName()," has an event with time ",state->m_events[0].m_procTime,".");
 		return n_network::t_timestamp(state->m_events[0].m_procTime, 0);
@@ -106,7 +106,7 @@ void HeavyPHOLDProcessor::intTransition()
 {
 	LOG_INFO("[PHOLD] - ",getName()," does an INTERNAL TRANSITION");
 	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-		        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
+		        *std::static_pointer_cast<PHOLDModelState>(getState()));
 	newState->m_events.pop_front();
 	setState(newState);
 }
@@ -115,7 +115,7 @@ void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> 
 {
 	LOG_INFO("[PHOLD] - ",getName()," does a CONFLUENT TRANSITION");
 	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-		        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
+		        *std::static_pointer_cast<PHOLDModelState>(getState()));
 	if (!newState->m_events.empty()) {
 		newState->m_events.pop_front();
 	}
@@ -134,7 +134,7 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 {
 	LOG_INFO("[PHOLD] - ",getName()," does an EXTERNAL TRANSITION");
 	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-	        *std::dynamic_pointer_cast<PHOLDModelState>(getState()));
+	        *std::static_pointer_cast<PHOLDModelState>(getState()));
 	if (!newState->m_events.empty()) {
 		newState->m_events[0].m_procTime -= m_elapsed.getTime();
 	}
@@ -152,7 +152,7 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 {
 	LOG_INFO("[PHOLD] - ",getName()," produces OUTPUT");
-	std::shared_ptr<PHOLDModelState> state = std::dynamic_pointer_cast<PHOLDModelState>(getState());
+	std::shared_ptr<PHOLDModelState> state = std::static_pointer_cast<PHOLDModelState>(getState());
 
 	if (!state->m_events.empty()) {
 		EventPair& i = state->m_events[0];

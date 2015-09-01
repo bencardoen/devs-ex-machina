@@ -165,12 +165,12 @@ n_network::t_timestamp Processor::lookAhead() const
 
 const ProcessorState& Processor::procstate() const
 {
-	return *(std::dynamic_pointer_cast<ProcessorState>(getState()));
+	return *(std::static_pointer_cast<ProcessorState>(getState()));
 }
 
 ProcessorState& Processor::procstate()
 {
-	return *(std::dynamic_pointer_cast<ProcessorState>(getState()));
+	return *(std::static_pointer_cast<ProcessorState>(getState()));
 }
 
 

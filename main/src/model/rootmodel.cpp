@@ -12,13 +12,13 @@
 namespace n_model {
 
 RootModel::RootModel()
-	: Model("_ROOT"), m_directConnected(false)
+	: /*Model("_ROOT"),*/ m_directConnected(false)
 {
 }
 
-RootModel::~RootModel()
-{
-}
+//RootModel::~RootModel()
+//{
+//}
 
 void RootModel::setComponents(const t_coupledmodelptr& model)
 {
@@ -33,7 +33,7 @@ void RootModel::setComponents(const t_coupledmodelptr& model)
 			if (atomic) {
 				m_components.push_back(atomic);
 			} else {
-				toDo.push_back(std::dynamic_pointer_cast<CoupledModel>(current));
+				toDo.push_back(std::static_pointer_cast<CoupledModel>(current));
 			}
 		}
 	}
@@ -62,7 +62,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 					assert(res.second && "All atomic models should have a unique name.");
 					m_components.push_back(atomic);
 				} else {
-					toDo.push_back(std::dynamic_pointer_cast<CoupledModel>(current));
+					toDo.push_back(std::static_pointer_cast<CoupledModel>(current));
 				}
 			}
 		}
