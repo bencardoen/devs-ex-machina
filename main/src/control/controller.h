@@ -298,17 +298,17 @@ private:
 //-------------statistics gathering--------------
 //#ifdef USESTAT
 private:
-	n_tools::t_intstat m_gvtStarted;
-	n_tools::t_intstat m_gvtSecondRound;
-	n_tools::t_intstat m_gvtFailed;
-	n_tools::t_intstat m_gvtFound;
+	n_tools::t_uintstat m_gvtStarted;
+	n_tools::t_uintstat m_gvtSecondRound;
+	n_tools::t_uintstat m_gvtFailed;
+	n_tools::t_uintstat m_gvtFound;
 public:
 	void printStats(std::ostream& out = std::cout) const
 	{
-		out << m_gvtStarted << '\n';
-		out << m_gvtSecondRound << '\n';
-		out << m_gvtFound << '\n';
-		out << m_gvtFailed << '\n';
+		out << m_gvtStarted
+			<< m_gvtSecondRound
+			<< m_gvtFound
+			<< m_gvtFailed;
 		for(const auto& i:m_cores)
 			i.second->printStats(out);
 	}

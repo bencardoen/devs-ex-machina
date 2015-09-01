@@ -8,14 +8,8 @@
 #ifndef SRC_TOOLS_STATISTIC_H_
 #define SRC_TOOLS_STATISTIC_H_
 
-//TODO remove USESTAT definition when testing is done!
-//#ifndef USESTAT
-//#define USESTAT
-//#endif
-
 #include <string>
 #include <iostream>
-#include "tools/globallog.h"
 
 namespace n_tools {
 
@@ -28,9 +22,19 @@ namespace n_tools {
  * addition assignment and stream output operator.
  *
  * @tparam T The type of the data. Defaults to std::size_t
+ * @tparam collect Boolean template argument. If true, data will be collected. Otherwise, no data is collected. Defaults to true.
  */
-template<typename T = std::size_t>
-class Statistic
+//#ifdef USESTAT
+#define DEFAULTCOLLECT true
+//#else
+//#define DEFAULTCOLLECT false
+//#endif
+
+template<typename T=std::size_t, bool collect=DEFAULTCOLLECT>
+class Statistic {};
+
+template<typename T>
+class Statistic<T, true>
 {
 public:
 	/**
@@ -40,7 +44,7 @@ public:
 	/**
 	 * @brief type specifier of this class.
 	 */
-	typedef Statistic<T> t_type;
+	typedef Statistic<T, true> t_type;
 
 	/**
 	 * @brief Constructs a new Statistic object.
@@ -48,16 +52,16 @@ public:
 	 * @param unit The unit of the statistic.
 	 * @param start The starting value for the data.
 	 */
-	Statistic(std::string name, std::string unit, t_datatype start = t_datatype()):
+	constexpr Statistic(const std::string& name, const std::string& unit, t_datatype start = t_datatype()):
 		m_name(name),
 		m_unit(unit),
 		m_data(start)
 	{
 	}
 
-	//needed by cereal. Don't use this one yourself.
+	//needed for cereal. Don't use this one yourself.
 	//use the documented version instead!
-	Statistic():
+	constexpr Statistic():
 		m_name("__invalid_stat__"),
 		m_unit("__invalid_unit__"),
 		m_data(t_datatype())
@@ -87,10 +91,14 @@ public:
 	/**
 	 * @brief output stream operator.
 	 */
-	friend std::ostream& operator<<(std::ostream& out, const Statistic& value)
+	friend constexpr std::ostream& operator<<(std::ostream& out, const Statistic& value)
 	{
-		out << value.m_name << Statistic::delimiter << value.m_data << Statistic::delimiter << value.m_unit;
-		return out;
+		return (out << value.m_name
+				<< Statistic::delimiter
+				<< value.m_data
+				<< Statistic::delimiter
+				<< value.m_unit
+				<< '\n');
 	}
 private:
 	const std::string m_name;
@@ -99,7 +107,63 @@ private:
 	static const char delimiter = ',';
 };
 
-typedef Statistic<std::size_t> t_intstat;
+template<typename T>
+class Statistic<T, false>
+{
+public:
+	/**
+	 * @brief type specifier of the contained datatype.
+	 */
+	typedef T t_datatype;
+	/**
+	 * @brief type specifier of this class.
+	 */
+	typedef Statistic<T, false> t_type;
+
+	/**
+	 * @brief Constructs a new Statistic object.
+	 * @param name The name of the statistic.
+	 * @param unit The unit of the statistic.
+	 * @param start The starting value for the data.
+	 */
+	constexpr Statistic(const std::string&, const std::string&, t_datatype = t_datatype())
+	{
+	}
+
+	//needed by cereal. Don't use this one yourself.
+	//use the documented version instead!
+	constexpr Statistic()
+	{
+	}
+
+	/**
+	 * @brief pre increment operator
+	 * Calls the pre increment operator of the data type.
+	 */
+	constexpr const t_type& operator++()
+	{
+		return *this;
+	}
+
+	/**
+	 * @brief addition assignment operator
+	 * Calls the addition assignment operator of the data type.
+	 */
+	constexpr const t_type& operator+=(const t_datatype&)
+	{
+		return *this;
+	}
+
+	/**
+	 * @brief output stream operator.
+	 */
+	friend constexpr std::ostream& operator<<(std::ostream& out, const Statistic&)
+	{
+		return out;
+	}
+};
+
+typedef Statistic<std::size_t> t_uintstat;
 typedef Statistic<double> t_doublestat;
 
 } /* namespace n_tools */

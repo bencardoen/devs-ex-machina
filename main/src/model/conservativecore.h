@@ -168,7 +168,7 @@ public:
 	/**
 	 * In theory, in a distributed setting we need access to getMessages() to get an EOT value.
 	 * For us, this is NOT required (shared memory).
-	 * In the algoritm, we need to keep a floating max of all rcd messages per core, but this is
+	 * In the algorithm, we need to keep a floating max of all rcd messages per core, but this is
 	 * done at sender side by sendMessage && shared vector. We have that information even before the
 	 * message reaches the network.
 	 */

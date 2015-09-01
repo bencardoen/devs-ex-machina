@@ -62,7 +62,7 @@ public:
 //-------------statistics gathering--------------
 //#ifdef USESTAT
 private:
-	n_tools::t_intstat m_msgcountstat;
+	n_tools::t_uintstat m_msgcountstat;
 	static std::size_t m_counter;
 public:
 	Msgqueue(): m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(++m_counter), "messages")
@@ -74,7 +74,7 @@ public:
 	 */
 	void printStats(std::ostream& out = std::cout) const
 	{
-		out << m_msgcountstat << '\n';
+		out << m_msgcountstat;
 	}
 //#endif
 };

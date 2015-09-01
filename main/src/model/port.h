@@ -296,7 +296,7 @@ public:
 //#ifdef USESTAT
 private:
 	//counters for statistics
-	std::map<t_portptr, n_tools::t_intstat> m_sendstat;
+	std::map<t_portptr, n_tools::t_uintstat> m_sendstat;
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -305,7 +305,7 @@ public:
 	inline void printStats(std::ostream& out = std::cout) const
 	{
 		for(const auto& i: m_sendstat)
-			out << i.second << '\n';
+			out << i.second;
 	}
 //#endif
 };

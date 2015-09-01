@@ -31,13 +31,13 @@ typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
 typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
 
 struct statistics_collector{
-        n_tools::t_intstat     m_amsg_sent;
-        n_tools::t_intstat     m_amsg_rcvd;
-        n_tools::t_intstat     m_turns;
-        n_tools::t_intstat     m_turns_stalled;
-        n_tools::t_intstat     m_reverts;
-        n_tools::t_intstat     m_msgs_sent;
-        n_tools::t_intstat     m_msgs_rcvd;
+        n_tools::t_uintstat     m_amsg_sent;
+        n_tools::t_uintstat     m_amsg_rcvd;
+        n_tools::t_uintstat     m_turns;
+        n_tools::t_uintstat     m_turns_stalled;
+        n_tools::t_uintstat     m_reverts;
+        n_tools::t_uintstat     m_msgs_sent;
+        n_tools::t_uintstat     m_msgs_rcvd;
         static std::string getName(std::size_t id, std::string name){
         	return std::string("_core") + n_tools::toString(id) + "/" + name;
         }
@@ -53,13 +53,13 @@ struct statistics_collector{
         void printStats(std::ostream& out = std::cout) const noexcept
         {
                 try{
-			out <<m_amsg_sent << '\n';
-			out <<m_amsg_rcvd << '\n';
-			out <<m_turns << '\n';
-                        out <<m_turns_stalled << '\n';
-			out <<m_msgs_sent << '\n';
-			out <<m_msgs_rcvd << '\n';
-			out <<m_reverts << '\n';
+			out << m_amsg_sent
+				<< m_amsg_rcvd
+				<< m_turns
+				<< m_turns_stalled
+				<< m_msgs_sent
+				<< m_msgs_rcvd
+				<< m_reverts;
                 }catch(...){
                         LOG_ERROR("Exception caught in printStats()");
                 }
