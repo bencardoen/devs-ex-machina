@@ -16,7 +16,7 @@
 #include "tracers/tracers.h"
 #include "tools/coutredirect.h"
 #include "test/compare.h"
-#include "model/multicore.h"
+#include "model/optimisticcore.h"
 #include "examples/trafficlight_coupled/trafficsystemc.h"
 #include "examples/trafficlight_ds/trafficsystemds.h"
 #include "model/dynamiccore.h"

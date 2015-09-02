@@ -110,7 +110,7 @@ add_library(
  	src/model/port.cpp
  	src/model/core.cpp
  	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
+ 	src/model/optimisticcore.cpp
  	src/model/conservativecore.cpp
  	src/model/zfunc.cpp
  	src/control/allocator.cpp
@@ -140,7 +140,7 @@ add_library(
  	src/model/port.cpp
  	src/model/core.cpp
  	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
+ 	src/model/optimisticcore.cpp
  	src/model/conservativecore.cpp
  	src/model/zfunc.cpp
  	src/control/allocator.cpp

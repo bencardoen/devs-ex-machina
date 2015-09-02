@@ -5,8 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
-#ifndef SRC_MODEL_MULTICORE_H_
-#define SRC_MODEL_MULTICORE_H_
+#ifndef SRC_MODEL_OPTIMISTICCORE_H_
+#define SRC_MODEL_OPTIMISTICCORE_H_
 
 #include "model/core.h"
 #include "control/locationtable.h"
@@ -26,6 +26,11 @@ private:
 	 * Link to network
 	 */
 	t_networkptr			m_network;
+        
+        /**
+	 * Location table
+	 */
+	n_control::t_location_tableptr	m_loctable;
 
 	/**
 	 * This core's current color state.
@@ -138,11 +143,6 @@ private:
         
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
-        
-        /**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
         
 protected:
         
@@ -317,4 +317,4 @@ public:
 
 } /* namespace n_model */
 
-#endif /* SRC_MODEL_MULTICORE_H_ */
+#endif /* SRC_MODEL_OPTIMISTICCORE_H_ */

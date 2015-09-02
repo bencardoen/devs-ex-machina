@@ -1,11 +1,11 @@
 /*
- * Multicore.cpp
+ * Optimisticcore.cpp
  *
  *  Created on: 21 Mar 2015
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
-#include "model/multicore.h"
+#include "model/optimisticcore.h"
 #include "tools/objectfactory.h"
 
 using namespace n_model;
