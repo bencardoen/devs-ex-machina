@@ -19,7 +19,7 @@ namespace n_model {
 /**
  * Multicore implementation of Core class.
  */
-class Multicore: public Core
+class Optimisticcore: public Core
 {
 private:
 	/**
@@ -165,7 +165,7 @@ protected:
         registerReceivedMessage(const t_msgptr& msg);
         
 public:
-	Multicore()=delete;
+	Optimisticcore()=delete;
 	/**
 	 * MCore constructor
 	 * @param coreid Unique sequential id (next=last+1).
@@ -175,11 +175,11 @@ public:
 	 * @pre coreid < cores
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
-	Multicore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+	Optimisticcore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */
-	virtual ~Multicore();
+	virtual ~Optimisticcore();
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name

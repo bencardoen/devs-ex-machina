@@ -201,8 +201,8 @@ TEST(Controller, pDEVS)
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
 		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+		t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+		t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 		coreMap[0] = c1;
 		coreMap[1] = c2;
 

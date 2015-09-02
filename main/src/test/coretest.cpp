@@ -262,7 +262,7 @@ TEST(Core, Messaging)
 	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
 }
 
-TEST(Multicore, revert){
+TEST(Optimisticcore, revert){
 	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
 	using n_control::t_location_tableptr;
@@ -271,7 +271,7 @@ TEST(Multicore, revert){
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, 2 );
+	t_coreptr coreone = createObject<n_model::Optimisticcore>(network, 0, loctable, 2 );
 	coreone->setTracers(tracers);
 	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
 	coreone->addModel(tcmodel);
@@ -318,7 +318,7 @@ TEST(Multicore, revert){
 }
 
 
-TEST(Multicore, revertidle){
+TEST(Optimisticcore, revertidle){
 	RecordProperty("description", "Revert: test if a core can go from idle/terminated back to working.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -330,8 +330,8 @@ TEST(Multicore, revertidle){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 
@@ -398,7 +398,7 @@ TEST(Multicore, revertidle){
 
 }
 
-TEST(Multicore, revertedgecases){
+TEST(Optimisticcore, revertedgecases){
 	RecordProperty("description", "Revert : test revert in scenario.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -410,8 +410,8 @@ TEST(Multicore, revertedgecases){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 
@@ -480,7 +480,7 @@ TEST(Multicore, revertedgecases){
 
 }
 
-TEST(Multicore, revertoffbyone){
+TEST(Optimisticcore, revertoffbyone){
 	RecordProperty("description", "Test revert in beginstate.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -492,8 +492,8 @@ TEST(Multicore, revertoffbyone){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 
@@ -558,7 +558,7 @@ TEST(Multicore, revertoffbyone){
 }
 
 
-TEST(Multicore, revertstress){
+TEST(Optimisticcore, revertstress){
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -569,8 +569,8 @@ TEST(Multicore, revertstress){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 
@@ -635,7 +635,7 @@ TEST(Multicore, revertstress){
 	}
 }
 
-TEST(Multicore, revert_antimessaging){
+TEST(Optimisticcore, revert_antimessaging){
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -646,8 +646,8 @@ TEST(Multicore, revert_antimessaging){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 
@@ -698,7 +698,7 @@ TEST(Multicore, revert_antimessaging){
 }
 
 
-TEST(Multicore, GVT){
+TEST(Optimisticcore, GVT){
 	RecordProperty("description", "Manually run GVT.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -710,8 +710,8 @@ TEST(Multicore, GVT){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-	t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-	t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 	coreMap[0] = c1;
 	coreMap[1] = c2;
 

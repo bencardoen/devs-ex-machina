@@ -29,7 +29,7 @@ typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_timevector;
 Applications in C++. Wiley Publishing, 2010.
  *
  */
-class Conservativecore: public Multicore
+class Conservativecore: public Optimisticcore
 {
 private:
         /**
@@ -182,7 +182,7 @@ public:
 	 * done at sender side by sendMessage && shared vector. We have that information even before the
 	 * message reaches the network.
 	 */
-	// void getMessages()override
+	void getMessages()override;
 
 	/**
 	 * Executes Steps 3/4/5 of algorithms (iow update(EOT|EIT)), before forwarding to Base class syncTime

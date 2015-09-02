@@ -57,7 +57,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap[i] = createObject<Multicore>(network, i, locTab, m_coreAmount);
+			coreMap[i] = createObject<Optimisticcore>(network, i, locTab, m_coreAmount);
 		}
 		break;
 	}

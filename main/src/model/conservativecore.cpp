@@ -13,13 +13,26 @@ namespace n_model {
 
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc, const t_timevector& tc)
-	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
+	: Optimisticcore(n, coreid, ltable, cores), /*Forward entire parampack.*/
 	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), t_timestamp::infinity());
         m_distributed_time->unlockEntry(this->getCoreID());
+}
+
+void Conservativecore::getMessages()
+{
+	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
+	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+	if(messages.size()!= 0){
+		if(this->isIdle()){
+			this->setIdle(false);
+			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
+		}
+	}
+	this->sortIncoming(messages);
 }
 
 Conservativecore::~Conservativecore()

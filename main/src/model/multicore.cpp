@@ -12,7 +12,7 @@ using namespace n_model;
 using n_control::t_location_tableptr;
 using namespace n_network;
 
-Multicore::~Multicore()
+Optimisticcore::~Optimisticcore()
 {
 	this->m_loctable.reset();
 	this->m_network.reset();
@@ -20,13 +20,13 @@ Multicore::~Multicore()
 	this->m_sent_messages.clear();
 }
 
-Multicore::Multicore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
+Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
 	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
 	        t_timestamp::infinity()),m_cores(cores)
 {
 }
 
-void Multicore::sendMessage(const t_msgptr& msg)
+void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock.
 	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
@@ -41,7 +41,7 @@ void Multicore::sendMessage(const t_msgptr& msg)
 	this->countMessage(msg);					// Make sure Mattern is notified
 }
 
-void Multicore::sendAntiMessage(const t_msgptr& msg)
+void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
         m_stats.logStat(AMSGSENT);
@@ -56,12 +56,12 @@ void Multicore::sendAntiMessage(const t_msgptr& msg)
 	this->m_network->acceptMessage(amsg);
 }
 
-void Multicore::paintMessage(const t_msgptr& msg)
+void Optimisticcore::paintMessage(const t_msgptr& msg)
 {
 	msg->paint(this->getColor());
 }
 
-void Multicore::handleAntiMessage(const t_msgptr& msg)
+void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
@@ -70,13 +70,13 @@ void Multicore::handleAntiMessage(const t_msgptr& msg)
 	}
 }
 
-void Multicore::markMessageStored(const t_msgptr& msg)
+void Optimisticcore::markMessageStored(const t_msgptr& msg)
 {
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
 	this->m_sent_messages.push_back(msg);
 }
 
-void Multicore::countMessage(const t_msgptr& msg)
+void Optimisticcore::countMessage(const t_msgptr& msg)
 {
         /**
          * ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
@@ -102,7 +102,7 @@ void Multicore::countMessage(const t_msgptr& msg)
 	}
 }
 
-void Multicore::receiveMessage(const t_msgptr& msg)
+void Optimisticcore::receiveMessage(const t_msgptr& msg)
 {
 	m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
@@ -126,7 +126,7 @@ void Multicore::receiveMessage(const t_msgptr& msg)
 }
 
 
-void Multicore::registerReceivedMessage(const t_msgptr& msg)
+void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 {
         	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
 	if (msg->getColor() == MessageColor::WHITE && !msg->isAntiMessage()) {
@@ -140,7 +140,7 @@ void Multicore::registerReceivedMessage(const t_msgptr& msg)
 }
 
 
-void Multicore::getMessages()
+void Optimisticcore::getMessages()
 {
 	// TODO : in principle, we could reduce threading issues by detecting live here (earlier) iso
 	// after simulation.
@@ -155,7 +155,7 @@ void Multicore::getMessages()
 	this->sortIncoming(messages);
 }
 
-void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
+void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	// Locking could be done inside the for loop, but would make dissecting logs much more difficult.
 	this->lockMessages();
@@ -170,7 +170,7 @@ void Multicore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->unlockMessages();
 }
 
-void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
+void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 {
 	// We don't have to get the count from the message each time,
 	// because the control message doesn't change, it stays in this core
@@ -201,7 +201,7 @@ void Multicore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
 	}
 }
 
-void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt)
+void Optimisticcore::receiveControl(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt)
 {
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
@@ -219,7 +219,7 @@ void Multicore::receiveControl(const t_controlmsg& msg, int round, std::atomic<b
 }
 
 void
-Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt){
+Optimisticcore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt){
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : process init received control message, waiting for pending messages.");
         this->waitUntilOK(msg, rungvt);
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT : All messages received, checking vectors. ");
@@ -264,7 +264,7 @@ Multicore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic<bool
 }
 
 void
-Multicore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
+Optimisticcore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
 {
         // ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
         if (this->getColor() == MessageColor::WHITE) {	// Locked
@@ -295,7 +295,7 @@ Multicore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::ato
 }
 
 void
-Multicore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
+Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
 {
         if(rungvt==false){
 		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
@@ -319,7 +319,7 @@ Multicore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::atomic<b
         return;
 }
 
-void Multicore::setGVT(const t_timestamp& candidate)
+void Optimisticcore::setGVT(const t_timestamp& candidate)
 {
 	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 	Core::setGVT(newgvt);
@@ -353,35 +353,35 @@ void Multicore::setGVT(const t_timestamp& candidate)
 	this->unlockSimulatorStep();
 }
 
-void n_model::Multicore::lockSimulatorStep()
+void n_model::Optimisticcore::lockSimulatorStep()
 {
 	LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
 	this->m_locallock.lock();
 	LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
 }
 
-void n_model::Multicore::unlockSimulatorStep()
+void n_model::Optimisticcore::unlockSimulatorStep()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " trying to unlock simulator core.");
 	this->m_locallock.unlock();
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
 }
 
-void n_model::Multicore::lockMessages()
+void n_model::Optimisticcore::lockMessages()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locking ... ");
 	m_msglock.lock();
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locked ");
 }
 
-void n_model::Multicore::unlockMessages()
+void n_model::Optimisticcore::unlockMessages()
 {
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocking ...");
 	m_msglock.unlock();
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocked");
 }
 
-void n_model::Multicore::revert(const t_timestamp& totime)
+void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
@@ -410,55 +410,55 @@ void n_model::Multicore::revert(const t_timestamp& totime)
 }
 
 
-bool n_model::Multicore::existTransientMessage(){
+bool n_model::Optimisticcore::existTransientMessage(){
 	bool b = this->m_network->networkHasMessages();
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " network has messages ?=", b);
 	return b;
 }
 
 void
-n_model::Multicore::setColor(MessageColor mc){
+n_model::Optimisticcore::setColor(MessageColor mc){
 	std::lock_guard<std::mutex> lock(m_colorlock);
 	this->m_color = mc;
 }
 
 MessageColor
-n_model::Multicore::getColor(){
+n_model::Optimisticcore::getColor(){
 	std::lock_guard<std::mutex> lock(m_colorlock);
 	return m_color;
 }
 
 void
-n_model::Multicore::setTime(const t_timestamp& newtime){
+n_model::Optimisticcore::setTime(const t_timestamp& newtime){
 	std::lock_guard<std::mutex> lock(m_timelock);
 	Core::setTime(newtime);
 }
 
 t_timestamp
-n_model::Multicore::getTime(){
+n_model::Optimisticcore::getTime(){
 	std::lock_guard<std::mutex> lock(m_timelock);
 	return Core::getTime();
 }
 
 t_timestamp
-n_model::Multicore::getTred(){
+n_model::Optimisticcore::getTred(){
 	std::lock_guard<std::mutex> lock(m_tredlock);
 	return this->m_tred;
 }
 
 void
-n_model::Multicore::setTred(t_timestamp val){
+n_model::Optimisticcore::setTred(t_timestamp val){
 	std::lock_guard<std::mutex> lock(m_tredlock);
 	this->m_tred = val;
 }
 
-void n_model::Multicore::setTerminationTime(t_timestamp endtime)
+void n_model::Optimisticcore::setTerminationTime(t_timestamp endtime)
 {
 	std::lock_guard<std::mutex> lock(m_timelock);
 	Core::setTerminationTime(endtime);
 }
 
-n_network::t_timestamp n_model::Multicore::getTerminationTime()
+n_network::t_timestamp n_model::Optimisticcore::getTerminationTime()
 {
 	std::lock_guard<std::mutex> lock(m_timelock);
 	return Core::getTerminationTime();
