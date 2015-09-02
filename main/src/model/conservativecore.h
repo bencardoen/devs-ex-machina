@@ -29,7 +29,7 @@ typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_timevector;
 Applications in C++. Wiley Publishing, 2010.
  *
  */
-class Conservativecore: public Optimisticcore
+class Conservativecore: public Core
 {
 private:
         /**
@@ -99,6 +99,11 @@ private:
 	 * Location table
 	 */
 	n_control::t_location_tableptr	m_loctable;
+        
+        /**
+	 * Protect access to Time.
+	 */
+	std::mutex 			m_timelock;
         
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
@@ -171,7 +176,7 @@ public:
 	 * @see Multicore
 	 */
 	Conservativecore(const t_networkptr& n , std::size_t coreid ,
-		const n_control::t_location_tableptr& ltable, size_t cores,
+		const n_control::t_location_tableptr& ltable,
 		const t_eotvector& vc, const t_timevector& tc);
 	virtual ~Conservativecore();
 
@@ -191,13 +196,17 @@ public:
 	void
 	syncTime()override;
         
-        void sortIncoming(const std::vector<t_msgptr>& messages)override;
+        void sortIncoming(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Intercept any call to update the time, so that we ~never~ go higher than EIT.
+         * Lock actual changing to time (since controller can request time at any moment).
 	 */
 	void
 	setTime(const t_timestamp& newtime)override;
+        
+        t_timestamp
+        getTime() override;
 
 	/**
 	 * @brief Condense model depency graph to integer-index vector.
@@ -259,6 +268,12 @@ public:
          * Records timestamp for eot, leaves actual handling to superclass.
          */
         virtual void sendMessage(const t_msgptr&)override;
+        
+        /**
+	 * Returns true if the network detects a pending message for any core.
+	 */
+	bool
+	existTransientMessage()override;
 
         //-------------statistics gathering--------------
 //#ifdef USESTAT

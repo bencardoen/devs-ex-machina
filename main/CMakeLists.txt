@@ -342,6 +342,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     MESSAGE( STATUS"Linking with GNU, Debug build, adapting linker flags")
     SET(CMAKE_EXE_LINKER_FLAGS "-pie" )
 endif()
+SET(CMAKE_EXE_LINKER_FLAGS "-pie" )
 
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

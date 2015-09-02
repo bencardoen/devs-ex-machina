@@ -12,8 +12,8 @@
 namespace n_model {
 
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
-        const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc, const t_timevector& tc)
-	: Optimisticcore(n, coreid, ltable, cores), /*Forward entire parampack.*/
+        const n_control::t_location_tableptr& ltable, const t_eotvector& vc, const t_timevector& tc)
+	: Core(coreid),
 	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
 {
         /// Make sure our nulltime is set correctly
@@ -161,13 +161,16 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	 * 	A kernel works in rounds however, so we only enforce here that the
 	 * 	kernel time never advances beyond eit.
 	 */
+        
 	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
 
 	t_timestamp corrected = std::min(this->getEit(), newtime);
 
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
-
-	Core::setTime(corrected);
+        {
+                std::lock_guard<std::mutex> lk(m_timelock);
+                Core::setTime(corrected);
+        }
 }
 
 void Conservativecore::receiveMessage(const t_msgptr& msg){
@@ -273,8 +276,6 @@ bool Conservativecore::timeStalled(){
 
 void Conservativecore::runSmallStep(){
         
-        this->lockSimulatorStep();                      //L
-        
         /**
          * EIT == TIME : stall
          *      if this is the first time this happens
@@ -291,15 +292,12 @@ void Conservativecore::runSmallStep(){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
                 this->runSmallStepStalled();
-
-                this->unlockSimulatorStep();            // UL
                 
                 // RST updates eit, so recheck.
                 if(timeStalled())       
                         invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
         }
         else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
-                this->unlockSimulatorStep();            // UL
                 
                 Core::runSmallStep();   //  L -> UL
         }
@@ -385,6 +383,12 @@ bool Conservativecore::checkNullRelease(){
         
 }
 
+bool n_model::Conservativecore::existTransientMessage(){
+	bool b = this->m_network->networkHasMessages();
+	LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " network has messages ?=", b);
+	return b;
+}
+
 void
 Conservativecore::sendMessage(const t_msgptr& msg){
         // At output collection, timestamp is set (color etc is of no interest to us here (and is not yet set)).
@@ -395,6 +399,10 @@ Conservativecore::sendMessage(const t_msgptr& msg){
 	this->m_network->acceptMessage(msg);
 }
 
-
+t_timestamp
+Conservativecore::getTime(){
+        std::lock_guard<std::mutex> lk(m_timelock);
+        return Core::getTime();
+}
 
 } /* namespace n_model */
