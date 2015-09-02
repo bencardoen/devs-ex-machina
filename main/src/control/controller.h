@@ -135,21 +135,6 @@ public:
 	void setSimType(SimType type);
 
 	/**
-	 * @brief Set simulation to be classic DEVS
-	 */
-	void setClassicDEVS();
-
-	/**
-	 * @brief Set simulation to be Parallel DEVS
-	 */
-	void setPDEVS();
-
-	/**
-	 * @brief Set simulation to be Dynamic Structure DEVS
-	 */
-	void setDSDEVS();
-
-	/**
 	 * @brief Set time at which the simulation will be halted
 	 */
 	void setTerminationTime(t_timestamp time);
@@ -246,7 +231,9 @@ private:
 	/**
 	 * @brief Simulation setup and loop using Parallel DEVS
 	 */
-	void simPDEVS();
+	void simOPDEVS();
+        
+        void simCPDEVS();
 
 	/**
 	 * @brief Simulation setup and loop using Dynamic Structure DEVS
@@ -329,7 +316,6 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
  * @param threadsignal : stores thread signalling flags
  * @param vectorlock : lock threadsignal
  * @param turns : infinite loop cutoff value.
- * @param rungvt : interrupt variable controlling GVT thread.
  */
 void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
         std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,

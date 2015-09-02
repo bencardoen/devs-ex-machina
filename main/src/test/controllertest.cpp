@@ -83,7 +83,7 @@ TEST(Controller, cDEVS)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setClassicDEVS();
+		ctrl.setSimType(SimType::CLASSIC);
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -114,7 +114,7 @@ TEST(Controller, cDEVS_coupled)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setClassicDEVS();
+		ctrl.setSimType(SimType::CLASSIC);
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
 		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -146,7 +146,7 @@ TEST(Controller, DSDEVS_connections)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setDSDEVS();
+		ctrl.setSimType(SimType::DYNAMIC);
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
 		t_coupledmodelptr m = createObject<n_examples_ds::TrafficSystem>("trafficSystem");
@@ -209,7 +209,7 @@ TEST(Controller, pDEVS)
 		t_timestamp endTime(2000, 0);
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setPDEVS();
+                ctrl.setSimType(SimType::OPTIMISTIC);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -273,7 +273,7 @@ TEST(Controller, CONDEVS)
 		t_timestamp endTime(70, 0);
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setPDEVS();
+		ctrl.setSimType(SimType::CONSERVATIVE);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<ModelC>("modelC");

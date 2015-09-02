@@ -29,6 +29,7 @@
 
 using namespace n_model;
 using namespace n_tools;
+using namespace n_control;
 using namespace n_examples;
 
 typedef n_examples::TrafficLight ATOMIC_TRAFFICLIGHT;
@@ -261,177 +262,6 @@ TEST(Core, Messaging)
 	EXPECT_EQ(mailbag["mycop"][0], msgtocop);
 }
 
-enum class ThreadSignal{ISWAITING, SHOULDWAIT, ISFINISHED, FREE};
-
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<ThreadSignal>& threadsignal,
-        std::mutex& vectorlock, std::size_t turns, const t_coreptr& core)
-{
-	/// A predicate is needed to refreeze the thread if gets a spurious awakening.
-	auto predicate = [&]()->bool {
-		std::lock_guard<std::mutex > lv(vectorlock);
-		return not (threadsignal[myid]==ThreadSignal::ISWAITING);
-	};
-	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		{	// If another thread has finished, main will flag us down, we need to stop as well.
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if(threadsignal[myid] == ThreadSignal::ISFINISHED){
-				core->setLive(false);
-				return;
-			}
-		}
-
-		// Try a simulationstep, if core has terminated, set finished flag, else continue.
-		if (core->isLive()) {
-			LOG_DEBUG("Thread for core ", core->getCoreID() , " running simstep in round ", i);
-			core->runSmallStep();
-		}else{
-			LOG_DEBUG("Thread for core ", core->getCoreID() , " is finished, setting flag.");
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			threadsignal[myid] = ThreadSignal::ISFINISHED;
-			return;
-		}
-
-		// Has Main asked us to wait for the other ??
-		bool skip_barrier = false;
-		{
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			// Case 1 : Main has asked us by setting SHOULDWAIT, tell main we're ready waiting.
-			if(threadsignal[myid] == ThreadSignal::SHOULDWAIT){
-				LOG_DEBUG("Thread for core ", core->getCoreID() , " switching flag to WAITING");
-				threadsignal[myid] = ThreadSignal::ISWAITING;
-			}
-			// Case 2 : We can skip the barrier ahead.
-			if(threadsignal[myid] == ThreadSignal::FREE){
-				LOG_DEBUG("Thread for core ", core->getCoreID() , " skipping barrier, FREE is set.");
-				skip_barrier = true;
-			}
-		}
-
-
-		if(skip_barrier){
-			continue;
-		}else{
-			std::unique_lock<std::mutex> mylock(cvlock);
-			cv.wait(mylock, predicate);				/// Infinite loop : while(!pred) wait().
-		}
-		/// We'll get here only if predicate = true (spurious) and/or notifyAll() is called.
-	}
-}
-
-TEST(Core, threading)
-{
-	RecordProperty("description", "Multicore threading + signalling. Prototype now in use in controller.");
-	using namespace n_network;
-	using n_control::t_location_tableptr;
-	using n_control::LocationTable;
-	t_networkptr network = createObject<Network>(2);
-	t_location_tableptr loctable = createObject<LocationTable>(2);
-	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
-	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Multicore>(network, 0, loctable, 2 );
-	coreone->setTracers(tracers);
-	t_coreptr coretwo = createObject<n_model::Multicore>(network, 1, loctable, 2);
-	coretwo->setTracers(tracers);
-	std::vector<t_coreptr> coreptrs;
-	coreptrs.push_back(coreone);
-	coreptrs.push_back(coretwo);
-	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
-	auto tc2model = createObject<COUPLED_TRAFFICLIGHT>("myotherlight", 0);
-	coreone->addModel(tcmodel);
-	EXPECT_TRUE(coreone->containsModel("mylight"));
-
-	t_timestamp endtime(2000,0);
-	coreone->setTerminationTime(endtime);
-	coretwo->addModel(tc2model);
-	EXPECT_TRUE(coretwo->containsModel("myotherlight"));
-	coretwo->setTerminationTime(endtime);
-	coreone->init();
-	coreone->setLive(true);
-	coretwo->init();
-	coretwo->setLive(true);
-	//Make a nr of threads run until a flag is set, have the main thread check (wait) until all threads are sleeping, then release them for the next iteration.
-	std::mutex cvlock;
-	std::condition_variable cv;
-	std::vector<t_coreptr> cores;
-	cores.push_back(coreone);
-	cores.push_back(coretwo);
-
-	std::vector<std::thread> threads;
-	const std::size_t threadcount = 2;
-	if (threadcount <= 1) {
-		LOG_WARNING("Skipping test, no threads!");
-		return;
-	}
-	const std::size_t rounds = 100;	// Safety, if main thread ever reaches this value, consider it a deadlock.
-
-	std::mutex veclock;	// Lock for vector with signals
-	std::vector<ThreadSignal> threadsignal = {ThreadSignal::FREE, ThreadSignal::FREE};
-
-	for (size_t i = 0; i < threadcount; ++i) {
-		threads.push_back(
-		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), rounds, std::cref(cores[i])));
-	}
-
-
-
-	for (std::size_t round = 0; round < rounds; ++round) {
-		bool exit_threads = false;
-		for(size_t j = 0;j<threadcount; ++j){
-			std::lock_guard<std::mutex> lock(veclock);
-			if(threadsignal[j]==ThreadSignal::ISFINISHED){
-				LOG_INFO("Main :: Thread id ", j, " has finished, flagging down the rest.");
-				threadsignal = std::vector<ThreadSignal>(threadcount, ThreadSignal::ISFINISHED);
-				exit_threads = true;
-				break;
-			}
-		}
-		if(exit_threads){break;}
-
-		bool all_waiting = false;
-		while (not all_waiting) {
-				std::lock_guard<std::mutex> lock(veclock);
-				all_waiting = true;
-				for (const auto& tsignal : threadsignal)
-				{
-					if (tsignal == ThreadSignal::SHOULDWAIT) {	// FREE is ok, ISWAITING is ok, SHOULDWAIT is the one that shouldn't be set.
-						all_waiting = false;
-						break;
-					}
-				}
-		}
-		{/// This section is only threadsafe if you have set all threads to SHOULDWAIT
-			;
-		}/// End threadsafe section
-		/// Revive threads, first toggle predicate, then release threads (reverse order will deadlock).
-		{
-			std::lock_guard<std::mutex> lock(veclock);
-			for (size_t i = 0; i < threadsignal.size(); ++i) {
-				if(threadsignal[i]!= ThreadSignal::ISFINISHED){
-					if(round == 4 || round == 9){				// Signal interrupt, threads will stop before the barrier next time
-						//LOG_DEBUG("Main : threads will wait next round", round);
-						threadsignal[i] = ThreadSignal::SHOULDWAIT;
-					}else{
-						//LOG_DEBUG("Main : threads can skip next round", round);
-						threadsignal[i] = ThreadSignal::FREE;
-					}
-				}else{
-					LOG_DEBUG("Main : seeing finished thread with id " , i);
-				}
-			}
-		}
-		cv.notify_all();// End of a round, it's possible some threads are already running (spurious), release all explicitly. Any FREE threads don't even hit the barrier.
-	}
-	for (auto& t : threads) {
-		t.join();
-	}
-	// Finally, dump trace buffers.
-	n_tracers::traceUntil(t_timestamp::infinity());
-	EXPECT_FALSE(coreone->isLive());
-	EXPECT_FALSE(coretwo->isLive());
-	EXPECT_TRUE(coreone->getTime()>= endtime || coretwo->getTime()>= endtime);
-}
-
 TEST(Multicore, revert){
 	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
@@ -508,7 +338,7 @@ TEST(Multicore, revertidle){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(SimType::OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -588,7 +418,7 @@ TEST(Multicore, revertedgecases){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -670,7 +500,7 @@ TEST(Multicore, revertoffbyone){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -747,7 +577,7 @@ TEST(Multicore, revertstress){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -824,7 +654,7 @@ TEST(Multicore, revert_antimessaging){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(SimType::OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -888,7 +718,7 @@ TEST(Multicore, GVT){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(SimType::OPTIMISTIC);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -949,7 +779,7 @@ TEST(Conservativecore, GVT){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(CONSERVATIVE);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -1025,7 +855,7 @@ TEST(Conservativecore, Abstract){
 	t_timestamp endTime(360, 0);
 
 	n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-	ctrl.setPDEVS();
+	ctrl.setSimType(CONSERVATIVE);
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<ModelC>("modelC");

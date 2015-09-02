@@ -146,9 +146,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
 
-	// Core::setTime is not locked, which is an issue if we run GVT async.
-	// vv is a synchronized setter.
-	Multicore::setTime(corrected);
+	Core::setTime(corrected);
 }
 
 void Conservativecore::receiveMessage(const t_msgptr& msg){
@@ -183,8 +181,6 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
                 // msgtime > currenttime is always fine.
         }
 
-        // For now, make sure GVT keeps working.
-	Multicore::registerReceivedMessage(msg);
 }
 
 void Conservativecore::init(){
