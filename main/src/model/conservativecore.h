@@ -32,6 +32,11 @@ Applications in C++. Wiley Publishing, 2010.
 class Conservativecore: public Multicore
 {
 private:
+        /**
+	 * Link to network
+	 */
+	t_networkptr			m_network;
+        
 	/**
 	 * Earliest input time.
 	 */
@@ -89,6 +94,11 @@ private:
          * Needed for eot calculation.
          */
         t_timestamp             m_last_sent_msgtime;
+        
+        /**
+	 * Location table
+	 */
+	n_control::t_location_tableptr	m_loctable;
         
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
@@ -180,6 +190,8 @@ public:
 	 */
 	void
 	syncTime()override;
+        
+        void sortIncoming(const std::vector<t_msgptr>& messages)override;
 
 	/**
 	 * Intercept any call to update the time, so that we ~never~ go higher than EIT.
@@ -248,6 +260,15 @@ public:
          */
         virtual void sendMessage(const t_msgptr&)override;
 
+        //-------------statistics gathering--------------
+//#ifdef USESTAT
+	virtual void printStats(std::ostream& out = std::cout) const
+	{
+		if(getCoreID() == 0)
+			m_network->printStats(out);
+		Core::printStats(out);
+	}
+//#endif
         
 };
 

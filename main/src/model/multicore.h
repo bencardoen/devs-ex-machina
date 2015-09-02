@@ -90,6 +90,8 @@ private:
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
+        
+        std::size_t 	m_cores;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -137,14 +139,12 @@ private:
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
-        
-protected:
-	/**
+        /**
 	 * Location table
 	 */
 	n_control::t_location_tableptr	m_loctable;
         
-	std::size_t 	m_cores;
+protected:
         
         /**
 	 * Handle antimessage
@@ -183,7 +183,7 @@ public:
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
-	 * @attention does not yet lock on messages acces
+	 * @attention does not yet lock on messages access
 	 */
 	void getMessages()override;
 

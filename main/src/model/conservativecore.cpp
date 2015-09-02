@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, size_t cores, const t_eotvector& vc, const t_timevector& tc)
 	: Multicore(n, coreid, ltable, cores), /*Forward entire parampack.*/
-	m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity())
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -24,6 +24,14 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
 
 Conservativecore::~Conservativecore()
 {
+}
+
+void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
+{
+	for( auto i = messages.begin(); i != messages.end(); i++) {
+		const auto & message = *i;
+		this->receiveMessage(message);
+	}
 }
 
 t_timestamp Conservativecore::getEit()const {return m_eit;}
@@ -169,7 +177,7 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
-                this->revert(msgtime);
+                throw std::logic_error("Revert in conservativecore !!");
         }else{
                 if (msgtime == currenttime && currenttime != eittime) {
                                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
@@ -368,8 +376,12 @@ void
 Conservativecore::sendMessage(const t_msgptr& msg){
         // At output collection, timestamp is set (color etc is of no interest to us here (and is not yet set)).
         this->m_last_sent_msgtime = msg->getTimeStamp();
-        Multicore::sendMessage(msg);
+        size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
+	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
+	LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sending message ", msg->toString());
+	this->m_network->acceptMessage(msg);
 }
+
 
 
 } /* namespace n_model */
