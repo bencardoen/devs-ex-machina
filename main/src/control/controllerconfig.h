@@ -88,6 +88,11 @@ struct ControllerConfig
 	 * 	100 less than 0.1%
 	 */
 	int m_zombieIdleThreshold;
+        
+        /**
+         * The nr of turns a core can simulate (including any idle rounds).
+         */
+        std::size_t     m_turns;
 
 	ControllerConfig();
 	virtual ~ControllerConfig();

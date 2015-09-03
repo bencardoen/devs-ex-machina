@@ -13,7 +13,7 @@ using n_tools::SharedVector;
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: m_name("MySimulation"), m_simType(SimType::CLASSIC), m_coreAmount(1), m_saveInterval(5), m_tracerset(nullptr), m_zombieIdleThreshold(-1)
+	: m_name("MySimulation"), m_simType(SimType::CLASSIC), m_coreAmount(1), m_saveInterval(5), m_tracerset(nullptr), m_zombieIdleThreshold(-1),m_turns(10000)
 {
 }
 
