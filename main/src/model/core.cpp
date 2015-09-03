@@ -52,7 +52,7 @@ n_model::Core::Core(std::size_t id)
 	  m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
 		m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
 		m_scheduler(n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false)),
-		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false)),
+		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, true)),
 		m_stats(m_coreid)
 {
 	assert(m_time == t_timestamp(0, 0));

@@ -245,6 +245,17 @@ public:
 	{
 		this->m_color = newcolor;
 	}
+        friend
+        bool operator<(const Message& left, const Message& right);
+        
+        friend
+        bool operator<=(const Message& left, const Message& right);
+        
+        friend
+        bool operator>=(const Message& left, const Message& right);
+        
+        friend
+        bool operator>(const Message& left, const Message& right);
 
 	friend
 	bool operator==(const Message& left, const Message& right);

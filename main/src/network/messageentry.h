@@ -30,8 +30,8 @@ public:
 	getMessage()const{return m_message;}
 
 	friend
-	bool operator<(const MessageEntry& left, const MessageEntry& right){
-		return (left.getMessage()->getTimeStamp() > right.getMessage()->getTimeStamp());
+	bool operator<(const MessageEntry& left, const MessageEntry& right){        
+		return ( *right.getMessage() < *left.getMessage() );    // Not <=, r<l for min heap conv.
 	}
 
 	friend
@@ -48,7 +48,7 @@ public:
 	friend
 	bool operator>(const MessageEntry& lhs, const MessageEntry& rhs)
 	{
-		return (rhs < lhs);
+		return (lhs.getMessage()->getTimeStamp() < rhs.getMessage()->getTimeStamp());
 	}
 
 	friend

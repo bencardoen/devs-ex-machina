@@ -3,19 +3,24 @@
 
 #include "tools/synchronizedscheduler.h"
 #include "tools/unsynchronizedscheduler.h"
+#include "tools/msgscheduler.h"
 #include <boost/heap/binomial_heap.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/heap/skew_heap.hpp>
 #include <boost/heap/d_ary_heap.hpp>
+#include "tools/msgscheduler.h"
 #include "tools/listscheduler.h"
 
 namespace n_tools {
 
 
 template<typename X>
-typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(const Storage& stype, bool synchronized )
+typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(const Storage& stype, bool synchronized, bool map_backed )
 {
+        if(map_backed && !synchronized){
+                return t_Scheduler(new MessageScheduler<boost::heap::fibonacci_heap<X>, X>);
+        }
 	switch (stype) {
 	case Storage::FIBONACCI: {
 		if(synchronized)
