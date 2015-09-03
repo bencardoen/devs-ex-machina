@@ -64,7 +64,7 @@ public:
 	virtual void intTransition();
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
-	virtual std::vector<n_network::t_msgptr> output() const;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
 	virtual n_network::t_timestamp lookAhead() const;
 
 	ProcessorState& procstate();
@@ -81,7 +81,7 @@ public:
 
 	virtual n_model::t_timestamp timeAdvance() const;
 	virtual void intTransition();
-	virtual std::vector<n_network::t_msgptr> output() const;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
 	virtual n_network::t_timestamp lookAhead() const;
 };
 

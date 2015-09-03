@@ -69,7 +69,7 @@ public:
 	virtual void intTransition();
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual void extTransition(const std::vector<n_network::t_msgptr>& message);
-	virtual std::vector<n_network::t_msgptr> output() const;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
 };
 
 class Structure: public n_model::CoupledModel

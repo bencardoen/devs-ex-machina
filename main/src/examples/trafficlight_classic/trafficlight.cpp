@@ -72,9 +72,9 @@ t_timestamp TrafficLight::timeAdvance() const
 	return t_timestamp();
 }
 
-std::vector<n_network::t_msgptr> TrafficLight::output() const
+void TrafficLight::output(std::vector<n_network::t_msgptr>&) const
 {
-	return std::vector<n_network::t_msgptr>();
+	//nothing to do here
 }
 
 t_stateptr TrafficLight::setState(const std::string& s)

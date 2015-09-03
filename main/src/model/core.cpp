@@ -220,8 +220,9 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 	 * Then sort that output by destination (for the transition functions)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
+	std::vector<n_network::t_msgptr> mailfrom;
 	for (const auto& modelname : imminents) {
-		const auto mailfrom = m_models[modelname]->doOutput();
+		m_models[modelname]->doOutput(mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
 		// Set timestamp, source and color (info model does not have).
 		for (const auto& msg : mailfrom) {
@@ -230,6 +231,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 			msg->setTimeStamp(this->getTime());
 		}
 		this->sortMail(mailfrom);	// <-- Locked here on msglock
+		mailfrom.clear();		//clear the vector of messages
 	}
 }
 

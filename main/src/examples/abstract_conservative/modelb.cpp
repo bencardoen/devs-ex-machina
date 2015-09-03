@@ -56,9 +56,9 @@ t_timestamp ModelB::timeAdvance() const
 	return t_timestamp(10);
 }
 
-std::vector<n_network::t_msgptr> ModelB::output() const
+void ModelB::output(std::vector<n_network::t_msgptr>&) const
 {
-	return std::vector<n_network::t_msgptr>();
+	//nothing to do here
 }
 
 t_timestamp ModelB::lookAhead() const

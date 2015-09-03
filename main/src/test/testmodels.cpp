@@ -67,9 +67,9 @@ n_network::t_timestamp Processor::timeAdvance() const
 	return std::dynamic_pointer_cast<ModelState>(getState())->m_counter;
 }
 
-std::vector<n_network::t_msgptr> Processor::output() const
+void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	return m_outport->createMessages(std::dynamic_pointer_cast<ModelState>(getState())->m_event);
+	m_outport->createMessages(std::dynamic_pointer_cast<ModelState>(getState())->m_event, msgs);
 }
 
 GeneratorState::GeneratorState():
@@ -106,16 +106,18 @@ void Generator::intTransition()
 
 n_network::t_timestamp Generator::timeAdvance() const
 {
-	return std::dynamic_pointer_cast<GeneratorState>(getState())->m_counter;
+	return std::static_pointer_cast<GeneratorState>(getState())->m_counter;
 }
 
-std::vector<n_network::t_msgptr> Generator::output() const
+void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	if(m_binary)
-		return m_outport->createMessages("b1");
-	auto state = std::dynamic_pointer_cast<GeneratorState>(getState());
+	if(m_binary){
+		m_outport->createMessages("b1", msgs);
+		return;
+	}
+	auto state = std::static_pointer_cast<GeneratorState>(getState());
 	Event e = {state->m_value};
-	return m_outport->createMessages(e);
+	m_outport->createMessages(e, msgs);
 }
 
 
@@ -160,16 +162,15 @@ GeneratorDS::GeneratorDS():
 	m_elapsed = 5u;
 }
 
-std::vector<n_network::t_msgptr> GeneratorDS::output() const
+void GeneratorDS::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	if(std::dynamic_pointer_cast<GeneratorState>(getState())->m_generated < 1)
-		return Generator::output();
-	return std::vector<n_network::t_msgptr>();
+	if(std::static_pointer_cast<GeneratorState>(getState())->m_generated < 1)
+		Generator::output(msgs);
 }
 
 bool GeneratorDS::modelTransition(n_model::DSSharedState*)
 {
-	if(std::dynamic_pointer_cast<GeneratorState>(getState())->m_generated == 1){
+	if(std::static_pointer_cast<GeneratorState>(getState())->m_generated == 1){
 		removePort(m_outport);
 		m_outport.reset();
 		return true;

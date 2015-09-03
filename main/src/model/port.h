@@ -171,23 +171,6 @@ public:
 	 */
 	bool isUsingDirectConnect() const;
 
-
-	/**
-	 * Function that creates messages with a give payload.
-	 * These messages are addressed to all out-ports that are currently connected
-	 * Note that these out-ports can differ if you are using direct connect!
-	 * Zfunctions that apply will be called upon the messages
-	 *
-	 * @param message The payload of the message that is to be sent
-	 */
-	template<typename DataType = std::string>
-	std::vector<n_network::t_msgptr> createMessages(const DataType& message)
-	{
-		std::vector<n_network::t_msgptr> container;
-		createMessages<DataType>(message, container);
-		return container;
-	}
-
 	/**
 	 * @brief Creates messages with a given payload and stores them in a container.
 	 *
@@ -202,7 +185,7 @@ public:
 	 * @note These out-ports can differ if you are using direct connect
 	 */
 	template<typename DataType = std::string>
-	std::vector<n_network::t_msgptr> createMessages(const DataType& message, std::vector<n_network::t_msgptr>& container);
+	void createMessages(const DataType& message, std::vector<n_network::t_msgptr>& container);
 
 	/**
 	 * @brief Returns a reference to all ports from incoming connections
@@ -312,7 +295,7 @@ public:
 
 
 template<typename DataType>
-std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
+void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
 	std::string sourcePort = this->getFullName();
@@ -327,6 +310,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
+		container.reserve(m_outs.size());
 		for (auto& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
 			std::string model_destination = pair.first->getHostName();
@@ -338,6 +322,7 @@ std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
 			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
 		}
 	} else {
+		container.reserve(m_coupled_outs.size());
 		for (auto& pair : m_coupled_outs) {
 			std::string model_destination = pair.first->getHostName();
 			//			std::string sourcePort = this->getFullName();
@@ -351,7 +336,6 @@ std::vector<n_network::t_msgptr> Port::createMessages(const DataType& message,
 			}
 		}
 	}
-	return container;
 }
 
 /*

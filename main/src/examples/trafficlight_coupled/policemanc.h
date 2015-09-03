@@ -67,7 +67,7 @@ public:
 	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	void intTransition() override;
 	t_timestamp timeAdvance() const override;
-	std::vector<n_network::t_msgptr> output() const override;
+	void output(std::vector<n_network::t_msgptr>& msgs) const override;
 	t_timestamp lookAhead() const override;
 
 	/*

@@ -169,7 +169,7 @@ t_timestamp FireCell::timeAdvance() const
 	}
 }
 
-std::vector<n_network::t_msgptr> FireCell::output() const
+void FireCell::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	/*
 	if abs(self.state.temperature - self.state.oldTemperature) > TMP_DIFF:
@@ -179,9 +179,8 @@ std::vector<n_network::t_msgptr> FireCell::output() const
 	 */
 	const FireCellState& state = fcstate();
 	if(std::abs(state.m_temperature - state.m_oldTemp) > TMP_DIFF) {
-		return m_myOport->createMessages(state.m_temperature);
+		m_myOport->createMessages(state.m_temperature, msgs);
 	}
-	return std::vector<n_network::t_msgptr>();
 }
 
 } /* namespace n_examples */

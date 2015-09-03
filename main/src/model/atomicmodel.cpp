@@ -19,13 +19,6 @@ AtomicModel::AtomicModel(std::string name, std::size_t)
 AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priority*/)
 	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
 {
-	/** TODO enable (breaks tracertest)
-	if(priority!= 0){
-		m_priority=nextPriority();
-	}else{
-		m_priority=priority;
-	}
-	*/
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
@@ -93,7 +86,7 @@ void AtomicModel::doConfTransition(const std::vector<n_network::t_msgptr>& messa
 	this->confTransition(message);
 }
 
-std::vector<n_network::t_msgptr> AtomicModel::doOutput()
+void AtomicModel::doOutput(std::vector<n_network::t_msgptr>& msgs)
 {
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
@@ -102,10 +95,8 @@ std::vector<n_network::t_msgptr> AtomicModel::doOutput()
 	}
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " calling output() function. ");
 	// Do the actual output function
-	auto messages = this->output();
-	LOG_DEBUG("Atomic Model ::  ", this->getName(), " output resulted in ", messages.size(), " messages ");
-	// We return the output back to the core
-	return messages;
+	this->output(msgs);
+	LOG_DEBUG("Atomic Model ::  ", this->getName(), " output resulted in ", msgs.size(), " messages ");
 }
 
 void AtomicModel::setGVT(t_timestamp gvt)

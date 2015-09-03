@@ -59,20 +59,17 @@ const FireGeneratorState& FireGenerator::getFGState() const
 	return *(std::dynamic_pointer_cast<FireGeneratorState>(getState()));
 }
 
-std::vector<n_network::t_msgptr> FireGenerator::output() const
+void FireGenerator::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	std::vector<n_network::t_msgptr> container;
-	container.reserve(m_oPorts.size());
 	double i = 1.0;
 	for(const std::map<std::string, n_model::t_portptr>::value_type& port : m_oPorts){
 		double val = T_AMBIENT + T_GENERATE/i;
-		port.second->createMessages(val, container);
+		port.second->createMessages(val, msgs);
 		i *= 2.0;
 	}
-	for(n_network::t_msgptr& ptr: container){
+	for(n_network::t_msgptr& ptr: msgs){
 		LOG_DEBUG("created message: ", ptr->toString());
 	}
-	return container;
 }
 
 } /* namespace n_examples */

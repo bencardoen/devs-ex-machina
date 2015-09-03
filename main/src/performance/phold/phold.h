@@ -61,7 +61,7 @@ public:
 	virtual void intTransition();
 	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
-	virtual std::vector<n_network::t_msgptr> output() const;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
 	virtual n_network::t_timestamp lookAhead() const;
 
 	EventTime getProcTime(size_t event) const;

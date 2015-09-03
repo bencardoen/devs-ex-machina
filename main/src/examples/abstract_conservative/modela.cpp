@@ -56,13 +56,12 @@ t_timestamp ModelA::timeAdvance() const
 	return t_timestamp(10);
 }
 
-std::vector<n_network::t_msgptr> ModelA::output() const
+void ModelA::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	t_stateptr state = this->getState();
 	if ((*state == "2") || (*state == "5")) {
-		return this->getPort("A")->createMessages("start");
+		this->getPort("A")->createMessages("start", msgs);
 	}
-	return std::vector<n_network::t_msgptr>();
 }
 
 t_timestamp ModelA::lookAhead() const

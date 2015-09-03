@@ -59,7 +59,7 @@ int main(int argc, char** args)
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;
-	conf.m_tracerset = createObject<n_tracers::t_tracerset>();
+	conf.m_tracerset = n_tools::createObject<n_tracers::t_tracerset>();
 	conf.m_tracerset->getByID<0>().initialize("./virus.txt");
 	conf.m_tracerset->getByID<1>().initialize("./virus", ".dot");
 //	conf.tracerset->getByID<1>().initialize();

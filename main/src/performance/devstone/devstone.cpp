@@ -143,10 +143,10 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	setState(newState);
 }
 
-std::vector<n_network::t_msgptr> Processor::output() const
+void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	const auto& procState = procstate();
-	return m_out->createMessages(procState.m_event1);
+	m_out->createMessages(procState.m_event1, msgs);
 }
 
 n_network::t_timestamp Processor::lookAhead() const
@@ -198,9 +198,9 @@ void Generator::intTransition()
 	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }
 
-std::vector<n_network::t_msgptr> Generator::output() const
+void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	return m_out->createMessages(Event(100));
+	return m_out->createMessages(Event(100), msgs);
 }
 
 /*

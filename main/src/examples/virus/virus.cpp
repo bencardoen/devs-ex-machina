@@ -136,13 +136,10 @@ void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 	setState(m_curState);
 }
 
-std::vector<n_network::t_msgptr> Cell::output() const
+void Cell::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	if (m_curState->m_toSend != 0) {
-		auto messages = m_neighbours[m_curState->m_target]->createMessages(MsgData(m_curState->m_toSend, getName()));
-		return messages;
-	} else {
-		return std::vector<n_network::t_msgptr>();
+		m_neighbours[m_curState->m_target]->createMessages(MsgData(m_curState->m_toSend, getName()), msgs);
 	}
 }
 

@@ -39,7 +39,7 @@ public:
 
 	void intTransition() override;
 	n_network::t_timestamp timeAdvance() const override;
-	std::vector<n_network::t_msgptr> output() const override;
+	void output(std::vector<n_network::t_msgptr>& msgs) const override;
 
 	std::vector<n_model::t_portptr>& getOutputs();
 };

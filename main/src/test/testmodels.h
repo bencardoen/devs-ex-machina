@@ -45,7 +45,7 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	virtual void intTransition() override;
 	virtual n_network::t_timestamp timeAdvance() const override;
-	virtual std::vector<n_network::t_msgptr> output() const override;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const override;
 };
 
 class GeneratorState: public ModelState
@@ -70,7 +70,7 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) override;
 	virtual void intTransition() override;
 	virtual n_network::t_timestamp timeAdvance() const override;
-	virtual std::vector<n_network::t_msgptr> output() const override;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const override;
 };
 
 class CoupledProcessor: public n_model::CoupledModel
@@ -87,9 +87,9 @@ public:
 	ElapsedNothing();
 	virtual void intTransition() override;
 	virtual n_network::t_timestamp timeAdvance() const override;
-	virtual std::vector<n_network::t_msgptr> output() const override
+	virtual void output(std::vector<n_network::t_msgptr>&) const override
 	{
-		return std::vector<n_network::t_msgptr>();
+		//nothing to do here
 	}
 };
 
@@ -97,7 +97,7 @@ class GeneratorDS: public Generator
 {
 public:
 	GeneratorDS();
-	virtual std::vector<n_network::t_msgptr> output() const override;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const override;
 
 	virtual bool modelTransition(n_model::DSSharedState* shared) override;
 

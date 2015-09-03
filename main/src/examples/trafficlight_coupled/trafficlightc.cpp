@@ -107,7 +107,7 @@ t_timestamp TrafficLight::timeAdvance() const
 	return t_timestamp();
 }
 
-std::vector<n_network::t_msgptr> TrafficLight::output() const
+void TrafficLight::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	// BEFORE USING THIS FUNCTION
 	// READ EXAMPLE @ PYTHONPDEVS trafficlight_classic/model.py line 117 ( def outputFnc(self):)
@@ -121,9 +121,9 @@ std::vector<n_network::t_msgptr> TrafficLight::output() const
 	else if (*state == "yellow")
 		message = "grey";
 	else  // nothing happens
-		return std::vector<n_network::t_msgptr>();
+		return;
 
-	return this->getPort("OBSERVED")->createMessages(message);
+	this->getPort("OBSERVED")->createMessages(message, msgs);
 }
 
 t_timestamp TrafficLight::lookAhead() const

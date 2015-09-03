@@ -12,13 +12,9 @@
 namespace n_model {
 
 RootModel::RootModel()
-	: /*Model("_ROOT"),*/ m_directConnected(false)
+	: m_directConnected(false)
 {
 }
-
-//RootModel::~RootModel()
-//{
-//}
 
 void RootModel::setComponents(const t_coupledmodelptr& model)
 {

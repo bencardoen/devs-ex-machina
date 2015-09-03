@@ -149,7 +149,7 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 	setState(newState);
 }
 
-std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
+void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	LOG_INFO("[PHOLD] - ",getName()," produces OUTPUT");
 	std::shared_ptr<PHOLDModelState> state = std::static_pointer_cast<PHOLDModelState>(getState());
@@ -160,11 +160,9 @@ std::vector<n_network::t_msgptr> HeavyPHOLDProcessor::output() const
 		size_t dest = getNextDestination(i.m_modelNumber);
 		size_t r = getRand(i.m_modelNumber, m_rand);
 		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
-		auto messages = m_outs[dest]->createMessages(r);
-		LOG_INFO("[PHOLD] - ",getName()," Ports created ", messages.size(), " messages.");
-		return messages;
+		m_outs[dest]->createMessages(r, msgs);
+		LOG_INFO("[PHOLD] - ",getName()," Ports created ", msgs.size(), " messages.");
 	}
-	return std::vector<n_network::t_msgptr>();
 }
 
 

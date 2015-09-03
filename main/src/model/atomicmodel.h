@@ -165,12 +165,12 @@ public:
 	 * @note Keep in mind that this function is called before
 	 * 	any of the transition functions are called.
 	 */
-	virtual std::vector<n_network::t_msgptr> output() const
+	virtual void output(std::vector<n_network::t_msgptr>&) const
 	{
 		LOG_ERROR(
 		        "ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
 		assert(false);
-		return std::vector<n_network::t_msgptr>();
+//		return std::vector<n_network::t_msgptr>();
 	}
 
 	/**
@@ -179,7 +179,7 @@ public:
 	 *
 	 * @return vector with pointers to all output messages in it
 	 */
-	std::vector<n_network::t_msgptr> doOutput();
+	void doOutput(std::vector<n_network::t_msgptr>& msgs);
 
 	/**
 	 * Sets the correct GVT for the model and fixes all necessary internal changes (like

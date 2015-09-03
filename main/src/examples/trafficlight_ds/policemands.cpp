@@ -81,7 +81,7 @@ t_timestamp Policeman::timeAdvance() const
 	return t_timestamp();
 }
 
-std::vector<n_network::t_msgptr> Policeman::output() const
+void Policeman::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	// BEFORE USING THIS FUNCTION
 	// READ EXAMPLE @ PYTHONPDEVS trafficlight_classic/model.py line 117 ( def outputFnc(self):)
@@ -94,9 +94,9 @@ std::vector<n_network::t_msgptr> Policeman::output() const
 	else if (substr == "work")
 		message = "toAutonomous";
 	else // nothing happens
-		return std::vector<n_network::t_msgptr>();
+		return;
 
-	return this->getPort("OUT")->createMessages(message);
+	this->getPort("OUT")->createMessages(message, msgs);
 }
 
 t_stateptr Policeman::setState(std::string s)
