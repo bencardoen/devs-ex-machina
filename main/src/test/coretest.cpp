@@ -899,7 +899,7 @@ TEST(Conservativecore, Abstract){
         LOG_INFO("--------------------------------------------------");
 	c1->runSmallStep();					// 
         c1->runSmallStep();								// 
-	EXPECT_TRUE(isInfinity(eotvector->get(1)));		// 
+	EXPECT_TRUE(!isInfinity(eotvector->get(1)));		// 
 	EXPECT_TRUE(isInfinity(c1->getEit()));			// 
 	EXPECT_EQ(c1->getTime().getTime(),70u);			// 
 	// A:7, B:7
