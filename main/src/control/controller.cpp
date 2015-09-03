@@ -203,25 +203,8 @@ void Controller::doDirectConnect()
 
 void Controller::setSimType(SimType type)
 {
+        assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
 	m_simType = type;
-}
-
-void Controller::setClassicDEVS()
-{
-	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = SimType::CLASSIC;
-}
-
-void Controller::setPDEVS()
-{
-	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = SimType::OPTIMISTIC;	//TODO fix setPDEVS
-}
-
-void Controller::setDSDEVS()
-{
-	assert(m_isSimulating == false && "Cannot change DEVS type during simulation");
-	m_simType = SimType::DYNAMIC;
 }
 
 void Controller::setTerminationTime(t_timestamp time)
@@ -295,8 +278,10 @@ void Controller::simulate()
 		simDEVS();
 		break;
 	case SimType::OPTIMISTIC:
+                simOPDEVS();
+		break;
 	case SimType::CONSERVATIVE:
-		simPDEVS();
+		simCPDEVS();
 		break;
 	case SimType::DYNAMIC:
 		simDSDEVS();
@@ -356,7 +341,7 @@ void Controller::simDEVS()
 	}
 }
 
-void Controller::simPDEVS()
+void Controller::simOPDEVS()
 {
 	std::mutex cvlock;
 	std::condition_variable cv;
@@ -398,6 +383,42 @@ void Controller::simPDEVS()
 	//  All events are then handled by handleTimeEvents, which returns True so a new GVT thread is set up again
 	//   and the simulation continues
 	//  If the GVT thread ended for any other reason we pass through handleTimeEvents and break out of the loop
+
+	for (auto& t : m_threads) {
+		t.join();
+	}
+}
+
+void Controller::simCPDEVS()
+{
+	std::mutex cvlock;
+	std::condition_variable cv;
+	std::mutex veclock;	// Lock for vector with signals
+	std::vector<std::size_t> threadsignal;
+	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
+
+	// configure all cores
+	for (auto core : m_cores) {
+		core.second->setTracers(m_tracers);
+		(!m_isLoadedSim) ? core.second->init() : core.second->initExistingSimulation(m_lastGVT);
+
+		if (m_checkTermTime)
+			core.second->setTerminationTime(m_terminationTime);
+		if (m_checkTermCond)
+			core.second->setTerminationFunction(m_terminationCondition);
+
+		core.second->setLive(true);
+
+		threadsignal.push_back(n_threadflags::FREE);
+	}
+
+
+	for (size_t i = 0; i < m_cores.size(); ++i) {
+		m_threads.push_back(
+		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
+		                std::ref(veclock), deadlockVal, std::ref(*this)));
+		LOG_INFO("CONTROLLER: Started thread # ", i);
+	}
 
 	for (auto& t : m_threads) {
 		t.join();

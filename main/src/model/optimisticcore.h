@@ -5,8 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
-#ifndef SRC_MODEL_MULTICORE_H_
-#define SRC_MODEL_MULTICORE_H_
+#ifndef SRC_MODEL_OPTIMISTICCORE_H_
+#define SRC_MODEL_OPTIMISTICCORE_H_
 
 #include "model/core.h"
 #include "control/locationtable.h"
@@ -19,13 +19,18 @@ namespace n_model {
 /**
  * Multicore implementation of Core class.
  */
-class Multicore: public Core
+class Optimisticcore: public Core
 {
 private:
 	/**
 	 * Link to network
 	 */
 	t_networkptr			m_network;
+        
+        /**
+	 * Location table
+	 */
+	n_control::t_location_tableptr	m_loctable;
 
 	/**
 	 * This core's current color state.
@@ -90,6 +95,8 @@ private:
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
+        
+        std::size_t 	m_cores;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -137,14 +144,7 @@ private:
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
-        
 protected:
-	/**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
-        
-	const std::size_t 	m_cores;
         
         /**
 	 * Handle antimessage
@@ -165,7 +165,7 @@ protected:
         registerReceivedMessage(const t_msgptr& msg);
         
 public:
-	Multicore()=delete;
+	Optimisticcore()=delete;
 	/**
 	 * MCore constructor
 	 * @param coreid Unique sequential id (next=last+1).
@@ -175,15 +175,15 @@ public:
 	 * @pre coreid < cores
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
-	Multicore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+	Optimisticcore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */
-	virtual ~Multicore();
+	virtual ~Optimisticcore();
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
-	 * @attention does not yet lock on messages acces
+	 * @attention does not yet lock on messages access
 	 */
 	void getMessages()override;
 
@@ -317,4 +317,4 @@ public:
 
 } /* namespace n_model */
 
-#endif /* SRC_MODEL_MULTICORE_H_ */
+#endif /* SRC_MODEL_OPTIMISTICCORE_H_ */

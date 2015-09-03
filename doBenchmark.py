@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from benchmarks import benchmarker, defaults
 from benchmarks.csv import toCSV
+from benchmarks.misc import printVerbose
 import multiprocessing
 import argparse
 from collections import namedtuple
@@ -8,6 +9,7 @@ from itertools import chain
 from pathlib import Path
 from subprocess import call, DEVNULL
 from functools import partial
+from datetime import datetime
 
 
 # small helper function for setting bounds on a argparse argument
@@ -45,6 +47,15 @@ parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
 parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=multiprocessing.cpu_count(),
     help="[default: {0}] number of simulation cores for parallel simulation. Note that it is generally not smart to set this value higher than the amount of physical cpu cores. (You have {0}.)".format(multiprocessing.cpu_count())
     )
+parser.add_argument("-b", "--backup", action="store_true",
+    help="Back up existing data files and then run the benchmarks as usual."
+    )
+parser.add_argument("-B", "--backup-no-benchmark", action="store_true",
+    help="Back up existing data files and exit without running any benchmarks."
+    )
+parser.add_argument("-v", "--verbose", action="store_true",
+    help="If true, produce more verbose output."
+    )
 parser.add_argument("limited", nargs='*', default=None,
     help="If set, only execute these benchmarks. Leave out to execute all."
     )
@@ -60,7 +71,6 @@ adevpholdEx = "./build/adevs_phold"
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
 simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', args.cores])
-
 
 # generators for the benchmark parameters
 def devstonegen(simtype, executable):
@@ -86,6 +96,7 @@ csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
 
+
 # compilation functions
 def unifiedCompiler(target, force=False):
     """
@@ -100,7 +111,7 @@ def unifiedCompiler(target, force=False):
         #     path.unlink()
         print("Compiling target {}".format(target))
         call(['make', '--always-make', target], cwd='./build', stdout=None if args.showSTDOUT else DEVNULL)
-        print("  -> Compilation done.")
+        printVerbose(args.verbose, "  -> Compilation done.")
 
 
 if __name__ == '__main__':
@@ -143,14 +154,33 @@ if __name__ == '__main__':
     folders = defaults.getOFolders(sysInfo, "bmarkdata")
     defaults.saveSysInfo(sysInfo, folders)
 
+    if args.backup or args.backup_no_benchmark:
+        # do the backup
+        print("Backing up current data files...")
+        for i in chain(*allBenchmark):
+            if i is not None:
+                date = '{0:%Y}.{0:%m}.{0:%d}_{0:%H}.{0:%M}.{0:%S}'.format(datetime.now())
+                plotPath = (folders.plots / "{}.csv".format(i.name), folders.plots / "{}_{}.csv".format(i.name, date))
+                jsonPath = (folders.json / "{}.json".format(i.name), folders.json / "{}_{}.json".format(i.name, date))
+                for curPath, newPath in [plotPath, jsonPath]:
+                    if not curPath.exists():
+                        printVerbose(args.verbose, "  > could not find {}, skipping this file.".format(curPath))
+                        continue
+                    curPath.rename(newPath)
+                    printVerbose(args.verbose, "  > moved {} \t-> {}".format(curPath, newPath))
+        print("done!")
+        if args.backup_no_benchmark:
+            exit(0)
+
     # do the benchmarks!
+    print("Executing benchmarks...")
     donelist = []
     for bmarkset, argp in zip(allBenchmark, bmarkArgParses):
         doCompile = True
         for bmark in bmarkset:
             if bmark is None or (len(args.limited) > 0 and bmark.name not in args.limited):
                 continue
-            print("> executing benchmark {}".format(bmark.name))
+            print("  > executing benchmark {}".format(bmark.name))
             donelist.append(bmark.name)
             data = analyzer.open(bmark, folders)
             for i in range(args.repeat):
@@ -159,14 +189,16 @@ if __name__ == '__main__':
                 doCompile = False
             analyzer.save(data, bmark, folders)
             toCSV(data, folders.plots / "{}.csv".format(bmark.name), *argp)
+    if len(donelist) > 0:
+        print("done!")
 
     if len(args.limited) > 0:
         wrong = set(args.limited) - set(donelist)
         if len(wrong) > 0:
-            print("> Unknown benchmarks requested:")
+            print("Unknown benchmarks requested:")
             for i in wrong:
                 print("    {}".format(i))
-            print("> Accepted benchmarks:")
+            print("Accepted benchmarks:")
             for i in chain(*allBenchmark):
                 if i is not None:
                     print("    {}".format(i.name))

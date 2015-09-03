@@ -16,7 +16,7 @@
 #include "tracers/tracers.h"
 #include "tools/coutredirect.h"
 #include "test/compare.h"
-#include "model/multicore.h"
+#include "model/optimisticcore.h"
 #include "examples/trafficlight_coupled/trafficsystemc.h"
 #include "examples/trafficlight_ds/trafficsystemds.h"
 #include "model/dynamiccore.h"
@@ -83,7 +83,7 @@ TEST(Controller, cDEVS)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setClassicDEVS();
+		ctrl.setSimType(SimType::CLASSIC);
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -114,7 +114,7 @@ TEST(Controller, cDEVS_coupled)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setClassicDEVS();
+		ctrl.setSimType(SimType::CLASSIC);
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
 		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -146,7 +146,7 @@ TEST(Controller, DSDEVS_connections)
 		coreMap[0] = c;
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setDSDEVS();
+		ctrl.setSimType(SimType::DYNAMIC);
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
 		t_coupledmodelptr m = createObject<n_examples_ds::TrafficSystem>("trafficSystem");
@@ -201,15 +201,15 @@ TEST(Controller, pDEVS)
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
 		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-		t_coreptr c1 = createObject<Multicore>(network, 0, locTab, 2);
-		t_coreptr c2 = createObject<Multicore>(network, 1, locTab, 2);
+		t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
+		t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
 		coreMap[0] = c1;
 		coreMap[1] = c2;
 
 		t_timestamp endTime(2000, 0);
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setPDEVS();
+                ctrl.setSimType(SimType::OPTIMISTIC);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
@@ -264,8 +264,8 @@ TEST(Controller, CONDEVS)
 
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
                 t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
-		auto c0 = createObject<Conservativecore>(network, 0, locTab, 2, eotvector, timevector);
-		auto c1 = createObject<Conservativecore>(network, 1, locTab, 2, eotvector, timevector);
+		auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
+		auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
 
 		coreMap[0] = c0;
 		coreMap[1] = c1;
@@ -273,7 +273,7 @@ TEST(Controller, CONDEVS)
 		t_timestamp endTime(70, 0);
 
 		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
-		ctrl.setPDEVS();
+		ctrl.setSimType(SimType::CONSERVATIVE);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<ModelC>("modelC");

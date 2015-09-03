@@ -4,7 +4,7 @@
 #
 # A collection of default implementations for some parts of this project.
 
-from .misc import assertPath
+from .misc import assertPath, printVerbose
 from .structs import Benchmark, Folders, BenchmarkDriver, BenchmarkAnalyzer
 from itertools import count
 from datetime import datetime
@@ -36,7 +36,7 @@ def pfloat(f):
         return locale.atof(f)
     except:
         try:
-            print("note: failed to directly parse string: {}\tWill try again by removing last character".format(f))
+            printVerbose(args.verbose, "note: failed to directly parse string: {}\tWill try again by removing last character".format(f))
             if f.endswith('%'):
                 return pfloat(f[:-1])/100
             return pfloat(f[:-1])

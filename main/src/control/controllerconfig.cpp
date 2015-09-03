@@ -57,7 +57,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap[i] = createObject<Multicore>(network, i, locTab, m_coreAmount);
+			coreMap[i] = createObject<Optimisticcore>(network, i, locTab, m_coreAmount);
 		}
 		break;
 	}
@@ -67,7 +67,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp(0,0));
                 t_eotvector timevector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp::infinity());
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap[i] = createObject<Conservativecore>(network, i, locTab, m_coreAmount, eotvector, timevector);
+			coreMap[i] = createObject<Conservativecore>(network, i, locTab, eotvector, timevector);
 		}
 		break;
 	}

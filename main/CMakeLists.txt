@@ -110,7 +110,7 @@ add_library(
  	src/model/port.cpp
  	src/model/core.cpp
  	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
+ 	src/model/optimisticcore.cpp
  	src/model/conservativecore.cpp
  	src/model/zfunc.cpp
  	src/control/allocator.cpp
@@ -140,7 +140,7 @@ add_library(
  	src/model/port.cpp
  	src/model/core.cpp
  	src/model/dynamiccore.cpp
- 	src/model/multicore.cpp
+ 	src/model/optimisticcore.cpp
  	src/model/conservativecore.cpp
  	src/model/zfunc.cpp
  	src/control/allocator.cpp
@@ -162,7 +162,7 @@ SET_TARGET_PROPERTIES(
 		)
 SET_TARGET_PROPERTIES(
 	DEVSEXMACHINACORE_RELEASE PROPERTIES EXCLUDE_FROM_ALL 1
-		COMPILE_FLAGS "-DLOG_LEVEL=0 -o3"
+		COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
 		)
 
 
@@ -228,7 +228,7 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
  	src/mainbenchfire.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "-DLOG_LEVEL=0"
+					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
  					)
 
 
@@ -239,7 +239,7 @@ add_executable(${PROJECT_NAME}_devstone
  	src/maindevstone.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
- 					COMPILE_FLAGS "-DLOG_LEVEL=0 -o3"
+					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
  					)
 
 
@@ -278,7 +278,7 @@ add_executable(${PROJECT_NAME}_traffic
 	src/maintraffic.cpp
 	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-DLOG_LEVEL=0"
+					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
 					)
 
 ##############################################################################

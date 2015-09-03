@@ -14,7 +14,7 @@
 #include "control/simpleallocator.h"
 #include "control/controller.h"
 #include "tracers/tracers.h"
-#include "model/multicore.h"
+#include "model/optimisticcore.h"
 #include "model/dynamiccore.h"
 #include "model/conservativecore.h"
 #include <unordered_set>

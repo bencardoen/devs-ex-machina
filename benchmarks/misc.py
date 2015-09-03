@@ -17,3 +17,13 @@ def assertPath(path):
     if not path.exists():
         path.mkdir(parents=True)
     return path
+
+
+def printVerbose(doPrint, *args, **kwargs):
+    """
+    prints only if verbose flag is used
+    params:
+      doPrint  if True, call the regular print with the remainder of the arguments.
+    """
+    if doPrint:
+        print(args, kwargs)
