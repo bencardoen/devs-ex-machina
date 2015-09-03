@@ -328,17 +328,21 @@ void Controller::simDEVS()
 		} else {
 			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
 		}
+                
 		if (i % m_saveInterval == 0) {
 			t_timestamp time = core->getTime();
 			n_tracers::traceUntil(time);
 			if (m_events.todo(time))
 				handleTimeEventsSingle(time);
 		}
+                
 		if (core->getZombieRounds() > 1) {
 			LOG_ERROR("Core has reached zombie state in classic devs.");
 			break;
 		}
 	}
+        t_timestamp time = core->getTime();
+        n_tracers::traceUntil(time);
 }
 
 void Controller::simOPDEVS()

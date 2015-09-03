@@ -8,6 +8,7 @@
 #include "tools/scheduler.h"
 #include <mutex>
 #include <unordered_map>
+#include <map>
 
 namespace n_tools {
 
@@ -33,6 +34,7 @@ private:
 	X m_storage;
 
 	typedef std::unordered_map<S, t_handle> t_hashtable;
+        //typedef std::map<S, t_handle> t_hashtable;
 
 	t_hashtable m_hashtable;
 
