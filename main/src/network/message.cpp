@@ -59,19 +59,49 @@ n_network::operator!=(const n_network::Message& left, const n_network::Message& 
 		return (not (left == right));
 	}
 
+bool
+n_network::operator<(const n_network::Message& left, const n_network::Message& right){
+        if(left.m_timestamp < right.m_timestamp)
+                return true;
+        else{ // >=
+                if(left.m_timestamp==right.m_timestamp) // ==
+                        return left.m_destination_model < right.m_destination_model;    // TODO check if we need even more...
+                else    
+                        return false;   // >
+        }
+               
+}
 
 bool
-n_network::operator==(const n_network::Message& left, const n_network::Message& right){
-	return(
-		left.getDestinationModel()==right.getDestinationModel()
-		&&
-		left.getDestinationPort() == right.getDestinationPort()
-		&&
-		left.getSourcePort() == right.getSourcePort()
-		&&
-		left.getTimeStamp() == right.getTimeStamp()
-	);
+n_network::operator<=(const n_network::Message& left, const n_network::Message& right){
+	return (left < right || left==right);
 }
+
+
+bool
+n_network::operator>=(const n_network::Message& left, const n_network::Message& right){
+	return (left > right || left==right);
+}
+
+
+bool
+n_network::operator>(const n_network::Message& left, const n_network::Message& right){
+	return !( left<= right);
+}
+
+ bool
+n_network::operator==(const n_network::Message& left, const n_network::Message& right){
+        // short circuit, tstamp will fail first.
+        return(
+                left.getTimeStamp() == right.getTimeStamp()
+                &&
+                left.getDestinationModel()==right.getDestinationModel()
+                &&
+                left.getDestinationPort() == right.getDestinationPort()
+                &&
+                left.getSourcePort() == right.getSourcePort()
+                );
+ }
 
 void n_network::Message::serialize(n_serialization::t_oarchive& archive)
 {

@@ -25,12 +25,9 @@ enum class Storage
 	/**
 	 * List based scheduler.
 	 */
-	LIST
+	LIST,
 };
 
-/*! \var Test::TEnum Test::Val1
- * The description of the first enum value.
- */
 
 
 /**
@@ -48,7 +45,7 @@ public:
 	typedef std::shared_ptr<Scheduler<X>> t_Scheduler;
 
 	static std::shared_ptr<Scheduler<X>>
-	makeScheduler(const Storage&, bool synchronized = false);
+	makeScheduler(const Storage&, bool synchronized = false, bool map_backed=false);
 };
 
 
