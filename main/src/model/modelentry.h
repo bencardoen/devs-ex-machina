@@ -49,6 +49,13 @@ public:
 			return lhs.m_name > rhs.m_name;
 		return lhs.m_scheduled_at > rhs.m_scheduled_at;
 	}
+        
+        friend
+	bool operator<=(const ModelEntry& lhs, const ModelEntry& rhs)
+	{
+		// a <= b  implies (not a>b)
+		return (not (lhs > rhs));
+	}
 
 	friend
 	bool operator>(const ModelEntry& lhs, const ModelEntry& rhs)
@@ -59,7 +66,7 @@ public:
 	friend
 	bool operator>=(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
-		return (!(lhs < rhs));
+		return (not (lhs < rhs));
 	}
 
 	friend

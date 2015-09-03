@@ -17,7 +17,7 @@
 namespace n_model {
 
 Port::Port(std::string name, std::string hostname, bool inputPort)
-	: m_name(name), m_hostname(hostname), m_inputPort(inputPort), m_usingDirectConnect(false)
+	: m_name(name), m_hostname(hostname),m_fullname(hostname + "." + name), m_inputPort(inputPort), m_usingDirectConnect(false)
 {
 }
 
@@ -28,14 +28,7 @@ std::string Port::getName() const
 
 std::string Port::getFullName() const
 {
-	//std::string tmp = m_hostname + "." + m_name;
-	// This is ugly, but required. G++ is too smart and sees through
-	// what I'm trying to do. Append forces a new copy.
-	// note that volatile does not work here.
-	std::string tmp = this->getHostName();
-	tmp.append(".");
-	tmp.append(this->getName());
-	return n_tools::copyString(tmp);
+	return n_tools::copyString(m_fullname);
 }
 
 std::string Port::getHostName() const
@@ -200,6 +193,7 @@ void Port::serialize(n_serialization::t_oarchive& archive)
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
 			m_coupled_outs, m_coupled_ins,
 			m_sentMessages, m_receivedMessages,
+                        m_fullname,
 			m_usingDirectConnect);
 }
 
@@ -208,6 +202,7 @@ void Port::serialize(n_serialization::t_iarchive& archive)
 	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
 			m_coupled_outs, m_coupled_ins,
 			m_sentMessages, m_receivedMessages,
+                        m_fullname,
 			m_usingDirectConnect);
 }
 

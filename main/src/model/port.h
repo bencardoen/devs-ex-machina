@@ -35,6 +35,7 @@ class Port
 private:
 	std::string m_name;
 	std::string m_hostname;
+        std::string m_fullname;
 	bool m_inputPort;
 
 	std::vector<t_portptr> m_ins;
@@ -298,7 +299,7 @@ template<typename DataType>
 void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
-	std::string sourcePort = this->getFullName();
+	const std::string& sourcePort = this->getFullName();
 	{
 		std::string str = "";
 		t_zfunc zfunc = n_tools::createObject<ZFunc>();
