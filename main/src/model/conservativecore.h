@@ -274,6 +274,9 @@ public:
 	 */
 	bool
 	existTransientMessage()override;
+        
+        void
+        calculateMinLookahead();
 
         //-------------statistics gathering--------------
 //#ifdef USESTAT

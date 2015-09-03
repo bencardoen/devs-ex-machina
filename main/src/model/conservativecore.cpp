@@ -137,13 +137,14 @@ void Conservativecore::syncTime(){
 	 *  slowing down. Case in point : EIT=oo, EOT=10, Time:10->20, EOT can never be behind current time.
 	 *
 	 */
+        this->calculateMinLookahead();
 	this->updateEOT();
 	this->updateEIT();
 
 	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
 
 	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
-	this->resetLookahead();
+	//this->resetLookahead(); // No longer do this, x=inf edge case.
 
 	// If we've terminated, our EOT should be our current time, not what we've calculated.
 	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
@@ -215,24 +216,14 @@ void Conservativecore::init(){
 	buildInfluenceeMap();
 
 	/// Get first lookahead.
-	for(const auto& model : m_models){
-		t_timestamp current_min = this->m_min_lookahead;
-		t_timestamp model_la = model.second->lookAhead();
-		this->m_min_lookahead = std::min(current_min, model_la);
-		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-	}
+        this->calculateMinLookahead();
 }
 
 
 void Conservativecore::initExistingSimulation(const t_timestamp& loaddate){
 	Core::initExistingSimulation(loaddate);
 	buildInfluenceeMap();
-	for(const auto& model : m_models){
-		t_timestamp current_min = this->m_min_lookahead;
-		t_timestamp model_la = model.second->lookAhead();
-		this->m_min_lookahead = std::min(current_min, model_la);
-		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-	}
+        this->calculateMinLookahead();
 }
 
 void Conservativecore::buildInfluenceeMap(){
@@ -348,6 +339,7 @@ void Conservativecore::runSmallStepStalled()
         /**
          * If we have no imminents, our EOT value can still have changed
          */
+        this->calculateMinLookahead();
         this->updateEOT();
         this->updateEIT();
 }
@@ -403,6 +395,16 @@ t_timestamp
 Conservativecore::getTime(){
         std::lock_guard<std::mutex> lk(m_timelock);
         return Core::getTime();
+}
+
+void
+Conservativecore::calculateMinLookahead(){
+	for(const auto& model : m_models){
+		t_timestamp current_min = this->m_min_lookahead;
+		t_timestamp model_la = model.second->lookAhead();
+		this->m_min_lookahead = std::min(current_min, model_la);
+		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
+	}
 }
 
 } /* namespace n_model */
