@@ -13,6 +13,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <random>
 #include "model/state.h"
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
@@ -30,12 +31,14 @@ typedef double t_counter;
 typedef std::size_t t_counter;
 #endif
 
+
 class ProcessorState : public n_model::State
 {
 public:
 	t_counter m_event1_counter;
 	Event m_event1;
 	std::vector<Event> m_queue;
+	std::size_t m_eventsHad;
 public:
 	ProcessorState();
 	virtual ~ProcessorState();
@@ -48,6 +51,7 @@ public:
 	std::shared_ptr<ProcessorState> copy() const;
 };
 
+typedef std::mt19937_64 t_randgen;
 
 class Processor : public n_model::AtomicModel
 {
@@ -55,6 +59,7 @@ private:
 	static std::size_t m_numcounter;
 	const bool m_randomta;
 	const n_model::t_portptr m_out;
+	mutable t_randgen m_rand;
 public:
 	const std::size_t m_num;
 	Processor(std::string name, bool randomta);
@@ -67,6 +72,7 @@ public:
 	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
 	virtual n_network::t_timestamp lookAhead() const;
 
+	t_counter getProcTime(size_t event) const;
 	ProcessorState& procstate();
 	const ProcessorState& procstate() const;
 };

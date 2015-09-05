@@ -8,33 +8,37 @@
 #include "performance/devstone/devstone.h"
 #include "tools/stringtools.h"
 #include <limits>
+#include <random>
 
 #ifdef FPTIME
 #define T_0 0.0
+#define T_1 0.01
 #define T_50 0.5
 #define T_75 0.75
 #define T_100 1.0
+#define T_125 1.25
+#define T_STEP 0.01
 #else
 #define T_0 0u
+#define T_1 1u
 #define T_50 50u
 #define T_75 75u
 #define T_100 100u
+#define T_125 125u
 #endif
 
 
 
 namespace n_devstone {
+
 const t_counter inf = std::numeric_limits<t_counter>::max();
 
 /*
  * ProcessorState
  */
-
-ProcessorState::ProcessorState()
-	: State(""), m_event1_counter(inf), m_event1(0)
-{
-}
-
+ProcessorState::ProcessorState():
+	State(""), m_event1_counter(inf), m_event1(0), m_eventsHad(0)
+{}
 ProcessorState::~ProcessorState()
 {
 }
@@ -86,15 +90,15 @@ n_model::t_timestamp Processor::timeAdvance() const
 void Processor::intTransition()
 {
 	const auto newState = procstate().copy();
-	newState->m_event1_counter = T_0;
 	if (newState->m_queue.empty()) {
 		newState->m_event1_counter = inf;
 		newState->m_event1 = Event(0u);
 	} else {
 		newState->m_event1 = newState->m_queue.back();
 		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1) : T_100;
 	}
+	++(newState->m_eventsHad);
 	LOG_DEBUG("internal event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
 }
@@ -111,8 +115,7 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 		newState->m_queue.push_back(ev1);
 	} else {
 		newState->m_event1 = ev1;
-		//TODO devstone randomized counter float
-		newState->m_event1_counter = (m_randomta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1)  : T_100;
 	}
 	LOG_DEBUG("confluent event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
 	setState(newState);
@@ -121,7 +124,6 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	const auto newState = procstate().copy();
-	newState->m_event1_counter = T_0;
 	LOG_DEBUG("event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed);
 	//We can only have 1 message
 	if (newState->m_queue.empty()) {
@@ -130,15 +132,15 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	} else {
 		newState->m_event1 = newState->m_queue.back();
 		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? T_75 + (rand() / (RAND_MAX / T_50)) : T_100;
+		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1) : T_100;
 	}
+	++(newState->m_eventsHad);
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
 	if (newState->m_event1 != Event(0)) {
 		newState->m_queue.push_back(ev1);
 	} else {
 		newState->m_event1 = ev1;
-		//TODO devstone randomized counter float
-		newState->m_event1_counter = (m_randomta) ? T_75 + (rand() / (RAND_MAX / T_50)) : T_100;
+		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1)  : T_100;
 	}
 	setState(newState);
 }
@@ -152,15 +154,29 @@ void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
 n_network::t_timestamp Processor::lookAhead() const
 {
 	if(m_randomta)
-		return n_network::t_timestamp(T_0);
+		return n_network::t_timestamp(T_1);
         else{
-                const auto& procState = procstate();
-                if (procState.m_event1_counter == inf) {
-                        return n_network::t_timestamp();
-                }else{
-                       return n_network::t_timestamp(T_100);
-                }
+		return n_network::t_timestamp(T_100);
         }
+}
+
+template<typename T>
+constexpr T roundTo(T val, T gran)
+{
+	return std::round(val/gran)*gran;
+}
+
+t_counter Processor::getProcTime(size_t event) const
+{
+#ifdef FPTIME
+	static std::uniform_real_distribution<t_counter> dist(T_75, T_125);
+	m_rand.seed((event + m_num + procstate().m_eventsHad)*m_num);
+	return roundTo(dist(m_rand), T_STEP);
+#else
+	static std::uniform_int_distribution<t_counter> dist(T_75, T_125);
+	m_rand.seed((event + m_num + procstate().m_eventsHad)*m_num);
+	return dist(m_rand);
+#endif
 }
 
 const ProcessorState& Processor::procstate() const

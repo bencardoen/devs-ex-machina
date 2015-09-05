@@ -12,27 +12,39 @@
 #include <sstream>
 #include <string>
 #include <limits>
+#include <random>
 
 #ifdef FPTIME
-//#define T_0 0.0
-//#define T_1 0.0000000001
-//#define T_50 0.5
-//#define T_75 0.75
-//#define T_100 1.0
+#define T_0 0.0
+#define T_1 0.01
+#define T_STEP 0.01
+#define T_50 0.5
+#define T_75 0.75
+#define T_100 1.0
+#define T_125 1.25
 # else
 #define T_0 0.0
 #define T_1 1.0
+#define T_STEP 1.0
 #define T_50 50.0
 #define T_75 75.0
 #define T_100 100.0
+#define T_125 125.0
 #endif
 #define T_INF DBL_MAX
 
 typedef adevs::PortValue<std::size_t, int> t_event;
 typedef std::size_t t_counter;
+typedef std::mt19937_64 t_randgen;
 
 const t_counter inf = std::numeric_limits<t_counter>::max();
 const t_event empty = t_event(0, -1);
+
+template<typename T>
+constexpr T roundTo(T val, T gran)
+{
+	return std::round(val/gran)*gran;
+}
 
 bool operator==(const t_event& lhs, const t_event& rhs){
 	return (lhs.port == rhs.port && lhs.value == rhs.value);
@@ -52,16 +64,19 @@ private:
 	//state
 	t_counter m_event1_counter;
 	t_event m_event1;
+	std::size_t m_eventsHad;
 	std::vector<t_event> m_queue;
 
 	//constant
 	const bool m_randta;
+	mutable t_randgen m_rand;
 public:
 	const std::size_t m_counter;
 	Processor(bool randta = false):
 		adevs::Atomic<t_event>(),
 		m_event1_counter(inf),
 		m_event1(empty),
+		m_eventsHad(0),
 		m_randta(randta),
 		m_counter(procCounter++)
 	{
@@ -80,6 +95,7 @@ public:
 			m_event1 = m_queue.back();
 			m_queue.pop_back();
 		}
+		++m_eventsHad;
 	}
 	/// External transition function.
 	void delta_ext(double e, const adevs::Bag<t_event>& xb)
@@ -108,6 +124,7 @@ public:
 			m_event1 = m_queue.back();
 			m_queue.pop_back();
 		}
+		++m_eventsHad;
 		t_event ev = *(xb.begin());
 		if(m_event1 != empty) {
 			m_queue.push_back(ev);
@@ -140,6 +157,13 @@ public:
 		if(m_event1_counter == inf)
 			return T_1;	//does not allow lookahead of 0, so we'll have to cheat.
 		return T_100;
+	}
+
+	double getProcTime(size_t event) const
+	{
+		static std::uniform_real_distribution<double> dist(T_75, T_125);
+		m_rand.seed((event + m_counter + m_eventsHad)*m_counter);
+		return roundTo<double>(dist(m_rand), T_STEP);
 	}
 };
 
@@ -317,6 +341,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAM
 	"  -t ENDTIME   set the endtime of the simulation\n"
 	"  -w WIDTH     the with of the devstone model\n"
 	"  -d DEPTH     the depth of the devstone model\n"
+	"  -r           use randomized processing time\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"

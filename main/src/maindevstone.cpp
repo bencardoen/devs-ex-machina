@@ -76,6 +76,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAM
 	"  -t ENDTIME   set the endtime of the simulation\n"
 	"  -w WIDTH     the with of the devstone model\n"
 	"  -d DEPTH     the depth of the devstone model\n"
+	"  -r           use randomized processing time\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"
