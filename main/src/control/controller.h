@@ -89,6 +89,11 @@ private:
 	 */
 	std::atomic<bool> 	m_rungvt;
         
+        /**
+         * Designate how many (possibly including idle) rounds any core can run.
+         */
+        std::size_t             m_turns;
+        
         /// Add keyword inline, if we can't use __attribute(pure)__, 
         /// inline + ifdef will convince compiler the function is empty, and throw it
         // away if we're nog statlogging.
@@ -98,7 +103,7 @@ private:
 public:
 	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
 		std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab,
-		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5);
+		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5, std::size_t turns=10000);
 
 	virtual ~Controller();
 

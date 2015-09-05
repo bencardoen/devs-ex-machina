@@ -20,10 +20,10 @@ namespace n_control {
 
 Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
         std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab, n_tracers::t_tracersetptr& tracers,
-        size_t saveInterval)
+        size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
 //#ifdef USESTAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -399,7 +399,6 @@ void Controller::simCPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
-	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
 	for (auto core : m_cores) {
@@ -420,7 +419,7 @@ void Controller::simCPDEVS()
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
 		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), deadlockVal, std::ref(*this)));
+		                std::ref(veclock), m_turns, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
