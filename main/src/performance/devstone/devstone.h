@@ -45,9 +45,6 @@ public:
 
 	virtual std::string toString();
 
-	friend bool operator==(const ProcessorState& lhs, const std::string rhs);
-	friend bool operator==(const std::string lhs, const ProcessorState& rhs);
-
 	std::shared_ptr<ProcessorState> copy() const;
 };
 

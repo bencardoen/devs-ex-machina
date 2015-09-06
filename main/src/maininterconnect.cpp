@@ -1,43 +1,37 @@
 /*
- * maindevstone.cpp
+ * maininterconnect.cpp
  *
  *      Author: Devs Ex Machina
  */
 
 #include "control/controllerconfig.h"
 #include "tools/coutredirect.h"
-#include "performance/devstone/devstone.h"
+#include "performance/highInterconnect/hinterconnect.h"
 #include "tools/stringtools.h"
 #include "control/allocator.h"
 
 #include "tools/statistic.h"
 
-LOG_INIT("devstone.log")
+LOG_INIT("interconnect.log")
 
-class DevstoneAlloc: public n_control::Allocator
+class InterconnectAlloc: public n_control::Allocator
 {
 private:
 	std::size_t m_maxn;
 public:
-	DevstoneAlloc(): m_maxn(0){
+	InterconnectAlloc(): m_maxn(0){
 
 	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
-		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
-		if(p == nullptr)
-			return 0;
-		std::size_t res = p->m_num*coreAmount()/m_maxn;
-		if(res >= coreAmount())
-			res = coreAmount()-1;
-		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
-		return res;
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
+		return 0;
 	}
 
 	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
 		m_maxn = models.size();
 		assert(m_maxn && "Total amount of models can't be zero.");
+		std::size_t i = 0;
 		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber(allocate(ptr));
+			ptr->setCorenumber((i++)%coreAmount());
 	}
 };
 
@@ -59,22 +53,20 @@ char getOpt(char* argv){
 
 /**
  * cmd args:
- * [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]
+ * [-h] [-t ENDTIME] [-w WIDTH][-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]
  * 	-h: show help and exit
  * 	-t ENDTIME set the endtime of the simulation
  * 	-w WIDTH the with of the devstone model
- * 	-d DEPTH the depth of the devstone model
  * 	-c COREAMT amount of simulation cores, ignored in classic mode
  * 	classic run single core simulation
  * 	cpdevs run conservative parallel simulation
  * 	opdevs|pdevs run optimistic parallel simulation
  * The last value entered for an option will overwrite any previous values for that option.
  */
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
-	"  -w WIDTH     the with of the devstone model\n"
 	"  -d DEPTH     the depth of the devstone model\n"
 	"  -r           use randomized processing time\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
@@ -89,7 +81,6 @@ int main(int argc, char** argv)
 	// default values:
 	const char optETime = 't';
 	const char optWidth = 'w';
-	const char optDepth = 'd';
 	const char optHelp = 'h';
 	const char optRand = 'r';
 	const char optCores = 'c';
@@ -101,7 +92,6 @@ int main(int argc, char** argv)
 	n_network::t_timestamp::t_time eTime = 10000;
 #endif
 	std::size_t width = 2;
-	std::size_t depth = 3;
 	bool randTa = false;
 
 	bool hasError = false;
@@ -155,14 +145,6 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
 			break;
-		case optDepth:
-			++i;
-			if(i < argc){
-				depth = toData<std::size_t>(std::string(*(++argvc)));
-			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
-			}
-			break;
 		case optRand:
 			randTa = true;
 			srand(0);
@@ -182,21 +164,21 @@ int main(int argc, char** argv)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "High Interconnect";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;     
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
 	ctrl->addModel(d);
 	{
-		std::ofstream filestream("./devstone.txt");
+		std::ofstream filestream("./interconnect.txt");
 		n_tools::CoutRedirect myRedirect(filestream);
 		ctrl->simulate();
 	}

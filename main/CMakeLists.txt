@@ -243,6 +243,17 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
  					)
 
 
+add_executable(${PROJECT_NAME}_interconnect
+	# The following target determines if the Debug/Release package is used
+	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
+ 	src/performance/highInterconnect/hinterconnect.cpp
+ 	src/maininterconnect.cpp
+  	)
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
+					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=15 -O3"
+ 					)
+
+
 add_executable(${PROJECT_NAME}_phold
 	$<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
  	src/performance/phold/phold.cpp
@@ -347,6 +358,7 @@ endif()
 target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})

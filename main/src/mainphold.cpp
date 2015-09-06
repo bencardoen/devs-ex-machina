@@ -1,7 +1,7 @@
 /*
  * mainphold.cpp
  *
- *      Author: Matthijs Van Os - Devs Ex Machina
+ *      Author: Devs Ex Machina
  */
 
 #include <performance/phold/phold.h>
