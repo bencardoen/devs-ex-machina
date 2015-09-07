@@ -60,6 +60,12 @@ constexpr T roundTo(T val, T gran)
 
 void Generator::adjustCounter(std::size_t seed)
 {
+	GeneratorState& stat = state();
+	if(!m_randomta){
+		stat.m_count = T_100;
+		return;
+	}
+
 #ifdef FPTIME
 	static std::uniform_real_distribution<t_counter> dist(T_1, T_100);
 #else
@@ -67,7 +73,6 @@ void Generator::adjustCounter(std::size_t seed)
 #endif
 	std::uniform_int_distribution<std::size_t> dist2(0, std::numeric_limits<std::size_t>::max());
 	m_rand.seed(seed);
-	GeneratorState& stat = state();
 	stat.m_count = dist(m_rand);
 #ifdef FPTIME
 	stat.m_count = roundTo(stat.m_count, T_STEP);
