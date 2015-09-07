@@ -127,7 +127,7 @@ def saveSysInfo(sysInfo, folders):
         f.close()
 
 
-timeout = 50
+timeout = 5
 """
 Waiting time in seconds before a subprocess is aborted. Note that no data will be collected from this instance.
 """
@@ -148,9 +148,11 @@ def defaultExec(arg, path):
     print(fmtcommand)
     try:
         call(fmtcommand.split(), timeout=timeout, stdout=DEVNULL if (args is None or not args.showSTDOUT) else None)
+        return True
     except TimeoutExpired:
         print("subprocess timed out after more than {} seconds.".format(timeout))
         timeouts.append(arg)
+        return False
 
 defaultDriver = BenchmarkDriver(defaultFilegen, defaultFoldergen, defaultExec)
 
@@ -172,6 +174,9 @@ def perfParser(path, old=None):
     rdata['args'] = [k for _, k in path]
     for ((p, _), i) in zip(path, count()):
         data = resdata[i]
+        if not p.exists():
+            # ignore
+            continue
         with p.open() as f:
             for line in map(str.strip, f):
                 # iterate over all lines with removed leading/trailing whitespace

@@ -109,7 +109,7 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp Generator::lookAhead() const
 {
-	return n_network::t_timestamp(T_STEP);
+	return n_network::t_timestamp(m_randomta? T_100 : T_STEP);
 }
 
 Generator::~Generator()

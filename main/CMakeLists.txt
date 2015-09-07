@@ -245,12 +245,12 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
 
 add_executable(${PROJECT_NAME}_interconnect
 	# The following target determines if the Debug/Release package is used
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE_RELEASE>
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE_DEBUG>
  	src/performance/highInterconnect/hinterconnect.cpp
  	src/maininterconnect.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS " -DLOG_LEVEL=0 -O0"
+					COMPILE_FLAGS " -DLOG_LEVEL=15 -O0"
  					)
 
 
@@ -327,6 +327,14 @@ SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
 					LINK_FLAGS "-fopenmp"
 					)
 
+add_executable(adevs_interconnect
+	${ADEVS_ROOT}/benchmarks/highinterconnect.cpp
+	)
+SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
+					COMPILE_FLAGS "-o3 -fopenmp"
+					LINK_FLAGS "-fopenmp"
+					)
+
 ### INCLUDE PATHS ############################################################
 # These are found by the section above.
 include_directories(${Boost_INCLUDE_DIRS})             
@@ -364,6 +372,7 @@ target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)
+target_link_libraries( adevs_interconnect ${LIBS} adevs)
 ###############################################################################
 
 

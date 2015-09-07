@@ -12,7 +12,7 @@
 
 #include "tools/statistic.h"
 
-//LOG_INIT("interconnect.log")
+LOG_INIT("interconnect.log")
 
 class InterconnectAlloc: public n_control::Allocator
 {
@@ -67,7 +67,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
-	"  -d DEPTH     the depth of the devstone model\n"
+	"  -w WIDTH     the width of the high interconnect model\n"
 	"  -r           use randomized processing time\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
@@ -122,11 +122,11 @@ int main(int argc, char** argv)
 			if(i < argc){
 				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
 				if(coreAmt == 0){
-					std::cout << "Invalid argument for option -" << optETime << '\n';
+					std::cout << "Invalid argument for option -" << optCores << '\n';
 					hasError = true;
 				}
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optCores << '\n';
 			}
 			break;
 		case optETime:
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				width = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optWidth << '\n';
 			}
 			break;
 		case optRand:
