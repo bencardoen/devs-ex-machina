@@ -58,7 +58,7 @@ if (${APPLE})
 endif()
 
 ### Debug #####################################################################
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -D_GLIBCXX_DEBUG -DSAFETY_CHECKS -Wall -Wextra -pedantic -fPIE")
+SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -DSAFETY_CHECKS -Wall -Wextra -pedantic -fPIE")
 ###############################################################################
 
 ### Profiling -- Clang and G++ ###############################################
@@ -162,7 +162,7 @@ SET_TARGET_PROPERTIES(
 		)
 SET_TARGET_PROPERTIES(
 	DEVSEXMACHINACORE_RELEASE PROPERTIES EXCLUDE_FROM_ALL 1
-		COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
+		COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
 		)
 
 
@@ -228,7 +228,7 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
  	src/mainbenchfire.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
+					COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
  					)
 
 
@@ -239,7 +239,7 @@ add_executable(${PROJECT_NAME}_devstone
  	src/maindevstone.cpp
   	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
+					COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
  					)
 
 
@@ -278,7 +278,7 @@ add_executable(${PROJECT_NAME}_traffic
 	src/maintraffic.cpp
 	)
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
-					COMPILE_FLAGS "-U_GLIBCXX_DEBUG -DLOG_LEVEL=0 -O3"
+					COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
 					)
 
 ##############################################################################
