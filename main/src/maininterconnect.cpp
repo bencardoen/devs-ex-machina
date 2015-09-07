@@ -12,7 +12,7 @@
 
 #include "tools/statistic.h"
 
-LOG_INIT("interconnect.log")
+//LOG_INIT("interconnect.log")
 
 class InterconnectAlloc: public n_control::Allocator
 {
@@ -176,6 +176,7 @@ int main(int argc, char** argv)
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+        
 	ctrl->addModel(d);
 	{
 		std::ofstream filestream("./interconnect.txt");
@@ -185,5 +186,6 @@ int main(int argc, char** argv)
 //#ifdef USESTAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
+         
 //#endif
 }

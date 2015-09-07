@@ -75,15 +75,19 @@ public:
 	HighInterconnect(std::size_t width, bool randomta)
 	: CoupledModel("High Interconnect")
 	{
+                
 		std::vector<n_model::t_atomicmodelptr> ptrs;
 		for(std::size_t i = 0; i < width; ++i){
 			n_model::t_atomicmodelptr pt = n_tools::createObject<Generator>(std::string("Generator") + n_tools::toString(i), 1000*i, randomta);
+                        ptrs.push_back(pt);
 		}
 		for(std::size_t i = 0; i < width; ++i){
 			for(std::size_t j = 0; j < width; ++j){
-				if(i != j)
+				if(i != j){
+                                        //// TODO Assertion thrown by isLegal 
 					connectPorts(std::static_pointer_cast<Generator>(ptrs[i])->m_out,
 						std::static_pointer_cast<Generator>(ptrs[j])->m_in);
+                                }
 			}
 		}
 	}
