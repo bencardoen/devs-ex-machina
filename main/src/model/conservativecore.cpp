@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, const t_eotvector& vc, const t_timevector& tc)
 	: Core(coreid),
-	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -77,11 +77,11 @@ void Conservativecore::updateEOT()
         t_timestamp y_pending = t_timestamp::infinity();
         
 	if(! isInfinity(this->m_min_lookahead)){
-		x=this->getTime() + this->m_min_lookahead;	//  this can still overflow, but then we're dead anyway.
+		x = this->m_min_lookahead;
 	}
 
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
-		y_sent=this->getTime();
+		y_sent = this->getTime();
         
         if(!this->m_scheduler->empty())
                 y_imminent = this->m_scheduler->top().getTime();
@@ -94,6 +94,7 @@ void Conservativecore::updateEOT()
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
         if(!isInfinity(oldeot)  && oldeot > neweot){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
+                // Don't remove braces, and don't throw unless you unlock first.
         }
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
@@ -249,14 +250,6 @@ void Conservativecore::invokeStallingBehaviour()
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
 }
 
-
-void Conservativecore::postTransition(const t_atomicmodelptr& model){
-	t_timestamp current_min = this->m_min_lookahead;
-	t_timestamp model_la = model->lookAhead();
-	this->m_min_lookahead = std::min(current_min, model_la);
-	LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-}
-
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
@@ -399,12 +392,29 @@ Conservativecore::getTime(){
 
 void
 Conservativecore::calculateMinLookahead(){
-	for(const auto& model : m_models){
-		t_timestamp current_min = this->m_min_lookahead;
-		t_timestamp model_la = model.second->lookAhead();
-		this->m_min_lookahead = std::min(current_min, model_la);
-		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-	}
+        /**
+         * Determine (if needed) a new minimum lookahead value.
+         * We need to ask all models for this, not only transitioned:
+         * E : 0->70, 70->75, 75->120
+         * D : 0->80, 80->90
+         * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
+         */
+        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() && !isInfinity(this->m_min_lookahead)){
+                m_min_lookahead = t_timestamp::infinity();
+                for(const auto& model : m_models){
+                        t_timestamp la = model.second->lookAhead();
+                        if(isZero(la))
+                                throw std::logic_error("Lookahead can't be zero");
+                        // Skip overflow
+                        if(isInfinity(la))
+                                continue;
+                        t_timestamp last = model.second->getTimeLast();
+                        m_min_lookahead = std::min(m_min_lookahead, (last+la));
+                }
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);
+        }else{
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead < time , skipping calculation. : ", m_min_lookahead);
+        }
 }
 
 } /* namespace n_model */

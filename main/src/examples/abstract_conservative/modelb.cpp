@@ -33,6 +33,7 @@ void ModelB::extTransition(const std::vector<n_network::t_msgptr> & message)
 void ModelB::intTransition()
 {
 	t_stateptr state = this->getState();
+        LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
 	if (*state == "0")
 		this->setState("1");
 	else if (*state == "1")

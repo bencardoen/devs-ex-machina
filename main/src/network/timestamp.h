@@ -195,6 +195,14 @@ public:
         constexpr bool isInfinity(const Time& arg){
                 return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
         }
+        
+        /**
+         * Return true if the time object equals the default constructor. (ignoring causality)
+         */
+        friend
+        constexpr bool isZero(const Time& arg){
+                return (arg.m_timestamp == Time::t_time());
+        }
 
 	/**
 	 * Unserialize this object to the given archive
