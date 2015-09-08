@@ -13,6 +13,7 @@
 #include "tools/globallog.h"
 #include <gtest/gtest.h>
 #include <queue>
+#include <thread>
 
 using namespace n_tools;
 using namespace n_network;
