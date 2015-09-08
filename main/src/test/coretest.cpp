@@ -828,7 +828,7 @@ TEST(Conservativecore, Abstract){
         
         c0->runSmallStep();                   // Model A 0->1
         EXPECT_EQ(c0->getTime().getTime(), 20u);
-        // EOT = 20, EIT=oo                  
+        
         EXPECT_TRUE(isInfinity(c0->getEit()));
         EXPECT_EQ(eotvector->get(0), (20u));            
         
@@ -841,7 +841,7 @@ TEST(Conservativecore, Abstract){
         
         c0->runSmallStep();                   // Model A 1->2
         EXPECT_EQ(c0->getTime().getTime(), 30u);
-        // EOT = 10, EIT=oo                  
+        
         EXPECT_TRUE(isInfinity(c0->getEit()));
         EXPECT_EQ(eotvector->get(0), 30u);            
         
@@ -850,6 +850,88 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c1->getEit(), 30u);
         LOG_INFO("--------------------------------------------------");
         
-	tracers->startTrace();
+        c0->runSmallStep();                   // Model A 2->3
+        EXPECT_EQ(c0->getTime().getTime(), 40u);        
+        
+        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(eotvector->get(0), 30u);            // Message sent @30, so EOT=30
+        
+        c1->runSmallStep();                   // Model B 1->2
+        EXPECT_EQ(c1->getTime().getTime(), 30u);
+        EXPECT_EQ(c1->getEit(), 30u);
+        LOG_INFO("--------------------------------------------------");
+        
+	c0->runSmallStep();                   // Model A 3->4
+        EXPECT_EQ(c0->getTime().getTime(), 50u);
+                    
+        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(eotvector->get(0), 50u);            // Next event = imminent @50, so change eot from 30->50
+        
+        c1->runSmallStep();                   // Model B 2 @ oo 
+        EXPECT_EQ(c1->getTime().getTime(), 30u);
+        EXPECT_EQ(c1->getEit(), 50u);
+        LOG_INFO("--------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A 4->5
+        EXPECT_EQ(c0->getTime().getTime(), 60u);
+                    
+        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(eotvector->get(0), 60u);            
+        
+        c1->runSmallStep();                   // Model B 2->3
+        /**
+         * Time : 30->40
+         * Transition B:2->3 external
+         * Lookahead treshold reached : update La from 30 to 60 by asking state 3
+         */
+        EXPECT_EQ(c1->getTime().getTime(), 40u);
+        EXPECT_EQ(c1->getEit(), 60u);
+        LOG_INFO("--------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A 5->6
+        EXPECT_EQ(c0->getTime().getTime(), 70u);
+                    
+        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(eotvector->get(0), 60u);            // Have sent message @ 60, so allthough new time = 70, output time is eot.
+        
+        c1->runSmallStep();                   // Model B 3->4
+        EXPECT_EQ(c1->getTime().getTime(), 50u);
+        EXPECT_EQ(c1->getEit(), 60u);
+        LOG_INFO("--------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A 6->7
+        EXPECT_EQ(c0->getTime().getTime(), 70u);
+                    
+        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        
+        c1->runSmallStep();                   // Model B 4->5
+        EXPECT_EQ(c1->getTime().getTime(), 60u);
+        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        LOG_INFO("--------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A @7
+        EXPECT_EQ(c0->getTime().getTime(), 70u);
+                    
+        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        
+        c1->runSmallStep();                   // Model B 5->6
+        // Lookahead has expired @60, but 6 returns inf as lookahead, so we set that.
+        EXPECT_EQ(c1->getTime().getTime(), 70u);
+        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        
+        LOG_INFO("--------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A @7
+        EXPECT_EQ(c0->getTime().getTime(), 70u);
+                    
+        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        
+        c1->runSmallStep();                   // Model B 6->7 finished
+        EXPECT_EQ(c1->getTime().getTime(), 70u);
+        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        tracers->startTrace();
 	}
 }

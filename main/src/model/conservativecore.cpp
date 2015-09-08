@@ -88,7 +88,13 @@ void Conservativecore::updateEOT()
         
         y_pending = this->getFirstMessageTime();                // Message lock
 
-	const t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+	t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+        
+        if(isInfinity(neweot)){
+                // Can only happen if all x,y == inf, meaning we can never receive a message, and have nothing to do.
+                // So eot cannot go backward later on from infinity to a real value. Nonetheless, for now log this event.
+                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
+        }
         
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
@@ -317,7 +323,7 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
         m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), this->getTime());
         m_distributed_time->unlockEntry(this->getCoreID());
-        LOG_DEBUG("CCORE :: ", this->getCoreID(), " Stalled round output generation, broadcasting time :: ", this->getTime());
+        LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 
 void Conservativecore::runSmallStepStalled()
@@ -329,10 +335,11 @@ void Conservativecore::runSmallStepStalled()
                 const t_timestamp last_scheduled = mdl->getTimeLast();
                 this->scheduleModel(mdl->getName(), last_scheduled);
         }
-        /**
-         * If we have no imminents, our EOT value can still have changed
-         */
-        this->calculateMinLookahead();
+        //We have no new states since our last lookahead calculation, so
+        //la values are unchanged.
+        //Eot does require an update if we have sent ^^^ output.
+        //Without updating eit, we'll never get out of a stalled round.
+        //this->calculateMinLookahead(); // DO NOT ENABLE, unless debugging.
         this->updateEOT();
         this->updateEIT();
 }
@@ -399,16 +406,19 @@ Conservativecore::calculateMinLookahead(){
          * D : 0->80, 80->90
          * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
          */
-        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() && !isInfinity(this->m_min_lookahead)){
+        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() 
+                && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_models){
-                        t_timestamp la = model.second->lookAhead();
+                        const t_timestamp la = model.second->lookAhead();
+                        
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");
-                        // Skip overflow
+                        
                         if(isInfinity(la))
                                 continue;
-                        t_timestamp last = model.second->getTimeLast();
+                        
+                        const t_timestamp last = model.second->getTimeLast();
                         m_min_lookahead = std::min(m_min_lookahead, (last+la));
                 }
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);

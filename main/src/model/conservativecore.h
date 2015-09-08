@@ -268,8 +268,12 @@ public:
         
         /**
          * If time >= min_lookahead, calculate the next minimal value.
+         * @attention We need to query all models (regardless if they have made a transition this turn), to avoid skipping
+         * minimal values. See the inline docs for a counterexample.
+         * LA is needed by eot calculation, and best done before time advances.
          * @pre lookahead() returns a non zero value (@see t_timestamp::isZero())
          * @post the lookahead value of this core is updated to a new floating minimum (in absolute time)
+         * @throw std::logic_error if any model returns a zero lookahead value.
          */
         void
         calculateMinLookahead();
