@@ -96,6 +96,11 @@ DEBUG_DIR="Debug"
 RELEASE_DIR="Release"
 BMARK_DIR="Benchmark"
 COMPILER="g++"
+# Override compiler invocation with second argument
+if [ "$#" -eq 1 ]
+then
+    COMPILER="$1"
+fi
 echo "$SCRIPT Setting up basic build environment."
 echo "$SCRIPT Note that this script is very basic and will probably be replaced by something better."
 echo "$SCRIPT I just made this to get started."
@@ -103,7 +108,7 @@ echo "$SCRIPT main build directory: $BUILD_DIR"
 echo "$SCRIPT debug build directory: $BUILD_DIR/$DEBUG_DIR"
 echo "$SCRIPT release build directory: $BUILD_DIR/$RELEASE_DIR"
 echo "$SCRIPT benchmark build directory: $BUILD_DIR/$BMARK_DIR"
-echo "$SCRIPT compiler: $COMPILER   (change this script if you want a different one)"
+echo "$SCRIPT compiler: $COMPILER"
 # If stale build is found, try to remove it.
 if [ -d "$BUILD_DIR" ]
   then
