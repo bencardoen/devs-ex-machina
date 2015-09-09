@@ -67,12 +67,12 @@ args = parser.parse_args()
 defaults.args = args
 
 # executable names
-devstoneEx = "./build/dxexmachina_devstone"
-pholdEx = "./build/dxexmachina_phold"
-connectEx = "./build/dxexmachina_interconnect"
-adevstoneEx = "./build/adevs_devstone"
-adevpholdEx = "./build/adevs_phold"
-adevconnectEx = "./build/adevs_interconnect"
+devstoneEx = "./build/Benchmark/dxexmachina_devstone"
+pholdEx = "./build/Benchmark/dxexmachina_phold"
+connectEx = "./build/Benchmark/dxexmachina_interconnect"
+adevstoneEx = "./build/Benchmark/adevs_devstone"
+adevpholdEx = "./build/Benchmark/adevs_phold"
+adevconnectEx = "./build/Benchmark/adevs_interconnect"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
@@ -123,12 +123,12 @@ def unifiedCompiler(target, force=False):
       target    The name of the cmake target
       force     [default=False] use a true value to force compilation
     """
-    path = Path('./build')/target
+    path = Path('./build/Benchmark')/target
     if force or not path.exists():
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
         print("Compiling target {}".format(target))
-        call(['make', '--always-make', target], cwd='./build', stdout=None if args.showSTDOUT else DEVNULL)
+        call(['./setup.sh', '-b', target], stdout=None if args.showSTDOUT else DEVNULL)
         printVerbose(args.verbose, "  -> Compilation done.")
 
 
@@ -240,10 +240,15 @@ if __name__ == '__main__':
     else:
         args.limited = set(args.limited)
     # get additional names from the regular expressions
+    regexpfail = []
     if len(args.regexp) != 0:
         regexList = []
         for regexp in args.regexp:
-            compiledRegExp = re.compile(regexp)
+            try:
+                compiledRegExp = re.compile(regexp)
+            except:
+                regexpfail.append(regexp)
+                continue
             for i in allNames:
                 if compiledRegExp.fullmatch(i):
                     regexList.append(i)
@@ -269,16 +274,24 @@ if __name__ == '__main__':
     if len(donelist) > 0:
         print("done!")
 
+    printAccepted = False
     if len(args.limited) > 0:
         wrong = set(args.limited) - set(donelist)
         if len(wrong) > 0:
             print("Unknown benchmarks requested:")
             for i in wrong:
                 print("    {}".format(i))
-            print("Accepted benchmarks:")
-            for i in allNames:
-                if i is not None:
-                    print("    {}".format(i))
+            printAccepted = True
+    if len(regexpfail) > 0:
+        print("Badly formatted regular expressions:")
+        for i in regexpfail:
+            print("    {}".format(i))
+        printAccepted = True
+    if printAccepted:
+        print("Accepted benchmarks:")
+        for i in allNames:
+            if i is not None:
+                print("    {}".format(i))
     if len(defaults.timeouts) > 0:
         print("A total of {} benchmarks timed out after a waiting period of {} seconds:".format(len(defaults.timeouts), defaults.timeout))
         for i in defaults.timeouts:
