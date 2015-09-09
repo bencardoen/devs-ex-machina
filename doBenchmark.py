@@ -128,7 +128,7 @@ def unifiedCompiler(target, force=False):
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
         print("Compiling target {}".format(target))
-        call(['./setup.sh', '-b', target], stdout=None if args.showSTDOUT else DEVNULL)
+        call(['./setup.sh', '-b', '-f' if force else '', target], stdout=None if args.showSTDOUT else DEVNULL)
         printVerbose(args.verbose, "  -> Compilation done.")
 
 

@@ -20,6 +20,7 @@ RELEASE_DIR="Release"
 BMARK_DIR="Benchmark"
 COMPILER="g++"
 DOECLIPSE=false
+FORCE_BUILD=""
 FORCE_DELETE=false
 
 BUILDCHOICE=e_DEBUG
@@ -48,7 +49,10 @@ case $key in
     -e|--eclipse)
     DOECLIPSE=true
     ;;
-    -f|--force-delete)
+    -f|--force-build)
+    FORCE_BUILD="--always-make"
+    ;;
+    -F|--force-delete)
     FORCE_DELETE=true
     ;;
     -d|--debug)
@@ -64,7 +68,7 @@ case $key in
     bold=$(tput bold)
     normal=$(tput sgr0)
     echo "${bold}usage:${normal}"
-    echo "  $SCRIPTNAME [-c COMPILER] [-e] [-f] [-h] [-j NRCPU]"
+    echo "  $SCRIPTNAME [-c COMPILER] [-e] [-f] [-F] [-h] [-j NRCPU]"
     echo "              [-d BENCHMARK [BENCHMARK [...]]]"
     echo "              [-r BENCHMARK [BENCHMARK [...]]]"
     echo "              [-b BENCHMARK [BENCHMARK [...]]]"
@@ -74,7 +78,9 @@ case $key in
     echo "           Set the compiler. Default value is g++"
     echo "  -e, --eclipse"
     echo "           Generate Eclipse project files."
-    echo "  -f, --force-delete"
+    echo "  -f, --force-build"
+    echo "           Force make to build the target."
+    echo "  -F, --force-delete"
     echo "           Delete the current build folder, if it exists."
     echo "  -h, --help"
     echo "           Show this help message and exit."
@@ -171,7 +177,7 @@ fi
 if [ ${#BUILD_DEBUG[@]} -ne 0 ]
   then
   echo "$SCRIPT building debug targets ${BUILD_DEBUG[@]}"
-  make -j$NRCPU $i ${BUILD_DEBUG[@]}
+  make -j$NRCPU $FORCE_BUILD $i ${BUILD_DEBUG[@]}
 fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
@@ -186,7 +192,7 @@ fi
 if [ ${#BUILD_RELEASE[@]} -ne 0 ]
   then
   echo "$SCRIPT building debug targets ${BUILD_RELEASE[@]}"
-  make -j$NRCPU $i ${BUILD_RELEASE[@]}
+  make -j$NRCPU $FORCE_BUILD $i ${BUILD_RELEASE[@]}
 fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
@@ -201,7 +207,7 @@ fi
 if [ ${#BUILD_BENCHMARK[@]} -ne 0 ]
   then
   echo "$SCRIPT building debug targets ${BUILD_BENCHMARK[@]}"
-  make -j$NRCPU $i ${BUILD_BENCHMARK[@]}
+  make -j$NRCPU $FORCE_BUILD $i ${BUILD_BENCHMARK[@]}
 fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
