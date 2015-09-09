@@ -161,14 +161,14 @@ if __name__ == '__main__':
         defaults.Benchmark('phold/conservative', dxpholdc, partial(pholdgen, simtypes.conservative, pholdEx), "dxexmachina phold, conservative"),
         )
     dxconnect = SimType(
-        defaults.Benchmark('connect/classic', dxpholdc, partial(interconnectgen, simtypes.classic, connectEx), "dxexmachina high interconnect, classic"),
-        defaults.Benchmark('connect/optimistic', dxpholdc, partial(interconnectgen, simtypes.optimistic, connectEx), "dxexmachina high interconnect, optimistic"),
-        defaults.Benchmark('connect/conservative', dxpholdc, partial(interconnectgen, simtypes.conservative, connectEx), "dxexmachina high interconnect, conservative"),
+        defaults.Benchmark('connect/classic', dxconnectc, partial(interconnectgen, simtypes.classic, connectEx), "dxexmachina high interconnect, classic"),
+        defaults.Benchmark('connect/optimistic', dxconnectc, partial(interconnectgen, simtypes.optimistic, connectEx), "dxexmachina high interconnect, optimistic"),
+        defaults.Benchmark('connect/conservative', dxconnectc, partial(interconnectgen, simtypes.conservative, connectEx), "dxexmachina high interconnect, conservative"),
         )
     dxrandconnect = SimType(
-        defaults.Benchmark('randconnect/classic', dxpholdc, partial(randconnectgen, simtypes.classic, connectEx), "dxexmachina randomized high interconnect, classic"),
-        defaults.Benchmark('randconnect/optimistic', dxpholdc, partial(randconnectgen, simtypes.optimistic, connectEx), "dxexmachina randomized high interconnect, optimistic"),
-        defaults.Benchmark('randconnect/conservative', dxpholdc, partial(randconnectgen, simtypes.conservative, connectEx), "dxexmachina randomized high interconnect, conservative"),
+        defaults.Benchmark('randconnect/classic', dxconnectc, partial(randconnectgen, simtypes.classic, connectEx), "dxexmachina randomized high interconnect, classic"),
+        defaults.Benchmark('randconnect/optimistic', dxconnectc, partial(randconnectgen, simtypes.optimistic, connectEx), "dxexmachina randomized high interconnect, optimistic"),
+        defaults.Benchmark('randconnect/conservative', dxconnectc, partial(randconnectgen, simtypes.conservative, connectEx), "dxexmachina randomized high interconnect, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -191,9 +191,9 @@ if __name__ == '__main__':
         defaults.Benchmark('aconnect/conservative', aconnectc, partial(interconnectgen, simtypes.conservative, adevconnectEx), "adevs high interconnect, conservative"),
         )
     arandconnect = SimType(
-        defaults.Benchmark('arandconnect/classic', aconnectc, partial(partial(interconnectgen, doRandom=True), simtypes.classic, adevconnectEx), "adevs randomized high interconnect, classic"),
+        defaults.Benchmark('arandconnect/classic', aconnectc, partial(randconnectgen, simtypes.classic, adevconnectEx), "adevs randomized high interconnect, classic"),
         None,
-        defaults.Benchmark('arandconnect/conservative', aconnectc, partial(partial(interconnectgen, doRandom=True), simtypes.conservative, adevconnectEx), "adevs randomized high interconnect, conservative"),
+        defaults.Benchmark('arandconnect/conservative', aconnectc, partial(randconnectgen, simtypes.conservative, adevconnectEx), "adevs randomized high interconnect, conservative"),
         )
     allBenchmark = [dxdevstone, dxranddevstone,
                     dxphold,
