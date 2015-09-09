@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 2.8)
 
 ### PROJECT NAME ##############################################################
 SET(PROJECT_NAME "dxexmachina")
-SET(PROJECT_ROOT "${CMAKE_BINARY_DIR}/../../")
+SET(PROJECT_ROOT "${CMAKE_BINARY_DIR}/${TOTOP}")
 get_filename_component(PROJECT_ROOT "${PROJECT_ROOT}" ABSOLUTE)
 MESSAGE( STATUS "CMAKE_BINARY_DIR:         " ${CMAKE_BINARY_DIR} )
 MESSAGE( STATUS "PROJECT_ROOT:             " ${PROJECT_ROOT} )
@@ -362,7 +362,7 @@ set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    MESSAGE( STATUS"Linking with GNU, adapting linker flags")
+    MESSAGE( STATUS "Linking with GNU, adapting linker flags")
     SET(CMAKE_EXE_LINKER_FLAGS "-pie" )
 endif()
 
@@ -378,7 +378,3 @@ target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)
 target_link_libraries( adevs_interconnect ${LIBS} adevs)
 ###############################################################################
-
-
-
-

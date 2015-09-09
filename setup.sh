@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 ###############################################################################
 # Generic build script.
@@ -6,101 +6,125 @@
 # Given sourcecode & CMake , runs CMake with preconfigured options.
 ###############################################################################
 
-# Assume pwd = projectdir (in other words, right after a git clone)
-# Source code and CMakeLists in ./main/
-# Generate build folder in ./build/
-# SCRIPT="__SCRIPT__:"
-# echo "$SCRIPT Received "$#" arguments".
+#some enum values
+e_DEBUG=0
+e_RELEASE=1
+e_BENCHMARK=2
 
-# echo "$SCRIPT Detecting nr of CPU's to use for make ....".
-
-# Nr of thread for make
-# NRCPU=4
-
-# if hash nproc 2>/dev/null;
-# then 
-# 	NRCPU=`nproc`
-# 	echo "$SCRIPT Found $NRCPU Cores."
-# 	NRCPU=$((2*$NRCPU))
-# fi
-
-# echo "$SCRIPT Using $NRCPU threads for make."
-
-## Set default values of build variables.
-# BUILD_TYPE="Debug"
-# COMPILER="g++"
-# ECLIPSE_INDEXER_ARGS="-std=c++11"
-# BUILD_DIR="../"
-
-# Detect if we are on cygwin, if we are Eclipse's cdt needs gnu++11, if not we need c++11 (or face horrors in the ide)
-# OSNAME=$(uname -o)
-# echo "$SCRIPT Running script on OS::  $OSNAME"
-# if [ "$OSNAME" == "Cygwin" ]
-# then
-#     ECLIPSE_INDEXER_ARGS="-std=gnu++11"
-#     echo "$SCRIPT detected Cygwin,  changing eclipse indexer to $ECLIPSE_INDEXER_ARGS"
-# fi
-
-# Override build type with first argument
-# if [ "$#" -ge 1 ]
-# then
-#     BUILD_TYPE="$1"
-#     echo "$SCRIPT  Overriding BUILD_TYPE with value $1 ."
-# else
-#     echo "$SCRIPT  Using Default BUILD_TYPE :: $BUILD_TYPE"
-# fi
-
-# Override compiler invocation with second argument
-# if [ "$#" -eq 2 ]
-# then
-#     COMPILER="$2"
-#     echo "$SCRIPT  Overriding Compiler choice with value :: $2"
-# fi
-
-# If stale build is found, try to remove it.
-# if [ -d "$BUILD_DIR" ]
-# 	then
-#     if [ -k "$BUILD_DIR" ]
-#         then
-#         echo "$SCRIPT Build directory exists but can't be removed, quitting."
-#         exit -1
-#     fi
-# 	if [ -L "$BUILD_DIR" ]
-# 		then
-# 		echo "$SCRIPT Build directory found, but it's a link. Computer says no."
-#         exit -1
-# 	else
-#         echo "$SCRIPT Found stale build directory : Removing"
-# 		rm -r $BUILD_DIR
-# 	fi
-# fi
-# mkdir $BUILD_DIR
-# cd $BUILD_DIR
-
-# Copy testfiles to generated directory so that eclipse finds them (eclipse cwd is BUILD_DIR)
-# mkdir "testfiles"
-# cp -r ../testfiles/* testfiles/
-
-# echo "$SCRIPT Generating CMake Build."
-## Generate Eclipse IDE project files
-# ARG1 argument is not needed for compilation but ensures the indexer in eclipse actually works.
-# cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER_ARG1="$ECLIPSE_INDEXER_ARGS" -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=$BUILD_TYPE ../../main
-
-# echo "$SCRIPT Building project .... "
-# Compile & link everything in build, assuming quad core
-# make all -j$NRCPU
-
+#some other values
 SCRIPT="__SCRIPT__:"
+SCRIPTNAME="${0##*/}"
 BUILD_DIR="build"
 DEBUG_DIR="Debug"
 RELEASE_DIR="Release"
 BMARK_DIR="Benchmark"
 COMPILER="g++"
-# Override compiler invocation with second argument
-if [ "$#" -eq 1 ]
-then
-    COMPILER="$1"
+DOECLIPSE=false
+FORCE_DELETE=false
+
+BUILDCHOICE=e_DEBUG
+BUILD_DEBUG=()
+BUILD_RELEASE=()
+BUILD_BENCHMARK=()
+
+NRCPU=4
+if hash nproc 2>/dev/null;
+then 
+  NRCPU=`nproc`
+  # NRCPU=$((2*$NRCPU))
 fi
+
+# argument parsing
+while [[ $# > 0 ]]
+do
+key="$1"
+# echo "$SCRIPT key: $key"
+
+case $key in
+    -c|--compiler)
+    COMPILER="$2"
+    shift # past argument
+    ;;
+    -e|--eclipse)
+    DOECLIPSE=true
+    ;;
+    -f|--force-delete)
+    FORCE_DELETE=true
+    ;;
+    -d|--debug)
+    BUILDCHOICE=$e_DEBUG
+    ;;
+    -r|--release)
+    BUILDCHOICE=$e_RELEASE
+    ;;
+    -b|--benchmark)
+    BUILDCHOICE=$e_BENCHMARK
+    ;;
+    -h|--help)
+    bold=$(tput bold)
+    normal=$(tput sgr0)
+    echo "${bold}usage:${normal}"
+    echo "  $SCRIPTNAME [-c COMPILER] [-e] [-f] [-h] [-j NRCPU]"
+    echo "              [-d BENCHMARK [BENCHMARK [...]]]"
+    echo "              [-r BENCHMARK [BENCHMARK [...]]]"
+    echo "              [-b BENCHMARK [BENCHMARK [...]]]"
+    echo ""
+    echo "${bold}parameters:${normal}"
+    echo "  -c, --compiler COMPILER"
+    echo "           Set the compiler. Default value is g++"
+    echo "  -e, --eclipse"
+    echo "           Generate Eclipse project files."
+    echo "  -f, --force-delete"
+    echo "           Delete the current build folder, if it exists."
+    echo "  -h, --help"
+    echo "           Show this help message and exit."
+    echo "  -j NRCPU"
+    echo "           Maximum amount of simultaneous jobs when building."
+    echo "  -d, --debug"
+    echo "           A list of build targets for the Debug build type."
+    echo "  -r, --release"
+    echo "           A list of build targets for the Release build type."
+    echo "  -b, --benchmark"
+    echo "           A list of build targets for the Benchmark build type."
+    echo ""
+    echo "${bold}notes:${normal}"
+    echo " - If the script finds a makefile in one of the subfolders,"
+    echo "   it will not try to overwrite it because that may corrupt the CMake cache."
+    echo "   If you want to regenerate the makefile of that particular build type,"
+    echo "   you can always just delete that folder."
+    exit
+    ;;
+    -j)
+    NRCPU="$2"
+    shift # past argument
+    ;;
+    *)
+    # unknown option
+    # echo "$SCRIPT __debug build choice: $BUILDCHOICE"
+    if [ $BUILDCHOICE = $e_DEBUG ]
+    then
+        # echo "$SCRIPT debug build selected!"
+        BUILD_DEBUG+=($key)
+    fi
+    if [ $BUILDCHOICE = $e_RELEASE ]
+    then
+        # echo "$SCRIPT release build selected!"
+        BUILD_RELEASE+=($key)
+    fi
+    if [ $BUILDCHOICE = $e_BENCHMARK ]
+    then
+        # echo "$SCRIPT benchmark build selected!"
+        BUILD_BENCHMARK+=($key)
+    fi
+    ;;
+esac
+shift # past argument or value
+done
+
+echo "$SCRIPT debug builds planned: ${BUILD_DEBUG[@]}"
+echo "$SCRIPT release builds planned: ${BUILD_RELEASE[@]}"
+echo "$SCRIPT benchmark builds planned: ${BUILD_BENCHMARK[@]}"
+
 echo "$SCRIPT Setting up basic build environment."
 echo "$SCRIPT Note that this script is very basic and will probably be replaced by something better."
 echo "$SCRIPT I just made this to get started."
@@ -109,48 +133,101 @@ echo "$SCRIPT debug build directory: $BUILD_DIR/$DEBUG_DIR"
 echo "$SCRIPT release build directory: $BUILD_DIR/$RELEASE_DIR"
 echo "$SCRIPT benchmark build directory: $BUILD_DIR/$BMARK_DIR"
 echo "$SCRIPT compiler: $COMPILER"
+echo "$SCRIPT force delete build folder if it already exists: $FORCE_DELETE"
+echo "$SCRIPT number of cores: $NRCPU"
+
 # If stale build is found, try to remove it.
-if [ -d "$BUILD_DIR" ]
+if [ "$FORCE_DELETE" = true ]
   then
+  if [ -d "$BUILD_DIR" ]
+    then
     if [ -k "$BUILD_DIR" ]
         then
         echo "$SCRIPT Build directory exists but can't be removed, quitting."
         exit -1
     fi
-  if [ -L "$BUILD_DIR" ]
-      then
-      echo "$SCRIPT Build directory found, but it's a link. Computer says no."
+    if [ -L "$BUILD_DIR" ]
+        then
+        echo "$SCRIPT Build directory found, but it's a link. Computer says no."
         exit -1
-  else
+    else
         echo "$SCRIPT Found stale build directory : Removing"
-      rm -r $BUILD_DIR
+        rm -r $BUILD_DIR
+    fi
   fi
 fi
+
 echo "$SCRIPT moving to ./$BUILD_DIR"
-mkdir $BUILD_DIR
+mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
 echo "$SCRIPT moving to ./$DEBUG_DIR"
-mkdir $DEBUG_DIR
+mkdir -p $DEBUG_DIR
 cd $DEBUG_DIR
-cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Debug ../../main
+if [ ! -f "Makefile" ]
+  then
+  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../../" ../../main
+fi
+if [ ${#BUILD_DEBUG[@]} -ne 0 ]
+  then
+  echo "$SCRIPT building debug targets ${BUILD_DEBUG[@]}"
+  make -j$NRCPU $i ${BUILD_DEBUG[@]}
+fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
 
 echo "$SCRIPT moving to ./$RELEASE_DIR"
-mkdir $RELEASE_DIR
+mkdir -p $RELEASE_DIR
 cd $RELEASE_DIR
-cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Release ../../main
+if [ ! -f "Makefile" ]
+  then
+  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Release -DTOTOP="../../" ../../main
+fi
+if [ ${#BUILD_RELEASE[@]} -ne 0 ]
+  then
+  echo "$SCRIPT building debug targets ${BUILD_RELEASE[@]}"
+  make -j$NRCPU $i ${BUILD_RELEASE[@]}
+fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
 
 echo "$SCRIPT moving to ./$BMARK_DIR"
-mkdir $BMARK_DIR
+mkdir -p $BMARK_DIR
 cd $BMARK_DIR
-cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Benchmark ../../main
+if [ ! -f "Makefile" ]
+  then
+  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Benchmark -DTOTOP="../../" ../../main
+fi
+if [ ${#BUILD_BENCHMARK[@]} -ne 0 ]
+  then
+  echo "$SCRIPT building debug targets ${BUILD_BENCHMARK[@]}"
+  make -j$NRCPU $i ${BUILD_BENCHMARK[@]}
+fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
+
+if [ "$DOECLIPSE" = true ]
+  then
+  echo "$SCRIPT generating Eclipse project files."
+  cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../" ../main
+fi
+
 echo "$SCRIPT moving back to parent directory."
 cd ../
-echo "use the following command to compile a target:"
-echo "  (cd ./build/[BUILDTYPE] && exec make [TARGET])"
+echo "$SCRIPT done. targets built:"
+echo "$SCRIPT  -> debug"
+for i in "${BUILD_DEBUG[@]}" ; do
+  echo "$SCRIPT        $i"
+done
+echo "$SCRIPT  -> release"
+for i in "${BUILD_RELEASE[@]}" ; do
+  echo "$SCRIPT        $i"
+done
+echo "$SCRIPT  -> benchmark"
+for i in "${BUILD_BENCHMARK[@]}" ; do
+  echo "$SCRIPT        $i"
+done
+if [ "$DOECLIPSE" = true ]
+  then
+  echo "$SCRIPT  -> Eclipse project files"
+fi
