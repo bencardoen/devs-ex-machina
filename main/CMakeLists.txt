@@ -84,22 +84,14 @@ SET(CMAKE_CXX_FLAGS_DEBUG
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0"
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0"
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -pg -DLOG_LEVEL=0 -DBENCHMARK"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
-
-### Debug #####################################################################
-# SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -DSAFETY_CHECKS -Wall -Wextra -pedantic -fPIE")
-###############################################################################
-
-### Profiling -- Clang and G++ ###############################################
-# SET(CMAKE_CXX_FLAGS_PROFILING "-march=native -g -O0 ${flagstdc11} -pg -fPIE")
-###############################################################################
 
 ### Threadsanitizer ###########################################################
 # If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
@@ -164,7 +156,6 @@ add_library(
 # 2 packages of the devs simulator that compile on log level 15 and 0
 SET_TARGET_PROPERTIES(
     DEVSEXMACHINACORE PROPERTIES EXCLUDE_FROM_ALL 1
-#       COMPILE_FLAGS "-DLOG_LEVEL=15"
         )
 
 
@@ -214,10 +205,7 @@ add_executable(${PROJECT_NAME}
     src/test/performancetest.cpp
     src/test/testmodels.cpp
     src/main.cpp
-    )
-#SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
-#                   COMPILE_FLAGS "-DLOG_LEVEL=15"
-#                   )
+    )         )
 
 
  add_executable(${PROJECT_NAME}_benchfire
@@ -230,29 +218,24 @@ add_executable(${PROJECT_NAME}
     src/mainbenchfire.cpp
     )
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
-#                   COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
                     )
 
 
 add_executable(${PROJECT_NAME}_devstone
-    # The following target determines if the Debug/Release package is used
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/performance/devstone/devstone.cpp
     src/maindevstone.cpp
     )
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-#                   COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
                     )
 
 
 add_executable(${PROJECT_NAME}_interconnect
-    # The following target determines if the Debug/Release package is used
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/performance/highInterconnect/hinterconnect.cpp
     src/maininterconnect.cpp
     )
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-#                   COMPILE_FLAGS " -DLOG_LEVEL=15 -O0"
                     )
 
 
@@ -262,7 +245,6 @@ add_executable(${PROJECT_NAME}_phold
     src/mainphold.cpp
     )
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
-#                   COMPILE_FLAGS "-DLOG_LEVEL=15"
                     )
 
 add_executable(${PROJECT_NAME}_virus
@@ -291,7 +273,6 @@ add_executable(${PROJECT_NAME}_traffic
     src/maintraffic.cpp
     )
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
-#                   COMPILE_FLAGS " -DLOG_LEVEL=0 -O3"
                     )
 
 ##############################################################################
