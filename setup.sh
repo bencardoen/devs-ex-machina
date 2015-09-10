@@ -69,9 +69,9 @@ case $key in
     normal=$(tput sgr0)
     echo "${bold}usage:${normal}"
     echo "  $SCRIPTNAME [-c COMPILER] [-e] [-f] [-F] [-h] [-j NRCPU]"
-    echo "              [-d BENCHMARK [BENCHMARK [...]]]"
-    echo "              [-r BENCHMARK [BENCHMARK [...]]]"
-    echo "              [-b BENCHMARK [BENCHMARK [...]]]"
+    echo "              [-d TARGET [TARGET [...]]]"
+    echo "              [-r TARGET [TARGET [...]]]"
+    echo "              [-b TARGET [TARGET [...]]]"
     echo ""
     echo "${bold}parameters:${normal}"
     echo "  -c, --compiler COMPILER"
