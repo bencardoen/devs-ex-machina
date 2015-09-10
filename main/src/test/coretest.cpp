@@ -21,6 +21,7 @@
 #include "control/controllerconfig.h"
 #include "control/controller.h"
 #include "test/compare.h"
+#include "examples/deadlock/pingset.h"
 #include <sstream>
 #include <unordered_set>
 #include <thread>
@@ -933,5 +934,71 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c1->getTime().getTime(), 70u);
         EXPECT_TRUE( isInfinity(c1->getEit()) );
         tracers->startTrace();
+	}
+}
+
+
+TEST(Conservativecore, Deadlock){
+        using n_examples_deadlock::Pingset;
+	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
+	{
+                CoutRedirect myRedirect(filestream);
+                using namespace n_examples_abstract_c;
+                auto tracers = createObject<n_tracers::t_tracerset>();
+
+                t_networkptr network = createObject<Network>(3);
+                std::unordered_map<std::size_t, t_coreptr> coreMap;
+                std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(3);
+                std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(3);
+
+                t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(3, t_timestamp(0,0));
+                t_timevector timevector = createObject<SharedVector<t_timestamp>>(3, t_timestamp::infinity());
+                auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
+                auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
+                auto c2 = createObject<Conservativecore>(network, 2, locTab, eotvector, timevector);
+                coreMap[0] = c0;
+                coreMap[1] = c1;
+                coreMap[2] = c2;
+
+                t_timestamp endTime(360, 0);
+
+                n_control::Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+                ctrl.setSimType(CONSERVATIVE);
+                ctrl.setTerminationTime(endTime);
+
+                t_coupledmodelptr m = createObject<Pingset>("feeling_lucky");
+                ctrl.addModel(m);
+                
+                c0->setTracers(tracers);
+                c0->init();  
+                c0->setTerminationTime(endTime);
+                c0->setLive(true);
+                c0->logCoreState();
+                
+                c1->setTracers(tracers);
+                c1->init();  
+                c1->setTerminationTime(endTime);
+                c1->setLive(true);
+                c1->logCoreState();
+                
+                c2->setTracers(tracers);
+                c2->init();  
+                c2->setTerminationTime(endTime);
+                c2->setLive(true);
+                c2->logCoreState();
+                
+                c0->runSmallStep();
+                c1->runSmallStep();
+                c2->runSmallStep();
+                
+                
+                c0->runSmallStep();
+                c1->runSmallStep();
+                c2->runSmallStep();
+                
+                c0->runSmallStep();
+                c1->runSmallStep();
+                c2->runSmallStep();
+                //tracers->startTrace();
 	}
 }

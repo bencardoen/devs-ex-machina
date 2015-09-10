@@ -171,6 +171,8 @@ add_executable(${PROJECT_NAME}
 	src/examples/abstract_conservative/modela.cpp
 	src/examples/abstract_conservative/modelb.cpp
 	src/examples/abstract_conservative/modelc.cpp
+	src/examples/deadlock/ping.cpp
+    src/examples/deadlock/pingset.cpp
 	src/examples/trafficlight_classic/trafficlight.cpp
 	src/examples/trafficlight_coupled/trafficlightc.cpp
 	src/examples/trafficlight_coupled/policemanc.cpp

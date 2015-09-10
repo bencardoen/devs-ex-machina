@@ -332,7 +332,7 @@ void Conservativecore::runSmallStepStalled()
         collectOutput(imminents); // only collects output once
         for(const auto& imm : imminents){
                 const t_atomicmodelptr mdl = this->m_models[imm];
-                const t_timestamp last_scheduled = mdl->getTimeLast();
+                const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getName(), last_scheduled);
         }
         //We have no new states since our last lookahead calculation, so

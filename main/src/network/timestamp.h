@@ -35,6 +35,21 @@ bool nearly_equal(const T& left, const T& right)
 	return (left == right);
 }
 
+template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+constexpr
+T type_epsilon()
+{
+        // TODO
+        return std::numeric_limits<T>::epsilon()*100000;
+}
+
+template<class T, typename std::enable_if<std::is_integral<T>::value>::type* = nullptr>
+constexpr
+T type_epsilon()
+{
+	return 1;
+}
+
 /**
  * Represents a timestamp with optional causal ordering.
  * Adevs' time is floating point based, this class can provide that as well by
@@ -71,6 +86,16 @@ public:
 	{
 		return Time(std::numeric_limits<T>::max(), std::numeric_limits<X>::max());
 	}
+        
+        /**
+         * The value of time representing the smallest difference between two distinct time slices.
+         * In other words, the least time any state can take to transition to another.
+         * For integral values, this is obviously 1.
+         */
+        static constexpr Time epsilon()
+        {
+                return Time(type_epsilon<T>(), 0);
+        }
 
 	constexpr Time(): m_timestamp(0), m_causal(0){}// = default;
 	constexpr Time(t_time time, t_causal causal = 0)
