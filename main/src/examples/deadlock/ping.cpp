@@ -4,14 +4,10 @@
  */
 
 /**
- *      PX_out -> PXX_in
- *      P has two states alternating :
- *              Processing : P has received a message and is busy for a set amount
- *              of time. After that time, P goes to the next state
- *              For lookahead debugging, add void internal states in this range.
- *              Communicating : P will generate and receive output. On receipt, it will
- *              go to the state processing.
- *
+ *      
+ *      Alternate between sending / receiving messages.
+ *      Sending is automated (ta=10), receiving requires a msg before going live.
+ * 
  */
 
 #include "examples/deadlock/ping.h"
@@ -21,7 +17,7 @@ namespace n_examples_deadlock {
 Ping::Ping(std::string name, std::size_t priority)
 	: AtomicModel(name, priority)
 {
-        this->setState(n_tools::createObject<State>("processing"));
+        this->setState(n_tools::createObject<State>("sending"));
 	m_elapsed = 0;
         this->addInPort("_in");
         this->addOutPort("_out");
@@ -35,20 +31,19 @@ void Ping::extTransition(const std::vector<n_network::t_msgptr> & )
 {
     t_stateptr state = this->getState();
     LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-    if(*state == "communicating"){
-        this->setState("processing");
+    if(*state == "waiting"){
+        this->setState("receiving");
         return;
     }
     assert(false);
-    LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
 }
 
 void Ping::intTransition()
 {
 	t_stateptr state = this->getState();
         LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-        if(*state == "processing"){
-                this->setState("communicating");
+        if(*state == "sending"){
+                this->setState("waiting");
                 return;
         }
         assert(false);
@@ -57,16 +52,20 @@ void Ping::intTransition()
 
 t_timestamp Ping::timeAdvance() const
 {		
-    if(*(this->getState()) == "processing")
-        return t_timestamp(10);
-    else
-        return t_timestamp::infinity();
+        auto state = this->getState();
+        if(*state == "sending")
+                return t_timestamp(10);
+        if(*state == "waiting")
+                return t_timestamp::infinity();
+        if(*state == "receiving")
+                return t_timestamp(5);
+        assert(false);
 }
 
 void Ping::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	t_stateptr state = this->getState();
-        if ((*state=="communicating")) {
+        if ((*state=="sending")) {
                 this->getPort("_out")->createMessages("i_hate_strings", msgs);
 	}
 }
@@ -74,10 +73,12 @@ void Ping::output(std::vector<n_network::t_msgptr>& msgs) const
 t_timestamp Ping::lookAhead() const
 {
 	t_stateptr state = this->getState();
-        if(*state == "communicating"){ // Can receive message at any point, so only our current time is safe.
+        if(*state == "waiting"){ // Can receive message at any point, so only our current time is safe.
                 return t_timestamp::epsilon();
         }
-        if(*state == "processing"){   // Busy for at least x time
+        if(*state == "receiving")
+                return t_timestamp(5);
+        if(*state == "sending"){   // Busy for at least x time
                 return t_timestamp(10);
         }
         assert(false);

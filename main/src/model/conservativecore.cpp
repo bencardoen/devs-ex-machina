@@ -60,7 +60,7 @@ Conservativecore::setEit(const t_timestamp& neweit){
 * Pseudocode :
 * 	EOT(myid) = std::min(x,y)
 * 		x = eit + lookahead_min
-* 		y = 	if(sent_message)	eit,1
+* 		y = 	if(sent_message)	eit+eps // have to increment, else we get deadlock!
 * 			else			top of scheduler (next event)
 *                       // what if : not sent message, time = 50, msg waiting @70, next event = 90
 *                       --> y = min(sent_msg, next_imminent, next_pendingmsg);
@@ -80,8 +80,9 @@ void Conservativecore::updateEOT()
 		x = this->m_min_lookahead;
 	}
 
+        // Replace with nullmsgtime + eps
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
-		y_sent = this->getTime();
+		y_sent = this->getTime()+t_timestamp::epsilon();
         
         if(!this->m_scheduler->empty())
                 y_imminent = this->m_scheduler->top().getTime();
