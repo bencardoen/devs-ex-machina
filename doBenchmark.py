@@ -134,9 +134,8 @@ def unifiedCompiler(target, force=False):
 
 if __name__ == '__main__':
     # test if the build folder exists and has a makefile
-    if not Path('./build').exists() or not Path('./build/Makefile').exists():
-        print("note: this script assumes that the cmake script has run at least once and that the './build/Makefile' file exists.")
-        print("Please do so and then rerun the benchmark script.")
+    if not Path('setup.sh').exists():
+        print("note: setup shellscript not found. Please make sure that it exists.")
         quit()
 
     dxdevc = partial(unifiedCompiler, 'dxexmachina_devstone', args.force)

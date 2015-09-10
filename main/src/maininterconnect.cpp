@@ -87,9 +87,9 @@ int main(int argc, char** argv)
 	char** argvc = argv+1;
 
 #ifdef FPTIME
-	n_network::t_timestamp::t_time eTime = 1000.0;
+	n_network::t_timestamp::t_time eTime = 50.0;
 #else
-	n_network::t_timestamp::t_time eTime = 10000;
+	n_network::t_timestamp::t_time eTime = 50;
 #endif
 	std::size_t width = 2;
 	bool randTa = false;

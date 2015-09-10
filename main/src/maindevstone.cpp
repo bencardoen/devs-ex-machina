@@ -96,9 +96,9 @@ int main(int argc, char** argv)
 	char** argvc = argv+1;
 
 #ifdef FPTIME
-	n_network::t_timestamp::t_time eTime = 1000.0;
+	n_network::t_timestamp::t_time eTime = 50.0;
 #else
-	n_network::t_timestamp::t_time eTime = 10000;
+	n_network::t_timestamp::t_time eTime = 50;
 #endif
 	std::size_t width = 2;
 	std::size_t depth = 3;
@@ -132,11 +132,11 @@ int main(int argc, char** argv)
 			if(i < argc){
 				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
 				if(coreAmt == 0){
-					std::cout << "Invalid argument for option -" << optETime << '\n';
+					std::cout << "Invalid argument for option -" << optCores << '\n';
 					hasError = true;
 				}
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optCores << '\n';
 			}
 			break;
 		case optETime:
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				width = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optWidth << '\n';
 			}
 			break;
 		case optDepth:
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
 		case optRand:

@@ -132,15 +132,13 @@ echo "$SCRIPT release builds planned: ${BUILD_RELEASE[@]}"
 echo "$SCRIPT benchmark builds planned: ${BUILD_BENCHMARK[@]}"
 
 echo "$SCRIPT Setting up basic build environment."
-echo "$SCRIPT Note that this script is very basic and will probably be replaced by something better."
-echo "$SCRIPT I just made this to get started."
-echo "$SCRIPT main build directory: $BUILD_DIR"
-echo "$SCRIPT debug build directory: $BUILD_DIR/$DEBUG_DIR"
-echo "$SCRIPT release build directory: $BUILD_DIR/$RELEASE_DIR"
-echo "$SCRIPT benchmark build directory: $BUILD_DIR/$BMARK_DIR"
-echo "$SCRIPT compiler: $COMPILER"
-echo "$SCRIPT force delete build folder if it already exists: $FORCE_DELETE"
-echo "$SCRIPT number of cores: $NRCPU"
+echo "$SCRIPT data:  main build directory: $BUILD_DIR"
+echo "$SCRIPT data: debug build directory: $BUILD_DIR/$DEBUG_DIR"
+echo "$SCRIPT data: release build directory: $BUILD_DIR/$RELEASE_DIR"
+echo "$SCRIPT data: benchmark build directory: $BUILD_DIR/$BMARK_DIR"
+echo "$SCRIPT data: compiler: $COMPILER"
+echo "$SCRIPT data: force delete build folder if it already exists: $FORCE_DELETE"
+echo "$SCRIPT data: number of simultaneous jobs: $NRCPU"
 
 # If stale build is found, try to remove it.
 if [ "$FORCE_DELETE" = true ]
