@@ -24,11 +24,17 @@ namespace n_tools {
  * @tparam T The type of the data. Defaults to std::size_t
  * @tparam collect Boolean template argument. If true, data will be collected. Otherwise, no data is collected. Defaults to true.
  */
-//#ifdef USESTAT
+#ifndef BENCHMARK
+#ifndef USESTAT
+#define USESTAT
+#endif
+#endif
+
+#ifdef USESTAT
 #define DEFAULTCOLLECT true
-//#else
-//#define DEFAULTCOLLECT false
-//#endif
+#else
+#define DEFAULTCOLLECT false
+#endif
 
 template<typename T=std::size_t, bool collect=DEFAULTCOLLECT>
 class Statistic {};

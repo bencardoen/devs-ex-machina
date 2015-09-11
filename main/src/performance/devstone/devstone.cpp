@@ -50,12 +50,7 @@ std::string ProcessorState::toString()
 
 std::shared_ptr<ProcessorState> ProcessorState::copy() const
 {
-	auto newState = n_tools::createObject<ProcessorState>();
-	newState->m_event1 = m_event1;
-	newState->m_event1_counter = m_event1_counter;
-	newState->m_queue = m_queue;
-	newState->m_state = m_state;
-
+	auto newState = n_tools::createObject<ProcessorState>(*this);
 	return newState;
 }
 

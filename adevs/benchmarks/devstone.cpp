@@ -388,12 +388,12 @@ int main(int argc, char** argv)
 			if(i < argc){
 				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
 				if(coreAmt == 0){
-					std::cout << "Invalid argument for option -" << optETime << '\n';
+					std::cout << "Invalid argument for option -" << optCores << '\n';
 					hasError = true;
 				}
 
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optCores << '\n';
 			}
 			break;
 		case optETime:
@@ -409,7 +409,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				width = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optWidth << '\n';
 			}
 			break;
 		case optDepth:
@@ -417,7 +417,7 @@ int main(int argc, char** argv)
 			if(i < argc){
 				depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optETime << '\n';
+				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
 		case optRand:
@@ -439,10 +439,15 @@ int main(int argc, char** argv)
 	}
 
 	DEVSTone* model = new DEVSTone(width, depth, randTa);
+#ifndef BENCHMARK
 	adevs::EventListener<t_event>* listener = new Listener();
+#endif
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
+
+#ifndef BENCHMARK
 		sim.addEventListener(listener);
+#endif
 		sim.execUntil(eTime);
 	} else {
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
@@ -451,10 +456,13 @@ int main(int argc, char** argv)
 		for(std::size_t i = 1; i < coreAmt; ++i)
 			lpg.addEdge(i-1, i);
 		adevs::ParSimulator<t_event> sim(model, lpg);
+#ifndef BENCHMARK
 		sim.addEventListener(listener);
+#endif
 		sim.execUntil(eTime);
-		std::cout << "we're done here!\n";
 	}
+#ifndef BENCHMARK
 	delete listener;
+#endif
 	delete model;
 }
