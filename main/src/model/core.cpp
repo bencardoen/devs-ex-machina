@@ -18,7 +18,7 @@ using n_network::MessageEntry;
 
 inline void validateTA(const n_network::t_timestamp& val){
 #ifdef SAFETY_CHECKS
-	if(val.getTime() == n_network::t_timestamp::t_time()) throw std::logic_error("Time Advance value shouldn't be zero.");
+	if(isZero(val)) throw std::logic_error("Time Advance value shouldn't be zero.");
 #endif
 }
 
@@ -250,14 +250,14 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", urgent->getName());
 			urgent->doIntTransition();
 			urgent->setTime(noncausaltime);
-			this->postTransition(urgent);
+			
 			this->traceInt(urgent);
 		} else {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", urgent->getName());
 			urgent->setTimeElapsed(0);
 			urgent->doConfTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
-			this->postTransition(urgent);
+			
 			this->traceConf(urgent);
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
@@ -270,7 +270,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
-		postTransition(model);
+		
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.

@@ -242,15 +242,6 @@ public:
 	collectOutput(std::set<std::string>& imminents)override;
 
 	/**
-	 * Allow a subclass to query a model after it has transitioned.
-	 * This is required to make the Conservative Algorithm work, it needs to query the lookahead of
-	 * a recently transitioned model. The alternative ( call lookahead regardless of model state) is expensive
-	 * for both kernel and model.
-	 */
-	void
-	postTransition(const t_atomicmodelptr&)override;
-
-	/**
 	 * Return current Earliest input time.
 	 */
 	t_timestamp
@@ -275,6 +266,15 @@ public:
 	bool
 	existTransientMessage()override;
         
+        /**
+         * If time >= min_lookahead, calculate the next minimal value.
+         * @attention We need to query all models (regardless if they have made a transition this turn), to avoid skipping
+         * minimal values. See the inline docs for a counterexample.
+         * LA is needed by eot calculation, and best done before time advances.
+         * @pre lookahead() returns a non zero value (@see t_timestamp::isZero())
+         * @post the lookahead value of this core is updated to a new floating minimum (in absolute time)
+         * @throw std::logic_error if any model returns a zero lookahead value.
+         */
         void
         calculateMinLookahead();
 

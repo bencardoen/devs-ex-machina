@@ -24,15 +24,20 @@ ModelB::~ModelB()
 void ModelB::extTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	t_stateptr state = this->getState();
-	if ((*state == "2") && (message.at(0)->getPayload() == "start"))
+	if ((*state == "2") && (message.at(0)->getPayload() == "start")){
+                LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
 		this->setState("3");
-	else if ((*state == "5") && (message.at(0)->getPayload() == "start"))
+        }
+	else if ((*state == "5") && (message.at(0)->getPayload() == "start")){
+                LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
 		this->setState("6");
+        }
 }
 
 void ModelB::intTransition()
 {
 	t_stateptr state = this->getState();
+        LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
 	if (*state == "0")
 		this->setState("1");
 	else if (*state == "1")
@@ -68,9 +73,11 @@ t_timestamp ModelB::lookAhead() const
 		return t_timestamp(30);
 	}
 	else if ((*state == "1") || (*state == "4")){
+                assert(false);
 		return t_timestamp(20);
 	}
 	else if ((*state == "2") || (*state == "5")){
+                assert(false);
 		return t_timestamp(10);
 	}
 

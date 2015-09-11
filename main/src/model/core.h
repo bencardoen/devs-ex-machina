@@ -539,13 +539,6 @@ public:
 	getTerminationTime();
 
 	/**
-	 * Allow a subclass to query a model after it has transitioned.
-	 */
-	virtual
-	void
-	postTransition(const t_atomicmodelptr&){;}
-
-	/**
 	 * Return if core has triggered termination functor.
 	 * @synchronized
 	 */

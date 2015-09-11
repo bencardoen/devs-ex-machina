@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
         const n_control::t_location_tableptr& ltable, const t_eotvector& vc, const t_timevector& tc)
 	: Core(coreid),
-	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(t_timestamp::infinity()),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable)
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -60,7 +60,7 @@ Conservativecore::setEit(const t_timestamp& neweit){
 * Pseudocode :
 * 	EOT(myid) = std::min(x,y)
 * 		x = eit + lookahead_min
-* 		y = 	if(sent_message)	eit,1
+* 		y = 	if(sent_message)	eit+eps // have to increment, else we get deadlock!
 * 			else			top of scheduler (next event)
 *                       // what if : not sent message, time = 50, msg waiting @70, next event = 90
 *                       --> y = min(sent_msg, next_imminent, next_pendingmsg);
@@ -77,23 +77,31 @@ void Conservativecore::updateEOT()
         t_timestamp y_pending = t_timestamp::infinity();
         
 	if(! isInfinity(this->m_min_lookahead)){
-		x=this->getTime() + this->m_min_lookahead;	//  this can still overflow, but then we're dead anyway.
+		x = this->m_min_lookahead;
 	}
 
+        // Replace with nullmsgtime + eps
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
-		y_sent=this->getTime();
+		y_sent = this->getTime()+t_timestamp::epsilon();
         
         if(!this->m_scheduler->empty())
                 y_imminent = this->m_scheduler->top().getTime();
         
         y_pending = this->getFirstMessageTime();                // Message lock
 
-	const t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+	t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+        
+        if(isInfinity(neweot)){
+                // Can only happen if all x,y == inf, meaning we can never receive a message, and have nothing to do.
+                // So eot cannot go backward later on from infinity to a real value. Nonetheless, for now log this event.
+                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
+        }
         
 	this->m_distributed_eot->lockEntry(getCoreID());
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
         if(!isInfinity(oldeot)  && oldeot > neweot){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
+                // Don't remove braces, and don't throw unless you unlock first.
         }
 	this->m_distributed_eot->set(this->getCoreID(), neweot);
 	this->m_distributed_eot->unlockEntry(getCoreID());
@@ -249,14 +257,6 @@ void Conservativecore::invokeStallingBehaviour()
         std::this_thread::sleep_for(std::chrono::milliseconds(60));
 }
 
-
-void Conservativecore::postTransition(const t_atomicmodelptr& model){
-	t_timestamp current_min = this->m_min_lookahead;
-	t_timestamp model_la = model->lookAhead();
-	this->m_min_lookahead = std::min(current_min, model_la);
-	LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-}
-
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
@@ -324,7 +324,7 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
         m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), this->getTime());
         m_distributed_time->unlockEntry(this->getCoreID());
-        LOG_DEBUG("CCORE :: ", this->getCoreID(), " Stalled round output generation, broadcasting time :: ", this->getTime());
+        LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 
 void Conservativecore::runSmallStepStalled()
@@ -333,13 +333,14 @@ void Conservativecore::runSmallStepStalled()
         collectOutput(imminents); // only collects output once
         for(const auto& imm : imminents){
                 const t_atomicmodelptr mdl = this->m_models[imm];
-                const t_timestamp last_scheduled = mdl->getTimeLast();
+                const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getName(), last_scheduled);
         }
-        /**
-         * If we have no imminents, our EOT value can still have changed
-         */
-        this->calculateMinLookahead();
+        //We have no new states since our last lookahead calculation, so
+        //la values are unchanged.
+        //Eot does require an update if we have sent ^^^ output.
+        //Without updating eit, we'll never get out of a stalled round.
+        //this->calculateMinLookahead(); // DO NOT ENABLE, unless debugging.
         this->updateEOT();
         this->updateEIT();
 }
@@ -399,12 +400,32 @@ Conservativecore::getTime(){
 
 void
 Conservativecore::calculateMinLookahead(){
-	for(const auto& model : m_models){
-		t_timestamp current_min = this->m_min_lookahead;
-		t_timestamp model_la = model.second->lookAhead();
-		this->m_min_lookahead = std::min(current_min, model_la);
-		LOG_DEBUG("CCORE :: ", this->getCoreID(), " updating lookahead from " , current_min, " to ", this->m_min_lookahead);
-	}
+        /**
+         * Determine (if needed) a new minimum lookahead value.
+         * We need to ask all models for this, not only transitioned:
+         * E : 0->70, 70->75, 75->120
+         * D : 0->80, 80->90
+         * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
+         */
+        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() 
+                && !isInfinity(this->m_min_lookahead)){
+                m_min_lookahead = t_timestamp::infinity();
+                for(const auto& model : m_models){
+                        const t_timestamp la = model.second->lookAhead();
+                        
+                        if(isZero(la))
+                                throw std::logic_error("Lookahead can't be zero");
+                        
+                        if(isInfinity(la))
+                                continue;
+                        
+                        const t_timestamp last = model.second->getTimeLast();
+                        m_min_lookahead = std::min(m_min_lookahead, (last+la));
+                }
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);
+        }else{
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead < time , skipping calculation. : ", m_min_lookahead);
+        }
 }
 
 } /* namespace n_model */
