@@ -193,11 +193,6 @@ void n_model::Core::init()
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
         }
         
-        for(size_t i = 0; i<m_indexed_models.size(); ++i){
-                AtomicModel* mdl = (m_indexed_models[i]).get();
-                
-        }
-        
 	for (const auto& model : this->m_models) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
 	}
