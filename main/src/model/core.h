@@ -172,6 +172,11 @@ private:
 	 * functor triggered as a new termination time (which in turn can be undone ...)
 	 */
 	std::atomic<bool> m_terminated_functor;
+        
+        /**
+         * Stores modelptrs sorted on ascending priority.
+         */
+        std::vector<t_atomicmodelptr> m_indexed_models;
 
 	/**
 	 * Check if dest model is local, if not:

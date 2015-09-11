@@ -118,6 +118,8 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	std::string mname = model->getName();
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
+        /// TODO merge
+        this->m_indexed_models.push_back(model);
 }
 
 void n_model::Core::addModelDS(t_atomicmodelptr model)
@@ -179,9 +181,27 @@ void n_model::Core::init()
 		" scheduler is not empty on call to init(), cowardly refusing to corrupt state any further.");
 		return;
 	}
+        auto cmp_prior = [](const t_atomicmodelptr& left, const t_atomicmodelptr& right)->bool{
+                return left->getPriority() < right->getPriority();
+        };
+        std::sort(m_indexed_models.begin(), m_indexed_models.end(), cmp_prior);
+        
+        for(size_t index = 0; index<m_indexed_models.size(); ++index){
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName() , " at ", index);
+                model->initUUID(this->getCoreID(), index);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
+        }
+        
+        for(size_t i = 0; i<m_indexed_models.size(); ++i){
+                AtomicModel* mdl = (m_indexed_models[i]).get();
+                
+        }
+        
 	for (const auto& model : this->m_models) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
 	}
+        
 	for (const auto& model : this->m_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
 		model.second->setTime(modelTime);	// DO NOT use priority, model does this already

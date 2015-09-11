@@ -21,6 +21,20 @@
 class TestCereal;
 
 namespace n_model {
+
+struct uuid{
+        /**
+         * Core index nr.
+         */
+        size_t  m_core_id;
+        /**
+         * Local index nr.
+         */
+        size_t  m_local_id;
+        uuid():m_core_id(0),m_local_id(0){;}
+        uuid(size_t cid, size_t lid):m_core_id(cid), m_local_id(lid){;}
+};
+
 class AtomicModel: public Model
 {
 	friend class ::TestCereal;
@@ -39,6 +53,11 @@ private:
 	 * Default value is -1. This value indicates no core is preferred
 	 */
 	int m_corenumber;
+        
+        /**
+         * Stores this model unique identifier.
+         */
+        uuid    m_uuid;
 
 protected:
 	// lower number -> higher priority
@@ -71,6 +90,35 @@ public:
 	 * @param priority The priority of the model
 	 */
 	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
+        
+        /**
+         * @return uuid object.
+         * @attention This is only initialized after a model is added to a core AND 
+         * the init function is invoked on that core (ie right before simulation starts).
+         */
+        uuid& getUUID()
+        {
+                return m_uuid;
+        }
+        
+        /**
+         * Called by the core before simulation starts.
+         * @param cid Core identifier
+         * @param lid Local identifier
+         */
+        void initUUID(size_t cid, size_t lid){
+                m_uuid.m_local_id=lid;
+                m_uuid.m_core_id=cid;
+        }
+        
+        size_t getLocalID() const{
+                return m_uuid.m_local_id;
+        }
+        
+        size_t getCoreID()const{
+                assert(m_uuid.m_core_id != (size_t) m_corenumber && "Core id corrupt");// if cnr = -1, still fine to compare (2^64 - 1)
+                return m_uuid.m_core_id;
+        }
 
 	/**
 	 * Perform an external transition
