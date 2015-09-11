@@ -210,17 +210,17 @@ add_executable(${PROJECT_NAME}
     )
 
 
- add_executable(${PROJECT_NAME}_benchfire
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/examples/forestfire/constants.cpp
-    src/examples/forestfire/firecell.cpp
-    src/examples/forestfire/firecellstate.cpp
-    src/examples/forestfire/firegenerator.cpp
-    src/examples/forestfire/firespread.cpp
-    src/mainbenchfire.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
+#  add_executable(${PROJECT_NAME}_benchfire
+#     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+#     src/examples/forestfire/constants.cpp
+#     src/examples/forestfire/firecell.cpp
+#     src/examples/forestfire/firecellstate.cpp
+#     src/examples/forestfire/firegenerator.cpp
+#     src/examples/forestfire/firespread.cpp
+#     src/mainbenchfire.cpp
+#     )
+# SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
+#                     )
 
 
 add_executable(${PROJECT_NAME}_devstone
