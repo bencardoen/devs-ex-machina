@@ -49,9 +49,9 @@ members:
                           signature:
                             Folders foldergen(Benchmark, Folders)
   * execute: (function) executes a single benchmark with a given list of arguments
-                        and a filepath.
+                        and a filepath. Returns True if the call was successful, otherwise False
                         signature:
-                          void execute(list, Path)
+                          bool execute(list, Path)
 """
 
 BenchmarkAnalyzer = namedtuple('BenchmarkAnalyzer', 'open read save')

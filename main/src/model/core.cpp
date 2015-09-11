@@ -18,7 +18,7 @@ using n_network::MessageEntry;
 
 inline void validateTA(const n_network::t_timestamp& val){
 #ifdef SAFETY_CHECKS
-	if(val.getTime() == n_network::t_timestamp::t_time()) throw std::logic_error("Time Advance value shouldn't be zero.");
+	if(isZero(val)) throw std::logic_error("Time Advance value shouldn't be zero.");
 #endif
 }
 
@@ -118,6 +118,8 @@ void n_model::Core::addModel(t_atomicmodelptr model)
 	std::string mname = model->getName();
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
+        /// TODO merge
+        this->m_indexed_models.push_back(model);
 }
 
 void n_model::Core::addModelDS(t_atomicmodelptr model)
@@ -179,9 +181,22 @@ void n_model::Core::init()
 		" scheduler is not empty on call to init(), cowardly refusing to corrupt state any further.");
 		return;
 	}
+        auto cmp_prior = [](const t_atomicmodelptr& left, const t_atomicmodelptr& right)->bool{
+                return left->getPriority() < right->getPriority();
+        };
+        std::sort(m_indexed_models.begin(), m_indexed_models.end(), cmp_prior);
+        
+        for(size_t index = 0; index<m_indexed_models.size(); ++index){
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName() , " at ", index);
+                model->initUUID(this->getCoreID(), index);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
+        }
+        
 	for (const auto& model : this->m_models) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
 	}
+        
 	for (const auto& model : this->m_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
 		model.second->setTime(modelTime);	// DO NOT use priority, model does this already
@@ -250,14 +265,14 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", urgent->getName());
 			urgent->doIntTransition();
 			urgent->setTime(noncausaltime);
-			this->postTransition(urgent);
+			
 			this->traceInt(urgent);
 		} else {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", urgent->getName());
 			urgent->setTimeElapsed(0);
 			urgent->doConfTransition(found->second);		// Confluent
 			urgent->setTime(noncausaltime);
-			this->postTransition(urgent);
+			
 			this->traceConf(urgent);
 			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
 			assert(erased != 0 && "Broken logic in collected output");
@@ -270,7 +285,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
-		postTransition(model);
+		
 		m_scheduler->erase(ModelEntry(model->getName(), this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(model);
 		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.

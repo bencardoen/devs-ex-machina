@@ -16,7 +16,17 @@
 #endif
 
 namespace n_tracers {
-#ifndef VIRUSTRACER
+#ifdef VIRUSTRACER
+typedef Tracers<VerboseTracer<FileWriter>, n_virus::VirusTracer> t_tracerset;
+
+#else
+#ifdef BENCHMARK
+/**
+ * @brief Benchmark tracer
+ * The benchmarks do not generate tracing output. Only the simulation core is benchmarked to keep things fair.
+ */
+typedef Tracers<> t_tracerset;
+#else
 /**
  * @brief Default set of tracers.
  * The default set of tracers uses only one Tracer (the Verbose tracer)
@@ -24,10 +34,8 @@ namespace n_tracers {
  */
 typedef Tracers<VerboseTracer<CoutWriter>> t_tracerset;
 
-#else
-typedef Tracers<VerboseTracer<FileWriter>, n_virus::VirusTracer> t_tracerset;
-
-#endif
+#endif	//#ifdef BENCHMARK
+#endif	//#ifdef VIRUSTRACER
 
 } /* namespace n_tracers */
 

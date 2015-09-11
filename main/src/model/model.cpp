@@ -76,14 +76,15 @@ void Model::resetParents()
 
 t_portptr Model::addPort(std::string name, bool isIn)
 {
+	LOG_DEBUG("adding port with name ", name, ", input? ", isIn, " to model ", m_name);
+	LOG_DEBUG("> this model has a controller?", (m_control? 1:0));
 	assert(allowDS() && "Model::addPort: Dynamic structured DEVS is not allowed in this phase.");
 	// Find new name for port if name was empty
 	std::string n = name;
 	if (n == "") {
-		n = "port";
 		int number = (int) m_iPorts.size() + (int) m_oPorts.size();
 		std::stringstream ss;
-		ss << n << number;
+		ss << "port" << number;
 		n = ss.str();
 	}
 

@@ -172,6 +172,11 @@ private:
 	 * functor triggered as a new termination time (which in turn can be undone ...)
 	 */
 	std::atomic<bool> m_terminated_functor;
+        
+        /**
+         * Stores modelptrs sorted on ascending priority.
+         */
+        std::vector<t_atomicmodelptr> m_indexed_models;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -537,13 +542,6 @@ public:
 	virtual
 	t_timestamp
 	getTerminationTime();
-
-	/**
-	 * Allow a subclass to query a model after it has transitioned.
-	 */
-	virtual
-	void
-	postTransition(const t_atomicmodelptr&){;}
 
 	/**
 	 * Return if core has triggered termination functor.
