@@ -19,22 +19,48 @@
 
 // representation of states
 
-/**
- * @brief Template struct for writing a state given a certain representation.
- */
+// base case. The default implementation will generate an error message
 #define STATE_REPR_STRUCT(__name) \
 template<typename T> struct __name { \
-	static constexpr std::string exec(const T&) { \
+	static std::string exec(const T&) { \
 		return std::string("No " STRINGIFY(__name) "::exec overload for type ") + typeid(T).name(); \
 	} \
 }
 
+// Create these messages for names ToString, ToXML, ToJSON and ToCell
 STATE_REPR_STRUCT(ToString);
 STATE_REPR_STRUCT(ToXML);
 STATE_REPR_STRUCT(ToJSON);
 STATE_REPR_STRUCT(ToCell);
 
+// Provide default implementations for numeric types, but only if not using cygwin
+#ifndef __CYGWIN__
+#define STATE_REPR_ARITHMETIC(__type, __name) \
+template<> struct __name<__type> { \
+	static std::string exec(const __type& val) { \
+		return std::to_string(val); \
+	} \
+}
+#define STATE_REPR_ARITHMETIC_GROUP(__name) \
+STATE_REPR_ARITHMETIC(int, __name); \
+STATE_REPR_ARITHMETIC(unsigned, __name); \
+STATE_REPR_ARITHMETIC(long, __name); \
+STATE_REPR_ARITHMETIC(unsigned long, __name); \
+STATE_REPR_ARITHMETIC(long long, __name); \
+STATE_REPR_ARITHMETIC(unsigned long long, __name); \
+STATE_REPR_ARITHMETIC(float, __name); \
+STATE_REPR_ARITHMETIC(double, __name); \
+STATE_REPR_ARITHMETIC(long double, __name)
+
+STATE_REPR_ARITHMETIC_GROUP(ToString);
+STATE_REPR_ARITHMETIC_GROUP(ToXML);
+STATE_REPR_ARITHMETIC_GROUP(ToJSON);
+STATE_REPR_ARITHMETIC_GROUP(ToCell);
+
 #undef STATE_REPR_STRUCT
+#undef STATE_REPR_ARITHMETIC
+#undef STATE_REPR_ARITHMETIC_GROUP
+#endif //ifndef __CYGWIN__
 
 namespace n_model {
 
