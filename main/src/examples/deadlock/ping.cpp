@@ -14,10 +14,10 @@
 
 namespace n_examples_deadlock {
 
+
 Ping::Ping(std::string name, std::size_t priority)
-	: AtomicModel_impl(name, priority)
+	: AtomicModel(name, priority)
 {
-        this->setState(n_tools::createObject<State>("sending"));
 	m_elapsed = 0;
         this->addInPort("_in");
         this->addOutPort("_out");
@@ -29,65 +29,59 @@ Ping::~Ping()
 
 void Ping::extTransition(const std::vector<n_network::t_msgptr> & )
 {
-    t_stateptr state = this->getState();
-    LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-    if(*state == "waiting"){
-        this->setState("receiving");
-        return;
-    }
-    assert(false);
+	PingState& st = state();
+	LOG_DEBUG("MODEL :: transitioning from : " , ToString<PingState>::exec(st));
+	if(st == PingState::WAITING){
+	st = PingState::RECEIVING;
+	return;
+	}
+	assert(false);
 }
 
 void Ping::intTransition()
 {
-	t_stateptr state = this->getState();
-        LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-        if(*state == "sending"){
-                this->setState("waiting");
+	PingState& st = state();
+        LOG_DEBUG("MODEL :: transitioning from : " , ToString<PingState>::exec(st));
+        if(st == PingState::SENDING){
+                st = PingState::WAITING;
                 return;
         }
         assert(false);
-	return;
 }
 
 t_timestamp Ping::timeAdvance() const
 {		
-        auto state = this->getState();
-        if(*state == "sending")
+	const PingState& st = state();
+        if(st == PingState::SENDING)
                 return t_timestamp(10);
-        if(*state == "waiting")
+        else if(st == PingState::WAITING)
                 return t_timestamp::infinity();
-        if(*state == "receiving")
+        else if(st == PingState::RECEIVING)
                 return t_timestamp(5);
         assert(false);
+        return t_timestamp();
 }
 
 void Ping::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	t_stateptr state = this->getState();
-        if ((*state=="sending")) {
+	const PingState& st = state();
+        if (st == PingState::SENDING) {
                 this->getPort("_out")->createMessages("i_hate_strings", msgs);
 	}
 }
 
 t_timestamp Ping::lookAhead() const
 {
-	t_stateptr state = this->getState();
-        if(*state == "waiting"){ // Can receive message at any point, so only our current time is safe.
+	const PingState& st = state();
+        if(st == PingState::WAITING) // Can receive message at any point, so only our current time is safe.
                 return t_timestamp::epsilon();
-        }
-        if(*state == "receiving")
+	else if(st == PingState::RECEIVING)
                 return t_timestamp(5);
-        if(*state == "sending"){   // Busy for at least x time
+	else if(st == PingState::SENDING)   // Busy for at least x time
                 return t_timestamp(10);
-        }
-        assert(false);
-}
 
-t_stateptr Ping::setState(std::string s)
-{
-	this->Model::setState(n_tools::createObject<State>(s));
-	return this->getState();
+        assert(false);
+        return t_timestamp();
 }
 
 }

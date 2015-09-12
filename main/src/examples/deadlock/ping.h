@@ -17,7 +17,31 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class Ping: public n_model::AtomicModel_impl
+enum class PingState{ SENDING, WAITING, RECEIVING};
+
+} /* namespace n_examples_deadlock */
+
+template<>
+struct ToString<n_examples_deadlock::PingState>
+{
+	static std::string exec(const n_examples_deadlock::PingState& s){
+		switch(s){
+		case n_examples_deadlock::PingState::SENDING:
+			return "sending";
+		case n_examples_deadlock::PingState::WAITING:
+			return "waiting";
+		case n_examples_deadlock::PingState::RECEIVING:
+			return "receiving";
+		default:
+			assert(false);
+			return "";
+		}
+	}
+};
+
+namespace n_examples_deadlock {
+
+class Ping: public n_model::AtomicModel<PingState>
 {
 public:
 	Ping(std::string name, std::size_t priority = 0);
@@ -28,10 +52,6 @@ public:
 	t_timestamp timeAdvance() const override;
 	void output(std::vector<n_network::t_msgptr>& msgs) const override;
 	t_timestamp lookAhead() const override;
-
-
-	using AtomicModel_impl::setState;
-	t_stateptr setState(std::string);
 };
 
 } /* namespace n_examples_abstract_c */
