@@ -177,6 +177,18 @@ private:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
+        
+        /**
+         * Messages to process in a current round.
+         */
+        std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
+        
+        /**
+         * Messages to process in a current round.
+         */
+        std::unordered_map<std::string, std::vector<t_msgptr>> m_mailbag;
+        
+        std::set<std::string> m_imminent;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -239,6 +251,12 @@ protected:
 	void
 	scheduleModel(std::string name, t_timestamp t);
         
+        /**
+         * Set the vectors containing messages for models to empty.
+         */
+        void
+        clearWaitingOutput();
+        
 	/**
 	 * Model storage.
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
@@ -255,6 +273,12 @@ protected:
 	 * @lock Unlocked (ie locked by caller)
 	 */
 	void queuePendingMessage(const t_msgptr& msg);
+        
+        /**
+         * Store a generated message between models in this core for local
+         * handling. (ie avoid the heap)
+         */
+        void queueLocalMessage(const t_msgptr& msg);
 
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.

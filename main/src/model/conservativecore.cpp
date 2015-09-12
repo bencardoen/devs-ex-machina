@@ -42,8 +42,7 @@ Conservativecore::~Conservativecore()
 void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
-		const auto & message = *i;
-		this->receiveMessage(message);
+		this->receiveMessage(*i);
 	}
 }
 
