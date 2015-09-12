@@ -30,26 +30,16 @@ CellState::CellState(size_t production, int capacity)
 {
 }
 
-CellState::~CellState()
-{
-}
-
-std::string CellState::toString()
-{
-	return "[Production: "+n_tools::toString(m_production)+" Capacity: "+n_tools::toString(m_capacity)+"]";
-}
-
 
 /*
  * CELL
  */
 
 Cell::Cell(std::string name, size_t neighbours, size_t production, size_t seed, size_t capacity)
-	: AtomicModel_impl(name), m_curState(n_tools::createObject<CellState>(production, capacity))
+	: AtomicModel<CellState>(name, CellState(production, capacity))
 {
 	m_rng.seed(seed);
 	addInPort("in");
-	setState(m_curState);
 }
 
 n_model::t_portptr n_virus::Cell::addConnection()
@@ -63,83 +53,71 @@ Cell::~Cell()
 {
 }
 
-void Cell::updateCurState()
-{
-	m_curState = n_tools::createObject<CellState>(*std::dynamic_pointer_cast<CellState>(getState()));
-}
-
 int Cell::send()
 {
-	if (abs(m_curState->m_capacity) < 2)
+	if (abs(state().m_capacity) < 2)
 		return 0;
 
-	std::uniform_int_distribution<int> dist(std::min(0,m_curState->m_capacity-1), std::max(0,m_curState->m_capacity-1));
+	std::uniform_int_distribution<int> dist(std::min(0,state().m_capacity-1), std::max(0,state().m_capacity-1));
 	return dist(m_rng);
 }
 
 void Cell::receive(int incoming)
 {
-	m_curState->m_capacity += incoming;
+	state().m_capacity += incoming;
 }
 
 void Cell::produce()
 {
-	m_curState->m_capacity += n_tools::sgn(m_curState->m_capacity) * m_curState->m_production;
+	state().m_capacity += n_tools::sgn(state().m_capacity) * state().m_production;
 }
 
 n_model::t_timestamp Cell::timeAdvance() const
 {
-	return m_curState->m_capacity == 0? n_network::t_timestamp::infinity() : n_network::t_timestamp(10, 0);
+	return state().m_capacity == 0? n_network::t_timestamp::infinity() : n_network::t_timestamp(10, 0);
 }
 
 void Cell::intTransition()
 {
-	updateCurState();
 	produce();
-	m_curState->m_capacity -= m_curState->m_toSend;
-	m_curState->m_produced = true;
+	state().m_capacity -= state().m_toSend;
+	state().m_produced = true;
 
 	std::uniform_int_distribution<size_t> dist(0, m_neighbours.size()-1);
-	m_curState->m_target = dist(m_rng);
-	m_curState->m_toSend = send();	//calculate what we'll send next time round
-
-	setState(m_curState);
+	state().m_target = dist(m_rng);
+	state().m_toSend = send();	//calculate what we'll send next time round
 }
 
 void Cell::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
-	updateCurState();
 	produce();
-	m_curState->m_capacity -= m_curState->m_toSend;
-	m_curState->m_produced = true;
+	state().m_capacity -= state().m_toSend;
+	state().m_produced = true;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
 
 	std::uniform_int_distribution<size_t> dist(0, m_neighbours.size()-1);
-	m_curState->m_target = dist(m_rng);
-	m_curState->m_toSend = send();	//calculate what we'll send next time round
-	setState(m_curState);
+	state().m_target = dist(m_rng);
+	state().m_toSend = send();	//calculate what we'll send next time round
 }
 
 void Cell::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	LOG_DEBUG("virus external transition");
-	updateCurState();
-	m_curState->m_produced = false;
+	state().m_produced = false;
 	for (auto& msg : message) {
 		int incoming = n_network::getMsgPayload<MsgData>(msg).m_value;
 		receive(incoming);
 	}
-	m_curState->m_toSend = send();	//calculate what we'll send next time round
-	setState(m_curState);
+	state().m_toSend = send();	//calculate what we'll send next time round
 }
 
 void Cell::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	if (m_curState->m_toSend != 0) {
-		m_neighbours[m_curState->m_target]->createMessages(MsgData(m_curState->m_toSend, getName()), msgs);
+	if (state().m_toSend != 0) {
+		m_neighbours[state().m_target]->createMessages(MsgData(state().m_toSend, getName()), msgs);
 	}
 }
 
