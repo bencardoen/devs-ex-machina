@@ -26,14 +26,6 @@ std::size_t getRand(std::size_t event, t_randgen& randgen)
 	return dist(randgen);
 }
 
-/*
- * PHOLDModelState
- */
-
-PHOLDModelState::PHOLDModelState()
-{
-}
-
 
 /*
  * HeavyPHOLDProcessor

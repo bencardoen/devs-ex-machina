@@ -129,7 +129,7 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
 		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
 		return;
 	}
-	assert(m_oldStates.empty() && "AtomicModel_impl::setGVT no memory!");
+	assert(!m_oldStates.empty() && "AtomicModel_impl::setGVT no memory!");
 	// Model has no memory of past
 	if (m_oldStates.empty()) {
 		LOG_ERROR("Model has no memory of past (no old states), no GVT happened!");

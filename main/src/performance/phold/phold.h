@@ -31,31 +31,22 @@ struct EventPair
 	EventTime m_procTime;
 };
 
-class PHOLDModelState
+struct PHOLDModelState
 {
-public:
-	PHOLDModelState();
-
 	std::deque<EventPair> m_events;
+};
 
+}	/* namespace n_benchmarks_phold */
 
-	std::string toString() const
-	{
-		return "";
-	}
-	std::string toXML() const
-	{
-		return "";
-	}
-	std::string toJSON() const
-	{
-		return "";
-	}
-	std::string toCell() const
-	{
+template<>
+struct ToString<n_benchmarks_phold::PHOLDModelState>
+{
+	static std::string exec(const n_benchmarks_phold::PHOLDModelState&){
 		return "";
 	}
 };
+
+namespace n_benchmarks_phold {
 
 typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
 

@@ -41,11 +41,6 @@ ProcessorState::ProcessorState():
 {
 }
 
-std::string ProcessorState::toString() const
-{
-	return n_tools::toString(m_event1);
-}
-
 /*
  * Processor
  */

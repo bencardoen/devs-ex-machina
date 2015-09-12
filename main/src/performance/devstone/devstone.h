@@ -40,23 +40,19 @@ struct ProcessorState{
 	std::size_t m_eventsHad;
 
 	ProcessorState();
+};
 
-	std::string toString() const;
+}	/* namespace n_devstone */
 
-
-	std::string toXML() const
-	{
-		return n_tools::toString(m_event1);
-	}
-	std::string toJSON() const
-	{
-		return n_tools::toString(m_event1);
-	}
-	std::string toCell() const
-	{
-		return n_tools::toString(m_event1);
+template<>
+struct ToString<n_devstone::ProcessorState>
+{
+	static std::string exec(const n_devstone::ProcessorState& s){
+		return n_tools::toString(s.m_event1);
 	}
 };
+
+namespace n_devstone {
 
 typedef std::mt19937_64 t_randgen;
 

@@ -28,23 +28,19 @@ public:
 	std::size_t m_seed;
 public:
 	GeneratorState(t_counter count = 0u, std::size_t seed = 0u);
+};
 
-	std::string toString() const;
+}	/* namespace n_interconnect */
 
-
-	std::string toXML() const
-	{
-		return "";
-	}
-	std::string toJSON() const
-	{
-		return "";
-	}
-	std::string toCell() const
-	{
-		return "";
+template<>
+struct ToString<n_interconnect::GeneratorState>
+{
+	static std::string exec(const n_interconnect::GeneratorState& s){
+		return n_tools::toString(s.m_count) + ", " + n_tools::toString(s.m_seed);
 	}
 };
+
+namespace n_interconnect {
 
 class Generator: public n_model::AtomicModel<GeneratorState>
 {

@@ -36,11 +36,6 @@ GeneratorState::GeneratorState(t_counter count, std::size_t seed):
 {
 }
 
-std::string GeneratorState::toString() const
-{
-	return n_tools::toString(m_count) + ", " + n_tools::toString(m_seed);
-}
-
 Generator::Generator(const std::string& name, std::size_t seed, bool randta):
 	AtomicModel(name), m_randomta(randta), m_out(addOutPort("output")), m_in(addInPort("input"))
 {

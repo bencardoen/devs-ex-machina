@@ -11,9 +11,30 @@
 #include "network/timestamp.h"
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
+#include "tools/macros.h"
 #include <assert.h>
 #include "serialization/archive.h"
 #include "cereal/types/polymorphic.hpp"
+#include <typeinfo>
+
+// representation of states
+
+/**
+ * @brief Template struct for writing a state given a certain representation.
+ */
+#define STATE_REPR_STRUCT(__name) \
+template<typename T> struct __name { \
+	static constexpr std::string exec(const T&) { \
+		return std::string("No " STRINGIFY(__name) "::exec overload for type ") + typeid(T).name(); \
+	} \
+}
+
+STATE_REPR_STRUCT(ToString);
+STATE_REPR_STRUCT(ToXML);
+STATE_REPR_STRUCT(ToJSON);
+STATE_REPR_STRUCT(ToCell);
+
+#undef STATE_REPR_STRUCT
 
 namespace n_model {
 
@@ -110,6 +131,7 @@ public:
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct);
 };
 
+
 template<typename T>
 class State__impl: public State
 {
@@ -133,7 +155,7 @@ public:
 	 */
 	virtual std::string toString() const override
 	{
-		return m_value.toString();
+		return ToString<t_type>::exec(m_value);
 	}
 
 	/**
@@ -142,7 +164,7 @@ public:
 	 */
 	virtual std::string toXML() const override
 	{
-		return m_value.toXML();
+		return ToXML<t_type>::exec(m_value);
 	}
 
 	/**
@@ -151,7 +173,7 @@ public:
 	 */
 	virtual std::string toJSON() const override
 	{
-		return m_value.toJSON();
+		return ToJSON<t_type>::exec(m_value);
 	}
 
 	/**
@@ -160,7 +182,7 @@ public:
 	 */
 	virtual std::string toCell() const override
 	{
-		return m_value.toCell();
+		return ToCell<t_type>::exec(m_value);
 	}
 };
 
