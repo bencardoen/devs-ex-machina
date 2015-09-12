@@ -23,7 +23,7 @@ std::string FireGeneratorState::toString()
 }
 
 FireGenerator::FireGenerator(std::size_t levels):
-	AtomicModel("Generator")
+	AtomicModel_impl("Generator")
 {
 	setState(n_tools::createObject<FireGeneratorState>());
 	m_outputs.reserve(levels);

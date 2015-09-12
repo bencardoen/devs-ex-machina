@@ -49,7 +49,7 @@ void PolicemanMode::load_and_construct(n_serialization::t_iarchive& archive, cer
 }
 
 Policeman::Policeman(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel_impl(name, priority)
 {
 	this->setState(n_tools::createObject<PolicemanMode>("idle"));
 	// Initialize elapsed attribute if required
@@ -120,12 +120,12 @@ t_stateptr Policeman::setState(std::string s)
 void Policeman::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("SERIALIZATION: Saving Policeman '", getName(), "' with timeNext = ", m_timeNext);
-	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
 }
 
 void Policeman::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
 	LOG_INFO("SERIALIZATION: Loaded Policeman '", getName(), "' with timeNext = ", m_timeNext);
 }
 

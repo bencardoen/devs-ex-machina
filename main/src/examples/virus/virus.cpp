@@ -45,7 +45,7 @@ std::string CellState::toString()
  */
 
 Cell::Cell(std::string name, size_t neighbours, size_t production, size_t seed, size_t capacity)
-	: AtomicModel(name), m_curState(n_tools::createObject<CellState>(production, capacity))
+	: AtomicModel_impl(name), m_curState(n_tools::createObject<CellState>(production, capacity))
 {
 	m_rng.seed(seed);
 	addInPort("in");

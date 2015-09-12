@@ -91,7 +91,7 @@ bool operator==(const RoadSegmentState& left, const RoadSegmentState& right)
 }
 
 RoadSegment::RoadSegment(int district, float l, float v_max, t_timestamp observ_delay, std::string name):
-		AtomicModel(name), district(district), l(l), v_max(v_max), observ_delay(observ_delay)
+		AtomicModel_impl(name), district(district), l(l), v_max(v_max), observ_delay(observ_delay)
 {
 	setState(n_tools::createObject<RoadSegmentState>());
 

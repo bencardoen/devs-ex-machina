@@ -37,21 +37,13 @@ const t_counter inf = std::numeric_limits<t_counter>::max();
  * ProcessorState
  */
 ProcessorState::ProcessorState():
-	State(""), m_event1_counter(inf), m_event1(0), m_eventsHad(0)
-{}
-ProcessorState::~ProcessorState()
+	m_event1_counter(inf), m_event1(0), m_eventsHad(0)
 {
 }
 
-std::string ProcessorState::toString()
+std::string ProcessorState::toString() const
 {
 	return n_tools::toString(m_event1);
-}
-
-std::shared_ptr<ProcessorState> ProcessorState::copy() const
-{
-	auto newState = n_tools::createObject<ProcessorState>(*this);
-	return newState;
 }
 
 /*
@@ -64,7 +56,6 @@ Processor::Processor(std::string name, bool randomta)
 	: AtomicModel(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(m_numcounter++)
 {
 	addInPort("in_event1");
-	setState(n_tools::createObject<ProcessorState>());
 	LOG_DEBUG("Created devstone processor ", name);
 }
 
@@ -74,76 +65,72 @@ Processor::~Processor()
 
 n_model::t_timestamp Processor::timeAdvance() const
 {
-	const auto& procState = procstate();
-	if (procState.m_event1_counter == inf) {
+	const ProcessorState& st = state();
+	if (st.m_event1_counter == inf) {
 		return n_network::t_timestamp::infinity();
 	} else {
-		return n_network::t_timestamp(procState.m_event1_counter);
+		return n_network::t_timestamp(st.m_event1_counter);
 	}
 }
 
 void Processor::intTransition()
 {
-	const auto newState = procstate().copy();
-	if (newState->m_queue.empty()) {
-		newState->m_event1_counter = inf;
-		newState->m_event1 = Event(0u);
+	ProcessorState& st = state();
+	if (st.m_queue.empty()) {
+		st.m_event1_counter = inf;
+		st.m_event1 = Event(0u);
 	} else {
-		newState->m_event1 = newState->m_queue.back();
-		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1) : T_100;
+		st.m_event1 = st.m_queue.back();
+		st.m_queue.pop_back();
+		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
 	}
-	++(newState->m_eventsHad);
-	LOG_DEBUG("internal event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
-	setState(newState);
+	++(st.m_eventsHad);
+	LOG_DEBUG("internal event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
 }
 
 void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
-	const auto newState = procstate().copy();
-	LOG_DEBUG("externala event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed, " =inf ", newState->m_event1_counter == inf);
-	newState->m_event1_counter = (newState->m_event1_counter == inf)? inf: (newState->m_event1_counter - m_elapsed.getTime());
-	LOG_DEBUG("externalb event counter of ", getName(), ", new value = ", newState->m_event1_counter);
+	ProcessorState& st = state();
+	LOG_DEBUG("externala event counter of ", getName(), " = ", st.m_event1_counter, ", time elapsed: ", m_elapsed, " =inf ", st.m_event1_counter == inf);
+	st.m_event1_counter = (st.m_event1_counter == inf)? inf: (st.m_event1_counter - m_elapsed.getTime());
+	LOG_DEBUG("externalb event counter of ", getName(), ", new value = ", st.m_event1_counter);
 	//We can only have 1 message
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
-	if (newState->m_event1 != Event(0)) {
-		newState->m_queue.push_back(ev1);
+	if (st.m_event1 != Event(0)) {
+		st.m_queue.push_back(ev1);
 	} else {
-		newState->m_event1 = ev1;
-		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1)  : T_100;
+		st.m_event1 = ev1;
+		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1)  : T_100;
 	}
-	LOG_DEBUG("confluent event counter of ", getName(), " = ", newState->m_event1_counter, " =inf ", newState->m_event1_counter == inf);
-	setState(newState);
+	LOG_DEBUG("confluent event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
 }
 
 void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 {
-	const auto newState = procstate().copy();
-	LOG_DEBUG("event counter of ", getName(), " = ", newState->m_event1_counter, ", time elapsed: ", m_elapsed);
+	ProcessorState& st = state();
+	LOG_DEBUG("event counter of ", getName(), " = ", st.m_event1_counter, ", time elapsed: ", m_elapsed);
 	//We can only have 1 message
-	if (newState->m_queue.empty()) {
-		newState->m_event1_counter = inf;
-		newState->m_event1 = Event(0u);
+	if (st.m_queue.empty()) {
+		st.m_event1_counter = inf;
+		st.m_event1 = Event(0u);
 	} else {
-		newState->m_event1 = newState->m_queue.back();
-		newState->m_queue.pop_back();
-		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1) : T_100;
+		st.m_event1 = st.m_queue.back();
+		st.m_queue.pop_back();
+		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
 	}
-	++(newState->m_eventsHad);
+	++(st.m_eventsHad);
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
-	if (newState->m_event1 != Event(0)) {
-		newState->m_queue.push_back(ev1);
+	if (st.m_event1 != Event(0)) {
+		st.m_queue.push_back(ev1);
 	} else {
-		newState->m_event1 = ev1;
-		newState->m_event1_counter = (m_randomta) ? getProcTime(procstate().m_event1)  : T_100;
+		st.m_event1 = ev1;
+		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1)  : T_100;
 	}
-	setState(newState);
 }
 
 void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	const auto& procState = procstate();
-	m_out->createMessages(procState.m_event1, msgs);
+	m_out->createMessages(state().m_event1, msgs);
 }
 
 n_network::t_timestamp Processor::lookAhead() const
@@ -165,34 +152,21 @@ t_counter Processor::getProcTime(size_t event) const
 {
 #ifdef FPTIME
 	static std::uniform_real_distribution<t_counter> dist(T_75, T_125);
-	m_rand.seed((event + m_num + procstate().m_eventsHad)*m_num);
+	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return roundTo(dist(m_rand), T_STEP);
 #else
 	static std::uniform_int_distribution<t_counter> dist(T_75, T_125);
-	m_rand.seed((event + m_num + procstate().m_eventsHad)*m_num);
+	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return dist(m_rand);
 #endif
 }
-
-const ProcessorState& Processor::procstate() const
-{
-	return *(std::static_pointer_cast<ProcessorState>(getState()));
-}
-
-ProcessorState& Processor::procstate()
-{
-	return *(std::static_pointer_cast<ProcessorState>(getState()));
-}
-
-
 
 /*
  * Generator
  */
 
-Generator::Generator() : n_model::AtomicModel("Generator"), m_out(addOutPort("out_event1"))
+Generator::Generator() : n_model::AtomicModel<void>("Generator"), m_out(addOutPort("out_event1"))
 {
-	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }
 
 Generator::~Generator()
@@ -206,7 +180,6 @@ n_model::t_timestamp Generator::timeAdvance() const
 
 void Generator::intTransition()
 {
-	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }
 
 void Generator::output(std::vector<n_network::t_msgptr>& msgs) const

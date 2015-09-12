@@ -17,7 +17,7 @@
 namespace n_examples_traffic {
 
 using n_network::t_msgptr;
-using n_model::AtomicModel;
+using n_model::AtomicModel_impl;
 using n_model::State;
 using n_model::t_stateptr;
 using n_model::t_modelptr;
@@ -52,7 +52,7 @@ public:
 	~BuildingState() {}
 };
 
-class Building: public AtomicModel
+class Building: public AtomicModel_impl
 {
 protected:
 

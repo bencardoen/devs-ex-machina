@@ -17,7 +17,7 @@ namespace n_examples_ds {
 
 using n_model::State;
 using n_model::t_stateptr;
-using n_model::AtomicModel;
+using n_model::AtomicModel_impl;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
@@ -32,7 +32,7 @@ public:
 	~PolicemanMode() {}
 };
 
-class Policeman: public AtomicModel
+class Policeman: public AtomicModel_impl
 {
 public:
 	Policeman() = delete;
@@ -48,7 +48,7 @@ public:
 	 * The following function has been created to easily
 	 * create states using a string
 	 */
-	using AtomicModel::setState;
+	using AtomicModel_impl::setState;
 	t_stateptr setState(std::string);
 
 	bool modelTransition(n_model::DSSharedState* shared) override;

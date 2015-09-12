@@ -637,7 +637,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 			dsScheduleModel(sub);
 		return;
 	}
-	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel>(model);
+	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel_impl>(model);
 //	if (atomic) {
 		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs

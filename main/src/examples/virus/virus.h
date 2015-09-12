@@ -48,7 +48,7 @@ public:
 	virtual std::string toString();
 };
 
-class Cell: public n_model::AtomicModel
+class Cell: public n_model::AtomicModel_impl
 {
 private:
 	std::mt19937 m_rng;

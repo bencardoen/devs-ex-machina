@@ -31,7 +31,7 @@ std::string TrafficLightMode::toCell()
 }
 
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel_impl(name, priority)
 {
 	this->setState(n_tools::createObject<TrafficLightMode>("red"));
 	//this->setState(std::make_shared<TrafficLightMode>("red"));

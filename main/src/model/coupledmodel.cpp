@@ -71,7 +71,7 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 
 	//remove the model itself from the controller
 	if(m_control) {
-		t_atomicmodelptr adevs = std::dynamic_pointer_cast<AtomicModel>(model);
+		t_atomicmodelptr adevs = std::dynamic_pointer_cast<AtomicModel_impl>(model);
 		if(adevs != nullptr){
 			LOG_DEBUG("Removed atomic model '", model->getName(), "' while in DSDEVS");
 			m_control->dsUnscheduleModel(adevs);
@@ -177,7 +177,7 @@ void CoupledModel::unscheduleChildren()
 	if(!m_control)
 		return;
 	for(t_modelptr& model: m_components){
-		t_atomicmodelptr adevs = std::dynamic_pointer_cast<AtomicModel>(model);
+		t_atomicmodelptr adevs = std::dynamic_pointer_cast<AtomicModel_impl>(model);
 		if(adevs != nullptr){
 			m_control->dsUnscheduleModel(adevs);
 			continue;
@@ -206,14 +206,14 @@ void CoupledModel::setController(n_control::Controller* newControl)
 
 void CoupledModel::serialize(n_serialization::t_oarchive& archive)
 {
-	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "' with timeNext = ", m_timeNext);
+	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "'");
 	archive(cereal::virtual_base_class<Model>(this), m_components);
 }
 
 void CoupledModel::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>(this), m_components);
-	LOG_INFO("SERIALIZATION: Loaded Coupled Model '", getName(), "' with timeNext = ", m_timeNext);
+	LOG_INFO("SERIALIZATION: Loaded Coupled Model '", getName(), "'");
 }
 
 void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct)

@@ -88,7 +88,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -pg -DLOG_LEVEL=0 -DBENCHMARK"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
@@ -351,7 +351,7 @@ endif()
 
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
+# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})

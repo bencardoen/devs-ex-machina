@@ -35,7 +35,7 @@ struct uuid{
         uuid(size_t cid, size_t lid):m_core_id(cid), m_local_id(lid){;}
 };
 
-class AtomicModel: public Model
+class AtomicModel_impl: public Model
 {
 	friend class ::TestCereal;
 private:
@@ -59,6 +59,25 @@ private:
          */
         uuid    m_uuid;
 
+	/**
+	 * @brief Variable that determines if old states are to be kept or not
+	 * It is sometimes useful to set this variable false if you only want to run your
+	 * AtomicModel single-core.
+	 * @note This is not to be used when simulating coupled models or models in parallel!
+	 */
+	bool m_keepOldStates;
+
+	t_timestamp m_timeLast;
+	t_timestamp m_timeNext;
+
+	t_stateptr m_state;
+	std::vector<t_stateptr> m_oldStates;
+
+	/**
+	 * @brief Copies the state, if necessary
+	 */
+	void copyState();
+
 protected:
 	// lower number -> higher priority
 	std::size_t m_priority;
@@ -66,7 +85,7 @@ protected:
 	t_timestamp m_lastRead;
 
 public:
-	AtomicModel() = delete;
+	AtomicModel_impl() = delete;
 
 	/**
 	 * Constructor for AtomicModel
@@ -77,7 +96,7 @@ public:
 	 * @param name The name of the model
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, std::size_t priority = 0);
+	AtomicModel_impl(std::string name, std::size_t priority = 0);
 
 	/**
 	 * Constructor for AtomicModel
@@ -89,7 +108,7 @@ public:
 	 * @param corenumber The core number that the model wants to be on
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
+	AtomicModel_impl(std::string name, int corenumber, std::size_t priority = 0);
         
         /**
          * @return uuid object.
@@ -121,19 +140,58 @@ public:
         }
 
 	/**
+	 * @brief Gets the next scheduled time.
+	 */
+	t_timestamp getTimeNext() const;
+
+	/**
+	 * @brief Gets the last scheduled time.
+	 */
+	t_timestamp getTimeLast() const;
+
+	/**
+	 * @brief Sets the variable that determines if old states are to be kept or not
+	 * It is sometimes useful to set this variable false if you only want to run your
+	 * AtomicModel single-core.
+	 * @note This is not to be used when simulating coupled models or models in parallel!
+	 */
+	void setKeepOldStates(bool b);
+
+	/**
+	 * @brief Gets the variable that determines if old states are to be kept or not
+	 * @return True or False
+	 */
+	bool getKeepOldStates() const;
+
+	/**
+	 * Returns the current state of the model
+	 *
+	 * @return current state of model
+	 */
+	t_stateptr getState() const;
+
+	/**
+	 * @brief Initializes the atomic model with this state.
+	 * @param stateptr A pointer to the initial state
+	 * @precondition The pointer is a valid pointer.
+	 */
+	void initState(const t_stateptr& stateptr);
+
+	/**
+	 * Set the current state of the model to a new state and pushes this new state on
+	 * the list of all oldStates.
+	 *
+	 * @param newState the new state the model should switch to (as a State object)
+	 */
+//	void setState(const t_stateptr& newState);
+
+	/**
 	 * Perform an external transition
 	 *
-	 * @param message A vector of messagepointers that represent events
+	 * @param message A vector of message pointers that represent events
 	 * @warning This function MUST be implemented in the simulated model
 	 */
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & message)
-	{
-		LOG_ERROR(
-		        "ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
-		assert(false);
-		message.capacity();
-	}
-	;
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
 
 	/**
 	 * Perform an external transition, this function will call the user-implemented extTransition
@@ -153,12 +211,7 @@ public:
 	 * Perform an internal transition.
 	 * @warning This function MUST be implemented in the simulated model
 	 */
-	virtual void intTransition()
-	{
-		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
-		assert(false);
-	}
-	;
+	virtual void intTransition();
 
 	/**
 	 * Transitions the model confluently with given messages.
@@ -276,7 +329,7 @@ public:
 	 */
 	void setCorenumber(int corenumber);
 
-	virtual ~AtomicModel()
+	virtual ~AtomicModel_impl()
 	{
 	}
 
@@ -319,12 +372,78 @@ public:
 	 * @param archive A container for the desired input stream
 	 * @param construct A helper struct for constructing the original object
 	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct);
 };
 
-typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
+typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
+
+
+template<typename T>
+class AtomicModel: public AtomicModel_impl
+{
+public:
+	typedef T t_type;
+private:
+public:
+	AtomicModel(std::string name, const T& value, std::size_t priority = 0):
+		AtomicModel_impl(name, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>(value));
+	}
+	AtomicModel(std::string name, const T& value, int coreNum, std::size_t priority = 0):
+		AtomicModel_impl(name, coreNum, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>(value));
+	}
+	AtomicModel(std::string name, std::size_t priority = 0):
+		AtomicModel_impl(name, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>());
+	}
+	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
+		AtomicModel_impl(name, coreNum, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>());
+	}
+
+	/**
+	 * @brief Returns a reference to the current state.
+	 */
+	constexpr const t_type& state() const
+	{
+		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	}
+
+	/**
+	 * @brief Returns a reference to the current state.
+	 */
+	t_type& state()
+	{
+		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	}
+
+};
+
+/**
+ * @brief Specialization for when the model has no internal state.
+ */
+template<>
+class AtomicModel<void>: public AtomicModel_impl
+{
+public:
+	AtomicModel(std::string name, std::size_t priority = 0):
+		AtomicModel_impl(name, priority)
+	{
+		initState(n_tools::createObject<State__impl<void>>());
+	}
+	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
+		AtomicModel_impl(name, coreNum, priority)
+	{
+		initState(n_tools::createObject<State__impl<void>>());
+	}
+};
 }	// end namespace
 
-CEREAL_REGISTER_TYPE(n_model::AtomicModel)
+CEREAL_REGISTER_TYPE(n_model::AtomicModel_impl)
 
 #endif /* ATOMICMODEL_H_ */

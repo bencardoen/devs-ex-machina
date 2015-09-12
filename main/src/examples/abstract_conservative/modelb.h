@@ -15,12 +15,12 @@ namespace n_examples_abstract_c {
 
 using n_model::State;
 using n_model::t_stateptr;
-using n_model::AtomicModel;
+using n_model::AtomicModel_impl;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class ModelB: public n_model::AtomicModel
+class ModelB: public n_model::AtomicModel_impl
 {
 public:
 	ModelB(std::string name, std::size_t priority = 0);
@@ -36,7 +36,7 @@ public:
 	 * The following function has been created to easily
 	 * create states using a string
 	 */
-	using AtomicModel::setState;
+	using AtomicModel_impl::setState;
 	t_stateptr setState(std::string);
 };
 

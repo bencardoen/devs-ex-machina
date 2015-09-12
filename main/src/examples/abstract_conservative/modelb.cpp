@@ -10,7 +10,7 @@
 namespace n_examples_abstract_c {
 
 ModelB::ModelB(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel_impl(name, priority)
 {
 	this->setState(n_tools::createObject<State>("0"));
 	m_elapsed = 0;

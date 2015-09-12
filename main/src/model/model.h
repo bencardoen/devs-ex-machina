@@ -44,24 +44,11 @@ private:
 	t_portptr addPort(std::string name, bool isIn);
 
 protected:
-	t_timestamp m_timeLast;
-	t_timestamp m_timeNext;
-
-	t_stateptr m_state;
-	std::vector<t_stateptr> m_oldStates;
 
 	std::map<std::string, t_portptr> m_iPorts;
 	std::map<std::string, t_portptr> m_oPorts;
 
 	n_control::Controller* m_control;
-
-	/**
-	 * @brief Variable that determines if old states are to be kept or not
-	 * It is sometimes useful to set this variable false if you only want to run your
-	 * AtomicModel single-core.
-	 * @note This is not to be used when simulating coupled models or models in parallel!
-	 */
-	bool m_keepOldStates;
 
 	/**
 	 * Parent node of this model, mainly used for direct connect and DS
@@ -134,21 +121,6 @@ public:
 	void removePort(t_portptr& port);
 
 	/**
-	 * Returns the current state of the model
-	 *
-	 * @return current state of model
-	 */
-	t_stateptr getState() const;
-
-	/**
-	 * Set the current state of the model to a new state and pushes this new state on
-	 * the list of all oldStates.
-	 *
-	 * @param newState the new state the model should switch to (as a State object)
-	 */
-	void setState(const t_stateptr& newState);
-
-	/**
 	 * Sets the current parent pointer to parent
 	 *
 	 * @param parent new parent pointer
@@ -208,30 +180,6 @@ public:
 	 * @note The user doesn't have to worry about this one.
 	 */
 	virtual void setController(n_control::Controller* newControl);
-
-	/**
-	 * @brief Gets the next scheduled time.
-	 */
-	t_timestamp getTimeNext() const;
-
-	/**
-	 * @brief Gets the last scheduled time.
-	 */
-	t_timestamp getTimeLast() const;
-
-	/**
-	 * @brief Sets the variable that determines if old states are to be kept or not
-	 * It is sometimes useful to set this variable false if you only want to run your
-	 * AtomicModel single-core.
-	 * @note This is not to be used when simulating coupled models or models in parallel!
-	 */
-	void setKeepOldStates(bool b);
-
-	/**
-	 * @brief Gets the variable that determines if old states are to be kept or not
-	 * @return True or False
-	 */
-	bool getKeepOldStates() const;
 
 //-------------serialization---------------------
 	/**

@@ -11,23 +11,36 @@
 
 namespace n_model {
 
-AtomicModel::AtomicModel(std::string name, std::size_t)
-	: Model(name), m_corenumber(-1),m_priority(nextPriority())
+AtomicModel_impl::AtomicModel_impl(std::string name, std::size_t)
+	: Model(name), m_corenumber(-1), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority())
 {
 }
 
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priority*/)
-	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
+AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t /*priority*/)
+	: Model(name), m_corenumber(corenumber), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority())
 {
 }
 
-void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)
+void AtomicModel_impl::intTransition()
+{
+	LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
+	assert(false);
+}
+
+void AtomicModel_impl::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	this->intTransition();
 	this->extTransition(message);
 }
 
-void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& message)
+void AtomicModel_impl::extTransition(const std::vector<n_network::t_msgptr>&)
+{
+	LOG_ERROR(
+		"ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
+	assert(false);
+}
+
+void AtomicModel_impl::doExtTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
 	for (auto& port : m_iPorts)
@@ -48,20 +61,27 @@ void AtomicModel::doExtTransition(const std::vector<n_network::t_msgptr>& messag
 			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
 		}
 	}
+
+	//copy the current state, if necessary
+	copyState();
 
 	// Do the actual external transition
 	this->extTransition(message);
 }
 
-void AtomicModel::doIntTransition()
+void AtomicModel_impl::doIntTransition()
 {
 	for (auto& port : m_iPorts)
 		port.second->clearReceivedMessages();
+
+	//copy the current state, if necessary
+	copyState();
+
 	intTransition();
 }
 
 
-void AtomicModel::doConfTransition(const std::vector<n_network::t_msgptr>& message)
+void AtomicModel_impl::doConfTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
 	for (auto& port : m_iPorts)
@@ -83,10 +103,13 @@ void AtomicModel::doConfTransition(const std::vector<n_network::t_msgptr>& messa
 		}
 	}
 
+	//copy the current state, if necessary
+	copyState();
+
 	this->confTransition(message);
 }
 
-void AtomicModel::doOutput(std::vector<n_network::t_msgptr>& msgs)
+void AtomicModel_impl::doOutput(std::vector<n_network::t_msgptr>& msgs)
 {
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
@@ -99,12 +122,14 @@ void AtomicModel::doOutput(std::vector<n_network::t_msgptr>& msgs)
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " output resulted in ", msgs.size(), " messages ");
 }
 
-void AtomicModel::setGVT(t_timestamp gvt)
+void AtomicModel_impl::setGVT(t_timestamp gvt)
 {
+	assert(m_keepOldStates && "AtomicModel_impl::setGVT called while old states are not remembered.");
 	if (!m_keepOldStates) {
 		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
 		return;
 	}
+	assert(m_oldStates.empty() && "AtomicModel_impl::setGVT no memory!");
 	// Model has no memory of past
 	if (m_oldStates.empty()) {
 		LOG_ERROR("Model has no memory of past (no old states), no GVT happened!");
@@ -124,7 +149,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 
 	if (k == -1) {
 		// model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
-		t_stateptr state = m_oldStates.at(m_oldStates.size() - 1);
+		t_stateptr state = m_oldStates.back();
 		m_oldStates.clear();
 		m_oldStates.push_back(state);
 	} else if (k == 0) {
@@ -140,7 +165,7 @@ void AtomicModel::setGVT(t_timestamp gvt)
 	}
 }
 
-t_timestamp AtomicModel::revert(t_timestamp time)
+t_timestamp AtomicModel_impl::revert(t_timestamp time)
 {
 	if (!m_keepOldStates) {
 		LOG_ERROR("Model has set m_keepOldStates to false, can't call revert!");
@@ -176,12 +201,12 @@ t_timestamp AtomicModel::revert(t_timestamp time)
 
 }
 
-std::size_t AtomicModel::getPriority() const
+std::size_t AtomicModel_impl::getPriority() const
 {
 	return m_priority;
 }
 
-void AtomicModel::setTime(t_timestamp time)
+void AtomicModel_impl::setTime(t_timestamp time)
 {
 	this->m_timeLast = t_timestamp(time.getTime(), m_priority);
 	this->m_timeNext = this->m_timeLast + this->timeAdvance();
@@ -194,35 +219,35 @@ void AtomicModel::setTime(t_timestamp time)
 //	laststate->m_timeNext = this->m_timeNext;
 }
 
-t_timestamp AtomicModel::getTimeElapsed() const
+t_timestamp AtomicModel_impl::getTimeElapsed() const
 {
 	return m_elapsed;
 }
 
-void AtomicModel::addInfluencees(std::set<std::string>& influences) const
+void AtomicModel_impl::addInfluencees(std::set<std::string>& influences) const
 {
 	for (auto& port: this->m_iPorts)
 		port.second->addInfluencees(influences);
 }
 
-void AtomicModel::setTimeElapsed(t_timestamp elapsed)
+void AtomicModel_impl::setTimeElapsed(t_timestamp elapsed)
 {
 	m_elapsed = elapsed;
 }
 
-void AtomicModel::serialize(n_serialization::t_oarchive& archive)
+void AtomicModel_impl::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("SERIALIZATION: Saving Atomic Model '", getName(), "' with timeNext = ", m_timeNext);
 	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
 }
 
-void AtomicModel::serialize(n_serialization::t_iarchive& archive)
+void AtomicModel_impl::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
 	LOG_INFO("SERIALIZATION: Loaded Atomic Model '", getName(), "' with timeNext = ", m_timeNext);
 }
 
-void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct)
+void AtomicModel_impl::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct)
 {
 	LOG_DEBUG("ATOMICMODEL: Load and Construct");
 
@@ -230,14 +255,73 @@ void AtomicModel::load_and_construct(n_serialization::t_iarchive& archive, cerea
 	construct->serialize(archive);
 }
 
-int AtomicModel::getCorenumber() const
+int AtomicModel_impl::getCorenumber() const
 {
 	return m_corenumber;
 }
 
-void AtomicModel::setCorenumber(int corenumber)
+void AtomicModel_impl::setCorenumber(int corenumber)
 {
 	m_corenumber = corenumber;
+}
+
+t_timestamp AtomicModel_impl::getTimeNext() const
+{
+	return m_timeNext;
+}
+
+t_timestamp AtomicModel_impl::getTimeLast() const
+{
+	return m_timeLast;
+}
+
+bool AtomicModel_impl::getKeepOldStates() const
+{
+	return m_keepOldStates;
+}
+
+void AtomicModel_impl::setKeepOldStates(bool b)
+{
+	m_keepOldStates = b;
+}
+
+t_stateptr AtomicModel_impl::getState() const
+{
+	return m_state;
+}
+
+void AtomicModel_impl::initState(const t_stateptr& stateptr)
+{
+	assert(m_state == nullptr && "AtomicModel_impl::initState called while a valid state is already present.");
+	m_state = stateptr;
+	if(m_keepOldStates)
+		m_oldStates.push_back(stateptr);
+}
+
+//void AtomicModel_impl::setState(const t_stateptr& newState)
+//{
+//	if (newState == nullptr)
+//		return;
+//	m_state = newState;
+//	if (m_keepOldStates)
+//		m_oldStates.push_back(m_state);
+//	else {
+//		if (m_oldStates.size() != 0)
+//			m_oldStates.at(0) = m_state;
+//		else
+//			m_oldStates.push_back(m_state);
+//	}
+//}
+
+void AtomicModel_impl::copyState()
+{
+	if(!m_keepOldStates)
+		return;
+	t_stateptr copy = m_state->copyState();
+	assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
+
+	m_oldStates.push_back(copy);
+	m_state = copy;
 }
 
 }

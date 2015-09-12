@@ -87,7 +87,7 @@ void BuildingState::setSendQueryDelay(int IAT_min, int IAT_max)
 
 Building::Building(bool, int district, std::shared_ptr<std::vector<std::string> > path, int IAT_min = 100, int IAT_max = 100,
 			 	   int v_pref_min = 15, int v_pref_max = 15, int dv_pos_max = 15, int dv_neg_max = 150, std::string name = "Building"):
-				AtomicModel(name), IAT_min(IAT_min), IAT_max(IAT_max),
+				AtomicModel_impl(name), IAT_min(IAT_min), IAT_max(IAT_max),
 				v_pref_min(v_pref_min), v_pref_max(v_pref_max),
 				dv_pos_max(dv_pos_max), dv_neg_max(dv_neg_max), district(district)
 {

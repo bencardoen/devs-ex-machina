@@ -303,10 +303,10 @@ public:
 	{
 		std::stringstream ss;
 
-		AtomicModel m1 = AtomicModel("test");
+		AtomicModel_impl m1 = AtomicModel_impl("test");
 		m1.m_timeLast = t_timestamp(42,42);
 		m1.m_timeNext = t_timestamp(42,42);
-		AtomicModel m2 = AtomicModel("err");
+		AtomicModel_impl m2 = AtomicModel_impl("err");
 
 		cereal::BinaryOutputArchive oarchive(ss);
 		cereal::BinaryInputArchive iarchive(ss);
@@ -323,10 +323,10 @@ public:
 	{
 		std::stringstream ss;
 
-		t_atomicmodelptr mp1 = n_tools::createObject<AtomicModel>("test");
+		t_atomicmodelptr mp1 = n_tools::createObject<AtomicModel_impl>("test");
 		mp1->m_timeLast = t_timestamp(42,42);
 		mp1->m_timeNext = t_timestamp(42,42);
-		t_atomicmodelptr mp2 = n_tools::createObject<AtomicModel>("err");
+		t_atomicmodelptr mp2 = n_tools::createObject<AtomicModel_impl>("err");
 
 		cereal::BinaryOutputArchive oarchive(ss);
 		cereal::BinaryInputArchive iarchive(ss);
@@ -425,7 +425,7 @@ TEST(Cereal, CoupledModelPointer)
 	TestCereal::testCerealModelCoupledPointer();
 }
 
-TEST(Cereal, AtomicModel)
+TEST(Cereal, AtomicModel_impl)
 {
 	TestCereal::testCerealAtomicModel();
 }
@@ -454,8 +454,8 @@ TEST(Cereal, AtomicModelBasic)
 {
 	std::stringstream ss;
 
-	AtomicModel m1 = AtomicModel("test");
-	AtomicModel m2 = AtomicModel("err");
+	AtomicModel_impl m1 = AtomicModel_impl("test");
+	AtomicModel_impl m2 = AtomicModel_impl("err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);
@@ -486,8 +486,8 @@ TEST(Cereal, ModelPolyAtomicModel)
 {
 	std::stringstream ss;
 
-	t_modelptr mpa1 = std::make_shared<AtomicModel>("test");
-	t_modelptr mpa2 = std::make_shared<AtomicModel>("err");
+	t_modelptr mpa1 = std::make_shared<AtomicModel_impl>("test");
+	t_modelptr mpa2 = std::make_shared<AtomicModel_impl>("err");
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);

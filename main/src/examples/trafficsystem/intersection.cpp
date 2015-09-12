@@ -50,7 +50,7 @@ std::string IntersectionState::toString()
 }
 
 Intersection::Intersection(int district, std::string name, t_timestamp switch_signal):
-		AtomicModel(name), district(district), switch_signal_delay(switch_signal)
+		AtomicModel_impl(name), district(district), switch_signal_delay(switch_signal)
 {
 	setState(n_tools::createObject<IntersectionState>(switch_signal));
 

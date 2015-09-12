@@ -32,25 +32,35 @@ typedef std::size_t t_counter;
 #endif
 
 
-class ProcessorState : public n_model::State
-{
-public:
+struct ProcessorState{
+
 	t_counter m_event1_counter;
 	Event m_event1;
 	std::vector<Event> m_queue;
 	std::size_t m_eventsHad;
-public:
+
 	ProcessorState();
-	virtual ~ProcessorState();
 
-	virtual std::string toString();
+	std::string toString() const;
 
-	std::shared_ptr<ProcessorState> copy() const;
+
+	std::string toXML() const
+	{
+		return n_tools::toString(m_event1);
+	}
+	std::string toJSON() const
+	{
+		return n_tools::toString(m_event1);
+	}
+	std::string toCell() const
+	{
+		return n_tools::toString(m_event1);
+	}
 };
 
 typedef std::mt19937_64 t_randgen;
 
-class Processor : public n_model::AtomicModel
+class Processor : public n_model::AtomicModel<ProcessorState>
 {
 private:
 	static std::size_t m_numcounter;
@@ -70,11 +80,9 @@ public:
 	virtual n_network::t_timestamp lookAhead() const;
 
 	t_counter getProcTime(size_t event) const;
-	ProcessorState& procstate();
-	const ProcessorState& procstate() const;
 };
 
-class Generator : public n_model::AtomicModel
+class Generator : public n_model::AtomicModel<void>
 {
 private:
 	const n_model::t_portptr m_out;

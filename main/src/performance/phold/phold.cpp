@@ -34,10 +34,6 @@ PHOLDModelState::PHOLDModelState()
 {
 }
 
-PHOLDModelState::~PHOLDModelState()
-{
-}
-
 
 /*
  * HeavyPHOLDProcessor
@@ -51,9 +47,7 @@ HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t t
 	for (size_t i = 0; i < totalAtomics; ++i) {
 		m_outs.push_back(addOutPort("outport_" + n_tools::toString(i)));
 	}
-	auto state = n_tools::createObject<PHOLDModelState>();
-	state->m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
-	setState(state);
+	state().m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
 }
 
 HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
@@ -92,10 +86,9 @@ size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 n_model::t_timestamp HeavyPHOLDProcessor::timeAdvance() const
 {
 	LOG_INFO("[PHOLD] - ",getName()," does TIMEADVANCE");
-	std::shared_ptr<PHOLDModelState> state = std::static_pointer_cast<PHOLDModelState>(getState());
-	if (!state->m_events.empty()) {
-		LOG_INFO("[PHOLD] - ",getName()," has an event with time ",state->m_events[0].m_procTime,".");
-		return n_network::t_timestamp(state->m_events[0].m_procTime, 0);
+	if (!state().m_events.empty()) {
+		LOG_INFO("[PHOLD] - ",getName()," has an event with time ", state().m_events[0].m_procTime,".");
+		return n_network::t_timestamp(state().m_events[0].m_procTime, 0);
 	} else {
 		LOG_INFO("[PHOLD] - ",getName()," has no events left, advances to infinity.");
 		return n_network::t_timestamp::infinity();
@@ -105,57 +98,47 @@ n_model::t_timestamp HeavyPHOLDProcessor::timeAdvance() const
 void HeavyPHOLDProcessor::intTransition()
 {
 	LOG_INFO("[PHOLD] - ",getName()," does an INTERNAL TRANSITION");
-	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-		        *std::static_pointer_cast<PHOLDModelState>(getState()));
-	newState->m_events.pop_front();
-	setState(newState);
+	state().m_events.pop_front();
 }
 
 void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	LOG_INFO("[PHOLD] - ",getName()," does a CONFLUENT TRANSITION");
-	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-		        *std::static_pointer_cast<PHOLDModelState>(getState()));
-	if (!newState->m_events.empty()) {
-		newState->m_events.pop_front();
+	if (!state().m_events.empty()) {
+		state().m_events.pop_front();
 	}
 	for (auto& msg : message) {
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
-		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
+		state().m_events.push_back(EventPair(payload, getProcTime(payload)));
 		volatile size_t i = 0;
 		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
-	setState(newState);
 }
 
 void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	LOG_INFO("[PHOLD] - ",getName()," does an EXTERNAL TRANSITION");
-	std::shared_ptr<PHOLDModelState> newState = n_tools::createObject<PHOLDModelState>(
-	        *std::static_pointer_cast<PHOLDModelState>(getState()));
-	if (!newState->m_events.empty()) {
-		newState->m_events[0].m_procTime -= m_elapsed.getTime();
+	if (!state().m_events.empty()) {
+		state().m_events[0].m_procTime -= m_elapsed.getTime();
 	}
 	for (auto& msg : message) {
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
-		newState->m_events.push_back(EventPair(payload, getProcTime(payload)));
+		state().m_events.push_back(EventPair(payload, getProcTime(payload)));
 		volatile size_t i = 0;
 		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
-	setState(newState);
 }
 
 void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	LOG_INFO("[PHOLD] - ",getName()," produces OUTPUT");
-	std::shared_ptr<PHOLDModelState> state = std::static_pointer_cast<PHOLDModelState>(getState());
 
-	if (!state->m_events.empty()) {
-		EventPair& i = state->m_events[0];
+	if (!state().m_events.empty()) {
+		const EventPair& i = state().m_events[0];
 		srand(i.m_modelNumber);
 		size_t dest = getNextDestination(i.m_modelNumber);
 		size_t r = getRand(i.m_modelNumber, m_rand);
@@ -168,8 +151,6 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
 {
-	LOG_WARNING(
-		"ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel::lookahead()'");
 	return n_network::t_timestamp(T_0);
 }
 

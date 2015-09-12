@@ -48,7 +48,7 @@ void TrafficLightMode::load_and_construct(n_serialization::t_iarchive& archive, 
 }
 
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel_impl(name, priority)
 {
 	this->setState(n_tools::createObject<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
@@ -143,12 +143,12 @@ t_stateptr TrafficLight::setState(std::string s)
 void TrafficLight::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("SERIALIZATION: Saving Traffic Light '", getName(), "' with timeNext = ", m_timeNext);
-	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
 }
 
 void TrafficLight::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(cereal::virtual_base_class<AtomicModel>( this ));
+	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
 	LOG_INFO("SERIALIZATION: Loaded Traffic Light '", getName(), "' with timeNext = ", m_timeNext);
 }
 
