@@ -515,7 +515,11 @@ class TestState: public n_model::State {
 class TestModel: public n_model::AtomicModel {
 	public:
 		TestModel() :
-				AtomicModel("TestModel", 1) {
+                        /// Careful, atomicmodel actually uses priority, unless the "ignore" value is set.
+                        /// 2 constructors of AModel : (string, int coreid, size_t prior=def)
+                        /// (string, size_t prior=def)
+                        /// We need to kill one of them (viciously).
+			AtomicModel("TestModel", 0, std::numeric_limits<size_t>::max()) {
 			this->addInPort("portIn");
 			this->addInPort("portIn2");
 			this->addOutPort("MyVerySpecialOutput");

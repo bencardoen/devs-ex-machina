@@ -14,11 +14,17 @@ namespace n_model {
 AtomicModel::AtomicModel(std::string name, std::size_t)
 	: Model(name), m_corenumber(-1),m_priority(nextPriority())
 {
+        LOG_DEBUG("\tAMODEL ctor :: name=", name, " m_prior= ", m_priority , " corenr=", m_corenumber);
 }
 
-AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t /*priority*/)
-	: Model(name), m_corenumber(corenumber), m_priority(nextPriority())
+AtomicModel::AtomicModel(std::string name, int corenumber, std::size_t priority)
+	: Model(name), m_corenumber(corenumber), m_priority(priority)
 {
+        if(m_priority == std::numeric_limits<std::size_t>::max())
+                m_priority = nextPriority();
+        else
+                m_priority = priority;
+        LOG_DEBUG("\tAMODEL ctor :: name=", name, " m_prior= ", m_priority , " corenr=", m_corenumber);
 }
 
 void AtomicModel::confTransition(const std::vector<n_network::t_msgptr> & message)

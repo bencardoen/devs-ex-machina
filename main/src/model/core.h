@@ -257,6 +257,12 @@ protected:
         void
         clearWaitingOutput();
         
+        /**
+         * Calculates Model ids, indices and mailbag adresses.
+         */
+        void
+        initializeModels();
+        
 	/**
 	 * Model storage.
 	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
@@ -304,6 +310,7 @@ protected:
 	 */
 	void
 	revertTracerUntil(const t_timestamp& totime);
+        
 
 public:
 	/**

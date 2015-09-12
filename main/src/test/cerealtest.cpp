@@ -549,8 +549,8 @@ TEST(Cereal, ModelEntry)
 {
 	std::stringstream ss;
 
-	ModelEntry me1 ("test", 0);
-	ModelEntry me2 ("err", 0);
+	ModelEntry me1 (1, 0);
+	ModelEntry me2 (2, 0);
 
 	cereal::BinaryOutputArchive oarchive(ss);
 	cereal::BinaryInputArchive iarchive(ss);

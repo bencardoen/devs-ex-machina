@@ -44,6 +44,7 @@ private:
 		static size_t initprior = 0;
 		return ++initprior;
 	}
+        
 	using Model::m_control;	//change access to private
 
 	/**
@@ -77,7 +78,7 @@ public:
 	 * @param name The name of the model
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, std::size_t priority = 0);
+	AtomicModel(std::string name, std::size_t priority = std::numeric_limits<size_t>::max());
 
 	/**
 	 * Constructor for AtomicModel
@@ -89,7 +90,7 @@ public:
 	 * @param corenumber The core number that the model wants to be on
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, int corenumber, std::size_t priority = 0);
+	AtomicModel(std::string name, int corenumber, std::size_t priority = std::numeric_limits<size_t>::max());
         
         /**
          * @return uuid object.

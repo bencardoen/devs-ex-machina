@@ -27,8 +27,7 @@ void DynamicCore::signalImminent(const std::set<std::string>& imminents)
 	this->m_lastimminents.clear();
 	for (const auto& immname : imminents) {
 		assert(this->containsModel(immname) && "imminent model not in core ??");
-		t_atomicmodelptr model = this->getModel(immname);
-		this->m_lastimminents.push_back(model);
+		this->m_lastimminents.push_back(this->getModel(immname));
 	}
 }
 } /* namespace n_model */

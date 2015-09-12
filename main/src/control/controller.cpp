@@ -641,7 +641,13 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 //	if (atomic) {
 		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs
-		m_cores.begin()->second->addModelDS(atomic);
+                if(!m_cores[0]->containsModel(model->getName())){
+                        m_cores.begin()->second->addModelDS(atomic);
+                }
+                else{
+                        LOG_ERROR("Trying to add model that already exists in core ????", model->getName());
+                }
+                        
 		atomic->setKeepOldStates(false);
 		//no need to remove the model from the root devs. We have to redo direct connect anyway
 //		return;

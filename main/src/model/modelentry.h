@@ -17,17 +17,17 @@ using n_network::t_timestamp;
  */
 class ModelEntry
 {
-	std::string m_name;
+        std::size_t m_localid;
 	t_timestamp m_scheduled_at;
 public:
-	std::string getName() const
-	{
-		return m_name;
-	}
 	t_timestamp getTime() const
 	{
 		return m_scheduled_at;
 	}
+        size_t getID()const
+        {
+                return m_localid; 
+        }
 
 	ModelEntry() = default;
 	~ModelEntry() = default;
@@ -36,8 +36,8 @@ public:
 	ModelEntry& operator=(const ModelEntry&) = default;
 	ModelEntry& operator=(ModelEntry&&) = default;
 
-	ModelEntry(std::string name, t_timestamp time)
-		: m_name(name), m_scheduled_at(time)
+	ModelEntry(std::size_t lid, t_timestamp time)
+		: m_localid(lid), m_scheduled_at(time)
 	{
 		;
 	}
@@ -46,7 +46,7 @@ public:
 	bool operator<(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
 		if (lhs.m_scheduled_at == rhs.m_scheduled_at)
-			return lhs.m_name > rhs.m_name;
+			return lhs.m_localid > rhs.m_localid;
 		return lhs.m_scheduled_at > rhs.m_scheduled_at;
 	}
         
@@ -72,12 +72,13 @@ public:
 	friend
 	bool operator==(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
-		return (lhs.m_name == rhs.m_name /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model
+		return (lhs.m_localid == rhs.m_localid /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model
 	}
 
 	friend
 	std::ostream& operator<<(std::ostream& os, const ModelEntry& rhs){
-		return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
+		//return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
+                return (os<<rhs.getID() << " scheduled at " << rhs.m_scheduled_at);
 	}
 
 	/**
@@ -87,7 +88,7 @@ public:
 	 */
 	void serialize(n_serialization::t_oarchive& archive)
 	{
-		archive(m_name, m_scheduled_at);
+		archive(m_localid, m_scheduled_at);
 	}
 
 	/**
@@ -97,7 +98,7 @@ public:
 	 */
 	void serialize(n_serialization::t_iarchive& archive)
 	{
-		archive(m_name, m_scheduled_at);
+		archive(m_localid, m_scheduled_at);
 	}
 };
 
@@ -110,7 +111,8 @@ struct hash<n_model::ModelEntry>
 	size_t operator()(const n_model::ModelEntry& item) const
 	{
 		//std::cout << "Hash function for "<< item.getName()<<std::endl;
-		return hash<std::string>()(item.getName());
+		//return hash<std::string>()(item.getName());
+                return hash<std::size_t>()(item.getID());
 	}
 };
 }

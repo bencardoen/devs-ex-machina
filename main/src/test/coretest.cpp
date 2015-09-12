@@ -45,33 +45,30 @@ TEST(ModelEntry, Scheduling)
 	EXPECT_TRUE(scheduler->empty());
 	std::stringstream s;
 	for (size_t i = 0; i < 100; ++i) {
-		s << i;
-		std::string name = s.str();
-		s.str(std::string(""));
-		scheduler->push_back(ModelEntry(name, t_timestamp(i, 0)));
+		scheduler->push_back(ModelEntry(i, t_timestamp(i, 0)));
 		EXPECT_EQ(scheduler->size(), i + 1);
 	}
 	std::vector<ModelEntry> imminent;
-	ModelEntry token("", t_timestamp(50, 0));
+	ModelEntry token(0, t_timestamp(50, 0));
 	scheduler->unschedule_until(imminent, token);
 	EXPECT_EQ(scheduler->size(), 50u);
-	token = ModelEntry("", t_timestamp(100, 0));
+	token = ModelEntry(0, t_timestamp(100, 0));
 	scheduler->unschedule_until(imminent, token);
 	EXPECT_EQ(scheduler->size(), 0u);
 
 	// Test if scheduling models at same time is a problem
-	ModelEntry origin("Abc", t_timestamp(0));
-	ModelEntry duplicate("Bca", t_timestamp(0));
-	ModelEntry third("Cab", t_timestamp(0, 1));
+	ModelEntry origin(1, t_timestamp(0));
+	ModelEntry duplicate(2, t_timestamp(0));
+	ModelEntry third(3, t_timestamp(0, 1));
 	scheduler->push_back(origin);
 	scheduler->push_back(duplicate);
 	EXPECT_EQ(scheduler->size(), 2u);
 	scheduler->push_back(third);
 	EXPECT_EQ(scheduler->size(), 3u);
 	ModelEntry found = scheduler->pop();
-	EXPECT_EQ(found.getName(), "Abc");
-	EXPECT_EQ(scheduler->pop().getName(), "Bca");
-	EXPECT_EQ(scheduler->pop().getName(), "Cab");
+	EXPECT_EQ(found.getID(), 1);
+	EXPECT_EQ(scheduler->pop().getID(), 2);
+	EXPECT_EQ(scheduler->pop().getID(), 3);
 	EXPECT_EQ(scheduler->size(), 0u);
 }
 
@@ -79,8 +76,8 @@ TEST(ModelScheduling, BasicOperations)
 {
 	RecordProperty("description",
 	        "Verify that std::hash, std::less and related operators are well defined and execute as expected.");
-	ModelEntry me("alone", t_timestamp(0, 0));
-	ModelEntry you("home", t_timestamp(0, 0));
+	ModelEntry me(1, t_timestamp(0, 0));
+	ModelEntry you(2, t_timestamp(0, 0));
 	EXPECT_FALSE(me == you);
 	std::unordered_set<ModelEntry> set;
 	set.insert(me);
@@ -92,8 +89,8 @@ TEST(ModelScheduling, BasicOperations)
 	// A model entry with the same name is equal no matter what time is set.
 	// The alternative allows insertion multiple times (an error).
 	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
-	me = ModelEntry("alone", t_timestamp(1, 0));
-	you = ModelEntry("alone", t_timestamp(1, 1));
+	me = ModelEntry(1, t_timestamp(1, 0));
+	you = ModelEntry(1, t_timestamp(1, 1));
 	EXPECT_TRUE(me == you);
 	EXPECT_TRUE(me > you); // Note this is so the max-heap property works as a min heap.
 	set.insert(me);
@@ -144,8 +141,12 @@ TEST(DynamicCore, smallStep)
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
 	c->setTracers(tracers);
-	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
-	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
+        std::string mname = "Amodel";
+        std::string nname = "toBen";
+	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>(mname);
+	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>(nname);
+        modelfrom->setCorenumber(0);
+        modelto->setCorenumber(0);
 	c->addModel(modelfrom);
 	c->addModel(modelto);
 	c->init();
