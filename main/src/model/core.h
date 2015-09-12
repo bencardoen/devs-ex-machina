@@ -304,6 +304,12 @@ protected:
 	 */
 	void
 	rescheduleAll(const t_timestamp& totime);
+        
+        /**
+         * Wipe the scheduler clear, and ask each model for a new scheduled entry.
+         */
+        void
+        rescheduleAll();
 
 	/**
 	 * Called by subclasses, undo tracing up to a time < totime, with totime >= gvt.
