@@ -56,7 +56,7 @@ struct ToJSON<n_examples_coupled::PolicemanMode>
 template<>
 struct ToCell<n_examples_coupled::PolicemanMode>
 {
-	static std::string exec(const n_examples_coupled::PolicemanMode& s){
+	static std::string exec(const n_examples_coupled::PolicemanMode&){
 		return "";
 	}
 };

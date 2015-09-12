@@ -51,7 +51,7 @@ struct ToJSON<n_examples::TrafficLightMode>
 template<>
 struct ToCell<n_examples::TrafficLightMode>
 {
-	static std::string exec(const n_examples::TrafficLightMode& s){
+	static std::string exec(const n_examples::TrafficLightMode&){
 		return "";
 	}
 };
