@@ -12,6 +12,7 @@
 #include "network/timestamp.h"
 #include "tools/stringtools.h"
 #include "tools/globallog.h"
+#include "model/uuid.h"
 #include <sstream>
 #include <iosfwd>
 
@@ -79,6 +80,10 @@ protected:
 	 * Is message an annihilator of the original ?
 	 */
 	bool m_antimessage;
+        
+        n_model::uuid src_uuid;
+        
+        n_model::uuid dst_uuid;
 
 public:
 	/**

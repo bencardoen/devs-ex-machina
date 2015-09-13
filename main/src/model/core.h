@@ -359,10 +359,7 @@ public:
         virtual
 	void addModel(const t_atomicmodelptr& model);
         
-        /**
-	 * Add model to this core.
-	 * @pre !containsModel(model->getName());
-	 */
+        // Move this and use dyn_ptr in DS. works for now.
         virtual
 	void addModelDS(const t_atomicmodelptr& /*model*/){assert(false);}
 
@@ -616,10 +613,12 @@ public:
 	void
 	removeModel(const std::string& name);
         
+        // Move this and use dyn_ptr in DS. works for now.
         virtual
 	void
 	removeModelDS(const std::string& /*name*/){assert(false);}
         
+        // Move this and use dyn_ptr in DS. works for now.
         virtual
         void
         validateModels(){assert(false);}

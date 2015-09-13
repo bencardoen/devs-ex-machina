@@ -9,6 +9,7 @@
 #define ATOMICMODEL_H_
 
 #include "model/model.h"
+#include "model/uuid.h"
 #include "network/message.h"	// include globallog
 #include <assert.h>
 #include <map>
@@ -22,18 +23,6 @@ class TestCereal;
 
 namespace n_model {
 
-struct uuid{
-        /**
-         * Core index nr.
-         */
-        size_t  m_core_id;
-        /**
-         * Local index nr.
-         */
-        size_t  m_local_id;
-        uuid():m_core_id(0),m_local_id(0){;}
-        uuid(size_t cid, size_t lid):m_core_id(cid), m_local_id(lid){;}
-};
 
 class AtomicModel: public Model
 {
