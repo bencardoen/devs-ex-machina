@@ -95,6 +95,12 @@ public:
 	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport,
 	        const std::string& payload = "");
 
+        n_model::uuid&
+        getSrcUUID(){return m_src_uuid;}
+        
+        n_model::uuid&
+        getDstUUID(){return m_dst_uuid;}
+        
 	/**
 	 * @brief Returns the destination core.
 	 * @return the destination core

@@ -16,6 +16,7 @@
 #include "model/zfunc.h"
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
+#include "model/uuid.h"
 #include <set>
 
 
@@ -64,6 +65,11 @@ private:
         
         AtomicModel*    m_hostmodel;
         
+        // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
+        // atomicmodel, but createMessages is templated (and header defined) so we can't call 
+        // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
+        uuid
+        getModelUUID()const;
 
 public:
 	/**
@@ -263,6 +269,7 @@ public:
 	void addInfluencees(std::set<std::string>& influences) const;
         
         void setHost(AtomicModel* h){
+                LOG_DEBUG("Port : ptr = ", h);
                 m_hostmodel=h;
         }
         
@@ -336,6 +343,8 @@ void Port::createMessages(const DataType& message,
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
+                        container.back()->getSrcUUID()=this->getModelUUID();
+                        container.back()->getDstUUID()=pair.first->getModelUUID();
 		}
 	} else {
 		container.reserve(m_coupled_outs.size());
@@ -346,6 +355,9 @@ void Port::createMessages(const DataType& message,
 			for (t_zfunc& zFunction : pair.second) {
 				container.push_back(
 				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
+                                // Correct UUIDs
+                                container.back()->getSrcUUID()=this->getModelUUID();
+                                container.back()->getDstUUID()=pair.first->getModelUUID();
 //#ifdef USESTAT
 				++m_sendstat[pair.first];
 //#endif

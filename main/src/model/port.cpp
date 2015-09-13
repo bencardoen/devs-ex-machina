@@ -14,6 +14,7 @@
 #include "tools/stringtools.h"
 #include "tools/objectfactory.h"
 #include "model.h"
+#include "atomicmodel.h"
 
 namespace n_model {
 
@@ -188,6 +189,12 @@ void Port::addInfluencees(std::set<std::string>& influences) const
 	for (auto& port : this->m_coupled_ins)
 		influences.insert(port->getHostName());
 }
+
+uuid Port::getModelUUID() const
+{
+        return m_hostmodel->getUUID();
+}
+
 
 void Port::serialize(n_serialization::t_oarchive& archive)
 {
