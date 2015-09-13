@@ -44,10 +44,6 @@ protected:
 	 */
 	const std::string m_destination_model;
 
-	std::size_t m_destination_core;
-
-	std::size_t m_source_core;
-
 	/**
 	 * Time message is created (by model/port)
 	 */
@@ -81,9 +77,10 @@ protected:
 	 */
 	bool m_antimessage;
         
-        n_model::uuid src_uuid;
+        n_model::uuid m_dst_uuid;
         
-        n_model::uuid dst_uuid;
+        n_model::uuid m_src_uuid;
+
 
 public:
 	/**
@@ -105,7 +102,7 @@ public:
 	 */
 	std::size_t getDestinationCore() const
 	{
-		return m_destination_core;
+		return m_dst_uuid.m_core_id;
 	}
 
 	/**
@@ -136,7 +133,7 @@ public:
 	 */
 	void setDestinationCore(std::size_t dest)
 	{
-		m_destination_core = dest;
+		m_dst_uuid.m_core_id=dest;
 	}
 
 	/**
@@ -145,7 +142,7 @@ public:
 	 */
 	std::size_t getSourceCore() const
 	{
-		return m_source_core;
+		return m_src_uuid.m_core_id;
 	}
 
 	/**
@@ -156,7 +153,7 @@ public:
 	 */
 	void setSourceCore(std::size_t src)
 	{
-		m_source_core = src;
+		m_src_uuid.m_core_id=src;
 	}
 
 	/**

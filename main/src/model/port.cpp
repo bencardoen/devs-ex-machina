@@ -13,6 +13,7 @@
 #include "cereal/types/polymorphic.hpp"
 #include "tools/stringtools.h"
 #include "tools/objectfactory.h"
+#include "model.h"
 
 namespace n_model {
 

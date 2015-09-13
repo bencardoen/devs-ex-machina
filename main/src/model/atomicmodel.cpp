@@ -246,4 +246,24 @@ void AtomicModel::setCorenumber(int corenumber)
 	m_corenumber = corenumber;
 }
 
+
+t_portptr AtomicModel::addInPort(std::string name){
+        t_portptr port(Model::addInPort(name));
+        port->setHost(this);
+        return port;
+}
+
+	
+t_portptr AtomicModel::addOutPort(std::string name){
+        t_portptr port(Model::addOutPort(name));
+        port->setHost(this);
+        return port;
+}
+
+
+void AtomicModel::removePort(t_portptr& port){
+        Model::removePort(port);
+        port->setHost(nullptr);
+}
+
 }

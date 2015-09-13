@@ -98,7 +98,7 @@ t_portptr Model::addPort(std::string name, bool isIn)
 	if (m_control) {
 		m_control->dsUndoDirectConnect();
 	}
-
+        
 	return port;
 }
 
@@ -113,6 +113,7 @@ void Model::removePort(t_portptr& port)
 
 	if (m_control)
 		m_control->dsRemovePort(port);
+        port->setHost(nullptr);
 }
 
 t_portptr Model::addInPort(std::string name)

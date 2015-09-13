@@ -21,6 +21,8 @@
 
 #include "tools/statistic.h"
 
+
+
 class TestCereal;
 
 namespace n_model {
@@ -28,6 +30,10 @@ namespace n_model {
 class Port;
 
 typedef std::shared_ptr<Port> t_portptr;
+
+
+//// Merge TODO, if States are merged, recheck this code.
+class AtomicModel;
 
 class Port
 {
@@ -55,6 +61,9 @@ private:
 	std::vector<n_network::t_msgptr> m_receivedMessages;
 
 	bool m_usingDirectConnect;
+        
+        AtomicModel*    m_hostmodel;
+        
 
 public:
 	/**
@@ -252,6 +261,12 @@ public:
 	 * @param influences A set of all current influences (strings: host names) that will be completed
 	 */
 	void addInfluencees(std::set<std::string>& influences) const;
+        
+        void setHost(AtomicModel* h){
+                m_hostmodel=h;
+        }
+        
+        AtomicModel* getHost(){return m_hostmodel;}
 
 //-------------serialization---------------------
 	/**

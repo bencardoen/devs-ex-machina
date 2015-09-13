@@ -54,6 +54,22 @@ protected:
 	std::size_t m_priority;
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
+        
+        /**
+	 * Add an input port to the model
+	 * Link the port to this model
+	 * @param name The name of the port
+	 */
+        virtual
+	t_portptr addInPort(std::string name)override final;
+
+	/**
+	 * Add an output port to the model
+	 * Link the port to this model
+	 * @param name The name of the port
+	 */
+        virtual
+	t_portptr addOutPort(std::string name)override final;
 
 public:
 	AtomicModel() = delete;
@@ -288,6 +304,12 @@ public:
 	 * @brief Sets the elapsed time since the previous internal transition.
 	 */
 	void setTimeElapsed(t_timestamp elapsed);
+        
+        /**
+	 * @brief Removes a port from this model.
+	 */
+        virtual
+	void removePort(t_portptr& port)override final;
 
 	/**
 	 * Serialize this object to the given archive

@@ -77,6 +77,7 @@ protected:
 	 *
 	 * @param name The name of the port
 	 */
+        virtual
 	t_portptr addInPort(std::string name);
 
 	/**
@@ -84,6 +85,7 @@ protected:
 	 *
 	 * @param name The name of the port
 	 */
+        virtual
 	t_portptr addOutPort(std::string name);
 
 	/**
@@ -134,6 +136,7 @@ public:
 	/**
 	 * @brief Removes a port from this model.
 	 */
+        virtual
 	void removePort(t_portptr& port);
 
 	/**
