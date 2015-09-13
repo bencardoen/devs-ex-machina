@@ -242,6 +242,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
 		// Set timestamp, source and color (info model does not have).
 		for (const auto& msg : mailfrom) {
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
 			msg->setSourceCore(this->getCoreID());
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());

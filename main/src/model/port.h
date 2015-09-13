@@ -332,6 +332,7 @@ void Port::createMessages(const DataType& message,
 	}
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
+        const n_model::uuid srcuuid = this->getModelUUID();
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
 		for (auto& pair : m_outs) {
@@ -343,7 +344,7 @@ void Port::createMessages(const DataType& message,
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
-                        container.back()->getSrcUUID()=this->getModelUUID();
+                        container.back()->getSrcUUID()=srcuuid;
                         container.back()->getDstUUID()=pair.first->getModelUUID();
 		}
 	} else {
@@ -356,7 +357,7 @@ void Port::createMessages(const DataType& message,
 				container.push_back(
 				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
                                 // Correct UUIDs
-                                container.back()->getSrcUUID()=this->getModelUUID();
+                                container.back()->getSrcUUID()=srcuuid;
                                 container.back()->getDstUUID()=pair.first->getModelUUID();
 //#ifdef USESTAT
 				++m_sendstat[pair.first];
