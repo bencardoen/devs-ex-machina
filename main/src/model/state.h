@@ -57,6 +57,47 @@ STATE_REPR_ARITHMETIC_GROUP(ToXML);
 STATE_REPR_ARITHMETIC_GROUP(ToJSON);
 STATE_REPR_ARITHMETIC_GROUP(ToCell);
 
+template<> struct ToString<bool> {
+	static std::string exec(const bool& val) {
+		return val? "1":"0";
+	}
+};
+template<> struct ToXML<bool> {
+	static std::string exec(const bool& val) {
+		return val? "true":"false";
+	}
+};
+template<> struct ToJSON<bool> {
+	static std::string exec(const bool& val) {
+		return val? "true":"false";
+	}
+};
+template<> struct ToCell<bool> {
+	static std::string exec(const bool& val) {
+		return val? "1":"0";
+	}
+};
+template<> struct ToString<std::string> {
+	static std::string exec(const std::string& val) {
+		return val;
+	}
+};
+template<> struct ToXML<std::string> {
+	static std::string exec(const std::string& val) {
+		return val;
+	}
+};
+template<> struct ToJSON<std::string> {
+	static std::string exec(const std::string& val) {
+		return "\"" + val + "\"";
+	}
+};
+template<> struct ToCell<std::string> {
+	static std::string exec(const std::string& val) {
+		return val;
+	}
+};
+
 #undef STATE_REPR_STRUCT
 #undef STATE_REPR_ARITHMETIC
 #undef STATE_REPR_ARITHMETIC_GROUP
