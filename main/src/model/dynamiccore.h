@@ -40,6 +40,19 @@ public:
 	virtual
 	void
 	getLastImminents(std::vector<t_atomicmodelptr>& imms);
+        
+        void
+        addModelDS(const t_atomicmodelptr& model)override;
+        
+        void
+        removeModelDS(const std::string& name)override;
+        
+        /**
+         * Whenever at least 1 model is altered in DS, call this
+         * function to reset all models. 
+         */
+        void
+        validateModels()override;
 };
 
 } /* namespace n_model */

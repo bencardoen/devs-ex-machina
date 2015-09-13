@@ -258,7 +258,7 @@ protected:
         clearWaitingOutput();
         
         /**
-         * Calculates Model ids, indices and mailbag adresses.
+         * Sort the vector of models by priority, sets indices in models.
          */
         void
         initializeModels();
@@ -356,13 +356,20 @@ public:
 	 * Add model to this core.
 	 * @pre !containsModel(model->getName());
 	 */
-	void addModel(t_atomicmodelptr model);
+        virtual
+	void addModel(const t_atomicmodelptr& model);
+        
+        /**
+	 * Add model to this core.
+	 * @pre !containsModel(model->getName());
+	 */
+        virtual
+	void addModelDS(const t_atomicmodelptr& /*model*/){assert(false);}
 
 	/**
 	 * Add model to this core during dynamic structured simulation.
 	 * @pre !containsModel(model->getName());
 	 */
-	void addModelDS(t_atomicmodelptr model);
 
 	/**
 	 * Retrieve model with name from core
@@ -605,8 +612,17 @@ public:
 	 * @attention : call only in single core or if core is not live.
 	 * @post name is no longer scheduled/present.
 	 */
+        virtual
 	void
-	removeModel(std::string name);
+	removeModel(const std::string& name);
+        
+        virtual
+	void
+	removeModelDS(const std::string& /*name*/){assert(false);}
+        
+        virtual
+        void
+        validateModels(){assert(false);}
 
 	/**
 	 * @brief Sets the tracers that will be used from now on

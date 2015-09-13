@@ -457,6 +457,7 @@ void Controller::simDSDEVS()
 			core->runSmallStep();
 			core->getLastImminents(imminent);
 			doDSDevs(imminent);
+                        core->validateModels();
 		} else {
 			LOG_DEBUG("CONTROLLER: CORE NO LONGER LIVE");
 			break;
@@ -663,7 +664,7 @@ void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
 
 	LOG_DEBUG("removing model: ", model->getName());
 	//it is an atomic model. Just remove this one from the core
-	m_cores.begin()->second->removeModel(model->getName());
+	m_cores.begin()->second->removeModelDS(model->getName());
 }
 
 void Controller::dsUndoDirectConnect()

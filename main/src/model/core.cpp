@@ -113,23 +113,15 @@ void n_model::Core::load(const std::string& fname)
 	}
 }
 
-void n_model::Core::addModel(t_atomicmodelptr model)
+void n_model::Core::addModel(const t_atomicmodelptr& model)
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Add model called on core::  got model : ", model->getName());
 	std::string mname = model->getName();
 	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
 	this->m_models[mname] = model;
+        this->m_indexed_models.push_back(model);
 }
 
-void n_model::Core::addModelDS(t_atomicmodelptr model)
-{
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DSAtomic :: got model : ", model->getName());
-	this->addModel(model);
-        this->initializeModels();
-        model->setTime(this->getTime().getTime());
-        this->rescheduleAll();
-        //this->scheduleModel(model->getName(),model->getTimeNext());
-}
 
 n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
 {
@@ -198,11 +190,6 @@ void n_model::Core::initializeModels()
         auto cmp_prior = [](const t_atomicmodelptr& left, const t_atomicmodelptr& right)->bool{
                 return left->getPriority() < right->getPriority();
         };
-        /// Make sure there is nothing left here, before filling it and sorting it.
-        m_indexed_models.clear();
-        for(const auto& mname : m_models){
-                m_indexed_models.push_back(mname.second);
-        }
         std::sort(m_indexed_models.begin(), m_indexed_models.end(), cmp_prior);
         
         assert(m_indexed_models.size()==m_models.size());
@@ -568,7 +555,7 @@ void n_model::Core::checkTerminationFunction()
 	}
 }
 
-void n_model::Core::removeModel(std::string name)
+void n_model::Core::removeModel(const std::string& name)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", name);
 
@@ -579,24 +566,20 @@ void n_model::Core::removeModel(std::string name)
                 
                 size_t sizeold = m_indexed_models.size();
                 auto iter = m_indexed_models.begin();
-                for(size_t i = 0; i <= lid;++i)
-                        ++iter;
+                std::advance(iter, lid);
                 m_indexed_models.erase(iter);
                 size_t news = m_indexed_models.size();
                 assert(sizeold = news+1);
-                // TODO
+                
 		ModelEntry target(lid, 0);
 		this->m_scheduler->erase(target);
+                
 		LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
                 assert(m_models.size()==m_indexed_models.size());
-                LOG_INFO("\tCORE :: ", this->getCoreID(), " current model size == ", m_indexed_models.size());
                 
 		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
 		assert(m_models.find(name) == m_models.end() && "Removal from scheduler failed !! model still in m_models");
                 
-                this->initializeModels();
-                
-                this->rescheduleAll();
 	} else {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " you've asked to remove model with name ", name, " which is not in this core.");
 	}
