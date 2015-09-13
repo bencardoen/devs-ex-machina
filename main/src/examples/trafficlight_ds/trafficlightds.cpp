@@ -7,9 +7,3 @@
 
 #include "examples/trafficlight_ds/trafficlightds.h"
 
-namespace n_examples_ds {
-
-
-
-}
-

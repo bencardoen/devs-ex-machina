@@ -19,18 +19,19 @@ typedef std::pair<std::size_t, std::size_t> t_point;
  * @brief Specialized atomic model that contains a position.
  * This model can be used for the Cell Tracer
  */
-class CellAtomicModel: public n_model::AtomicModel_impl
+class CellAtomicModel_impl: public n_model::AtomicModel_impl
 {
 protected:
 	t_point m_pos;
 
 public:
-	CellAtomicModel() = delete;
-	CellAtomicModel(const CellAtomicModel&) = default;
-	CellAtomicModel(std::string name, std::size_t priority = 0);
-	CellAtomicModel(std::string name, t_point point, std::size_t priority = 0);
+	CellAtomicModel_impl() = delete;
+	CellAtomicModel_impl(std::string name, int core, std::size_t priority = 0);
+	CellAtomicModel_impl(std::string name, t_point point, int core, std::size_t priority = 0);
+	CellAtomicModel_impl(std::string name, std::size_t priority = 0);
+	CellAtomicModel_impl(std::string name, t_point point, std::size_t priority = 0);
 
-	virtual ~CellAtomicModel() = default;
+	virtual ~CellAtomicModel_impl() = default;
 
 	/**
 	 * @return The position property of this state
@@ -49,7 +50,53 @@ public:
 	void setPoint(t_point pt);
 };
 
-typedef std::shared_ptr<CellAtomicModel> t_cellmodelptr;
+template<typename T>
+class CellAtomicModel: public CellAtomicModel_impl
+{
+public:
+	typedef T t_type;
+
+public:
+	CellAtomicModel(std::string name, t_point pt, const T& value, std::size_t priority = 0):
+		CellAtomicModel_impl(name, pt, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>(value));
+	}
+	CellAtomicModel(std::string name, t_point pt, const T& value, int coreNum, std::size_t priority = 0):
+		CellAtomicModel_impl(name, pt, coreNum, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>(value));
+	}
+	CellAtomicModel(std::string name, t_point pt, std::size_t priority = 0):
+		CellAtomicModel_impl(name, pt, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>());
+	}
+	CellAtomicModel(std::string name, t_point pt, int coreNum, std::size_t priority = 0):
+		CellAtomicModel_impl(name, pt, coreNum, priority)
+	{
+		initState(n_tools::createObject<State__impl<t_type>>());
+	}
+
+	/**
+	 * @brief Returns a reference to the current state.
+	 */
+	constexpr const t_type& state() const
+	{
+		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	}
+
+	/**
+	 * @brief Returns a reference to the current state.
+	 */
+	t_type& state()
+	{
+		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	}
+
+};
+
+typedef std::shared_ptr<CellAtomicModel_impl> t_cellmodelptr;
 
 } /* namespace n_model */
 

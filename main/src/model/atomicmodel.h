@@ -110,6 +110,8 @@ public:
 	 */
 	AtomicModel_impl(std::string name, int corenumber, std::size_t priority = 0);
         
+	virtual ~AtomicModel_impl() = default;
+
         /**
          * @return uuid object.
          * @attention This is only initialized after a model is added to a core AND 
@@ -328,10 +330,6 @@ public:
 	 * @param corenumber The core number this model wants to be on
 	 */
 	void setCorenumber(int corenumber);
-
-	virtual ~AtomicModel_impl()
-	{
-	}
 
 	/**
 	 * @brief Returns the elapsed time set by the model on initialization.

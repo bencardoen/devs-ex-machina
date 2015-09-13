@@ -15,12 +15,9 @@ using namespace n_network;
 
 namespace n_examples {
 
-class FireCell: public n_model::CellAtomicModel
+class FireCell: public n_model::CellAtomicModel<FireCellState>
 {
 private:
-	const FireCellState& fcstate() const;
-	FireCellState& fcstate();
-
 	std::array<n_model::t_portptr, 5> m_myIports;
 	n_model::t_portptr m_myOport;
 public:
