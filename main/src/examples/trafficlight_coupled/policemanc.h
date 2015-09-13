@@ -26,7 +26,8 @@ class PolicemanMode
 {
 public:
 	std::string m_value;
-	PolicemanMode(std::string state);
+	PolicemanMode(std::string state): m_value(state)
+	{}
 };
 
 

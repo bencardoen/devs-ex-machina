@@ -488,38 +488,55 @@ TEST(tracing, policies) {
 
 }
 
-class TestState: public n_model::State {
-	public:
-		TestState(std::size_t time = 0, std::size_t causality = 0) :
-				State("This is a test state") {
-			m_timeLast = t_timestamp(time, causality);
-		}
+struct TestState
+{
+	std::string m_value;
+public:
+	TestState()
+		: m_value("This is a test state")
+	{
+	}
 
-		virtual std::string toXML() {
-			return "<attribute category=\"P\">"
-				"<name>isXml</name>"
-				"<type>String</type>"
-				"<value>indeed!</value>"
-				"</attribute>";
-		}
-		;
-		virtual std::string toJSON() {
-			return "{\"state\":\"JSON!\"}";
-		}
-		;
-		virtual std::string toCell() {
-			return toString();
-		}
-		;
 };
-class TestModel: public n_model::AtomicModel_impl {
+template<>
+struct ToString<TestState>
+{
+	static std::string exec(const TestState& s){
+		return s.m_value;
+	}
+};
+template<>
+struct ToXML<TestState>
+{
+	static std::string exec(const TestState&){
+		return "<attribute category=\"P\">"
+			"<name>isXml</name>"
+			"<type>String</type>"
+			"<value>indeed!</value>"
+			"</attribute>";
+	}
+};
+template<>
+struct ToJSON<TestState>
+{
+	static std::string exec(const TestState&){
+		return "{\"state\":\"JSON!\"}";
+	}
+};
+template<>
+struct ToCell<TestState>
+{
+	static std::string exec(const TestState& s){
+		return s.m_value;
+	}
+};
+class TestModel: public n_model::AtomicModel<TestState> {
 	public:
 		TestModel() :
-				AtomicModel_impl("TestModel", 1) {
-			this->addInPort("portIn");
-			this->addInPort("portIn2");
-			this->addOutPort("MyVerySpecialOutput");
-			this->setState(std::make_shared<TestState>());
+			AtomicModel<TestState>("TestModel", 1) {
+			addInPort("portIn");
+			addInPort("portIn2");
+			addOutPort("MyVerySpecialOutput");
 		}
 
 		virtual void extTransition(const std::vector<n_network::t_msgptr> &) {
@@ -548,26 +565,26 @@ TEST(tracing, tracer##tracerclass){\
 		tracer.startTrace();\
 		tracer.tracesInit(model, t_timestamp(12, 1));\
 		tracer.tracesInternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(13));\
+		model->getState()->setTimeLast(13);\
 		model->setTime(13); \
 		tracer.tracesExternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(14));\
+		model->getState()->setTimeLast(14);\
 		model->setTime(14); \
 		tracer.tracesExternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(14, 1));\
+		model->getState()->setTimeLast(n_network::t_timestamp(14, 1));\
 		tracer.tracesConfluent(model, 0u);\
-		model->setState(std::make_shared<TestState>(15));\
+		model->getState()->setTimeLast(n_network::t_timestamp(15));\
 		model->setTime(15); \
 		tracer.tracesInit(model, t_timestamp(16, 1));\
-		model->setState(std::make_shared<TestState>(16, 2));\
+		model->getState()->setTimeLast(n_network::t_timestamp(16, 2));\
 		model->setTime(16); \
 		tracer.tracesInternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(16, 3));\
+		model->getState()->setTimeLast(n_network::t_timestamp(16, 3));\
 		tracer.tracesExternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(17));\
+		model->getState()->setTimeLast(n_network::t_timestamp(17));\
 		model->setTime(17); \
 		tracer.tracesExternal(model, 0u);\
-		model->setState(std::make_shared<TestState>(18));\
+		model->getState()->setTimeLast(n_network::t_timestamp(18));\
 		model->setTime(18); \
 		tracer.tracesConfluent(model, 0u);\
 		n_tracers::traceUntil(t_timestamp(400, 0));\
@@ -597,9 +614,8 @@ TEST(tracing, tracerCellTracer){
 			for(std::size_t y = 0u; y < 5u; ++y){
 				++data;
 				fireCell->setPoint(n_model::t_point(x, y));
-				n_examples::t_firecellstateptr ptr = std::dynamic_pointer_cast<n_examples::FireCellState>(fireCell->getState());
-				ptr->setTemp(data);
-				ptr->m_timeLast = n_network::t_timestamp(0);
+				fireCell->state().m_temperature = data;
+				fireCell->getState()->setTimeLast(n_network::t_timestamp(0));
 				tracer1.tracesInit(fireAtomic, n_network::t_timestamp(0));
 				tracer2.tracesInit(fireAtomic, n_network::t_timestamp(0));
 			}
@@ -612,9 +628,8 @@ TEST(tracing, tracerCellTracer){
 					for(std::size_t y = 0u; y < 5u; ++y){
 						++data;
 						fireCell->setPoint(n_model::t_point(x, y));
-						n_examples::t_firecellstateptr ptr = std::dynamic_pointer_cast<n_examples::FireCellState>(fireCell->getState());
-						ptr->setTemp(data);
-						ptr->m_timeLast = n_network::t_timestamp(k+1);
+						fireCell->state().m_temperature = data;
+						fireCell->getState()->setTimeLast(n_network::t_timestamp(k+1));
 						if(i%3 == 0){
 							tracer1.tracesInternal(fireAtomic, 0);
 							tracer2.tracesInternal(fireAtomic, 0);

@@ -37,7 +37,7 @@ void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> & inputs
 		if (mode.m_value == "manual")
 			mode.m_value = "red"; // Restart with a red light
 		else if (mode.m_value == "red" || mode.m_value == "green" || mode.m_value == "yellow")
-			; // Keep the same light
+			{} // Keep the same light
 		else
 			assert(false);
 	}

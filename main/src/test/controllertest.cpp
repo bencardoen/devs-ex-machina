@@ -338,7 +338,7 @@ TEST(Pause, DISABLED_RepeatPause)
 	}
 }
 
-TEST(Save, ClassicSave)
+TEST(Save, DISABLED_ClassicSave)
 {
 	RecordProperty("description", "Tests saving a simple simulation");
 
@@ -361,7 +361,7 @@ TEST(Save, ClassicSave)
 	}
 }
 
-TEST(Save, ClassicLoad)
+TEST(Save, DISABLED_ClassicLoad)
 {
 	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
 
@@ -380,7 +380,7 @@ TEST(Save, ClassicLoad)
 	}
 }
 
-TEST(Save, ParallelSave)
+TEST(Save, DISABLED_ParallelSave)
 {
 	RecordProperty("description", "Tests saving a simple simulation");
 
@@ -405,7 +405,7 @@ TEST(Save, ParallelSave)
 	}
 }
 
-TEST(Save, ParallelLoad)
+TEST(Save, DISABLED_ParallelLoad)
 {
 	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
 

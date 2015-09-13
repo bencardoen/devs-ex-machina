@@ -67,7 +67,6 @@ namespace n_model {
 using n_network::t_timestamp;
 
 class State;
-
 typedef std::shared_ptr<State> t_stateptr;
 
 /**
@@ -133,6 +132,25 @@ public:
 		assert(false && "State::copyState not reimplemented in derived class.");
 		return nullptr;
 	}
+	const t_timestamp& getTimeLast() const
+	{
+		return m_timeLast;
+	}
+
+	const t_timestamp& getTimeNext() const
+	{
+		return m_timeNext;
+	}
+
+	void setTimeLast(const t_timestamp& timeLast)
+	{
+		m_timeLast = timeLast;
+	}
+
+	void setTimeNext(const t_timestamp& timeNext)
+	{
+		m_timeNext = timeNext;
+	}
 
 	/**
 	 * Serialize this object to the given archive
@@ -155,7 +173,8 @@ public:
 	 * @param construct A helper struct for constructing the original object
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct);
-};
+
+	};
 
 
 template<typename T>
