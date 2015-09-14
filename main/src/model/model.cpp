@@ -189,7 +189,7 @@ void Model::serialize(n_serialization::t_oarchive& archive)
 	std::vector<t_stateptr> oldStates;
 	if (not m_oldStates.empty()) oldStates.push_back(m_oldStates.at(0));
 	archive(m_name, m_timeLast, m_timeNext, m_state, oldStates,
-			m_iPorts, m_oPorts, //m_sendMessages, m_receivedMessages,
+			m_iPorts, m_oPorts,
 			m_keepOldStates, m_parent);
 }
 
@@ -216,8 +216,6 @@ void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 	archive(construct->m_oldStates);
 	archive(construct->m_iPorts);
 	archive(construct->m_oPorts);
-	archive(construct->m_sendMessages);
-	archive(construct->m_receivedMessages);
 	archive(construct->m_keepOldStates);
 	archive(construct->m_parent);
 }

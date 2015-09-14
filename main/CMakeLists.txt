@@ -88,7 +88,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -pg -DLOG_LEVEL=0 -DBENCHMARK"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
@@ -210,17 +210,17 @@ add_executable(${PROJECT_NAME}
     )
 
 
- add_executable(${PROJECT_NAME}_benchfire
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/examples/forestfire/constants.cpp
-    src/examples/forestfire/firecell.cpp
-    src/examples/forestfire/firecellstate.cpp
-    src/examples/forestfire/firegenerator.cpp
-    src/examples/forestfire/firespread.cpp
-    src/mainbenchfire.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
+#  add_executable(${PROJECT_NAME}_benchfire
+#     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+#     src/examples/forestfire/constants.cpp
+#     src/examples/forestfire/firecell.cpp
+#     src/examples/forestfire/firecellstate.cpp
+#     src/examples/forestfire/firegenerator.cpp
+#     src/examples/forestfire/firespread.cpp
+#     src/mainbenchfire.cpp
+#     )
+# SET_TARGET_PROPERTIES(${PROJECT_NAME}_benchfire PROPERTIES EXCLUDE_FROM_ALL 1
+#                     )
 
 
 add_executable(${PROJECT_NAME}_devstone
@@ -351,7 +351,7 @@ endif()
 
 # Execute linker
 target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
+# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})

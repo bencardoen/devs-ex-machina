@@ -53,9 +53,6 @@ protected:
 	std::map<std::string, t_portptr> m_iPorts;
 	std::map<std::string, t_portptr> m_oPorts;
 
-	std::deque<n_network::t_msgptr> m_sendMessages;
-	std::deque<n_network::t_msgptr> m_receivedMessages;
-
 	n_control::Controller* m_control;
 
 	/**

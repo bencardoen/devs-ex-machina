@@ -40,7 +40,7 @@ parser.add_argument("limited", nargs='*', default=set(),
     help="If set, only execute these benchmarks. Leave out to execute all."
     )
 parser.add_argument("-f", "--force", action="store_true",
-    help="[default: false] force compilation, regardless of whether the executable already exists."
+    help="force compilation, regardless of whether the executable already exists."
     )
 parser.add_argument("--showSTDOUT", action="store_true",
     help="Allow subprocesses, such as compilation scripts and benchmarks, to send output to stdout."
@@ -50,6 +50,9 @@ parser.add_argument("-r", "--repeat", type=boundedValue(int, minv=1), default=1,
     )
 parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=multiprocessing.cpu_count(),
     help="[default: {0}] number of simulation cores for parallel simulation. Note that it is generally not smart to set this value higher than the amount of physical cpu cores. (You have {0}.)".format(multiprocessing.cpu_count())
+    )
+parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
+    help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
 parser.add_argument("-b", "--backup", action="store_true",
     help="Back up existing data files and then run the benchmarks as usual."
@@ -83,7 +86,7 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 def devstonegen(simtype, executable, doRandom=False):
     for depth in [1, 2, 3]:  # , 4, 8, 16]:
         for width in [2, 3, 4]:  # , 8, 16]:
-            for endTime in [50]:
+            for endTime in [args.endtime]:
                 if simtype is not simtypes.classic and (depth*width+1) < simtype[2]:
                     continue
                 yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
@@ -97,14 +100,14 @@ def pholdgen(simtype, executable):
         for nodes in [2, 4]:  # , 8, 16, 32]:
             for iterations in [16, 64, 256, 1024]:
                 for remotes in [10]:
-                    for endTime in [50]:
+                    for endTime in [args.endtime]:
                         yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
                         # return
 
 
 def interconnectgen(simtype, executable, doRandom=False):
     for width in [2, 4, 8, 16]:
-        for endTime in [50]:
+        for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
 
 randconnectgen = partial(interconnectgen, doRandom=True)
