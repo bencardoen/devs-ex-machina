@@ -54,6 +54,9 @@ parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=mul
 parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
     help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
+parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=50,
+    help="[default: 50] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
+    )
 parser.add_argument("-b", "--backup", action="store_true",
     help="Back up existing data files and then run the benchmarks as usual."
     )
@@ -68,6 +71,7 @@ parser.add_argument("-e", "--regexp", nargs='*', default=[],
     )
 args = parser.parse_args()
 defaults.args = args
+defaults.timeout = args.timeout_time
 
 # executable names
 devstoneEx = "./build/Benchmark/dxexmachina_devstone"

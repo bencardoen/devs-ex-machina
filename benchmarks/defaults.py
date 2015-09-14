@@ -127,7 +127,7 @@ def saveSysInfo(sysInfo, folders):
         f.close()
 
 
-timeout = 5
+timeout = 50
 """
 Waiting time in seconds before a subprocess is aborted. Note that no data will be collected from this instance.
 """
