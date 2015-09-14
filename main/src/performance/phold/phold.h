@@ -42,7 +42,7 @@ public:
 
 typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
 
-class HeavyPHOLDProcessor: public n_model::AtomicModel
+class HeavyPHOLDProcessor: public n_model::AtomicModel_impl
 {
 private:
 	const size_t m_percentageRemotes;

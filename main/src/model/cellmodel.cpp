@@ -10,7 +10,7 @@
 namespace n_model {
 
 n_model::CellAtomicModel::CellAtomicModel(std::string name, std::size_t priority):
-	AtomicModel(name, priority)
+	AtomicModel_impl(name, priority)
 {
 }
 
@@ -25,7 +25,7 @@ t_point n_model::CellAtomicModel::getPoint()
 }
 
 CellAtomicModel::CellAtomicModel(std::string name, t_point point, std::size_t priority):
-	AtomicModel(name, priority),
+	AtomicModel_impl(name, priority),
 	m_pos(point)
 {
 }

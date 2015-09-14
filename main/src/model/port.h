@@ -34,7 +34,7 @@ typedef std::shared_ptr<Port> t_portptr;
 
 
 //// Merge TODO, if States are merged, recheck this code.
-class AtomicModel;
+class AtomicModel_impl;
 
 class Port
 {
@@ -63,7 +63,7 @@ private:
 
 	bool m_usingDirectConnect;
         
-        AtomicModel*    m_hostmodel;
+        AtomicModel_impl*    m_hostmodel;
         
         // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
         // atomicmodel, but createMessages is templated (and header defined) so we can't call 
@@ -268,12 +268,12 @@ public:
 	 */
 	void addInfluencees(std::set<std::string>& influences) const;
         
-        void setHost(AtomicModel* h){
+        void setHost(AtomicModel_impl* h){
                 LOG_DEBUG("Port : ptr = ", h);
                 m_hostmodel=h;
         }
         
-        AtomicModel* getHost(){return m_hostmodel;}
+        AtomicModel_impl* getHost(){return m_hostmodel;}
 
 //-------------serialization---------------------
 	/**

@@ -34,7 +34,7 @@ public:
 	std::string toXML() override;
 };
 
-class Processor: public n_model::AtomicModel
+class Processor: public n_model::AtomicModel_impl
 {
 public:
 	std::size_t m_event1;
@@ -58,7 +58,7 @@ public:
 	GeneratorState(const GeneratorState& other) = default;
 };
 
-class Generator: public n_model::AtomicModel
+class Generator: public n_model::AtomicModel_impl
 {
 public:
 	std::size_t m_gen_event1;
@@ -81,7 +81,7 @@ public:
 	CoupledProcessor(std::size_t event1_P1, std::size_t levels);
 };
 
-class ElapsedNothing: public n_model::AtomicModel
+class ElapsedNothing: public n_model::AtomicModel_impl
 {
 public:
 	ElapsedNothing();

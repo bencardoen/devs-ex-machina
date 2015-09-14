@@ -12,12 +12,12 @@ namespace n_examples_deadlock {
 
 using n_model::State;
 using n_model::t_stateptr;
-using n_model::AtomicModel;
+using n_model::AtomicModel_impl;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class Ping: public n_model::AtomicModel
+class Ping: public n_model::AtomicModel_impl
 {
 public:
 	Ping(std::string name, std::size_t priority = 0);
@@ -30,7 +30,7 @@ public:
 	t_timestamp lookAhead() const override;
 
 
-	using AtomicModel::setState;
+	using AtomicModel_impl::setState;
 	t_stateptr setState(std::string);
 };
 

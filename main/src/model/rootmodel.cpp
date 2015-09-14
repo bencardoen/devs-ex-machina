@@ -25,7 +25,7 @@ void RootModel::setComponents(const t_coupledmodelptr& model)
 		toDo.pop_front();
 		for (t_modelptr& current : top->getComponents()) {
 			current->setParent(top);
-			t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(current);
+			t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel_impl>(current);
 			if (atomic) {
 				m_components.push_back(atomic);
 			} else {
@@ -51,7 +51,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 			toDo.pop_front();
 			for (t_modelptr& current : top->getComponents()) {
 				current->setParent(top);
-				t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel>(current);
+				t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel_impl>(current);
 				if (atomic) {
 					//model = atomic
 					auto res = atomics.insert(atomic->getName());

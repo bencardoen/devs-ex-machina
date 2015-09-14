@@ -24,7 +24,7 @@ class TestCereal;
 namespace n_model {
 
 
-class AtomicModel: public Model
+class AtomicModel_impl: public Model
 {
 	friend class ::TestCereal;
 private:
@@ -72,10 +72,10 @@ protected:
 	t_portptr addOutPort(std::string name)override final;
 
 public:
-	AtomicModel() = delete;
+	AtomicModel_impl() = delete;
 
 	/**
-	 * Constructor for AtomicModel
+	 * Constructor for AtomicModel_impl
 	 *
 	 * Note that 0 is the highest priority. The higher the number,
 	 * the lower the priority.
@@ -83,10 +83,10 @@ public:
 	 * @param name The name of the model
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, std::size_t priority = std::numeric_limits<size_t>::max());
+	AtomicModel_impl(std::string name, std::size_t priority = std::numeric_limits<size_t>::max());
 
 	/**
-	 * Constructor for AtomicModel
+	 * Constructor for AtomicModel_impl
 	 *
 	 * Note that 0 is the highest priority. The higher the number,
 	 * the lower the priority.
@@ -95,7 +95,7 @@ public:
 	 * @param corenumber The core number that the model wants to be on
 	 * @param priority The priority of the model
 	 */
-	AtomicModel(std::string name, int corenumber, std::size_t priority = std::numeric_limits<size_t>::max());
+	AtomicModel_impl(std::string name, int corenumber, std::size_t priority = std::numeric_limits<size_t>::max());
         
         /**
          * @return uuid object.
@@ -135,7 +135,7 @@ public:
 	virtual void extTransition(const std::vector<n_network::t_msgptr> & message)
 	{
 		LOG_ERROR(
-		        "ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::extTransition(const std::vector<n_network::t_msgptr> & message)'");
+		        "ATOMICMODEL: Not implemented: 'void n_model::AtomicModel_impl::extTransition(const std::vector<n_network::t_msgptr> & message)'");
 		assert(false);
 		message.capacity();
 	}
@@ -161,7 +161,7 @@ public:
 	 */
 	virtual void intTransition()
 	{
-		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
+		LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel_impl::intTransition()'");
 		assert(false);
 	}
 	;
@@ -193,7 +193,7 @@ public:
 	 */
 	virtual t_timestamp timeAdvance() const
 	{
-		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel::timeAdvance()'");
+		LOG_ERROR("ATOMICMODEL: Not implemented: 't_timestamp n_model::AtomicModel_impl::timeAdvance()'");
 		assert(false);
 		return t_timestamp();
 	}
@@ -207,7 +207,7 @@ public:
 	virtual t_timestamp lookAhead() const
 	{
 		LOG_WARNING(
-		        "ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel::lookahead()'");
+		        "ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel_impl::lookahead()'");
 		return t_timestamp(0);
 	}
 
@@ -222,7 +222,7 @@ public:
 	virtual void output(std::vector<n_network::t_msgptr>&) const
 	{
 		LOG_ERROR(
-		        "ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel::output()'");
+		        "ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel_impl::output()'");
 		assert(false);
 //		return std::vector<n_network::t_msgptr>();
 	}
@@ -282,7 +282,7 @@ public:
 	 */
 	void setCorenumber(int corenumber);
 
-	virtual ~AtomicModel()
+	virtual ~AtomicModel_impl()
 	{
 	}
 
@@ -331,12 +331,12 @@ public:
 	 * @param archive A container for the desired input stream
 	 * @param construct A helper struct for constructing the original object
 	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel>& construct);
+	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct);
 };
 
-typedef std::shared_ptr<AtomicModel> t_atomicmodelptr;
+typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
 }	// end namespace
 
-CEREAL_REGISTER_TYPE(n_model::AtomicModel)
+CEREAL_REGISTER_TYPE(n_model::AtomicModel_impl)
 
 #endif /* ATOMICMODEL_H_ */

@@ -50,7 +50,7 @@ public:
 
 typedef std::mt19937_64 t_randgen;
 
-class Processor : public n_model::AtomicModel
+class Processor : public n_model::AtomicModel_impl
 {
 private:
 	static std::size_t m_numcounter;
@@ -74,7 +74,7 @@ public:
 	const ProcessorState& procstate() const;
 };
 
-class Generator : public n_model::AtomicModel
+class Generator : public n_model::AtomicModel_impl
 {
 private:
 	const n_model::t_portptr m_out;

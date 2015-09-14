@@ -37,7 +37,7 @@ std::string ModelState::toXML()
 }
 
 Processor::Processor(std::string name, std::size_t t_event1):
-	AtomicModel(name),
+	AtomicModel_impl(name),
 	m_event1(t_event1),
 	m_inport(addInPort("inport")),
 	m_outport(addOutPort("outport"))
@@ -80,7 +80,7 @@ GeneratorState::GeneratorState():
 }
 
 Generator::Generator(std::string name, std::size_t t_gen_event1, bool binary):
-	AtomicModel(name),
+	AtomicModel_impl(name),
 	m_gen_event1(t_gen_event1),
 	m_binary(binary),
 	m_inport(addInPort("inport")),
@@ -135,7 +135,7 @@ CoupledProcessor::CoupledProcessor(std::size_t event1_P1, std::size_t levels):
 }
 
 ElapsedNothing::ElapsedNothing():
-	AtomicModel("ElapsedNothing")
+	AtomicModel_impl("ElapsedNothing")
 {
 	m_elapsed = 3u;
 	setState(n_tools::createObject<ModelState>());

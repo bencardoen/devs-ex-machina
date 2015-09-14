@@ -27,7 +27,7 @@ public:
 
 typedef std::shared_ptr<FireGeneratorState> t_fgstateptr;
 
-class FireGenerator: public n_model::AtomicModel
+class FireGenerator: public n_model::AtomicModel_impl
 {
 private:
 	FireGeneratorState& getFGState();

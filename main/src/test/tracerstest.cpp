@@ -512,14 +512,14 @@ class TestState: public n_model::State {
 		}
 		;
 };
-class TestModel: public n_model::AtomicModel {
+class TestModel: public n_model::AtomicModel_impl {
 	public:
 		TestModel() :
                         /// Careful, atomicmodel actually uses priority, unless the "ignore" value is set.
                         /// 2 constructors of AModel : (string, int coreid, size_t prior=def)
                         /// (string, size_t prior=def)
                         /// We need to kill one of them (viciously).
-			AtomicModel("TestModel", 0, std::numeric_limits<size_t>::max()) {
+			AtomicModel_impl("TestModel", 0, std::numeric_limits<size_t>::max()) {
 			this->addInPort("portIn");
 			this->addInPort("portIn2");
 			this->addOutPort("MyVerySpecialOutput");
@@ -595,7 +595,7 @@ TEST(tracing, tracerCellTracer){
 		tracer1.initialize(TESTFOLDERTRACE"CellTracer_out1.txt");
 		tracer2.initialize(TESTFOLDERTRACE"CellTracer_out2", ".txt");
 		n_examples::t_firecellptr fireCell = n_tools::createObject<n_examples::FireCell>(n_model::t_point(0u, 0u));
-		n_model::t_atomicmodelptr fireAtomic = std::dynamic_pointer_cast<n_model::AtomicModel>(fireCell);
+		n_model::t_atomicmodelptr fireAtomic = std::dynamic_pointer_cast<n_model::AtomicModel_impl>(fireCell);
 		double data = 1.0;
 		for(std::size_t x = 0u; x < 5u; ++x){
 			for(std::size_t y = 0u; y < 5u; ++y){

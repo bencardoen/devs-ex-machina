@@ -114,7 +114,7 @@ void Controller::load(const std::string& fname, bool isSingleAtomic)
 
 	LOG_INFO("CONTROLLER: Loading simulation from file ", fname);
 	if(isSingleAtomic) {
-		LOG_INFO("CONTROLLER: Loading AtomicModel");
+		LOG_INFO("CONTROLLER: Loading AtomicModel_impl");
 		iarchivemodel(m_atomicOrigin);
 		addModel(m_atomicOrigin); // Just run standard adding procedure
 	}
@@ -638,7 +638,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 			dsScheduleModel(sub);
 		return;
 	}
-	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel>(model);
+	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel_impl>(model);
 //	if (atomic) {
 		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs

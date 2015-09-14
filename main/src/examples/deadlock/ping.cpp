@@ -15,7 +15,7 @@
 namespace n_examples_deadlock {
 
 Ping::Ping(std::string name, std::size_t priority)
-	: AtomicModel(name, priority)
+	: AtomicModel_impl(name, priority)
 {
         this->setState(n_tools::createObject<State>("sending"));
 	m_elapsed = 0;

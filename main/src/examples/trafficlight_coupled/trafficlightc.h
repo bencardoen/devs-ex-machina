@@ -15,7 +15,7 @@
 namespace n_examples_coupled {
 
 using n_network::t_msgptr;
-using n_model::AtomicModel;
+using n_model::AtomicModel_impl;
 using n_model::State;
 using n_model::t_stateptr;
 using n_model::t_modelptr;
@@ -53,7 +53,7 @@ public:
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLightMode>& construct);
 };
 
-class TrafficLight: public AtomicModel
+class TrafficLight: public AtomicModel_impl
 {
 public:
 	TrafficLight() = delete;
@@ -70,7 +70,7 @@ public:
 	 * The following function has been created to easily
 	 * create states using a string
 	 */
-	using AtomicModel::setState;
+	using AtomicModel_impl::setState;
 	t_stateptr setState(std::string);
 
 	/**

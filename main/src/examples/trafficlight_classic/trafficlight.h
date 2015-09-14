@@ -27,7 +27,7 @@ public:
 	~TrafficLightMode() {}
 };
 
-class TrafficLight: public AtomicModel
+class TrafficLight: public AtomicModel_impl
 {
 public:
 	TrafficLight() = delete;
@@ -43,7 +43,7 @@ public:
 	 * The following function has been created to easily
 	 * create states using a string
 	 */
-	using AtomicModel::setState;
+	using AtomicModel_impl::setState;
 	t_stateptr setState(const std::string&);
 };
 

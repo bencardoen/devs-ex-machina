@@ -61,7 +61,7 @@ std::shared_ptr<ProcessorState> ProcessorState::copy() const
 std::size_t Processor::m_numcounter = 1;
 
 Processor::Processor(std::string name, bool randomta)
-	: AtomicModel(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(m_numcounter++)
+	: AtomicModel_impl(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(m_numcounter++)
 {
 	addInPort("in_event1");
 	setState(n_tools::createObject<ProcessorState>());
@@ -190,7 +190,7 @@ ProcessorState& Processor::procstate()
  * Generator
  */
 
-Generator::Generator() : n_model::AtomicModel("Generator"), m_out(addOutPort("out_event1"))
+Generator::Generator() : n_model::AtomicModel_impl("Generator"), m_out(addOutPort("out_event1"))
 {
 	setState(n_tools::createObject<n_model::State>("gen_event1"));
 }

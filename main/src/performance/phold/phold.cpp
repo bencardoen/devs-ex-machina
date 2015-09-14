@@ -45,7 +45,7 @@ PHOLDModelState::~PHOLDModelState()
 
 HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
         std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes)
-	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
+	: AtomicModel_impl(name), m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
@@ -169,7 +169,7 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
 {
 	LOG_WARNING(
-		"ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel::lookahead()'");
+		"ATOMICMODEL: Lookahead: assuming 0: Not implemented: 't_timestamp n_model::AtomicModel_impl::lookahead()'");
 	return n_network::t_timestamp(T_0);
 }
 
