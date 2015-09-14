@@ -561,11 +561,14 @@ public:
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @param imminent modelnames with firing time <= to current time
+	 * @param imminent models
 	 * @param mail collected from local/network by collectOutput/getMessages
+         * @attention : imminent can grow (a model 'awakening' after external transition)
+         * @post imminent.size()_after >= imminent.size()_before
+         * @post mail.size()=0;
 	 */
 	void
-	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Debug function : print out the currently scheduled models.

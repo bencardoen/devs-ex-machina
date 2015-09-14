@@ -296,7 +296,7 @@ void n_model::Core::collectOutput(std::vector<t_atomicmodelptr>& imminents)
 	}
 }
 
-void n_model::Core::transition(std::set<std::string>& imminents,
+void n_model::Core::transition(std::vector<t_atomicmodelptr>& imminents,
         std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
 {
 	// Imminents : need at least internal transition
@@ -306,25 +306,21 @@ void n_model::Core::transition(std::set<std::string>& imminents,
         
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (const auto& imminent : imminents) {
-		t_atomicmodelptr urgent = this->m_models[imminent];
-		auto found = mail.find(imminent);
+		auto found = mail.find(imminent->getName());
 		if (found == mail.end()) {				// Internal
 			
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", urgent->getName());
-			urgent->doIntTransition();
-			urgent->setTime(noncausaltime);
-			this->traceInt(urgent);
-                        
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
+			imminent->doIntTransition();
+			imminent->setTime(noncausaltime);
+			this->traceInt(imminent);
 		} else {
-			
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", urgent->getName());
-			urgent->setTimeElapsed(0);
-			urgent->doConfTransition(found->second);		// Confluent
-			urgent->setTime(noncausaltime);
-			this->traceConf(urgent);
-			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
-			assert(erased != 0 && "Broken logic in collected output");
-                        
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
+			imminent->setTimeElapsed(0);
+			imminent->doConfTransition(found->second);		// Confluent
+			imminent->setTime(noncausaltime);
+			this->traceConf(imminent);
+			std::size_t erased = mail.erase(imminent->getName()); 	// Erase so we don't need to double check in the next for loop.
+			assert(erased != 0 && "Broken logic in collected output");    
 		}
 	}
 
@@ -342,7 +338,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
-			imminents.insert(model->getName());
+			imminents.push_back(model);
 		}else{
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to infinity, no longer scheduling.");
@@ -536,8 +532,6 @@ void n_model::Core::runSmallStep()
         for(const auto& model : imms){
                 imminent.insert(model->getName());
         }
-        
-	//auto imminent = this->getImminent();
 
 	// Get all produced messages, and route them.
 	this->collectOutput(imminent);			// locked on msgs
@@ -551,13 +545,7 @@ void n_model::Core::runSmallStep()
 	this->getPendingMail(m_mailbag);			// locked on msgs
 
 	// Transition depending on state.
-	this->transition(imminent, m_mailbag);		// NOTE: the scheduler can go empty() here.
-        
-        // TRANSLATE
-        imms.clear();
-        for(const auto& imm : imminent){
-                imms.push_back(this->getModel(imm));
-        }
+	this->transition(imms, m_mailbag);		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(imms);

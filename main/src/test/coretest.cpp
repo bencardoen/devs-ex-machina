@@ -122,22 +122,14 @@ TEST(Core, CoreFlow)
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
-	auto imminent = c.getImminent();
+        std::vector<t_atomicmodelptr> imminent;
+	c.getImminent(imminent);
 	EXPECT_EQ(imminent.size(), 2u);
-	
-        std::vector<t_atomicmodelptr> imms;
-        for(const auto& el : imminent){
-                imms.push_back(c.getModel(el));
-        }
-	c.rescheduleImminent(imms);
+	c.rescheduleImminent(imminent);
 	c.syncTime();
-	imminent = c.getImminent();
-        imms.clear();
-        for(const auto& el : imminent){
-                imms.push_back(c.getModel(el));
-        }
-	
-	c.rescheduleImminent(imms);
+        imminent.clear();
+	c.getImminent(imminent);
+	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(imminent.size(), 2u);
