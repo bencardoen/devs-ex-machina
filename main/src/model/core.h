@@ -247,9 +247,13 @@ protected:
 	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
 	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
 	 * can still be wrong. (see coretest.cpp revertedgecases).
+         * @deprecated
 	 */
 	void
 	scheduleModel(std::string name, t_timestamp t);
+        
+        void
+        scheduleModel(size_t id, t_timestamp t);
         
         /**
          * Set the vectors containing messages for models to empty.
@@ -296,7 +300,7 @@ protected:
 	 */
 	virtual
 	void
-	signalImminent(const std::set<std::string>& ){;}
+	signalImminent(const std::vector<t_atomicmodelptr>& ){;}
 
 	/**
 	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
@@ -467,7 +471,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::set<std::string>&);
+	rescheduleImminent(const std::vector<t_atomicmodelptr>&);
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
@@ -499,6 +503,13 @@ public:
 	 */
 	virtual void
 	collectOutput(std::set<std::string>& imminents);
+        
+        /**
+	 * Collect output from imminent models, sort them in the mailbag by destination name.
+	 * @attention : generated messages (events) are timestamped by the current core time.
+	 */
+        virtual void
+        collectOutput(std::vector<t_atomicmodelptr>& imminent);
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
