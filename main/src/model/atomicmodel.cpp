@@ -12,13 +12,13 @@
 namespace n_model {
 
 AtomicModel_impl::AtomicModel_impl(std::string name, std::size_t)
-	: Model(name), m_corenumber(-1), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority())
+	: Model(name), m_corenumber(-1), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority()),m_transition_type_next(NONE)
 {
         LOG_DEBUG("\tAMODEL ctor :: name=", name, " m_prior= ", m_priority , " corenr=", m_corenumber);
 }
 
 AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t priority)
-	: Model(name), m_corenumber(corenumber), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority())
+	: Model(name), m_corenumber(corenumber), m_keepOldStates(true), m_state(nullptr), m_priority(nextPriority()),m_transition_type_next(NONE)
 {
         if(m_priority == std::numeric_limits<std::size_t>::max())
                 m_priority = nextPriority();

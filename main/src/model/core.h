@@ -173,11 +173,13 @@ private:
 	 */
 	std::atomic<bool> m_terminated_functor;
         
+protected:        
         /**
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
         
+private:
         /**
          * Messages to process in a current round.
          */
@@ -188,7 +190,7 @@ private:
          */
         std::unordered_map<std::string, std::vector<t_msgptr>> m_mailbag;
         
-        std::set<std::string> m_imminent;
+        std::vector<t_atomicmodelptr>   m_imminents;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -264,12 +266,6 @@ protected:
         void
         initializeModels();
         
-	/**
-	 * Model storage.
-	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
-	 */
-	std::unordered_map<std::string, t_atomicmodelptr> m_models;
-
 	/**
 	* Store received messages (local and networked)
 	*/

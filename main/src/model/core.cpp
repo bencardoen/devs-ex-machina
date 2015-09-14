@@ -24,18 +24,13 @@ inline void validateTA(const n_network::t_timestamp& val){
 
 n_model::Core::~Core()
 {
-	// Make sure we don't keep stale pointers alive
-	for (auto& model : m_models) {
-		model.second.reset();
-	}
-	m_models.clear();
-	m_received_messages->clear();
+        ;
 }
 
 void
 n_model::Core::checkInvariants(){
 #ifdef SAFETY_CHECKS
-        if(this->m_scheduler->size() > this->m_models.size()){
+        if(this->m_scheduler->size() > this->m_indexed_models.size()){
                 const std::string msg = "Scheduler contains more models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
@@ -81,7 +76,7 @@ void n_model::Core::save(const std::string& fname)
 		scheduler.push_back(m_scheduler->pop());
 	}
 
-	oarchive(m_models, messages, scheduler);
+	oarchive(m_indexed_models, messages, scheduler);
 }
 
 void n_model::Core::load(const std::string& fname)
@@ -92,7 +87,7 @@ void n_model::Core::load(const std::string& fname)
 	std::vector<t_msgptr> messages;
 	std::vector<ModelEntry> scheduler;
 
-	iarchive(m_models, messages, scheduler);
+	iarchive(m_indexed_models, messages, scheduler);
 
 	while (not messages.empty()) {
 		m_received_messages->push_back(MessageEntry(messages.back()));
@@ -109,8 +104,6 @@ void n_model::Core::addModel(const t_atomicmodelptr& model)
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Add model called on core::  got model : ", model->getName());
 	std::string mname = model->getName();
-	assert(this->m_models.find(mname) == this->m_models.end() && "Model already in core.");
-	this->m_models[mname] = model;
         this->m_indexed_models.push_back(model);
 }
 
@@ -136,7 +129,11 @@ n_model::Core::getModel(size_t index)const{
 
 bool n_model::Core::containsModel(const std::string& mname) const
 {
-	return (this->m_models.find(mname) != this->m_models.end());
+        for(const auto& model : m_indexed_models){
+                if(model->getName()==mname)
+                        return true;
+        }
+        return false;
 }
 
 void n_model::Core::scheduleModel(std::size_t id, t_timestamp t)
@@ -186,8 +183,6 @@ void n_model::Core::initializeModels()
                 return left->getPriority() < right->getPriority();
         };
         std::sort(m_indexed_models.begin(), m_indexed_models.end(), cmp_prior);
-        
-        assert(m_indexed_models.size()==m_models.size());
         
         m_indexed_local_mail.resize(m_indexed_models.size());
         
@@ -275,7 +270,7 @@ void n_model::Core::transition(std::vector<t_atomicmodelptr>& imminents,
 
 	for (const auto& remaining : mail) {				// External
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " delivering " , remaining.second.size(), " messages to ", remaining.first);
-		const t_atomicmodelptr& model = this->m_models[remaining.first];
+		const t_atomicmodelptr& model = this->getModel(remaining.first);
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
 		model->setTime(noncausaltime);
@@ -451,26 +446,26 @@ void n_model::Core::runSmallStep()
 	}
 
 	// Query imminent models (who are about to fire transition)
-        std::vector<t_atomicmodelptr> imms;
-        this->getImminent(imms);
+        m_imminents.clear();
+        this->getImminent(m_imminents);
         //Translate for now
 
 	// Get all produced messages, and route them.
-	this->collectOutput(imms);			// locked on msgs
+	this->collectOutput(m_imminents);			// locked on msgs
         // ^^ change concurrently with conservativecore's collectOutput
 
 	// Give DynStructured Devs a chance to store imminent models.
-	this->signalImminent(imms);
+	this->signalImminent(m_imminents);
 
 	// Get msg < timenow, sort them for ext/conf.
         
 	this->getPendingMail(m_mailbag);			// locked on msgs
 
 	// Transition depending on state.
-	this->transition(imms, m_mailbag);		// NOTE: the scheduler can go empty() here.
+	this->transition(m_imminents, m_mailbag);		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
-	this->rescheduleImminent(imms);
+	this->rescheduleImminent(m_imminents);
 
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
@@ -532,9 +527,9 @@ void n_model::Core::checkTerminationFunction()
 {
 	if (m_termination_function) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Checking termination function.");
-		for (const auto& model : m_models) {
-			if ((*m_termination_function)(model.second)) {
-				LOG_DEBUG("CORE: ", this->getCoreID(), " Termination function evaluated to true for model ", model.first);
+		for (const auto& model : m_indexed_models) {
+			if ((*m_termination_function)(model)) {
+				LOG_DEBUG("CORE: ", this->getCoreID(), " Termination function evaluated to true for model ", model->getName());
 				this->setLive(false);
 				this->setIdle(true);
 				this->setTerminationTime(this->getTime());
@@ -554,7 +549,6 @@ void n_model::Core::removeModel(const std::string& name)
         const t_atomicmodelptr& model = this->getModel(name);
                 
         const size_t lid = model->getUUID().m_local_id;
-        m_models.erase(name);
 
         auto iter = m_indexed_models.begin();
         std::advance(iter, lid);
@@ -564,8 +558,6 @@ void n_model::Core::removeModel(const std::string& name)
         this->m_scheduler->erase(target);       // irrelevant if it exist or not.
 
         LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-        assert(m_models.size()==m_indexed_models.size());
-
         assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
 }
 
@@ -592,7 +584,6 @@ void n_model::Core::clearModels()
 {
 	assert(this->isLive() == false && "Clearing models during simulation is not supported.");
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing all models from core.");
-	this->m_models.clear();
         this->m_indexed_local_mail.clear();
         this->m_indexed_models.clear();
         this->m_mailbag.clear();

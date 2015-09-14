@@ -238,8 +238,7 @@ void Conservativecore::initExistingSimulation(const t_timestamp& loaddate){
 void Conservativecore::buildInfluenceeMap(){
 	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map.");
 	std::set<std::string>	influencees;
-	for(const auto& modelentry: m_models){
-		const auto& model = modelentry.second;
+	for(const auto& model: m_indexed_models){
 		model->addInfluencees(influencees);
 	}
 	for(const auto& modelname : influencees){
@@ -411,8 +410,8 @@ Conservativecore::calculateMinLookahead(){
         if(this->m_min_lookahead.getTime() <= this->getTime().getTime() 
                 && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
-                for(const auto& model : m_models){
-                        const t_timestamp la = model.second->lookAhead();
+                for(const auto& model : m_indexed_models){
+                        const t_timestamp la = model->lookAhead();
                         
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");
@@ -420,7 +419,7 @@ Conservativecore::calculateMinLookahead(){
                         if(isInfinity(la))
                                 continue;
                         
-                        const t_timestamp last = model.second->getTimeLast();
+                        const t_timestamp last = model->getTimeLast();
                         m_min_lookahead = std::min(m_min_lookahead, (last+la));
                 }
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);
