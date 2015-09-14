@@ -243,15 +243,12 @@ protected:
         
         /**
 	 * Schedule model.name @ time t.
-	 * @pre name is a model in this core.
+	 * @pre id is a model in this core.
 	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
 	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
 	 * can still be wrong. (see coretest.cpp revertedgecases).
          * @deprecated
 	 */
-	void
-	scheduleModel(std::string name, t_timestamp t);
-        
         void
         scheduleModel(size_t id, t_timestamp t);
         
@@ -445,12 +442,6 @@ public:
 	 */
 	virtual
 	void initExistingSimulation(const t_timestamp& loaddate);
-
-	/**
-	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
-	 */
-	std::set<std::string>
-	getImminent();
         
         void
         getImminent(std::vector<t_atomicmodelptr>& imms);
@@ -496,13 +487,6 @@ public:
 	virtual
 	void
 	runSmallStep();
-
-	/**
-	 * Collect output from imminent models, sort them in the mailbag by destination name.
-	 * @attention : generated messages (events) are timestamped by the current core time.
-	 */
-	virtual void
-	collectOutput(std::set<std::string>& imminents);
         
         /**
 	 * Collect output from imminent models, sort them in the mailbag by destination name.

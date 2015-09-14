@@ -139,34 +139,6 @@ bool n_model::Core::containsModel(const std::string& mname) const
 	return (this->m_models.find(mname) != this->m_models.end());
 }
 
-void n_model::Core::scheduleModel(std::string name, t_timestamp t)
-{
-        checkInvariants();
-	if (this->m_models.find(name) != this->m_models.end()) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
-		if(isInfinity(t)){
-			LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", name , "@", t);
-			return;
-		}
-		size_t offset = this->m_models[name]->getPriority();
-		t_timestamp newt(t.getTime(), offset);
-                // TODO change sig
-                size_t localid = this->m_models[name]->getUUID().m_local_id;
-		ModelEntry entry(localid, newt);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " rescheduling : ", name, "@", newt);
-		if (this->m_scheduler->contains(entry)) {
-			LOG_INFO("\tCORE :: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", name,
-			" at t=", newt, " replacing.");
-			this->m_scheduler->erase(entry);			// Needed for revert, scheduled entry may be wrong.
-		}
-		this->m_scheduler->push_back(entry);
-	} else {
-		LOG_ERROR("\tCORE :: ", this->getCoreID(), " !!LOGIC ERROR!! Model with name "
-			, name, " not in core, can't reschedule.");
-	}
-        checkInvariants();
-}
-
 void n_model::Core::scheduleModel(std::size_t id, t_timestamp t)
 {
         checkInvariants();
@@ -236,40 +208,17 @@ void n_model::Core::initExistingSimulation(const t_timestamp& loaddate){
 		return;
 	}
         
-	for (const auto& model : this->m_models) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
+	for (const auto& model : this->m_indexed_models) {
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName());
 	}
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Reinitializing with loaddate ", loaddate );
 	this->m_gvt = loaddate;
 	this->m_time = loaddate;
-	for (const auto& model : this->m_models) {
-		LOG_INFO("Model ", model.second->getName(), " TImenext = ", model.second->getTimeNext(), " loaddate ", loaddate);
-		t_timestamp model_scheduled_time(model.second->getTimeNext().getTime(), 0); // model.second->timeAdvance();
-		this->scheduleModel(model.first, model_scheduled_time);
-		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
-	}
-}
-
-void n_model::Core::collectOutput(std::set<std::string>& imminents)
-{
-	/**
-	 * For each imminent model, collect output.
-	 * Then sort that output by destination (for the transition functions)
-	 */
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
-	std::vector<n_network::t_msgptr> mailfrom;
-	for (const auto& modelname : imminents) {
-		m_models[modelname]->doOutput(mailfrom);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
-		
-		for (const auto& msg : mailfrom) {
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-                        assert(msg->getSourceCore()==this->m_coreid);
-			paintMessage(msg);
-			msg->setTimeStamp(this->getTime());
-		}
-		this->sortMail(mailfrom);	// <-- Locked here on msglock
-		mailfrom.clear();		//clear the vector of messages
+	for (const auto& model : this->m_indexed_models) {
+		LOG_INFO("Model ", model->getName(), " TImenext = ", model->getTimeNext(), " loaddate ", loaddate);
+		t_timestamp model_scheduled_time(model->getTimeNext().getTime(), 0); // model.second->timeAdvance();
+		this->scheduleModel(model->getLocalID(), model_scheduled_time);
+		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
 	}
 }
 
@@ -367,32 +316,9 @@ void n_model::Core::printSchedulerState()
 	this->m_scheduler->printScheduler();
 }
 
-std::set<std::string> n_model::Core::getImminent()
-{
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Retrieving imminent models ");
-	std::set<std::string> imminent;
-	std::vector<ModelEntry> bag;
-	t_timestamp maxtime = n_network::makeLatest(this->getTime());
-	ModelEntry mark(0, maxtime);
-	this->m_scheduler->unschedule_until(bag, mark);
-	if (bag.size() == 0) {
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " No imminent models @ time ", this->getTime());
-	}
-	for (const auto& entry : bag) {
-                size_t lid = entry.getID();
-                const std::string& mname = m_indexed_models[lid]->getName();
-		bool inserted = imminent.insert(mname).second;
-		assert(inserted && "Logic fail in Core get Imminent.");
-	}
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imminent.size(), " imminents ");
-	return imminent;
-}
-
 void
 n_model::Core::getImminent(std::vector<t_atomicmodelptr>& imms)
 {
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Retrieving imminent models ");
-	
 	std::vector<ModelEntry> bag;
 	const ModelEntry mark(0, t_timestamp(this->getTime().getTime(), t_timestamp::MAXCAUSAL));
 	this->m_scheduler->unschedule_until(bag, mark);
@@ -528,13 +454,9 @@ void n_model::Core::runSmallStep()
         std::vector<t_atomicmodelptr> imms;
         this->getImminent(imms);
         //Translate for now
-        std::set<std::string> imminent;
-        for(const auto& model : imms){
-                imminent.insert(model->getName());
-        }
 
 	// Get all produced messages, and route them.
-	this->collectOutput(imminent);			// locked on msgs
+	this->collectOutput(imms);			// locked on msgs
         // ^^ change concurrently with conservativecore's collectOutput
 
 	// Give DynStructured Devs a chance to store imminent models.
@@ -708,10 +630,9 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
 	for (const auto& model : m_indexed_models) {
-                const std::string mname=model->getName();
 		t_timestamp modellast = model->revert(totime);
 		// Bug lived here : Do not set time on model.
-                this->scheduleModel(mname, modellast);
+                this->scheduleModel(model->getLocalID(), modellast);
 	}
 }
 
@@ -721,7 +642,7 @@ void n_model::Core::rescheduleAll()
 	assert(m_scheduler->empty());
 	for (const auto& model : m_indexed_models) {
                 t_timestamp nval = model->getTimeNext();
-		this->scheduleModel(model->getName(), nval);
+		this->scheduleModel(model->getLocalID(), nval);
 	}
 }
 

@@ -295,18 +295,19 @@ void Conservativecore::runSmallStep(){
         }
 }
 
-void Conservativecore::collectOutput(std::set<std::string>& imminents){
+void Conservativecore::collectOutput(std::vector<t_atomicmodelptr>& imminents){
         // Two cases, either we have collected output already, in which case we need to remove the entry from the set
         // Or we haven't in which case the entry stays put, and we mark it for the next round.
-        std::set<std::string> sortedimminents;
+        std::vector<t_atomicmodelptr> sortedimminents;
         for(const auto& imminent : imminents){
-                auto found = m_generated_output_at.find(imminent);
+                const std::string& name = imminent->getName();
+                auto found = m_generated_output_at.find(name);
                 if(found != m_generated_output_at.end()){
                         // Have an entry, check timestamps (possible stale entries)
                         if(found->second.getTime()!=this->getTime().getTime()){
                                 // Stale entry, need to collect output and mark model at current time.
-                                sortedimminents.insert(imminent);
-                                m_generated_output_at[imminent]=this->getTime();
+                                sortedimminents.push_back(imminent);
+                                m_generated_output_at[name]=this->getTime();
                         }else{
                                 // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
                                 ;
@@ -314,8 +315,8 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
                 }
                 else{
                         // No entry, so make one at current time.
-                        sortedimminents.insert(imminent);
-                        m_generated_output_at[imminent]=this->getTime();
+                        sortedimminents.push_back(imminent);
+                        m_generated_output_at[name]=this->getTime();
                 }
         }
         // Base function handles all the rest (message routing etc..)
@@ -330,12 +331,13 @@ void Conservativecore::collectOutput(std::set<std::string>& imminents){
 
 void Conservativecore::runSmallStepStalled()
 {
-        std::set<std::string> imminents = this->getImminent();
-        collectOutput(imminents); // only collects output once
-        for(const auto& imm : imminents){
-                const t_atomicmodelptr mdl = this->m_models[imm];
+        std::vector<t_atomicmodelptr> imms;
+        this->getImminent(imms);
+        
+        collectOutput(imms); // only collects output once
+        for(const auto& mdl : imms){
                 const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
-                this->scheduleModel(mdl->getName(), last_scheduled);
+                this->scheduleModel(mdl->getLocalID(), last_scheduled);
         }
         //We have no new states since our last lookahead calculation, so
         //la values are unchanged.
