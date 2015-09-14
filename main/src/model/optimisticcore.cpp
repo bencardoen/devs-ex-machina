@@ -154,12 +154,8 @@ void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->lockMessages();
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
-                
-		if(this->containsModel(message->getDestinationModel())){
-			this->receiveMessage(message);
-		}else{
-			LOG_ERROR("MCORE:: ", this->getCoreID(), " time: ", getTime(), " received message for model not in core\n", message->toString());
-		}
+                validateUUID(message->getDstUUID());
+		this->receiveMessage(message);
 	}
 	this->unlockMessages();
 }

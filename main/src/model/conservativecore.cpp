@@ -42,7 +42,9 @@ Conservativecore::~Conservativecore()
 void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
-		this->receiveMessage(*i);
+		const auto & message = *i;
+                validateUUID(message->getDstUUID());
+		this->receiveMessage(message);
 	}
 }
 
