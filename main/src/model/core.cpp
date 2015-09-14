@@ -34,12 +34,14 @@ n_model::Core::~Core()
 
 void
 n_model::Core::checkInvariants(){
+#ifdef SAFETY_CHECKS
         if(this->m_scheduler->size() > this->m_models.size()){
                 const std::string msg = "Scheduler contains more models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
+#endif
 }
 
 n_model::Core::Core():
@@ -61,17 +63,7 @@ n_model::Core::Core(std::size_t id)
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 {
-	/**
-	 *  Got a generated message from my own models, figure out if destination is local.
-	 */
-	const bool found = this->containsModel(msg->getDestinationModel());
-	if (found) {
-		msg->setDestinationCore(this->getCoreID());
-		LOG_DEBUG("CORE ::", this->getCoreID(), " message is local : \n", msg->toString());
-		return true;
-	} else {
-		return false;
-	}
+        return (msg->getDestinationCore()==m_coreid);
 }
 
 void n_model::Core::save(const std::string& fname)
@@ -207,13 +199,12 @@ void n_model::Core::initializeModels()
 
 
 void n_model::Core::initExistingSimulation(const t_timestamp& loaddate){
-
+        assert(false);
 	if (this->m_scheduler->size() != 0) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID(),
 		" scheduler is not empty on call to initExistingSimulation(), cowardly refusing to corrupt state any further.");
 		return;
 	}
-        /// TODO ADD init.
         
 	for (const auto& model : this->m_models) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
@@ -240,10 +231,10 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 	for (const auto& modelname : imminents) {
 		m_models[modelname]->doOutput(mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
-		// Set timestamp, source and color (info model does not have).
+		
 		for (const auto& msg : mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-			msg->setSourceCore(this->getCoreID());
+                        assert(msg->getSourceCore()==this->m_coreid);
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());
 		}
@@ -443,6 +434,12 @@ void n_model::Core::clearWaitingOutput(){
         // TODO
         m_mailbag.clear();
 }
+
+void n_model::Core::validateUUID(const n_model::uuid& id)
+{
+        assert(id.m_core_id == m_coreid && id.m_local_id<m_indexed_models.size());
+}
+
 
 void n_model::Core::runSmallStep()
 {

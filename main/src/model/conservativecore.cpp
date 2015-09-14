@@ -385,8 +385,6 @@ void
 Conservativecore::sendMessage(const t_msgptr& msg){
         // At output collection, timestamp is set (color etc is of no interest to us here (and is not yet set)).
         this->m_last_sent_msgtime = msg->getTimeStamp();
-        size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
-	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
 	LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 }

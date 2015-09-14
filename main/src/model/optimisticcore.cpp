@@ -29,12 +29,6 @@ Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, cons
 void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock.
-	size_t coreid = this->m_loctable->lookupModel(msg->getDestinationModel());
-	if(coreid >= m_cores || coreid == this->getCoreID()){
-		LOG_ERROR("\tMCORE :: ", this->getCoreID(), " failed lookup for msg ", msg->toString());
-		return;
-	}
-	msg->setDestinationCore(coreid);	// time, color, source are set by collectOutput(). Rest is set by model.
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
@@ -44,16 +38,17 @@ void Optimisticcore::sendMessage(const t_msgptr& msg)
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock
+        // size_t branch :: skip alloc of amsg entirely.
         m_stats.logStat(AMSGSENT);
-	t_msgptr amsg = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(),
-	        msg->getDestinationPort(), msg->getSourcePort(), "");// Use explicit copy accessors to void any chance for races.
-	this->paintMessage(amsg);		// Antimessage should have same color as core!!
-	amsg->setAntiMessage(true);
-	amsg->setDestinationCore(msg->getDestinationCore());
-	amsg->setSourceCore(msg->getSourceCore());
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", amsg->toString());
-	//this->countMessage(amsg);					// Make sure Mattern is notified
-	this->m_network->acceptMessage(amsg);
+	
+	this->paintMessage(msg);		
+	msg->setAntiMessage(true);
+        
+	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
+        // Skip this, by definition any antimessage is beyond the cut-line of gvt.
+        // If you enable this, do so as well @receive side.
+	//this->countMessage(amsg);					
+	this->m_network->acceptMessage(msg);
 }
 
 void Optimisticcore::paintMessage(const t_msgptr& msg)
@@ -65,9 +60,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
-	if (this->m_received_messages->contains(MessageEntry(msg))) {
-		this->m_received_messages->erase(MessageEntry(msg));
-	}
+	this->m_received_messages->erase(MessageEntry(msg));
 }
 
 void Optimisticcore::markMessageStored(const t_msgptr& msg)
@@ -112,7 +105,7 @@ void Optimisticcore::receiveMessage(const t_msgptr& msg)
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
 		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
 	} else {
-		this->queuePendingMessage(msg); // do not store antimessage (fifo network queue).
+		this->queuePendingMessage(msg); // do not store antimessage
 	}
 	
 	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
@@ -161,6 +154,7 @@ void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 	this->lockMessages();
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
+                
 		if(this->containsModel(message->getDestinationModel())){
 			this->receiveMessage(message);
 		}else{

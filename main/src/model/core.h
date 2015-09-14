@@ -380,6 +380,13 @@ public:
 	 */
 	bool
 	containsModel(const std::string& name)const;
+        
+        /**
+         * Check if the model's uuid references a local model.
+         * Depends on safety_checks macro
+         */
+        void
+        validateUUID(const n_model::uuid&);
 
 	/**
 	 * Indicates if Core is running, or halted.
