@@ -10,9 +10,8 @@
 namespace n_examples_abstract_c {
 
 ModelB::ModelB(std::string name, std::size_t priority)
-	: AtomicModel_impl(name, priority)
+	: AtomicModel<int>(name, priority)
 {
-	this->setState(n_tools::createObject<State>("0"));
 	m_elapsed = 0;
 	this->addInPort("B");
 }
@@ -23,31 +22,23 @@ ModelB::~ModelB()
 
 void ModelB::extTransition(const std::vector<n_network::t_msgptr> & message)
 {
-	t_stateptr state = this->getState();
-	if ((*state == "2") && (message.at(0)->getPayload() == "start")){
-                LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-		this->setState("3");
+	int& st = state();
+	if ((st == 2) && (message.at(0)->getPayload() == "start")){
+                LOG_DEBUG("MODEL :: transitioning from : " , st);
+		st = 3;
         }
-	else if ((*state == "5") && (message.at(0)->getPayload() == "start")){
-                LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-		this->setState("6");
+	else if ((st == 5) && (message.at(0)->getPayload() == "start")){
+                LOG_DEBUG("MODEL :: transitioning from : " , st);
+		st = 6;
         }
 }
 
 void ModelB::intTransition()
 {
-	t_stateptr state = this->getState();
-        LOG_DEBUG("MODEL :: transitioning from : " , state->toString());
-	if (*state == "0")
-		this->setState("1");
-	else if (*state == "1")
-		this->setState("2");
-	else if (*state == "3")
-		this->setState("4");
-	else if (*state == "4")
-		this->setState("5");
-	else if (*state == "6")
-		this->setState("7");
+	int& st = state();
+        LOG_DEBUG("MODEL :: transitioning from : " , st);
+	if (st < 7)
+		++st;
 	else
 		assert(false); // You shouldn't come here...
 	return;
@@ -55,8 +46,8 @@ void ModelB::intTransition()
 
 t_timestamp ModelB::timeAdvance() const
 {
-	t_stateptr state = this->getState();
-	if ((*state == "7") || (*state == "2") || (*state == "5"))
+	const int& st = state();
+	if (st == 7 || (st == 2) || (st == 5))
 		return t_timestamp::infinity();
 	return t_timestamp(10);
 }
@@ -68,26 +59,20 @@ void ModelB::output(std::vector<n_network::t_msgptr>&) const
 
 t_timestamp ModelB::lookAhead() const
 {
-	t_stateptr state = this->getState();
-	if ((*state == "0") || (*state == "3")){
+	const int& st = state();
+	if ((st == 0) || (st == 3)){
 		return t_timestamp(30);
 	}
-	else if ((*state == "1") || (*state == "4")){
+	else if ((st == 1) || (st == 4)){
                 assert(false);
 		return t_timestamp(20);
 	}
-	else if ((*state == "2") || (*state == "5")){
+	else if ((st == 2) || (st == 5)){
                 assert(false);
 		return t_timestamp(10);
 	}
 
 	return t_timestamp::infinity();
-}
-
-t_stateptr ModelB::setState(std::string s)
-{
-	this->Model::setState(n_tools::createObject<State>(s));
-	return this->getState();
 }
 
 } /* namespace n_examples_abstract_c */

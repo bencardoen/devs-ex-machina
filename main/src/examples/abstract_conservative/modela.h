@@ -20,7 +20,7 @@ using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class ModelA: public n_model::AtomicModel_impl
+class ModelA: public n_model::AtomicModel<int>
 {
 public:
 	ModelA(std::string name, std::size_t priority = 0);
@@ -31,13 +31,6 @@ public:
 	t_timestamp timeAdvance() const override;
 	void output(std::vector<n_network::t_msgptr>& msgs) const override;
 	t_timestamp lookAhead() const override;
-
-	/*
-	 * The following function has been created to easily
-	 * create states using a string
-	 */
-	using AtomicModel_impl::setState;
-	t_stateptr setState(std::string);
 };
 
 } /* namespace n_examples_abstract_c */

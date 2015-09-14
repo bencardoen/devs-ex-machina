@@ -9,31 +9,11 @@
 
 namespace n_examples_ds {
 
-PolicemanMode::PolicemanMode(std::string state)
-	: State(state)
-{
-
-}
-
-std::string PolicemanMode::toXML()
-{
-	return "<policeman activity =\"" + this->toString() + "\"/>";
-}
-
-std::string PolicemanMode::toJSON()
-{
-	return "{ \"activity\": \"" + this->toString() + "\" }";
-}
-
-std::string PolicemanMode::toCell()
-{
-	return "";
-}
 
 Policeman::Policeman(std::string name, std::size_t priority)
-	: AtomicModel_impl(name, priority)
+	: AtomicModel<PolicemanMode>(name, PolicemanMode("idle_at_1"), priority)
 {
-	this->setState(n_tools::createObject<PolicemanMode>("idle_at_1"));
+//	this->setState(n_tools::createObject<PolicemanMode>("idle_at_1"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
 	this->addOutPort("OUT");
@@ -46,20 +26,20 @@ void Policeman::extTransition(const std::vector<n_network::t_msgptr> &)
 
 void Policeman::intTransition()
 {
-	t_stateptr state = this->getState();
+	PolicemanMode& mode = state();
 
-	if (*state == "idle_at_1")
-	    this->setState("working_at_1");
-	else if (*state == "working_at_1")
-	    this->setState("moving_from_1_to_2");
-	else if (*state == "moving_from_1_to_2")
-	    this->setState("idle_at_2");
-	else if (*state == "idle_at_2")
-	    this->setState("working_at_2");
-	else if (*state == "working_at_2")
-	    this->setState("moving_from_2_to_1");
-	else if (*state == "moving_from_2_to_1")
-	    this->setState("idle_at_1");
+	if (mode.m_value == "idle_at_1")
+		mode.m_value = "working_at_1";
+	else if (mode.m_value == "working_at_1")
+		mode.m_value = "moving_from_1_to_2";
+	else if (mode.m_value == "moving_from_1_to_2")
+		mode.m_value = "idle_at_2";
+	else if (mode.m_value == "idle_at_2")
+		mode.m_value = "working_at_2";
+	else if (mode.m_value == "working_at_2")
+		mode.m_value = "moving_from_2_to_1";
+	else if (mode.m_value == "moving_from_2_to_1")
+		mode.m_value = "idle_at_1";
 	else
 		assert(false); // You shouldn't come here...
 	return;
@@ -67,8 +47,8 @@ void Policeman::intTransition()
 
 t_timestamp Policeman::timeAdvance() const
 {
-	t_stateptr state = this->getState();
-	std::string substr = state->m_state.substr(0, 4);
+	const PolicemanMode& mode = state();
+	std::string substr = mode.m_value.substr(0, 4);
 	LOG_DEBUG("Policeman::timeAdvance substr = ", substr);
 	if (substr == "idle")
 		return t_timestamp(50);
@@ -85,10 +65,10 @@ void Policeman::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	// BEFORE USING THIS FUNCTION
 	// READ EXAMPLE @ PYTHONPDEVS trafficlight_classic/model.py line 117 ( def outputFnc(self):)
-	t_stateptr state = this->getState();
+	const PolicemanMode& mode = state();
 	std::string message = "";
 
-	std::string substr = state->m_state.substr(0, 4);
+	std::string substr = mode.m_value.substr(0, 4);
 	if (substr == "idle")
 		message = "toManual";
 	else if (substr == "work")
@@ -99,21 +79,15 @@ void Policeman::output(std::vector<n_network::t_msgptr>& msgs) const
 	this->getPort("OUT")->createMessages(message, msgs);
 }
 
-t_stateptr Policeman::setState(std::string s)
-{
-	this->Model::setState(n_tools::createObject<PolicemanMode>(s));
-	return this->getState();
-}
-
 bool Policeman::modelTransition(n_model::DSSharedState* shared)
 {
 	LOG_DEBUG("Policeman::parent = ", m_parent.expired());
-	t_stateptr state = this->getState();
+	PolicemanMode& mode = state();
 	std::string val = "";
-	if (*state == "moving_from_1_to_2"){
+	if (mode.m_value == "moving_from_1_to_2"){
 		val = "2";
 	}
-	else if (*state == "moving_from_2_to_1"){
+	else if (mode.m_value == "moving_from_2_to_1"){
 		val = "1";
 	}
 	LOG_DEBUG("Policeman::modelTransition with destination = ", val);

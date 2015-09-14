@@ -31,18 +31,26 @@ struct EventPair
 	EventTime m_procTime;
 };
 
-class PHOLDModelState: public n_model::State
+struct PHOLDModelState
 {
-public:
-	PHOLDModelState();
-	virtual ~PHOLDModelState();
-
 	std::deque<EventPair> m_events;
 };
 
+}	/* namespace n_benchmarks_phold */
+
+template<>
+struct ToString<n_benchmarks_phold::PHOLDModelState>
+{
+	static std::string exec(const n_benchmarks_phold::PHOLDModelState&){
+		return "";
+	}
+};
+
+namespace n_benchmarks_phold {
+
 typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
 
-class HeavyPHOLDProcessor: public n_model::AtomicModel_impl
+class HeavyPHOLDProcessor: public n_model::AtomicModel<PHOLDModelState>
 {
 private:
 	const size_t m_percentageRemotes;

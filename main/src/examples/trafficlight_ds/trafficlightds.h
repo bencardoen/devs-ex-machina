@@ -10,46 +10,12 @@
 
 #include "model/atomicmodel.h"
 #include "model/state.h"
+#include "examples/trafficlight_coupled/trafficlightc.h"
 #include <assert.h>
 
 namespace n_examples_ds {
 
-using n_network::t_msgptr;
-using n_model::AtomicModel_impl;
-using n_model::State;
-using n_model::t_stateptr;
-using n_model::t_modelptr;
-using n_network::t_timestamp;
-
-class TrafficLightMode: public State
-{
-public:
-	TrafficLightMode(std::string state);
-	std::string toXML() override;
-	std::string toJSON() override;
-	std::string toCell() override;
-	~TrafficLightMode() {}
-};
-
-class TrafficLight: public AtomicModel_impl
-{
-public:
-	TrafficLight() = delete;
-	TrafficLight(std::string, std::size_t priority = 0);
-	~TrafficLight() {}
-
-	void extTransition(const std::vector<n_network::t_msgptr> & message) override;
-	void intTransition() override;
-	t_timestamp timeAdvance() const override;
-	void output(std::vector<n_network::t_msgptr>& msgs) const override;
-
-	/*
-	 * The following function has been created to easily
-	 * create states using a string
-	 */
-	using AtomicModel_impl::setState;
-	t_stateptr setState(std::string);
-};
+typedef n_examples_coupled::TrafficLight TrafficLight;
 
 }
 

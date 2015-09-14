@@ -34,7 +34,7 @@ struct MsgData
 
 std::ostream& operator<<(std::ostream& out, const MsgData& data);
 
-class CellState: public n_model::State
+class CellState
 {
 public:
 	size_t m_production;
@@ -42,23 +42,31 @@ public:
 	int m_toSend;	//how much will be sent the this time
 	std::size_t m_target; //the target
 	bool m_produced;		//whether or not we produced something last time
-public:
+
 	CellState(size_t production, int capacity = 0);
-	virtual ~CellState();
-	virtual std::string toString();
 };
 
-class Cell: public n_model::AtomicModel
+} /* namespace n_virus */
+
+template<>
+struct ToString<n_virus::CellState>
+{
+	static std::string exec(const n_virus::CellState& s){
+		return "[Production: "+n_tools::toString(s.m_production)+" Capacity: "+n_tools::toString(s.m_capacity)+"]";
+	}
+};
+
+namespace n_virus {
+
+class Cell: public n_model::AtomicModel<CellState>
 {
 private:
 	std::mt19937 m_rng;
 	std::vector<n_model::t_portptr> m_neighbours;
-	std::shared_ptr<CellState> m_curState;
 public:
 	Cell(std::string name, size_t neighbours, size_t production, size_t seed, size_t capacity = 0);
 	virtual ~Cell();
 
-	void updateCurState();
 	int send();
 	void receive(int incoming);
 	void produce();

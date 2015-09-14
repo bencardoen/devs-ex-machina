@@ -425,7 +425,7 @@ TEST(Cereal, CoupledModelPointer)
 	TestCereal::testCerealModelCoupledPointer();
 }
 
-TEST(Cereal, AtomicModel)
+TEST(Cereal, AtomicModel_impl)
 {
 	TestCereal::testCerealAtomicModel();
 }

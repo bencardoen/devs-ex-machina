@@ -17,17 +17,48 @@ namespace n_examples {
 using namespace n_model;
 using n_network::t_msgptr;
 
-class TrafficLightMode: public State
+class TrafficLightMode
 {
 public:
-	TrafficLightMode(std::string state);
-	std::string toXML() override;
-	std::string toJSON() override;
-	std::string toCell() override;
-	~TrafficLightMode() {}
+	std::string m_value;
+	TrafficLightMode(std::string state = "red");
 };
 
-class TrafficLight: public AtomicModel_impl
+
+} /* namespace n_examples */
+
+template<>
+struct ToString<n_examples::TrafficLightMode>
+{
+	static std::string exec(const n_examples::TrafficLightMode& s){
+		return s.m_value;
+	}
+};
+template<>
+struct ToXML<n_examples::TrafficLightMode>
+{
+	static std::string exec(const n_examples::TrafficLightMode& s){
+		return "<state color =\"" + s.m_value + "\"/>";
+	}
+};
+template<>
+struct ToJSON<n_examples::TrafficLightMode>
+{
+	static std::string exec(const n_examples::TrafficLightMode& s){
+		return "{ \"state\": \"" + s.m_value + "\" }";
+	}
+};
+template<>
+struct ToCell<n_examples::TrafficLightMode>
+{
+	static std::string exec(const n_examples::TrafficLightMode&){
+		return "";
+	}
+};
+
+namespace n_examples {
+
+class TrafficLight: public AtomicModel<TrafficLightMode>
 {
 public:
 	TrafficLight() = delete;
@@ -38,13 +69,6 @@ public:
 	void intTransition() override;
 	t_timestamp timeAdvance() const override;
 	void output(std::vector<n_network::t_msgptr>& msgs) const override;
-
-	/*
-	 * The following function has been created to easily
-	 * create states using a string
-	 */
-	using AtomicModel_impl::setState;
-	t_stateptr setState(const std::string&);
 };
 
 }

@@ -12,27 +12,16 @@
 
 namespace n_examples {
 
-class FireGenerator;
-
-class FireGeneratorState: public n_model::State
+struct FGState
 {
-	friend FireGenerator;
-private:
-	bool m_status;
-public:
-	FireGeneratorState();
-
-	std::string toString() override;
+	bool m_value;
+	FGState(bool v = false): m_value(v)
+	{}
 };
 
-typedef std::shared_ptr<FireGeneratorState> t_fgstateptr;
-
-class FireGenerator: public n_model::AtomicModel_impl
+class FireGenerator: public n_model::AtomicModel<FGState>
 {
 private:
-	FireGeneratorState& getFGState();
-	const FireGeneratorState& getFGState() const;
-
 	std::vector<n_model::t_portptr> m_outputs;
 public:
 	FireGenerator(std::size_t levels);
@@ -47,5 +36,21 @@ public:
 typedef std::shared_ptr<FireGenerator> t_fgenptr;
 
 } /* namespace n_examples */
+
+
+template<>
+struct ToString<n_examples::FGState>
+{
+	static std::string exec(const n_examples::FGState& s){
+		 return (s.m_value)? "GeneratorState: true": "GeneratorState: false";
+	}
+};
+template<>
+struct ToCell<n_examples::FGState>
+{
+	static std::string exec(const n_examples::FGState&){
+		 return "";
+	}
+};
 
 #endif /* SRC_EXAMPLES_FORESTFIRE_FIREGENERATOR_H_ */

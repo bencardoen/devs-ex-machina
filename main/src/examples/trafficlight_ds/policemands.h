@@ -11,28 +11,21 @@
 #include "model/atomicmodel.h"
 #include "model/state.h"
 #include "model/dssharedstate.h"
+#include "examples/trafficlight_coupled/policemanc.h"
 #include <assert.h>
 
 namespace n_examples_ds {
 
 using n_model::State;
 using n_model::t_stateptr;
-using n_model::AtomicModel_impl;
+using n_model::AtomicModel;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 using n_model::t_atomicmodelptr;
 
-class PolicemanMode: public State
-{
-public:
-	PolicemanMode(std::string state);
-	std::string toXML() override;
-	std::string toJSON() override;
-	std::string toCell() override;
-	~PolicemanMode() {}
-};
+typedef n_examples_coupled::PolicemanMode PolicemanMode;
 
-class Policeman: public AtomicModel_impl
+class Policeman: public AtomicModel<PolicemanMode>
 {
 public:
 	Policeman() = delete;
@@ -43,13 +36,6 @@ public:
 	void intTransition() override;
 	t_timestamp timeAdvance() const override;
 	void output(std::vector<n_network::t_msgptr>& msgs) const override;
-
-	/*
-	 * The following function has been created to easily
-	 * create states using a string
-	 */
-	using AtomicModel_impl::setState;
-	t_stateptr setState(std::string);
 
 	bool modelTransition(n_model::DSSharedState* shared) override;
 };
