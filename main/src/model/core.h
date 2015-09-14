@@ -303,7 +303,7 @@ protected:
 	 * with fresh entries.
 	 */
 	void
-	rescheduleAll(const t_timestamp& totime);
+	rescheduleAllRevert(const t_timestamp& totime);
         
         /**
          * Wipe the scheduler clear, and ask each model for a new scheduled entry.
@@ -371,9 +371,13 @@ public:
 	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
+         * @deprecated
 	 */
 	t_atomicmodelptr
-	getModel(const std::string& name);
+	getModel(const std::string& name)const;
+        
+        const t_atomicmodelptr&
+        getModel(size_t index)const;
 
 	/**
 	 * Check if model is present in core.
@@ -443,6 +447,10 @@ public:
 	 */
 	std::set<std::string>
 	getImminent();
+        
+        void
+        getImminent(std::vector<t_atomicmodelptr>& imms);
+
 
 	/**
 	 * Called in case of Dynamic structured Devs.

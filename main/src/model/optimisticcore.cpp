@@ -395,7 +395,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
 		}
 	}
 	this->setTime(totime);
-	this->rescheduleAll(totime);		// Make sure the scheduler is reloaded with fresh/stale models
+	this->rescheduleAllRevert(totime);		// Make sure the scheduler is reloaded with fresh/stale models
 	this->revertTracerUntil(totime); 	// Finally, revert trace output
 }
 

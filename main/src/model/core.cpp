@@ -115,10 +115,23 @@ void n_model::Core::addModel(const t_atomicmodelptr& model)
 }
 
 
-n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
+n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)const
 {
-	assert(this->containsModel(mname) && "Model not in core.");
-	return this->m_models[mname];
+        LOG_INFO("DEPRECATED!");
+        for(const auto& model : m_indexed_models){
+                if(model->getName()==mname)
+                        return model;
+        }
+        assert(false);
+}
+
+const n_model::t_atomicmodelptr&
+n_model::Core::getModel(size_t index)const{
+#ifdef SAFETY_CHECKS
+        return m_indexed_models.at(index);
+#else
+        return m_indexed_model[index];
+#endif
 }
 
 bool n_model::Core::containsModel(const std::string& mname) const
@@ -190,7 +203,6 @@ void n_model::Core::initializeModels()
         
         for(size_t index = 0; index<m_indexed_models.size(); ++index){
                 const t_atomicmodelptr& model = m_indexed_models[index];
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName() , " at ", index);
                 model->initUUID(this->getCoreID(), index);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
         }
@@ -338,6 +350,20 @@ std::set<std::string> n_model::Core::getImminent()
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imminent.size(), " imminents ");
 	return imminent;
 }
+
+void
+n_model::Core::getImminent(std::vector<t_atomicmodelptr>& imms)
+{
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Retrieving imminent models ");
+	
+	std::vector<ModelEntry> bag;
+	const ModelEntry mark(0, t_timestamp(this->getTime().getTime(), t_timestamp::MAXCAUSAL));
+	this->m_scheduler->unschedule_until(bag, mark);
+	for (const auto& entry : bag) 
+                imms.push_back(this->getModel(entry.getID()));
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imms.size(), " imminents @ time " , this->getTime() );
+}
+
 
 void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 {
@@ -560,31 +586,23 @@ void n_model::Core::checkTerminationFunction()
 void n_model::Core::removeModel(const std::string& name)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", name);
+        
+        const t_atomicmodelptr& model = this->getModel(name);
+                
+        const size_t lid = model->getUUID().m_local_id;
+        m_models.erase(name);
 
-	if (this->containsModel(name)) {
-                t_atomicmodelptr model = m_models[name];
-                size_t lid = model->getUUID().m_local_id;
-		m_models.erase(name);
-                
-                size_t sizeold = m_indexed_models.size();
-                auto iter = m_indexed_models.begin();
-                std::advance(iter, lid);
-                m_indexed_models.erase(iter);
-                size_t news = m_indexed_models.size();
-                assert(sizeold = news+1);
-                
-		ModelEntry target(lid, 0);
-		this->m_scheduler->erase(target);
-                
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-                assert(m_models.size()==m_indexed_models.size());
-                
-		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
-		assert(m_models.find(name) == m_models.end() && "Removal from scheduler failed !! model still in m_models");
-                
-	} else {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " you've asked to remove model with name ", name, " which is not in this core.");
-	}
+        auto iter = m_indexed_models.begin();
+        std::advance(iter, lid);
+        m_indexed_models.erase(iter);
+        
+        const ModelEntry target(lid, 0);
+        this->m_scheduler->erase(target);       // irrelevant if it exist or not.
+
+        LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
+        assert(m_models.size()==m_indexed_models.size());
+
+        assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
@@ -611,6 +629,9 @@ void n_model::Core::clearModels()
 	assert(this->isLive() == false && "Clearing models during simulation is not supported.");
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing all models from core.");
 	this->m_models.clear();
+        this->m_indexed_local_mail.clear();
+        this->m_indexed_models.clear();
+        this->m_mailbag.clear();
 	this->m_scheduler->clear();
 	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0, 0));
@@ -640,19 +661,15 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 }
 
 
-void n_model::Core::rescheduleAll(const t_timestamp& totime)
+void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for (const auto& modelentry : m_models) {
-		t_timestamp modellast = modelentry.second->revert(totime);
+	for (const auto& model : m_indexed_models) {
+                const std::string mname=model->getName();
+		t_timestamp modellast = model->revert(totime);
 		// Bug lived here : Do not set time on model.
-		if (!isInfinity(modellast)) {
-			this->scheduleModel(modelentry.first, modellast);
-		} else {
-			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert :: ",
-			        modelentry.second->getName());
-		}
+                this->scheduleModel(mname, modellast);
 	}
 }
 
@@ -660,9 +677,9 @@ void n_model::Core::rescheduleAll()
 {
         this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for (const auto& modelentry : m_models) {
-                t_timestamp nval = modelentry.second->getTimeNext();
-		this->scheduleModel(modelentry.first, nval);
+	for (const auto& model : m_indexed_models) {
+                t_timestamp nval = model->getTimeNext();
+		this->scheduleModel(model->getName(), nval);
 	}
 }
 
