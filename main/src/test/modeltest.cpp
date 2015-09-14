@@ -100,7 +100,6 @@ TEST(Model, Basic)
 {
 	RecordProperty("description", "Verifies all basic functionality of the default model functions");
 	Model model1("ABC");
-	EXPECT_EQ(model1.getState(), nullptr);
 	EXPECT_EQ(model1.getIPorts().size(), 0u);
 	EXPECT_EQ(model1.getOPorts().size(), 0u);
 	EXPECT_EQ(model1.getName(), "ABC");
@@ -113,6 +112,7 @@ TEST(Model, AtomicModel)
 {
 	RecordProperty("description", "Verifies all basic functionality of AtomicModel");
 	n_examples::TrafficLight tl("Trafficlight1");
+	EXPECT_EQ(tl.state().m_value, "red");
 	EXPECT_EQ(tl.getName(), "Trafficlight1");
 }
 
@@ -140,11 +140,10 @@ TEST(State, Basic)
 {
 	RecordProperty("description", "Verifies bassic functionality of state");
 	n_examples::TrafficLightMode mode("red");
-	EXPECT_EQ(mode.toString(), "red");
-	EXPECT_EQ(mode.toXML(), "<state color =\"red\"/>");
-	EXPECT_EQ(mode.toJSON(), "{ \"state\": \"red\" }");
-	EXPECT_TRUE(mode == "red");
-	EXPECT_TRUE("red" == mode);
+	EXPECT_EQ(ToString<n_examples::TrafficLightMode>::exec(mode), "red");
+	EXPECT_EQ(ToXML<n_examples::TrafficLightMode>::exec(mode), "<state color =\"red\"/>");
+	EXPECT_EQ(ToJSON<n_examples::TrafficLightMode>::exec(mode), "{ \"state\": \"red\" }");
+	EXPECT_TRUE(mode.m_value == "red");
 }
 
 TEST(Port, Basic)

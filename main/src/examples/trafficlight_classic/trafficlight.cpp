@@ -10,30 +10,14 @@
 namespace n_examples {
 
 TrafficLightMode::TrafficLightMode(std::string state)
-	: State(state)
+	: m_value(state)
 {
-
-}
-
-std::string TrafficLightMode::toXML()
-{
-	return "<state color =\"" + this->toString() + "\"/>";
-}
-
-std::string TrafficLightMode::toJSON()
-{
-	return "{ \"state\": \"" + this->toString() + "\" }";
-}
-
-std::string TrafficLightMode::toCell()
-{
-	return "";
 }
 
 TrafficLight::TrafficLight(std::string name, std::size_t priority)
-	: AtomicModel_impl(name, priority)
+	: AtomicModel(name, TrafficLightMode("red"), priority)
 {
-	this->setState(n_tools::createObject<TrafficLightMode>("red"));
+//	this->setState(n_tools::createObject<TrafficLightMode>("red"));
 	//this->setState(std::make_shared<TrafficLightMode>("red"));
 	// Initialize elapsed attribute if required
 	m_elapsed = 0;
@@ -46,13 +30,13 @@ void TrafficLight::extTransition(const std::vector<n_network::t_msgptr> &)
 
 void TrafficLight::intTransition()
 {
-	t_stateptr state = this->getState();
-	if (*state == "red")
-		this->setState("green");
-	else if (*state == "green")
-		this->setState("yellow");
-	else if (*state == "yellow")
-		this->setState("red");
+	TrafficLightMode& mode = state();
+	if (mode.m_value == "red")
+		mode.m_value = "green";
+	else if (mode.m_value == "green")
+		mode.m_value = "yellow";
+	else if (mode.m_value == "yellow")
+		mode.m_value = "red";
 	else
 		assert(false); // You shouldn't come here...
 	return;
@@ -60,12 +44,12 @@ void TrafficLight::intTransition()
 
 t_timestamp TrafficLight::timeAdvance() const
 {
-	t_stateptr state = this->getState();
-	if (*state == "red")
+	const TrafficLightMode& mode = state();
+	if (mode.m_value == "red")
 		return t_timestamp(60);
-	else if (*state == "green")
+	else if (mode.m_value == "green")
 		return t_timestamp(50);
-	else if (*state == "yellow")
+	else if (mode.m_value == "yellow")
 		return t_timestamp(10);
 	else
 		assert(false); // You shouldn't come here...
@@ -75,12 +59,6 @@ t_timestamp TrafficLight::timeAdvance() const
 void TrafficLight::output(std::vector<n_network::t_msgptr>&) const
 {
 	//nothing to do here
-}
-
-t_stateptr TrafficLight::setState(const std::string& s)
-{
-	this->Model::setState(n_tools::createObject<TrafficLightMode>(s));
-	return this->getState();
 }
 
 }

@@ -36,19 +36,9 @@ GeneratorState::GeneratorState(t_counter count, std::size_t seed):
 {
 }
 
-GeneratorState::~GeneratorState()
-{
-}
-
-std::string GeneratorState::toString()
-{
-	return n_tools::toString(m_count) + ", " + n_tools::toString(m_seed);
-}
-
 Generator::Generator(const std::string& name, std::size_t seed, bool randta):
 	AtomicModel(name), m_randomta(randta), m_out(addOutPort("output")), m_in(addInPort("input"))
 {
-	setState(n_tools::createObject<GeneratorState>(0, 0));
 	adjustCounter(seed);
 }
 
@@ -87,13 +77,11 @@ n_model::t_timestamp Generator::timeAdvance() const
 
 void Generator::intTransition()
 {
-	setState(n_tools::createObject<GeneratorState>(state()));
 	adjustCounter(state().m_seed);
 }
 
 void Generator::extTransition(const std::vector<n_network::t_msgptr>&)
 {
-	setState(n_tools::createObject<GeneratorState>(state()));
 	state().m_count -= getTimeElapsed().getTime();
 }
 

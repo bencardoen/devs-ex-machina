@@ -202,7 +202,7 @@ add_executable(${PROJECT_NAME}
     src/test/loggertest.cpp
     src/test/controllertest.cpp
     src/test/messagetest.cpp
-    src/test/cerealtest.cpp
+#    src/test/cerealtest.cpp
     src/test/basiccerealtest.cpp
     src/test/performancetest.cpp
     src/test/testmodels.cpp
@@ -259,23 +259,23 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
                     )
 
-add_executable(${PROJECT_NAME}_traffic
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/examples/trafficsystem/car.cpp
-    src/examples/trafficsystem/city_small.cpp
-    src/examples/trafficsystem/query.cpp
-    src/examples/trafficsystem/queryack.cpp
-    src/examples/trafficsystem/building.cpp
-    src/examples/trafficsystem/residence.cpp
-    src/examples/trafficsystem/commercial.cpp
-    src/examples/trafficsystem/roadsegment.cpp
-    src/examples/trafficsystem/road.cpp
-    src/examples/trafficsystem/intersection.cpp
-    src/examples/trafficsystem/collector.cpp
-    src/maintraffic.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
+# add_executable(${PROJECT_NAME}_traffic
+#     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+#     src/examples/trafficsystem/car.cpp
+#     src/examples/trafficsystem/city_small.cpp
+#     src/examples/trafficsystem/query.cpp
+#     src/examples/trafficsystem/queryack.cpp
+#     src/examples/trafficsystem/building.cpp
+#     src/examples/trafficsystem/residence.cpp
+#     src/examples/trafficsystem/commercial.cpp
+#     src/examples/trafficsystem/roadsegment.cpp
+#     src/examples/trafficsystem/road.cpp
+#     src/examples/trafficsystem/intersection.cpp
+#     src/examples/trafficsystem/collector.cpp
+#     src/maintraffic.cpp
+#     )
+# SET_TARGET_PROPERTIES(${PROJECT_NAME}_traffic PROPERTIES EXCLUDE_FROM_ALL 1
+#                     )
 
 ##############################################################################
 ### adevs targets ############################################################
@@ -356,7 +356,7 @@ target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
+# target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)
 target_link_libraries( adevs_interconnect ${LIBS} adevs)

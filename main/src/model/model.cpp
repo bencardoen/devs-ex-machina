@@ -15,7 +15,7 @@
 namespace n_model {
 
 Model::Model(std::string name)
-	: m_name(name), m_state(nullptr), m_control(nullptr), m_keepOldStates(true)
+	: m_name(name), m_control(nullptr)
 {
 }
 
@@ -37,26 +37,6 @@ t_portptr Model::getPort(std::string name) const
 	} else
 		return ptr1->second;
 	return nullptr;
-}
-
-t_stateptr Model::getState() const
-{
-	return m_state;
-}
-
-void Model::setState(const t_stateptr& newState)
-{
-	if (newState == nullptr)
-		return;
-	m_state = newState;
-	if (m_keepOldStates)
-		m_oldStates.push_back(m_state);
-	else {
-		if (m_oldStates.size() != 0)
-			m_oldStates.at(0) = m_state;
-		else
-			m_oldStates.push_back(m_state);
-	}
 }
 
 void Model::setParent(const std::shared_ptr<Model>& parent)
@@ -163,43 +143,18 @@ bool Model::allowDS() const
 	return true;
 }
 
-t_timestamp Model::getTimeNext() const
-{
-	return m_timeNext;
-}
-
-t_timestamp Model::getTimeLast() const
-{
-	return m_timeLast;
-}
-
-bool Model::getKeepOldStates() const
-{
-	return m_keepOldStates;
-}
-
-void Model::setKeepOldStates(bool b)
-{
-	m_keepOldStates = b;
-}
-
 void Model::serialize(n_serialization::t_oarchive& archive)
 {
-	LOG_INFO("SERIALIZATION: Saving Model '", getName(), "' with timeNext = ", m_timeNext);
-	std::vector<t_stateptr> oldStates;
-	if (not m_oldStates.empty()) oldStates.push_back(m_oldStates.at(0));
-	archive(m_name, m_timeLast, m_timeNext, m_state, oldStates,
-			m_iPorts, m_oPorts,
-			m_keepOldStates, m_parent);
+	LOG_INFO("SERIALIZATION: Saving Model '", getName(), "'");
+	archive(m_name, m_iPorts, m_oPorts, m_parent);
 }
 
 void Model::serialize(n_serialization::t_iarchive& archive)
 {
 	LOG_DEBUG("MODEL: Serialize (load)");
-	archive(m_name, m_timeLast, m_timeNext, m_state, m_oldStates,
-			m_iPorts, m_oPorts, m_keepOldStates, m_parent);
+	archive(m_name, m_iPorts, m_oPorts, m_parent);
 
-	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "' with timeNext = ", m_timeNext);
+	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "'");
 }
 
 void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Model>& construct)
@@ -210,13 +165,8 @@ void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 	archive(name);
 	construct(name);
 
-	archive(construct->m_timeLast);
-	archive(construct->m_timeNext);
-	archive(construct->m_state);
-	archive(construct->m_oldStates);
 	archive(construct->m_iPorts);
 	archive(construct->m_oPorts);
-	archive(construct->m_keepOldStates);
 	archive(construct->m_parent);
 }
 

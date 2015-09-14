@@ -11,21 +11,9 @@
 
 namespace n_examples {
 
-FireGeneratorState::FireGeneratorState(): m_status(true)
-{
-}
-
-std::string FireGeneratorState::toString()
-{
-	if(m_status)
-		return "GeneratorState: true";
-	return "GeneratorState: false";
-}
-
 FireGenerator::FireGenerator(std::size_t levels):
-	AtomicModel_impl("Generator")
+	AtomicModel<FGState>("Generator", FGState(true))
 {
-	setState(n_tools::createObject<FireGeneratorState>());
 	m_outputs.reserve(levels);
 	for(std::size_t i = 0; i < levels; ++i) {
 		std::stringstream ssr;
@@ -36,27 +24,14 @@ FireGenerator::FireGenerator(std::size_t levels):
 
 void FireGenerator::intTransition()
 {
-	t_fgstateptr newState = n_tools::createObject<FireGeneratorState>();
-	newState->m_status = false;
-	setState(newState);
+	state().m_value = false;
 }
 
 n_network::t_timestamp FireGenerator::timeAdvance() const
 {
-	const FireGeneratorState& state = getFGState();
-	if(state.m_status)
+	if(state().m_value)
 		return n_network::t_timestamp(1);
 	return n_network::t_timestamp::infinity();
-}
-
-FireGeneratorState& FireGenerator::getFGState()
-{
-	return *(std::dynamic_pointer_cast<FireGeneratorState>(getState()));
-}
-
-const FireGeneratorState& FireGenerator::getFGState() const
-{
-	return *(std::dynamic_pointer_cast<FireGeneratorState>(getState()));
 }
 
 void FireGenerator::output(std::vector<n_network::t_msgptr>& msgs) const
@@ -72,9 +47,9 @@ void FireGenerator::output(std::vector<n_network::t_msgptr>& msgs) const
 	}
 }
 
-} /* namespace n_examples */
-
-std::vector<n_model::t_portptr>& n_examples::FireGenerator::getOutputs()
+std::vector<n_model::t_portptr>& FireGenerator::getOutputs()
 {
 	return m_outputs;
 }
+
+} /* namespace n_examples */

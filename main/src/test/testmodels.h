@@ -21,20 +21,15 @@ struct Event
 
 std::ostream& operator<<(std::ostream& stream, const Event& event);
 
-class ModelState: public n_model::State
+struct ModelState
 {
-public:
 	std::size_t m_counter;	//keep this public as these are just for test models
 	Event m_event;
 
 	ModelState();
-	ModelState(const ModelState& other) = default;
-
-	std::string toString() override;
-	std::string toXML() override;
 };
 
-class Processor: public n_model::AtomicModel_impl
+class Processor: public n_model::AtomicModel<ModelState>
 {
 public:
 	std::size_t m_event1;
@@ -58,7 +53,7 @@ public:
 	GeneratorState(const GeneratorState& other) = default;
 };
 
-class Generator: public n_model::AtomicModel_impl
+class Generator: public n_model::AtomicModel<GeneratorState>
 {
 public:
 	std::size_t m_gen_event1;
@@ -81,7 +76,7 @@ public:
 	CoupledProcessor(std::size_t event1_P1, std::size_t levels);
 };
 
-class ElapsedNothing: public n_model::AtomicModel_impl
+class ElapsedNothing: public n_model::AtomicModel<ModelState>
 {
 public:
 	ElapsedNothing();
@@ -116,5 +111,33 @@ public:
 };
 
 } /* namespace n_testmodel */
+template<>
+struct ToString<n_testmodel::ModelState>
+{
+	static std::string exec(const n_testmodel::ModelState& s){
+		return s.m_counter == std::numeric_limits<std::size_t>::max() ? "inf": n_tools::toString(s.m_counter);
+	}
+};
+template<>
+struct ToXML<n_testmodel::ModelState>
+{
+	static std::string exec(const n_testmodel::ModelState& s){
+		return std::string("<counter>") + ToString<n_testmodel::ModelState>::exec(s) + "</counter>";
+	}
+};
+template<>
+struct ToString<n_testmodel::GeneratorState>
+{
+	static std::string exec(const n_testmodel::GeneratorState& s){
+		return s.m_counter == std::numeric_limits<std::size_t>::max() ? "inf": n_tools::toString(s.m_counter);
+	}
+};
+template<>
+struct ToXML<n_testmodel::GeneratorState>
+{
+	static std::string exec(const n_testmodel::GeneratorState& s){
+		return std::string("<counter>") + ToString<n_testmodel::ModelState>::exec(s) + "</counter>";
+	}
+};
 
 #endif /* SRC_TEST_TESTMODELS_H_ */

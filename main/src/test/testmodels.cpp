@@ -20,29 +20,17 @@ std::ostream& operator <<(std::ostream& stream, const Event& event)
 }
 
 ModelState::ModelState():
-	State(),
 	m_counter(std::numeric_limits<std::size_t>::max()),
 	m_event{0}
 {
 }
 
-std::string ModelState::toString()
-{
-	return m_counter == std::numeric_limits<std::size_t>::max() ? "inf": n_tools::toString(m_counter);
-}
-
-std::string ModelState::toXML()
-{
-	return std::string("<counter>") + toString() + "</counter>";
-}
-
 Processor::Processor(std::string name, std::size_t t_event1):
-	AtomicModel_impl(name),
+	AtomicModel<ModelState>(name),
 	m_event1(t_event1),
 	m_inport(addInPort("inport")),
 	m_outport(addOutPort("outport"))
 {
-	setState(n_tools::createObject<ModelState>());
 }
 
 void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
@@ -51,25 +39,23 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 		return;
 	const Event& event = n_network::getMsgPayload<Event>(message[0]);
 
-	auto newState = n_tools::createObject<ModelState>();
-	newState->m_counter = m_event1;
-	newState->m_event = event;
-	setState(newState);
+	state().m_counter = m_event1;
+	state().m_event = event;
 }
 
 void Processor::intTransition()
 {
-	setState(n_tools::createObject<ModelState>());
+	state() = ModelState();
 }
 
 n_network::t_timestamp Processor::timeAdvance() const
 {
-	return std::dynamic_pointer_cast<ModelState>(getState())->m_counter;
+	return state().m_counter;
 }
 
 void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	m_outport->createMessages(std::dynamic_pointer_cast<ModelState>(getState())->m_event, msgs);
+	m_outport->createMessages(state().m_event, msgs);
 }
 
 GeneratorState::GeneratorState():
@@ -80,33 +66,28 @@ GeneratorState::GeneratorState():
 }
 
 Generator::Generator(std::string name, std::size_t t_gen_event1, bool binary):
-	AtomicModel_impl(name),
+	AtomicModel<GeneratorState>(name),
 	m_gen_event1(t_gen_event1),
 	m_binary(binary),
 	m_inport(addInPort("inport")),
 	m_outport(addOutPort("outport"))
 {
-	setState(n_tools::createObject<GeneratorState>());
-	std::dynamic_pointer_cast<GeneratorState>(getState())->m_counter = t_gen_event1;
+	state().m_counter = t_gen_event1;
 }
 
 void Generator::extTransition(const std::vector<n_network::t_msgptr>&)
 {
-	auto newState = n_tools::createObject<GeneratorState>(*std::dynamic_pointer_cast<GeneratorState>(getState()));
-	newState->m_counter -= getTimeElapsed().getTime();
-	setState(newState);
+	state().m_counter -= getTimeElapsed().getTime();
 }
 
 void Generator::intTransition()
 {
-	auto newState = n_tools::createObject<GeneratorState>(*std::dynamic_pointer_cast<GeneratorState>(getState()));
-	++(newState->m_generated);
-	setState(newState);
+	++(state().m_generated);
 }
 
 n_network::t_timestamp Generator::timeAdvance() const
 {
-	return std::static_pointer_cast<GeneratorState>(getState())->m_counter;
+	return state().m_counter;
 }
 
 void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
@@ -115,8 +96,7 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 		m_outport->createMessages("b1", msgs);
 		return;
 	}
-	auto state = std::static_pointer_cast<GeneratorState>(getState());
-	Event e = {state->m_value};
+	Event e = {state().m_value};
 	m_outport->createMessages(e, msgs);
 }
 
@@ -135,22 +115,21 @@ CoupledProcessor::CoupledProcessor(std::size_t event1_P1, std::size_t levels):
 }
 
 ElapsedNothing::ElapsedNothing():
-	AtomicModel_impl("ElapsedNothing")
+	AtomicModel<ModelState>("ElapsedNothing")
 {
 	m_elapsed = 3u;
-	setState(n_tools::createObject<ModelState>());
-	std::dynamic_pointer_cast<ModelState>(getState())->m_counter = 10;
+	state().m_counter = 10;
 }
 
 void ElapsedNothing::intTransition()
 {
-	setState(n_tools::createObject<ModelState>());
-	std::dynamic_pointer_cast<ModelState>(getState())->m_counter = 0;
+	state() = ModelState();
+	state().m_counter = 0;
 }
 
 n_network::t_timestamp ElapsedNothing::timeAdvance() const
 {
-	std::size_t i = std::dynamic_pointer_cast<ModelState>(getState())->m_counter;
+	std::size_t i = state().m_counter;
 	if(i)
 		return i;
 	return n_network::t_timestamp::infinity();
@@ -164,13 +143,13 @@ GeneratorDS::GeneratorDS():
 
 void GeneratorDS::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	if(std::static_pointer_cast<GeneratorState>(getState())->m_generated < 1)
+	if(state().m_generated < 1)
 		Generator::output(msgs);
 }
 
 bool GeneratorDS::modelTransition(n_model::DSSharedState*)
 {
-	if(std::static_pointer_cast<GeneratorState>(getState())->m_generated == 1){
+	if(state().m_generated == 1){
 		removePort(m_outport);
 		m_outport.reset();
 		return true;

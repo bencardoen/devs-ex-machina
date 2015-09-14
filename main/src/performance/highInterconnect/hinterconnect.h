@@ -21,19 +21,28 @@ typedef std::size_t t_counter;
 #endif
 typedef std::mt19937_64 t_randgen;
 
-class GeneratorState : public n_model::State
+class GeneratorState
 {
 public:
 	t_counter m_count;
 	std::size_t m_seed;
 public:
-	GeneratorState(t_counter count, std::size_t seed);
-	virtual ~GeneratorState();
-
-	virtual std::string toString();
+	GeneratorState(t_counter count = 0u, std::size_t seed = 0u);
 };
 
-class Generator: public n_model::AtomicModel
+}	/* namespace n_interconnect */
+
+template<>
+struct ToString<n_interconnect::GeneratorState>
+{
+	static std::string exec(const n_interconnect::GeneratorState& s){
+		return n_tools::toString(s.m_count) + ", " + n_tools::toString(s.m_seed);
+	}
+};
+
+namespace n_interconnect {
+
+class Generator: public n_model::AtomicModel<GeneratorState>
 {
 private:
 	const bool m_randomta;
@@ -53,14 +62,6 @@ public:
 	virtual n_network::t_timestamp lookAhead() const;
 
 	virtual ~Generator();
-
-	GeneratorState& state(){
-		return *(std::static_pointer_cast<GeneratorState>(getState()));
-	}
-
-	const GeneratorState& state() const{
-		return *(std::static_pointer_cast<GeneratorState>(getState()));
-	}
 };
 
 class HighInterconnect : public n_model::CoupledModel

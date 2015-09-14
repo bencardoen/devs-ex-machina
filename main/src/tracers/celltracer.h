@@ -49,7 +49,7 @@ private:
 	inline void traceCall(const n_model::t_atomicmodelptr& adevs, std::size_t coreid, t_timestamp time){
 		LOG_DEBUG("CellTracer created a message at time", time);
 
-		n_model::t_cellmodelptr celldevs = std::dynamic_pointer_cast<n_model::CellAtomicModel>(adevs);
+		n_model::t_cellmodelptr celldevs = std::dynamic_pointer_cast<n_model::CellAtomicModel_impl>(adevs);
 		if(!celldevs) return;	//don't celltrace models that don't have the correct type of state
 
 		std::function<void()> fun = std::bind(&t_derived::doTrace, this, time, celldevs->getPoint(), celldevs->getState()->toCell());

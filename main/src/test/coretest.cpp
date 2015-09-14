@@ -66,9 +66,9 @@ TEST(ModelEntry, Scheduling)
 	scheduler->push_back(third);
 	EXPECT_EQ(scheduler->size(), 3u);
 	ModelEntry found = scheduler->pop();
-	EXPECT_EQ(found.getID(), 1);
-	EXPECT_EQ(scheduler->pop().getID(), 2);
-	EXPECT_EQ(scheduler->pop().getID(), 3);
+	EXPECT_EQ(found.getID(), 1u);
+	EXPECT_EQ(scheduler->pop().getID(), 2u);
+	EXPECT_EQ(scheduler->pop().getID(), 3u);
 	EXPECT_EQ(scheduler->size(), 0u);
 }
 

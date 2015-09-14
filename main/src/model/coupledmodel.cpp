@@ -206,14 +206,14 @@ void CoupledModel::setController(n_control::Controller* newControl)
 
 void CoupledModel::serialize(n_serialization::t_oarchive& archive)
 {
-	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "' with timeNext = ", m_timeNext);
+	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "'");
 	archive(cereal::virtual_base_class<Model>(this), m_components);
 }
 
 void CoupledModel::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>(this), m_components);
-	LOG_INFO("SERIALIZATION: Loaded Coupled Model '", getName(), "' with timeNext = ", m_timeNext);
+	LOG_INFO("SERIALIZATION: Loaded Coupled Model '", getName(), "'");
 }
 
 void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct)

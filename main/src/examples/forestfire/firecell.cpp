@@ -19,7 +19,7 @@ std::string cellName(n_model::t_point pos)
 }
 
 FireCell::FireCell(n_model::t_point pos):
-	CellAtomicModel(cellName(pos), pos),
+	CellAtomicModel<FireCellState>(cellName(pos), pos, FireCellState()),
 	m_myIports({{this->addInPort("in_N"),
 		  this->addInPort("in_E"),
 		  this->addInPort("in_S"),
@@ -27,21 +27,10 @@ FireCell::FireCell(n_model::t_point pos):
 		  this->addInPort("in_G")}}),
 	m_myOport(this->addOutPort("out_T"))
 {
-	setState(n_tools::createObject<FireCellState>());
 	/*
 	self.inports = [self.addInPort("in_N"), self.addInPort("in_E"), self.addInPort("in_S"), self.addInPort("in_W"), self.addInPort("in_G")]
         self.outport = self.addOutPort("out_T")
 	 */
-}
-
-const FireCellState& FireCell::fcstate() const
-{
-	return *(std::dynamic_pointer_cast<FireCellState>(getState()));
-}
-
-FireCellState& FireCell::fcstate()
-{
-	return *(std::dynamic_pointer_cast<FireCellState>(getState()));
 }
 
 void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
@@ -60,17 +49,16 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
         if self.state.phase == PH_INACTIVE:
             self.state.phase = PH_UNBURNED
 	 */
-	const FireCellState& state = fcstate();
-	t_firecellstateptr newState = n_tools::createObject<FireCellState>(state);
+	FireCellState& st = state();
 
 	bool wasFromGenerator = false;
 	for(const n_network::t_msgptr& msg: message){
 		if(msg->getDestinationPort() == m_myIports[4]->getFullName()){
 			wasFromGenerator = true;
-			newState->m_temperature = n_network::getMsgPayload<double>(msg);
-			newState->m_phase = getNext(state.m_phase, newState->m_temperature);
-			if(newState->m_phase == FirePhase::BURNING)
-				newState->m_igniteTime = state.m_timeLast.getTime() * TIMESTEP;
+			st.m_temperature = n_network::getMsgPayload<double>(msg);
+			st.m_phase = getNext(st.m_phase, st.m_temperature);
+			if(st.m_phase == FirePhase::BURNING)
+				st.m_igniteTime = getTimeLast().getTime() * TIMESTEP;
 		}
 	}
 
@@ -79,16 +67,16 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 			double msgTemp = n_network::getMsgPayload<double>(msg);
 			switch(msg->getDestinationPort().back()){
 			case 'N':
-				newState->m_surroundingTemp[0] = msgTemp;
+				st.m_surroundingTemp[0] = msgTemp;
 				break;
 			case 'E':
-				newState->m_surroundingTemp[1] = msgTemp;
+				st.m_surroundingTemp[1] = msgTemp;
 				break;
 			case 'S':
-				newState->m_surroundingTemp[2] = msgTemp;
+				st.m_surroundingTemp[2] = msgTemp;
 				break;
 			case 'W':
-				newState->m_surroundingTemp[3] = msgTemp;
+				st.m_surroundingTemp[3] = msgTemp;
 				break;
 			default:
 				assert(false && "Unknown destination port for FireCell::extTransition");
@@ -97,9 +85,8 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 		}
 	}
 
-	if(newState->m_phase == FirePhase::INACTIVE)
-		newState->m_phase = FirePhase::UNBURNED;
-	setState(newState);
+	if(st.m_phase == FirePhase::INACTIVE)
+		st.m_phase = FirePhase::UNBURNED;
 }
 
 void FireCell::intTransition()
@@ -125,38 +112,34 @@ void FireCell::intTransition()
         self.state.phase = newPhase
         self.state.temperature = newTemp
 	 */
-	const FireCellState& state = fcstate();
-	t_firecellstateptr newState = n_tools::createObject<FireCellState>(state);
+	FireCellState& st = state();
 
-	if(std::abs(state.m_temperature - state.m_oldTemp) > TMP_DIFF)
-		newState->m_oldTemp = state.m_temperature;
+	if(std::abs(st.m_temperature - st.m_oldTemp) > TMP_DIFF)
+		st.m_oldTemp = st.m_temperature;
 
-	if(state.m_phase == FirePhase::BURNED){
-		setState(getState());
+	if(st.m_phase == FirePhase::BURNED){
 		return;				//We're already finished burning
 	}
 
-	double newTemp = 0.98489 * state.m_temperature + 0.0031 * state.getSurroundingTemp() + 0.213;
-	if (state.m_phase == FirePhase::BURNING){
-		double ex = -0.19 * (state.m_timeLast.getTime() * TIMESTEP - (double) state.m_igniteTime);
+	double newTemp = 0.98489 * st.m_temperature + 0.0031 * st.getSurroundingTemp() + 0.213;
+	if (st.m_phase == FirePhase::BURNING){
+		double ex = -0.19 * (getTimeLast().getTime() * TIMESTEP - (double) st.m_igniteTime);
 		newTemp += 2.74 * std::exp(ex);
 	}
 
-	FirePhase newPhase = getNext(state.m_phase, newTemp);
+	FirePhase newPhase = getNext(st.m_phase, newTemp);
 
 	if(newPhase == FirePhase::BURNED)
 		newTemp = T_AMBIENT;
-	else if(state.m_phase == FirePhase::UNBURNED && newPhase == FirePhase::BURNING)
-		newState->m_igniteTime = state.m_timeLast.getTime() * TIMESTEP;
-	newState->m_phase = newPhase;
-	newState->m_temperature = newTemp;
-
-	setState(newState);
+	else if(st.m_phase == FirePhase::UNBURNED && newPhase == FirePhase::BURNING)
+		st.m_igniteTime = getTimeLast().getTime() * TIMESTEP;
+	st.m_phase = newPhase;
+	st.m_temperature = newTemp;
 }
 
 t_timestamp FireCell::timeAdvance() const
 {
-	switch (fcstate().m_phase) {
+	switch (state().m_phase) {
 	case FirePhase::INACTIVE:
 		return t_timestamp::infinity();
 	case FirePhase::UNBURNED:
@@ -177,9 +160,8 @@ void FireCell::output(std::vector<n_network::t_msgptr>& msgs) const
         else:
             return {}
 	 */
-	const FireCellState& state = fcstate();
-	if(std::abs(state.m_temperature - state.m_oldTemp) > TMP_DIFF) {
-		m_myOport->createMessages(state.m_temperature, msgs);
+	if(std::abs(state().m_temperature - state().m_oldTemp) > TMP_DIFF) {
+		m_myOport->createMessages(state().m_temperature, msgs);
 	}
 }
 

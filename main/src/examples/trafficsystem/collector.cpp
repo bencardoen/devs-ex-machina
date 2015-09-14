@@ -29,7 +29,7 @@ std::string CollectorState::toString()
 	return ss.str();
 }
 
-Collector::Collector(): AtomicModel("Collector")
+Collector::Collector(): AtomicModel_impl("Collector")
 {
 	setState(n_tools::createObject<CollectorState>());
 	car_in = addInPort("car_in");
