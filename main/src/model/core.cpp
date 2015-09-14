@@ -122,7 +122,7 @@ n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)const
                 if(model->getName()==mname)
                         return model;
         }
-        assert(false);
+        throw std::out_of_range("No such model in core.");
 }
 
 const n_model::t_atomicmodelptr&
@@ -130,7 +130,7 @@ n_model::Core::getModel(size_t index)const{
 #ifdef SAFETY_CHECKS
         return m_indexed_models.at(index);
 #else
-        return m_indexed_model[index];
+        return m_indexed_models[index];
 #endif
 }
 
