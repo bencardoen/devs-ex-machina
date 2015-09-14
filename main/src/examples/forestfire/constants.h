@@ -17,13 +17,13 @@ enum class FirePhase {
 	INACTIVE, UNBURNED, BURNING, BURNED
 };
 
-const double T_AMBIENT = 27.0;
-const double T_IGNITE = 300.0;
-const double T_GENERATE = 500.0;
-const double T_BURNED = 60.0;
-const double TIMESTEP = 0.01;
-const std::size_t RADIUS = 1;
-const double TMP_DIFF = 1.0;
+constexpr double T_AMBIENT = 27.0;
+constexpr double T_IGNITE = 300.0;
+constexpr double T_GENERATE = 500.0;
+constexpr double T_BURNED = 60.0;
+constexpr double TIMESTEP = 0.01;
+constexpr std::size_t RADIUS = 1;
+constexpr double TMP_DIFF = 1.0;
 
 /**
  * @brief Calculates the next phase based on the current phase and temperature
