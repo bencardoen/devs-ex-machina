@@ -286,81 +286,31 @@ void n_model::Core::_transition()
 	}
 
         
-	for (size_t index = 0; index< m_indexed_local_mail.size(); ++index) {				// External
+	//for (size_t index = 0; index< m_indexed_local_mail.size(); ++index) {				// External
+        for(const auto& external : m_externs){
 		//LOG_DEBUG("\tCORE :: ", this->getCoreID(), " delivering " , remaining.second.size(), " messages to ", remaining.first);
 		//const t_atomicmodelptr& model = this->getModel(remaining.first);
-                if(!hasMail(index))
-                        continue;
-                const auto& model = this->getModel(index);
-                auto& mail = getMail(index);
-		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
-		model->doExtTransition(mail);
-                assert(model->nextType()==EXT);
-                model->nextType()=n_model::NONE;
+                const size_t id = external->getLocalID();
+                auto& mail = getMail(id);
+		external->setTimeElapsed(noncausaltime.getTime() - external->getTimeLast().getTime());
+		external->doExtTransition(mail);
+                assert(external->nextType()==EXT);
+                external->nextType()=n_model::NONE;
                 mail.clear();
-		model->setTime(noncausaltime);
+		external->setTime(noncausaltime);
 		
-		m_scheduler->erase(ModelEntry(model->getUUID().m_local_id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
-		this->traceExt(model);
-		t_timestamp queried = model->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
+		m_scheduler->erase(ModelEntry(id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
+		this->traceExt(external);
+		t_timestamp queried = external->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
                 validateTA(queried);
 		if (!isInfinity(queried)) {
-			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
+			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", external->getName(),
 				" changed ta value to ", queried, " rescheduling.");
-			m_imminents.push_back(model);
+			m_imminents.push_back(external);
 		}else{
-			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
+			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", external->getName(),
 				" changed ta value to infinity, no longer scheduling.");
 		}
-	}
-}
-
-void n_model::Core::transition()
-{
-	// Imminents : need at least internal transition
-	// Mail : models with pending messages (ext or confluent)
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, ");
-        
-	const t_timestamp noncausaltime(this->getTime().getTime(), 0);
-        
-	for (const auto& model : m_imminents) {
-                const auto ttype = model->nextType();
-                switch(ttype){
-                        case n_model::INT:{
-                                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " int for model ", model->getName(), "@ time ", this->getTime());
-                                model->doIntTransition();
-                                model->setTime(noncausaltime);
-                                this->traceInt(model);
-                                break;
-                        }
-                        case n_model::CONF:{
-                                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " conf for model ", model->getName(), "@ time ", this->getTime());
-                                model->setTimeElapsed(0);
-                                auto& mail = m_indexed_local_mail[model->getLocalID()];
-                                model->doConfTransition(mail);		
-                                mail.clear();
-                                model->setTime(noncausaltime);
-                                this->traceConf(model);
-                                break;
-                        }
-                        
-                        case n_model::EXT:{
-                                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ext for model ", model->getName(), "@ time ", this->getTime());
-                                model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
-                                auto& mail = m_indexed_local_mail[model->getLocalID()];
-                                model->doExtTransition(mail);
-                                mail.clear();
-                                model->setTime(noncausaltime);
-
-                                m_scheduler->erase(ModelEntry(model->getUUID().m_local_id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
-                                this->traceExt(model);
-                                break;
-                        }
-                        
-                        default :{
-                                throw std::logic_error("Model transitio type set to invalid value!.");
-                        }
-                }
 	}
 }
 
@@ -373,7 +323,6 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
                         m_stats.logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
-                        // Message is generated at our time, so skip heap.
 			this->queueLocalMessage(message);
 		}
 	}
@@ -430,9 +379,9 @@ void n_model::Core::syncTime()
 	if (not this->m_scheduler->empty()) {
 		nextfired = this->m_scheduler->top().getTime();
 	}
-	t_timestamp firstmessagetime = this->getFirstMessageTime();
+	const t_timestamp firstmessagetime(this->getFirstMessageTime());
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
-	t_timestamp newtime = std::min(firstmessagetime, nextfired);
+	const t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		this->m_zombie_rounds.fetch_add(1);
@@ -520,16 +469,17 @@ void n_model::Core::runSmallStep()
 
 	// Query imminent models (who are about to fire transition)
         m_imminents.clear();
+        m_externs.clear();
         this->getImminent(m_imminents);
         
         // Dynamic structured needs the list, but best before we add externals to it.
-        this->signalImminent(m_imminents);  // Does nothing in base class
+        this->signalImminent(m_imminents);  
         
 	// Get all produced messages, and route them.
-	this->collectOutput(m_imminents);			// locked on msgs
+	this->collectOutput(m_imminents);	
 
 	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();			// locked on msgs
+	this->getPendingMail();			
 
 	// Transition depending on state.
 	this->_transition();		// NOTE: the scheduler can go empty() here.
@@ -542,6 +492,9 @@ void n_model::Core::runSmallStep()
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
+        
+        m_externs.clear();
+        m_imminents.clear();
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
@@ -662,7 +615,7 @@ void n_model::Core::clearModels()
 
 void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 {
-	MessageEntry entry(msg);
+	const MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
 	}else{
@@ -674,15 +627,15 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing local message (skip heap) ", msg->toString());
-        
-        const size_t modelid = msg->getDstUUID().m_local_id;
-        const auto& modeldest = this->getModel(msg->getDstUUID().m_local_id);
-        const auto& destname = modeldest->getName();
-        auto& imail = this->getMail(modelid);
-        if(!hasMail(modelid))
-                modeldest->nextType()|= n_model::EXT;   // Mark external pending in this round.
-        imail.push_back(msg);
+        const size_t id = msg->getDstUUID().m_local_id;
+        const auto& model = this->getModel(id);
+        if(!hasMail(id)){               // If recd msg size==0
+                if(model->nextType()==n_model::NONE){   // If INT is set, we get CONF so adding it to imminents risks duplicate transitions
+                        m_externs.push_back(model);     // avoid map by checking state.
+                }
+                model->nextType() |= n_model::EXT;
+        }
+        getMail(id).push_back(msg);
 }
 
 
@@ -710,7 +663,7 @@ void n_model::Core::rescheduleAll()
 
 void n_model::Core::receiveMessage(const t_msgptr& )
 {
-;
+        assert(false);
 }
 
 void n_model::Core::getPendingMail()
@@ -727,15 +680,9 @@ void n_model::Core::getPendingMail()
 	this->lockMessages();
 	this->m_received_messages->unschedule_until(messages, tokentime);
 	this->unlockMessages();
-	for (const auto& entry : messages) {
-                const auto& msg(entry.getMessage());
-		std::string modelname = msg->getDestinationModel();
-                const size_t id = msg->getDstUUID().m_local_id;
-                const auto& model = this->getModel(id);
-                if(!hasMail(id))
-                        model->nextType() |= n_model::EXT;
-                getMail(id).push_back(msg);
-	}
+	for (const auto& entry : messages) 
+                queueLocalMessage(entry.getMessage());
+
 }
 
 t_timestamp n_model::Core::getFirstMessageTime()

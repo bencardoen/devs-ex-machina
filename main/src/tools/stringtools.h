@@ -18,8 +18,8 @@ namespace n_tools {
  */
 inline std::string copyString(const std::string& input)
 {
-	return std::string(input.data(), input.size());
-        //return input;
+	//return std::string(input.data(), input.size());
+        return input;
 }
 
 /**

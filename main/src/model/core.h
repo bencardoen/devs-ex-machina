@@ -190,6 +190,12 @@ private:
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_atomicmodelptr>   m_imminents;
+        
+        /**
+         * Stores models that will transition in this simulation round.
+         * This vector shrinks/expands during the simulation steps.
+         */
+        std::vector<t_atomicmodelptr>   m_externs;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -201,10 +207,15 @@ private:
 	virtual
 	isMessageLocal(const t_msgptr&)const;
         
+        /**
+         * Return current mail for the model.
+         */
         std::vector<t_msgptr>&
         getMail(size_t id);
         
-        // TODO translation function.
+        /**
+         * Check if a model has mail pending.
+         */
         bool
         hasMail(size_t id);
 
@@ -213,7 +224,6 @@ private:
 	 */
 	void
 	checkTerminationFunction();
-
 
 	virtual
 	void
