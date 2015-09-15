@@ -17,6 +17,7 @@ using n_network::t_timestamp;
  */
 class ModelEntry
 {
+        //TODO make this const (aka kill serializing code)
         std::size_t m_localid;
 	t_timestamp m_scheduled_at;
 public:
@@ -24,6 +25,10 @@ public:
 	{
 		return m_scheduled_at;
 	}
+        
+        /**
+         * @return The local id of the model this entry represents.
+         */
         size_t getID()const
         {
                 return m_localid; 

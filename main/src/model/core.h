@@ -243,13 +243,14 @@ protected:
         
         /**
 	 * Schedule model.name @ time t.
-	 * @pre name is a model in this core.
+	 * @pre id is a model in this core.
 	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
 	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
 	 * can still be wrong. (see coretest.cpp revertedgecases).
+         * @deprecated
 	 */
-	void
-	scheduleModel(std::string name, t_timestamp t);
+        void
+        scheduleModel(size_t id, t_timestamp t);
         
         /**
          * Set the vectors containing messages for models to empty.
@@ -296,14 +297,14 @@ protected:
 	 */
 	virtual
 	void
-	signalImminent(const std::set<std::string>& ){;}
+	signalImminent(const std::vector<t_atomicmodelptr>& ){;}
 
 	/**
 	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
 	 * with fresh entries.
 	 */
 	void
-	rescheduleAll(const t_timestamp& totime);
+	rescheduleAllRevert(const t_timestamp& totime);
         
         /**
          * Wipe the scheduler clear, and ask each model for a new scheduled entry.
@@ -371,15 +372,26 @@ public:
 	/**
 	 * Retrieve model with name from core
 	 * @pre model is present in this core.
+         * @deprecated
 	 */
 	t_atomicmodelptr
-	getModel(const std::string& name);
+	getModel(const std::string& name)const;
+        
+        const t_atomicmodelptr&
+        getModel(size_t index)const;
 
 	/**
 	 * Check if model is present in core.
 	 */
 	bool
 	containsModel(const std::string& name)const;
+        
+        /**
+         * Check if the model's uuid references a local model.
+         * Depends on safety_checks macro
+         */
+        void
+        validateUUID(const n_model::uuid&);
 
 	/**
 	 * Indicates if Core is running, or halted.
@@ -430,12 +442,10 @@ public:
 	 */
 	virtual
 	void initExistingSimulation(const t_timestamp& loaddate);
+        
+        void
+        getImminent(std::vector<t_atomicmodelptr>& imms);
 
-	/**
-	 * Ask the scheduler for any model with scheduled time <= (current core time, causal::max)
-	 */
-	std::set<std::string>
-	getImminent();
 
 	/**
 	 * Called in case of Dynamic structured Devs.
@@ -452,7 +462,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::set<std::string>&);
+	rescheduleImminent(const std::vector<t_atomicmodelptr>&);
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
@@ -477,13 +487,13 @@ public:
 	virtual
 	void
 	runSmallStep();
-
-	/**
+        
+        /**
 	 * Collect output from imminent models, sort them in the mailbag by destination name.
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
-	virtual void
-	collectOutput(std::set<std::string>& imminents);
+        virtual void
+        collectOutput(std::vector<t_atomicmodelptr>& imminent);
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
@@ -535,11 +545,14 @@ public:
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @param imminent modelnames with firing time <= to current time
+	 * @param imminent models
 	 * @param mail collected from local/network by collectOutput/getMessages
+         * @attention : imminent can grow (a model 'awakening' after external transition)
+         * @post imminent.size()_after >= imminent.size()_before
+         * @post mail.size()=0;
 	 */
 	void
-	transition(std::set<std::string>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
 
 	/**
 	 * Debug function : print out the currently scheduled models.

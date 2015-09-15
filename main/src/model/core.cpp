@@ -34,12 +34,14 @@ n_model::Core::~Core()
 
 void
 n_model::Core::checkInvariants(){
+#ifdef SAFETY_CHECKS
         if(this->m_scheduler->size() > this->m_models.size()){
                 const std::string msg = "Scheduler contains more models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
+#endif
 }
 
 n_model::Core::Core():
@@ -61,17 +63,7 @@ n_model::Core::Core(std::size_t id)
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 {
-	/**
-	 *  Got a generated message from my own models, figure out if destination is local.
-	 */
-	const bool found = this->containsModel(msg->getDestinationModel());
-	if (found) {
-		msg->setDestinationCore(this->getCoreID());
-		LOG_DEBUG("CORE ::", this->getCoreID(), " message is local : \n", msg->toString());
-		return true;
-	} else {
-		return false;
-	}
+        return (msg->getDestinationCore()==m_coreid);
 }
 
 void n_model::Core::save(const std::string& fname)
@@ -123,10 +115,23 @@ void n_model::Core::addModel(const t_atomicmodelptr& model)
 }
 
 
-n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)
+n_model::t_atomicmodelptr n_model::Core::getModel(const std::string& mname)const
 {
-	assert(this->containsModel(mname) && "Model not in core.");
-	return this->m_models[mname];
+        LOG_INFO("DEPRECATED!");
+        for(const auto& model : m_indexed_models){
+                if(model->getName()==mname)
+                        return model;
+        }
+        throw std::out_of_range("No such model in core.");
+}
+
+const n_model::t_atomicmodelptr&
+n_model::Core::getModel(size_t index)const{
+#ifdef SAFETY_CHECKS
+        return m_indexed_models.at(index);
+#else
+        return m_indexed_models[index];
+#endif
 }
 
 bool n_model::Core::containsModel(const std::string& mname) const
@@ -134,31 +139,25 @@ bool n_model::Core::containsModel(const std::string& mname) const
 	return (this->m_models.find(mname) != this->m_models.end());
 }
 
-void n_model::Core::scheduleModel(std::string name, t_timestamp t)
+void n_model::Core::scheduleModel(std::size_t id, t_timestamp t)
 {
         checkInvariants();
-	if (this->m_models.find(name) != this->m_models.end()) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", name, "@", t);
-		if(isInfinity(t)){
-			LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", name , "@", t);
-			return;
-		}
-		size_t offset = this->m_models[name]->getPriority();
-		t_timestamp newt(t.getTime(), offset);
-                // TODO change sig
-                size_t localid = this->m_models[name]->getUUID().m_local_id;
-		ModelEntry entry(localid, newt);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " rescheduling : ", name, "@", newt);
-		if (this->m_scheduler->contains(entry)) {
-			LOG_INFO("\tCORE :: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", name,
-			" at t=", newt, " replacing.");
-			this->m_scheduler->erase(entry);			// Needed for revert, scheduled entry may be wrong.
-		}
-		this->m_scheduler->push_back(entry);
-	} else {
-		LOG_ERROR("\tCORE :: ", this->getCoreID(), " !!LOGIC ERROR!! Model with name "
-			, name, " not in core, can't reschedule.");
-	}
+        t_atomicmodelptr model = this->getModel(id);
+	
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", model->getName(), "@", t);
+        if(isInfinity(t)){
+                LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", model->getName() , "@", t);
+                return;
+        }
+        const t_timestamp newt(t.getTime(), model->getPriority());
+        ModelEntry entry(id, newt);
+        if (this->m_scheduler->contains(entry)) {
+                LOG_INFO("\tCORE :: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", model->getName(),
+                " at t=", t, " replacing.");
+                this->m_scheduler->erase(entry);			// Needed for revert, scheduled entry may be wrong.
+        }
+        this->m_scheduler->push_back(entry);
+
         checkInvariants();
 }
 
@@ -171,23 +170,19 @@ void n_model::Core::init()
 	}
         this->initializeModels();
         
-	for (const auto& model : this->m_models) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
-	}
-        
-	for (const auto& model : this->m_models) {
-		const t_timestamp modelTime(this->getTime().getTime() - model.second->getTimeElapsed().getTime(),0);
-		model.second->setTime(modelTime);	// DO NOT use priority, model does this already
-		const t_timestamp model_scheduled_time = model.second->getTimeNext(); // model.second->timeAdvance();
-		this->scheduleModel(model.first, model_scheduled_time);
-		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
+	for (const auto& model : this->m_indexed_models) {
+		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);
+		model->setTime(modelTime);	// DO NOT use priority, model does this already
+		const t_timestamp model_scheduled_time = model->getTimeNext(); // model.second->timeAdvance();
+		this->scheduleModel(model->getLocalID(), model_scheduled_time);
+		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
 	}
 }
 
 void n_model::Core::initializeModels()
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " initializing models ");
-        auto cmp_prior = [](const t_atomicmodelptr& left, const t_atomicmodelptr& right)->bool{
+        auto cmp_prior = [=](const t_atomicmodelptr& left, const t_atomicmodelptr& right)->bool{
                 return left->getPriority() < right->getPriority();
         };
         std::sort(m_indexed_models.begin(), m_indexed_models.end(), cmp_prior);
@@ -198,7 +193,6 @@ void n_model::Core::initializeModels()
         
         for(size_t index = 0; index<m_indexed_models.size(); ++index){
                 const t_atomicmodelptr& model = m_indexed_models[index];
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName() , " at ", index);
                 model->initUUID(this->getCoreID(), index);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
         }
@@ -207,29 +201,28 @@ void n_model::Core::initializeModels()
 
 
 void n_model::Core::initExistingSimulation(const t_timestamp& loaddate){
-
+        assert(false);
 	if (this->m_scheduler->size() != 0) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID(),
 		" scheduler is not empty on call to initExistingSimulation(), cowardly refusing to corrupt state any further.");
 		return;
 	}
-        /// TODO ADD init.
         
-	for (const auto& model : this->m_models) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model.first);
+	for (const auto& model : this->m_indexed_models) {
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName());
 	}
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Reinitializing with loaddate ", loaddate );
 	this->m_gvt = loaddate;
 	this->m_time = loaddate;
-	for (const auto& model : this->m_models) {
-		LOG_INFO("Model ", model.second->getName(), " TImenext = ", model.second->getTimeNext(), " loaddate ", loaddate);
-		t_timestamp model_scheduled_time(model.second->getTimeNext().getTime(), 0); // model.second->timeAdvance();
-		this->scheduleModel(model.first, model_scheduled_time);
-		m_tracers->tracesInit(model.second, t_timestamp(0, model.second->getPriority()));
+	for (const auto& model : this->m_indexed_models) {
+		LOG_INFO("Model ", model->getName(), " TImenext = ", model->getTimeNext(), " loaddate ", loaddate);
+		t_timestamp model_scheduled_time(model->getTimeNext().getTime(), 0); // model.second->timeAdvance();
+		this->scheduleModel(model->getLocalID(), model_scheduled_time);
+		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
 	}
 }
 
-void n_model::Core::collectOutput(std::set<std::string>& imminents)
+void n_model::Core::collectOutput(std::vector<t_atomicmodelptr>& imminents)
 {
 	/**
 	 * For each imminent model, collect output.
@@ -237,13 +230,13 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
 	std::vector<n_network::t_msgptr> mailfrom;
-	for (const auto& modelname : imminents) {
-		m_models[modelname]->doOutput(mailfrom);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", modelname);
-		// Set timestamp, source and color (info model does not have).
+	for (const auto& model : imminents) {
+		model->doOutput(mailfrom);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", model->getName());
+		
 		for (const auto& msg : mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-			msg->setSourceCore(this->getCoreID());
+                        validateUUID(msg->getSrcUUID());
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());
 		}
@@ -252,7 +245,7 @@ void n_model::Core::collectOutput(std::set<std::string>& imminents)
 	}
 }
 
-void n_model::Core::transition(std::set<std::string>& imminents,
+void n_model::Core::transition(std::vector<t_atomicmodelptr>& imminents,
         std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
 {
 	// Imminents : need at least internal transition
@@ -262,25 +255,21 @@ void n_model::Core::transition(std::set<std::string>& imminents,
         
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (const auto& imminent : imminents) {
-		t_atomicmodelptr urgent = this->m_models[imminent];
-		auto found = mail.find(imminent);
+		auto found = mail.find(imminent->getName());
 		if (found == mail.end()) {				// Internal
 			
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", urgent->getName());
-			urgent->doIntTransition();
-			urgent->setTime(noncausaltime);
-			this->traceInt(urgent);
-                        
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
+			imminent->doIntTransition();
+			imminent->setTime(noncausaltime);
+			this->traceInt(imminent);
 		} else {
-			
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", urgent->getName());
-			urgent->setTimeElapsed(0);
-			urgent->doConfTransition(found->second);		// Confluent
-			urgent->setTime(noncausaltime);
-			this->traceConf(urgent);
-			std::size_t erased = mail.erase(imminent); 	// Erase so we don't need to double check in the next for loop.
-			assert(erased != 0 && "Broken logic in collected output");
-                        
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
+			imminent->setTimeElapsed(0);
+			imminent->doConfTransition(found->second);		// Confluent
+			imminent->setTime(noncausaltime);
+			this->traceConf(imminent);
+			std::size_t erased = mail.erase(imminent->getName()); 	// Erase so we don't need to double check in the next for loop.
+			assert(erased != 0 && "Broken logic in collected output");    
 		}
 	}
 
@@ -298,7 +287,7 @@ void n_model::Core::transition(std::set<std::string>& imminents,
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
-			imminents.insert(model->getName());
+			imminents.push_back(model);
 		}else{
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to infinity, no longer scheduling.");
@@ -327,33 +316,22 @@ void n_model::Core::printSchedulerState()
 	this->m_scheduler->printScheduler();
 }
 
-std::set<std::string> n_model::Core::getImminent()
+void
+n_model::Core::getImminent(std::vector<t_atomicmodelptr>& imms)
 {
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Retrieving imminent models ");
-	std::set<std::string> imminent;
 	std::vector<ModelEntry> bag;
-	t_timestamp maxtime = n_network::makeLatest(this->getTime());
-	ModelEntry mark(0, maxtime);
+	const ModelEntry mark(0, t_timestamp(this->getTime().getTime(), t_timestamp::MAXCAUSAL));
 	this->m_scheduler->unschedule_until(bag, mark);
-	if (bag.size() == 0) {
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " No imminent models @ time ", this->getTime());
-	}
-	for (const auto& entry : bag) {
-                size_t lid = entry.getID();
-                const std::string& mname = m_indexed_models[lid]->getName();
-		bool inserted = imminent.insert(mname).second;
-		assert(inserted && "Logic fail in Core get Imminent.");
-	}
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imminent.size(), " imminents ");
-	return imminent;
+	for (const auto& entry : bag) 
+                imms.push_back(this->getModel(entry.getID()));
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imms.size(), " imminents @ time " , this->getTime() );
 }
 
-void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
+
+void n_model::Core::rescheduleImminent(const std::vector<t_atomicmodelptr>& oldimms)
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", oldimms.size(), " models for next run.");
-	for (const auto& old : oldimms) {
-		assert(this->containsModel(old) && " Trying to reschedule model not in this core ?!");
-		t_atomicmodelptr model = this->m_models[old];
+	for (const auto& model : oldimms) {
 		t_timestamp ta = model->timeAdvance();
 		//check the time advance value
 		validateTA(ta);
@@ -361,7 +339,7 @@ void n_model::Core::rescheduleImminent(const std::set<std::string>& oldimms)
 			t_timestamp next = ta + this->m_time;
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
 			        " rescheduled @ ", next);
-			this->scheduleModel(old, next);		// DO NOT add priority, scheduleModel handles this.
+			this->scheduleModel(model->getLocalID(), next);		// DO NOT add priority, scheduleModel handles this.
 		} else {
 			LOG_INFO("\tCORE :: ", this->getCoreID() , " " , model->getName(), " is no longer scheduled (infinity) ");
 		}
@@ -444,6 +422,16 @@ void n_model::Core::clearWaitingOutput(){
         m_mailbag.clear();
 }
 
+void n_model::Core::validateUUID(const n_model::uuid& id)
+{
+        if(! (id.m_core_id == m_coreid && id.m_local_id<m_indexed_models.size() )){
+                LOG_ERROR("Core ::", this->getCoreID(), " uuid check failed : ", id, " holding ", m_indexed_models.size());
+                throw std::logic_error("UUID validation failed. Check logs.");
+        }
+        
+}
+
+
 void n_model::Core::runSmallStep()
 {
 	// Lock simulator to allow setGVT/Revert to clear things up.
@@ -463,23 +451,26 @@ void n_model::Core::runSmallStep()
 	}
 
 	// Query imminent models (who are about to fire transition)
-	auto imminent = this->getImminent();
+        std::vector<t_atomicmodelptr> imms;
+        this->getImminent(imms);
+        //Translate for now
 
 	// Get all produced messages, and route them.
-	this->collectOutput(imminent);			// locked on msgs
+	this->collectOutput(imms);			// locked on msgs
+        // ^^ change concurrently with conservativecore's collectOutput
 
 	// Give DynStructured Devs a chance to store imminent models.
-	this->signalImminent(imminent);
+	this->signalImminent(imms);
 
 	// Get msg < timenow, sort them for ext/conf.
         
 	this->getPendingMail(m_mailbag);			// locked on msgs
 
 	// Transition depending on state.
-	this->transition(imminent, m_mailbag);		// NOTE: the scheduler can go empty() here.
+	this->transition(imms, m_mailbag);		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
-	this->rescheduleImminent(imminent);
+	this->rescheduleImminent(imms);
 
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
@@ -559,31 +550,23 @@ void n_model::Core::checkTerminationFunction()
 void n_model::Core::removeModel(const std::string& name)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", name);
+        
+        const t_atomicmodelptr& model = this->getModel(name);
+                
+        const size_t lid = model->getUUID().m_local_id;
+        m_models.erase(name);
 
-	if (this->containsModel(name)) {
-                t_atomicmodelptr model = m_models[name];
-                size_t lid = model->getUUID().m_local_id;
-		m_models.erase(name);
-                
-                size_t sizeold = m_indexed_models.size();
-                auto iter = m_indexed_models.begin();
-                std::advance(iter, lid);
-                m_indexed_models.erase(iter);
-                size_t news = m_indexed_models.size();
-                assert(sizeold = news+1);
-                
-		ModelEntry target(lid, 0);
-		this->m_scheduler->erase(target);
-                
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-                assert(m_models.size()==m_indexed_models.size());
-                
-		assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
-		assert(m_models.find(name) == m_models.end() && "Removal from scheduler failed !! model still in m_models");
-                
-	} else {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " you've asked to remove model with name ", name, " which is not in this core.");
-	}
+        auto iter = m_indexed_models.begin();
+        std::advance(iter, lid);
+        m_indexed_models.erase(iter);
+        
+        const ModelEntry target(lid, 0);
+        this->m_scheduler->erase(target);       // irrelevant if it exist or not.
+
+        LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
+        assert(m_models.size()==m_indexed_models.size());
+
+        assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
@@ -610,6 +593,9 @@ void n_model::Core::clearModels()
 	assert(this->isLive() == false && "Clearing models during simulation is not supported.");
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing all models from core.");
 	this->m_models.clear();
+        this->m_indexed_local_mail.clear();
+        this->m_indexed_models.clear();
+        this->m_mailbag.clear();
 	this->m_scheduler->clear();
 	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0, 0));
@@ -639,19 +625,14 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 }
 
 
-void n_model::Core::rescheduleAll(const t_timestamp& totime)
+void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for (const auto& modelentry : m_models) {
-		t_timestamp modellast = modelentry.second->revert(totime);
+	for (const auto& model : m_indexed_models) {
+		t_timestamp modellast = model->revert(totime);
 		// Bug lived here : Do not set time on model.
-		if (!isInfinity(modellast)) {
-			this->scheduleModel(modelentry.first, modellast);
-		} else {
-			LOG_WARNING("\tCORE :: ", this->getCoreID(), " model did not give a new time for rescheduling after revert :: ",
-			        modelentry.second->getName());
-		}
+                this->scheduleModel(model->getLocalID(), modellast);
 	}
 }
 
@@ -659,9 +640,9 @@ void n_model::Core::rescheduleAll()
 {
         this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for (const auto& modelentry : m_models) {
-                t_timestamp nval = modelentry.second->getTimeNext();
-		this->scheduleModel(modelentry.first, nval);
+	for (const auto& model : m_indexed_models) {
+                t_timestamp nval = model->getTimeNext();
+		this->scheduleModel(model->getLocalID(), nval);
 	}
 }
 

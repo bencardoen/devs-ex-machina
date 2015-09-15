@@ -122,13 +122,13 @@ TEST(Core, CoreFlow)
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
-	auto imminent = c.getImminent();
+        std::vector<t_atomicmodelptr> imminent;
+	c.getImminent(imminent);
 	EXPECT_EQ(imminent.size(), 2u);
-	//for(const auto& el : imminent)	std::cout << el << std::endl;
 	c.rescheduleImminent(imminent);
 	c.syncTime();
-	imminent = c.getImminent();
-	//for(const auto& el : imminent)		std::cout << el << std::endl;
+        imminent.clear();
+	c.getImminent(imminent);
 	c.rescheduleImminent(imminent);
 	//c.printSchedulerState();
 	c.syncTime();
@@ -487,6 +487,8 @@ TEST(Optimisticcore, revertoffbyone){
 
 	// c1: has policeman
 	// c2: has trafficlight
+        
+        
 
 	c2->runSmallStep();
 	c2->logCoreState();
@@ -501,6 +503,10 @@ TEST(Optimisticcore, revertoffbyone){
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
+        msg->getDstUUID().m_core_id=1;
+        msg->getDstUUID().m_local_id=0;
+        msg->getSrcUUID().m_core_id=0;
+        msg->getSrcUUID().m_local_id=0;
 	msg->setSourceCore(0);
 	msg->setDestinationCore(1);
 	msg->paint(MessageColor::WHITE);
@@ -574,13 +580,17 @@ TEST(Optimisticcore, revertstress){
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
 	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-	msg->setSourceCore(0);
-	msg->setDestinationCore(1);
+        msg->getSrcUUID().m_local_id=0;
+        msg->getSrcUUID().m_core_id=0;
+        msg->getDstUUID().m_local_id=0;
+        msg->getDstUUID().m_core_id=1;
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
 	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-	msglater->setSourceCore(0);
-	msglater->setDestinationCore(1);
+	msglater->getSrcUUID().m_local_id=0;
+        msglater->getSrcUUID().m_core_id=0;
+        msglater->getDstUUID().m_local_id=0;
+        msglater->getDstUUID().m_core_id=1;
 	msglater->paint(MessageColor::WHITE);
 	network->acceptMessage(msglater);
 	c2->runSmallStep();

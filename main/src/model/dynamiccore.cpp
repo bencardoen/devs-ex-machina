@@ -22,13 +22,10 @@ void DynamicCore::getLastImminents(std::vector<t_atomicmodelptr>& imms)
 	imms = this->m_lastimminents;
 }
 
-void DynamicCore::signalImminent(const std::set<std::string>& imminents)
+void DynamicCore::signalImminent(const std::vector<t_atomicmodelptr>& imminents)
 {
 	this->m_lastimminents.clear();
-	for (const auto& immname : imminents) {
-		assert(this->containsModel(immname) && "imminent model not in core ??");
-		this->m_lastimminents.push_back(this->getModel(immname));
-	}
+	m_lastimminents=imminents;
 }
 
 void DynamicCore::addModelDS(const t_atomicmodelptr& model){

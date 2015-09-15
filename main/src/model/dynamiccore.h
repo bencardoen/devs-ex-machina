@@ -26,7 +26,7 @@ protected:
 	 * atomicmodelptrs are retrieved and stored in m_lastimminents;
 	 */
 	void
-	signalImminent(const std::set<std::string>& immnames);
+	signalImminent(const std::vector<t_atomicmodelptr>& imm)override;
 
 public:
 	DynamicCore();
