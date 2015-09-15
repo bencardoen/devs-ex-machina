@@ -147,7 +147,6 @@ int main(int argc, char** argv)
 			break;
 		case optRand:
 			randTa = true;
-			srand(0);
 			break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;

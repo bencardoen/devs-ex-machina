@@ -131,7 +131,6 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 	if (!state().m_events.empty()) {
 		const EventPair& i = state().m_events[0];
-		srand(i.m_modelNumber);
 		size_t dest = getNextDestination(i.m_modelNumber);
 		size_t r = getRand(i.m_modelNumber, m_rand);
 		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);

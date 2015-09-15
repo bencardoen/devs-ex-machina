@@ -80,7 +80,7 @@ public:
 		m_randta(randta),
 		m_counter(procCounter++)
 	{
-		std::cout << "processor " << m_counter << " was born!\n";
+//		std::cout << "processor " << m_counter << " was born!\n";
 	}
 
 	/// Internal transition function.
@@ -91,7 +91,7 @@ public:
 			m_event1_counter = inf;
 			m_event1 = t_event(0, 0);
 		} else {
-			m_event1_counter = (m_randta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+			m_event1_counter = (m_randta) ? getProcTime(m_event1.value) : T_100;
 			m_event1 = m_queue.back();
 			m_queue.pop_back();
 		}
@@ -107,7 +107,7 @@ public:
 			m_queue.push_back(ev);
 		} else {
 			m_event1 = ev;
-			m_event1_counter = (m_randta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+			m_event1_counter = (m_randta) ? getProcTime(m_event1.value) : T_100;
 		}
 	}
 	/// Confluent transition function.
@@ -120,7 +120,7 @@ public:
 			m_event1_counter = inf;
 			m_event1 = t_event(0, 0);
 		} else {
-			m_event1_counter = (m_randta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+			m_event1_counter = (m_randta) ? getProcTime(m_event1.value) : T_100;
 			m_event1 = m_queue.back();
 			m_queue.pop_back();
 		}
@@ -130,7 +130,7 @@ public:
 			m_queue.push_back(ev);
 		} else {
 			m_event1 = ev;
-			m_event1_counter = (m_randta) ? (T_75 + (rand() / (RAND_MAX / T_50))) : T_100;
+			m_event1_counter = (m_randta) ? getProcTime(m_event1.value) : T_100;
 		}
 	}
 	/// Output function.
@@ -422,7 +422,6 @@ int main(int argc, char** argv)
 			break;
 		case optRand:
 			randTa = true;
-			srand(0);
 			break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;

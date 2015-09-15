@@ -143,7 +143,6 @@ public:
 	{
 		if (!m_events.empty()) {
 			EventPair& i = m_events[0];
-			srand(i.m_modelNumber);
 			size_t dest = getNextDestination(i.m_modelNumber);
 			size_t r = getRand(i.m_modelNumber, m_rand);
 			yb.insert(t_event(dest, r));
