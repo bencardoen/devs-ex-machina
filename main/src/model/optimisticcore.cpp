@@ -334,8 +334,8 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ", m_sent_messages.size());
 	// Update models
-	for (const auto& modelentry : this->m_models) {
-		modelentry.second->setGVT(newgvt);
+	for (const auto& model : this->m_indexed_models) {
+		model->setGVT(newgvt);
 	}
 	// Reset state (note V-vector is reset by Mattern code.
 	this->setColor(MessageColor::WHITE);

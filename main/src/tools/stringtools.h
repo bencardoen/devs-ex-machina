@@ -18,8 +18,14 @@ namespace n_tools {
  */
 inline std::string copyString(const std::string& input)
 {
-	return std::string(input.data(), input.size());
-        //return input;
+#define GCC_VERSION (__GNUC__ * 10000 \
+                               + __GNUC_MINOR__ * 100 \
+                               + __GNUC_PATCHLEVEL__)
+#if GCC_VERSION > 50000
+                return input;
+#else 
+                return std::string(input.data(),input.size());
+#endif
 }
 
 /**

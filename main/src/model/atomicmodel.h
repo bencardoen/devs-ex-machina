@@ -23,6 +23,12 @@ class TestCereal;
 
 namespace n_model {
 
+typedef uint8_t t_transtype;
+
+constexpr t_transtype NONE=0;
+constexpr t_transtype EXT=1;
+constexpr t_transtype INT=2;
+constexpr t_transtype CONF=3;   // EXT | INT
 
 class AtomicModel_impl: public Model
 {
@@ -62,14 +68,23 @@ private:
 	t_stateptr m_state;
 	std::vector<t_stateptr> m_oldStates;
 
+protected:
+	// lower number -> higher priority
+	std::size_t m_priority;
+
+private:        
+        /**
+         * Record if this model has an external transition pending.
+         */
+        t_transtype m_transition_type_next;
+
 	/**
 	 * @brief Copies the state, if necessary
 	 */
 	void copyState();
 
 protected:
-	// lower number -> higher priority
-	std::size_t m_priority;
+	
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
         
@@ -126,6 +141,12 @@ public:
         {
                 return m_uuid;
         }
+        
+        t_transtype&
+        nextType(){return m_transition_type_next;}
+        
+        const t_transtype&
+        nextType()const{return m_transition_type_next;}
         
         /**
          * Called by the core before simulation starts.

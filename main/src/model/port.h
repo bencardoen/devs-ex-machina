@@ -323,11 +323,8 @@ void Port::createMessages(const DataType& message,
 {
 	const std::string& sourcePort = this->getFullName();
 	{
-		std::string str = "";
 		t_zfunc zfunc = n_tools::createObject<ZFunc>();
-		n_network::t_msgptr msg = createMsg("", "", sourcePort, message, zfunc);
-//			n_tools::createObject<n_network::Message>("",
-//			        n_network::t_timestamp::infinity(), "", sourcePort, message);
+		const n_network::t_msgptr& msg = createMsg("", "", sourcePort, message, zfunc);
 		m_sentMessages.push_back(msg);
 	}
 
@@ -339,8 +336,8 @@ void Port::createMessages(const DataType& message,
 			t_zfunc& zFunction = pair.second;
 			std::string model_destination = pair.first->getHostName();
 			//			std::string sourcePort = this->getFullName();
-			std::string destPort = n_tools::copyString(pair.first->getFullName());
-			n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
+			const std::string& destPort = n_tools::copyString(pair.first->getFullName());
+			const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));

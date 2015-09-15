@@ -173,22 +173,29 @@ private:
 	 */
 	std::atomic<bool> m_terminated_functor;
         
+protected:        
         /**
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
         
+private:
         /**
          * Messages to process in a current round.
          */
         std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
         
         /**
-         * Messages to process in a current round.
+         * Stores models that will transition in this simulation round.
+         * This vector shrinks/expands during the simulation steps.
          */
-        std::unordered_map<std::string, std::vector<t_msgptr>> m_mailbag;
+        std::vector<t_atomicmodelptr>   m_imminents;
         
-        std::set<std::string> m_imminent;
+        /**
+         * Stores models that will transition in this simulation round.
+         * This vector shrinks/expands during the simulation steps.
+         */
+        std::vector<t_atomicmodelptr>   m_externs;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -199,13 +206,24 @@ private:
 	bool
 	virtual
 	isMessageLocal(const t_msgptr&)const;
+        
+        /**
+         * Return current mail for the model.
+         */
+        std::vector<t_msgptr>&
+        getMail(size_t id);
+        
+        /**
+         * Check if a model has mail pending.
+         */
+        bool
+        hasMail(size_t id);
 
 	/**
 	 * After a simulation step, verify that we need to continue.
 	 */
 	void
 	checkTerminationFunction();
-
 
 	virtual
 	void
@@ -253,23 +271,11 @@ protected:
         scheduleModel(size_t id, t_timestamp t);
         
         /**
-         * Set the vectors containing messages for models to empty.
-         */
-        void
-        clearWaitingOutput();
-        
-        /**
          * Sort the vector of models by priority, sets indices in models.
          */
         void
         initializeModels();
         
-	/**
-	 * Model storage.
-	 * @attention Models are never scheduled, entries (name+time) are (as with Yentl).
-	 */
-	std::unordered_map<std::string, t_atomicmodelptr> m_models;
-
 	/**
 	* Store received messages (local and networked)
 	*/
@@ -552,7 +558,14 @@ public:
          * @post mail.size()=0;
 	 */
 	void
-	transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	_transition();
+        
+        /**
+         * Indiced transtion function.
+         * Walk over imminent list, execute transition based on type set in model.
+         */
+        void
+	transition();
 
 	/**
 	 * Debug function : print out the currently scheduled models.
@@ -672,7 +685,7 @@ public:
 	 * @locks on messagelock
 	 */
 	virtual
-	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+	void getPendingMail();
 
 	/**
 	 * Record msg as sent.
