@@ -186,11 +186,6 @@ private:
         std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
         
         /**
-         * Messages to process in a current round.
-         */
-        std::unordered_map<std::string, std::vector<t_msgptr>> m_mailbag;
-        
-        /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
@@ -264,12 +259,6 @@ protected:
 	 */
         void
         scheduleModel(size_t id, t_timestamp t);
-        
-        /**
-         * Set the vectors containing messages for models to empty.
-         */
-        void
-        clearWaitingOutput();
         
         /**
          * Sort the vector of models by priority, sets indices in models.
