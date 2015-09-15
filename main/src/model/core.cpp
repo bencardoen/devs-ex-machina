@@ -258,25 +258,26 @@ n_model::Core::hasMail(size_t id){
 #endif
 }
 
-void n_model::Core::_transition(std::vector<t_atomicmodelptr>& imminents,
-        std::unordered_map<std::string, std::vector<t_msgptr>>& mail)
+void n_model::Core::_transition()
 {
 	// Imminents : need at least internal transition
 	// Mail : models with pending messages (ext or confluent)
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", imminents.size(), " imminents, and ",
+        auto& mail = m_mailbag;
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, and ",
 	        mail.size(), " models to deliver mail to.");
         
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
-	for (const auto& imminent : imminents) {
+	for (const auto& imminent : m_imminents) {
 		auto found = mail.find(imminent->getName());
 		if (found == mail.end()) {				// Internal
-			
+			assert(imminent->nextType()==INT);
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(imminent);
 		} else {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
+                        assert(imminent->nextType()==CONF);
 			imminent->setTimeElapsed(0);
 			imminent->doConfTransition(found->second);		// Confluent
 			imminent->setTime(noncausaltime);
@@ -291,6 +292,7 @@ void n_model::Core::_transition(std::vector<t_atomicmodelptr>& imminents,
 		const t_atomicmodelptr& model = this->getModel(remaining.first);
 		model->setTimeElapsed(noncausaltime.getTime() - model->getTimeLast().getTime());
 		model->doExtTransition(remaining.second);
+                assert(model->nextType()==EXT);
 		model->setTime(noncausaltime);
 		
 		m_scheduler->erase(ModelEntry(model->getUUID().m_local_id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
@@ -300,7 +302,7 @@ void n_model::Core::_transition(std::vector<t_atomicmodelptr>& imminents,
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to ", queried, " rescheduling.");
-			imminents.push_back(model);
+			m_imminents.push_back(model);
 		}else{
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", model->getName(),
 				" changed ta value to infinity, no longer scheduling.");
@@ -528,10 +530,10 @@ void n_model::Core::runSmallStep()
 	this->collectOutput(m_imminents);			// locked on msgs
 
 	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail(m_mailbag);			// locked on msgs
+	this->getPendingMail();			// locked on msgs
 
 	// Transition depending on state.
-	this->_transition(m_imminents, m_mailbag);		// NOTE: the scheduler can go empty() here.
+	this->_transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
@@ -677,9 +679,15 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing local message (skip heap) ", msg->toString());
-        const auto& destname = msg->getDestinationModel();
+        
+        const size_t modelid = msg->getDstUUID().m_local_id;
         const auto& modeldest = this->getModel(msg->getDstUUID().m_local_id);
-        // TODO replace with indexed mail.
+        const auto& destname = modeldest->getName();
+        auto& imail = this->getMail(modelid);
+        if(hasMail(modelid))
+                modeldest->nextType()|= n_model::EXT;   // Mark external pending in this round.
+        imail.push_back(msg);
+        // TRANSLATE
         if(m_mailbag.find(destname)==m_mailbag.end()){
                 modeldest->nextType()|= n_model::EXT;   // Mark external pending in this round.
                 m_mailbag[destname]=std::vector<t_msgptr>();
@@ -715,7 +723,7 @@ void n_model::Core::receiveMessage(const t_msgptr& )
 ;
 }
 
-void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>& mailbag)
+void n_model::Core::getPendingMail()
 {
 	/**
 	 * Check if we have pending messages with time <= (time=now, caus=oo);
@@ -729,15 +737,23 @@ void n_model::Core::getPendingMail(std::unordered_map<std::string, std::vector<t
 	this->lockMessages();
 	this->m_received_messages->unschedule_until(messages, tokentime);
 	this->unlockMessages();
-
+        // TRANSLATE
+        auto& mailbag = m_mailbag;
 	for (const auto& entry : messages) {
-		std::string modelname = entry.getMessage()->getDestinationModel();
-                const auto& model = this->getModel(entry.getMessage()->getDstUUID().m_local_id);
+                const auto& msg(entry.getMessage());
+		std::string modelname = msg->getDestinationModel();
+                const size_t id = msg->getDstUUID().m_local_id;
+                const auto& model = this->getModel(id);
+                
+                if(hasMail(id))
+                        model->nextType() |= n_model::EXT;
+                getMail(id).push_back(msg);
+                ///TRANSLATE
 		if (mailbag.find(modelname) == mailbag.end()) {
                         model->nextType() |= n_model::EXT;
 			mailbag[modelname] = std::vector<t_msgptr>();	// Only make them if we have mail.
 		}
-		mailbag[modelname].push_back(entry.getMessage());
+		mailbag[modelname].push_back(msg);
 	}
 }
 

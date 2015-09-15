@@ -559,7 +559,7 @@ public:
          * @post mail.size()=0;
 	 */
 	void
-	_transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	_transition();
         
         /**
          * Indiced transtion function.
@@ -686,7 +686,7 @@ public:
 	 * @locks on messagelock
 	 */
 	virtual
-	void getPendingMail(std::unordered_map<std::string, std::vector<t_msgptr>>&);
+	void getPendingMail();
 
 	/**
 	 * Record msg as sent.
