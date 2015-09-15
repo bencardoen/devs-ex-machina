@@ -139,15 +139,16 @@ bool n_model::Core::containsModel(const std::string& mname) const
 void n_model::Core::scheduleModel(std::size_t id, t_timestamp t)
 {
         checkInvariants();
-        t_atomicmodelptr model = this->getModel(id);
+        
 	
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", model->getName(), "@", t);
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got request rescheduling : ", getModel(id)->getName() , "@", t);
         if(isInfinity(t)){
-                LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", model->getName() , "@", t);
+                LOG_INFO("\tCORE :: ", this->getCoreID(), " refusing to schedule ", getModel(id)->getName() , "@", t);
                 return;
         }
+        const t_atomicmodelptr& model = this->getModel(id);             // Acces ptr here saves ~shared_ptr  release
         const t_timestamp newt(t.getTime(), model->getPriority());
-        ModelEntry entry(id, newt);
+        const ModelEntry entry(id, newt);
         if (this->m_scheduler->contains(entry)) {
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " scheduleModel Tried to schedule a model that is already scheduled: ", model->getName(),
                 " at t=", t, " replacing.");
@@ -288,8 +289,6 @@ void n_model::Core::_transition()
         
 	//for (size_t index = 0; index< m_indexed_local_mail.size(); ++index) {				// External
         for(const auto& external : m_externs){
-		//LOG_DEBUG("\tCORE :: ", this->getCoreID(), " delivering " , remaining.second.size(), " messages to ", remaining.first);
-		//const t_atomicmodelptr& model = this->getModel(remaining.first);
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
 		external->setTimeElapsed(noncausaltime.getTime() - external->getTimeLast().getTime());
@@ -301,7 +300,7 @@ void n_model::Core::_transition()
 		
 		m_scheduler->erase(ModelEntry(id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(external);
-		t_timestamp queried = external->timeAdvance();		// A previously inactive model can be awoken, make sure we check this.
+		const t_timestamp queried(external->timeAdvance());		// A previously inactive model can be awoken, make sure we check this.
                 validateTA(queried);
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", external->getName(),
@@ -567,10 +566,8 @@ void n_model::Core::removeModel(const std::string& name)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", name);
         
-        const t_atomicmodelptr& model = this->getModel(name);
-                
+        const t_atomicmodelptr& model = this->getModel(name);        
         const size_t lid = model->getUUID().m_local_id;
-
         auto iter = m_indexed_models.begin();
         std::advance(iter, lid);
         m_indexed_models.erase(iter);
