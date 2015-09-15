@@ -146,7 +146,7 @@ public:
 	 * @brief pre increment operator
 	 * Calls the pre increment operator of the data type.
 	 */
-	constexpr const t_type& operator++()
+	constexpr const t_type& operator++() const
 	{
 		return *this;
 	}
@@ -155,7 +155,7 @@ public:
 	 * @brief addition assignment operator
 	 * Calls the addition assignment operator of the data type.
 	 */
-	constexpr const t_type& operator+=(const t_datatype&)
+	constexpr const t_type& operator+=(const t_datatype&) const
 	{
 		return *this;
 	}
