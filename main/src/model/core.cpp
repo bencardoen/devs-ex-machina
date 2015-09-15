@@ -680,7 +680,8 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
         const auto& modeldest = this->getModel(msg->getDstUUID().m_local_id);
         const auto& destname = modeldest->getName();
         auto& imail = this->getMail(modelid);
-        modeldest->nextType()|= n_model::EXT;   // Mark external pending in this round.
+        if(!hasMail(modelid))
+                modeldest->nextType()|= n_model::EXT;   // Mark external pending in this round.
         imail.push_back(msg);
 }
 
@@ -731,7 +732,8 @@ void n_model::Core::getPendingMail()
 		std::string modelname = msg->getDestinationModel();
                 const size_t id = msg->getDstUUID().m_local_id;
                 const auto& model = this->getModel(id);
-                model->nextType() |= n_model::EXT;
+                if(!hasMail(id))
+                        model->nextType() |= n_model::EXT;
                 getMail(id).push_back(msg);
 	}
 }
