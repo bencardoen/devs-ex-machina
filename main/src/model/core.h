@@ -190,6 +190,10 @@ private:
          */
         std::unordered_map<std::string, std::vector<t_msgptr>> m_mailbag;
         
+        /**
+         * Stores models that will transition in this simulation round.
+         * This vector shrinks/expands during the simulation steps.
+         */
         std::vector<t_atomicmodelptr>   m_imminents;
 
 	/**
@@ -201,6 +205,13 @@ private:
 	bool
 	virtual
 	isMessageLocal(const t_msgptr&)const;
+        
+        std::vector<t_msgptr>&
+        getMail(size_t id);
+        
+        // TODO translation function.
+        bool
+        hasMail(size_t id);
 
 	/**
 	 * After a simulation step, verify that we need to continue.
@@ -548,7 +559,14 @@ public:
          * @post mail.size()=0;
 	 */
 	void
-	transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+	_transition(std::vector<t_atomicmodelptr>& imminents, std::unordered_map<std::string, std::vector<t_msgptr>>& mail);
+        
+        /**
+         * Indiced transtion function.
+         * Walk over imminent list, execute transition based on type set in model.
+         */
+        void
+	transition();
 
 	/**
 	 * Debug function : print out the currently scheduled models.

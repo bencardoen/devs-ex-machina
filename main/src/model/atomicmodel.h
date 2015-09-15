@@ -143,7 +143,7 @@ public:
         }
         
         t_transtype&
-        nextTType(){return m_transition_type_next;}
+        nextType(){return m_transition_type_next;}
         
         const t_transtype&
         nextType()const{return m_transition_type_next;}
