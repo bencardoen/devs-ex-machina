@@ -135,6 +135,10 @@ void revertTo(n_network::t_timestamp, std::size_t)
 {
 }
 
+void clearAll()
+{
+}
+
 #else /* USE_TRACER */
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
@@ -209,6 +213,14 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	}
 	for (const TraceMessageEntry& mess : messages)
 		scheduler->push_back(mess);
+}
+
+void clearAll()
+{
+	while (!scheduler->empty()) {
+		TraceMessageEntry ptr = scheduler->pop();
+		n_tools::takeBack(ptr.getPointer());
+	}
 }
 
 #endif /* USE_TRACER */
