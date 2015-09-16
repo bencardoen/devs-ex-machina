@@ -8,6 +8,7 @@
 #define STRINGTOOLS_H_
 #include <string>
 #include <sstream>
+#include "tools/macros.h"
 
 namespace n_tools {
 
@@ -16,17 +17,17 @@ namespace n_tools {
  * Avoid any race by explicitly forcing a string data copy (which is threadsafe).
  * Can be deprecated if using libstdc++ >= 5 or with llvm's libc++.
  */
+#ifdef USE_COPY_STRING
 inline std::string copyString(const std::string& input)
 {
-#define GCC_VERSION (__GNUC__ * 10000 \
-                               + __GNUC_MINOR__ * 100 \
-                               + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION > 50000
-                return input;
-#else 
                 return std::string(input.data(),input.size());
-#endif
 }
+#else /* USE_COPY_STRING */
+constexpr const std::string& copyString(const std::string& input)
+{
+                return input;
+}
+#endif /* USE_COPY_STRING */
 
 /**
  * @brief Test whether the first string ends with the second string.

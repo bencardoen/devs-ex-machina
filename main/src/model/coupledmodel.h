@@ -136,7 +136,7 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 public:
 	/**
 	 * @brief Prints some basic stats.

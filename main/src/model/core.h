@@ -65,7 +65,7 @@ struct statistics_collector{
                 }
         }
         void logStat(enum STAT_TYPE st){
-//#ifdef USESTAT
+//#ifdef USE_STAT
                 switch(st){
                 case MSGRCVD:{
                         ++m_msgs_rcvd;
@@ -778,7 +778,7 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 protected:
 	statistics_collector m_stats;
 public:

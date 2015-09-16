@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 		n_tools::CoutRedirect myRedirect(filestream);
 		ctrl->simulate();
 	}
-//#ifdef USESTAT
+//#ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
 //#endif

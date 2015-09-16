@@ -114,6 +114,32 @@ std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
 	return (os << "Trace message scheduled at " << rhs->getTimeStamp());
 }
 
+#ifdef NO_TRACER
+
+void scheduleMessage(t_tracemessageptr message)
+{
+}
+
+void waitForTracer()
+{
+}
+
+void doRealTrace(std::vector<TraceMessageEntry>){
+}
+
+void traceUntil(n_network::t_timestamp)
+{
+}
+
+void revertTo(n_network::t_timestamp, std::size_t)
+{
+}
+
+void clearAll()
+{
+}
+
+#else /* USE_TRACER */
 
 std::shared_ptr<Scheduler<TraceMessageEntry>> scheduler = SchedulerFactory<TraceMessageEntry>::makeScheduler(
         Storage::FIBONACCI, true);
@@ -150,6 +176,8 @@ void traceUntil(n_network::t_timestamp time)
 	std::vector<TraceMessageEntry> messages;
 	TraceMessage t(time, [] {}, 0u);
 	scheduler->unschedule_until(messages, &t);
+	if(messages.empty())
+		return;
 
 	if (tracerFuture.load() != nullptr) {
 		tracerFuture.load()->wait();
@@ -194,5 +222,7 @@ void clearAll()
 		n_tools::takeBack(ptr.getPointer());
 	}
 }
+
+#endif /* USE_TRACER */
 
 } /* namespace n_tracers */

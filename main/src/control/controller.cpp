@@ -24,7 +24,7 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
-//#ifdef USESTAT
+//#ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
 	m_gvtFailed("_controller/gvt failed", ""),
@@ -43,7 +43,7 @@ Controller::~Controller()
 
 void Controller::logStat(CTRLSTAT_TYPE ev)
 {
-//#ifdef USESTAT
+//#ifdef USE_STAT
 
         switch(ev){
         case GVT_2NDRND:{

@@ -299,7 +299,7 @@ public:
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
 
 //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 private:
 	//counters for statistics
 	std::map<t_portptr, n_tools::t_uintstat> m_sendstat;
@@ -356,7 +356,7 @@ void Port::createMessages(const DataType& message,
                                 // Correct UUIDs
                                 container.back()->getSrcUUID()=srcuuid;
                                 container.back()->getDstUUID()=pair.first->getModelUUID();
-//#ifdef USESTAT
+//#ifdef USE_STAT
 				++m_sendstat[pair.first];
 //#endif
 			}
