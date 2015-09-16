@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 
 		ctrl->simulate();
 	}
-//#ifdef USESTAT
+//#ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
 //#endif

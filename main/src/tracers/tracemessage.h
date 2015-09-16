@@ -110,7 +110,15 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID = std::numeric_lim
  * 	 Normally, the Tracers class handles this for you.
  * 	 If you are feeling adventurous and want to tinker with the trace messages directly, don't forget this function!
  */
-void clearAll();
+inline void clearAll()
+{
+#ifndef NO_TRACER
+	while (!scheduler->empty()) {
+		TraceMessageEntry ptr = scheduler->pop();
+		n_tools::takeBack(ptr.getPointer());
+	}
+#endif /* NO_TRACER */
+}
 
 /**
  * @brief block current thread until the previous batch of trace messages has been dealt with.

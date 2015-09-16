@@ -279,7 +279,7 @@ public:
         calculateMinLookahead();
 
         //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		if(getCoreID() == 0)

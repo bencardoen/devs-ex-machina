@@ -42,7 +42,7 @@ public:
 	std::vector<Q>
 	purge(){
 		std::lock_guard<std::mutex> lock(m_lock);
-//#ifdef USESTAT
+//#ifdef USE_STAT
 		m_msgcountstat += m_queue.size();
 //#endif
 		auto contents(std::move(m_queue));
@@ -60,7 +60,7 @@ public:
 	}
 
 //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 private:
 	n_tools::t_uintstat m_msgcountstat;
 	static std::size_t m_counter;
@@ -79,7 +79,7 @@ public:
 //#endif
 };
 
-//#ifdef USESTAT
+//#ifdef USE_STAT
 template<typename Q>
 std::size_t Msgqueue<Q>::m_counter = 0;
 //#endif

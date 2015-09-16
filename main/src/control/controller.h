@@ -288,7 +288,7 @@ private:
 
 
 //-------------statistics gathering--------------
-//#ifdef USESTAT
+//#ifdef USE_STAT
 private:
 	n_tools::t_uintstat m_gvtStarted;
 	n_tools::t_uintstat m_gvtSecondRound;

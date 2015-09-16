@@ -10,6 +10,7 @@
 
 #include <string>
 #include <iostream>
+#include "tools/macros.h"
 
 namespace n_tools {
 
@@ -24,13 +25,8 @@ namespace n_tools {
  * @tparam T The type of the data. Defaults to std::size_t
  * @tparam collect Boolean template argument. If true, data will be collected. Otherwise, no data is collected. Defaults to true.
  */
-#ifndef BENCHMARK
-#ifndef USESTAT
-#define USESTAT
-#endif
-#endif
 
-#ifdef USESTAT
+#ifdef USE_STAT
 #define DEFAULTCOLLECT true
 #else
 #define DEFAULTCOLLECT false
@@ -38,6 +34,8 @@ namespace n_tools {
 
 template<typename T=std::size_t, bool collect=DEFAULTCOLLECT>
 class Statistic {};
+
+#undef DEFAULTCOLLECT
 
 template<typename T>
 class Statistic<T, true>
