@@ -196,8 +196,10 @@ int main(int argc, char** argv)
 	        percentageRemotes);
 	ctrl->addModel(d);
 	{
+#ifndef BENCHMARK
 		std::ofstream filestream("./phold.txt");
 		n_tools::CoutRedirect myRedirect(filestream);
+#endif /* BENCHMARK */
 
 		ctrl->simulate();
 	}

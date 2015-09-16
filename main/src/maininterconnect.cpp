@@ -178,8 +178,10 @@ int main(int argc, char** argv)
         
 	ctrl->addModel(d);
 	{
+#ifndef BENCHMARK
 		std::ofstream filestream("./interconnect.txt");
 		n_tools::CoutRedirect myRedirect(filestream);
+#endif /* BENCHMARK */
 		ctrl->simulate();
 	}
 //#ifdef USE_STAT
