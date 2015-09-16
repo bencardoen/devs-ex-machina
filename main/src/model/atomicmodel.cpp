@@ -291,7 +291,12 @@ void AtomicModel_impl::setKeepOldStates(bool b)
 	m_keepOldStates = b;
 }
 
-t_stateptr AtomicModel_impl::getState() const
+const t_stateptr& AtomicModel_impl::getState() const
+{
+	return m_state;
+}
+
+t_stateptr& AtomicModel_impl::getState()
 {
 	return m_state;
 }

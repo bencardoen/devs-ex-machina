@@ -196,7 +196,13 @@ public:
 	 *
 	 * @return current state of model
 	 */
-	t_stateptr getState() const;
+	const t_stateptr& getState() const;
+	/**
+	 * Returns the current state of the model
+	 *
+	 * @return current state of model
+	 */
+	t_stateptr& getState();
 
 	/**
 	 * @brief Initializes the atomic model with this state.
