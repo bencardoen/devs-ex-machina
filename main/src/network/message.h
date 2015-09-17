@@ -74,14 +74,14 @@ protected:
 
 public:
 	/**
+	 * @brief Constructor for the most general message.
+	 * @see Port::createMessages for a more convenient way to create messages.
 	 * @param srcUUID	uuid of the model that sends the message
 	 * @param dstUUID	uuid of the model that receives the message
 	 * @param time_made	The timestamp at which the message is created
 	 * @param destport	full name of destination port
 	 * @param sourceport	full name of source port
-	 * @param payload	user supplied content.
 	 * @note	Color is set by default to white.
-	 * @attention Core id is initialized at limits::max().
 	 */
 	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
 		const t_timestamp& time_made,
@@ -150,6 +150,13 @@ public:
 	}
 
 	//can't remove. Needed by tracer
+	/**
+	 * @brief Returns a string representation of the payload.
+	 *
+	 * This string representation is, among others, used by the tracers to print out
+	 * trace output for the sent/received messages.
+	 * @see n_netwrok::getMsgPayload To extract the actual payload, instead of just a string representation.
+	 */
 	virtual std::string getPayload() const
 	{
 		LOG_ERROR("Message::getPayload called on base class.");
@@ -245,10 +252,13 @@ template<typename DataType>
 class SpecializedMessage: public Message
 {
 private:
-	DataType m_data;
+	const DataType m_data;
 public:
 	/**
-	 * @param modeldest : destination model
+	 * @brief Constructor for a tye-specific message.
+	 * @see Port::createMessages for a more convenient way to create messages.
+	 * @param srcUUID	uuid of the model that sends the message
+	 * @param dstUUID	uuid of the model that receives the message
 	 * @param time_made The time of creation.
 	 * @param destport : full name of destination port
 	 * @param sourceport : full name of source port
@@ -284,17 +294,6 @@ public:
 	}
 
 };
-
-//unnamed namespace for hiding certain implementation details
-namespace{
-
-template<typename T>
-struct isString: public std::false_type{};
-
-template<>
-struct isString<std::string>: public std::true_type{};
-
-}
 
 
 /**
