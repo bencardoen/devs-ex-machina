@@ -498,11 +498,11 @@ TEST(Optimisticcore, revertoffbyone){
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
-	t_msgptr msg = createObject<Message>(police->getUUID(), light->getUUID(), t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
-        msg->getDstUUID().m_core_id=1;
-        msg->getDstUUID().m_local_id=0;
-        msg->getSrcUUID().m_core_id=0;
-        msg->getSrcUUID().m_local_id=0;
+	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
+//        msg->getDstUUID().m_core_id=1;
+//        msg->getDstUUID().m_local_id=0;
+//        msg->getSrcUUID().m_core_id=0;
+//        msg->getSrcUUID().m_local_id=0;
 //	msg->setSourceCore(0);
 //	msg->setDestinationCore(1);
 	msg->paint(MessageColor::WHITE);
@@ -547,6 +547,8 @@ TEST(Optimisticcore, revertstress){
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	t_atomicmodelptr police = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[0]);
+	t_atomicmodelptr light = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[1]);
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
@@ -575,14 +577,14 @@ TEST(Optimisticcore, revertstress){
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
-	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
+	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
         msg->getSrcUUID().m_local_id=0;
         msg->getSrcUUID().m_core_id=0;
         msg->getDstUUID().m_local_id=0;
         msg->getDstUUID().m_core_id=1;
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
-	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
+	t_msgptr msglater = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
 	msglater->getSrcUUID().m_local_id=0;
         msglater->getSrcUUID().m_core_id=0;
         msglater->getDstUUID().m_local_id=0;
