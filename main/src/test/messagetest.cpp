@@ -28,7 +28,7 @@ TEST(Message, TestThreadRaceConditions){
 	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), "TargetPort", "SourcePort");
 //	msg->setDestinationCore(42);
 //	msg->setSourceCore(1);
-	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 to model TargetModel from kernel 1 to kernel 42 payload  cargo  color : WHITE";
+	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 from model cid=1 lid=0 to model cid=42 lid=0 payload  color : WHITE";
 	EXPECT_EQ(msg->toString(), expected_out);
 	std::vector<std::thread> workers;
 	// Try to trigger races.

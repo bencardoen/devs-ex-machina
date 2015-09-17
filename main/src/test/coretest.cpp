@@ -116,8 +116,10 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
 	c.addModel(modelto);
 	EXPECT_EQ(c.getModel("toBen"), modelto);
+	c.init();
 	t_msgptr mymessage = createObject<Message>(modelfrom->getUUID(), modelto->getUUID(), (0), portname_stub, portname_stub);
-	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
+	EXPECT_EQ(mymessage->getDestinationCore(), 0u);
+	EXPECT_EQ(mymessage->getSourceCore(), 0u);
 	c.init();
 	//c.printSchedulerState();
 	c.syncTime();
