@@ -126,7 +126,7 @@ TEST(Message, Smoketest){
 		std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), "TargetPort", "SourcePort");
 //		msg->setDestinationCore(1);
 //		msg->setSourceCore(0);
-		t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(1, 0), n_model::uuid(0, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
+		t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
 //		antimessage->setDestinationCore(0);
 //		antimessage->setSourceCore(1);
 		EXPECT_FALSE(scheduler->contains(msg));

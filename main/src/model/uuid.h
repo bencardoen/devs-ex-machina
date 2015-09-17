@@ -31,7 +31,7 @@ bool operator==(const uuid& l, const uuid& r)
 inline constexpr
 bool operator<(const uuid& l, const uuid& r)
 {
-	return ((l.m_core_id == r.m_core_id)? (l.m_core_id < r.m_core_id) : (l.m_local_id <= r.m_local_id));
+	return ((l.m_local_id <= r.m_local_id));
 }
 } 	//end namespace n_model
 namespace std {
@@ -43,9 +43,10 @@ struct hash<n_model::uuid>
 	 */
 	size_t operator()(const n_model::uuid& id) const
 	{
-		const std::size_t& x = id.m_core_id;
-		const std::size_t& y = id.m_local_id;
-		return std::hash<std::size_t>()(((x + y)*(x + y + 1)/2) + y);
+//		const std::size_t& x = id.m_core_id;
+//		const std::size_t& y = id.m_local_id;
+		return id.m_local_id;
+//		return std::hash<std::size_t>()(((x + y)*(x + y + 1)/2) + y);
 	}
 };
 }	// end namespace std

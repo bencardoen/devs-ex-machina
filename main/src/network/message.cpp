@@ -66,7 +66,7 @@ n_network::operator<(const n_network::Message& left, const n_network::Message& r
                 return true;
         else{ // >=
                 if(left.m_timestamp==right.m_timestamp) // ==
-                        return left.m_dst_uuid < right.m_dst_uuid;    // TODO check if we need even more...
+                        return left.m_dst_uuid.m_local_id < right.m_dst_uuid.m_local_id;    // TODO check if we need even more...
                 else    
                         return false;   // >
         }

@@ -332,8 +332,8 @@ struct hash<n_network::Message>
 		std::stringstream ss;
 		ss << message.getSourcePort()
 			<< message.getDestinationPort()
-			<< std::hash<n_model::uuid>()(message.getDstUUID())
-			<< std::hash<n_model::uuid>()(message.getSrcUUID())
+			<< message.getDstUUID().m_local_id
+			<< message.getSrcUUID().m_local_id
 		        << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);
