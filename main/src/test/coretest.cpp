@@ -580,17 +580,17 @@ TEST(Optimisticcore, revertstress){
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
 	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-        msg->getSrcUUID().m_local_id=0;
-        msg->getSrcUUID().m_core_id=0;
-        msg->getDstUUID().m_local_id=0;
-        msg->getDstUUID().m_core_id=1;
+//        msg->getSrcUUID().m_local_id=0;
+//        msg->getSrcUUID().m_core_id=0;
+//        msg->getDstUUID().m_local_id=0;
+//        msg->getDstUUID().m_core_id=1;
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
 	t_msgptr msglater = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-	msglater->getSrcUUID().m_local_id=0;
-        msglater->getSrcUUID().m_core_id=0;
-        msglater->getDstUUID().m_local_id=0;
-        msglater->getDstUUID().m_core_id=1;
+//	msglater->getSrcUUID().m_local_id=0;
+//        msglater->getSrcUUID().m_core_id=0;
+//        msglater->getDstUUID().m_local_id=0;
+//        msglater->getDstUUID().m_core_id=1;
 	msglater->paint(MessageColor::WHITE);
 	network->acceptMessage(msglater);
 	c2->runSmallStep();

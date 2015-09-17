@@ -67,34 +67,29 @@ protected:
 	 */
 	bool m_antimessage;
         
-        n_model::uuid m_dst_uuid;
+        const n_model::uuid m_dst_uuid;
         
-        n_model::uuid m_src_uuid;
+        const n_model::uuid m_src_uuid;
 
 
 public:
 	/**
-	 * @param modeldest : destination model
-	 * @param time_made
-	 * @param destport : full name of destination port
-	 * @param sourceport : full name of source port
-	 * @param payload : user supplied content.
-	 * @note : Color is set by default to white.
+	 * @param srcUUID	uuid of the model that sends the message
+	 * @param dstUUID	uuid of the model that receives the message
+	 * @param time_made	The timestamp at which the message is created
+	 * @param destport	full name of destination port
+	 * @param sourceport	full name of source port
+	 * @param payload	user supplied content.
+	 * @note	Color is set by default to white.
 	 * @attention Core id is initialized at limits::max().
 	 */
-	Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made, const std::string& destport, const std::string& sourceport);
+	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
+		const t_timestamp& time_made,
+		const std::string& destport, const std::string& sourceport);
 
-        n_model::uuid&
-        getSrcUUID(){return m_src_uuid;}
-
-//        constexpr
         const n_model::uuid&
         getSrcUUID()const{return m_src_uuid;}
         
-        n_model::uuid&
-        getDstUUID(){return m_dst_uuid;}
-
-//        constexpr
         const n_model::uuid&
         getDstUUID()const{return m_dst_uuid;}
         

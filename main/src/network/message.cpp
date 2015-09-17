@@ -30,7 +30,11 @@ n_network::operator<<(std::ostream& os, const n_network::MessageColor& c){
 n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made,
 				const std::string& destport, const std::string& sourceport)
 		:
-		m_timestamp(time_made), m_destination_port(destport), m_source_port(sourceport), m_color(MessageColor::WHITE),m_antimessage(false),
+		m_timestamp(time_made),
+		m_destination_port(destport),
+		m_source_port(sourceport),
+		m_color(MessageColor::WHITE),
+		m_antimessage(false),
                 m_dst_uuid(dstUUID),
                 m_src_uuid(srcUUID)
 	{
