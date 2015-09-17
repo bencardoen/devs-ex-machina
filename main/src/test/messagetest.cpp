@@ -25,7 +25,7 @@ TEST(Message, TestThreadRaceConditions){
 	 */
 	if(std::thread::hardware_concurrency() <=1)
 		LOG_WARNING("Thread test skipped, OS report no threads avaiable");
-	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), "TargetPort", "SourcePort", " cargo ");
+	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), "TargetPort", "SourcePort");
 //	msg->setDestinationCore(42);
 //	msg->setSourceCore(1);
 	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 to model TargetModel from kernel 1 to kernel 42 payload  cargo  color : WHITE";
@@ -52,8 +52,8 @@ TEST(Message, operators){
 	/**
 	 * Test if Message, MessageEntry 's operators behave as expected.
 	 */
-	std::shared_ptr<Message> msgbefore = createObject<Message>("TargetModel", t_timestamp(1,0), "TargetPort", "SourcePort", " cargo ");
-	std::shared_ptr<Message> msgafter = createObject<Message>("TargetModel", t_timestamp(1,1), "TargetPort", "SourcePort", " cargo ");
+	std::shared_ptr<Message> msgbefore = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,0), "TargetPort", "SourcePort");
+	std::shared_ptr<Message> msgafter = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,1), "TargetPort", "SourcePort");
 	std::size_t msghashbefore = std::hash<Message>()(*msgbefore);
 	std::size_t msghashafter = std::hash<Message>()(*msgafter);
 	EXPECT_TRUE(msghashbefore != msghashafter);
@@ -80,25 +80,25 @@ TEST(Message, operators){
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	EXPECT_FALSE(scheduler->isLockable());
 	for(size_t i = 0; i<100; ++i){
-		std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(i,0), "TargetPort", "SourcePort", " cargo ");
+		std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(i,0), "TargetPort", "SourcePort");
 		MessageEntry entry(msg);
 		scheduler->push_back(entry);
 		EXPECT_EQ(scheduler->size(), i+1);
 		EXPECT_TRUE(scheduler->contains(entry));
 	}
-	std::shared_ptr<Message> antimessage = createObject<Message>("TargetModel", t_timestamp(55,0), "TargetPort", "SourcePort", " cargo ");
+	std::shared_ptr<Message> antimessage = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), "TargetPort", "SourcePort");
 	scheduler->erase(MessageEntry(antimessage));
 	EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
 	//scheduler->printScheduler();
 	std::vector<MessageEntry> popped;
-	std::shared_ptr<Message> token = createObject<Message>("", t_timestamp(55,0), "", "", "");
+	std::shared_ptr<Message> token = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), "", "");
 	MessageEntry tokentime(token);
 	scheduler->unschedule_until(popped, tokentime);
 	EXPECT_EQ(popped.size(), 55u);
 	EXPECT_EQ(scheduler->size(), 44u);
 	popped.clear();
 	token.reset();
-	token = createObject<Message>("", t_timestamp::infinity(), "", "", "");
+	token = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp::infinity(), "", "");
 	MessageEntry endtime(token);
 	scheduler->unschedule_until(popped, token);
 	EXPECT_EQ(scheduler->size(), 0u);
@@ -157,23 +157,23 @@ TEST(Message, ContentTest){
 	EXPECT_EQ(msgStr->getDestinationPort(), "dest");
 	EXPECT_EQ(msgStr->getSourcePort(), "source");
 	EXPECT_EQ(msgStr->getPayload(), "payload");
-	EXPECT_EQ(msgStr->getDestinationCore(), 42);
+	EXPECT_EQ(msgStr->getDestinationCore(), 42u);
 	std::string str = n_network::getMsgPayload<std::string>(msgStr);
 	EXPECT_EQ(str, "payload");
 
-	t_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>("model", 1, "dest", "source", 3.14);
+	t_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, "dest", "source", 3.14);
 	EXPECT_EQ(msgDouble->getDestinationPort(), "dest");
 	EXPECT_EQ(msgDouble->getSourcePort(), "source");
-	EXPECT_EQ(msgDouble->getDestinationModel(), "model");
+	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
 	const double& doub = n_network::getMsgPayload<double>(msgDouble);
 	EXPECT_EQ(doub, 3.14);
 
 	MyStruct data = {-2, 't', 42.24};
 	MyStruct control = data;
-	t_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>("model", 1, "dest", "source", data);
+	t_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, "dest", "source", data);
 	EXPECT_EQ(msgMyStruct->getDestinationPort(), "dest");
 	EXPECT_EQ(msgMyStruct->getSourcePort(), "source");
-	EXPECT_EQ(msgMyStruct->getDestinationModel(), "model");
+	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
 	const MyStruct& res = n_network::getMsgPayload<MyStruct>(msgMyStruct);
 	data.i++;
 	EXPECT_EQ(res.i, control.i);
