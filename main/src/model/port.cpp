@@ -223,8 +223,8 @@ void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::cons
 	archive(name, hostname, inputPort);
 	construct(name, hostname, inputPort);*/
 
-//	construct("", "", false);
-//	construct->serialize(archive);
+	construct("", "", false);
+	construct->serialize(archive);
 }
 
 }

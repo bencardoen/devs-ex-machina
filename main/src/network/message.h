@@ -154,7 +154,7 @@ public:
 		return n_tools::copyString(m_source_port);
 	}
 
-	//TODO remove
+	//can't remove. Needed by tracer
 	virtual std::string getPayload() const
 	{
 		LOG_ERROR("Message::getPayload called on base class.");

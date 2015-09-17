@@ -146,13 +146,13 @@ bool Model::allowDS() const
 void Model::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("SERIALIZATION: Saving Model '", getName(), "'");
-//	archive(m_name, m_iPorts, m_oPorts, m_parent);
+	archive(m_name, m_iPorts, m_oPorts, m_parent);
 }
 
 void Model::serialize(n_serialization::t_iarchive& archive)
 {
 	LOG_DEBUG("MODEL: Serialize (load)");
-//	archive(m_name, m_iPorts, m_oPorts, m_parent);
+	archive(m_name, m_iPorts, m_oPorts, m_parent);
 
 	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "'");
 }
@@ -161,13 +161,13 @@ void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 {
 	LOG_DEBUG("MODEL: Load and Construct");
 
-//	std::string name;
-//	archive(name);
-//	construct(name);
-//
-//	archive(construct->m_iPorts);
-//	archive(construct->m_oPorts);
-//	archive(construct->m_parent);
+	std::string name;
+	archive(name);
+	construct(name);
+
+	archive(construct->m_iPorts);
+	archive(construct->m_oPorts);
+	archive(construct->m_parent);
 }
 
 }
