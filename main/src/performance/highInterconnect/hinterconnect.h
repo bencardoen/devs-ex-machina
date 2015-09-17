@@ -10,6 +10,7 @@
 
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
+#include "tools/objectfactory.h"
 #include <random>
 
 namespace n_interconnect {
@@ -86,8 +87,8 @@ public:
 		for(std::size_t i = 0; i < width; ++i){
 			for(std::size_t j = 0; j < width; ++j){
 				if(i != j){
-					connectPorts(std::static_pointer_cast<Generator>(ptrs[i])->m_out,
-						std::static_pointer_cast<Generator>(ptrs[j])->m_in);
+					connectPorts(n_tools::staticCast<Generator>(ptrs[i])->m_out,
+						n_tools::staticCast<Generator>(ptrs[j])->m_in);
                                 }
 			}
 		}

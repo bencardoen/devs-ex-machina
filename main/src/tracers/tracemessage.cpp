@@ -17,12 +17,10 @@ using namespace n_tools;
 namespace n_tracers {
 
 TraceMessage::TraceMessage(n_network::t_timestamp time, const t_messagefunc& func, std::size_t coreID, const t_messagefunc& takeback)
-	: Message("", time, "", ""), m_func(func), m_takeBack(takeback)
+	: m_time(time.getTime(), time.getCausality()+1), m_coreid(coreID), m_func(func), m_takeBack(takeback)
 {
 	assert(m_func != nullptr && "TraceMessage::TraceMessage can't accept nullptr as execution function");
 	assert(m_takeBack != nullptr && "TraceMessage::TraceMessage Can't accept nullptr as cleanup function. If you don't need a cleanup function, either provide an empty one or omit the argument.");
-	m_timestamp.increaseCausality(1u);
-	setSourceCore(coreID);
 }
 
 TraceMessage::~TraceMessage()
@@ -37,18 +35,18 @@ void TraceMessage::execute()
 
 bool TraceMessage::operator <(const TraceMessage& other) const
 {
-	if (this->getTimeStamp() == other.getTimeStamp()){
+	if (this->getTime() == other.getTime()){
 		return this < &other;
 	}
-	return (this->getTimeStamp() < other.getTimeStamp());
+	return (this->getTime() < other.getTime());
 }
 
 bool TraceMessage::operator >(const TraceMessage& other) const
 {
-	if (this->getTimeStamp() == other.getTimeStamp()){
+	if (this->getTime() == other.getTime()){
 		return this > &other;
 	}
-	return (this->getTimeStamp() > other.getTimeStamp());
+	return (this->getTime() > other.getTime());
 }
 
 t_tracemessageptr TraceMessageEntry::getPointer() const
@@ -111,7 +109,7 @@ bool operator==(const TraceMessageEntry& lhs, const TraceMessageEntry& rhs)
 
 std::ostream& operator<<(std::ostream& os, const TraceMessageEntry& rhs)
 {
-	return (os << "Trace message scheduled at " << rhs->getTimeStamp());
+	return (os << "Trace message scheduled at " << rhs->getTime());
 }
 
 #ifdef NO_TRACER
@@ -164,7 +162,7 @@ void waitForTracer()
 
 void doRealTrace(std::vector<TraceMessageEntry> entries){
 	for (TraceMessageEntry& mess : entries) {
-		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTimeStamp());
+		LOG_DEBUG("TRACE: executing trace message at time.", mess->getTime());
 		mess->execute();
 		n_tools::takeBack(mess.getPointer());
 	}
@@ -205,7 +203,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 			n_tools::takeBack(mess.getPointer());
 	} else {
 		for (const TraceMessageEntry& mess : messagesLost) {
-			if (mess->getSourceCore() != coreID)
+			if (mess->getCoreID() != coreID)
 				scheduler->push_back(mess);
 			else
 				n_tools::takeBack(mess.getPointer());

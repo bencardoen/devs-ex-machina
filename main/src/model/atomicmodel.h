@@ -447,7 +447,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticCast<const State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**

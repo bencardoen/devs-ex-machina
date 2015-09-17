@@ -321,41 +321,35 @@ template<typename DataType>
 void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
+        const n_model::uuid srcuuid = this->getModelUUID();
+	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 	const std::string& sourcePort = this->getFullName();
 	{
 		t_zfunc zfunc = n_tools::createObject<ZFunc>();
-		const n_network::t_msgptr& msg = createMsg("", "", sourcePort, message, zfunc);
+		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0), n_network::t_timestamp::infinity(), "", sourcePort, message, zfunc);
 		m_sentMessages.push_back(msg);
 	}
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
-        const n_model::uuid srcuuid = this->getModelUUID();
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
 		for (auto& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
-			std::string model_destination = pair.first->getHostName();
-			//			std::string sourcePort = this->getFullName();
-			const std::string& destPort = n_tools::copyString(pair.first->getFullName());
-			const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
+			const std::string destPort = pair.first->getFullName();
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
-			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
-                        container.back()->getSrcUUID()=srcuuid;
-                        container.back()->getDstUUID()=pair.first->getModelUUID();
+			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, zFunction));
+//#ifdef USE_STAT
+			++m_sendstat[pair.first];
+//#endif
 		}
 	} else {
 		container.reserve(m_coupled_outs.size());
 		for (auto& pair : m_coupled_outs) {
-			std::string model_destination = pair.first->getHostName();
-			//			std::string sourcePort = this->getFullName();
-			std::string destPort = n_tools::copyString(pair.first->getFullName());
+			const std::string destPort = pair.first->getFullName();
 			for (t_zfunc& zFunction : pair.second) {
 				container.push_back(
-				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
-                                // Correct UUIDs
-                                container.back()->getSrcUUID()=srcuuid;
-                                container.back()->getDstUUID()=pair.first->getModelUUID();
+				        createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, zFunction));
 //#ifdef USE_STAT
 				++m_sendstat[pair.first];
 //#endif
@@ -400,11 +394,11 @@ struct array2ptr<T[N]>
  * @brief Base case. Used for everything except strings
  */
 template<typename DataType>
-inline n_network::t_msgptr createMsgImpl(const std::string& dest, const std::string& destP, const std::string& sourceP,
+inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
         const DataType& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(dest,
-	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
+		time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -413,11 +407,12 @@ inline n_network::t_msgptr createMsgImpl(const std::string& dest, const std::str
  * @brief Overload for std::string
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<std::string>(const std::string& dest, const std::string& destP,
-        const std::string& sourceP, const std::string& msg, t_zfunc& func)
+inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+	const std::string& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend =
+		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
+		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -426,11 +421,12 @@ inline n_network::t_msgptr createMsgImpl<std::string>(const std::string& dest, c
  * @brief Overload for string literals
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<const char*>(const std::string& dest, const std::string& destP,
-        const std::string& sourceP, const char* const & msg, t_zfunc& func)
+inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+	const char* const & msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend =
+		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
+		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -448,10 +444,10 @@ inline n_network::t_msgptr createMsgImpl<const char*>(const std::string& dest, c
  * @param func The ZFunction that must be applied on this message
  */
 template<typename T>
-inline n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+inline n_network::t_msgptr createMsg(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
         const T& msg, t_zfunc& func)
 {
-	return createMsgImpl<typename array2ptr<T>::type>(dest, destP, sourceP, msg, func);
+	return createMsgImpl<typename array2ptr<T>::type>(srcUUID, dstUUID, time_made, destport, sourceport, msg, func);
 }
 }
 

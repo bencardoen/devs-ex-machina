@@ -25,17 +25,15 @@ TEST(Message, TestThreadRaceConditions){
 	 */
 	if(std::thread::hardware_concurrency() <=1)
 		LOG_WARNING("Thread test skipped, OS report no threads avaiable");
-	auto msg = createObject<Message>("TargetModel", t_timestamp(0,1), "TargetPort", "SourcePort", " cargo ");
-	msg->setDestinationCore(42);
-	msg->setSourceCore(1);
+	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), "TargetPort", "SourcePort", " cargo ");
+//	msg->setDestinationCore(42);
+//	msg->setSourceCore(1);
 	std::string expected_out = "Message from SourcePort to TargetPort @TimeStamp ::0 causal ::1 to model TargetModel from kernel 1 to kernel 42 payload  cargo  color : WHITE";
 	EXPECT_EQ(msg->toString(), expected_out);
 	std::vector<std::thread> workers;
 	// Try to trigger races.
 	auto worker = [&]()->void{
-		std::string dest = msg->getDestinationModel();
-		dest[0] = 'c';
-		dest = msg->getDestinationPort();
+		std::string dest = msg->getDestinationPort();
 		dest[0] = 'c';
 		dest = msg->getSourcePort();
 		dest[0] = 'c';
@@ -45,7 +43,7 @@ TEST(Message, TestThreadRaceConditions){
 	}
 	for(auto& t : workers)
 		t.join();
-	EXPECT_TRUE(msg->getDestinationModel()=="TargetModel");
+	EXPECT_TRUE(msg->getDstUUID().m_core_id==42);
 	EXPECT_TRUE(msg->getSourcePort()=="SourcePort");
 	EXPECT_TRUE(msg->getDestinationPort()=="TargetPort");
 }
@@ -108,12 +106,12 @@ TEST(Message, operators){
 
 TEST(Message, Antimessage){
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
-	std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(55,0), "TargetPort", "SourcePort", " cargo ");
-	msg->setDestinationCore(1);
-	msg->setSourceCore(0);
-	t_msgptr antimessage = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
-	antimessage->setDestinationCore(0);
-	antimessage->setSourceCore(1);
+	std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(55,0), "TargetPort", "SourcePort");
+//	msg->setDestinationCore(1);
+//	msg->setSourceCore(0);
+	t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
+//	antimessage->setDestinationCore(0);
+//	antimessage->setSourceCore(1);
 	scheduler->push_back(MessageEntry(msg));
 	EXPECT_TRUE(scheduler->contains(MessageEntry(msg)));
 	scheduler->erase(MessageEntry(antimessage));
@@ -125,12 +123,12 @@ TEST(Message, Smoketest){
 	//// Try to break scheduler.
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	for(size_t i = 0; i<1000; ++i){
-		std::shared_ptr<Message> msg = createObject<Message>("TargetModel", t_timestamp(0,i), "TargetPort", "SourcePort", " cargo ");
-		msg->setDestinationCore(1);
-		msg->setSourceCore(0);
-		t_msgptr antimessage = n_tools::createObject<Message>(msg->getDestinationModel(), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort(), msg->getPayload());
-		antimessage->setDestinationCore(0);
-		antimessage->setSourceCore(1);
+		std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), "TargetPort", "SourcePort");
+//		msg->setDestinationCore(1);
+//		msg->setSourceCore(0);
+		t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(1, 0), n_model::uuid(0, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
+//		antimessage->setDestinationCore(0);
+//		antimessage->setSourceCore(1);
 		EXPECT_FALSE(scheduler->contains(msg));
 		size_t oldsize = scheduler->size();
 		scheduler->push_back(MessageEntry(msg));
@@ -155,11 +153,11 @@ std::ostream& operator<<(std::ostream& o, const MyStruct& m){
 }
 
 TEST(Message, ContentTest){
-	t_msgptr msgStr = n_tools::createObject<Message>("model", 1, "dest", "source", "payload");
+	t_msgptr msgStr = n_tools::createObject<SpecializedMessage<std::string>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, "dest", "source", "payload");
 	EXPECT_EQ(msgStr->getDestinationPort(), "dest");
 	EXPECT_EQ(msgStr->getSourcePort(), "source");
 	EXPECT_EQ(msgStr->getPayload(), "payload");
-	EXPECT_EQ(msgStr->getDestinationModel(), "model");
+	EXPECT_EQ(msgStr->getDestinationCore(), 42);
 	std::string str = n_network::getMsgPayload<std::string>(msgStr);
 	EXPECT_EQ(str, "payload");
 

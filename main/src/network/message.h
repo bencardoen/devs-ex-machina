@@ -13,6 +13,7 @@
 #include "tools/stringtools.h"
 #include "tools/globallog.h"
 #include "model/uuid.h"
+#include "tools/objectfactory.h"
 #include <sstream>
 #include <iosfwd>
 
@@ -40,11 +41,6 @@ class Message
 	friend class ::TestCereal;
 protected:
 	/**
-	 * Unique model name of target.
-	 */
-	const std::string m_destination_model;
-
-	/**
 	 * Time message is created (by model/port)
 	 */
 	t_timestamp m_timestamp;
@@ -58,12 +54,6 @@ protected:
 	 * Full name of source port.
 	 */
 	const std::string m_source_port;
-
-	/**
-	 * User defined payload.
-	 * @see toString()
-	 */
-	const std::string m_payload;
 
 	/**
 	 * Color in synchronization algorithms.
@@ -92,18 +82,19 @@ public:
 	 * @note : Color is set by default to white.
 	 * @attention Core id is initialized at limits::max().
 	 */
-	Message(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport,
-	        const std::string& payload = "");
+	Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made, const std::string& destport, const std::string& sourceport);
 
         n_model::uuid&
         getSrcUUID(){return m_src_uuid;}
-        
+
+//        constexpr
         const n_model::uuid&
         getSrcUUID()const{return m_src_uuid;}
         
         n_model::uuid&
         getDstUUID(){return m_dst_uuid;}
-        
+
+//        constexpr
         const n_model::uuid&
         getDstUUID()const{return m_dst_uuid;}
         
@@ -137,35 +128,12 @@ public:
 	}
 
 	/**
-	 * @brief Sets the destination core of this message.
-	 * The message will be send to this core.
-	 * @param dest The ID of the destination core.
-	 * @note The simulator will automatically set the destination core.
-	 * @note The destination core is the simulation core that simulates the destination model
-	 */
-	void setDestinationCore(std::size_t dest)
-	{
-		m_dst_uuid.m_core_id=dest;
-	}
-
-	/**
 	 * @brief Returns the source core.
 	 * @note The source core is the core that simulates the model that created this message.
 	 */
 	std::size_t getSourceCore() const
 	{
 		return m_src_uuid.m_core_id;
-	}
-
-	/**
-	 * @brief Sets the source core of this message.
-	 * @param dest The ID of the source core.
-	 * @note The simulator will automatically set the source core.
-	 * @note The source core is the core that simulates the model that created this message.
-	 */
-	void setSourceCore(std::size_t src)
-	{
-		m_src_uuid.m_core_id=src;
 	}
 
 	/**
@@ -178,16 +146,6 @@ public:
 	}
 
 	/**
-	 * @brief Returns the name of the destination model.
-	 * @return The name of the destination model.
-	 * This model must contain the destination port. @see getDestinationPort
-	 */
-	std::string getDestinationModel() const
-	{
-		return n_tools::copyString(m_destination_model);
-	}
-
-	/**
 	 * @brief Returns the name of source port of the message.
 	 * @return The full name of the source port.
 	 */
@@ -196,14 +154,11 @@ public:
 		return n_tools::copyString(m_source_port);
 	}
 
-	/**
-	 * @brief Returns a string representation of the payload of this message.
-	 * @see n_network::getMsgPayload For a more convenient way to get the payload of any message.
-	 */
+	//TODO remove
 	virtual std::string getPayload() const
 	{
-		LOG_DEBUG("Message: getPayload");
-		return n_tools::copyString(m_payload);
+		LOG_ERROR("Message::getPayload called on base class.");
+		return "";
 	}
 
 	/**
@@ -276,22 +231,6 @@ public:
 
 	friend
 	bool operator!=(const Message& left, const Message& right);
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Message>& construct);
-
 };
 
 /**
@@ -322,8 +261,8 @@ public:
 	 * @note : Color is set by default to white.
 	 * @attention Core id is initialized at limits::max().
 	 */
-	SpecializedMessage(std::string modeldest, const t_timestamp& time_made, std::string destport, std::string sourceport, const DataType& data):
-		Message(modeldest, time_made, destport, sourceport, ""),
+	SpecializedMessage(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made, const std::string& destport, const std::string& sourceport, const DataType& data):
+		Message(srcUUID, dstUUID, time_made, destport, sourceport),
 		m_data(data)
 	{
 	}
@@ -372,21 +311,8 @@ struct isString<std::string>: public std::true_type{};
  * This overload handles non-string types.
  */
 template<typename T>
-typename std::enable_if<!isString<T>::value, const T&>::type getMsgPayload(const t_msgptr& msg){
-	return std::static_pointer_cast<n_network::SpecializedMessage<T>>(msg)->getData();
-}
-
-/**
- * @brief Tries to get the payload of a specific type from a message
- * @tparam T The expected type of the payload contained within the message.
- * @param msg A pointer to a message
- * @warning If the message does not contain a payload of the expected type, the simulation is allowed to abort via a segmentation fault.
- * Always make sure that the type is correct!
- * This overload handles string types.
- */
-template<typename T>
-typename std::enable_if<isString<T>::value, std::string>::type getMsgPayload(const t_msgptr& msg){
-	return msg->getPayload();
+const T& getMsgPayload(const t_msgptr& msg){
+	return n_tools::staticCast<const n_network::SpecializedMessage<T>>(msg)->getData();
 }
 
 } // end namespace n_network
@@ -404,7 +330,10 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSourcePort() << message.getDestinationPort() << message.getDestinationModel()
+		ss << message.getSourcePort()
+			<< message.getDestinationPort()
+			<< std::hash<n_model::uuid>()(message.getDstUUID())
+			<< std::hash<n_model::uuid>()(message.getSrcUUID())
 		        << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);

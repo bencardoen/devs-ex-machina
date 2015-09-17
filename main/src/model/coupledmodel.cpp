@@ -206,13 +206,13 @@ void CoupledModel::setController(n_control::Controller* newControl)
 
 void CoupledModel::serialize(n_serialization::t_oarchive& archive)
 {
-	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "'");
+//	LOG_INFO("SERIALIZATION: Saving Coupled Model '", getName(), "'");
 	archive(cereal::virtual_base_class<Model>(this), m_components);
 }
 
 void CoupledModel::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(cereal::virtual_base_class<Model>(this), m_components);
+//	archive(cereal::virtual_base_class<Model>(this), m_components);
 	LOG_INFO("SERIALIZATION: Loaded Coupled Model '", getName(), "'");
 }
 
@@ -220,8 +220,8 @@ void CoupledModel::load_and_construct(n_serialization::t_iarchive& archive, cere
 {
 	LOG_DEBUG("COUPLEDMODEL: Load and Construct");
 
-	construct("temp");
-	construct->serialize(archive);
+//	construct("temp");
+//	construct->serialize(archive);
 }
 
 }
