@@ -2,6 +2,7 @@
  * modelentry.h
  *      Author: Ben Cardoen
  */
+#include "network/timestamp.h"
 
 #ifndef SRC_MODEL_MODELENTRY_H_
 #define SRC_MODEL_MODELENTRY_H_
@@ -33,6 +34,8 @@ public:
         {
                 return m_localid; 
         }
+       
+        explicit operator size_t ()const{return getID();} 
 
 	ModelEntry() = default;
 	~ModelEntry() = default;

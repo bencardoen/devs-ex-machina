@@ -10,6 +10,7 @@
 #include <boost/heap/skew_heap.hpp>
 #include <boost/heap/d_ary_heap.hpp>
 #include "tools/msgscheduler.h"
+#include "tools/vectorscheduler.h"
 #include "tools/listscheduler.h"
 
 namespace n_tools {
