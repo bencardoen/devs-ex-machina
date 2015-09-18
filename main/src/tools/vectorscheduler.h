@@ -115,6 +115,10 @@ public:
 	virtual
 	void
 	testInvariant()override;
+        
+        virtual
+        void
+        hintSize(size_t expected)override;
 
 };
 

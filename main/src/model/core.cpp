@@ -12,6 +12,7 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/unordered_map.hpp"
+#include "tools/vectorscheduler.h"
 #include "cereal/types/vector.hpp"
 
 using n_network::MessageEntry;
@@ -48,8 +49,8 @@ n_model::Core::Core(std::size_t id)
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
 	  m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
 		m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
-		m_scheduler(n_tools::SchedulerFactory<ModelEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false)),
-		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, true)),
+                m_scheduler(new n_tools::VectorScheduler<boost::heap::fibonacci_heap<ModelEntry>, ModelEntry>),
+		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
 {
 	assert(m_time == t_timestamp(0, 0));
@@ -167,6 +168,7 @@ void n_model::Core::init()
 		return;
 	}
         this->initializeModels();
+        this->m_scheduler->hintSize(m_indexed_models.size());
         
 	for (const auto& model : this->m_indexed_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);

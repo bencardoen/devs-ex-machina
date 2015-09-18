@@ -125,6 +125,10 @@ public:
 	virtual
 	void
 	testInvariant()=0;
+        
+        virtual
+        void
+        hintSize(size_t /*expected_size*/){;}
 };
 
 template<typename T>

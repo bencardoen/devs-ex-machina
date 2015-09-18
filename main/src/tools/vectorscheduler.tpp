@@ -103,11 +103,9 @@ bool VectorScheduler<X, R>::erase(const R& elem) {
 
 template<typename X, typename R>
 void VectorScheduler<X, R>::printScheduler()  {
-        assert(false);
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
-		R stored = *iter;
-		std::cout << stored << std::endl;
+		std::cout << *iter << std::endl;
 	}
 }
 
@@ -119,6 +117,11 @@ void VectorScheduler<X, R>::testInvariant() {
                         ++count_keys;
         if(count_keys != size())
                 throw std::logic_error("Scheduler invariant broken : keys!=heap items");
+}
+
+template<typename X, typename R>
+void VectorScheduler<X, R>::hintSize(size_t expected){
+        m_keys.reserve(expected);
 }
 
 } // ENamespace

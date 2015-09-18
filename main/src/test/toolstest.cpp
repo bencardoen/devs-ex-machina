@@ -431,8 +431,8 @@ TEST(VectorScheduler, basic_ops){
         using n_model::ModelEntry;
         constexpr size_t limit = 10;
         using n_network::t_timestamp;
-        typedef n_tools::VectorScheduler<boost::heap::fibonacci_heap<ModelEntry>, ModelEntry> t_scheduler;
-        t_scheduler vscheduler;
+        typedef boost::heap::fibonacci_heap<ModelEntry> heapchoice;
+        VectorScheduler<heapchoice, ModelEntry> vscheduler;
         std::vector<ModelEntry> scheduled;
         for(size_t i = 0; i<limit; ++i){
                 ModelEntry entry(i, t_timestamp(i, 0u));
