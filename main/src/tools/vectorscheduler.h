@@ -119,7 +119,10 @@ public:
         virtual
         void
         hintSize(size_t expected)override;
-
+        
+        virtual
+        void
+        update(const S& elem)override;
 };
 
 }

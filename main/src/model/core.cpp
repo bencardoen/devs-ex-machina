@@ -49,7 +49,7 @@ n_model::Core::Core(std::size_t id)
 	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
 	  m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
 		m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
-                m_scheduler(new n_tools::VectorScheduler<boost::heap::fibonacci_heap<ModelEntry>, ModelEntry>),
+                m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
 {
@@ -300,7 +300,7 @@ void n_model::Core::transition()
                 mail.clear();
 		external->setTime(noncausaltime);
 		
-		m_scheduler->erase(ModelEntry(id, this->getTime()));		// If ta() changed , we need to erase the invalidated entry.
+		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(external);
 		const t_timestamp queried(external->timeAdvance());		// A previously inactive model can be awoken, make sure we check this.
                 validateTA(queried);
@@ -360,8 +360,10 @@ void n_model::Core::rescheduleImminent(const std::vector<t_atomicmodelptr>& oldi
 		validateTA(ta);
 		if (!isInfinity(ta)) {
 			t_timestamp next = ta + this->m_time;
+                        
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
 			        " rescheduled @ ", next);
+                        //this->m_scheduler->update(ModelEntry(model->getLocalID(), next));
 			this->scheduleModel(model->getLocalID(), next);		// DO NOT add priority, scheduleModel handles this.
 		} else {
 			LOG_INFO("\tCORE :: ", this->getCoreID() , " " , model->getName(), " is no longer scheduled (infinity) ");

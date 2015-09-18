@@ -124,5 +124,16 @@ void VectorScheduler<X, R>::hintSize(size_t expected){
         m_keys.reserve(expected);
 }
 
+template<typename X, typename R>
+void VectorScheduler<X, R>::update(const R& item){
+        if(!contains(item)){
+                this->push_back(item);
+        }else{
+                const size_t index(item);
+                auto& handle = m_keys[index].first;
+                m_storage.update(handle, item);
+        }
+}
+
 } // ENamespace
 #endif
