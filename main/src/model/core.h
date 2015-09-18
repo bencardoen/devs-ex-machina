@@ -282,6 +282,8 @@ protected:
 	* Store received messages (local and networked)
 	*/
 	t_msgscheduler	m_received_messages;
+        
+        std::vector<ModelEntry> m_imm_ids;
 
 	/**
 	 * Push msg onto pending stack of msgs. Called by revert, receive.

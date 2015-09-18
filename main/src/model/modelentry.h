@@ -22,6 +22,7 @@ class ModelEntry
         std::size_t m_localid;
 	t_timestamp m_scheduled_at;
 public:
+        constexpr
 	t_timestamp getTime() const
 	{
 		return m_scheduled_at;
@@ -30,12 +31,12 @@ public:
         /**
          * @return The local id of the model this entry represents.
          */
-        size_t getID()const
+        constexpr size_t getID()const
         {
                 return m_localid; 
         }
        
-        explicit operator size_t ()const{return getID();} 
+        explicit constexpr operator size_t ()const{return getID();} 
 
 	ModelEntry() = default;
 	~ModelEntry() = default;
@@ -51,14 +52,17 @@ public:
 	}
 
 	friend
+        constexpr
 	bool operator<(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
-		if (lhs.m_scheduled_at == rhs.m_scheduled_at)
-			return lhs.m_localid > rhs.m_localid;
-		return lhs.m_scheduled_at > rhs.m_scheduled_at;
+                return (lhs.m_scheduled_at == rhs.m_scheduled_at)? (lhs.m_localid > rhs.m_localid):(lhs.m_scheduled_at > rhs.m_scheduled_at); 
+		//if (lhs.m_scheduled_at == rhs.m_scheduled_at)
+		//	return lhs.m_localid > rhs.m_localid;
+		//return lhs.m_scheduled_at > rhs.m_scheduled_at;
 	}
         
         friend
+        constexpr
 	bool operator<=(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
 		// a <= b  implies (not a>b)
@@ -66,18 +70,21 @@ public:
 	}
 
 	friend
+        constexpr
 	bool operator>(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
 		return (rhs < lhs);
 	}
 
 	friend
+        constexpr
 	bool operator>=(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
 		return (not (lhs < rhs));
 	}
 
 	friend
+        constexpr
 	bool operator==(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
 		return (lhs.m_localid == rhs.m_localid /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model

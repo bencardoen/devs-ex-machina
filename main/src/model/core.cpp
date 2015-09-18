@@ -169,6 +169,8 @@ void n_model::Core::init()
 	}
         this->initializeModels();
         this->m_scheduler->hintSize(m_indexed_models.size());
+        m_indexed_models.reserve(m_indexed_models.size());
+        m_imm_ids.reserve(m_indexed_models.size());
         
 	for (const auto& model : this->m_indexed_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);
@@ -238,7 +240,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());
 		}
-		this->sortMail(mailfrom);	// <-- Locked here on msglock
+		this->sortMail(std::move(mailfrom));	// <-- Locked here on msglock
 		mailfrom.clear();		//clear the vector of messages
 	}
 }
@@ -324,7 +326,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
                         m_stats.logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
-			this->queueLocalMessage(message);
+			this->queueLocalMessage(std::move(message));
 		}
 	}
 	this->unlockMessages();
@@ -338,14 +340,14 @@ void n_model::Core::printSchedulerState()
 void
 n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 {
-	std::vector<ModelEntry> bag;
 	const ModelEntry mark(0, t_timestamp(this->getTime().getTime(), t_timestamp::MAXCAUSAL));
-	this->m_scheduler->unschedule_until(bag, mark);
-	for (const auto& entry : bag) {
+	this->m_scheduler->unschedule_until(m_imm_ids, mark);
+	for (const auto& entry : m_imm_ids) {
                 auto model = this->getModel(entry.getID()).get();
                 model->nextType() |= n_model::INT;
                 imms.push_back(model);
         }
+        m_imm_ids.clear();
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imms.size(), " imminents @ time " , this->getTime() );
 }
 
@@ -636,7 +638,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 }
                 model->nextType() |= n_model::EXT;
         }
-        getMail(id).push_back(msg);
+        getMail(id).push_back(std::move(msg));
 }
 
 
@@ -655,10 +657,8 @@ void n_model::Core::rescheduleAll()
 {
         this->m_scheduler->clear();
 	assert(m_scheduler->empty());
-	for (const auto& model : m_indexed_models) {
-                t_timestamp nval = model->getTimeNext();
-		this->scheduleModel(model->getLocalID(), nval);
-	}
+	for (const auto& model : m_indexed_models) 
+		this->scheduleModel(model->getLocalID(), model->getTimeNext());
 }
 
 
