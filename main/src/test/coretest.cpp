@@ -122,7 +122,7 @@ TEST(Core, CoreFlow)
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
-        std::vector<t_atomicmodelptr> imminent;
+        std::vector<t_raw_atomic> imminent;
 	c.getImminent(imminent);
 	EXPECT_EQ(imminent.size(), 2u);
 	c.rescheduleImminent(imminent);
@@ -155,7 +155,7 @@ TEST(DynamicCore, smallStep)
 	c->setTerminationTime(t_timestamp(200, 0));
 	finaltime = c->getTerminationTime();
 	EXPECT_EQ(finaltime, t_timestamp(200, 0));
-	std::vector<t_atomicmodelptr> imms;
+	std::vector<t_raw_atomic> imms;
 	c->getLastImminents(imms);
 	EXPECT_EQ(imms.size(), 0u);
 	c->setLive(true);
@@ -165,8 +165,8 @@ TEST(DynamicCore, smallStep)
 		c->getLastImminents(imms);
 		EXPECT_EQ(imms.size(), 2u);
 		if(imms.size()==2){
-			EXPECT_EQ(imms[0],modelfrom);
-			EXPECT_EQ(imms[1], modelto);
+			EXPECT_EQ(imms[0],modelfrom.get());
+			EXPECT_EQ(imms[1], modelto.get());
 		}
 	}
 	// This is not how to run a core, but a check of safety blocks.

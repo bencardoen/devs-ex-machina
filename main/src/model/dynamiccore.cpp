@@ -17,12 +17,12 @@ DynamicCore::~DynamicCore()
 {
 }
 
-void DynamicCore::getLastImminents(std::vector<t_atomicmodelptr>& imms)
+void DynamicCore::getLastImminents(std::vector<t_raw_atomic>& imms)
 {
 	imms = this->m_lastimminents;
 }
 
-void DynamicCore::signalImminent(const std::vector<t_atomicmodelptr>& imminents)
+void DynamicCore::signalImminent(const std::vector<t_raw_atomic>& imminents)
 {
 	this->m_lastimminents.clear();
 	m_lastimminents=imminents;

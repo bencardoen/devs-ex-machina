@@ -239,7 +239,7 @@ public:
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
-	collectOutput(std::vector<t_atomicmodelptr>& imminents)override;
+	collectOutput(std::vector<t_raw_atomic>& imminents)override;
 
 	/**
 	 * Return current Earliest input time.

@@ -18,7 +18,7 @@ namespace n_model {
 class DynamicCore: public Core
 {
 private:
-	std::vector<t_atomicmodelptr> m_lastimminents;
+	std::vector<t_raw_atomic> m_lastimminents;
 protected:
 	/**
 	 * Called during Simulation Step.
@@ -26,7 +26,7 @@ protected:
 	 * atomicmodelptrs are retrieved and stored in m_lastimminents;
 	 */
 	void
-	signalImminent(const std::vector<t_atomicmodelptr>& imm)override;
+	signalImminent(const std::vector<t_raw_atomic>& imm)override;
 
 public:
 	DynamicCore();
@@ -39,7 +39,7 @@ public:
 	 */
 	virtual
 	void
-	getLastImminents(std::vector<t_atomicmodelptr>& imms);
+	getLastImminents(std::vector<t_raw_atomic>& imms);
         
         void
         addModelDS(const t_atomicmodelptr& model)override;

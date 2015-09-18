@@ -446,7 +446,7 @@ void Controller::simDSDEVS()
 
 	core->setLive(true);
 
-	std::vector<n_model::t_atomicmodelptr> imminent;
+	std::vector<n_model::t_raw_atomic> imminent;
 	std::size_t i = 0;
 	while (core->isLive()) {
 		++i;
@@ -568,12 +568,12 @@ bool Controller::handleTimeEventsParallel(std::condition_variable& cv, std::mute
 	return (svd || pause > 0);
 }
 
-void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
+void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 {
 	m_dsPhase = true;
 	// loop over all atomic models
 	std::deque<t_modelptr> models;
-	for (t_atomicmodelptr& model : imminent) {
+	for (t_raw_atomic model : imminent) {
 		if (model->modelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
 			if (model->getParent().expired())

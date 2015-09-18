@@ -191,13 +191,13 @@ private:
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
-        std::vector<t_atomicmodelptr>   m_imminents;
+        std::vector<t_raw_atomic>   m_imminents;
         
         /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
-        std::vector<t_atomicmodelptr>   m_externs;
+        std::vector<t_raw_atomic>   m_externs;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -305,7 +305,7 @@ protected:
 	 */
 	virtual
 	void
-	signalImminent(const std::vector<t_atomicmodelptr>& ){;}
+	signalImminent(const std::vector<t_raw_atomic>& ){;}
 
 	/**
 	 * In case of a revert, wipe the scheduler clean, inform all models of the changed time and reload the scheduler
@@ -452,7 +452,7 @@ public:
 	void initExistingSimulation(const t_timestamp& loaddate);
         
         void
-        getImminent(std::vector<t_atomicmodelptr>& imms);
+        getImminent(std::vector<t_raw_atomic>& imms);
 
 
 	/**
@@ -462,7 +462,7 @@ public:
 	 */
 	virtual
 	void
-	getLastImminents(std::vector<t_atomicmodelptr>&){
+	getLastImminents(std::vector<t_raw_atomic>&){
 		assert(false && "Not supported in non dynamic structured devs");
 	}
 
@@ -470,7 +470,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::vector<t_atomicmodelptr>&);
+	rescheduleImminent(const std::vector<t_raw_atomic>&);
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
@@ -501,7 +501,7 @@ public:
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
         virtual void
-        collectOutput(std::vector<t_atomicmodelptr>& imminent);
+        collectOutput(std::vector<t_raw_atomic>& imminent);
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
