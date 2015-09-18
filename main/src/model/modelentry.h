@@ -44,7 +44,7 @@ public:
 	ModelEntry& operator=(const ModelEntry&) = default;
 	ModelEntry& operator=(ModelEntry&&) = default;
 
-	ModelEntry(std::size_t lid, t_timestamp time)
+	constexpr ModelEntry(std::size_t lid, t_timestamp time)
 		: m_localid(lid), m_scheduled_at(time)
 	{
 		;

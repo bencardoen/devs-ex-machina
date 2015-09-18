@@ -18,6 +18,8 @@
 
 namespace n_model {
 
+typedef n_model::AtomicModel_impl* t_raw_atomic;
+
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
@@ -558,13 +560,6 @@ public:
          * @post mail.size()=0;
 	 */
 	void
-	_transition();
-        
-        /**
-         * Indiced transtion function.
-         * Walk over imminent list, execute transition based on type set in model.
-         */
-        void
 	transition();
 
 	/**

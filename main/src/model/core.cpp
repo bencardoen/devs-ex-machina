@@ -88,7 +88,7 @@ void n_model::Core::load(const std::string& fname)
 	std::vector<t_msgptr> messages;
 	std::vector<ModelEntry> scheduler;
 
-	iarchive(m_indexed_models, messages, scheduler);
+	iarchive(m_indexed_models, messages);
 
 	while (not messages.empty()) {
 		m_received_messages->push_back(MessageEntry(messages.back()));
@@ -261,7 +261,7 @@ n_model::Core::hasMail(size_t id){
 #endif
 }
 
-void n_model::Core::_transition()
+void n_model::Core::transition()
 {
         
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, and ");
@@ -483,7 +483,7 @@ void n_model::Core::runSmallStep()
 	this->getPendingMail();			
 
 	// Transition depending on state.
-	this->_transition();		// NOTE: the scheduler can go empty() here.
+	this->transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
@@ -671,6 +671,12 @@ void n_model::Core::getPendingMail()
 	 * Check if we have pending messages with time <= (time=now, caus=oo);
 	 * If so, add them to the mailbag
 	 */
+        this->lockMessages();
+        if(m_received_messages->empty()){
+                this->unlockMessages();
+                return;
+        }
+        this->unlockMessages();
 	t_timestamp nowtime = makeLatest(this->getTime());
 	std::vector<MessageEntry> messages;
 	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>("", nowtime, "", "", "");
