@@ -30,6 +30,7 @@ const char* sig2str(int sig){
 		return "unknown signal";
 	}
 }
+void restoreHandler();
 
 /**
  * @brief Custom signal handler for when stuff goes wrong
@@ -40,18 +41,31 @@ void signalHandler(int sig){
 	LOG_FLUSH;
 	if(sig == SIGINT)
 		std::terminate();
+	restoreHandler();
 }
+sighandler_t defSigSegv;
+sighandler_t defSigTerm;
+sighandler_t defSigAbrt;
+sighandler_t defSigInt;
 
 /**
  * @brief Installs custom signal handlers
  */
 int installHandler(){
-	std::signal(SIGSEGV, &signalHandler);
-	std::signal(SIGTERM, &signalHandler);
-	std::signal(SIGABRT, &signalHandler);
-	std::signal(SIGINT, &signalHandler);
+	defSigSegv = std::signal(SIGSEGV, &signalHandler);
+	defSigTerm = std::signal(SIGTERM, &signalHandler);
+	defSigAbrt = std::signal(SIGABRT, &signalHandler);
+	defSigInt = std::signal(SIGINT, &signalHandler);
 
 	return 0;
+}
+
+void restoreHandler()
+{
+	std::signal(SIGSEGV, defSigSegv);
+	std::signal(SIGTERM, defSigTerm);
+	std::signal(SIGABRT, defSigAbrt);
+	std::signal(SIGINT, defSigInt);
 }
 
 int handlerSet = installHandler();
