@@ -28,7 +28,7 @@ n_network::operator<<(std::ostream& os, const n_network::MessageColor& c){
 
 
 n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made,
-				const std::string& destport, const std::string& sourceport)
+				const std::size_t& destport, const std::size_t& sourceport)
 		:
 		m_timestamp(time_made),
 		m_destination_port(destport),
@@ -46,7 +46,7 @@ std::string
 n_network::Message::toString() const
 {
 	std::stringstream result;
-	result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
+	result << "Message from " << this->getSrcPort() << " to " << this->getDstPort();
 	result << " @" << m_timestamp;
 	result << " from model " << getSrcUUID() ;
 	result << " to model " << getDstUUID() ;
@@ -104,8 +104,8 @@ n_network::operator==(const n_network::Message& left, const n_network::Message& 
                 &&
                 left.m_src_uuid==right.m_src_uuid
                 &&
-                left.getDestinationPort() == right.getDestinationPort()
+                left.getDstPort() == right.getDstPort()
                 &&
-                left.getSourcePort() == right.getSourcePort()
+                left.getSrcPort() == right.getSrcPort()
                 );
  }

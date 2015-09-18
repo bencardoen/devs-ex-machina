@@ -19,8 +19,11 @@
 
 namespace n_model {
 
-Port::Port(std::string name, std::string hostname, bool inputPort)
-	: m_name(name), m_hostname(hostname),m_fullname(hostname + "." + name), m_inputPort(inputPort), m_usingDirectConnect(false)
+Port::Port(const std::string& name, const std::string& hostname, std::size_t portid, bool inputPort)
+	: m_name(name), m_hostname(hostname),m_fullname(hostname + "." + name),
+	  m_portid(portid), m_inputPort(inputPort),
+	  m_usingDirectConnect(false),
+	  m_hostmodel(nullptr)
 {
 }
 
@@ -163,25 +166,6 @@ uuid Port::getModelUUID() const
         return m_hostmodel->getUUID();
 }
 
-
-void Port::serialize(n_serialization::t_oarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, // m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-                        m_fullname,
-			m_usingDirectConnect);
-}
-
-void Port::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, // m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-                        m_fullname,
-			m_usingDirectConnect);
-}
-
 void Port::clearConnections()
 {
 	for(t_portptr_raw& ptr: m_ins){
@@ -194,6 +178,26 @@ void Port::clearConnections()
 	m_outs.clear();
 }
 
+void Port::serialize(n_serialization::t_oarchive& archive)
+{
+	archive(m_name, m_hostname, m_inputPort, m_portid,
+//			m_ins, m_outs,
+//			m_coupled_outs, m_coupled_ins,
+//			m_sentMessages, m_receivedMessages,
+                        m_fullname,
+			m_usingDirectConnect);
+}
+
+void Port::serialize(n_serialization::t_iarchive& archive)
+{
+	archive(m_name, m_hostname, m_inputPort, m_portid,
+//			m_ins, m_outs,
+//			m_coupled_outs, m_coupled_ins,
+//			m_sentMessages, m_receivedMessages,
+                        m_fullname,
+			m_usingDirectConnect);
+}
+
 void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )
 {
 	/*std::string name;
@@ -203,7 +207,7 @@ void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::cons
 	archive(name, hostname, inputPort);
 	construct(name, hostname, inputPort);*/
 
-	construct("", "", false);
+	construct("", "", 0, false);
 	construct->serialize(archive);
 }
 

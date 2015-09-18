@@ -11,11 +11,12 @@
 #include "cereal/types/vector.hpp"
 #include "cereal/types/map.hpp"
 #include "cereal/types/deque.hpp"
+#include <algorithm>
 
 namespace n_model {
 
 Model::Model(std::string name)
-	: m_name(name), m_control(nullptr)
+	: m_name(name), removedInPort(false), removedOutPort(false), m_control(nullptr)
 {
 }
 
@@ -27,15 +28,12 @@ std::string Model::getName() const
 
 t_portptr Model::getPort(std::string name) const
 {
-	auto ptr1 = m_iPorts.find(name);
-	auto ptr2 = m_oPorts.find(name);
-	if (ptr1 == m_iPorts.end()) {
-		if (ptr2 == m_oPorts.end())
-			return nullptr;
-		else
-			return ptr2->second;
-	} else
-		return ptr1->second;
+	for(const t_portptr ptr: m_iPorts)
+		if(ptr->getName() == name)
+			return ptr;
+	for(const t_portptr ptr: m_oPorts)
+		if(ptr->getName() == name)
+			return ptr;
 	return nullptr;
 }
 
@@ -60,20 +58,13 @@ t_portptr Model::addPort(std::string name, bool isIn)
 	LOG_DEBUG("> this model has a controller?", (m_control? 1:0));
 	assert(allowDS() && "Model::addPort: Dynamic structured DEVS is not allowed in this phase.");
 	// Find new name for port if name was empty
-	std::string n = name;
-	if (n == "") {
-		int number = (int) m_iPorts.size() + (int) m_oPorts.size();
-		std::stringstream ss;
-		ss << "port" << number;
-		n = ss.str();
-	}
-
-	t_portptr port(n_tools::createObject<Port>(name, this->m_name, isIn));
+	std::size_t id = isIn? m_iPorts.size() : m_oPorts.size();
+	t_portptr port(n_tools::createObject<Port>(name, this->m_name, id, isIn));
 
 	if (isIn)
-		m_iPorts.insert(std::pair<std::string, t_portptr>(name, port));
+		m_iPorts.push_back(port);
 	else
-		m_oPorts.insert(std::pair<std::string, t_portptr>(name, port));
+		m_oPorts.push_back(port);
 
 	if (m_control) {
 		m_control->dsUndoDirectConnect();
@@ -86,53 +77,90 @@ void Model::removePort(t_portptr& port)
 {
 	//remove the port itself
 	assert(allowDS() && "Dynamic structured DEVS is not allowed in this phase.");
-	if (port->isInPort())
-		m_iPorts.erase(port->getName());
-	else
-		m_oPorts.erase(port->getName());
+	port->clearConnections();
+	if (port->isInPort()) {
+		m_iPorts[port->getPortID()] = nullptr;
+		removedInPort = true;
+	} else {
+		m_oPorts[port->getPortID()] = nullptr;
+		removedOutPort = true;
+	}
 
 	if (m_control)
 		m_control->dsRemovePort(port);
         port->setHost(nullptr);
+
 }
 
 void Model::clearConnections()
 {
 	assert(allowDS() && "Dynamic structured DEVS is not allowed in this phase.");
 	for(auto& ptr: m_iPorts)
-		ptr.second->clearConnections();
+		ptr->clearConnections();
 	for(auto& ptr: m_oPorts)
-		ptr.second->clearConnections();
+		ptr->clearConnections();
 }
 
-t_portptr Model::addInPort(std::string name)
+t_portptr Model::addInPort(const std::string& name)
 {
 	return this->addPort(name, true);
 }
 
-t_portptr Model::addOutPort(std::string name)
+t_portptr Model::addOutPort(const std::string& name)
 {
 	return this->addPort(name, false);
 }
 
-const std::map<std::string, t_portptr>& Model::getIPorts() const
+const std::vector<t_portptr>& Model::getIPorts() const
 {
 	return m_iPorts;
 }
 
-const std::map<std::string, t_portptr>& Model::getOPorts() const
+const std::vector<t_portptr>& Model::getOPorts() const
 {
 	return m_oPorts;
 }
 
-std::map<std::string, t_portptr>& Model::getIPorts()
+std::vector<t_portptr>& Model::getIPorts()
 {
 	return m_iPorts;
 }
 
-std::map<std::string, t_portptr>& Model::getOPorts()
+std::vector<t_portptr>& Model::getOPorts()
 {
 	return m_oPorts;
+}
+
+bool Model::doModelTransition(DSSharedState* st)
+{
+	bool result = modelTransition(st);
+	if(removedInPort){
+		//first, remove all nullptr
+		m_oPorts.erase(
+			std::remove_if(m_iPorts.begin(), m_iPorts.end(),
+				[](const t_portptr& x){return (x == nullptr);}),
+			m_iPorts.end());
+		//then, fix all id's so that they are their vector index again
+		for(std::size_t i = 0; i < m_iPorts.size(); ++i){
+			assert(m_iPorts[i] != nullptr && "Did not remove a nullptr");
+			m_iPorts[i]->setPortID(i);
+		}
+		removedInPort = false;
+	}
+	if(removedOutPort){
+		//first, remove all nullptr
+		m_oPorts.erase(
+			std::remove_if(m_oPorts.begin(), m_oPorts.end(),
+				[](const t_portptr& x){return (x == nullptr);}),
+			m_oPorts.end());
+		//then, fix all id's so that they are their vector index again
+		for(std::size_t i = 0; i < m_oPorts.size(); ++i){
+			assert(m_oPorts[i] != nullptr && "Did not remove a nullptr");
+			m_oPorts[i]->setPortID(i);
+		}
+		removedOutPort = false;
+	}
+	return result;
 }
 
 bool Model::modelTransition(DSSharedState*)

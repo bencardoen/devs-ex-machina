@@ -49,24 +49,10 @@ void AtomicModel_impl::extTransition(const std::vector<n_network::t_msgptr>&)
 void AtomicModel_impl::doExtTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
-	for (auto& port : m_iPorts)
-		port.second->clearReceivedMessages();
+	for (t_portptr& port : m_iPorts)
+		port->clearReceivedMessages();
 
-	for (auto& m : message) {
-		std::string destport = m->getDestinationPort();
-		auto it = m_iPorts.begin();
-		while (it != m_iPorts.end()) {
-			if (n_tools::endswith(destport, it->first))
-				break;
-			++it;
-		}
-		// When we find the port, we add the message temporarily to it for the tracer
-		if (it != m_iPorts.end())
-			it->second->addMessage(m, true);
-		else {
-			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
-		}
-	}
+	deliverMessages(message);
 
 	//copy the current state, if necessary
 	copyState();
@@ -78,7 +64,7 @@ void AtomicModel_impl::doExtTransition(const std::vector<n_network::t_msgptr>& m
 void AtomicModel_impl::doIntTransition()
 {
 	for (auto& port : m_iPorts)
-		port.second->clearReceivedMessages();
+		port->clearReceivedMessages();
 
 	//copy the current state, if necessary
 	copyState();
@@ -91,23 +77,9 @@ void AtomicModel_impl::doConfTransition(const std::vector<n_network::t_msgptr>& 
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
 	for (auto& port : m_iPorts)
-		port.second->clearReceivedMessages();
+		port->clearReceivedMessages();
 
-	for (auto& m : message) {
-		std::string destport = m->getDestinationPort();
-		auto it = m_iPorts.begin();
-		while (it != m_iPorts.end()) {
-			if (n_tools::endswith(destport, it->first))
-				break;
-			++it;
-		}
-		// When we find the port, we add the message temporarily to it for the tracer
-		if (it != m_iPorts.end())
-			it->second->addMessage(m, true);
-		else {
-			LOG_ERROR("Failed to add received message ", m->getPayload(), " to port ", destport);
-		}
-	}
+	deliverMessages(message);
 
 	//copy the current state, if necessary
 	copyState();
@@ -120,7 +92,7 @@ void AtomicModel_impl::doOutput(std::vector<n_network::t_msgptr>& msgs)
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
 	for (auto& port : m_oPorts){
-		port.second->clearSentMessages();
+		port->clearSentMessages();
 	}
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " calling output() function. ");
 	// Do the actual output function
@@ -233,7 +205,7 @@ t_timestamp AtomicModel_impl::getTimeElapsed() const
 void AtomicModel_impl::addInfluencees(std::set<std::string>& influences) const
 {
 	for (auto& port: this->m_iPorts)
-		port.second->addInfluencees(influences);
+		port->addInfluencees(influences);
 }
 
 void AtomicModel_impl::setTimeElapsed(t_timestamp elapsed)
@@ -251,6 +223,17 @@ void AtomicModel_impl::serialize(n_serialization::t_iarchive& archive)
 {
 	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
 	LOG_INFO("SERIALIZATION: Loaded Atomic Model '", getName(), "' with timeNext = ", m_timeNext);
+}
+
+void AtomicModel_impl::deliverMessages(const std::vector<n_network::t_msgptr>& message)
+{
+#ifdef SAFETY_CHECKS
+	for(const n_network::t_msgptr& msg: message)
+		m_iPorts.at(msg->getDstPort())->addMessage(msg, true);
+#else /* SAFETY_CHECKS */
+	for(const n_network::t_msgptr& msg: message)
+		m_iPorts[msg->getDstPort()]->addMessage(msg, true);
+#endif /* SAFETY_CHECKS */
 }
 
 void AtomicModel_impl::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct)
@@ -335,23 +318,17 @@ void AtomicModel_impl::copyState()
 	m_state = copy;
 }
 
-t_portptr AtomicModel_impl::addInPort(std::string name){
+t_portptr AtomicModel_impl::addInPort(const std::string& name){
         t_portptr port(Model::addInPort(name));
         port->setHost(this);
         return port;
 }
 
 	
-t_portptr AtomicModel_impl::addOutPort(std::string name){
+t_portptr AtomicModel_impl::addOutPort(const std::string& name){
         t_portptr port(Model::addOutPort(name));
         port->setHost(this);
         return port;
-}
-
-
-void AtomicModel_impl::removePort(t_portptr& port){
-        Model::removePort(port);
-        port->setHost(nullptr);
 }
 
 }

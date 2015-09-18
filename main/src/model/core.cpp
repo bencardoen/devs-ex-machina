@@ -660,7 +660,7 @@ void n_model::Core::getPendingMail()
 	 */
 	t_timestamp nowtime = makeLatest(this->getTime());
 	std::vector<MessageEntry> messages;
-	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, "", "");
+	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
 	MessageEntry tokentime(token);
 
 	this->lockMessages();

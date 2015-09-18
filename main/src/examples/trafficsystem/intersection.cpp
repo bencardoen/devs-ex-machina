@@ -109,7 +109,7 @@ void Intersection::extTransition(const std::vector<n_network::t_msgptr> & messag
 		for (auto msg : message) {
 			if(msg->getDestinationPort() == car_in[direction]->getFullName()) {
 				LOG_DEBUG("INTERSECTION: " + getName() + " - expect Car");
-				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSourcePort());
+				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSrcPort());
 				std::shared_ptr<Car> car = std::make_shared<Car>(n_network::getMsgPayload<Car>(msg));
 				LOG_DEBUG("INTERSECTION: " + getName() + " - received Car");
 				getIntersectionState()->send_car.push_back(car);
@@ -133,7 +133,7 @@ void Intersection::extTransition(const std::vector<n_network::t_msgptr> & messag
 
 			if(msg->getDestinationPort() == q_recv[direction]->getFullName()) {
 				LOG_DEBUG("INTERSECTION: " + getName() + " - expect Query");
-				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSourcePort());
+				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSrcPort());
 				std::shared_ptr<Query> query = std::make_shared<Query>(n_network::getMsgPayload<Query>(msg));
 				LOG_DEBUG("INTERSECTION: " + getName() + " - received Query");
 
@@ -150,7 +150,7 @@ void Intersection::extTransition(const std::vector<n_network::t_msgptr> & messag
 
 			if(msg->getDestinationPort() == q_rans[direction]->getFullName()) {
 				LOG_DEBUG("INTERSECTION: " + getName() + " - expect QueryAck");
-				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSourcePort());
+				LOG_DEBUG("INTERSECTION: " + getName() + " - from " + msg->getSrcPort());
 				std::shared_ptr<QueryAck> ack = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
 				LOG_DEBUG("INTERSECTION: " + getName() + " - received QueryAck");
 				LOG_DEBUG("INTERSECTION: A");

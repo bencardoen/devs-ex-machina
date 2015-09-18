@@ -46,14 +46,14 @@ protected:
 	t_timestamp m_timestamp;
 
 	/**
-	 * Full name of destination port.
+	 * Port id of destination port.
 	 */
-	const std::string m_destination_port;
+	const std::size_t m_destination_port;
 
 	/**
-	 * Full name of source port.
+	 * Port id of source port.
 	 */
-	const std::string m_source_port;
+	const std::size_t m_source_port;
 
 	/**
 	 * Color in synchronization algorithms.
@@ -85,7 +85,7 @@ public:
 	 */
 	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
 		const t_timestamp& time_made,
-		const std::string& destport, const std::string& sourceport);
+		const std::size_t& destport, const std::size_t& sourceport);
 
         const n_model::uuid&
         getSrcUUID()const{return m_src_uuid;}
@@ -135,19 +135,15 @@ public:
 	 * @brief Returns the name of the destination port.
 	 * @return The full name of the destination port.
 	 */
-	std::string getDestinationPort() const
-	{
-		return n_tools::copyString(m_destination_port);
-	}
+	std::size_t getDstPort() const
+	{ return m_destination_port; }
 
 	/**
 	 * @brief Returns the name of source port of the message.
 	 * @return The full name of the source port.
 	 */
-	std::string getSourcePort() const
-	{
-		return n_tools::copyString(m_source_port);
-	}
+	std::size_t getSrcPort() const
+	{ return m_source_port; }
 
 	//can't remove. Needed by tracer
 	/**
@@ -266,7 +262,7 @@ public:
 	 * @note : Color is set by default to white.
 	 * @attention Core id is initialized at limits::max().
 	 */
-	SpecializedMessage(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made, const std::string& destport, const std::string& sourceport, const DataType& data):
+	SpecializedMessage(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made, const std::size_t& destport, const std::size_t& sourceport, const DataType& data):
 		Message(srcUUID, dstUUID, time_made, destport, sourceport),
 		m_data(data)
 	{
@@ -323,8 +319,8 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSourcePort()
-			<< message.getDestinationPort()
+		ss << message.getSrcPort()
+			<< message.getDstPort()
 			<< message.getDstUUID().m_local_id
 			<< message.getSrcUUID().m_local_id
 		        << message.getTimeStamp();

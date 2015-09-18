@@ -34,6 +34,8 @@ class Model
 	friend class ::TestCereal;
 private:
 	std::string m_name;
+	bool removedInPort;
+	bool removedOutPort;
 
 	/**
 	 * Utility function to create a new port and add it
@@ -45,8 +47,8 @@ private:
 
 protected:
 
-	std::map<std::string, t_portptr> m_iPorts;
-	std::map<std::string, t_portptr> m_oPorts;
+	std::vector<t_portptr> m_iPorts;
+	std::vector<t_portptr> m_oPorts;
 
 	n_control::Controller* m_control;
 
@@ -62,7 +64,7 @@ protected:
 	 * @param name The name of the port
 	 */
         virtual
-	t_portptr addInPort(std::string name);
+	t_portptr addInPort(const std::string& name);
 
 	/**
 	 * Add an output port to the model
@@ -70,7 +72,7 @@ protected:
 	 * @param name The name of the port
 	 */
         virtual
-	t_portptr addOutPort(std::string name);
+	t_portptr addOutPort(const std::string& name);
 
 	/**
 	 * @return Whether or not to allow structural changes
@@ -112,8 +114,7 @@ public:
 	/**
 	 * @brief Removes a port from this model.
 	 */
-        virtual
-	void removePort(t_portptr& port);
+        void removePort(t_portptr& port);
 
 	/**
 	 * @brief Removes all incoming and outgoing connections on this model.
@@ -144,28 +145,37 @@ public:
 	 *
 	 * @return current input ports
 	 */
-	const std::map<std::string, t_portptr>& getIPorts() const;
+	const std::vector<t_portptr>& getIPorts() const;
 
 	/**
 	 * Return all current output ports
 	 *
 	 * @return current output ports
 	 */
-	const std::map<std::string, t_portptr>& getOPorts() const;
+	const std::vector<t_portptr>& getOPorts() const;
 
 	/**
 	 * Return all current input ports
 	 *
 	 * @return current input ports
 	 */
-	std::map<std::string, t_portptr>& getIPorts();
+	std::vector<t_portptr>& getIPorts();
 
 	/**
 	 * Return all current output ports
 	 *
 	 * @return current output ports
 	 */
-	std::map<std::string, t_portptr>& getOPorts();
+	std::vector<t_portptr>& getOPorts();
+
+	/**
+	 * @brief Transition function for dynamic structured DEVS.
+	 * This function will be called during the simulation for changing the structure of the model.
+	 * @return If true, propagate this call upwards in the model tree.
+	 * @note Only this function is allowed to change the structure during the simulation.
+	 * @note This function will automatically call the user defined function modelTransition.
+	 */
+	bool doModelTransition(DSSharedState* shared);
 
 	/**
 	 * @brief Transition function for dynamic structured DEVS.
@@ -215,7 +225,7 @@ public:
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		for(const auto& i: m_oPorts)
-			i.second->printStats(out);
+			i->printStats(out);
 	}
 //#endif
 };

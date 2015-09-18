@@ -45,6 +45,7 @@ private:
 	std::string m_name;
 	std::string m_hostname;
         std::string m_fullname;
+        std::size_t m_portid;
 	bool m_inputPort;
 
 	//vectors for single connections
@@ -76,7 +77,7 @@ public:
 	 * @param host pointer to the host of the port
 	 * @param inputPort whether or not this is an input port
 	 */
-	Port(std::string name, std::string hostname, bool inputPort);
+	Port(const std::string& name, const std::string& hostname, std::size_t portid, bool inputPort);
 
 	/**
 	 * Returns the name of the port
@@ -98,6 +99,19 @@ public:
 	 * @return Hostname of the port
 	 */
 	std::string getHostName() const;
+
+	/**
+	 * @return The port id, which is a unique port identifier
+	 * among all input or output ports of a model.
+	 */
+	inline std::size_t getPortID() const
+	{ return m_portid; }
+
+	/**
+	 * @brief Sets the port id
+	 */
+	inline void setPortID(std::size_t id)
+	{ m_portid = id; }
 
 	/**
 	 * Returns whether or not this is an input port
@@ -329,10 +343,12 @@ void Port::createMessages(const DataType& message,
 {
         const n_model::uuid srcuuid = this->getModelUUID();
 	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
-	const std::string& sourcePort = this->getFullName();
 	{
 		t_zfunc zfunc = n_tools::createObject<ZFunc>();
-		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0), n_network::t_timestamp::infinity(), "", sourcePort, message, zfunc);
+		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0),
+			n_network::t_timestamp::infinity(),
+			std::numeric_limits<std::size_t>::max(), getPortID(),
+			message, zfunc);
 		m_sentMessages.push_back(msg);
 	}
 
@@ -341,10 +357,12 @@ void Port::createMessages(const DataType& message,
 		container.reserve(m_outs.size());
 		for (t_outconnect& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
-			const std::string destPort = pair.first->getFullName();
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
-			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, zFunction));
+			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
+				dummytimestamp,
+				pair.first->getPortID(), getPortID(),
+				message, zFunction));
 //#ifdef USE_STAT
 			++m_sendstat[pair.first];
 //#endif
@@ -352,9 +370,10 @@ void Port::createMessages(const DataType& message,
 	} else {
 		container.reserve(m_coupled_outs.size());
 		for (t_outconnect& pair : m_coupled_outs) {
-			const std::string destPort = pair.first->getFullName();
-			container.push_back(
-				createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, pair.second));
+			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
+				dummytimestamp,
+				pair.first->getPortID(), getPortID(),
+				message, pair.second));
 //#ifdef USE_STAT
 			++m_sendstat[pair.first];
 //#endif
@@ -398,7 +417,9 @@ struct array2ptr<T[N]>
  * @brief Base case. Used for everything except strings
  */
 template<typename DataType>
-inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
         const DataType& msg, t_zfunc& func)
 {
 	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
@@ -411,7 +432,9 @@ inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid ds
  * @brief Overload for std::string
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
 	const std::string& msg, t_zfunc& func)
 {
 	n_network::t_msgptr messagetobesend =
@@ -425,7 +448,9 @@ inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_m
  * @brief Overload for string literals
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
 	const char* const & msg, t_zfunc& func)
 {
 	n_network::t_msgptr messagetobesend =
@@ -448,7 +473,9 @@ inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_m
  * @param func The ZFunction that must be applied on this message
  */
 template<typename T>
-inline n_network::t_msgptr createMsg(n_model::uuid srcUUID, n_model::uuid dstUUID, const n_network::t_timestamp& time_made, const std::string& destport, const std::string& sourceport,
+inline n_network::t_msgptr createMsg(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
         const T& msg, t_zfunc& func)
 {
 	return createMsgImpl<typename array2ptr<T>::type>(srcUUID, dstUUID, time_made, destport, sourceport, msg, func);
