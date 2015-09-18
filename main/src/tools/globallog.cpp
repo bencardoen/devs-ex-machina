@@ -6,6 +6,10 @@
  */
 
 #include "tools/globallog.h"
+#ifdef __GNUC__
+#include <execinfo.h>
+#include <unistd.h>
+#endif /* __GNUC__ */
 
 #if LOGGING==true
 
@@ -41,6 +45,20 @@ void signalHandler(int sig){
 	LOG_FLUSH;
 	if(sig == SIGINT)
 		std::terminate();
+	//if gcc, print stacktrace
+#ifdef __GNUC__
+	/* many thanks to tgamblin and Violet Giraffe for this code
+	 * @see http://stackoverflow.com/a/77336
+	 */
+	void *array[10];
+	size_t size;
+	// get void*'s for all entries on the stack
+	size = backtrace(array, 10);
+
+	// print out all the frames to stderr
+	fprintf(stderr, "Error: signal %d:\n", sig);
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif /* __GNUC__ */
 	restoreHandler();
 }
 sighandler_t defSigSegv;
