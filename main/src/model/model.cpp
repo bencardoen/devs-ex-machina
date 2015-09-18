@@ -85,7 +85,7 @@ t_portptr Model::addPort(std::string name, bool isIn)
 void Model::removePort(t_portptr& port)
 {
 	//remove the port itself
-	assert(allowDS() && "Model::removePort: Dynamic structured DEVS is not allowed in this phase.");
+	assert(allowDS() && "Dynamic structured DEVS is not allowed in this phase.");
 	if (port->isInPort())
 		m_iPorts.erase(port->getName());
 	else
@@ -94,6 +94,15 @@ void Model::removePort(t_portptr& port)
 	if (m_control)
 		m_control->dsRemovePort(port);
         port->setHost(nullptr);
+}
+
+void Model::clearConnections()
+{
+	assert(allowDS() && "Dynamic structured DEVS is not allowed in this phase.");
+	for(auto& ptr: m_iPorts)
+		ptr.second->clearConnections();
+	for(auto& ptr: m_oPorts)
+		ptr.second->clearConnections();
 }
 
 t_portptr Model::addInPort(std::string name)

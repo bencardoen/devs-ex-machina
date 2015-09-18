@@ -31,6 +31,8 @@ namespace n_model {
 class Port;
 
 typedef std::shared_ptr<Port> t_portptr;
+typedef Port* t_portptr_raw;
+typedef std::pair<t_portptr_raw, t_zfunc> t_outconnect;
 
 
 //// Merge TODO, if States are merged, recheck this code.
@@ -45,20 +47,15 @@ private:
         std::string m_fullname;
 	bool m_inputPort;
 
-	std::vector<t_portptr> m_ins;
-	std::map<t_portptr, t_zfunc> m_outs;
-
-	std::map<t_portptr, std::vector<t_zfunc>> m_coupled_outs;
-	std::vector<t_portptr> m_coupled_ins;
-
-	/**
-	 * Vectors of recently send messages for the tracer
-	 */
+	//vectors for single connections
+	std::vector<t_portptr_raw> m_ins;
+	std::vector<t_outconnect> m_outs;
+	//vectors for direct connect connections
+	std::vector<t_portptr_raw> m_coupled_ins;
+	std::vector<t_outconnect> m_coupled_outs;
+	//vector of recently send messages for the tracer
 	std::vector<n_network::t_msgptr> m_sentMessages;
-
-	/**
-	 * Vectors of recently received messages for the tracer
-	 */
+	//vector of recently received messages for the tracer
 	std::vector<n_network::t_msgptr> m_receivedMessages;
 
 	bool m_usingDirectConnect;
@@ -110,13 +107,6 @@ public:
 	bool isInPort() const;
 
 	/**
-	 * Returns the function matching with the given port.
-	 *
-	 * @return the matching function
-	 */
-	t_zfunc getZFunc(const t_portptr& port) const;
-
-	/**
 	 * Sets an output port with a matching function to this port
 	 *
 	 * @param port new output port
@@ -124,7 +114,7 @@ public:
 	 *
 	 * @return whether or not the port wasn't already added
 	 */
-	bool setZFunc(const t_portptr& port, t_zfunc function);
+	bool setZFunc(const t_portptr_raw port, t_zfunc function);
 
 	/**
 	 * Sets an input port to this port
@@ -133,24 +123,17 @@ public:
 	 *
 	 * @return whether or not the port was already added
 	 */
-	bool setInPort(const t_portptr& port);
-
-	/**
-	 * @brief Clears all links to other ports from this message.
-	 * @note This function will not remove these references from the other ports.
-	 * @see CoupledModel::disconnectPorts to safely remove connections between ports.
-	 */
-	void clear();
+	bool setInPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Removes a port from the list of outgoing connections
 	 */
-	void removeOutPort(const t_portptr& port);
+	void removeOutPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Removes a port from the list of incoming connections
 	 */
-	void removeInPort(const t_portptr& port);
+	void removeInPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Adds an outgoing connection with a Z function.
@@ -159,7 +142,7 @@ public:
 	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
 	 * @see setZFunc
 	 */
-	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
+	void setZFuncCoupled(const t_portptr_raw port, t_zfunc function);
 
 	/**
 	 * @brief Adds an incoming connection.
@@ -167,7 +150,7 @@ public:
 	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
 	 * @see setInPort
 	 */
-	void setInPortCoupled(const t_portptr& port);
+	void setInPortCoupled(const t_portptr_raw port);
 
 	/*
 	 * Sets the if whether the port is currently using direct connect or not
@@ -206,27 +189,50 @@ public:
 	/**
 	 * @brief Returns a reference to all ports from incoming connections
 	 */
-	const std::vector<t_portptr>& getIns() const;
+	const std::vector<t_portptr_raw>& getIns() const
+	{
+		return m_ins;
+	}
 	/**
 	 * @brief Returns a reference to all ports from outgoing connections
 	 */
-	const std::map<t_portptr, t_zfunc>& getOuts() const;
+	const std::vector<t_outconnect>& getOuts() const
+	{
+		return m_outs;
+	}
 	/**
-	 * @brief Returns all ports from incoming connections
+	 * @brief Returns a reference to all incoming connections
 	 */
-	std::vector<t_portptr>& getIns();
+	std::vector<t_portptr_raw>& getIns()
+	{
+		return m_ins;
+	}
 	/**
-	 * @brief Returns to all ports from outgoing connections
+	 * @brief Returns a reference to all outgoing connections
 	 */
-	std::map<t_portptr, t_zfunc>& getOuts();
+	std::vector<t_outconnect>& getOuts()
+	{
+		return m_outs;
+	}
 	/**
 	 * @brief Returns a reference to all ports from incoming connections, using the directConnect algorithm.
 	 */
-	const std::vector<t_portptr>& getCoupledIns() const;
+	const std::vector<t_portptr_raw>& getCoupledIns() const
+	{
+		return m_coupled_ins;
+	}
 	/**
 	 * @brief Returns a reference to all ports from outgoing connections, using the directConnect algorithm.
 	 */
-	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
+	const std::vector<t_outconnect>& getCoupledOuts() const
+	{
+		return m_coupled_outs;
+	}
+
+	/**
+	 * @brief Removes all incoming and outgoing connections.
+	 */
+	void clearConnections();
 
 	/**
 	 * Clears all sent messages for the tracer
@@ -302,7 +308,7 @@ public:
 //#ifdef USE_STAT
 private:
 	//counters for statistics
-	std::map<t_portptr, n_tools::t_uintstat> m_sendstat;
+	std::map<t_portptr_raw, n_tools::t_uintstat> m_sendstat;
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -333,7 +339,7 @@ void Port::createMessages(const DataType& message,
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
-		for (auto& pair : m_outs) {
+		for (t_outconnect& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
 			const std::string destPort = pair.first->getFullName();
 
@@ -345,15 +351,13 @@ void Port::createMessages(const DataType& message,
 		}
 	} else {
 		container.reserve(m_coupled_outs.size());
-		for (auto& pair : m_coupled_outs) {
+		for (t_outconnect& pair : m_coupled_outs) {
 			const std::string destPort = pair.first->getFullName();
-			for (t_zfunc& zFunction : pair.second) {
-				container.push_back(
-				        createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, zFunction));
+			container.push_back(
+				createMsg(srcuuid, pair.first->getModelUUID(), dummytimestamp, destPort, sourcePort, message, pair.second));
 //#ifdef USE_STAT
-				++m_sendstat[pair.first];
+			++m_sendstat[pair.first];
 //#endif
-			}
 		}
 	}
 }

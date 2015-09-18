@@ -92,14 +92,6 @@ public:
 	 */
 	virtual ~Model()
 	{
-		// Delete all shared pointers to ports so they too can be freed
-		for (auto& p : m_iPorts) {
-			p.second->clear();
-
-		}
-		for (auto& p : m_oPorts) {
-			p.second->clear();
-		}
 	}
 
 	/**
@@ -122,6 +114,11 @@ public:
 	 */
         virtual
 	void removePort(t_portptr& port);
+
+	/**
+	 * @brief Removes all incoming and outgoing connections on this model.
+	 */
+	void clearConnections();
 
 	/**
 	 * Sets the current parent pointer to parent

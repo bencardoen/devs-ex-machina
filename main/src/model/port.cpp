@@ -15,6 +15,7 @@
 #include "tools/objectfactory.h"
 #include "model.h"
 #include "atomicmodel.h"
+#include <algorithm>
 
 namespace n_model {
 
@@ -43,71 +44,66 @@ bool Port::isInPort() const
 	return m_inputPort;
 }
 
-t_zfunc Port::getZFunc(const std::shared_ptr<Port>& port) const
+void n_model::Port::removeOutPort(const t_portptr_raw port)
 {
-	return m_outs.at(port);
-}
+	std::vector<t_outconnect>::iterator it = m_outs.begin();
+	while(it != m_outs.end()){
+		if(it->first == port)
+			break;
+		++it;
+	}
 
-void n_model::Port::removeOutPort(const t_portptr& port)
-{
-	std::map<t_portptr, t_zfunc>::iterator it = m_outs.find(port);
 	if(it != m_outs.end()){
 		//there is a connection to this port
 		m_outs.erase(it);
 	}
 }
 
-void Port::removeInPort(const t_portptr& port)
+void Port::removeInPort(const t_portptr_raw port)
 {
+	LOG_DEBUG("current amount of ports: ", m_ins.size());
 	auto it = std::find(m_ins.begin(), m_ins.end(), port);
 	if(it != m_ins.end())
 		m_ins.erase(it);
+	else
+		LOG_ERROR("tried to remove port that we don't have!");
+	LOG_DEBUG("new amount of ports: ", m_ins.size());
 }
 
-bool Port::setZFunc(const std::shared_ptr<Port>& port, t_zfunc function)
+bool Port::setZFunc(const t_portptr_raw port, t_zfunc function)
 {
-	if (m_outs.find(port) != m_outs.end()) {
-		return false;
+	std::vector<t_outconnect>::iterator it = m_outs.begin();
+	while(it != m_outs.end()){
+		if(it->first == port)
+			return false;
+		++it;
 	}
-	m_outs.insert(std::pair<std::shared_ptr<Port>, t_zfunc>(port, function));
+	m_outs.push_back(t_outconnect(port, function));
 	return true;
 }
 
-bool Port::setInPort(const std::shared_ptr<Port>& port)
+bool Port::setInPort(const t_portptr_raw port)
 {
+	LOG_DEBUG("current amount of ports: ", m_ins.size());
 	if (std::find(m_ins.begin(), m_ins.end(), port) != m_ins.end())
 		return false;
 	m_ins.push_back(port);
+	LOG_DEBUG("new amount of ports: ", m_ins.size());
 	return true;
 }
 
-void Port::setZFuncCoupled(const std::shared_ptr<Port>& port, t_zfunc function)
+void Port::setZFuncCoupled(const t_portptr_raw port, t_zfunc function)
 {
-	std::map<std::shared_ptr<Port>, std::vector<t_zfunc>>::iterator it = m_coupled_outs.find(port);
-	if (it == m_coupled_outs.end()) {
-		m_coupled_outs.emplace(port, std::vector<t_zfunc>( { function }));
+	m_coupled_outs.push_back(t_outconnect(port, function));
 //#ifdef USE_STAT
-		std::string statname = getHostName() + "/" + getName() + "->" + port->getHostName() + "/" + port->getName();
-		m_sendstat.emplace(port, n_tools::t_uintstat(statname, "messages"));
+	std::string statname = getHostName() + "/" + getName() + "->" + port->getHostName() + "/" + port->getName();
+	m_sendstat.emplace(port,n_tools::t_uintstat(statname, "messages"));
 //#endif
-		return;
-	}
-	it->second.push_back(function);
 }
 
 void Port::setUsingDirectConnect(bool dc)
 {
 	m_usingDirectConnect = dc;
-}
-
-const std::vector<std::shared_ptr<Port> >& Port::getIns() const
-{
-	return m_ins;
-}
-
-std::vector<std::shared_ptr<Port> >& Port::getIns()
-{
-	return m_ins;
 }
 
 void Port::resetDirectConnect()
@@ -122,37 +118,9 @@ bool Port::isUsingDirectConnect() const
 	return m_usingDirectConnect;
 }
 
-void Port::setInPortCoupled(const t_portptr& port)
+void Port::setInPortCoupled(const t_portptr_raw port)
 {
 	m_coupled_ins.push_back(port);
-}
-
-const std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts() const
-{
-	return m_outs;
-}
-
-std::map<std::shared_ptr<Port>, t_zfunc>& Port::getOuts()
-{
-	return m_outs;
-}
-
-const std::vector<t_portptr>& Port::getCoupledIns() const
-{
-	return m_coupled_ins;
-}
-
-void Port::clear()
-{
-	m_ins.clear();
-	m_outs.clear();
-	m_coupled_ins.clear();
-	m_coupled_outs.clear();
-}
-
-const std::map<t_portptr, std::vector<t_zfunc> >& Port::getCoupledOuts() const
-{
-	return m_coupled_outs;
 }
 
 void Port::clearSentMessages()
@@ -198,8 +166,8 @@ uuid Port::getModelUUID() const
 
 void Port::serialize(n_serialization::t_oarchive& archive)
 {
-	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
-			m_coupled_outs, m_coupled_ins,
+	archive(m_name, m_hostname, m_inputPort, // m_ins, m_outs,
+//			m_coupled_outs, m_coupled_ins,
 //			m_sentMessages, m_receivedMessages,
                         m_fullname,
 			m_usingDirectConnect);
@@ -207,11 +175,23 @@ void Port::serialize(n_serialization::t_oarchive& archive)
 
 void Port::serialize(n_serialization::t_iarchive& archive)
 {
-	archive(m_name, m_hostname, m_inputPort, m_ins, m_outs,
-			m_coupled_outs, m_coupled_ins,
+	archive(m_name, m_hostname, m_inputPort, // m_ins, m_outs,
+//			m_coupled_outs, m_coupled_ins,
 //			m_sentMessages, m_receivedMessages,
                         m_fullname,
 			m_usingDirectConnect);
+}
+
+void Port::clearConnections()
+{
+	for(t_portptr_raw& ptr: m_ins){
+		ptr->removeOutPort(this);
+	}
+	m_ins.clear();
+	for(t_outconnect& ptr: m_outs){
+		ptr.first->removeInPort(this);
+	}
+	m_outs.clear();
 }
 
 void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )

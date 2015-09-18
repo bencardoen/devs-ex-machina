@@ -302,7 +302,6 @@ public:
  * @param msg A pointer to a message
  * @warning If the message does not contain a payload of the expected type, the simulation is allowed to abort via a segmentation fault.
  * Always make sure that the type is correct!
- * This overload handles non-string types.
  */
 template<typename T>
 const T& getMsgPayload(const t_msgptr& msg){

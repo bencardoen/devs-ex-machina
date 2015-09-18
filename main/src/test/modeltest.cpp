@@ -170,9 +170,9 @@ TEST(RootModel, DirectConnectLayered)
 			t_portptr commsOut = a->getPort("POLICECOMMSOUT");
 			EXPECT_TRUE(commsOut != nullptr);
 			EXPECT_TRUE(commsOut->isUsingDirectConnect());
-			std::map<t_portptr, std::vector<t_zfunc> > outs = commsOut->getCoupledOuts();
+			std::vector<t_outconnect> outs = commsOut->getCoupledOuts();
 			EXPECT_TRUE(!outs.empty());
-			t_portptr commsIn = outs.begin()->first;
+			t_portptr_raw commsIn = outs.begin()->first;
 			EXPECT_EQ(commsIn->getName(), "POLICECOMMSIN");
 		} else if (name == "policeOfficer") {
 			t_portptr commsIn = a->getPort("POLICECOMMSIN");
@@ -180,7 +180,7 @@ TEST(RootModel, DirectConnectLayered)
 			EXPECT_TRUE(commsIn->isUsingDirectConnect());
 			auto ins = commsIn->getCoupledIns();
 			EXPECT_TRUE(!ins.empty());
-			t_portptr commsOut = ins[0];
+			t_portptr_raw commsOut = ins[0];
 			EXPECT_EQ(commsOut->getName(), "POLICECOMMSOUT");
 		}
 	}
