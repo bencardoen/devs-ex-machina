@@ -368,7 +368,7 @@ void Port::createMessages(const DataType& message,
 //#endif
 		}
 	} else {
-		container.reserve(m_coupled_outs.size());
+		container.reserve(container.size() + m_coupled_outs.size());
 		for (t_outconnect& pair : m_coupled_outs) {
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				dummytimestamp,
