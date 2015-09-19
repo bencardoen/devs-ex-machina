@@ -121,7 +121,7 @@ void Building::extTransition(const std::vector<n_network::t_msgptr> & message)
 	for (auto msg : message) {
 		if(msg->getDestinationPort() == Q_rack->getFullName()) {
 			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect QueryAck");
-			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSourcePort());
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSrcPort());
 			std::shared_ptr<QueryAck> queryAck = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
 			LOG_DEBUG("ROADSEGMENT: " + getName() + " - received QueryAck");
 			if (getBuildingState()->send_car_id == queryAck->ID and (getBuildingState()->sent < send_max)) {

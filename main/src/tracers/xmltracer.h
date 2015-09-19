@@ -37,10 +37,10 @@ private:
 
 	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "<port name=\"" << item.first << "\" category=\"I\">\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+		const std::vector<t_portptr>& ports = adevs->getIPorts();
+		for (const t_portptr& item : ports) {
+			*ssr << "<port name=\"" << item->getName() << "\" category=\"I\">\n";
+			const std::vector<n_network::t_msgptr>& messages = item->getReceivedMessages();
 			for (const n_network::t_msgptr& message : messages)
 				*ssr << "<message>" << message->getPayload() << "</message>\n";
 			*ssr << "</port>\n";
@@ -49,10 +49,10 @@ private:
 
 	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << "<port name=\"" << item.first << "\" category=\"O\">\n";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getSentMessages();
+		const std::vector<t_portptr>& ports = adevs->getOPorts();
+		for (const t_portptr& item : ports) {
+			*ssr << "<port name=\"" << item->getName() << "\" category=\"O\">\n";
+			const std::vector<n_network::t_msgptr>& messages = item->getSentMessages();
 			for (const n_network::t_msgptr& message : messages)
 				*ssr << "<message>" << message->getPayload() << "</message>\n";
 			*ssr << "</port>\n";

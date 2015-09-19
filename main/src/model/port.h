@@ -31,6 +31,8 @@ namespace n_model {
 class Port;
 
 typedef std::shared_ptr<Port> t_portptr;
+typedef Port* t_portptr_raw;
+typedef std::pair<t_portptr_raw, t_zfunc> t_outconnect;
 
 
 //// Merge TODO, if States are merged, recheck this code.
@@ -43,22 +45,18 @@ private:
 	std::string m_name;
 	std::string m_hostname;
         std::string m_fullname;
+        std::size_t m_portid;
 	bool m_inputPort;
 
-	std::vector<t_portptr> m_ins;
-	std::map<t_portptr, t_zfunc> m_outs;
-
-	std::map<t_portptr, std::vector<t_zfunc>> m_coupled_outs;
-	std::vector<t_portptr> m_coupled_ins;
-
-	/**
-	 * Vectors of recently send messages for the tracer
-	 */
+	//vectors for single connections
+	std::vector<t_portptr_raw> m_ins;
+	std::vector<t_outconnect> m_outs;
+	//vectors for direct connect connections
+	std::vector<t_portptr_raw> m_coupled_ins;
+	std::vector<t_outconnect> m_coupled_outs;
+	//vector of recently send messages for the tracer
 	std::vector<n_network::t_msgptr> m_sentMessages;
-
-	/**
-	 * Vectors of recently received messages for the tracer
-	 */
+	//vector of recently received messages for the tracer
 	std::vector<n_network::t_msgptr> m_receivedMessages;
 
 	bool m_usingDirectConnect;
@@ -79,7 +77,7 @@ public:
 	 * @param host pointer to the host of the port
 	 * @param inputPort whether or not this is an input port
 	 */
-	Port(std::string name, std::string hostname, bool inputPort);
+	Port(const std::string& name, const std::string& hostname, std::size_t portid, bool inputPort);
 
 	/**
 	 * Returns the name of the port
@@ -103,18 +101,24 @@ public:
 	std::string getHostName() const;
 
 	/**
+	 * @return The port id, which is a unique port identifier
+	 * among all input or output ports of a model.
+	 */
+	inline std::size_t getPortID() const
+	{ return m_portid; }
+
+	/**
+	 * @brief Sets the port id
+	 */
+	inline void setPortID(std::size_t id)
+	{ m_portid = id; }
+
+	/**
 	 * Returns whether or not this is an input port
 	 *
 	 * @return whether or not this is an input port
 	 */
 	bool isInPort() const;
-
-	/**
-	 * Returns the function matching with the given port.
-	 *
-	 * @return the matching function
-	 */
-	t_zfunc getZFunc(const t_portptr& port) const;
 
 	/**
 	 * Sets an output port with a matching function to this port
@@ -124,7 +128,7 @@ public:
 	 *
 	 * @return whether or not the port wasn't already added
 	 */
-	bool setZFunc(const t_portptr& port, t_zfunc function);
+	bool setZFunc(const t_portptr_raw port, t_zfunc function);
 
 	/**
 	 * Sets an input port to this port
@@ -133,24 +137,17 @@ public:
 	 *
 	 * @return whether or not the port was already added
 	 */
-	bool setInPort(const t_portptr& port);
-
-	/**
-	 * @brief Clears all links to other ports from this message.
-	 * @note This function will not remove these references from the other ports.
-	 * @see CoupledModel::disconnectPorts to safely remove connections between ports.
-	 */
-	void clear();
+	bool setInPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Removes a port from the list of outgoing connections
 	 */
-	void removeOutPort(const t_portptr& port);
+	void removeOutPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Removes a port from the list of incoming connections
 	 */
-	void removeInPort(const t_portptr& port);
+	void removeInPort(const t_portptr_raw port);
 
 	/**
 	 * @brief Adds an outgoing connection with a Z function.
@@ -159,7 +156,7 @@ public:
 	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
 	 * @see setZFunc
 	 */
-	void setZFuncCoupled(const t_portptr& port, t_zfunc function);
+	void setZFuncCoupled(const t_portptr_raw port, t_zfunc function);
 
 	/**
 	 * @brief Adds an incoming connection.
@@ -167,7 +164,7 @@ public:
 	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
 	 * @see setInPort
 	 */
-	void setInPortCoupled(const t_portptr& port);
+	void setInPortCoupled(const t_portptr_raw port);
 
 	/*
 	 * Sets the if whether the port is currently using direct connect or not
@@ -206,27 +203,50 @@ public:
 	/**
 	 * @brief Returns a reference to all ports from incoming connections
 	 */
-	const std::vector<t_portptr>& getIns() const;
+	const std::vector<t_portptr_raw>& getIns() const
+	{
+		return m_ins;
+	}
 	/**
 	 * @brief Returns a reference to all ports from outgoing connections
 	 */
-	const std::map<t_portptr, t_zfunc>& getOuts() const;
+	const std::vector<t_outconnect>& getOuts() const
+	{
+		return m_outs;
+	}
 	/**
-	 * @brief Returns all ports from incoming connections
+	 * @brief Returns a reference to all incoming connections
 	 */
-	std::vector<t_portptr>& getIns();
+	std::vector<t_portptr_raw>& getIns()
+	{
+		return m_ins;
+	}
 	/**
-	 * @brief Returns to all ports from outgoing connections
+	 * @brief Returns a reference to all outgoing connections
 	 */
-	std::map<t_portptr, t_zfunc>& getOuts();
+	std::vector<t_outconnect>& getOuts()
+	{
+		return m_outs;
+	}
 	/**
 	 * @brief Returns a reference to all ports from incoming connections, using the directConnect algorithm.
 	 */
-	const std::vector<t_portptr>& getCoupledIns() const;
+	const std::vector<t_portptr_raw>& getCoupledIns() const
+	{
+		return m_coupled_ins;
+	}
 	/**
 	 * @brief Returns a reference to all ports from outgoing connections, using the directConnect algorithm.
 	 */
-	const std::map<t_portptr, std::vector<t_zfunc> >& getCoupledOuts() const;
+	const std::vector<t_outconnect>& getCoupledOuts() const
+	{
+		return m_coupled_outs;
+	}
+
+	/**
+	 * @brief Removes all incoming and outgoing connections.
+	 */
+	void clearConnections();
 
 	/**
 	 * Clears all sent messages for the tracer
@@ -302,7 +322,7 @@ public:
 //#ifdef USE_STAT
 private:
 	//counters for statistics
-	std::map<t_portptr, n_tools::t_uintstat> m_sendstat;
+	std::map<t_portptr_raw, n_tools::t_uintstat> m_sendstat;
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -321,45 +341,42 @@ template<typename DataType>
 void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
-	const std::string& sourcePort = this->getFullName();
+        const n_model::uuid srcuuid = this->getModelUUID();
+	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 	{
 		t_zfunc zfunc = n_tools::createObject<ZFunc>();
-		const n_network::t_msgptr& msg = createMsg("", "", sourcePort, message, zfunc);
+		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0),
+			n_network::t_timestamp::infinity(),
+			std::numeric_limits<std::size_t>::max(), getPortID(),
+			message, zfunc);
 		m_sentMessages.push_back(msg);
 	}
 
 	// We want to iterate over the correct ports (whether we use direct connect or not)
-        const n_model::uuid srcuuid = this->getModelUUID();
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
-		for (auto& pair : m_outs) {
+		for (t_outconnect& pair : m_outs) {
 			t_zfunc& zFunction = pair.second;
-			std::string model_destination = pair.first->getHostName();
-			//			std::string sourcePort = this->getFullName();
-			const std::string& destPort = n_tools::copyString(pair.first->getFullName());
-			const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
-			container.push_back(createMsg(model_destination, destPort, sourcePort, message, zFunction));
-                        container.back()->getSrcUUID()=srcuuid;
-                        container.back()->getDstUUID()=pair.first->getModelUUID();
+			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
+				dummytimestamp,
+				pair.first->getPortID(), getPortID(),
+				message, zFunction));
+//#ifdef USE_STAT
+			++m_sendstat[pair.first];
+//#endif
 		}
 	} else {
-		container.reserve(m_coupled_outs.size());
-		for (auto& pair : m_coupled_outs) {
-			std::string model_destination = pair.first->getHostName();
-			//			std::string sourcePort = this->getFullName();
-			std::string destPort = n_tools::copyString(pair.first->getFullName());
-			for (t_zfunc& zFunction : pair.second) {
-				container.push_back(
-				        createMsg(model_destination, destPort, sourcePort, message, zFunction));
-                                // Correct UUIDs
-                                container.back()->getSrcUUID()=srcuuid;
-                                container.back()->getDstUUID()=pair.first->getModelUUID();
+		container.reserve(container.size() + m_coupled_outs.size());
+		for (t_outconnect& pair : m_coupled_outs) {
+			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
+				dummytimestamp,
+				pair.first->getPortID(), getPortID(),
+				message, pair.second));
 //#ifdef USE_STAT
-				++m_sendstat[pair.first];
+			++m_sendstat[pair.first];
 //#endif
-			}
 		}
 	}
 }
@@ -400,11 +417,13 @@ struct array2ptr<T[N]>
  * @brief Base case. Used for everything except strings
  */
 template<typename DataType>
-inline n_network::t_msgptr createMsgImpl(const std::string& dest, const std::string& destP, const std::string& sourceP,
+inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
         const DataType& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(dest,
-	        n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
+		time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -413,11 +432,14 @@ inline n_network::t_msgptr createMsgImpl(const std::string& dest, const std::str
  * @brief Overload for std::string
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<std::string>(const std::string& dest, const std::string& destP,
-        const std::string& sourceP, const std::string& msg, t_zfunc& func)
+inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
+	const std::string& msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend =
+		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
+		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -426,11 +448,14 @@ inline n_network::t_msgptr createMsgImpl<std::string>(const std::string& dest, c
  * @brief Overload for string literals
  */
 template<>
-inline n_network::t_msgptr createMsgImpl<const char*>(const std::string& dest, const std::string& destP,
-        const std::string& sourceP, const char* const & msg, t_zfunc& func)
+inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
+	const char* const & msg, t_zfunc& func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::Message>(dest,
-		n_network::t_timestamp::infinity(), destP, sourceP, msg);
+	n_network::t_msgptr messagetobesend =
+		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
+		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
@@ -448,10 +473,12 @@ inline n_network::t_msgptr createMsgImpl<const char*>(const std::string& dest, c
  * @param func The ZFunction that must be applied on this message
  */
 template<typename T>
-inline n_network::t_msgptr createMsg(const std::string& dest, const std::string& destP, const std::string& sourceP,
+inline n_network::t_msgptr createMsg(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	const n_network::t_timestamp& time_made,
+	std::size_t destport, std::size_t sourceport,
         const T& msg, t_zfunc& func)
 {
-	return createMsgImpl<typename array2ptr<T>::type>(dest, destP, sourceP, msg, func);
+	return createMsgImpl<typename array2ptr<T>::type>(srcUUID, dstUUID, time_made, destport, sourceport, msg, func);
 }
 }
 

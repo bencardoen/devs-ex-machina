@@ -22,7 +22,7 @@ namespace n_tracers {
  * In a parallel simulation, time is not enough. Therefore, the ID of the core
  * that initiated the trace is taken into consideration as well.
  */
-class TraceMessage: public n_network::Message
+class TraceMessage
 {
 public:
 	/**
@@ -69,7 +69,19 @@ public:
 	 */
 	bool operator>(const TraceMessage& other) const;
 
+	inline
+	const std::size_t& getCoreID() const
+	{
+		return m_coreid;
+	}
+	inline
+	const n_network::t_timestamp& getTime() const
+	{
+		return m_time;
+	}
 private:
+	const n_network::t_timestamp m_time;
+	const std::size_t m_coreid;
 	t_messagefunc m_func;		//function to be executed. This function takes no arguments
 	t_messagefunc m_takeBack;	//function for destroying this object
 };

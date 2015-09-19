@@ -31,14 +31,25 @@
 
 #ifdef BENCHMARK
 
+//If NO_TRACER is defined, don't use the tracer module
 #ifndef NO_TRACER
 #define NO_TRACER
 #endif /* NO_TRACER */
+
+//If USE_SAFE_CAST is true, use safe casts (dynamic casts)
+//otherwise, use unsafe, fast casts (reinterpret cast)
+#ifndef USE_SAFE_CAST
+#define USE_SAFE_CAST false
+#endif /* USE_SAFE_CAST */
 
 #else /* BENCHMARK */
 #ifndef USE_STAT
 #define USE_STAT
 #endif /* USE_STAT */
+
+#ifndef USE_SAFE_CAST
+#define USE_SAFE_CAST true
+#endif /* USE_SAFE_CAST */
 
 #endif /* BENCHMARK */
 
