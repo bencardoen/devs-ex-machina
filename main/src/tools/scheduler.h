@@ -125,6 +125,18 @@ public:
 	virtual
 	void
 	testInvariant()=0;
+        
+        /**
+         * If item (key) is present in heap, overwrite it, else insert.
+         * @param 
+         */
+        virtual
+        void
+        update(const T&){;}
+        
+        virtual
+        void
+        hintSize(size_t /*expected_size*/){;}
 };
 
 template<typename T>

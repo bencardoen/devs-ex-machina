@@ -26,8 +26,10 @@ public:
 	MessageEntry(const t_msgptr& msg):m_message(msg){;}
 	virtual ~MessageEntry(){;}
 
-	t_msgptr
+	const t_msgptr&
 	getMessage()const{return m_message;}
+        
+        explicit operator size_t()const{return m_message->getDstUUID().m_local_id;}
 
 	friend
 	bool operator<(const MessageEntry& left, const MessageEntry& right){        

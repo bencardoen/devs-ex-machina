@@ -3,6 +3,7 @@
  */
 
 #include "tools/scheduler.h"
+#include "tools/vectorscheduler.h"
 
 #ifndef SCHEDULERFACTORY_H
 #define SCHEDULERFACTORY_H
@@ -28,6 +29,34 @@ enum class Storage
 	LIST,
 };
 
+/**
+ * For scheduler operations where contains()/erase() is required in O(1) or O(logn), 
+ * define a storage backend here. 
+ */
+enum class KeyStorage
+{
+        /**
+         * Don't care, so duplicate items scheduled is possible and erase/contains is very slow.
+         */
+        NONE,
+        /**
+         * Uses std::hash<T>operator(const T&)const to store ptrs to heap items for fast retrieval.
+         * Slow push/pop, fast retrieval.
+         */
+        HASHMAP,
+        /**
+         * Uses std::less<T>operator(const T& left, const T& right)const for comparison
+         * In heavy push/pop usage can be faster (but lookup becomes slower)
+         */
+        MAP,
+        /**
+         * Expects a well defined implementation of 
+         *      operator size_t()const for type T, that converts to a unique id.
+         *      Pointers to elements are stored using that index.
+         * Ids should form a continuous series to conserve memory.
+         */
+        VECTOR
+};
 
 
 /**
@@ -45,9 +74,8 @@ public:
 	typedef std::shared_ptr<Scheduler<X>> t_Scheduler;
 
 	static std::shared_ptr<Scheduler<X>>
-	makeScheduler(const Storage&, bool synchronized = false, bool map_backed=false);
+	makeScheduler(Storage, bool synchronized = false, KeyStorage=KeyStorage::HASHMAP);
 };
-
 
 }
 #include "schedulerfactory.tpp"

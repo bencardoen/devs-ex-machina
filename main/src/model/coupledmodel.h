@@ -76,7 +76,7 @@ public:
 	/**
 	 * Resets the parent pointers of this model and all its children (depth-first)
 	 */
-	virtual void resetParents();
+	virtual void resetParents()override;
 
 	/**
 	 * Connects the given ports with eachother (with a zFunction)
@@ -137,7 +137,7 @@ public:
 	 * @brief Prints some basic stats.
 	 * @param out The output will be printed to this stream.
 	 */
-	virtual void printStats(std::ostream& out = std::cout) const
+	virtual void printStats(std::ostream& out = std::cout) const override
 	{
 		for(const auto& i: m_components)
 			i->printStats(out);

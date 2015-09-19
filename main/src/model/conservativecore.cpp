@@ -294,11 +294,11 @@ void Conservativecore::runSmallStep(){
         }
 }
 
-void Conservativecore::collectOutput(std::vector<t_atomicmodelptr>& imminents){
+void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // Two cases, either we have collected output already, in which case we need to remove the entry from the set
         // Or we haven't in which case the entry stays put, and we mark it for the next round.
-        std::vector<t_atomicmodelptr> sortedimminents;
-        for(const auto& imminent : imminents){
+        std::vector<t_raw_atomic> sortedimminents;
+        for(auto imminent : imminents){
                 const std::string& name = imminent->getName();
                 auto found = m_generated_output_at.find(name);
                 if(found != m_generated_output_at.end()){
@@ -330,11 +330,11 @@ void Conservativecore::collectOutput(std::vector<t_atomicmodelptr>& imminents){
 
 void Conservativecore::runSmallStepStalled()
 {
-        std::vector<t_atomicmodelptr> imms;
+        std::vector<t_raw_atomic> imms;
         this->getImminent(imms);
         
         collectOutput(imms); // only collects output once
-        for(const auto& mdl : imms){
+        for(auto mdl : imms){
                 const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getLocalID(), last_scheduled);
         }

@@ -155,7 +155,7 @@ protected:
 	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
 	 */
 	void
-	handleAntiMessage(const t_msgptr& msg);
+	handleAntiMessage(const t_msgptr& msg)override;
 
         /**
          * Allow msg to be traced by (among others the GVT algorithm)

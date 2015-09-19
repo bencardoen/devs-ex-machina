@@ -14,7 +14,9 @@
 #include "tools/coutredirect.h"
 #include "tools/sharedvector.h"
 #include "tools/listscheduler.h"
+#include "tools/stlscheduler.h"
 #include "tools/flags.h"
+#include "model/modelentry.h"
 
 using std::cout;
 using std::endl;
@@ -426,3 +428,75 @@ TEST(SharedVector, concurrency){
 	}
 }
 
+TEST(VectorScheduler, basic_ops){
+        using n_model::ModelEntry;
+        constexpr size_t limit = 100;
+        using n_network::t_timestamp;
+        typedef boost::heap::fibonacci_heap<ModelEntry> heapchoice;
+        VectorScheduler<heapchoice, ModelEntry> vscheduler;
+        std::vector<ModelEntry> scheduled;
+        for(size_t i = 0; i<limit; ++i){
+                ModelEntry entry(i, t_timestamp(i, 0u));
+                vscheduler.push_back(entry);
+                scheduled.push_back(entry);
+                EXPECT_TRUE(vscheduler.contains(entry));
+                EXPECT_EQ(vscheduler.size(), i+1);
+        }
+        vscheduler.testInvariant();
+        for(size_t i = 0; i<limit; ++i){
+                ModelEntry entry(i, t_timestamp(424242422, 9999u));
+                EXPECT_TRUE(vscheduler.contains(entry));
+        }
+        vscheduler.testInvariant();
+        for(const auto& entry : scheduled){
+                EXPECT_TRUE(vscheduler.contains(entry));
+                if(size_t(entry)%2==0){
+                        vscheduler.erase(entry);
+                        EXPECT_TRUE(!vscheduler.contains(entry));
+                }
+        }
+        
+        vscheduler.testInvariant();
+        EXPECT_EQ(vscheduler.size(), limit/2);
+        size_t oldsize = vscheduler.size();
+        std::vector<ModelEntry> popped;
+        ModelEntry last(9999999, t_timestamp(limit/2, 0));
+        vscheduler.unschedule_until(popped, last);
+        EXPECT_EQ(vscheduler.size(), oldsize-popped.size());
+}
+
+TEST(STLScheduler, basic_ops){
+        using n_model::ModelEntry;
+        constexpr size_t limit = 100;
+        using n_network::t_timestamp;
+        STLScheduler<ModelEntry> vscheduler;
+        std::vector<ModelEntry> scheduled;
+        for(size_t i = 0; i<limit; ++i){
+                ModelEntry entry(i, t_timestamp(i, 0u));
+                vscheduler.push_back(entry);
+                scheduled.push_back(entry);
+                EXPECT_TRUE(vscheduler.contains(entry));
+                EXPECT_EQ(vscheduler.size(), i+1);
+        }
+        
+        for(size_t i = 0; i<limit; ++i){
+                ModelEntry entry(i, t_timestamp(424242422, 9999u));
+                EXPECT_TRUE(vscheduler.contains(entry));
+        }
+        
+        for(const auto& entry : scheduled){
+                EXPECT_TRUE(vscheduler.contains(entry));
+                if(size_t(entry)%2==0){
+                        vscheduler.erase(entry);
+                        EXPECT_TRUE(!vscheduler.contains(entry));
+                }
+        }
+        
+        
+        EXPECT_EQ(vscheduler.size(), limit/2);
+        size_t oldsize = vscheduler.size();
+        std::vector<ModelEntry> popped;
+        ModelEntry last(9999999, t_timestamp(limit/2, 0));
+        vscheduler.unschedule_until(popped, last);
+        EXPECT_EQ(vscheduler.size(), oldsize-popped.size());
+}

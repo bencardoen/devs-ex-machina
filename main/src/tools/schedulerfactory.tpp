@@ -11,16 +11,21 @@
 #include <boost/heap/d_ary_heap.hpp>
 #include "tools/msgscheduler.h"
 #include "tools/listscheduler.h"
+#include "schedulerfactory.h"
 
 namespace n_tools {
 
 
 template<typename X>
-typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(const Storage& stype, bool synchronized, bool map_backed )
+typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(Storage stype, bool synchronized, KeyStorage ktype )
 {
-        if(map_backed && !synchronized){
-                return t_Scheduler(new MessageScheduler<boost::heap::fibonacci_heap<X>, X>);
-        }
+        // TODO specialize, else types for which operator size_t is not defined fail to compile despite not being used.
+        
+        if(ktype==KeyStorage::MAP && !synchronized)
+                return t_Scheduler(new MessageScheduler<boost::heap::fibonacci_heap<X>, X>);        
+        
+        if(ktype!=KeyStorage::HASHMAP)
+                throw std::logic_error("Unsupported keytype.");
 	switch (stype) {
 	case Storage::FIBONACCI: {
 		if(synchronized)

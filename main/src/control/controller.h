@@ -268,7 +268,7 @@ private:
 	bool handleTimeEventsParallel(std::condition_variable& cv, std::mutex& cvlock);
 
 	void doDirectConnect();
-	void doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent);
+	void doDSDevs(std::vector<n_model::t_raw_atomic>& imminent);
 
 	/**
 	 * If a core triggers a termination functor, it will pass its current time to
