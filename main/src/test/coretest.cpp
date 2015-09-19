@@ -108,8 +108,7 @@ TEST(Core, CoreFlow)
 	tracers->stopTracers();	//disable the output
 	c.setTracers(tracers);
 	EXPECT_EQ(c.getCoreID(), 0u);
-	std::string portname_stub = "model_port";
-	t_msgptr mymessage = createObject<Message>("toBen", (0), portname_stub, portname_stub);
+	std::size_t portname_stub = 1;
 	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
 	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
@@ -117,7 +116,10 @@ TEST(Core, CoreFlow)
 	EXPECT_EQ(c.getModel("Amodel"), modelfrom);
 	c.addModel(modelto);
 	EXPECT_EQ(c.getModel("toBen"), modelto);
-	EXPECT_FALSE(mymessage->getDestinationCore() == 0);
+	c.init();
+	t_msgptr mymessage = createObject<Message>(modelfrom->getUUID(), modelto->getUUID(), (0), portname_stub, portname_stub);
+	EXPECT_EQ(mymessage->getDestinationCore(), 0u);
+	EXPECT_EQ(mymessage->getSourceCore(), 0u);
 	c.init();
 	//c.printSchedulerState();
 	c.syncTime();
@@ -255,15 +257,9 @@ TEST(Optimisticcore, revert){
 	t_timestamp beforegvt(61,0);
 	t_timestamp gvt(62,0);
 	t_timestamp aftergvt(63,0);
-	t_msgptr msg = createObject<Message>("mylight", beforegvt, "", "");
-	msg->setSourceCore(0);
-	msg->setDestinationCore(1);
-	t_msgptr msggvt = createObject<Message>("mylight", gvt, "", "");
-	msggvt->setSourceCore(0);
-	msggvt->setDestinationCore(1);
-	t_msgptr msgaftergvt = createObject<Message>("mylight", aftergvt, "", "");
-	msgaftergvt->setSourceCore(0);
-	msgaftergvt->setDestinationCore(1);
+	t_msgptr msg = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), beforegvt, 3u, 2u);
+	t_msgptr msggvt = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), gvt, 3u, 2u);
+	t_msgptr msgaftergvt = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
@@ -273,7 +269,7 @@ TEST(Optimisticcore, revert){
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	Message origin = *msgaftergvt;
 	t_msgptr antimessage( new Message(origin));
-	antimessage->setSourceCore(42);	// Work around error in log.
+//	antimessage->setSourceCore(42);	// Work around error in log.
 	antimessage->setAntiMessage(true);
 	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
@@ -468,6 +464,8 @@ TEST(Optimisticcore, revertoffbyone){
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	t_atomicmodelptr police = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[0]);
+	t_atomicmodelptr light = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[1]);
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
@@ -502,13 +500,13 @@ TEST(Optimisticcore, revertoffbyone){
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
-	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(108, 0), "trafficLight.INTERRUPT", "policeman.OUT", "toManual");
-        msg->getDstUUID().m_core_id=1;
-        msg->getDstUUID().m_local_id=0;
-        msg->getSrcUUID().m_core_id=0;
-        msg->getSrcUUID().m_local_id=0;
-	msg->setSourceCore(0);
-	msg->setDestinationCore(1);
+	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(108, 0), 0u, 0u, "toManual");
+//        msg->getDstUUID().m_core_id=1;
+//        msg->getDstUUID().m_local_id=0;
+//        msg->getSrcUUID().m_core_id=0;
+//        msg->getSrcUUID().m_local_id=0;
+//	msg->setSourceCore(0);
+//	msg->setDestinationCore(1);
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
 	c2->runSmallStep();
@@ -551,6 +549,8 @@ TEST(Optimisticcore, revertstress){
 	ctrl.setTerminationTime(endTime);
 
 	t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
+	t_atomicmodelptr police = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[0]);
+	t_atomicmodelptr light = std::dynamic_pointer_cast<AtomicModel_impl>(m->getComponents()[1]);
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
@@ -579,18 +579,18 @@ TEST(Optimisticcore, revertstress){
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
-	t_msgptr msg = createObject<Message>("trafficLight", t_timestamp(101, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-        msg->getSrcUUID().m_local_id=0;
-        msg->getSrcUUID().m_core_id=0;
-        msg->getDstUUID().m_local_id=0;
-        msg->getDstUUID().m_core_id=1;
+	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(101, 0), 0u,0u, "toManual");
+//        msg->getSrcUUID().m_local_id=0;
+//        msg->getSrcUUID().m_core_id=0;
+//        msg->getDstUUID().m_local_id=0;
+//        msg->getDstUUID().m_core_id=1;
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
-	t_msgptr msglater = createObject<Message>("trafficLight", t_timestamp(100, 0), "trafficLight.INTERRUPT","policeman.OUT", "toManual");
-	msglater->getSrcUUID().m_local_id=0;
-        msglater->getSrcUUID().m_core_id=0;
-        msglater->getDstUUID().m_local_id=0;
-        msglater->getDstUUID().m_core_id=1;
+	t_msgptr msglater = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(100, 0), 0u,0u, "toManual");
+//	msglater->getSrcUUID().m_local_id=0;
+//        msglater->getSrcUUID().m_core_id=0;
+//        msglater->getDstUUID().m_local_id=0;
+//        msglater->getDstUUID().m_core_id=1;
 	msglater->paint(MessageColor::WHITE);
 	network->acceptMessage(msglater);
 	c2->runSmallStep();

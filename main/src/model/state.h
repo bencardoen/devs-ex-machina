@@ -273,7 +273,7 @@ public:
 };
 
 template<>
-class State__impl<void>: public State
+class State__impl<void> final: public State
 {
 public:
 	typedef void t_type;

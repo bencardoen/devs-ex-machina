@@ -67,17 +67,12 @@ void n_model::Core::save(const std::string& fname)
 	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
 	cereal::BinaryOutputArchive oarchive(fs);
 
-	std::vector<t_msgptr> messages;
-	while (not m_received_messages->empty()) {
-		messages.push_back(m_received_messages->pop().getMessage());
-	}
-
 	std::vector<ModelEntry> scheduler;
 	while (not m_scheduler->empty()) {
 		scheduler.push_back(m_scheduler->pop());
 	}
 
-	oarchive(m_indexed_models, messages, scheduler);
+	oarchive(m_indexed_models, scheduler);
 }
 
 void n_model::Core::load(const std::string& fname)
@@ -85,15 +80,10 @@ void n_model::Core::load(const std::string& fname)
 	std::fstream fs (fname, std::fstream::in | std::fstream::binary);
 	cereal::BinaryInputArchive iarchive(fs);
 
-	std::vector<t_msgptr> messages;
 	std::vector<ModelEntry> scheduler;
 
-	iarchive(m_indexed_models, messages);
+	iarchive(m_indexed_models, scheduler);
 
-	while (not messages.empty()) {
-		m_received_messages->push_back(MessageEntry(messages.back()));
-		messages.pop_back();
-	}
 
 	while (not scheduler.empty()) {
 		m_scheduler->push_back(scheduler.back());
@@ -681,7 +671,7 @@ void n_model::Core::getPendingMail()
         this->unlockMessages();
 	t_timestamp nowtime = makeLatest(this->getTime());
 	std::vector<MessageEntry> messages;
-	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>("", nowtime, "", "", "");
+	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
 	MessageEntry tokentime(token);
 
 	this->lockMessages();

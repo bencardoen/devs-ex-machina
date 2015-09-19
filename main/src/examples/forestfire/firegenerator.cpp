@@ -37,9 +37,9 @@ n_network::t_timestamp FireGenerator::timeAdvance() const
 void FireGenerator::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	double i = 1.0;
-	for(const std::map<std::string, n_model::t_portptr>::value_type& port : m_oPorts){
+	for(const n_model::t_portptr& port : m_oPorts){
 		double val = T_AMBIENT + T_GENERATE/i;
-		port.second->createMessages(val, msgs);
+		port->createMessages(val, msgs);
 		i *= 2.0;
 	}
 	for(n_network::t_msgptr& ptr: msgs){

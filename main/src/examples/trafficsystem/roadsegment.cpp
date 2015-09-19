@@ -177,7 +177,7 @@ void RoadSegment::extTransition(const std::vector<n_network::t_msgptr> & message
 		if(msg->getDestinationPort() == Q_rack->getFullName()
 				or msg->getDestinationPort() == q_rans_bs->getFullName() ) {
 			LOG_DEBUG("ROADSEGMENT: " + getName() + " - expect QueryAck");
-			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSourcePort());
+			LOG_DEBUG("ROADSEGMENT: " + getName() + " - from " + msg->getSrcPort());
 			std::shared_ptr<QueryAck> ack = n_network::getMsgPayload<std::shared_ptr<QueryAck> >(msg);
 			LOG_DEBUG("ROADSEGMENT: " + getName() + " - received QueryAck");
 

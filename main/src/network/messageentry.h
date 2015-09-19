@@ -72,33 +72,6 @@ public:
 		os << rhs.getMessage()->toString();
 		return os;
 	}
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive)
-	{
-		archive(m_message);
-	}
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive)
-	{
-		archive(m_message);
-	}
-
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<MessageEntry>& construct)
-	{
-		t_msgptr msg;
-		archive(msg);
-		construct(msg);
-	}
 };
 
 }

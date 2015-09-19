@@ -39,6 +39,47 @@ template<typename T>
 void takeBack(T* pointer){
 	delete pointer;
 }
+
+#if USE_SAFE_CAST
+template<class T>
+struct castReturn
+{
+	typedef std::shared_ptr<T> t_type;
+};
+
+template<typename to, typename from>
+inline typename castReturn<to>::t_type staticCast(const from& value)
+{
+	return std::static_pointer_cast<to>(value);
+}
+
+template<typename to, typename from>
+inline typename castReturn<to>::t_type dynamicCast(const from& value)
+{
+	return std::dynamic_pointer_cast<to>(value);
+}
+#else /* USE_SAFE_CAST */
+template<class T>
+struct castReturn
+{
+	typedef T* t_type;
+};
+
+/**
+ * @brief custom implementation of static_pointer_cast
+ */
+template<typename to, typename from>
+inline typename castReturn<to>::t_type staticCast(const from& value)
+{
+	return reinterpret_cast<typename castReturn<to>::t_type>(value.get());
+}
+
+template<typename to, typename from>
+inline typename castReturn<to>::t_type dynamicCast(const from& value)
+{
+	return dynamic_cast<typename castReturn<to>::t_type>(value.get());
+}
+#endif /* USE_SAFE_CAST */
 } /* namespace n_tools */
 
 #endif /* SRC_TOOLS_OBJECTFACTORY_H_ */

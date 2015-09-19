@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <fstream>
+#include "tools/objectfactory.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 
@@ -574,7 +575,7 @@ void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 	// loop over all atomic models
 	std::deque<t_modelptr> models;
 	for (t_raw_atomic model : imminent) {
-		if (model->modelTransition(&m_sharedState)) {
+		if (model->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
 			if (model->getParent().expired())
 				continue;
@@ -587,11 +588,7 @@ void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 	while (models.size()) {
 		t_modelptr top = models.front();
 		models.pop_front();
-		if (top->modelTransition(&m_sharedState)) {
-			// do the DS transition
-			if (!top->modelTransition(&m_sharedState))
-				continue; // no need to continue
-			// if nothing happened .
+		if (top->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
 			if (top->getParent().expired())
 				continue;

@@ -19,11 +19,6 @@ class CoupledModel: public Model
 	friend class ::TestCereal;
 private:
 	/**
-	 * Removes all connections between two models
-	 */
-	void removeConnectionsBetween(t_modelptr& mod1, t_modelptr& mod2);
-
-	/**
 	 * Tests whether a connection from one port to the other is legal.
 	 * @param p1 The port from which output is sent
 	 * @param p2 The port to which the output is sent

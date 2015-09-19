@@ -39,12 +39,12 @@ private:
 
 	inline void printIncoming(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		const std::map<std::string, t_portptr>& ports = adevs->getIPorts();
+		const std::vector<t_portptr>& ports = adevs->getIPorts();
 		char comma1 = ' ';
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"I\",\n"
+		for (const t_portptr& item : ports) {
+			*ssr << comma1 << "{ \"name\":\"" << item->getName() << "\", \"category\":\"I\",\n"
 				"\"messages\":[";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+			const std::vector<n_network::t_msgptr>& messages = item->getReceivedMessages();
 			char comma2 = ' ';
 			for (const n_network::t_msgptr& message : messages) {
 				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";
@@ -57,12 +57,12 @@ private:
 
 	inline void printOutgoing(const t_atomicmodelptr& adevs, std::ostringstream* ssr)
 	{
-		const std::map<std::string, t_portptr>& ports = adevs->getOPorts();
+		const std::vector<t_portptr>& ports = adevs->getOPorts();
 		char comma1 = ' ';
-		for (const std::map<std::string, t_portptr>::value_type& item : ports) {
-			*ssr << comma1 << "{ \"name\":\"" << item.first << "\", \"category\":\"O\",\n"
+		for (const t_portptr& item : ports) {
+			*ssr << comma1 << "{ \"name\":\"" << item->getName() << "\", \"category\":\"O\",\n"
 				"\"messages\":[";
-			const std::vector<n_network::t_msgptr>& messages = item.second->getReceivedMessages();
+			const std::vector<n_network::t_msgptr>& messages = item->getReceivedMessages();
 			char comma2 = ' ';
 			for (const n_network::t_msgptr& message : messages) {
 				*ssr << comma2 << "{\"message\": " << message->getPayload() << "}";

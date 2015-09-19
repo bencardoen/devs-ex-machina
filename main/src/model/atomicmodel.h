@@ -83,6 +83,11 @@ private:
 	 */
 	void copyState();
 
+	/**
+	 * @brief delivers all the messages to the correct port
+	 */
+	void deliverMessages(const std::vector<n_network::t_msgptr>& message);
+
 protected:
 	
 	t_timestamp m_elapsed;
@@ -94,7 +99,7 @@ protected:
 	 * @param name The name of the port
 	 */
         virtual
-	t_portptr addInPort(std::string name)override final;
+	t_portptr addInPort(const std::string& name)override final;
 
 	/**
 	 * Add an output port to the model
@@ -102,7 +107,7 @@ protected:
 	 * @param name The name of the port
 	 */
         virtual
-	t_portptr addOutPort(std::string name)override final;
+	t_portptr addOutPort(const std::string& name)override final;
 
 public:
 	AtomicModel_impl() = delete;
@@ -381,12 +386,6 @@ public:
 	 * @brief Sets the elapsed time since the previous internal transition.
 	 */
 	void setTimeElapsed(t_timestamp elapsed);
-        
-        /**
-	 * @brief Removes a port from this model.
-	 */
-        virtual
-	void removePort(t_portptr& port)override final;
 
 	/**
 	 * Serialize this object to the given archive
@@ -447,7 +446,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticCast<const State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**

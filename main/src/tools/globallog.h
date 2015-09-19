@@ -52,7 +52,7 @@
 	logCommand;\
 }while(0)
 #define LOG_NOOP
-#define LOG_ARGS(start, ...) start " \t[ ", FILE_SHORT, " L: " STRINGIFY(__LINE__) "] \t", __VA_ARGS__, '\n'
+#define LOG_ARGS(start, ...) start " \t[ ", FILE_SHORT, " L: " STRINGIFY(__LINE__) " F: ", __FUNCTION__, "] \t", __VA_ARGS__, '\n'
 #define LOG_CALL(funcname, start, ...) LOG_BLOCK(LOG_GLOBAL.funcname(LOG_ARGS(start, __VA_ARGS__)))
 
 /// @endcond
