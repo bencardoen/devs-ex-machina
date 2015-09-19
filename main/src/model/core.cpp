@@ -46,12 +46,14 @@ n_model::Core::Core():
 }
 
 n_model::Core::Core(std::size_t id)
-	: m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
-	  m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-		m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
+	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
+                m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
+                m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
+                m_token(n_tools::createObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
+                
 {
 	assert(m_time == t_timestamp(0, 0));
 	assert(m_live == false);
@@ -219,19 +221,19 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	 * Then sort that output by destination (for the transition functions)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
-	std::vector<n_network::t_msgptr> mailfrom;
+        m_mailfrom.clear();
 	for (auto model : imminents) {
-		model->doOutput(mailfrom);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", mailfrom.size(), " messages from ", model->getName());
+		model->doOutput(m_mailfrom);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
 		
-		for (const auto& msg : mailfrom) {
+		for (const auto& msg : m_mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
                         validateUUID(msg->getSrcUUID());
 			paintMessage(msg);
 			msg->setTimeStamp(this->getTime());
 		}
-		this->sortMail(std::move(mailfrom));	// <-- Locked here on msglock
-		mailfrom.clear();		//clear the vector of messages
+		this->sortMail(m_mailfrom);	// <-- Locked here on msglock
+                m_mailfrom.clear();
 	}
 }
 
@@ -306,7 +308,7 @@ void n_model::Core::transition()
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
 	this->lockMessages();
-	for (const auto & message : messages) {
+        for(const auto& message : messages){
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
                         m_stats.logStat(MSGSENT);
@@ -432,11 +434,12 @@ std::size_t n_model::Core::getCoreID() const
 
 void n_model::Core::validateUUID(const n_model::uuid& id)
 {
+#ifdef SAFETY_CHECKS
         if(! (id.m_core_id == m_coreid && id.m_local_id<m_indexed_models.size() )){
                 LOG_ERROR("Core ::", this->getCoreID(), " uuid check failed : ", id, " holding ", m_indexed_models.size());
                 throw std::logic_error("UUID validation failed. Check logs.");
         }
-        
+#endif  
 }
 
 
@@ -483,9 +486,6 @@ void n_model::Core::runSmallStep()
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
-        
-        //m_externs.clear();
-        //m_imminents.clear();
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
@@ -665,13 +665,13 @@ void n_model::Core::getPendingMail()
                 return;
         }
         this->unlockMessages();
-	t_timestamp nowtime = makeLatest(this->getTime());
+	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
-	std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
-	MessageEntry tokentime(token);
+	//std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
+	m_token.getMessage()->setTimeStamp(nowtime);
 
 	this->lockMessages();
-	this->m_received_messages->unschedule_until(messages, tokentime);
+	this->m_received_messages->unschedule_until(messages, m_token);
 	this->unlockMessages();
 	for (const auto& entry : messages) 
                 queueLocalMessage(entry.getMessage());

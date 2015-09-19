@@ -161,7 +161,7 @@ void Port::addInfluencees(std::set<std::string>& influences) const
 		influences.insert(port->getHostName());
 }
 
-uuid Port::getModelUUID() const
+const uuid& Port::getModelUUID() const
 {
         return m_hostmodel->getUUID();
 }

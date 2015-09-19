@@ -36,7 +36,7 @@ TEST(Message, TestThreadRaceConditions){
 		std::size_t dest = msg->getDstPort();
 		dest = 'c';
 		dest = msg->getSrcPort();
-		dest = 'c';
+		EXPECT_TRUE(dest!='c');
 	};
 	for(size_t i = 0; i<4; ++i){
 		workers.emplace_back(worker);

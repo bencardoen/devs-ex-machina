@@ -198,6 +198,15 @@ private:
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_raw_atomic>   m_externs;
+        
+        std::vector<ModelEntry> m_imm_ids;
+        
+        /**
+         * Cached token used to check for messages.
+         */
+        MessageEntry        m_token;
+        
+        std::vector<n_network::t_msgptr> m_mailfrom;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -282,8 +291,6 @@ protected:
 	* Store received messages (local and networked)
 	*/
 	t_msgscheduler	m_received_messages;
-        
-        std::vector<ModelEntry> m_imm_ids;
 
 	/**
 	 * Push msg onto pending stack of msgs. Called by revert, receive.

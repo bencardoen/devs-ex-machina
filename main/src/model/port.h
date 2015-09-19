@@ -66,7 +66,7 @@ private:
         // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
         // atomicmodel, but createMessages is templated (and header defined) so we can't call 
         // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
-        uuid
+        const uuid&
         getModelUUID()const;
 
 public:
@@ -343,21 +343,19 @@ template<typename DataType>
 void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
-        const n_model::uuid srcuuid = this->getModelUUID();
+        const n_model::uuid& srcuuid = this->getModelUUID();
 	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 	{
-		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0),
-			n_network::t_timestamp::infinity(),
-			std::numeric_limits<std::size_t>::max(), getPortID(),
-			message, nullptr);
-		m_sentMessages.push_back(msg);
+		m_sentMessages.push_back(createMsg(
+                                srcuuid, uuid(0, 0),n_network::t_timestamp::infinity(),
+                                std::numeric_limits<std::size_t>::max(), getPortID(),
+                                message, nullptr)
+                );
 	}
-
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
 		for (t_outconnect& pair : m_outs) {
-
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				dummytimestamp,
