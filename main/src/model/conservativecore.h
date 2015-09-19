@@ -105,6 +105,8 @@ private:
 	 */
 	std::mutex 			m_timelock;
         
+        std::atomic<size_t>             m_zombie_rounds;
+        
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
          * >= our time, and we ourselves have produced all output at current time.
@@ -277,6 +279,12 @@ public:
          */
         void
         calculateMinLookahead();
+        
+        virtual std::size_t getZombieRounds()override{return m_zombie_rounds.load();}
+        
+        virtual void incrementZombieRounds()override{m_zombie_rounds.fetch_add(1);}
+        
+        virtual void resetZombieRounds()override{m_zombie_rounds.store(0);}
 
         //-------------statistics gathering--------------
 //#ifdef USE_STAT

@@ -175,8 +175,10 @@ TEST(DynamicCore, smallStep)
 	c->setLive(true);
 	c->setIdle(false);
 	c->removeModel("Amodel");
+        c->validateModels();
 	EXPECT_EQ(c->containsModel("Amodel"), false);
 	c->removeModel("toBen");
+        c->validateModels();
 	EXPECT_EQ(c->containsModel("toBen"), false);
 	c->printSchedulerState();
 	c->runSmallStep();

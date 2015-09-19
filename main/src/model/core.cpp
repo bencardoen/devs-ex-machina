@@ -48,7 +48,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_idle(false), m_zombie_rounds(0), m_terminated_functor(false),
+                m_idle(false), m_terminated_functor(false),
                 m_token(n_tools::createObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
@@ -58,6 +58,8 @@ n_model::Core::Core(std::size_t id)
 	assert(m_time == t_timestamp(0, 0));
 	assert(m_live == false);
 }
+
+
 
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 {
@@ -294,8 +296,7 @@ void n_model::Core::transition()
 		
 		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(getModel(id));
-		const t_timestamp queried(external->timeAdvance());		// A previously inactive model can be awoken, make sure we check this.
-                validateTA(queried);
+		const t_timestamp queried(external->getTimeNext());		// A previously inactive model can be awoken, make sure we check this.
 		if (!isInfinity(queried)) {
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", external->getName(),
 				" changed ta value to ", queried, " rescheduling.");
@@ -346,14 +347,10 @@ void n_model::Core::rescheduleImminent(const std::vector<t_raw_atomic>& oldimms)
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", oldimms.size(), " models for next run.");
 	for (auto model : oldimms) {
-		t_timestamp ta = model->timeAdvance();
+                const t_timestamp next = model->getTimeNext();
                 model->nextType()=n_model::NONE;        // Reset transition state
-		//check the time advance value
-		validateTA(ta);
-		if (!isInfinity(ta)) {
-			t_timestamp next = ta + this->m_time;
-                        
-			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(), " timeadv = ", ta,
+		if (!isInfinity(next)) {
+			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " ", model->getName(),
 			        " rescheduled @ ", next);
                         //this->m_scheduler->update(ModelEntry(model->getLocalID(), next));
 			this->scheduleModel(model->getLocalID(), next);		// DO NOT add priority, scheduleModel handles this.
@@ -379,17 +376,19 @@ void n_model::Core::syncTime()
 	const t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
-		this->m_zombie_rounds.fetch_add(1);
+		incrementZombieRounds();
 		return;
 	}
+#ifdef SAFETY_CHECKS
 	if (this->getTime() > newtime) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID() ," Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
 		throw std::runtime_error("Core time going backwards. ");
 	}
+#endif
 	// Here we a valid new time.
 	this->setTime(newtime);						// It's possible this stalls time if eit == old time
 									// but that is a deadlock, not a zombie state.
-	this->m_zombie_rounds.store(0);					// reset zombie state.
+	this->resetZombieRounds();
 
 	if (this->getTime() >= this->getTerminationTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
@@ -565,12 +564,8 @@ void n_model::Core::removeModel(const std::string& name)
         auto iter = m_indexed_models.begin();
         std::advance(iter, lid);
         m_indexed_models.erase(iter);
-        
-        const ModelEntry target(lid, 0);
-        this->m_scheduler->erase(target);       // irrelevant if it exist or not.
-
         LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", name);
-        assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
+        //assert(this->m_scheduler->contains(target) == false && "Removal from scheduler failed !! model still in scheduler");
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
@@ -734,10 +729,6 @@ n_model::Core::existTransientMessage(){
 	throw std::runtime_error("You invoked existTransientMessage on a single core implementation (which has no network)!)");
 }
 
-std::size_t
-n_model::Core::getZombieRounds(){
-	return m_zombie_rounds;
-}
 
 bool
 n_model::Core::terminatedByFunctor()const{

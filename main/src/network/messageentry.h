@@ -85,9 +85,7 @@ struct hash<n_network::MessageEntry>
 	 */
 	size_t operator()(const n_network::MessageEntry& item) const
 	{
-		size_t hashvalue = std::hash<n_network::Message>()(*(item.getMessage()));
-		//std::size_t hashvalue = (std::size_t ) item.getMessage().get(); // This does not work.
-		return hashvalue;
+		return std::hash<n_network::Message>()(*(item.getMessage()));
 	}
 };
 }

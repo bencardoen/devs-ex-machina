@@ -3,6 +3,7 @@
  *      Author: Ben Cardoen
  */
 #include "network/timestamp.h"
+#include "model/atomicmodel.h"
 
 #ifndef SRC_MODEL_MODELENTRY_H_
 #define SRC_MODEL_MODELENTRY_H_
@@ -18,9 +19,10 @@ using n_network::t_timestamp;
  */
 class ModelEntry
 {
-        //TODO make this const (aka kill serializing code)
+        // Not const (has to go into vector)
         std::size_t m_localid;
 	t_timestamp m_scheduled_at;
+        
 public:
         constexpr
 	t_timestamp getTime() const
@@ -56,9 +58,6 @@ public:
 	bool operator<(const ModelEntry& lhs, const ModelEntry& rhs)
 	{
                 return (lhs.m_scheduled_at == rhs.m_scheduled_at)? (lhs.m_localid > rhs.m_localid):(lhs.m_scheduled_at > rhs.m_scheduled_at); 
-		//if (lhs.m_scheduled_at == rhs.m_scheduled_at)
-		//	return lhs.m_localid > rhs.m_localid;
-		//return lhs.m_scheduled_at > rhs.m_scheduled_at;
 	}
         
         friend
@@ -129,7 +128,64 @@ struct hash<n_model::ModelEntry>
 		//return hash<std::string>()(item.getName());
                 return hash<std::size_t>()(item.getID());
 	}
+        
+        
 };
+}
+
+namespace n_model{
+
+class IntrusiveEntry{
+private:
+        n_model::AtomicModel_impl*      m_modelp;
+        size_t                          m_lid;
+public:
+        explicit IntrusiveEntry(AtomicModel_impl* m):m_modelp(m),m_lid(m->getLocalID()){;}
+        IntrusiveEntry()=default;
+        ~IntrusiveEntry()=default;
+        
+        explicit operator size_t ()const{
+                return m_lid;
+        }
+        
+        explicit operator t_timestamp () const{
+                return m_modelp->getTimeNext();
+        }
+        
+
+	friend
+	bool operator<(const IntrusiveEntry& lhs, const IntrusiveEntry& rhs)
+	{
+                return (t_timestamp (lhs) == t_timestamp (rhs))? (size_t (lhs) > size_t (rhs)):(t_timestamp (lhs) > t_timestamp (rhs));          
+	}
+        
+        friend
+	bool operator<=(const IntrusiveEntry& lhs, const IntrusiveEntry& rhs)
+	{
+		// a <= b  implies (not a>b)
+		return (not (lhs > rhs));
+	}
+
+	friend
+	bool operator>(const IntrusiveEntry& lhs, const IntrusiveEntry& rhs)
+	{
+		return (rhs < lhs);
+	}
+
+	friend
+	bool operator>=(const IntrusiveEntry& lhs, const IntrusiveEntry& rhs)
+	{
+		return (not (lhs < rhs));
+	}
+
+	friend
+	bool operator==(const IntrusiveEntry& lhs, const IntrusiveEntry& rhs)
+	{
+		return (size_t(lhs) == size_t(rhs));
+	}
+
+};
+
 }
 
 #endif /* SRC_MODEL_MODELENTRY_H_ */

@@ -97,6 +97,13 @@ private:
 	std::deque<t_msgptr>		m_sent_messages;
         
         std::size_t 	m_cores;
+        
+        /**
+	 * Count for how long this core has been in a zombie state
+	 * @attention : A round == zombiestate if time does not advance, but this does (obviously) not
+	 * apply if the core is idling (ie beyond termtime/fun).
+	 */
+	std::atomic<std::size_t> m_zombie_rounds;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -302,6 +309,16 @@ public:
 
 	t_timestamp
 	getTerminationTime()override;
+        
+        
+        virtual std::size_t getZombieRounds()override{return m_zombie_rounds.load();}
+        
+        virtual void incrementZombieRounds()override{m_zombie_rounds.fetch_add(1);}
+        
+        virtual void resetZombieRounds()override{m_zombie_rounds.store(0);}
+
+
+
 
 
 //-------------statistics gathering--------------

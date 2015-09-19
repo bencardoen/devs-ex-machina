@@ -162,13 +162,6 @@ private:
 	std::atomic<bool> m_idle;
 
 	/**
-	 * Count for how long this core has been in a zombie state
-	 * @attention : A round == zombiestate if time does not advance, but this does (obviously) not
-	 * apply if the core is idling (ie beyond termtime/fun).
-	 */
-	std::atomic<std::size_t> m_zombie_rounds;
-
-	/**
 	 * Marks if this core has triggered a terminated functor. This distinction is required
 	 * for timewarp, and for the controller to redistribute the current time at wich the
 	 * functor triggered as a new termination time (which in turn can be undone ...)
@@ -747,8 +740,19 @@ public:
 	/**
 	 * @return nr of consecutive simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
 	 */
+        virtual
 	std::size_t
-	getZombieRounds();
+	getZombieRounds(){return 0;}
+        
+        /**
+         * 
+         */
+        virtual
+        void
+        incrementZombieRounds(){;}
+        
+        virtual
+        void resetZombieRounds(){;}
 
 	virtual
 	MessageColor
