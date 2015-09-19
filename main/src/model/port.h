@@ -124,11 +124,13 @@ public:
 	 * Sets an output port with a matching function to this port
 	 *
 	 * @param port new output port
-	 * @param function function matching with the new output port
+	 * @param function function matching with the new output port, when
+         *      no function is necessary, use nullptr
 	 *
 	 * @return whether or not the port wasn't already added
 	 */
-	bool setZFunc(const t_portptr_raw port, t_zfunc function);
+	bool setZFunc(const t_portptr_raw port, t_zfunc function = nullptr);
+        
 
 	/**
 	 * Sets an input port to this port
@@ -156,7 +158,7 @@ public:
 	 * @note This functionality is used for direct connect and should not be used for creating regular connections.
 	 * @see setZFunc
 	 */
-	void setZFuncCoupled(const t_portptr_raw port, t_zfunc function);
+	void setZFuncCoupled(const t_portptr_raw port, t_zfunc function = nullptr);
 
 	/**
 	 * @brief Adds an incoming connection.
@@ -344,11 +346,10 @@ void Port::createMessages(const DataType& message,
         const n_model::uuid srcuuid = this->getModelUUID();
 	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 	{
-		t_zfunc zfunc = n_tools::createObject<ZFunc>();
 		const n_network::t_msgptr& msg = createMsg(srcuuid, uuid(0, 0),
 			n_network::t_timestamp::infinity(),
 			std::numeric_limits<std::size_t>::max(), getPortID(),
-			message, zfunc);
+			message, nullptr);
 		m_sentMessages.push_back(msg);
 	}
 
@@ -356,13 +357,12 @@ void Port::createMessages(const DataType& message,
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
 		for (t_outconnect& pair : m_outs) {
-			t_zfunc& zFunction = pair.second;
 
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				dummytimestamp,
 				pair.first->getPortID(), getPortID(),
-				message, zFunction));
+				message, pair.second));
 //#ifdef USE_STAT
 			++m_sendstat[pair.first];
 //#endif
@@ -420,11 +420,14 @@ template<typename DataType>
 inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid dstUUID,
 	const n_network::t_timestamp& time_made,
 	std::size_t destport, std::size_t sourceport,
-        const DataType& msg, t_zfunc& func)
+        const DataType& msg, t_zfunc func)
 {
 	n_network::t_msgptr messagetobesend = n_tools::createObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
 		time_made, destport, sourceport, msg);
-	messagetobesend = (*func)(messagetobesend);
+	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
+	// Call the zFunction onto the message to be send
+	if (func)
+		messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
 
@@ -435,12 +438,15 @@ template<>
 inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_model::uuid dstUUID,
 	const n_network::t_timestamp& time_made,
 	std::size_t destport, std::size_t sourceport,
-	const std::string& msg, t_zfunc& func)
+	const std::string& msg, t_zfunc func)
 {
 	n_network::t_msgptr messagetobesend =
 		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
-	messagetobesend = (*func)(messagetobesend);
+	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
+	// Call the zFunction onto the message to be send
+	if (func)
+		messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
 
@@ -451,12 +457,15 @@ template<>
 inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_model::uuid dstUUID,
 	const n_network::t_timestamp& time_made,
 	std::size_t destport, std::size_t sourceport,
-	const char* const & msg, t_zfunc& func)
+	const char* const & msg, t_zfunc func)
 {
 	n_network::t_msgptr messagetobesend =
 		n_tools::createObject<n_network::SpecializedMessage<std::string>>(
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
-	messagetobesend = (*func)(messagetobesend);
+	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
+	// Call the zFunction onto the message to be send
+	if (func)
+		messagetobesend = (*func)(messagetobesend);
 	return messagetobesend;
 }
 ///@}
@@ -476,8 +485,9 @@ template<typename T>
 inline n_network::t_msgptr createMsg(n_model::uuid srcUUID, n_model::uuid dstUUID,
 	const n_network::t_timestamp& time_made,
 	std::size_t destport, std::size_t sourceport,
-        const T& msg, t_zfunc& func)
+        const T& msg, t_zfunc func)
 {
+
 	return createMsgImpl<typename array2ptr<T>::type>(srcUUID, dstUUID, time_made, destport, sourceport, msg, func);
 }
 }

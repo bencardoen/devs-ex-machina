@@ -71,7 +71,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 		const t_portptr_raw in;
 		const t_zfunc zfunc;
 
-		record(const t_portptr_raw out, const t_portptr_raw in, const t_zfunc& zfunc)
+		record(const t_portptr_raw out, const t_portptr_raw in, t_zfunc zfunc)
 			: out(out), in(in), zfunc(zfunc)
 		{
 		}
@@ -107,9 +107,28 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 						//this is a link to a port of a coupled devs!
 						//loop over its connected ports & squash the links together
 						for (t_outconnect link2 : rec.in->getOuts()) {
+
+							t_zfunc replacement = nullptr;
+
+							if (rec.zfunc) {
+								if (link2.second) {
+									// zfunc of receiver exists
+									// zfunc of link2 exists
+									// thus we make the combo
+									replacement = n_tools::createObject<ZFuncCombo>(rec.zfunc, link2.second);
+								} else {								
+									// zfunc of receiver exists
+									// zfunc of link2 does not
+									replacement = rec.zfunc;
+								}
+							} else {
+								// zfunc of receiver does not exist
+								// use link2 (either nullptr or existing zfunc)
+								replacement = link2.second;
+							}
+
 							worklist.emplace_back(rec.out, link2.first,
-							        n_tools::createObject<ZFuncCombo>(rec.zfunc,
-							                link2.second));
+							        replacement);
 						}
 					}
 				}

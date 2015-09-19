@@ -183,7 +183,7 @@ public:
 	 * @param from The starting port of the connection
 	 * @param to The destination port of the connection
 	 */
-	void dsAddConnection(const n_model::t_portptr& from, const n_model::t_portptr& to, const t_zfunc& zFunction);
+	void dsAddConnection(const n_model::t_portptr& from, const n_model::t_portptr& to, t_zfunc zFunction);
 	/**
 	 * @brief Removes a connection during Dynamic Structured DEVS
 	 * @preconditions We are in the Dynamic Structured phase.

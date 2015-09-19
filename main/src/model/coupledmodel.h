@@ -86,7 +86,7 @@ public:
 	 * @param p2 pointer to input port
 	 * @param zFunction the zFunction that has to be executed on the message before transmitting it
 	 */
-	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction = n_tools::createObject<ZFunc>());
+	void connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction = nullptr);
 
 	/**
 	 * @brief Disconnects one connection between the two ports

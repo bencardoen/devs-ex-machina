@@ -603,7 +603,7 @@ void Controller::doDSDevs(std::vector<n_model::t_atomicmodelptr>& imminent)
 	m_dsPhase = false;
 }
 
-void Controller::dsAddConnection(const n_model::t_portptr&, const n_model::t_portptr&, const t_zfunc&)
+void Controller::dsAddConnection(const n_model::t_portptr&, const n_model::t_portptr&, t_zfunc)
 {
 	assert(isInDSPhase() && "Controller::dsAddConnection called while not in the DS phase.");
 	dsUndoDirectConnect();
