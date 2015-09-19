@@ -546,8 +546,8 @@ class TestModel: public n_model::AtomicModel<TestState> {
 		}
 		;
 //	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
-		virtual std::vector<n_network::t_msgptr> output() const {
-			return std::vector<n_network::t_msgptr>();
+		virtual void output(std::vector<n_network::t_msgptr>&) const override {
+			return;
 		}
 		virtual t_timestamp timeAdvance() const {
 			return t_timestamp(getState()->m_timeLast.getTime() + 1, 1);

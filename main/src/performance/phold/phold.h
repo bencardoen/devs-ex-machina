@@ -65,12 +65,12 @@ public:
 	        std::vector<size_t> remote, size_t percentageRemotes);
 	virtual ~HeavyPHOLDProcessor();
 
-	virtual n_network::t_timestamp timeAdvance() const;
-	virtual void intTransition();
-	virtual void confTransition(const std::vector<n_network::t_msgptr> & message);
-	virtual void extTransition(const std::vector<n_network::t_msgptr> & message);
-	virtual void output(std::vector<n_network::t_msgptr>& msgs) const;
-	virtual n_network::t_timestamp lookAhead() const;
+	virtual n_network::t_timestamp timeAdvance() const override;
+	virtual void intTransition() override;
+	virtual void confTransition(const std::vector<n_network::t_msgptr> & message) override;
+	virtual void extTransition(const std::vector<n_network::t_msgptr> & message) override;
+	virtual void output(std::vector<n_network::t_msgptr>& msgs) const override;
+	virtual n_network::t_timestamp lookAhead() const override;
 
 	EventTime getProcTime(size_t event) const;
 	size_t getNextDestination(size_t event) const;

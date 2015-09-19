@@ -259,9 +259,9 @@ void n_model::Core::transition()
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, and ");
         
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
-	for (auto imminent : m_imminents) {
+	for (auto imminent : m_imminents) {                     
                 const size_t modelid = imminent->getLocalID();
-		if (!hasMail(modelid)) {				// Internal
+		if (!hasMail(modelid)) {			
 			assert(imminent->nextType()==INT);
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->doIntTransition();
@@ -269,7 +269,6 @@ void n_model::Core::transition()
 			this->traceInt(getModel(modelid));
 		} else {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
-                        
                         assert(imminent->nextType()==n_model::CONF);
                         imminent->nextType()=n_model::NONE;
 			imminent->setTimeElapsed(0);
@@ -279,9 +278,6 @@ void n_model::Core::transition()
                         getMail(modelid).clear();
 		}
 	}
-
-        
-	//for (size_t index = 0; index< m_indexed_local_mail.size(); ++index) {				// External
         for(auto external : m_externs){
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
@@ -488,8 +484,8 @@ void n_model::Core::runSmallStep()
 	// Do we need to continue ?
 	this->checkTerminationFunction();
         
-        m_externs.clear();
-        m_imminents.clear();
+        //m_externs.clear();
+        //m_imminents.clear();
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
