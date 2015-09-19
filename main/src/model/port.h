@@ -348,7 +348,8 @@ void Port::createMessages(const DataType& message,
 {
         const n_model::uuid& srcuuid = this->getModelUUID();
         const n_network::t_timestamp nowtime = this->imminentTime();
-	//const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
+	
+#ifdef TRACER
 	{
 		m_sentMessages.push_back(createMsg(
                                 srcuuid, uuid(0, 0),nowtime,
@@ -356,6 +357,7 @@ void Port::createMessages(const DataType& message,
                                 message, nullptr)
                 );
 	}
+#endif
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());

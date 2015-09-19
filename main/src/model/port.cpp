@@ -138,11 +138,13 @@ void Port::clearReceivedMessages()
 
 void Port::addMessage(const n_network::t_msgptr& message, bool received)
 {
+#ifdef  TRACER
 	LOG_DEBUG("Added message ", message->getPayload(), ", we ", received? "RECEIVED":"SENT", " this message.");
 	if (received)
 		m_receivedMessages.push_back(message);
 	else
 		m_sentMessages.push_back(message);
+#endif
 }
 
 const std::vector<n_network::t_msgptr>& Port::getSentMessages() const
