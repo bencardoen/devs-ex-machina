@@ -22,6 +22,8 @@
 
 #include "tools/statistic.h"
 
+// Don't include atomicmodel here
+
 
 
 class TestCereal;
@@ -34,8 +36,6 @@ typedef std::shared_ptr<Port> t_portptr;
 typedef Port* t_portptr_raw;
 typedef std::pair<t_portptr_raw, t_zfunc> t_outconnect;
 
-
-//// Merge TODO, if States are merged, recheck this code.
 class AtomicModel_impl;
 
 class Port
@@ -68,6 +68,9 @@ private:
         // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
         const uuid&
         getModelUUID()const;
+        
+        n_network::t_timestamp
+        imminentTime()const;
 
 public:
 	/**
@@ -344,10 +347,11 @@ void Port::createMessages(const DataType& message,
         std::vector<n_network::t_msgptr>& container)
 {
         const n_model::uuid& srcuuid = this->getModelUUID();
-	const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
+        const n_network::t_timestamp nowtime = this->imminentTime();
+	//const n_network::t_timestamp dummytimestamp(n_network::t_timestamp::infinity());
 	{
 		m_sentMessages.push_back(createMsg(
-                                srcuuid, uuid(0, 0),n_network::t_timestamp::infinity(),
+                                srcuuid, uuid(0, 0),nowtime,
                                 std::numeric_limits<std::size_t>::max(), getPortID(),
                                 message, nullptr)
                 );
@@ -355,10 +359,10 @@ void Port::createMessages(const DataType& message,
 	// We want to iterate over the correct ports (whether we use direct connect or not)
 	if (!m_usingDirectConnect) {
 		container.reserve(m_outs.size());
-		for (t_outconnect& pair : m_outs) {
+		for (const t_outconnect& pair : m_outs) {
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
-				dummytimestamp,
+				nowtime,
 				pair.first->getPortID(), getPortID(),
 				message, pair.second));
 //#ifdef USE_STAT
@@ -369,7 +373,7 @@ void Port::createMessages(const DataType& message,
 		container.reserve(container.size() + m_coupled_outs.size());
 		for (t_outconnect& pair : m_coupled_outs) {
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
-				dummytimestamp,
+				nowtime,
 				pair.first->getPortID(), getPortID(),
 				message, pair.second));
 //#ifdef USE_STAT

@@ -225,13 +225,15 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	for (auto model : imminents) {
 		model->doOutput(m_mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
-		
+
+#ifdef SAFETY_CHECKS		
 		for (const auto& msg : m_mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-                        validateUUID(msg->getSrcUUID());
-			paintMessage(msg);
-			msg->setTimeStamp(this->getTime());
+                        validateUUID(msg->getSrcUUID()); // noop SC
+			//paintMessage(msg);            // Only for optimistic
+			//msg->setTimeStamp(this->getTime());  // Done in port
 		}
+#endif
 		this->sortMail(m_mailfrom);	// <-- Locked here on msglock
                 m_mailfrom.clear();
 	}

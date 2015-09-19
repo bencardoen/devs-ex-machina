@@ -166,6 +166,11 @@ const uuid& Port::getModelUUID() const
         return m_hostmodel->getUUID();
 }
 
+t_timestamp Port::imminentTime()const 
+{
+        return m_hostmodel->getTimeNext();
+}
+
 void Port::clearConnections()
 {
 	for(t_portptr_raw& ptr: m_ins){

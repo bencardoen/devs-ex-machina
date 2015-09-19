@@ -30,6 +30,7 @@ void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock.
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message ", msg->toString());
+        paintMessage(msg);
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
 	this->countMessage(msg);					// Make sure Mattern is notified
