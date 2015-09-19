@@ -349,7 +349,7 @@ void Port::createMessages(const DataType& message,
         const n_model::uuid& srcuuid = this->getModelUUID();
         const n_network::t_timestamp nowtime = this->imminentTime();
 	
-#ifdef TRACER
+#ifndef NO_TRACER
 	{
 		m_sentMessages.push_back(createMsg(
                                 srcuuid, uuid(0, 0),nowtime,
