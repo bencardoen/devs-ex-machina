@@ -430,7 +430,7 @@ TEST(SharedVector, concurrency){
 
 TEST(VectorScheduler, basic_ops){
         using n_model::ModelEntry;
-        constexpr size_t limit = 100;
+        constexpr size_t limit = 1000;
         using n_network::t_timestamp;
         typedef boost::heap::fibonacci_heap<ModelEntry> heapchoice;
         VectorScheduler<heapchoice, ModelEntry> vscheduler;
@@ -467,7 +467,7 @@ TEST(VectorScheduler, basic_ops){
 
 TEST(STLScheduler, basic_ops){
         using n_model::ModelEntry;
-        constexpr size_t limit = 100;
+        constexpr size_t limit = 1000;
         using n_network::t_timestamp;
         STLScheduler<ModelEntry> vscheduler;
         std::vector<ModelEntry> scheduled;
@@ -499,4 +499,59 @@ TEST(STLScheduler, basic_ops){
         ModelEntry last(9999999, t_timestamp(limit/2, 0));
         vscheduler.unschedule_until(popped, last);
         EXPECT_EQ(vscheduler.size(), oldsize-popped.size());
+}
+
+
+struct modelstub{
+        n_network::t_timestamp time;
+        size_t  id;
+        modelstub(n_network::t_timestamp t, size_t d):time(t),id(d){;}
+        n_network::t_timestamp getTimeNext()const{return time;}
+        size_t getLocalID()const{return id;}
+};
+
+
+/**
+ * Prototype for a scheduler that never releases items, and 
+ * fits model scheduling better than the current as a test before implementing the new one.
+ */
+template<typename Item>
+struct mockscheduler{
+        std::deque<Item> m_storage;
+        void
+        init(const std::deque<Item>& m_models){
+                m_storage=m_models;
+        }
+        
+        void
+        pop_until(const Item& mark, std::vector<size_t>& ids){
+            std::sort(m_storage.rbegin(), m_storage.rend());
+            for(auto iter = m_storage.begin(); iter != m_storage.end(); ++iter){
+                    if(*iter < mark)
+                            break;
+                    ids.emplace_back(size_t (*iter));
+            }
+        }
+};
+
+
+TEST(IntrusiveScheduler, basic_ops){
+        using n_network::t_timestamp;
+        constexpr size_t limit = 1000;
+        using n_model::IntrusiveEntry;
+        using n_model::ModelEntry;
+        std::deque<modelstub*> models;
+        std::deque<IntrusiveEntry<modelstub>> entries;
+        for(size_t i = 0; i<limit; ++i){
+                modelstub* ptr= new modelstub(t_timestamp(i, i), i);
+                models.push_back(ptr);
+                entries.push_back(IntrusiveEntry<modelstub>(ptr));
+        }
+        mockscheduler<IntrusiveEntry<modelstub>> sched;
+        sched.init(entries);
+        std::vector<size_t> ids;
+        modelstub m(t_timestamp(limit+1), limit+1);
+        IntrusiveEntry<modelstub> ie(&m);
+        sched.pop_until(ie, ids);
+        EXPECT_EQ(ids.size(), limit);
 }

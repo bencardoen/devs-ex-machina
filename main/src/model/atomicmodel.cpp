@@ -91,9 +91,11 @@ void AtomicModel_impl::doOutput(std::vector<n_network::t_msgptr>& msgs)
 {
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
+#ifndef NO_TRACER
 	for (auto& port : m_oPorts){
 		port->clearSentMessages();
 	}
+#endif
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " calling output() function. ");
 	// Do the actual output function
 	this->output(msgs);

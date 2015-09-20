@@ -135,12 +135,13 @@ struct hash<n_model::ModelEntry>
 
 namespace n_model{
 
+template<typename Object>
 class IntrusiveEntry{
 private:
-        n_model::AtomicModel_impl*      m_modelp;
-        size_t                          m_lid;
+        Object*         m_modelp;
+        size_t          m_lid;
 public:
-        explicit IntrusiveEntry(AtomicModel_impl* m):m_modelp(m),m_lid(m->getLocalID()){;}
+        explicit IntrusiveEntry(Object* m):m_modelp(m),m_lid(m->getLocalID()){;}
         IntrusiveEntry()=default;
         ~IntrusiveEntry()=default;
         
