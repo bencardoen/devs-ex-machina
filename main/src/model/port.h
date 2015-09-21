@@ -36,7 +36,7 @@ typedef std::shared_ptr<Port> t_portptr;
 typedef Port* t_portptr_raw;
 typedef std::pair<t_portptr_raw, t_zfunc> t_outconnect;
 
-class AtomicModel_impl;
+class Model;
 
 class Port
 {
@@ -44,7 +44,6 @@ class Port
 private:
 	std::string m_name;
 	std::string m_hostname;
-        std::string m_fullname;
         std::size_t m_portid;
 	bool m_inputPort;
 
@@ -61,7 +60,7 @@ private:
 
 	bool m_usingDirectConnect;
         
-        AtomicModel_impl*    m_hostmodel;
+        Model* m_hostmodel;
         
         // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
         // atomicmodel, but createMessages is templated (and header defined) so we can't call 
@@ -80,7 +79,7 @@ public:
 	 * @param host pointer to the host of the port
 	 * @param inputPort whether or not this is an input port
 	 */
-	Port(const std::string& name, const std::string& hostname, std::size_t portid, bool inputPort);
+	Port(const std::string& name, Model* host, std::size_t portid, bool inputPort);
 
 	/**
 	 * Returns the name of the port
@@ -88,13 +87,6 @@ public:
 	 * @return local name of the port
 	 */
 	std::string getName() const;
-
-	/**
-	 * Returns the complete name of the port
-	 *
-	 * @return fully qualified name of the port
-	 */
-	std::string getFullName() const;
 
 	/**
 	 * Returns the hostname of the port
@@ -269,7 +261,7 @@ public:
 	 * @param message The message that is to be added
 	 * @param received If this port received the message or didn't (and thus sent it)
 	 */
-	void addMessage(const n_network::t_msgptr& message, bool received);
+	void addMessage(const n_network::t_msgptr& message);
 
 	/**
 	 * Get the sent messages (for the tracer)
@@ -292,13 +284,12 @@ public:
 	 * @param influences A set of all current influences (strings: host names) that will be completed
 	 */
 	void addInfluencees(std::set<std::string>& influences) const;
-        
-        void setHost(AtomicModel_impl* h){
-                LOG_DEBUG("Port : ptr = ", h);
-                m_hostmodel=h;
-        }
-        
-        AtomicModel_impl* getHost(){return m_hostmodel;}
+
+	const Model* getHost() const
+	{return m_hostmodel;}
+
+	Model* getHost()
+	{return m_hostmodel;}
 
 //-------------serialization---------------------
 	/**

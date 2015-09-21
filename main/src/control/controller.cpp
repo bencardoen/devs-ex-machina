@@ -573,26 +573,22 @@ void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 {
 	m_dsPhase = true;
 	// loop over all atomic models
-	std::deque<t_modelptr> models;
+	std::deque<Model*> models;
 	for (t_raw_atomic model : imminent) {
 		if (model->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
-			if (model->getParent().expired())
-				continue;
-			t_modelptr parent = model->getParent().lock();
+			Model* parent = model->getParent();
 			if (parent)
 				models.push_back(parent);
 		}
 	}
 	// continue looping until we’re at the top of the tree
 	while (models.size()) {
-		t_modelptr top = models.front();
+		Model* top = models.front();
 		models.pop_front();
 		if (top->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
-			if (top->getParent().expired())
-				continue;
-			t_modelptr parent = top->getParent().lock();
+			Model* parent = top->getParent();
 			if (parent)
 				models.push_back(parent);
 		}

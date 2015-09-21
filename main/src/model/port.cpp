@@ -19,22 +19,17 @@
 
 namespace n_model {
 
-Port::Port(const std::string& name, const std::string& hostname, std::size_t portid, bool inputPort)
-	: m_name(name), m_hostname(hostname),m_fullname(hostname + "." + name),
+Port::Port(const std::string& name, Model* host, std::size_t portid, bool inputPort)
+	: m_name(name), m_hostname(host->getName()),
 	  m_portid(portid), m_inputPort(inputPort),
 	  m_usingDirectConnect(false),
-	  m_hostmodel(nullptr)
+	  m_hostmodel(host)
 {
 }
 
 std::string Port::getName() const
 {
 	return n_tools::copyString(m_name);
-}
-
-std::string Port::getFullName() const
-{
-	return n_tools::copyString(m_fullname);
 }
 
 std::string Port::getHostName() const
@@ -136,14 +131,11 @@ void Port::clearReceivedMessages()
 	m_receivedMessages.clear();
 }
 
-void Port::addMessage(const n_network::t_msgptr& message, bool received)
+void Port::addMessage(const n_network::t_msgptr& message)
 {
 #ifndef  NO_TRACER
-	LOG_DEBUG("Added message ", message->getPayload(), ", we ", received? "RECEIVED":"SENT", " this message.");
-	if (received)
-		m_receivedMessages.push_back(message);
-	else
-		m_sentMessages.push_back(message);
+	LOG_DEBUG("Added message ", message->getPayload(), ", we RECEIVED this message.");
+	m_receivedMessages.push_back(message);
 #endif
 }
 
@@ -165,12 +157,24 @@ void Port::addInfluencees(std::set<std::string>& influences) const
 
 const uuid& Port::getModelUUID() const
 {
-        return m_hostmodel->getUUID();
+#ifdef SAFETY_CHECKS
+	AtomicModel_impl* impl = dynamic_cast<AtomicModel_impl*>(m_hostmodel);
+	assert(impl != nullptr && "Requested getModelUUID from a non-atomic model.");
+	return impl->getUUID();
+#else /* no SAFETY_CHECKS */
+        return reinterpret_cast<AtomicModel_impl*>(m_hostmodel)->getUUID();
+#endif /* SAFETY_CHECKS */
 }
 
 t_timestamp Port::imminentTime()const 
 {
-        return m_hostmodel->getTimeNext();
+#ifdef SAFETY_CHECKS
+	AtomicModel_impl* impl = dynamic_cast<AtomicModel_impl*>(m_hostmodel);
+	assert(impl != nullptr && "Requested getModelUUID from a non-atomic model.");
+	return impl->getTimeNext();
+#else /* no SAFETY_CHECKS */
+        return reinterpret_cast<AtomicModel_impl*>(m_hostmodel)->getTimeNext();
+#endif /* SAFETY_CHECKS */
 }
 
 void Port::clearConnections()
@@ -191,7 +195,6 @@ void Port::serialize(n_serialization::t_oarchive& archive)
 //			m_ins, m_outs,
 //			m_coupled_outs, m_coupled_ins,
 //			m_sentMessages, m_receivedMessages,
-                        m_fullname,
 			m_usingDirectConnect);
 }
 
@@ -201,7 +204,6 @@ void Port::serialize(n_serialization::t_iarchive& archive)
 //			m_ins, m_outs,
 //			m_coupled_outs, m_coupled_ins,
 //			m_sentMessages, m_receivedMessages,
-                        m_fullname,
 			m_usingDirectConnect);
 }
 
@@ -214,7 +216,7 @@ void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::cons
 	archive(name, hostname, inputPort);
 	construct(name, hostname, inputPort);*/
 
-	construct("", "", 0, false);
+	construct("", nullptr, 0, false);
 	construct->serialize(archive);
 }
 

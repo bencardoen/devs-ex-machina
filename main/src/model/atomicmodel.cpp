@@ -231,10 +231,10 @@ void AtomicModel_impl::deliverMessages(const std::vector<n_network::t_msgptr>& m
 {
 #ifdef SAFETY_CHECKS
 	for(const n_network::t_msgptr& msg: message)
-		m_iPorts.at(msg->getDstPort())->addMessage(msg, true);
+		m_iPorts.at(msg->getDstPort())->addMessage(msg);
 #else /* SAFETY_CHECKS */
 	for(const n_network::t_msgptr& msg: message)
-		m_iPorts[msg->getDstPort()]->addMessage(msg, true);
+		m_iPorts[msg->getDstPort()]->addMessage(msg);
 #endif /* SAFETY_CHECKS */
 }
 
@@ -318,19 +318,6 @@ void AtomicModel_impl::copyState()
 
 	m_oldStates.push_back(copy);
 	m_state = copy;
-}
-
-t_portptr AtomicModel_impl::addInPort(const std::string& name){
-        t_portptr port(Model::addInPort(name));
-        port->setHost(this);
-        return port;
-}
-
-	
-t_portptr AtomicModel_impl::addOutPort(const std::string& name){
-        t_portptr port(Model::addOutPort(name));
-        port->setHost(this);
-        return port;
 }
 
 }

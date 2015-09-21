@@ -74,11 +74,6 @@ public:
 	void removeSubModel(t_modelptr& model);
 
 	/**
-	 * Resets the parent pointers of this model and all its children (depth-first)
-	 */
-	virtual void resetParents()override;
-
-	/**
 	 * Connects the given ports with eachother (with a zFunction)
 	 * The zFunction will not change the message by default
 	 *

@@ -16,7 +16,7 @@
 namespace n_model {
 
 Model::Model(std::string name)
-	: m_name(name), removedInPort(false), removedOutPort(false), m_control(nullptr)
+	: m_name(name), removedInPort(false), removedOutPort(false), m_control(nullptr), m_parent(nullptr)
 {
 }
 
@@ -37,19 +37,24 @@ t_portptr Model::getPort(std::string name) const
 	return nullptr;
 }
 
-void Model::setParent(const std::shared_ptr<Model>& parent)
+void Model::setParent(Model* parent)
 {
 	m_parent = parent;
 }
 
-const std::weak_ptr<Model>& Model::getParent() const
+const Model* Model::getParent() const
 {
 	return m_parent;
 }
 
-void Model::resetParents()
+Model* Model::getParent()
 {
-	m_parent.reset();
+	return m_parent;
+}
+
+void Model::resetParent()
+{
+	m_parent = nullptr;
 }
 
 t_portptr Model::addPort(std::string name, bool isIn)
@@ -59,7 +64,7 @@ t_portptr Model::addPort(std::string name, bool isIn)
 	assert(allowDS() && "Model::addPort: Dynamic structured DEVS is not allowed in this phase.");
 	// Find new name for port if name was empty
 	std::size_t id = isIn? m_iPorts.size() : m_oPorts.size();
-	t_portptr port(n_tools::createObject<Port>(name, this->m_name, id, isIn));
+	t_portptr port(n_tools::createObject<Port>(name, this, id, isIn));
 
 	if (isIn)
 		m_iPorts.push_back(port);
@@ -88,7 +93,6 @@ void Model::removePort(t_portptr& port)
 
 	if (m_control)
 		m_control->dsRemovePort(port);
-        port->setHost(nullptr);
 
 }
 
@@ -183,13 +187,13 @@ bool Model::allowDS() const
 void Model::serialize(n_serialization::t_oarchive& archive)
 {
 	LOG_INFO("SERIALIZATION: Saving Model '", getName(), "'");
-	archive(m_name, m_iPorts, m_oPorts, m_parent);
+	archive(m_name, m_iPorts, m_oPorts);
 }
 
 void Model::serialize(n_serialization::t_iarchive& archive)
 {
 	LOG_DEBUG("MODEL: Serialize (load)");
-	archive(m_name, m_iPorts, m_oPorts, m_parent);
+	archive(m_name, m_iPorts, m_oPorts);
 
 	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "'");
 }
@@ -204,7 +208,6 @@ void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::con
 
 	archive(construct->m_iPorts);
 	archive(construct->m_oPorts);
-	archive(construct->m_parent);
 }
 
 }

@@ -56,23 +56,21 @@ protected:
 	 * Parent node of this model, mainly used for direct connect and DS
 	 * Weak pointer is used for easier destruction
 	 */
-	std::weak_ptr<Model> m_parent;
+	Model* m_parent;
 
 	/**
 	 * Add an input port to the model
 	 *
 	 * @param name The name of the port
 	 */
-        virtual
-	t_portptr addInPort(const std::string& name);
+        t_portptr addInPort(const std::string& name);
 
 	/**
 	 * Add an output port to the model
 	 *
 	 * @param name The name of the port
 	 */
-        virtual
-	t_portptr addOutPort(const std::string& name);
+        t_portptr addOutPort(const std::string& name);
 
 	/**
 	 * @return Whether or not to allow structural changes
@@ -126,19 +124,20 @@ public:
 	 *
 	 * @param parent new parent pointer
 	 */
-	void setParent(const std::shared_ptr<Model>& parent);
+	void setParent(Model* parent);
 
 	/**
 	 * Get the current parent pointer
 	 *
 	 * @return current parent pointer or nullptr if parent is not set
 	 */
-	const std::weak_ptr<Model>& getParent() const;
+	const Model* getParent() const;
+	Model* getParent();
 
 	/**
 	 * Resets the parent pointers of this model
 	 */
-	virtual void resetParents();
+	void resetParent();
 
 	/**
 	 * Return all current input ports
