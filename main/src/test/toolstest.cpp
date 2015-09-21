@@ -554,4 +554,6 @@ TEST(IntrusiveScheduler, basic_ops){
         IntrusiveEntry<modelstub> ie(&m);
         sched.pop_until(ie, ids);
         EXPECT_EQ(ids.size(), limit);
+        for(auto mptr: models)
+                delete mptr;
 }
