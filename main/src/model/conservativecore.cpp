@@ -254,7 +254,7 @@ void Conservativecore::buildInfluenceeMap(){
 
 void Conservativecore::invokeStallingBehaviour()
 {
-        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void Conservativecore::resetLookahead(){

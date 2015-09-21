@@ -16,8 +16,8 @@ Optimisticcore::~Optimisticcore()
 {
 	this->m_loctable.reset();
 	this->m_network.reset();
-	// this->m_received_messages member of Core.cpp, don't touch.
 	this->m_sent_messages.clear();
+        // TODO clear received messages.
 }
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
@@ -332,6 +332,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 	// Erase them.
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ", distance(m_sent_messages.begin(), senditer),
 	        " sent messages to erase.");
+        /// TODO delete sent messages from begin() to senditer (not incl)
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ", m_sent_messages.size());
 	// Update models
@@ -374,6 +375,7 @@ void n_model::Optimisticcore::unlockMessages()
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
+        /// Ownership semantics : receiver is always responsible for delete
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {

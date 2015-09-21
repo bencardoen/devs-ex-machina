@@ -151,6 +151,15 @@ private:
         void
         finalizeGVTRound(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
         
+        /**
+         * In optimistic, we can only safely destroy messages after gvt has been found.
+         * @param msgs
+         * @pre msg.size()>0
+         * @post msg.size() == 0
+         */
+        virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override{msgs.clear();}
+
+        
 protected:
         
         /**

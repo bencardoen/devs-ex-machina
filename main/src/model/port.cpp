@@ -126,8 +126,18 @@ void Port::setInPortCoupled(const t_portptr_raw port)
 	m_coupled_ins.push_back(port);
 }
 
+Port::~Port(){
+        this->clearSentMessages();
+}
+
 void Port::clearSentMessages()
 {
+        for(auto& msg : m_sentMessages){
+                delete msg;
+#ifdef SAFETY_CHECKS
+                msg=nullptr;
+#endif
+        }
 	m_sentMessages.clear();
 }
 

@@ -190,7 +190,7 @@ public:
 
 	virtual ~Message()
 	{
-		;
+                ;
 	}
 
 	/**
@@ -234,7 +234,8 @@ public:
 /**
  * Typedef for client classes
  */
-typedef std::shared_ptr<Message> t_msgptr;
+typedef std::shared_ptr<Message> t_shared_msgptr;
+typedef Message* t_msgptr;
 
 /**
  * @brief Message class for sending data that is not a string.
@@ -267,6 +268,8 @@ public:
 		m_data(data)
 	{
 	}
+                
+        ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -301,7 +304,7 @@ public:
  */
 template<typename T>
 const T& getMsgPayload(const t_msgptr& msg){
-	return n_tools::staticCast<const n_network::SpecializedMessage<T>>(msg)->getData();
+        return n_tools::staticRawCast<const n_network::SpecializedMessage<T>>(msg)->getData();
 }
 
 } // end namespace n_network

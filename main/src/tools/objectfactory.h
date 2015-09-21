@@ -80,6 +80,28 @@ inline typename castReturn<to>::t_type dynamicCast(const from& value)
 	return dynamic_cast<typename castReturn<to>::t_type>(value.get());
 }
 #endif /* USE_SAFE_CAST */
+
+template<class T>
+struct castRawReturn
+{
+	typedef T* t_type;
+};
+
+/**
+ * @brief custom implementation of static_pointer_cast
+ */
+template<typename to, typename from>
+inline typename castRawReturn<to>::t_type staticRawCast(const from& value)
+{
+	return reinterpret_cast<typename castRawReturn<to>::t_type>(value);
+}
+
+template<typename to, typename from>
+inline typename castRawReturn<to>::t_type dynamicRawCast(const from& value)
+{
+	return dynamic_cast<typename castRawReturn<to>::t_type>(value);
+}
+
 } /* namespace n_tools */
 
 #endif /* SRC_TOOLS_OBJECTFACTORY_H_ */

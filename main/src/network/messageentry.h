@@ -14,7 +14,7 @@
 namespace n_network {
 
 /**
- * Wrapper class for shared_ptrs to message.
+ * Wrapper class for ptrs to message.
  * Forwards all operator to Message
  */
 class MessageEntry
