@@ -70,12 +70,14 @@ void Port::removeInPort(const t_portptr_raw port)
 
 bool Port::setZFunc(const t_portptr_raw port, t_zfunc function)
 {
+#ifdef SAFETY_CHECKS
 	std::vector<t_outconnect>::iterator it = m_outs.begin();
 	while(it != m_outs.end()){
 		if(it->first == port)
 			return false;
 		++it;
 	}
+#endif /* SAFETY_CHECKS */
 	m_outs.push_back(t_outconnect(port, function));
 	return true;
 }
