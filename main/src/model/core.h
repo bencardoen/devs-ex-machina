@@ -67,7 +67,7 @@ struct statistics_collector{
                 }
         }
         void logStat(enum STAT_TYPE st){
-//#ifdef USE_STAT
+#ifdef USE_STAT
                 switch(st){
                 case MSGRCVD:{
                         ++m_msgs_rcvd;
@@ -101,7 +101,7 @@ struct statistics_collector{
                         LOG_ERROR("No such logstat type");
                         break;
                 }
-//#endif
+#endif
         }
 };
 
@@ -786,15 +786,18 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
 protected:
 	statistics_collector m_stats;
 public:
+#ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		m_stats.printStats(out);
 	}
-//#endif
+#else /* USE_STAT */
+	inline void printStats(std::ostream& = std::cout) const
+	{ }
+#endif
 };
 
 typedef std::shared_ptr<Core> t_coreptr;

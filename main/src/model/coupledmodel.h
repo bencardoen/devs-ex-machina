@@ -126,7 +126,6 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -134,10 +133,11 @@ public:
 	 */
 	virtual void printStats(std::ostream& out = std::cout) const override
 	{
+#ifdef USE_STAT
 		for(const auto& i: m_components)
 			i->printStats(out);
+#endif
 	}
-//#endif
 };
 
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;

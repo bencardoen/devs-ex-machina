@@ -102,7 +102,6 @@ public:
 		 m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0),
 		 m_name(name)
 	{
-		std::cout << "processor " << name << " was born!\n";
 		m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
 	}
 

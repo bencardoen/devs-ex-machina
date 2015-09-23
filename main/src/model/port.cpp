@@ -83,8 +83,10 @@ bool Port::setZFunc(const t_portptr_raw port, t_zfunc function)
 bool Port::setInPort(const t_portptr_raw port)
 {
 	LOG_DEBUG("current amount of ports: ", m_ins.size());
+#ifdef SAFETY_CHECKS
 	if (std::find(m_ins.begin(), m_ins.end(), port) != m_ins.end())
 		return false;
+#endif /* SAFETY_CHECKS */
 	m_ins.push_back(port);
 	LOG_DEBUG("new amount of ports: ", m_ins.size());
 	return true;
@@ -93,10 +95,10 @@ bool Port::setInPort(const t_portptr_raw port)
 void Port::setZFuncCoupled(const t_portptr_raw port, t_zfunc function)
 {
 	m_coupled_outs.push_back(t_outconnect(port, function));
-//#ifdef USE_STAT
+#ifdef USE_STAT
 	std::string statname = getHostName() + "/" + getName() + "->" + port->getHostName() + "/" + port->getName();
 	m_sendstat.emplace(port,n_tools::t_uintstat(statname, "messages"));
-//#endif
+#endif
 }
 
 void Port::setUsingDirectConnect(bool dc)

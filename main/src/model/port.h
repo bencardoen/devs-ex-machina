@@ -358,9 +358,9 @@ void Port::createMessages(const DataType& message,
 				nowtime,
 				pair.first->getPortID(), getPortID(),
 				message, pair.second));
-//#ifdef USE_STAT
+#ifdef USE_STAT
 			++m_sendstat[pair.first];
-//#endif
+#endif
 		}
 	} else {
 		container.reserve(container.size() + m_coupled_outs.size());
@@ -369,9 +369,9 @@ void Port::createMessages(const DataType& message,
 				nowtime,
 				pair.first->getPortID(), getPortID(),
 				message, pair.second));
-//#ifdef USE_STAT
+#ifdef USE_STAT
 			++m_sendstat[pair.first];
-//#endif
+#endif
 		}
 	}
 }

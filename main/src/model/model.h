@@ -215,7 +215,6 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -223,10 +222,11 @@ public:
 	 */
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
+#ifdef USE_STAT
 		for(const auto& i: m_oPorts)
 			i->printStats(out);
+#endif
 	}
-//#endif
 };
 
 typedef std::shared_ptr<Model> t_modelptr;

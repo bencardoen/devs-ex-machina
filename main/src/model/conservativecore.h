@@ -287,14 +287,14 @@ public:
         virtual void resetZombieRounds()override{m_zombie_rounds.store(0);}
 
         //-------------statistics gathering--------------
-//#ifdef USE_STAT
+#ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		if(getCoreID() == 0)
 			m_network->printStats(out);
 		Core::printStats(out);
 	}
-//#endif
+#endif
         
 };
 
