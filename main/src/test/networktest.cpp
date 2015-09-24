@@ -21,10 +21,11 @@ using namespace n_network;
 TEST(Network, detectIdle){
 	n_network::Network n(4);
 	EXPECT_EQ(n.networkHasMessages(), false);
-	t_msgptr msg = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(3, 0), t_timestamp(1, 0), 0, 0);
+	t_msgptr msg = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(3, 0), t_timestamp(1, 0), 0, 0);
 //	msg->setDestinationCore(3);
 	n.acceptMessage(msg);
 	EXPECT_EQ(n.networkHasMessages(), true);
+        delete msg;
 }
 
 TEST(Time, FactoryFunctions)
@@ -91,7 +92,7 @@ void push(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 		for (size_t j = 0; j < cores; ++j) {
 			if (j == coreid)
 				continue;
-			t_msgptr msg = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(j, 0), t_timestamp(i, 0), 0, 0);
+			t_msgptr msg = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(j, 0), t_timestamp(i, 0), 0, 0);
 			EXPECT_TRUE(msg->getDestinationCore() == j);
 			net.acceptMessage(msg);
 		}
@@ -107,6 +108,8 @@ void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 			received.insert(received.begin(), messages.begin(), messages.end());
 		}
 	}
+        for(auto msg : received)
+                delete msg;
 }
 
 TEST(Network, threadsafety)

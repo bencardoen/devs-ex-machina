@@ -67,6 +67,12 @@ protected:
 	 */
 	bool m_antimessage;
         
+        /**
+         * Edge case of original message immediately followed by antimessage, allow
+         * receiver to mark this message a 'to be deleted' without ever entering any queue.
+         */
+        bool m_delete_flag_set;
+        
         const n_model::uuid m_dst_uuid;
         
         const n_model::uuid m_src_uuid;
@@ -137,6 +143,10 @@ public:
 	 */
 	std::size_t getDstPort() const
 	{ return m_destination_port; }
+        
+        bool deleteFlagIsSet()const{return m_delete_flag_set;}
+        
+        void setDeleteFlag(){m_delete_flag_set=true;}
 
 	/**
 	 * @brief Returns the name of source port of the message.
@@ -190,7 +200,7 @@ public:
 
 	virtual ~Message()
 	{
-		;
+                ;
 	}
 
 	/**
@@ -234,7 +244,8 @@ public:
 /**
  * Typedef for client classes
  */
-typedef std::shared_ptr<Message> t_msgptr;
+typedef std::shared_ptr<Message> t_shared_msgptr;
+typedef Message* t_msgptr;
 
 /**
  * @brief Message class for sending data that is not a string.
@@ -267,6 +278,8 @@ public:
 		m_data(data)
 	{
 	}
+                
+        ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -301,7 +314,7 @@ public:
  */
 template<typename T>
 const T& getMsgPayload(const t_msgptr& msg){
-	return n_tools::staticCast<const n_network::SpecializedMessage<T>>(msg)->getData();
+        return n_tools::staticRawCast<const n_network::SpecializedMessage<T>>(msg)->getData();
 }
 
 } // end namespace n_network

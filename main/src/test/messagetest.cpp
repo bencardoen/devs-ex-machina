@@ -18,118 +18,104 @@
 using namespace n_tools;
 using namespace n_network;
 
-TEST(Message, TestThreadRaceConditions){
-	/**
-	 * std::string has a copy-on-write implementation that can trigger race conditions in threaded code.
-	 * Test if the message class can avoid these by forcing the compiler to copy strings and not cow.
-	 */
-	if(std::thread::hardware_concurrency() <=1)
-		LOG_WARNING("Thread test skipped, OS report no threads avaiable");
-	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), 3u, 1u);
-//	msg->setDestinationCore(42);
-//	msg->setSourceCore(1);
-	std::string expected_out = "Message from 1 to 3 @TimeStamp ::0 causal ::1 from model cid=1 lid=0 to model cid=42 lid=0 payload  color : WHITE";
-	EXPECT_EQ(msg->toString(), expected_out);
-	std::vector<std::thread> workers;
-	// Try to trigger races.
-	auto worker = [&]()->void{
-		std::size_t dest = msg->getDstPort();
-		dest = 'c';
-		dest = msg->getSrcPort();
-		EXPECT_TRUE(dest!='c');
-	};
-	for(size_t i = 0; i<4; ++i){
-		workers.emplace_back(worker);
-	}
-	for(auto& t : workers)
-		t.join();
-	EXPECT_TRUE(msg->getDstUUID().m_core_id==42u);
-	EXPECT_TRUE(msg->getSrcPort()==1u);
-	EXPECT_TRUE(msg->getDstPort()==3u);
-}
-
 TEST(Message, operators){
-	/**
-	 * Test if Message, MessageEntry 's operators behave as expected.
-	 */
-	std::shared_ptr<Message> msgbefore = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,0), 3u, 2u);
-	std::shared_ptr<Message> msgafter = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,1), 3u, 2u);
-	std::size_t msghashbefore = std::hash<Message>()(*msgbefore);
-	std::size_t msghashafter = std::hash<Message>()(*msgafter);
-	EXPECT_TRUE(msghashbefore != msghashafter);
-	MessageEntry mbefore(msgbefore);
-	MessageEntry mafter(msgafter);
-	EXPECT_TRUE(mbefore != mafter);
-	EXPECT_TRUE(mbefore > mafter);
-	EXPECT_TRUE(mbefore >= mafter);
-	EXPECT_FALSE(mbefore < mafter);
-	EXPECT_FALSE(mbefore <= mafter);
-	EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(mbefore));
-	// Copy constructors
-	MessageEntry copy(mbefore);
-	EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(copy));
-	MessageEntry assigned = mbefore;
-	EXPECT_TRUE(assigned == mbefore);
-	EXPECT_TRUE(copy == mbefore);
-	EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(assigned));
-	std::unordered_set<MessageEntry> myset;
-	myset.insert(mbefore);
-	EXPECT_EQ(myset.insert(copy).second, false);
-	EXPECT_EQ(myset.insert(assigned).second, false);
-	EXPECT_EQ(myset.insert(msgafter).second, true);
+        {
+                /**
+                 * Test if Message, MessageEntry 's operators behave as expected.
+                 */
+                t_msgptr msgbefore = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,0), 3u, 2u);
+                t_msgptr msgafter = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(1,1), 3u, 2u);
+
+                std::size_t msghashbefore = std::hash<Message>()(*msgbefore);
+                std::size_t msghashafter = std::hash<Message>()(*msgafter);
+                EXPECT_TRUE(msghashbefore != msghashafter);
+                MessageEntry mbefore(msgbefore);
+                MessageEntry mafter(msgafter);
+                EXPECT_TRUE(mbefore != mafter);
+                EXPECT_TRUE(mbefore > mafter);
+                EXPECT_TRUE(mbefore >= mafter);
+                EXPECT_FALSE(mbefore < mafter);
+                EXPECT_FALSE(mbefore <= mafter);
+                EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(mbefore));
+                // Copy constructors
+                MessageEntry copy(mbefore);
+                EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(copy));
+                MessageEntry assigned = mbefore;
+                EXPECT_TRUE(assigned == mbefore);
+                EXPECT_TRUE(copy == mbefore);
+                EXPECT_TRUE(std::hash<Message>()(*msgbefore) == std::hash<MessageEntry>()(assigned));
+                std::unordered_set<MessageEntry> myset;
+                myset.insert(mbefore);
+                EXPECT_EQ(myset.insert(copy).second, false);
+                EXPECT_EQ(myset.insert(assigned).second, false);
+                EXPECT_EQ(myset.insert(msgafter).second, true);
+                delete msgbefore;
+                delete msgafter;
+        }
+        
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
-	EXPECT_FALSE(scheduler->isLockable());
+	
+        t_msgptr am;
+        /// Create N objects, test push/contains
 	for(size_t i = 0; i<100; ++i){
-		std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(i,0), 3u, 2u);
+		t_msgptr msg = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(i,0), 3u, 2u);
 		MessageEntry entry(msg);
+                if(i==55)
+                        am=msg;
 		scheduler->push_back(entry);
 		EXPECT_EQ(scheduler->size(), i+1);
 		EXPECT_TRUE(scheduler->contains(entry));
 	}
-	std::shared_ptr<Message> antimessage = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 3u, 2u);
-	scheduler->erase(MessageEntry(antimessage));
-	EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
+        
+	{
+                /// Check hash / operator< antimessaging.
+                //t_msgptr antimessage = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 3u, 2u);
+                scheduler->erase(MessageEntry(am));
+                EXPECT_FALSE(scheduler->contains(MessageEntry(am)));
+                delete am;
+        }
+        
 	//scheduler->printScheduler();
+        /// N-1 objects left, test unschedule_until && operator<
 	std::vector<MessageEntry> popped;
-	std::shared_ptr<Message> token = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 0u, 0u);
+	t_msgptr token = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 0u, 0u);
 	MessageEntry tokentime(token);
 	scheduler->unschedule_until(popped, tokentime);
 	EXPECT_EQ(popped.size(), 55u);
 	EXPECT_EQ(scheduler->size(), 44u);
+        
+        for(auto entry : popped)
+                delete entry.getMessage();
 	popped.clear();
-	token.reset();
-	token = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp::infinity(), 0u, 0u);
-	MessageEntry endtime(token);
+        delete token;
+        
+	token = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp::infinity(), 0u, 0u);
 	scheduler->unschedule_until(popped, token);
+        for(auto entry : popped)
+                delete entry.getMessage();
+        delete token;
 	EXPECT_EQ(scheduler->size(), 0u);
 }
 
 TEST(Message, Antimessage){
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
-	std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(55,0), 3u, 2u);
-//	msg->setDestinationCore(1);
-//	msg->setSourceCore(0);
-	t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
-//	antimessage->setDestinationCore(0);
-//	antimessage->setSourceCore(1);
-	scheduler->push_back(MessageEntry(msg));
-	EXPECT_TRUE(scheduler->contains(MessageEntry(msg)));
-	scheduler->erase(MessageEntry(antimessage));
-	EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
-	EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
+	t_shared_msgptr msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(55,0), 3u, 2u);
+	t_shared_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
+	scheduler->push_back(MessageEntry(msg.get()));
+	EXPECT_TRUE(scheduler->contains(MessageEntry(msg.get())));
+	scheduler->erase(MessageEntry(antimessage.get()));
+	EXPECT_FALSE(scheduler->contains(MessageEntry(msg.get())));
+	EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage.get())));
 }
 
 TEST(Message, Smoketest){
 	//// Try to break scheduler.
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
+
 	for(size_t i = 0; i<1000; ++i){
-		std::shared_ptr<Message> msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), 3u, 2u);
-//		msg->setDestinationCore(1);
-//		msg->setSourceCore(0);
-		t_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
-//		antimessage->setDestinationCore(0);
-//		antimessage->setSourceCore(1);
-		EXPECT_FALSE(scheduler->contains(msg));
+		t_msgptr msg = createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), 3u, 2u);
+		t_msgptr antimessage = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
+		EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
 		size_t oldsize = scheduler->size();
 		scheduler->push_back(MessageEntry(msg));
 		EXPECT_TRUE(oldsize == scheduler->size()-1);
@@ -138,6 +124,8 @@ TEST(Message, Smoketest){
 		scheduler->erase(MessageEntry(antimessage));
 		EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
 		EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
+                delete msg;
+                delete antimessage;
 	}
 }
 
@@ -153,28 +141,29 @@ std::ostream& operator<<(std::ostream& o, const MyStruct& m){
 }
 
 TEST(Message, ContentTest){
-	t_msgptr msgStr = n_tools::createObject<SpecializedMessage<std::string>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, "payload");
+	t_shared_msgptr msgStr = n_tools::createObject<SpecializedMessage<std::string>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, "payload");
+        EXPECT_FALSE(msgStr->deleteFlagIsSet());
 	EXPECT_EQ(msgStr->getDstPort(), 3u);
 	EXPECT_EQ(msgStr->getSrcPort(), 2u);
 	EXPECT_EQ(msgStr->getPayload(), "payload");
 	EXPECT_EQ(msgStr->getDestinationCore(), 42u);
-	std::string str = n_network::getMsgPayload<std::string>(msgStr);
+	std::string str = n_network::getMsgPayload<std::string>(msgStr.get());
 	EXPECT_EQ(str, "payload");
 
-	t_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, 3.14);
+	t_shared_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, 3.14);
 	EXPECT_EQ(msgDouble->getDstPort(), 3u);
 	EXPECT_EQ(msgDouble->getSrcPort(), 2u);
 	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
-	const double& doub = n_network::getMsgPayload<double>(msgDouble);
+	const double& doub = n_network::getMsgPayload<double>(msgDouble.get());
 	EXPECT_EQ(doub, 3.14);
 
 	MyStruct data = {-2, 't', 42.24};
 	MyStruct control = data;
-	t_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, data);
+	t_shared_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, data);
 	EXPECT_EQ(msgMyStruct->getDstPort(), 3u);
 	EXPECT_EQ(msgMyStruct->getSrcPort(), 2u);
 	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
-	const MyStruct& res = n_network::getMsgPayload<MyStruct>(msgMyStruct);
+	const MyStruct& res = n_network::getMsgPayload<MyStruct>(msgMyStruct.get());
 	data.i++;
 	EXPECT_EQ(res.i, control.i);
 	EXPECT_EQ(res.c, control.c);
