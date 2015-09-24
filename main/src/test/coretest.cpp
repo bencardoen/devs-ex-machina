@@ -288,14 +288,14 @@ TEST(Optimisticcore, revertidle){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -368,14 +368,14 @@ TEST(Optimisticcore, revertedgecases){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -450,14 +450,14 @@ TEST(Optimisticcore, revertoffbyone){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -535,14 +535,14 @@ TEST(Optimisticcore, revertstress){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 	CoutRedirect myRedirect(filestream);
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -618,14 +618,14 @@ TEST(Optimisticcore, revert_antimessaging){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 	CoutRedirect myRedirect(filestream);
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -682,14 +682,14 @@ TEST(Optimisticcore, GVT){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
 	t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-	coreMap[0] = c1;
-	coreMap[1] = c2;
+	coreMap.push_back(c1);
+	coreMap.push_back(c2);
 
 	t_timestamp endTime(360, 0);
 
@@ -742,7 +742,7 @@ TEST(Conservativecore, Abstract){
 	auto tracers = createObject<n_tracers::t_tracerset>();
 
 	t_networkptr network = createObject<Network>(2);
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
+	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
@@ -750,8 +750,8 @@ TEST(Conservativecore, Abstract){
         t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
 	auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
 	auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
-	coreMap[0] = c0;
-	coreMap[1] = c1;
+	coreMap.push_back(c0);
+	coreMap.push_back(c1);
 
 	t_timestamp endTime(360, 0);
 
@@ -923,7 +923,7 @@ TEST(Conservativecore, Deadlock){
                 auto tracers = createObject<n_tracers::t_tracerset>();
 
                 t_networkptr network = createObject<Network>(3);
-                std::unordered_map<std::size_t, t_coreptr> coreMap;
+                std::vector<t_coreptr> coreMap;
                 std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(3);
                 std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(3);
 
@@ -932,9 +932,9 @@ TEST(Conservativecore, Deadlock){
                 auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
                 auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
                 auto c2 = createObject<Conservativecore>(network, 2, locTab, eotvector, timevector);
-                coreMap[0] = c0;
-                coreMap[1] = c1;
-                coreMap[2] = c2;
+                coreMap.push_back(c0);
+                coreMap.push_back(c1);
+                coreMap.push_back(c2);
 
                 t_timestamp endTime(360, 0);
 
