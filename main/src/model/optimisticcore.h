@@ -157,7 +157,7 @@ private:
          * @pre msg.size()>0
          * @post msg.size() == 0
          */
-        virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override{msgs.clear();}
+        virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override;
 
         
 protected:
