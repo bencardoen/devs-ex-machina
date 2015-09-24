@@ -92,22 +92,6 @@ protected:
 	
 	t_timestamp m_elapsed;
 	t_timestamp m_lastRead;
-        
-        /**
-	 * Add an input port to the model
-	 * Link the port to this model
-	 * @param name The name of the port
-	 */
-        virtual
-	t_portptr addInPort(const std::string& name)override final;
-
-	/**
-	 * Add an output port to the model
-	 * Link the port to this model
-	 * @param name The name of the port
-	 */
-        virtual
-	t_portptr addOutPort(const std::string& name)override final;
 
 public:
 	AtomicModel_impl() = delete;

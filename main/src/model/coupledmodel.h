@@ -74,11 +74,6 @@ public:
 	void removeSubModel(t_modelptr& model);
 
 	/**
-	 * Resets the parent pointers of this model and all its children (depth-first)
-	 */
-	virtual void resetParents()override;
-
-	/**
 	 * Connects the given ports with eachother (with a zFunction)
 	 * The zFunction will not change the message by default
 	 *
@@ -131,7 +126,6 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
 public:
 	/**
 	 * @brief Prints some basic stats.
@@ -139,10 +133,11 @@ public:
 	 */
 	virtual void printStats(std::ostream& out = std::cout) const override
 	{
+#ifdef USE_STAT
 		for(const auto& i: m_components)
 			i->printStats(out);
+#endif
 	}
-//#endif
 };
 
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;

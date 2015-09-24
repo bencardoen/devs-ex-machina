@@ -71,13 +71,13 @@ public:
 	bool networkHasMessages();
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
 	void printStats(std::ostream& out = std::cout) const
 	{
+#ifdef USE_STAT
 		for(const auto& i:m_queues)
 			i.printStats(out);
+#endif
 	}
-//#endif
 };
 
 

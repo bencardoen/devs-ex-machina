@@ -22,6 +22,7 @@ void CoupledModel::addSubModel(const t_modelptr& model)
 {
 	assert(this->allowDS() && "CoupledModel::addSubModel: Dynamic structured DEVS is not allowed in this phase.");
 	//precondition: not simulating or DSDEVS
+	model->setParent(this);
 	this->m_components.push_back(model);
 	if(m_control){
 		model->setController(m_control);
@@ -49,7 +50,7 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 
 	m_components.erase(it);
 
-	model->resetParents();
+	model->resetParent();
 
 	model->clearConnections();
 
@@ -73,13 +74,6 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 	}
 }
 
-void CoupledModel::resetParents()
-{
-	m_parent.reset();
-	for (auto& child : m_components)
-		child->resetParents();
-}
-
 void CoupledModel::connectPorts(const t_portptr& p1, const t_portptr& p2, t_zfunc zFunction)
 {
 	assert(this->allowDS() && "CoupledModel::connectPorts: Dynamic structured DEVS is not allowed in this phase.");
@@ -96,7 +90,7 @@ void CoupledModel::disconnectPorts(const t_portptr& p1, const t_portptr& p2)
 {
 	assert(this->allowDS() && "CoupledModel::disconnectPorts: Dynamic structured DEVS is not allowed in this phase.");
 	//precondition: not simulating or DSDEVS
-	LOG_DEBUG("CoupledModel::disconnectPorts, control: ", m_control, " ports: ", p1->getFullName(), " ->", p2->getFullName());
+	LOG_DEBUG("CoupledModel::disconnectPorts, control: ", m_control, " ports: ", p1->getName(), " ->", p2->getName());
 	p1->removeOutPort(p2.get());
 	p2->removeInPort(p1.get());
 	if(m_control)
@@ -107,23 +101,18 @@ bool CoupledModel::isLegalConnection(const t_portptr& p1, const t_portptr& p2) c
 {
 	//make sure that the connection is not illegal
 	//figure out whose port these actually are
+	LOG_DEBUG("checking legal connection between ", p1->getHostName(), "/", p1->getName(), " -> ", p2->getHostName(), "/", p2->getName());
+	LOG_DEBUG(" -> p1->getHost() == this", p1->getHost() == this);
+	LOG_DEBUG(" -> p1->getHost()->getParent() != this", p1->getHost()->getParent() != this);
+	LOG_DEBUG(" -> p2->getHost() == this", p2->getHost() == this);
+	LOG_DEBUG(" -> p1->getHost()->getParent() != this", p1->getHost()->getParent() != this);
 	std::size_t isOwner = 0;
-	if(p1->getHostName() == getName()) isOwner = 1;
-	else {
-		bool found = false;
-		for(const t_modelptr& mod : m_components)
-			if(mod->getName() == p1->getHostName())
-				found = true;
-		if(!found) return false;
-	}
-	if(p2->getHostName() == getName()) isOwner |= 2;
-	else {
-		bool found = false;
-		for(const t_modelptr& mod : m_components)
-			if(mod->getName() == p2->getHostName())
-				found = true;
-		if(!found) return false;
-	}
+	if(p1->getHost() == this) isOwner = 1;
+	else if(p1->getHost()->getParent() != this)
+		return false;
+	if(p2->getHost() == this) isOwner |= 2;
+	else if(p2->getHost()->getParent() != this)
+		return false;
 
 	switch(isOwner){
 	case 0u:	//both of a submodel

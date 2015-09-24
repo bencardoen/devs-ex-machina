@@ -25,12 +25,12 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
-//#ifdef USE_STAT
+#ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
 	m_gvtFailed("_controller/gvt failed", ""),
 	m_gvtFound("_controller/gvt found", "")
-//#endif
+#endif
 {
 	m_root = n_tools::createObject<n_model::RootModel>();
 	m_zombieIdleThreshold.store(-1);
@@ -44,7 +44,7 @@ Controller::~Controller()
 
 void Controller::logStat(CTRLSTAT_TYPE ev)
 {
-//#ifdef USE_STAT
+#ifdef USE_STAT
 
         switch(ev){
         case GVT_2NDRND:{
@@ -69,7 +69,7 @@ void Controller::logStat(CTRLSTAT_TYPE ev)
         }
 //#else // TODO use compiler attribute pure, allows compiler to ignore fcall().
         // see http://stackoverflow.com/questions/6623879/c-optimizing-function-with-no-side-effects
-//#endif
+#endif
 }
 
 
@@ -573,26 +573,22 @@ void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 {
 	m_dsPhase = true;
 	// loop over all atomic models
-	std::deque<t_modelptr> models;
+	std::deque<Model*> models;
 	for (t_raw_atomic model : imminent) {
 		if (model->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
-			if (model->getParent().expired())
-				continue;
-			t_modelptr parent = model->getParent().lock();
+			Model* parent = model->getParent();
 			if (parent)
 				models.push_back(parent);
 		}
 	}
 	// continue looping until we’re at the top of the tree
 	while (models.size()) {
-		t_modelptr top = models.front();
+		Model* top = models.front();
 		models.pop_front();
 		if (top->doModelTransition(&m_sharedState)) {
 			// keep a reference to the parent of this model
-			if (top->getParent().expired())
-				continue;
-			t_modelptr parent = top->getParent().lock();
+			Model* parent = top->getParent();
 			if (parent)
 				models.push_back(parent);
 		}

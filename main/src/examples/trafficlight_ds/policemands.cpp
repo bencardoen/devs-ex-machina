@@ -81,7 +81,7 @@ void Policeman::output(std::vector<n_network::t_msgptr>& msgs) const
 
 bool Policeman::modelTransition(n_model::DSSharedState* shared)
 {
-	LOG_DEBUG("Policeman::parent = ", m_parent.expired());
+	LOG_DEBUG("Policeman::parent = ", m_parent);
 	PolicemanMode& mode = state();
 	std::string val = "";
 	if (mode.m_value == "moving_from_1_to_2"){

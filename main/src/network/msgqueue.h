@@ -42,9 +42,9 @@ public:
 	std::vector<Q>
 	purge(){
 		std::lock_guard<std::mutex> lock(m_lock);
-//#ifdef USE_STAT
+#ifdef USE_STAT
 		m_msgcountstat += m_queue.size();
-//#endif
+#endif
 		auto contents(std::move(m_queue));
 		m_queue.clear();
 		return contents;

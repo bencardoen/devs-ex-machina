@@ -336,14 +336,14 @@ public:
 
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
+#ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{
 		if(getCoreID() == 0)
 			m_network->printStats(out);
 		Core::printStats(out);
 	}
-//#endif
+#endif
 };
 
 } /* namespace n_model */
