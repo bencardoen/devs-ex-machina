@@ -18,36 +18,6 @@
 using namespace n_tools;
 using namespace n_network;
 
-TEST(Message, TestThreadRaceConditions){
-	/**
-	 * std::string has a copy-on-write implementation that can trigger race conditions in threaded code.
-	 * Test if the message class can avoid these by forcing the compiler to copy strings and not cow.
-	 */
-	if(std::thread::hardware_concurrency() <=1)
-		LOG_WARNING("Thread test skipped, OS report no threads avaiable");
-	auto msg = createObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(0,1), 3u, 1u);
-//	msg->setDestinationCore(42);
-//	msg->setSourceCore(1);
-	std::string expected_out = "Message from 1 to 3 @TimeStamp ::0 causal ::1 from model cid=1 lid=0 to model cid=42 lid=0 payload  color : WHITE";
-	EXPECT_EQ(msg->toString(), expected_out);
-	std::vector<std::thread> workers;
-	// Try to trigger races.
-	auto worker = [&]()->void{
-		std::size_t dest = msg->getDstPort();
-		dest = 'c';
-		dest = msg->getSrcPort();
-		EXPECT_TRUE(dest!='c');
-	};
-	for(size_t i = 0; i<4; ++i){
-		workers.emplace_back(worker);
-	}
-	for(auto& t : workers)
-		t.join();
-	EXPECT_TRUE(msg->getDstUUID().m_core_id==42u);
-	EXPECT_TRUE(msg->getSrcPort()==1u);
-	EXPECT_TRUE(msg->getDstPort()==3u);
-}
-
 TEST(Message, operators){
         {
                 /**
@@ -85,11 +55,13 @@ TEST(Message, operators){
         
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	
-        
+        t_msgptr am;
         /// Create N objects, test push/contains
 	for(size_t i = 0; i<100; ++i){
 		t_msgptr msg = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(i,0), 3u, 2u);
 		MessageEntry entry(msg);
+                if(i==55)
+                        am=msg;
 		scheduler->push_back(entry);
 		EXPECT_EQ(scheduler->size(), i+1);
 		EXPECT_TRUE(scheduler->contains(entry));
@@ -97,10 +69,10 @@ TEST(Message, operators){
         
 	{
                 /// Check hash / operator< antimessaging.
-                t_msgptr antimessage = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 3u, 2u);
-                scheduler->erase(MessageEntry(antimessage));
-                EXPECT_FALSE(scheduler->contains(MessageEntry(antimessage)));
-                delete antimessage;
+                //t_msgptr antimessage = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(55,0), 3u, 2u);
+                scheduler->erase(MessageEntry(am));
+                EXPECT_FALSE(scheduler->contains(MessageEntry(am)));
+                delete am;
         }
         
 	//scheduler->printScheduler();
@@ -118,7 +90,6 @@ TEST(Message, operators){
         delete token;
         
 	token = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp::infinity(), 0u, 0u);
-	MessageEntry endtime(token);
 	scheduler->unschedule_until(popped, token);
         for(auto entry : popped)
                 delete entry.getMessage();
@@ -171,6 +142,7 @@ std::ostream& operator<<(std::ostream& o, const MyStruct& m){
 
 TEST(Message, ContentTest){
 	t_shared_msgptr msgStr = n_tools::createObject<SpecializedMessage<std::string>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, "payload");
+        EXPECT_FALSE(msgStr->deleteFlagIsSet());
 	EXPECT_EQ(msgStr->getDstPort(), 3u);
 	EXPECT_EQ(msgStr->getSrcPort(), 2u);
 	EXPECT_EQ(msgStr->getPayload(), "payload");

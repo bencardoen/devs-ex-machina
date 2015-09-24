@@ -168,10 +168,12 @@ protected:
 	 * If y is processed, trigger a revert.
 	 * If y is not yet received : store x and destroy y if it arrives.
 	 * @param msg the antimessage
+         * @param set to true if messagetime is <= current time.
+         * @attention : the case where time is equal is allready checked by msg scheduler, see implementation.
 	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
 	 */
 	void
-	handleAntiMessage(const t_msgptr& msg)override;
+	handleAntiMessage(const t_msgptr& msg, bool msgtime_indicates_processed);
 
         /**
          * Allow msg to be traced by (among others the GVT algorithm)
@@ -192,8 +194,11 @@ public:
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
 	Optimisticcore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+        
 	/**
-	 * Resets ptrs to network and locationtable.
+	 * Deletes all sent messages.
+         * @attention : The core is held by shared_ptr on Controller, so the controller's thread will always invoke the destructor.
+         * Running cores while any destructor runs voids all pointer safety.
 	 */
 	virtual ~Optimisticcore();
 

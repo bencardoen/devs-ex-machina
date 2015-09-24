@@ -723,13 +723,6 @@ public:
 	}
 
 	/**
-	 * Noop in single core (and is never called), but it is called as base trigger by receiveMessage()
-	 */
-	virtual
-	void
-	handleAntiMessage(const t_msgptr&){;}
-
-	/**
 	 * Noop in single core. Paints message according to current color in core. (multicore).
 	 */
 	virtual

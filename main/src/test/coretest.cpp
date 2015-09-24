@@ -227,6 +227,7 @@ TEST(Core, terminationfunction)
 }
 
 TEST(Optimisticcore, revert){
+        // Valgrind clear
 	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
 	using n_control::t_location_tableptr;
@@ -272,11 +273,12 @@ TEST(Optimisticcore, revert){
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
-        delete msgaftergvt;
+        
 }
 
 
 TEST(Optimisticcore, revertidle){
+        // Valgrind clear.
 	RecordProperty("description", "Revert: test if a core can go from idle/terminated back to working.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -344,6 +346,8 @@ TEST(Optimisticcore, revertidle){
 	c1->logCoreState();
 	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
+        
+        c2->runSmallStep();     // give tlight chance to delete amsgs.
 
 	n_tracers::traceUntil(t_timestamp::infinity());
 	n_tracers::clearAll();
@@ -513,12 +517,14 @@ TEST(Optimisticcore, revertoffbyone){
 	tracers->finishTrace();
 
 	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-
+        // msg is not antimessage, has no am equivalent and is not in __sent from any core, so delete manual.
+        delete msg;
 	}
 }
 
 
 TEST(Optimisticcore, revertstress){
+        // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -589,11 +595,15 @@ TEST(Optimisticcore, revertstress){
 	tracers->finishTrace();
 
 	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-
+        // Both messages were not sent by core, so delete them manually, they don't have antimessages
+        // equivalents.
+        delete msglater;
+        delete msg;
 	}
 }
 
 TEST(Optimisticcore, revert_antimessaging){
+        // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{

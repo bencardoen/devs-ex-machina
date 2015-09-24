@@ -67,6 +67,12 @@ protected:
 	 */
 	bool m_antimessage;
         
+        /**
+         * Edge case of original message immediately followed by antimessage, allow
+         * receiver to mark this message a 'to be deleted' without ever entering any queue.
+         */
+        bool m_delete_flag_set;
+        
         const n_model::uuid m_dst_uuid;
         
         const n_model::uuid m_src_uuid;
@@ -137,6 +143,10 @@ public:
 	 */
 	std::size_t getDstPort() const
 	{ return m_destination_port; }
+        
+        bool deleteFlagIsSet()const{return m_delete_flag_set;}
+        
+        void setDeleteFlag(){m_delete_flag_set=true;}
 
 	/**
 	 * @brief Returns the name of source port of the message.

@@ -5,7 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 #include <unordered_map>
-#include "model/optimisticcore.h"
+#include "control/locationtable.h"
+#include "model/core.h"
 #include "tools/sharedvector.h"
 
 #ifndef SRC_MODEL_CONSERVATIVECORE_H_
