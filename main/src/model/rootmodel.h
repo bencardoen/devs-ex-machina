@@ -26,9 +26,15 @@ public:
 	 * @precondition All atomic models have a unique name
 	 */
 	const std::vector<t_atomicmodelptr>& directConnect(const t_coupledmodelptr&);
-	void undoDirectConnect();
+	void undoDirectConnect()
+	{ m_directConnected = false;}
 
-	std::vector<t_atomicmodelptr> getComponents();
+	const std::vector<t_atomicmodelptr>& getComponents()const
+	{ return m_components;}
+	std::vector<t_atomicmodelptr>& getComponents()
+	{ return m_components;}
+
+	void reset();
 };
 } /* namespace n_model */
 

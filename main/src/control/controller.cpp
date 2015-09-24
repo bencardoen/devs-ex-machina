@@ -22,7 +22,7 @@ namespace n_control {
 Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         std::shared_ptr<Allocator>& alloc, n_tracers::t_tracersetptr& tracers,
         size_t saveInterval, size_t turns)
-	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
+	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
@@ -32,7 +32,6 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-	m_root = n_tools::createObject<n_model::RootModel>();
 	m_zombieIdleThreshold.store(-1);
 }
 
@@ -108,9 +107,9 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 		emptyAllCores();
 	}
 	m_coupledOrigin = coupled;
-	m_root->directConnect(coupled);
+	m_root.directConnect(coupled);
 
-	const std::vector<t_atomicmodelptr> atomics = m_root->getComponents();
+	const std::vector<t_atomicmodelptr>& atomics = m_root.getComponents();
 	m_allocator->allocateAll(atomics);
 
 	for (const t_atomicmodelptr& atomic : atomics) {
@@ -127,7 +126,7 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 void Controller::doDirectConnect()
 {
 	if (m_coupledOrigin) {
-		m_root->directConnect(m_coupledOrigin);
+		m_root.directConnect(m_coupledOrigin);
 	} else {
 		LOG_DEBUG("doDirectConnect no coupled origin!");
 	}
@@ -158,7 +157,7 @@ void Controller::emptyAllCores()
 	for (auto core : m_cores) {
 		core->clearModels();
 	}
-	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
+	m_root.reset(); // reset root
 }
 
 void Controller::setGVTInterval(std::size_t ms)
@@ -227,11 +226,8 @@ void Controller::simDEVS()
 	auto& core = m_cores.front(); // there is only one core in Classic DEVS
 	core->setTracers(m_tracers);
 
-	if (!m_isLoadedSim) {	// The simulation starts from scratch
-		core->init();
-	} else {		// The simulation was loaded from a binary
-		core->initExistingSimulation(m_lastGVT);
-	}
+	core->init();
+
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -241,15 +237,11 @@ void Controller::simDEVS()
 	core->setLive(true);
 
 	uint i = 0;
-	while (check()) { // As long any cores are active
+	while (core->isLive()) { // As long any cores are active
 		++i;
 		LOG_INFO("CONTROLLER: Commencing simulation loop #", i, "...");
-		if (core->isLive()) {
-			LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
-			core->runSmallStep();
-		} else {
-			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
-		}
+		LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
+		core->runSmallStep();
                 
 		if (i % m_saveInterval == 0) {
 			t_timestamp time = core->getTime();
@@ -271,12 +263,13 @@ void Controller::simOPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
+	threadsignal.reserve(m_cores.size());
 	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
 	for (auto& core : m_cores) {
 		core->setTracers(m_tracers);
-		(!m_isLoadedSim) ? core->init() : core->initExistingSimulation(m_lastGVT);
+		core->init();
 
 		if (m_checkTermTime)
 			core->setTerminationTime(m_terminationTime);
@@ -310,11 +303,12 @@ void Controller::simCPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
+	threadsignal.reserve(m_cores.size());
 
 	// configure all cores
 	for (auto& core : m_cores) {
 		core->setTracers(m_tracers);
-		(!m_isLoadedSim) ? core->init() : core->initExistingSimulation(m_lastGVT);
+		core->init();
 
 		if (m_checkTermTime)
 			core->setTerminationTime(m_terminationTime);
@@ -344,11 +338,8 @@ void Controller::simDSDEVS()
 	auto& core = m_cores.front(); // there is only one core in DS DEVS
 	core->setTracers(m_tracers);
 
-	if (!m_isLoadedSim) {	// The simulation starts from scratch
-		core->init();
-	} else {		// The simulation was loaded from a binary
-		core->initExistingSimulation(m_lastGVT);
-	}
+	core->init();
+
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -363,16 +354,12 @@ void Controller::simDSDEVS()
 		++i;
 		imminent.clear();
 		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, " at time ", core->getTime());
-		if (core->isLive()) {
-			LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
-			core->runSmallStep();
-			core->getLastImminents(imminent);
-			doDSDevs(imminent);
-                        core->validateModels();
-		} else {
-			LOG_DEBUG("CONTROLLER: CORE NO LONGER LIVE");
-			break;
-		}
+		LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
+		core->runSmallStep();
+		core->getLastImminents(imminent);
+		doDSDevs(imminent);
+		core->validateModels();
+
 		if (i % m_saveInterval == 0) {
 			t_timestamp time = core->getTime();
 			n_tracers::traceUntil(time);
@@ -388,14 +375,7 @@ void Controller::startGVTThread()
 {
 	constexpr std::size_t infguard = 100;
 	std::size_t i = 0;
-	std::chrono::milliseconds ms { 5 };	// Wait before running gvt, this prevents an obvious gvt of zero.
-	std::this_thread::sleep_for(ms);
-	LOG_INFO("Controller:: starting GVT thread");
-	std::thread runonce(&runGVT, std::ref(*this), std::ref(m_rungvt));
-	runonce.join();
-	std::chrono::milliseconds sleep { m_sleep_gvt_thread };	// Wait before running gvt, this prevents an obvious gvt of zero.
-	std::this_thread::sleep_for(sleep);
-	LOG_INFO("Controller:: joined GVT thread");
+
 	while(m_rungvt.load()==true){
 		if(infguard < ++i){
 			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
@@ -515,7 +495,7 @@ void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
 void Controller::dsUndoDirectConnect()
 {
 	assert(isInDSPhase() && "Controller::dsUndoDirectConnect called while not in the DS phase.");
-	m_root->undoDirectConnect();
+	m_root.undoDirectConnect();
 }
 
 bool Controller::isInDSPhase() const

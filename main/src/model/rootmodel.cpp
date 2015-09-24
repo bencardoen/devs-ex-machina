@@ -18,17 +18,17 @@ RootModel::RootModel()
 
 void RootModel::setComponents(const t_coupledmodelptr& model)
 {
-	std::deque<t_coupledmodelptr> toDo;
-	toDo.push_back(model);
+	std::deque<CoupledModel*> toDo;
+	toDo.push_back(model.get());
 	while (!toDo.empty()) {
-		t_coupledmodelptr top = toDo.front();
+		CoupledModel* top = toDo.front();
 		toDo.pop_front();
 		for (t_modelptr& current : top->getComponents()) {
 			t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel_impl>(current);
 			if (atomic) {
 				m_components.push_back(atomic);
 			} else {
-				toDo.push_back(std::static_pointer_cast<CoupledModel>(current));
+				toDo.push_back(n_tools::staticRawCast<CoupledModel>(current.get()));
 			}
 		}
 	}
@@ -168,15 +168,10 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 	return m_components;
 }
 
-void RootModel::undoDirectConnect()
+void RootModel::reset()
 {
 	m_directConnected = false;
-	LOG_DEBUG("undid direct connect");
-}
-
-std::vector<t_atomicmodelptr> RootModel::getComponents()
-{
-	return m_components;
+	m_components.clear();
 }
 
 } /* namespace n_model */
