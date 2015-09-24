@@ -9,19 +9,17 @@
 #include "tools/objectfactory.h"
 
 using namespace n_model;
-using n_control::t_location_tableptr;
 using namespace n_network;
 
 Optimisticcore::~Optimisticcore()
 {
-	this->m_loctable.reset();
 	this->m_network.reset();
 	// this->m_received_messages member of Core.cpp, don't touch.
 	this->m_sent_messages.clear();
 }
 
-Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
-	: Core(coreid, cores), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
+Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, size_t cores)
+	: Core(coreid, cores), m_network(net), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
 	        t_timestamp::infinity()),m_zombie_rounds(0)
 {
 }

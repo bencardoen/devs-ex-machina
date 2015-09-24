@@ -36,8 +36,6 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		m_coreAmount = 1;
 
 	std::vector<t_coreptr> coreMap;
-	std::shared_ptr<n_control::LocationTable> locTab =
-		createObject<n_control::LocationTable>(m_coreAmount);
 
 	// If no custom allocator is given, use simple allocator
 	if (m_allocator == nullptr)
@@ -57,7 +55,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap.push_back(createObject<Optimisticcore>(network, i, locTab, m_coreAmount));
+			coreMap.push_back(createObject<Optimisticcore>(network, i, m_coreAmount));
 		}
 		break;
 	}
@@ -67,13 +65,13 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp(0,0));
                 t_eotvector timevector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp::infinity());
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap.push_back(createObject<Conservativecore>(network, i, m_coreAmount, locTab, eotvector, timevector));
+			coreMap.push_back(createObject<Conservativecore>(network, i, m_coreAmount, eotvector, timevector));
 		}
 		break;
 	}
 	}
 
-	auto ctrl = createObject<Controller>(m_name, coreMap, m_allocator, locTab, tracers, m_saveInterval);
+	auto ctrl = createObject<Controller>(m_name, coreMap, m_allocator, tracers, m_saveInterval);
 
 	ctrl->setSimType(m_simType);
 	ctrl->setZombieIdleThreshold(m_zombieIdleThreshold);

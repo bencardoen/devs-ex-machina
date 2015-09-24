@@ -9,7 +9,6 @@
 #define SRC_MODEL_OPTIMISTICCORE_H_
 
 #include "model/core.h"
-#include "control/locationtable.h"
 #include "model/v.h"
 using n_network::MessageColor;
 
@@ -26,11 +25,6 @@ private:
 	 * Link to network
 	 */
 	t_networkptr			m_network;
-        
-        /**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
 
 	/**
 	 * This core's current color state.
@@ -180,7 +174,7 @@ public:
 	 * @pre coreid < cores
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
-	Optimisticcore(const t_networkptr& n, std::size_t coreid, const n_control::t_location_tableptr& ltable, size_t cores);
+	Optimisticcore(const t_networkptr& n, std::size_t coreid, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */

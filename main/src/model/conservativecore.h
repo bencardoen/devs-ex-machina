@@ -96,11 +96,6 @@ private:
         t_timestamp             m_last_sent_msgtime;
         
         /**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
-        
-        /**
 	 * Protect access to Time.
 	 */
 	std::mutex 			m_timelock;
@@ -178,7 +173,6 @@ public:
 	 * @see Multicore
 	 */
 	Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
-		const n_control::t_location_tableptr& ltable,
 		const t_eotvector& vc, const t_timevector& tc);
 	virtual ~Conservativecore();
 

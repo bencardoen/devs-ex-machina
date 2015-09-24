@@ -46,9 +46,9 @@ n_model::Core::Core():
 }
 
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
-	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_cores(totalCores), m_live(false), m_termtime(t_timestamp::infinity()),
+	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_idle(false), m_terminated_functor(false),
+                m_idle(false), m_terminated_functor(false), m_cores(totalCores),
                 m_token(n_tools::createObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),

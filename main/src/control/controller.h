@@ -19,7 +19,6 @@
 #include "model/coupledmodel.h"
 #include "model/rootmodel.h"
 #include "model/port.h"
-#include "control/locationtable.h"
 #include "control/allocator.h"
 #include "model/core.h"
 #include "tracers/tracers.h"
@@ -58,7 +57,6 @@ private:
 	std::atomic<int> m_zombieIdleThreshold;
 
 	std::vector<t_coreptr> m_cores;
-	t_location_tableptr m_locTab;
 	std::shared_ptr<Allocator> m_allocator;
 	std::shared_ptr<n_model::RootModel> m_root;
 	t_atomicmodelptr m_atomicOrigin;
@@ -100,7 +98,7 @@ private:
 
 public:
 	Controller(std::string name, std::vector<t_coreptr>& cores,
-		std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab,
+		std::shared_ptr<Allocator>& alloc,
 		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5, std::size_t turns=10000);
 
 	virtual ~Controller();

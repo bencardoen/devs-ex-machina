@@ -36,12 +36,9 @@ using namespace n_examples;
 /*
  * Function to test part of the functionality present in Controller's addModel methods
  */
-void testAddModel(const std::vector<t_atomicmodelptr>& models, std::shared_ptr<Allocator> allocator,
-        std::shared_ptr<n_control::LocationTable> locTab)
+void testAddModel(const std::vector<t_atomicmodelptr>& models, std::shared_ptr<Allocator> allocator)
 {
 	allocator->allocateAll(models);
-	for(const auto& m : models)
-		locTab->registerModel(m, m->getCorenumber());
 }
 
 TEST(Controller, allocation)
@@ -49,7 +46,6 @@ TEST(Controller, allocation)
 	RecordProperty("description", "Adding and allocation of models, recorded in LocationTable");
 
 	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	// Add Models
 	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
@@ -58,12 +54,12 @@ TEST(Controller, allocation)
 	t_atomicmodelptr m4 = createObject<TrafficLight>("Fth");
 
 	const std::vector<t_atomicmodelptr> models= {m1,m2,m3,m4};
-	testAddModel(models, allocator, locTab);
+	testAddModel(models, allocator);
 
-	EXPECT_EQ(locTab->lookupModel("Fst"), 0u);
-	EXPECT_EQ(locTab->lookupModel("Snd"), 1u);
-	EXPECT_EQ(locTab->lookupModel("Thd"), 0u);
-	EXPECT_EQ(locTab->lookupModel("Fth"), 1u);
+	EXPECT_EQ(m1->getCorenumber(), 0);
+	EXPECT_EQ(m2->getCorenumber(), 1);
+	EXPECT_EQ(m3->getCorenumber(), 0);
+	EXPECT_EQ(m4->getCorenumber(), 1);
 }
 
 TEST(Controller, cDEVS)
@@ -76,12 +72,11 @@ TEST(Controller, cDEVS)
 
 		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<Core>();
 		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CLASSIC);
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
@@ -107,12 +102,11 @@ TEST(Controller, cDEVS_coupled)
 
 		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<Core>();
 		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CLASSIC);
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -139,12 +133,11 @@ TEST(Controller, DSDEVS_connections)
 
 		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<DynamicCore>();
 		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::DYNAMIC);
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
@@ -198,23 +191,24 @@ TEST(Controller, pDEVS)
 		t_networkptr network = createObject<Network>(2);
 		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-		t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
-		t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
+		t_coreptr c1 = createObject<Optimisticcore>(network, 0, 2);
+		t_coreptr c2 = createObject<Optimisticcore>(network, 1, 2);
 		coreMap.push_back(c1);
 		coreMap.push_back(c2);
 
 		t_timestamp endTime(2000, 0);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
                 ctrl.setSimType(SimType::OPTIMISTIC);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 		ctrl.addModel(m);
 
-		EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+		EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
+				!=
+			std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
 
 		ctrl.simulate();
 		EXPECT_TRUE(c1->isLive() == false);
@@ -259,19 +253,18 @@ TEST(Controller, CONDEVS)
 		t_networkptr network = createObject<Network>(2);
 		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
                 t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
-		auto c0 = createObject<Conservativecore>(network, 0, 2, locTab, eotvector, timevector);
-		auto c1 = createObject<Conservativecore>(network, 1, 2, locTab, eotvector, timevector);
+		auto c0 = createObject<Conservativecore>(network, 0, 2, eotvector, timevector);
+		auto c1 = createObject<Conservativecore>(network, 1, 2, eotvector, timevector);
 
 		coreMap.push_back(c0);
 		coreMap.push_back(c1);
 
 		t_timestamp endTime(70, 0);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CONSERVATIVE);
 		ctrl.setTerminationTime(endTime);
 
