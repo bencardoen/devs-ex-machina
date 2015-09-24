@@ -82,7 +82,7 @@ private:
 	 * 	Policeman	@ core 1
 	 * 	This core ==0, influencees = "Policeman", == {1}
 	 */
-	std::set<std::size_t> m_influencees;
+	std::vector<std::size_t> m_influencees;
 
 	/**
 	 * Minimum lookahead for all transitioned models in a simulation step.
@@ -177,7 +177,7 @@ public:
 	 * @param vc A shared vector of eot timestamps of all cores.
 	 * @see Multicore
 	 */
-	Conservativecore(const t_networkptr& n , std::size_t coreid ,
+	Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
 		const n_control::t_location_tableptr& ltable,
 		const t_eotvector& vc, const t_timevector& tc);
 	virtual ~Conservativecore();

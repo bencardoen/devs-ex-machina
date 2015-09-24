@@ -41,12 +41,12 @@ n_model::Core::checkInvariants(){
 }
 
 n_model::Core::Core():
-	Core(0)
+	Core(0, 1)
 {
 }
 
-n_model::Core::Core(std::size_t id)
-	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
+n_model::Core::Core(std::size_t id, std::size_t totalCores)
+	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_cores(totalCores), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
                 m_idle(false), m_terminated_functor(false),
                 m_token(n_tools::createObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),

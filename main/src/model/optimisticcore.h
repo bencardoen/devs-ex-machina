@@ -96,8 +96,6 @@ private:
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
         
-        std::size_t 	m_cores;
-        
         /**
 	 * Count for how long this core has been in a zombie state
 	 * @attention : A round == zombiestate if time does not advance, but this does (obviously) not
@@ -182,7 +180,7 @@ public:
 	 * @pre coreid < cores
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
-	Optimisticcore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
+	Optimisticcore(const t_networkptr& n, std::size_t coreid, const n_control::t_location_tableptr& ltable, size_t cores);
 	/**
 	 * Resets ptrs to network and locationtable.
 	 */

@@ -364,7 +364,7 @@ public:
 	 *
 	 * @param influences A set of all current influences (strings: host names) that will be completed
 	 */
-	void addInfluencees(std::set<std::string>& influences) const;
+	void addInfluencees(std::vector<std::size_t>& influences) const;
 
 	/**
 	 * @brief Sets the elapsed time since the previous internal transition.

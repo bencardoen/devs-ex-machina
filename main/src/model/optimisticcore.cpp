@@ -21,8 +21,8 @@ Optimisticcore::~Optimisticcore()
 }
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
-	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
-	        t_timestamp::infinity()),m_cores(cores),m_zombie_rounds(0)
+	: Core(coreid, cores), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
+	        t_timestamp::infinity()),m_zombie_rounds(0)
 {
 }
 

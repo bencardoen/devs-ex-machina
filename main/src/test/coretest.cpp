@@ -748,8 +748,8 @@ TEST(Conservativecore, Abstract){
 
 	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
         t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
-	auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
-	auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
+	auto c0 = createObject<Conservativecore>(network, 0, 2, locTab, eotvector, timevector);
+	auto c1 = createObject<Conservativecore>(network, 1, 2, locTab, eotvector, timevector);
 	coreMap.push_back(c0);
 	coreMap.push_back(c1);
 
@@ -929,9 +929,9 @@ TEST(Conservativecore, Deadlock){
 
                 t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(3, t_timestamp(0,0));
                 t_timevector timevector = createObject<SharedVector<t_timestamp>>(3, t_timestamp::infinity());
-                auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
-                auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
-                auto c2 = createObject<Conservativecore>(network, 2, locTab, eotvector, timevector);
+                auto c0 = createObject<Conservativecore>(network, 0, 3, locTab, eotvector, timevector);
+                auto c1 = createObject<Conservativecore>(network, 1, 3, locTab, eotvector, timevector);
+                auto c2 = createObject<Conservativecore>(network, 2, 3, locTab, eotvector, timevector);
                 coreMap.push_back(c0);
                 coreMap.push_back(c1);
                 coreMap.push_back(c2);
