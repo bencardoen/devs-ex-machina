@@ -88,8 +88,9 @@ void TrafficLight::output(std::vector<n_network::t_msgptr>& msgs) const
 		message = "grey";
 	else  // nothing happens
 		return;
-
+        
 	this->getPort("OBSERVED")->createMessages(message, msgs);
+
 }
 
 t_timestamp TrafficLight::lookAhead() const

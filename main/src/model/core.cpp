@@ -25,7 +25,7 @@ inline void validateTA(const n_network::t_timestamp& val){
 
 n_model::Core::~Core()
 {
-        ;
+        delete m_token.getMessage();
 }
 
 void
@@ -49,7 +49,7 @@ n_model::Core::Core(std::size_t id)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
                 m_idle(false), m_terminated_functor(false),
-                m_token(n_tools::createObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
+                m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -163,7 +163,7 @@ void n_model::Core::init()
 	}
         this->initializeModels();
         this->m_scheduler->hintSize(m_indexed_models.size());
-        m_indexed_models.reserve(m_indexed_models.size());
+        
         m_imm_ids.reserve(m_indexed_models.size());
         
 	for (const auto& model : this->m_indexed_models) {
@@ -231,12 +231,11 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 #ifdef SAFETY_CHECKS		
 		for (const auto& msg : m_mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-                        validateUUID(msg->getSrcUUID()); // noop SC
-			//paintMessage(msg);            // Only for optimistic
-			//msg->setTimeStamp(this->getTime());  // Done in port
+                        validateUUID(msg->getSrcUUID());
 		}
 #endif
-		this->sortMail(m_mailfrom);	// <-- Locked here on msglock
+                
+		this->sortMail(m_mailfrom);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
                 m_mailfrom.clear();
 	}
 }
@@ -278,10 +277,12 @@ void n_model::Core::transition()
                         assert(imminent->nextType()==n_model::CONF);
                         imminent->nextType()=n_model::NONE;
 			imminent->setTimeElapsed(0);
-			imminent->doConfTransition(getMail(modelid));		// Confluent
+                        auto& mail = getMail(modelid);
+			imminent->doConfTransition(mail);		// Confluent
 			imminent->setTime(noncausaltime);
 			this->traceConf(getModel(modelid));
-                        getMail(modelid).clear();
+                        clearProcessedMessages(mail);        
+
 		}
 	}
         for(auto external : m_externs){
@@ -291,9 +292,7 @@ void n_model::Core::transition()
 		external->doExtTransition(mail);
                 assert(external->nextType()==EXT);
                 external->nextType()=n_model::NONE;
-                mail.clear();
 		external->setTime(noncausaltime);
-		
 		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(getModel(id));
 		const t_timestamp queried(external->getTimeNext());		// A previously inactive model can be awoken, make sure we check this.
@@ -305,6 +304,7 @@ void n_model::Core::transition()
 			LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Model ", external->getName(),
 				" changed ta value to infinity, no longer scheduling.");
 		}
+                clearProcessedMessages(mail);
 	}
 }
 
@@ -317,7 +317,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
                         m_stats.logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
 		} else {
-			this->queueLocalMessage(std::move(message));
+			this->queueLocalMessage(message);
 		}
 	}
 	this->unlockMessages();
@@ -494,29 +494,35 @@ void n_model::Core::runSmallStep()
 
 void n_model::Core::traceInt(const t_atomicmodelptr& model)
 {
+#ifndef NO_TRACER
 	if (not this->m_tracers) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " I have no tracers ?? , tracerset = nullptr.");
 	} else {
 		this->m_tracers->tracesInternal(model, this->getCoreID());
 	}
+#endif
 }
 
 void n_model::Core::traceExt(const t_atomicmodelptr& model)
 {
+#ifndef NO_TRACER
 	if (not this->m_tracers) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " I have no tracers ?? , tracerset = nullptr.");
 	} else {
 		this->m_tracers->tracesExternal(model, this->getCoreID());
 	}
+#endif
 }
 
 void n_model::Core::traceConf(const t_atomicmodelptr& model)
 {
+#ifndef NO_TRACER
 	if (not this->m_tracers) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " I have no tracers ?? , tracerset = nullptr.");
 	} else {
 		this->m_tracers->tracesConfluent(model, this->getCoreID());
 	}
+#endif
 }
 
 void n_model::Core::setTerminationTime(t_timestamp endtime)
@@ -586,6 +592,23 @@ void n_model::Core::signalTracersFlush() const
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " asking tracers to write output up to ", marktime);
 	n_tracers::traceUntil(marktime);
 }
+
+void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
+{
+#ifdef SAFETY_CHECKS
+        if(msgs.size()==0)
+                throw std::logic_error("Msgs not empty after processing ?");
+#endif
+        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
+        for(auto& ptr : msgs){
+                delete ptr;
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif   
+        }
+        msgs.clear();
+}
+
 
 void n_model::Core::clearModels()
 {

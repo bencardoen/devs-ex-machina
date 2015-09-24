@@ -13,7 +13,7 @@ struct uuid{
          * Local index nr.
          */
         size_t  m_local_id;
-        constexpr uuid():m_core_id(0),m_local_id(0){;}
+        constexpr uuid():m_core_id(std::numeric_limits<size_t>::max()),m_local_id(std::numeric_limits<size_t>::max()){;}
         constexpr uuid(size_t cid, size_t lid):m_core_id(cid), m_local_id(lid){;}
 };
 

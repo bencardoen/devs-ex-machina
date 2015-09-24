@@ -5,6 +5,8 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 
+#include <thread>
+
 #include "model/optimisticcore.h"
 #include "tools/objectfactory.h"
 
@@ -16,14 +18,34 @@ Optimisticcore::~Optimisticcore()
 {
 	this->m_loctable.reset();
 	this->m_network.reset();
-	// this->m_received_messages member of Core.cpp, don't touch.
-	this->m_sent_messages.clear();
+        for(auto& ptr : m_sent_messages){
+                delete ptr;
+        }
+        m_sent_messages.clear();
 }
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, const t_location_tableptr& ltable, size_t cores)
 	: Core(coreid), m_network(net), m_loctable(ltable), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
 	        t_timestamp::infinity()),m_cores(cores),m_zombie_rounds(0)
 {
+}
+
+void
+Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
+#ifdef SAFETY_CHECKS
+        if(msgs.size()==0)
+                throw std::logic_error("Msgs not empty after processing ?");
+#endif
+        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
+        for(auto& ptr : msgs){
+                if(ptr->getSourceCore()==this->getCoreID())
+                        delete ptr;
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif   
+        
+        }
+        msgs.clear();
 }
 
 void Optimisticcore::sendMessage(const t_msgptr& msg)
@@ -57,11 +79,30 @@ void Optimisticcore::paintMessage(const t_msgptr& msg)
 	msg->paint(this->getColor());
 }
 
-void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
+void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
 {
 	// We're locked on msgs
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
-	this->m_received_messages->erase(MessageEntry(msg));
+        
+        if(this->m_received_messages->contains(msg)){   // Have received it before, but not processed it.
+                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," original found ", msg->toString(), " deleting ");
+                this->m_received_messages->erase(MessageEntry(msg));
+                delete msg;
+        }else{                                          // Not yet received (origin) OR processed
+                if(msgtimeinpast){                      // Processed, destroy am
+                        LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
+                        delete msg;
+                }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
+                        if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
+                                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass.");
+                                msg->setDeleteFlag();
+                        }
+                        else{                           // Second time, delete.
+                                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
+                                delete msg;             
+                        }
+                }
+        }
 }
 
 void Optimisticcore::markMessageStored(const t_msgptr& msg)
@@ -98,32 +139,38 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 
 void Optimisticcore::receiveMessage(const t_msgptr& msg)
 {
+        const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
+        bool msgtime_in_past = false;
+        if(msgtime <= this->getTime().getTime()){       // <=, else you risk the edge case of extern/intern double transition instead of conf.
+                msgtime_in_past=true;
+        }
+        
 	m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
         
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
-		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
+		this->handleAntiMessage(msg, msgtime_in_past);
 	} else {
-		this->queuePendingMessage(msg); // do not store antimessage
+		this->queuePendingMessage(msg);
+                this->registerReceivedMessage(msg);         
 	}
+        
 	
-	if (msg->getTimeStamp().getTime() <= this->getTime().getTime()) {  // DO NOT change the operator, it should always be <=
-		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime(),
-		        " msg follows: ", msg->toString());
+	if (msgtime_in_past) {  
+		LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime());
                 m_stats.logStat(REVERTS);
-                this->revert(msg->getTimeStamp().getTime());
+                this->revert(msgtime);
 	}
-
-	this->registerReceivedMessage(msg);             // Mattern/GVT
 }
 
 
 void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 {
-        	// ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
-	if (msg->getColor() == MessageColor::WHITE && !msg->isAntiMessage()) {
+        // ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
+        // msg is not an antimessage here.
+	if (msg->getColor() == MessageColor::WHITE) {
 		{	// Raii, so that notified thread will not have to wait on lock.
 			std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
@@ -324,14 +371,20 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 	this->lockSimulatorStep();
 	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
-	for (; senditer != m_sent_messages.end(); ++senditer) {
+	for (; senditer != m_sent_messages.end(); ++senditer) {      
 		if ((*senditer)->getTimeStamp() > this->getGVT()) {
 			break;
 		}
+                t_msgptr& ptr = *senditer;
+                delete ptr;
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif          
 	}
 	// Erase them.
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ", distance(m_sent_messages.begin(), senditer),
 	        " sent messages to erase.");
+        /// TODO delete sent messages from begin() to senditer (not incl)
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ", m_sent_messages.size());
 	// Update models
@@ -374,6 +427,7 @@ void n_model::Optimisticcore::unlockMessages()
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
+        /// Ownership semantics : receiver is always responsible for delete
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {

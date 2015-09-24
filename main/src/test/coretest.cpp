@@ -108,7 +108,6 @@ TEST(Core, CoreFlow)
 	tracers->stopTracers();	//disable the output
 	c.setTracers(tracers);
 	EXPECT_EQ(c.getCoreID(), 0u);
-	std::size_t portname_stub = 1;
 	t_atomicmodelptr modelfrom = createObject<ATOMIC_TRAFFICLIGHT>("Amodel");
 	t_atomicmodelptr modelto = createObject<ATOMIC_TRAFFICLIGHT>("toBen");
 	EXPECT_EQ(modelfrom->getName(), "Amodel");
@@ -117,9 +116,6 @@ TEST(Core, CoreFlow)
 	c.addModel(modelto);
 	EXPECT_EQ(c.getModel("toBen"), modelto);
 	c.init();
-	t_msgptr mymessage = createObject<Message>(modelfrom->getUUID(), modelto->getUUID(), (0), portname_stub, portname_stub);
-	EXPECT_EQ(mymessage->getDestinationCore(), 0u);
-	EXPECT_EQ(mymessage->getSourceCore(), 0u);
 	c.init();
 	//c.printSchedulerState();
 	c.syncTime();
@@ -231,15 +227,18 @@ TEST(Core, terminationfunction)
 }
 
 TEST(Optimisticcore, revert){
+        // Valgrind clear
 	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
 	using n_control::t_location_tableptr;
 	using n_control::LocationTable;
+        
 	t_networkptr network = createObject<Network>(2);
 	t_location_tableptr loctable = createObject<LocationTable>(2);
 	n_tracers::t_tracersetptr tracers = createObject<n_tracers::t_tracerset>();
 	tracers->stopTracers();	//disable the output
-	t_coreptr coreone = createObject<n_model::Optimisticcore>(network, 0, loctable, 2 );
+	
+        t_coreptr coreone = createObject<n_model::Optimisticcore>(network, 0, loctable, 2 );
 	coreone->setTracers(tracers);
 	auto tcmodel = createObject<COUPLED_TRAFFICLIGHT>("mylight", 0);
 	coreone->addModel(tcmodel);
@@ -249,19 +248,18 @@ TEST(Optimisticcore, revert){
 	coreone->init();
 	coreone->syncTime();
 	EXPECT_EQ(coreone->getTime().getTime(), 58u);
-	//coreone->printSchedulerState();
+	
 	coreone->setLive(true);
 	coreone->runSmallStep();
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
-	//coreone->printSchedulerState();
+	
 	// Trigger revert
 	// Setup message state to test all paths
-	t_timestamp beforegvt(61,0);
+	
 	t_timestamp gvt(62,0);
 	t_timestamp aftergvt(63,0);
-	t_msgptr msg = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), beforegvt, 3u, 2u);
-	t_msgptr msggvt = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), gvt, 3u, 2u);
-	t_msgptr msgaftergvt = createObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
+	
+	t_msgptr msgaftergvt = createRawObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
@@ -269,18 +267,18 @@ TEST(Optimisticcore, revert){
 	EXPECT_EQ(coreone->getTime(), 62u);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
-	Message origin = *msgaftergvt;
-	t_msgptr antimessage( new Message(origin));
-//	antimessage->setSourceCore(42);	// Work around error in log.
-	antimessage->setAntiMessage(true);
-	coreone->receiveMessage(antimessage);		// this triggers a new revert, we were @67, now @63
+	
+	msgaftergvt->setAntiMessage(true);
+	coreone->receiveMessage(msgaftergvt);		// this triggers a new revert, we were @67, now @63
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
+        
 }
 
 
 TEST(Optimisticcore, revertidle){
+        // Valgrind clear.
 	RecordProperty("description", "Revert: test if a core can go from idle/terminated back to working.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -348,6 +346,8 @@ TEST(Optimisticcore, revertidle){
 	c1->logCoreState();
 	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
+        
+        c2->runSmallStep();     // give tlight chance to delete amsgs.
 
 	n_tracers::traceUntil(t_timestamp::infinity());
 	n_tracers::clearAll();
@@ -502,13 +502,7 @@ TEST(Optimisticcore, revertoffbyone){
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a revert.
 	/// 108::0 < 108::2, forces revert.
-	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(108, 0), 0u, 0u, "toManual");
-//        msg->getDstUUID().m_core_id=1;
-//        msg->getDstUUID().m_local_id=0;
-//        msg->getSrcUUID().m_core_id=0;
-//        msg->getSrcUUID().m_local_id=0;
-//	msg->setSourceCore(0);
-//	msg->setDestinationCore(1);
+	t_msgptr msg = createRawObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(108, 0), 0u, 0u, "toManual");
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
 	c2->runSmallStep();
@@ -523,12 +517,14 @@ TEST(Optimisticcore, revertoffbyone){
 	tracers->finishTrace();
 
 	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-
+        // msg is not antimessage, has no am equivalent and is not in __sent from any core, so delete manual.
+        delete msg;
 	}
 }
 
 
 TEST(Optimisticcore, revertstress){
+        // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -581,18 +577,10 @@ TEST(Optimisticcore, revertstress){
 	c2->runSmallStep();		// Fires light @ 58:2, advances to 108.
 	EXPECT_EQ(c2->getTime().getTime(), 108u);
 	/// Next simulate what happens if light gets a confluent transition, combined with a double revert.
-	t_msgptr msg = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(101, 0), 0u,0u, "toManual");
-//        msg->getSrcUUID().m_local_id=0;
-//        msg->getSrcUUID().m_core_id=0;
-//        msg->getDstUUID().m_local_id=0;
-//        msg->getDstUUID().m_core_id=1;
+	t_msgptr msg = createRawObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(101, 0), 0u,0u, "toManual");
 	msg->paint(MessageColor::WHITE);
 	network->acceptMessage(msg);
-	t_msgptr msglater = createObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(100, 0), 0u,0u, "toManual");
-//	msglater->getSrcUUID().m_local_id=0;
-//        msglater->getSrcUUID().m_core_id=0;
-//        msglater->getDstUUID().m_local_id=0;
-//        msglater->getDstUUID().m_core_id=1;
+	t_msgptr msglater = createRawObject<SpecializedMessage<std::string>>(police->getUUID(), light->getUUID(), t_timestamp(100, 0), 0u,0u, "toManual");
 	msglater->paint(MessageColor::WHITE);
 	network->acceptMessage(msglater);
 	c2->runSmallStep();
@@ -607,11 +595,15 @@ TEST(Optimisticcore, revertstress){
 	tracers->finishTrace();
 
 	EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
-
+        // Both messages were not sent by core, so delete them manually, they don't have antimessages
+        // equivalents.
+        delete msglater;
+        delete msg;
 	}
 }
 
 TEST(Optimisticcore, revert_antimessaging){
+        // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{

@@ -256,6 +256,19 @@ private:
         virtual
         void
         checkInvariants();
+        
+        /**
+         * After a transition (and trace call), the processed messages
+         * are no longer needed (except in optimistic). In conservative and single core,
+         * the messages are safe to destroy. This method is virtual to allow optimistic to override
+         * this behaviour.
+         * @param msgs is the vector of msgptrs processed by a single model in a confluent/external transition.
+         * @pre msgs.size()>0
+         * @post msgs.size()==0
+         */
+        virtual
+        void
+        clearProcessedMessages(std::vector<t_msgptr>& msgs);
 
 protected:
 	/**
@@ -708,13 +721,6 @@ public:
 	receiveControl(const t_controlmsg& /*controlmessage*/, int /*first*/, std::atomic<bool>& /*rungvt*/){
 		assert(false);
 	}
-
-	/**
-	 * Noop in single core (and is never called), but it is called as base trigger by receiveMessage()
-	 */
-	virtual
-	void
-	handleAntiMessage(const t_msgptr&){;}
 
 	/**
 	 * Noop in single core. Paints message according to current color in core. (multicore).

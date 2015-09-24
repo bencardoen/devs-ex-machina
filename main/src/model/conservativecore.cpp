@@ -187,13 +187,12 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
         m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
         
-        if (msg->isAntiMessage()) {
-                m_stats.logStat(AMSGRCVD);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
-		this->handleAntiMessage(msg);	// wipes message if it exists in pending, timestamp is checked later.
-	} else {
-		this->queuePendingMessage(msg); // do not store antimessage
-	}
+#ifdef SAFETY_CHECKS
+        if (msg->isAntiMessage()) 
+                throw std::logic_error("Antimessage in conservativecore !!");
+#endif
+        
+        this->queuePendingMessage(msg); // do not store antimessage
 	
         const t_timestamp::t_time currenttime= this->getTime().getTime();       // Avoid x times locked getter
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
@@ -254,7 +253,7 @@ void Conservativecore::buildInfluenceeMap(){
 
 void Conservativecore::invokeStallingBehaviour()
 {
-        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void Conservativecore::resetLookahead(){
