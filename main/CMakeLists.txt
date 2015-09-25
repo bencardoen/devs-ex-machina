@@ -144,8 +144,6 @@ add_library(
     src/control/allocator.cpp
     src/control/controller.cpp
     src/control/controllerconfig.cpp
-    src/control/locationtable.cpp
-    src/control/timeevent.cpp
     src/network/message.cpp
     src/network/controlmessage.cpp
     src/network/network.cpp

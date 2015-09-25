@@ -285,7 +285,7 @@ public:
 	 *
 	 * @param influences A set of all current influences (strings: host names) that will be completed
 	 */
-	void addInfluencees(std::set<std::string>& influences) const;
+	void addInfluencees(std::vector<std::size_t>& influences) const;
 
 	const Model* getHost() const
 	{return m_hostmodel;}

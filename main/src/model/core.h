@@ -173,6 +173,11 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
+
+	/**
+	 * Total amount of cores.
+	 */
+	std::size_t m_cores;
         
 private:
         /**
@@ -313,7 +318,7 @@ protected:
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
 	 */
-	Core(std::size_t id);
+	Core(std::size_t id, std::size_t totalCores);
 
 	/**
 	 * Subclass hook. Is called after imminents are collected.

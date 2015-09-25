@@ -35,9 +35,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	else if(!isParallel(m_simType))
 		m_coreAmount = 1;
 
-	std::unordered_map<std::size_t, t_coreptr> coreMap;
-	std::shared_ptr<n_control::LocationTable> locTab =
-		createObject<n_control::LocationTable>(m_coreAmount);
+	std::vector<t_coreptr> coreMap;
 
 	// If no custom allocator is given, use simple allocator
 	if (m_allocator == nullptr)
@@ -48,16 +46,16 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	// Create all cores
 	switch (m_simType) {
 	case SimType::CLASSIC:
-		coreMap[0] = createObject<Core>();
+		coreMap.push_back(createObject<Core>());
 		break;
 	case SimType::DYNAMIC:
-		coreMap[0] = createObject<DynamicCore>();
+		coreMap.push_back(createObject<DynamicCore>());
 		break;
 	case SimType::OPTIMISTIC:
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap[i] = createObject<Optimisticcore>(network, i, locTab, m_coreAmount);
+			coreMap.push_back(createObject<Optimisticcore>(network, i, m_coreAmount));
 		}
 		break;
 	}
@@ -67,13 +65,13 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp(0,0));
                 t_eotvector timevector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp::infinity());
 		for (size_t i = 0; i < m_coreAmount; ++i) {
-			coreMap[i] = createObject<Conservativecore>(network, i, locTab, eotvector, timevector);
+			coreMap.push_back(createObject<Conservativecore>(network, i, m_coreAmount, eotvector, timevector));
 		}
 		break;
 	}
 	}
 
-	auto ctrl = createObject<Controller>(m_name, coreMap, m_allocator, locTab, tracers, m_saveInterval, m_turns);
+	auto ctrl = createObject<Controller>(m_name, coreMap, m_allocator, tracers, m_saveInterval, m_turns);
 
 	ctrl->setSimType(m_simType);
 	ctrl->setZombieIdleThreshold(m_zombieIdleThreshold);

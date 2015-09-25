@@ -11,10 +11,10 @@
 
 namespace n_model {
 
-Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid,
-        const n_control::t_location_tableptr& ltable, const t_eotvector& vc, const t_timevector& tc)
-	: Core(coreid),
-	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_loctable(ltable),m_zombie_rounds(0)
+Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
+	const t_eotvector& vc, const t_timevector& tc)
+	: Core(coreid, totalCores),
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_zombie_rounds(0)
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -236,14 +236,17 @@ void Conservativecore::initExistingSimulation(const t_timestamp& loaddate){
 
 void Conservativecore::buildInfluenceeMap(){
 	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map.");
-	std::set<std::string>	influencees;
+	std::vector<std::size_t> temp(m_cores, 0);
+
 	for(const auto& model: m_indexed_models){
-		model->addInfluencees(influencees);
+		model->addInfluencees(temp);
 	}
-	for(const auto& modelname : influencees){
-		std::size_t influencee_core = this->m_loctable->lookupModel(modelname);
-                if(influencee_core != this->getCoreID())                // Dependency on self is implied.
-                        this->m_influencees.insert(influencee_core);
+	for(std::size_t i = 0; i < m_cores; ++i){
+		LOG_INFO("CCORE :: ", getCoreID(), "temp vector[", i, "] = ", temp[i]);
+		if(i == getCoreID())
+			continue;
+                if(temp[i])                // Dependency on self is implied.
+                        this->m_influencees.push_back(i);
 	}
 	
 	for(const auto& coreid : m_influencees){

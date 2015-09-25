@@ -9,7 +9,6 @@
 #define SRC_MODEL_OPTIMISTICCORE_H_
 
 #include "model/core.h"
-#include "control/locationtable.h"
 #include "model/v.h"
 using n_network::MessageColor;
 
@@ -26,11 +25,6 @@ private:
 	 * Link to network
 	 */
 	t_networkptr			m_network;
-        
-        /**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
 
 	/**
 	 * This core's current color state.
@@ -95,8 +89,6 @@ private:
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
 	std::deque<t_msgptr>		m_sent_messages;
-        
-        std::size_t 	m_cores;
         
         /**
 	 * Count for how long this core has been in a zombie state
@@ -193,8 +185,7 @@ public:
 	 * @pre coreid < cores
 	 * @pre loctable, network & cores are all dimensioned EXACTLY the same.
 	 */
-	Optimisticcore(const t_networkptr& n , std::size_t coreid , const n_control::t_location_tableptr& ltable, size_t cores);
-        
+	Optimisticcore(const t_networkptr& n, std::size_t coreid, size_t cores);
 	/**
 	 * Deletes all sent messages.
          * @attention : The core is held by shared_ptr on Controller, so the controller's thread will always invoke the destructor.

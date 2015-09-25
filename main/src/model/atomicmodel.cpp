@@ -210,7 +210,7 @@ t_timestamp AtomicModel_impl::getTimeElapsed() const
 	return m_elapsed;
 }
 
-void AtomicModel_impl::addInfluencees(std::set<std::string>& influences) const
+void AtomicModel_impl::addInfluencees(std::vector<std::size_t>& influences) const
 {
 	for (auto& port: this->m_iPorts)
 		port->addInfluencees(influences);

@@ -5,7 +5,6 @@
  *      Author: Ben Cardoen -- Tim Tuijn
  */
 #include <unordered_map>
-#include "control/locationtable.h"
 #include "model/core.h"
 #include "tools/sharedvector.h"
 
@@ -83,7 +82,7 @@ private:
 	 * 	Policeman	@ core 1
 	 * 	This core ==0, influencees = "Policeman", == {1}
 	 */
-	std::set<std::size_t> m_influencees;
+	std::vector<std::size_t> m_influencees;
 
 	/**
 	 * Minimum lookahead for all transitioned models in a simulation step.
@@ -95,11 +94,6 @@ private:
          * Needed for eot calculation.
          */
         t_timestamp             m_last_sent_msgtime;
-        
-        /**
-	 * Location table
-	 */
-	n_control::t_location_tableptr	m_loctable;
         
         /**
 	 * Protect access to Time.
@@ -178,8 +172,7 @@ public:
 	 * @param vc A shared vector of eot timestamps of all cores.
 	 * @see Multicore
 	 */
-	Conservativecore(const t_networkptr& n , std::size_t coreid ,
-		const n_control::t_location_tableptr& ltable,
+	Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
 		const t_eotvector& vc, const t_timevector& tc);
 	virtual ~Conservativecore();
 

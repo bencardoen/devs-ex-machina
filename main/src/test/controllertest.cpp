@@ -20,7 +20,6 @@
 #include "examples/trafficlight_coupled/trafficsystemc.h"
 #include "examples/trafficlight_ds/trafficsystemds.h"
 #include "model/dynamiccore.h"
-#include "control/timeevent.h"
 #include "test/testmodels.h"
 #include "examples/abstract_conservative/modelc.h"
 #include <unordered_set>
@@ -37,12 +36,9 @@ using namespace n_examples;
 /*
  * Function to test part of the functionality present in Controller's addModel methods
  */
-void testAddModel(const std::vector<t_atomicmodelptr>& models, std::shared_ptr<Allocator> allocator,
-        std::shared_ptr<n_control::LocationTable> locTab)
+void testAddModel(const std::vector<t_atomicmodelptr>& models, std::shared_ptr<Allocator> allocator)
 {
 	allocator->allocateAll(models);
-	for(const auto& m : models)
-		locTab->registerModel(m, m->getCorenumber());
 }
 
 TEST(Controller, allocation)
@@ -50,7 +46,6 @@ TEST(Controller, allocation)
 	RecordProperty("description", "Adding and allocation of models, recorded in LocationTable");
 
 	std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-	std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 	// Add Models
 	t_atomicmodelptr m1 = createObject<TrafficLight>("Fst");
@@ -59,12 +54,12 @@ TEST(Controller, allocation)
 	t_atomicmodelptr m4 = createObject<TrafficLight>("Fth");
 
 	const std::vector<t_atomicmodelptr> models= {m1,m2,m3,m4};
-	testAddModel(models, allocator, locTab);
+	testAddModel(models, allocator);
 
-	EXPECT_EQ(locTab->lookupModel("Fst"), 0u);
-	EXPECT_EQ(locTab->lookupModel("Snd"), 1u);
-	EXPECT_EQ(locTab->lookupModel("Thd"), 0u);
-	EXPECT_EQ(locTab->lookupModel("Fth"), 1u);
+	EXPECT_EQ(m1->getCorenumber(), 0);
+	EXPECT_EQ(m2->getCorenumber(), 1);
+	EXPECT_EQ(m3->getCorenumber(), 0);
+	EXPECT_EQ(m4->getCorenumber(), 1);
 }
 
 TEST(Controller, cDEVS)
@@ -75,14 +70,13 @@ TEST(Controller, cDEVS)
 		CoutRedirect myRedirect(filestream);
 		auto tracers = createObject<n_tracers::t_tracerset>();
 
-		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<Core>();
-		coreMap[0] = c;
+		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CLASSIC);
 
 		ctrl.setTerminationTime(t_timestamp(360, 0));
@@ -106,14 +100,13 @@ TEST(Controller, cDEVS_coupled)
 		CoutRedirect myRedirect(filestream);
 		auto tracers = createObject<n_tracers::t_tracerset>();
 
-		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<Core>();
-		coreMap[0] = c;
+		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CLASSIC);
 		ctrl.setTerminationTime(t_timestamp(360, 0));
 
@@ -138,14 +131,13 @@ TEST(Controller, DSDEVS_connections)
 		CoutRedirect myRedirect(filestream);
 		auto tracers = createObject<n_tracers::t_tracerset>();
 
-		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(1);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(1);
 
 		t_coreptr c = createObject<DynamicCore>();
-		coreMap[0] = c;
+		coreMap.push_back(c);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::DYNAMIC);
 		ctrl.setTerminationTime(t_timestamp(3600, 0));
 
@@ -197,25 +189,26 @@ TEST(Controller, pDEVS)
 		auto tracers = createObject<n_tracers::t_tracerset>();
 
 		t_networkptr network = createObject<Network>(2);
-		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
-		t_coreptr c1 = createObject<Optimisticcore>(network, 0, locTab, 2);
-		t_coreptr c2 = createObject<Optimisticcore>(network, 1, locTab, 2);
-		coreMap[0] = c1;
-		coreMap[1] = c2;
+		t_coreptr c1 = createObject<Optimisticcore>(network, 0, 2);
+		t_coreptr c2 = createObject<Optimisticcore>(network, 1, 2);
+		coreMap.push_back(c1);
+		coreMap.push_back(c2);
 
 		t_timestamp endTime(2000, 0);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
                 ctrl.setSimType(SimType::OPTIMISTIC);
 		ctrl.setTerminationTime(endTime);
 
 		t_coupledmodelptr m = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
 		ctrl.addModel(m);
 
-		EXPECT_TRUE(locTab->lookupModel("trafficLight") != locTab->lookupModel("policeman"));
+		EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
+				!=
+			std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
 
 		ctrl.simulate();
 		EXPECT_TRUE(c1->isLive() == false);
@@ -258,21 +251,20 @@ TEST(Controller, CONDEVS)
 		auto tracers = createObject<n_tracers::t_tracerset>();
 
 		t_networkptr network = createObject<Network>(2);
-		std::unordered_map<std::size_t, t_coreptr> coreMap;
+		std::vector<t_coreptr> coreMap;
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
-		std::shared_ptr<n_control::LocationTable> locTab = createObject<n_control::LocationTable>(2);
 
 		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
                 t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
-		auto c0 = createObject<Conservativecore>(network, 0, locTab, eotvector, timevector);
-		auto c1 = createObject<Conservativecore>(network, 1, locTab, eotvector, timevector);
+		auto c0 = createObject<Conservativecore>(network, 0, 2, eotvector, timevector);
+		auto c1 = createObject<Conservativecore>(network, 1, 2, eotvector, timevector);
 
-		coreMap[0] = c0;
-		coreMap[1] = c1;
+		coreMap.push_back(c0);
+		coreMap.push_back(c1);
 
 		t_timestamp endTime(70, 0);
 
-		Controller ctrl("testController", coreMap, allocator, locTab, tracers);
+		Controller ctrl("testController", coreMap, allocator, tracers);
 		ctrl.setSimType(SimType::CONSERVATIVE);
 		ctrl.setTerminationTime(endTime);
 
@@ -286,142 +278,4 @@ TEST(Controller, CONDEVS)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDER "controller/condevstest.txt", TESTFOLDER "controller/condevstest.corr"), 0);
-}
-
-TEST(Pause, DISABLED_Pause)
-{
-	RecordProperty("description", "Tests pause functionality of simulator");
-
-	ControllerConfig conf;
-	conf.m_name = "SimpleSim";
-	conf.m_saveInterval = 30;
-	conf.m_simType = SimType::OPTIMISTIC;
-	conf.m_coreAmount = 2;
-
-	std::ofstream filestream(TESTFOLDER "controller/pausetest.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(360, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->addPauseEvent(t_timestamp(120,0),5);
-
-		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
-		ctrl->addModel(m1);
-
-		ctrl->simulate();
-	}
-}
-
-TEST(Pause, DISABLED_RepeatPause)
-{
-	RecordProperty("description", "Tests repeating pause");
-
-	ControllerConfig conf;
-	conf.m_name = "SimpleSim";
-	conf.m_saveInterval = 30;
-	conf.m_simType = SimType::OPTIMISTIC;
-	conf.m_coreAmount = 2;
-
-	std::ofstream filestream(TESTFOLDER "controller/pausetest2.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(360, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->addPauseEvent(t_timestamp(60,0),2, true);
-
-		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
-		ctrl->addModel(m1);
-
-		ctrl->simulate();
-	}
-}
-
-TEST(Save, DISABLED_ClassicSave)
-{
-	RecordProperty("description", "Tests saving a simple simulation");
-
-	ControllerConfig conf;
-	conf.m_name = "SimpleSim";
-	conf.m_saveInterval = 1;
-
-	std::ofstream filestream(TESTFOLDER "controller/savetestc.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(720, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->addSaveEvent(t_timestamp(100, 0), TESTFOLDER "controller/savetestc");
-
-		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
-		ctrl->addModel(m1);
-
-		ctrl->simulate();
-	}
-}
-
-TEST(Save, DISABLED_ClassicLoad)
-{
-	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
-
-	ControllerConfig conf;
-	conf.m_name = "LoadedSim";
-	conf.m_saveInterval = 1;
-
-	std::ofstream filestream(TESTFOLDER "controller/loadtestc.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(720, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->load(TESTFOLDER "controller/savetestc_100");
-		ctrl->simulate();
-	}
-}
-
-TEST(Save, DISABLED_ParallelSave)
-{
-	RecordProperty("description", "Tests saving a simple simulation");
-
-	ControllerConfig conf;
-	conf.m_name = "SimpleSim";
-	conf.m_saveInterval = 1;
-	conf.m_simType = SimType::OPTIMISTIC;
-	conf.m_coreAmount = 2;
-
-	std::ofstream filestream(TESTFOLDER "controller/savetestp.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(720, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->addSaveEvent(t_timestamp(100, 0), TESTFOLDER "controller/savetestp");
-
-		t_coupledmodelptr m1 = createObject<n_examples_coupled::TrafficSystem>("trafficSystem");
-		ctrl->addModel(m1);
-
-		ctrl->simulate();
-	}
-}
-
-TEST(Save, DISABLED_ParallelLoad)
-{
-	RecordProperty("description", "Tests loading and restarting a simple parallel simulation");
-
-	ControllerConfig conf;
-	conf.m_name = "LoadedSim";
-	conf.m_saveInterval = 30;
-	conf.m_simType = SimType::OPTIMISTIC;
-	conf.m_coreAmount = 2;
-
-	std::ofstream filestream(TESTFOLDER "controller/loadtestp.txt");
-	{
-		CoutRedirect myRedirect(filestream);
-		auto ctrl = conf.createController();
-		t_timestamp endTime(720, 0);
-		ctrl->setTerminationTime(endTime);
-		ctrl->load(TESTFOLDER "controller/savetestp_100");
-		ctrl->simulate();
-	}
 }

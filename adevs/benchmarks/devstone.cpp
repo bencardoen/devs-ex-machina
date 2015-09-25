@@ -305,7 +305,7 @@ void allocate(std::size_t numCores, std::size_t pCount, Processor* p){
 	if(p != nullptr){
 		std::size_t core = p->m_counter*numCores/pCount;
 		p->setProc(core);
-		std::cout << "assigned processor_" << p->m_counter << " to core " << core << '\n';
+//		std::cout << "assigned processor_" << p->m_counter << " to core " << core << '\n';
 	}
 }
 void allocate(std::size_t, std::size_t, Generator* g){
@@ -315,7 +315,7 @@ void findProcessors(std::vector<Processor*>& procs, adevs::Devs<t_event>* c){
 	Processor* p = dynamic_cast<Processor*>(c);
 	if(p != nullptr){
 		procs.push_back(p);
-		std::cout << "found processor " << p->m_counter << '\n';
+//		std::cout << "found processor " << p->m_counter << '\n';
 	}
 	else {
 		CoupledRecursion* r = dynamic_cast<CoupledRecursion*>(c);

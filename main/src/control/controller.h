@@ -12,20 +12,17 @@
 #include <functional>
 #include <memory>
 #include <thread>
-#include <unordered_map>
 #include <condition_variable>
 #include "network/timestamp.h"
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include "model/rootmodel.h"
 #include "model/port.h"
-#include "control/locationtable.h"
 #include "control/allocator.h"
 #include "model/core.h"
 #include "tracers/tracers.h"
 #include "tools/globallog.h"
 #include "model/dssharedstate.h"
-#include "control/timeevent.h"
 #include "control/simtype.h"
 #include "tools/statistic.h"
 
@@ -47,7 +44,6 @@ private:
 	SimType m_simType;
 	bool m_hasMainModel;
 	bool m_isSimulating;
-	bool m_isLoadedSim;	/// Whether this is a simulation reinitialized from a binary save
 
 	std::string m_name;
 
@@ -58,14 +54,12 @@ private:
 	size_t m_saveInterval;
 	std::atomic<int> m_zombieIdleThreshold;
 
-	std::unordered_map<std::size_t, t_coreptr> m_cores;
-	t_location_tableptr m_locTab;
+	std::vector<t_coreptr> m_cores;
 	std::shared_ptr<Allocator> m_allocator;
-	std::shared_ptr<n_model::RootModel> m_root;
+	n_model::RootModel m_root;
 	t_atomicmodelptr m_atomicOrigin;
 	t_coupledmodelptr m_coupledOrigin;
 	n_tracers::t_tracersetptr m_tracers;
-	TimeEventQueue m_events;
 	t_timestamp m_lastGVT;
 
 	DSSharedState m_sharedState;
@@ -101,8 +95,8 @@ private:
         void logStat(enum CTRLSTAT_TYPE);
 
 public:
-	Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
-		std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab,
+	Controller(std::string name, std::vector<t_coreptr>& cores,
+		std::shared_ptr<Allocator>& alloc,
 		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5, std::size_t turns=10000);
 
 	virtual ~Controller();
@@ -116,18 +110,6 @@ public:
 	 * @brief Set a coupled model as the main model using the given allocator
 	 */
 	void addModel(const t_coupledmodelptr& coupled);
-
-	/**
-	 * @brief Serialize all models
-	 * @precondition All cores need to be stopped beforehand
-	 */
-	void save(const std::string& fname, const t_timestamp& time);
-
-	/**
-	 * @brief Load all models
-	 * @param isSingleAtomic : Whether nor not the simulation was of a single atomic model, false by default
-	 */
-	void load(const std::string& fname, bool isSingleAtomic = false);
 
 	/**
 	 * @brief Main loop, starts simulation
@@ -153,16 +135,6 @@ public:
 	 * Update the GVT interval with a new value.
 	 */
 	void setGVTInterval(std::size_t ms);
-
-	/**
-	 * @brief Add a moment during which the simulation will pause for a certain time
-	 */
-	void addPauseEvent(t_timestamp time, size_t duration, bool repeating = false);
-
-	/**
-	 * @brief Add a moment on which the simulation will be paused, saved and continued
-	 */
-	void addSaveEvent(t_timestamp time, std::string prefix, bool repeating = false);
 
 	/**
 	 * Return the current GVT threading interval.
@@ -255,18 +227,6 @@ private:
 	 */
 	void addModel(const t_atomicmodelptr& atomic, std::size_t coreID);
 
-	/**
-	 * @brief Handle all time events until now, returns whether the simulation should continue
-	 * @attention This method should only be used in CLASSIC or DSDEVS mode
-	 */
-	void handleTimeEventsSingle(const t_timestamp& now);
-
-	/**
-	 * @brief Handle all time events until now, returns whether the simulation should continue
-	 * @attention This method should only be used in PDEVS mode
-	 */
-	bool handleTimeEventsParallel(std::condition_variable& cv, std::mutex& cvlock);
-
 	void doDirectConnect();
 	void doDSDevs(std::vector<n_model::t_raw_atomic>& imminent);
 
@@ -302,7 +262,7 @@ public:
 			<< m_gvtFound
 			<< m_gvtFailed;
 		for(const auto& i:m_cores)
-			i.second->printStats(out);
+			i->printStats(out);
 	}
 //#endif
 };

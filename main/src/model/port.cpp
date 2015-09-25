@@ -163,10 +163,23 @@ const std::vector<n_network::t_msgptr>& Port::getReceivedMessages() const
 	return m_receivedMessages;
 }
 
-void Port::addInfluencees(std::set<std::string>& influences) const
+void Port::addInfluencees(std::vector<std::size_t>& influences) const
 {
-	for (auto& port : this->m_coupled_ins)
-		influences.insert(port->getHostName());
+	/*
+	 * Note: we can't simply request the modelUUID because that may not have been set yet.
+	 * The models are required to have been allocated already, so we can use that instead
+	 */
+	for (auto& port : this->m_coupled_ins){
+#ifdef SAFETY_CHECKS
+		AtomicModel_impl* impl = dynamic_cast<AtomicModel_impl*>(port->getHost());
+		assert(impl != nullptr && "Requested getModelUUID from a non-atomic model.");
+		std::size_t value =  impl->getCorenumber();
+#else /* no SAFETY_CHECKS */
+		std::size_t value =  reinterpret_cast<AtomicModel_impl*>(port->getHost())->getCorenumber();
+#endif /* SAFETY_CHECKS */
+		influences[value] = 1;
+		LOG_INFO("port ", getHostName(), "/", getName(), " influenced by ", port->getHostName(), "/", port->getHostName(), " @ core ", value);
+	}
 }
 
 const uuid& Port::getModelUUID() const

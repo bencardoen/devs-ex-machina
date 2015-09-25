@@ -19,11 +19,11 @@ using namespace n_tools;
 
 namespace n_control {
 
-Controller::Controller(std::string name, std::unordered_map<std::size_t, t_coreptr>& cores,
-        std::shared_ptr<Allocator>& alloc, std::shared_ptr<LocationTable>& locTab, n_tracers::t_tracersetptr& tracers,
+Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
+        std::shared_ptr<Allocator>& alloc, n_tracers::t_tracersetptr& tracers,
         size_t saveInterval, size_t turns)
-	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_isLoadedSim(false), m_name(name), m_checkTermTime(
-	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_locTab(locTab), m_allocator(
+	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
+	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
@@ -32,7 +32,6 @@ Controller::Controller(std::string name, std::unordered_map<std::size_t, t_corep
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-	m_root = n_tools::createObject<n_model::RootModel>();
 	m_zombieIdleThreshold.store(-1);
 }
 
@@ -72,74 +71,6 @@ void Controller::logStat(CTRLSTAT_TYPE ev)
 #endif
 }
 
-
-void Controller::save(const std::string& fname, const t_timestamp& time)
-{
-	if (fname == "")
-		return;
-
-	std::string fnameModel = fname + ".devs";
-	std::fstream fsmodel(fnameModel, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchivemodel(fsmodel);
-
-	std::string fnameGvt = fname + "_gvt.devs";
-	std::fstream fsgvt(fnameGvt, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchivegvt(fsgvt);
-
-
-	LOG_INFO("CONTROLLER: Saving GVT to file ", fnameGvt, " at time ", time.getTime());
-	oarchivegvt(time);
-	LOG_INFO("CONTROLLER: Saving simulation to file ", fnameModel, " at time ", time.getTime());
-
-	if(m_coupledOrigin) {
-		oarchivemodel(m_coupledOrigin);
-	} else {
-		oarchivemodel(m_atomicOrigin);
-	}
-}
-
-void Controller::load(const std::string& fname, bool isSingleAtomic)
-{
-	assert(fname != "" && "Can't load simulation without file!");
-
-	std::string fnameModel = fname + ".devs";
-	std::fstream fsmodel(fnameModel, std::fstream::in | std::fstream::binary);
-	cereal::BinaryInputArchive iarchivemodel(fsmodel);
-
-	std::string fnameGvt = fname + "_gvt.devs";
-	std::fstream fsgvt(fnameGvt, std::fstream::in | std::fstream::binary);
-	cereal::BinaryInputArchive iarchivegvt(fsgvt);
-
-	LOG_INFO("CONTROLLER: Loading GVT from file ", fnameGvt);
-	iarchivegvt(m_lastGVT);
-
-	LOG_INFO("CONTROLLER: Loading simulation from file ", fname);
-	if(isSingleAtomic) {
-		LOG_INFO("CONTROLLER: Loading AtomicModel_impl");
-		iarchivemodel(m_atomicOrigin);
-		addModel(m_atomicOrigin); // Just run standard adding procedure
-	}
-	else {
-		LOG_INFO("CONTROLLER: Loading CoupledModel");
-		iarchivemodel(m_coupledOrigin);
-		m_root->setComponents(m_coupledOrigin);
-		for (t_atomicmodelptr& model : m_root->getComponents()) {
-			//size_t coreID = m_allocator->allocate(model);
-			// Save implies allocation is done.
-			int coreid = model->getCorenumber();
-			assert(coreid >= 0 && ( (std::size_t) coreid < m_cores.size()));
-			addModel(model, coreid);
-			model->setKeepOldStates(isParallel(m_simType));
-			LOG_DEBUG("Controller::addModel added model with name ", model->getName());
-		}
-		if (m_simType == SimType::DYNAMIC)
-			m_coupledOrigin->setController(this);
-		m_hasMainModel = true;
-	}
-	LOG_INFO("CONTROLLER: Loaded simulation starts at ", m_lastGVT);
-	m_isLoadedSim = true;
-}
-
 void Controller::addModel(const t_atomicmodelptr& atomic)
 {
 	assert(m_isSimulating == false && "Cannot replace main model during simulation");
@@ -148,7 +79,7 @@ void Controller::addModel(const t_atomicmodelptr& atomic)
 		emptyAllCores();
 		m_hasMainModel = false;
 	}
-	//size_t coreID = m_allocator->allocate(atomic);		// De we still need 1 atomic usecase ??
+	//size_t coreID = m_allocator->allocate(atomic);		// Do we still need 1 atomic usecase ??
 	const std::vector<t_atomicmodelptr> models = {atomic};		// anyway, let's not leave landmines
 	m_allocator->allocateAll(models);
 	addModel(atomic, atomic->getCorenumber());
@@ -164,7 +95,6 @@ void Controller::addModel(const t_atomicmodelptr& atomic)
 void Controller::addModel(const t_atomicmodelptr& atomic, std::size_t coreID)
 {
 	m_cores[coreID]->addModel(atomic);
-	m_locTab->registerModel(atomic, coreID);
 }
 
 void Controller::addModel(const t_coupledmodelptr& coupled)
@@ -177,9 +107,9 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 		emptyAllCores();
 	}
 	m_coupledOrigin = coupled;
-	m_root->directConnect(coupled);
+	m_root.directConnect(coupled);
 
-	const std::vector<t_atomicmodelptr> atomics = m_root->getComponents();
+	const std::vector<t_atomicmodelptr>& atomics = m_root.getComponents();
 	m_allocator->allocateAll(atomics);
 
 	for (const t_atomicmodelptr& atomic : atomics) {
@@ -196,7 +126,7 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 void Controller::doDirectConnect()
 {
 	if (m_coupledOrigin) {
-		m_root->directConnect(m_coupledOrigin);
+		m_root.directConnect(m_coupledOrigin);
 	} else {
 		LOG_DEBUG("doDirectConnect no coupled origin!");
 	}
@@ -222,22 +152,12 @@ void Controller::setTerminationCondition(t_terminationfunctor termination_condit
 	m_terminationCondition = termination_condition;
 }
 
-void Controller::addPauseEvent(t_timestamp time, size_t duration, bool repeating)
-{
-	m_events.push(TimeEvent(time, duration, repeating));
-}
-
-void Controller::addSaveEvent(t_timestamp time, std::string prefix, bool repeating)
-{
-	m_events.push(TimeEvent(time, prefix, repeating));
-}
-
 void Controller::emptyAllCores()
 {
 	for (auto core : m_cores) {
-		core.second->clearModels();
+		core->clearModels();
 	}
-	m_root = n_tools::createObject<n_model::RootModel>(); // reset root
+	m_root.reset(); // reset root
 }
 
 void Controller::setGVTInterval(std::size_t ms)
@@ -253,7 +173,7 @@ std::size_t Controller::getGVTInterval()
 void Controller::distributeTerminationTime(t_timestamp ntime)
 {
 	for (const auto& core : m_cores) {
-		core.second->setTerminationTime(ntime);
+		core->setTerminationTime(ntime);
 	}
 }
 
@@ -303,14 +223,11 @@ void Controller::simulate()
 void Controller::simDEVS()
 {
 	// configure core
-	auto core = m_cores.begin()->second; // there is only one core in Classic DEVS
+	auto& core = m_cores.front(); // there is only one core in Classic DEVS
 	core->setTracers(m_tracers);
 
-	if (!m_isLoadedSim) {	// The simulation starts from scratch
-		core->init();
-	} else {		// The simulation was loaded from a binary
-		core->initExistingSimulation(m_lastGVT);
-	}
+	core->init();
+
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -320,21 +237,15 @@ void Controller::simDEVS()
 	core->setLive(true);
 
 	uint i = 0;
-	while (check()) { // As long any cores are active
+	while (core->isLive()) { // As long any cores are active
 		++i;
 		LOG_INFO("CONTROLLER: Commencing simulation loop #", i, "...");
-		if (core->isLive()) {
-			LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
-			core->runSmallStep();
-		} else {
-			LOG_INFO("CONTROLLER: Shhh, core ", core->getCoreID(), " is resting now.");
-		}
+		LOG_INFO("CONTROLLER: Core ", core->getCoreID(), " starting small step.");
+		core->runSmallStep();
                 
 		if (i % m_saveInterval == 0) {
 			t_timestamp time = core->getTime();
 			n_tracers::traceUntil(time);
-			if (m_events.todo(time))
-				handleTimeEventsSingle(time);
 		}
                 
 		if (core->getZombieRounds() > 1) {
@@ -352,19 +263,20 @@ void Controller::simOPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
+	threadsignal.reserve(m_cores.size());
 	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
-	for (auto core : m_cores) {
-		core.second->setTracers(m_tracers);
-		(!m_isLoadedSim) ? core.second->init() : core.second->initExistingSimulation(m_lastGVT);
+	for (auto& core : m_cores) {
+		core->setTracers(m_tracers);
+		core->init();
 
 		if (m_checkTermTime)
-			core.second->setTerminationTime(m_terminationTime);
+			core->setTerminationTime(m_terminationTime);
 		if (m_checkTermCond)
-			core.second->setTerminationFunction(m_terminationCondition);
+			core->setTerminationFunction(m_terminationCondition);
 
-		core.second->setLive(true);
+		core->setLive(true);
 
 		threadsignal.push_back(n_threadflags::FREE);
 	}
@@ -378,17 +290,8 @@ void Controller::simOPDEVS()
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
-	do {
-		this->startGVTThread();	// Starts and joins GVT threads.
-	} while (handleTimeEventsParallel(cv, cvlock));
+	this->startGVTThread();	// Starts and joins GVT threads.
         
-	// Explanation of the above:
-	//  The event queue is checked for occurring events each time a GVT is calculated
-	//  If there are any, the simulation needs to be halted in any case so the GVT thread is stopped
-	//  All events are then handled by handleTimeEvents, which returns True so a new GVT thread is set up again
-	//   and the simulation continues
-	//  If the GVT thread ended for any other reason we pass through handleTimeEvents and break out of the loop
-
 	for (auto& t : m_threads) {
 		t.join();
 	}
@@ -400,18 +303,19 @@ void Controller::simCPDEVS()
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
+	threadsignal.reserve(m_cores.size());
 
 	// configure all cores
-	for (auto core : m_cores) {
-		core.second->setTracers(m_tracers);
-		(!m_isLoadedSim) ? core.second->init() : core.second->initExistingSimulation(m_lastGVT);
+	for (auto& core : m_cores) {
+		core->setTracers(m_tracers);
+		core->init();
 
 		if (m_checkTermTime)
-			core.second->setTerminationTime(m_terminationTime);
+			core->setTerminationTime(m_terminationTime);
 		if (m_checkTermCond)
-			core.second->setTerminationFunction(m_terminationCondition);
+			core->setTerminationFunction(m_terminationCondition);
 
-		core.second->setLive(true);
+		core->setLive(true);
 
 		threadsignal.push_back(n_threadflags::FREE);
 	}
@@ -431,14 +335,11 @@ void Controller::simCPDEVS()
 
 void Controller::simDSDEVS()
 {
-	auto core = m_cores.begin()->second; // there is only one core in DS DEVS
+	auto& core = m_cores.front(); // there is only one core in DS DEVS
 	core->setTracers(m_tracers);
 
-	if (!m_isLoadedSim) {	// The simulation starts from scratch
-		core->init();
-	} else {		// The simulation was loaded from a binary
-		core->initExistingSimulation(m_lastGVT);
-	}
+	core->init();
+
 
 	if (m_checkTermTime)
 		core->setTerminationTime(m_terminationTime);
@@ -453,20 +354,15 @@ void Controller::simDSDEVS()
 		++i;
 		imminent.clear();
 		LOG_INFO("CONTROLLER: Commencing DSDEVS simulation loop #", i, " at time ", core->getTime());
-		if (core->isLive()) {
-			LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
-			core->runSmallStep();
-			core->getLastImminents(imminent);
-			doDSDevs(imminent);
-                        core->validateModels();
-		} else {
-			LOG_DEBUG("CONTROLLER: CORE NO LONGER LIVE");
-			break;
-		}
+		LOG_INFO("CONTROLLER: DSDEVS Core ", core->getCoreID(), " starting small step.");
+		core->runSmallStep();
+		core->getLastImminents(imminent);
+		doDSDevs(imminent);
+		core->validateModels();
+
 		if (i % m_saveInterval == 0) {
 			t_timestamp time = core->getTime();
 			n_tracers::traceUntil(time);
-			if(m_events.todo(time)) handleTimeEventsSingle(time);
 		}
 		if(core->getZombieRounds() > 1){
 			LOG_ERROR("Core has reached zombie state in ds devs.");
@@ -479,14 +375,7 @@ void Controller::startGVTThread()
 {
 	constexpr std::size_t infguard = 100;
 	std::size_t i = 0;
-	std::chrono::milliseconds ms { 5 };	// Wait before running gvt, this prevents an obvious gvt of zero.
-	std::this_thread::sleep_for(ms);
-	LOG_INFO("Controller:: starting GVT thread");
-	std::thread runonce(&runGVT, std::ref(*this), std::ref(m_rungvt));
-	runonce.join();
-	std::chrono::milliseconds sleep { m_sleep_gvt_thread };	// Wait before running gvt, this prevents an obvious gvt of zero.
-	std::this_thread::sleep_for(sleep);
-	LOG_INFO("Controller:: joined GVT thread");
+
 	while(m_rungvt.load()==true){
 		if(infguard < ++i){
 			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
@@ -504,70 +393,13 @@ void Controller::startGVTThread()
 
 bool Controller::check()
 {
-	for (auto core : m_cores) {
-		if (core.second->isLive())
+	for (const auto& core : m_cores) {
+		if (core->isLive())
 			return true;
 	}
 	return false;
 }
 
-void Controller::handleTimeEventsSingle(const t_timestamp& now)
-{
-	LOG_INFO("CONTROLLER: Handling any events");
-	std::vector<TimeEvent> worklist = m_events.popUntil(now);
-	uint pause = 0;
-	for (const TimeEvent& event : worklist) {
-		switch (event.m_type) {
-		case TimeEvent::Type::PAUSE:
-			LOG_INFO("CONTROLLER: Pausing at ", n_tools::toString(event.m_time.getTime()), " for ",
-			        event.m_duration, " seconds ", ((event.m_repeating) ? "[REPEATING]" : "[SINGLE]"));
-			pause += event.m_duration;
-			break;
-		case TimeEvent::Type::SAVE:
-			LOG_INFO("CONTROLLER: Saving to file ", event.m_prefix, "_",
-			        n_tools::toString(event.m_time.getTime()));
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()), now);
-			break;
-		}
-	}
-	if (pause) {
-		sleep(pause);
-	}
-}
-
-bool Controller::handleTimeEventsParallel(std::condition_variable& cv, std::mutex& cvlock)
-{
-	LOG_INFO("CONTROLLER: Handling any events");
-	bool svd = false;
-	size_t pause = 0;
-	std::vector<TimeEvent> worklist = m_events.popUntil(m_lastGVT);
-	for (TimeEvent& event : worklist) {
-		switch (event.m_type) {
-		case TimeEvent::Type::PAUSE:
-			LOG_INFO("CONTROLLER: Pausing at ", n_tools::toString(event.m_time.getTime()), " for ",
-			        event.m_duration, " seconds ", ((event.m_repeating) ? "[REPEATING]" : "[SINGLE]"));
-			pause += event.m_duration;
-			break;
-		case TimeEvent::Type::SAVE:
-			svd = true;
-			cvlock.lock();		//Stop cores
-			cv.notify_all();
-			LOG_INFO("CONTROLLER: Saving to file ",event.m_prefix,"_",n_tools::toString(event.m_time.getTime()));
-			save(event.m_prefix + "_" + n_tools::toString(event.m_time.getTime()), m_lastGVT);
-			cvlock.unlock();	//Start cores again
-			cv.notify_all();
-			break;
-		}
-	}
-	if (pause) {
-		cvlock.lock();		//Stop cores
-		cv.notify_all();
-		sleep(pause);
-		cvlock.unlock();	//Start cores again
-		cv.notify_all();
-	}
-	return (svd || pause > 0);
-}
 
 void Controller::doDSDevs(std::vector<n_model::t_raw_atomic>& imminent)
 {
@@ -636,7 +468,7 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
 		//it is an atomic model. Just remove this one from the core and the root devs
                 if(!m_cores[0]->containsModel(model->getName())){
-                        m_cores.begin()->second->addModelDS(atomic);
+                        m_cores.front()->addModelDS(atomic);
                 }
                 else{
                         LOG_ERROR("Trying to add model that already exists in core ????", model->getName());
@@ -657,13 +489,13 @@ void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
 
 	LOG_DEBUG("removing model: ", model->getName());
 	//it is an atomic model. Just remove this one from the core
-	m_cores.begin()->second->removeModelDS(model->getName());
+	m_cores.front()->removeModelDS(model->getName());
 }
 
 void Controller::dsUndoDirectConnect()
 {
 	assert(isInDSPhase() && "Controller::dsUndoDirectConnect called while not in the DS phase.");
-	m_root->undoDirectConnect();
+	m_root.undoDirectConnect();
 }
 
 bool Controller::isInDSPhase() const
@@ -723,7 +555,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			// Atomic isIdle is faster.
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
-				if( not coreentry.second->isIdle()){
+				if( not coreentry->isIdle()){
 					quit = false;
 					break;
 				}
@@ -804,13 +636,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		cont.logStat(GVT_FOUND);
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
 		for (const auto& ucore : cont.m_cores)
-			ucore.second->setGVT(cmsg->getGvt());
+			ucore->setGVT(cmsg->getGvt());
 		n_tracers::traceUntil(cmsg->getGvt());
 		cont.m_lastGVT = cmsg->getGvt();
-		if (cont.m_events.countTodo(cmsg->getGvt()) > 0) {
-			LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
-			gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
-		}
 	} else {
                 ///// 2nd round initiated.
 		cont.logStat(GVT_2NDRND);
@@ -827,13 +655,9 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			LOG_INFO("Controller: found GVT after second round, gvt=", cmsg->getGvt(), " updating cores.");
 
 			for (const auto& ucore : cont.m_cores)
-				ucore.second->setGVT(cmsg->getGvt());
+				ucore->setGVT(cmsg->getGvt());
 			n_tracers::traceUntil(cmsg->getGvt());
 			cont.m_lastGVT = cmsg->getGvt();
-			if (cont.m_events.countTodo(cmsg->getGvt()) > 0) {
-				LOG_INFO("CONTROLLER: We have incoming events to handle, stopping GVT!");
-				gvtsafe.store(false); // We have some events to handle, so we need to stop the GVT in any case
-			}
 		} else {
 			cont.logStat(GVT_FAILED);
 			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Not doing anything.");
