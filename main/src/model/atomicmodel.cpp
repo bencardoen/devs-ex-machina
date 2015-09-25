@@ -49,12 +49,12 @@ void AtomicModel_impl::extTransition(const std::vector<n_network::t_msgptr>&)
 void AtomicModel_impl::doExtTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
-
-	for (t_portptr& port : m_iPorts)
+#ifndef NO_TRACER
+	for (const t_portptr& port : m_iPorts)
 		port->clearReceivedMessages();
 
-
 	deliverMessages(message);
+#endif        
 
 	//copy the current state, if necessary
 	copyState();
@@ -65,8 +65,10 @@ void AtomicModel_impl::doExtTransition(const std::vector<n_network::t_msgptr>& m
 
 void AtomicModel_impl::doIntTransition()
 {
-	for (auto& port : m_iPorts)
+#ifndef NO_TRACER
+	for (const auto& port : m_iPorts)
 		port->clearReceivedMessages();
+#endif
 
 	//copy the current state, if necessary
 	copyState();
@@ -78,9 +80,11 @@ void AtomicModel_impl::doIntTransition()
 void AtomicModel_impl::doConfTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	// Remove all old messages in the input-ports of this model, so the tracer won't find them again
-	for (auto& port : m_iPorts)
+#ifndef NO_TRACER        
+	for (const auto& port : m_iPorts)
 		port->clearReceivedMessages();
 
+#endif
 	deliverMessages(message);
 
 	//copy the current state, if necessary
@@ -94,7 +98,7 @@ void AtomicModel_impl::doOutput(std::vector<n_network::t_msgptr>& msgs)
 	// Remove all old messages in the output-ports of this model, so the tracer won't find them again
 	LOG_DEBUG("Atomic Model ::  ", this->getName(), " clearing sent messages.");
 #ifndef NO_TRACER
-	for (auto& port : m_oPorts){
+	for (const auto& port : m_oPorts){
 		port->clearSentMessages();
 	}
 #endif
@@ -121,7 +125,7 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
 	int index = 0;
 	int k = -1;
 
-	for (auto& state : m_oldStates) {
+	for (const auto& state : m_oldStates) {
 		if (state->m_timeLast >= gvt) {
 			k = std::max(0, index - 1);
 			break;
