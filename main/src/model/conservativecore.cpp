@@ -308,10 +308,19 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
 
 void Conservativecore::runSmallStepStalled()
 {
+        /**
+         * Time == Eit. Generate output (once), then check if we can advance next time.
+         * Broadcast null msg time to others to try to break the deadlock.
+         */
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        if(outputtime == m_time.getTime()){
+                updateEIT();
+                return;
+        }
         std::vector<t_raw_atomic> imms;
         this->getImminent(imms);
         
-        collectOutput(imms); 
+        collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
         for(auto mdl : imms){
                 const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getLocalID(), last_scheduled);
