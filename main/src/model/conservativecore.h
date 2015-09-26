@@ -65,12 +65,6 @@ private:
          * timestamps and avoid backward walking eot values.
          */
         t_timevector    m_distributed_time;
-        
-        /**
-         * In case we're stalled, remember who has sent output and who hasn't to make
-         * sure we don't send duplicate messages.
-         */
-        std::unordered_map<std::size_t, t_timestamp>    m_generated_output_at;
 
 	/**
 	 * Store the cores that influence this core.
@@ -94,8 +88,6 @@ private:
          * Needed for eot calculation.
          */
         t_timestamp             m_last_sent_msgtime;
-        
-        t_timestamp::t_time     m_last_transition_time;
         
         /**
 	 * Protect access to Time.

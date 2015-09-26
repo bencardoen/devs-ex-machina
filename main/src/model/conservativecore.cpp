@@ -20,7 +20,6 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
         m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), t_timestamp::infinity());
         m_distributed_time->unlockEntry(this->getCoreID());
-        m_last_transition_time=t_timestamp::MAXTIME;
 }
 
 void Conservativecore::getMessages()
@@ -284,41 +283,25 @@ void Conservativecore::runSmallStep(){
                         invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
         }
         else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
-                m_last_transition_time=m_time.getTime();
+                
                 Core::runSmallStep();   //  L -> UL
         }
 }
 
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
-        // Two cases, either we have collected output already, in which case we need to remove the entry from the set
-        // Or we haven't in which case the entry stays put, and we mark it for the next round.
-        std::vector<t_raw_atomic> sortedimminents;
-        for(auto imminent : imminents){
-                const std::size_t id = imminent->getLocalID();
-                auto found = m_generated_output_at.find(id);
-                if(found != m_generated_output_at.end()){
-                        // Have an entry, check timestamps (possible stale entries)
-                        if(found->second.getTime()!=this->getTime().getTime()){
-                                // Stale entry, need to collect output and mark model at current time.
-                                sortedimminents.push_back(imminent);
-                                m_generated_output_at[id]=this->getTime();
-                        }else{
-                                // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
-                                ;
-                        }
-                }
-                else{
-                        // No entry, so make one at current time.
-                        sortedimminents.push_back(imminent);
-                        m_generated_output_at[id]=this->getTime();
-                }
-        }
+        // Don't need a lock, since we are the writer and we're reading here.
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        if(outputtime == m_time.getTime())
+                return;
+        
+                
         // Base function handles all the rest (message routing etc..)
-        Core::collectOutput(sortedimminents);
+        Core::collectOutput(imminents);
         // Next, we're stalled, but can be entering deadlock. Signal out current Time so the tiebreaker can
         // be found and break the lock.
+        
         m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), this->getTime());
+        m_distributed_time->set(this->getCoreID(), m_time);
         m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
@@ -328,7 +311,7 @@ void Conservativecore::runSmallStepStalled()
         std::vector<t_raw_atomic> imms;
         this->getImminent(imms);
         
-        collectOutput(imms); // only collects output once
+        collectOutput(imms); 
         for(auto mdl : imms){
                 const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getLocalID(), last_scheduled);

@@ -463,8 +463,7 @@ void n_model::Core::runSmallStep()
 	}
 
 	// Query imminent models (who are about to fire transition)
-        m_imminents.clear();
-        m_externs.clear();
+
         this->getImminent(m_imminents);
         
         // Dynamic structured needs the list, but best before we add externals to it.
@@ -484,6 +483,8 @@ void n_model::Core::runSmallStep()
 
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
+        m_imminents.clear();
+        m_externs.clear();
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
