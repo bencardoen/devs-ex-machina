@@ -20,6 +20,7 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
         m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), t_timestamp::infinity());
         m_distributed_time->unlockEntry(this->getCoreID());
+        m_last_transition_time=t_timestamp::MAXTIME;
 }
 
 void Conservativecore::getMessages()
@@ -42,7 +43,7 @@ Conservativecore::~Conservativecore()
 void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
-		const auto & message = *i;
+		t_msgptr message = *i;
                 validateUUID(message->getDstUUID());
 		this->receiveMessage(message);
 	}
@@ -203,17 +204,9 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
                 throw std::logic_error("Revert in conservativecore !!");
-        }else{
-                if (msgtime == currenttime && currenttime != eittime) {
-                                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
-                                        " msg follows: ", msg->toString());
-                                m_stats.logStat(REVERTS);
-                                this->revert(msgtime);
-                }
-                // Stalled round && equal time is ok (have not yet transitioned)
-                // msgtime > currenttime is always fine.
         }
-
+        // The case == is safe for conservative due to stalling.
+        // The case > is normal.
 }
 
 void Conservativecore::init(){
@@ -291,7 +284,7 @@ void Conservativecore::runSmallStep(){
                         invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
         }
         else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
-                
+                m_last_transition_time=m_time.getTime();
                 Core::runSmallStep();   //  L -> UL
         }
 }
@@ -301,14 +294,14 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // Or we haven't in which case the entry stays put, and we mark it for the next round.
         std::vector<t_raw_atomic> sortedimminents;
         for(auto imminent : imminents){
-                const std::string& name = imminent->getName();
-                auto found = m_generated_output_at.find(name);
+                const std::size_t id = imminent->getLocalID();
+                auto found = m_generated_output_at.find(id);
                 if(found != m_generated_output_at.end()){
                         // Have an entry, check timestamps (possible stale entries)
                         if(found->second.getTime()!=this->getTime().getTime()){
                                 // Stale entry, need to collect output and mark model at current time.
                                 sortedimminents.push_back(imminent);
-                                m_generated_output_at[name]=this->getTime();
+                                m_generated_output_at[id]=this->getTime();
                         }else{
                                 // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
                                 ;
@@ -317,7 +310,7 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
                 else{
                         // No entry, so make one at current time.
                         sortedimminents.push_back(imminent);
-                        m_generated_output_at[name]=this->getTime();
+                        m_generated_output_at[id]=this->getTime();
                 }
         }
         // Base function handles all the rest (message routing etc..)

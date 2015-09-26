@@ -597,15 +597,17 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 {
 #ifdef SAFETY_CHECKS
         if(msgs.size()==0)
-                throw std::logic_error("Msgs not empty after processing ?");
+                throw std::logic_error("Msgs empty after processing ?");
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(auto& ptr : msgs){
                 delete ptr;
+                m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
 #endif   
         }
+        
         msgs.clear();
 }
 
