@@ -269,14 +269,15 @@ void n_model::Core::transition()
 		if (!hasMail(modelid)) {			
 			assert(imminent->nextType()==INT);
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
-			imminent->doIntTransition();
+			imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
+                        imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
 		} else {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
                         assert(imminent->nextType()==n_model::CONF);
                         imminent->nextType()=n_model::NONE;
-			imminent->setTimeElapsed(0);
+			imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         auto& mail = getMail(modelid);
 			imminent->doConfTransition(mail);		// Confluent
 			imminent->setTime(noncausaltime);

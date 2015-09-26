@@ -154,10 +154,11 @@ class Server: public n_model::AtomicModel<ServerState>
 {
 private:
 	n_network::t_timestamp m_rate;	//generator rate
+	double m_maxSize;
 public:
 	n_model::t_portptr m_out;
 	n_model::t_portptr m_in;
-	Server(QueueMsg::t_size rate);
+	Server(QueueMsg::t_size rate, double maxSize = 100);
 	virtual ~Server(){}
 
 	virtual n_model::t_timestamp timeAdvance() const override;

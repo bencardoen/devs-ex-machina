@@ -65,9 +65,9 @@ n_network::t_timestamp MsgGenerator::lookAhead() const
 	return m_rate;
 }
 
-Server::Server(QueueMsg::t_size rate):
+Server::Server(QueueMsg::t_size rate, double maxSize):
 	n_model::AtomicModel<ServerState>("Server"),
-	m_rate(rate),
+	m_rate(rate), m_maxSize(maxSize),
 	m_out(addOutPort("out")), m_in(addInPort("in"))
 {
 }
@@ -84,19 +84,34 @@ n_model::t_timestamp Server::timeAdvance() const
 void Server::intTransition()
 {
 	ServerState& st = state();
-	if(st.m_priorityMsgs.size())
-		st.m_priorityMsgs.pop_front();
-	else if(st.m_msgs.size())
-		st.m_msgs.pop_front();
+	double i = 0;
+	auto piter = st.m_priorityMsgs.begin();
+	auto niter = st.m_msgs.begin();
+	double size = m_maxSize*getTimeElapsed().getTime();
+	LOG_DEBUG("applicable size: ", size, ", elapsed time: ", getTimeElapsed());
+	while(true) {
+		if(piter != st.m_priorityMsgs.end()){
+			if(i + piter->m_size <= size){
+				piter = st.m_priorityMsgs.erase(piter);
+				i += piter->m_size;
+				continue;
+			}
+			break;
+		} else if(niter != st.m_msgs.end()){
+			if(i + niter->m_size <= size){
+				niter = st.m_msgs.erase(niter);
+				i += niter->m_size;
+				continue;
+			}
+			break;
+		}
+		break;
+	}
 }
 
 void Server::extTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	ServerState& st = state();
-	if(st.m_priorityMsgs.size())
-		st.m_priorityMsgs.front().m_size -= getTimeElapsed().getTime();
-	else if(st.m_msgs.size())
-		st.m_msgs.front().m_size -= getTimeElapsed().getTime();
 	for(const n_network::t_msgptr& ptr: message){
 		const QueueMsg& msg = n_network::getMsgPayload<QueueMsg>(ptr);
 		if(msg.m_isPriority)
@@ -109,10 +124,29 @@ void Server::extTransition(const std::vector<n_network::t_msgptr>& message)
 void Server::confTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	ServerState& st = state();
-	if(st.m_priorityMsgs.size())
-		st.m_priorityMsgs.pop_front();
-	else if(st.m_msgs.size())
-		st.m_msgs.pop_front();
+	double i = 0;
+	auto piter = st.m_priorityMsgs.begin();
+	auto niter = st.m_msgs.begin();
+	double size = m_maxSize*getTimeElapsed().getTime();
+	LOG_DEBUG("applicable size: ", size, ", elapsed time: ", getTimeElapsed());
+	while(true) {
+		if(piter != st.m_priorityMsgs.end()){
+			if(i + piter->m_size <= size){
+				piter = st.m_priorityMsgs.erase(piter);
+				i += piter->m_size;
+				continue;
+			}
+			break;
+		} else if(niter != st.m_msgs.end()){
+			if(i + niter->m_size <= size){
+				niter = st.m_msgs.erase(niter);
+				i += niter->m_size;
+				continue;
+			}
+			break;
+		}
+		break;
+	}
 	for(const n_network::t_msgptr& ptr: message){
 		const QueueMsg& msg = n_network::getMsgPayload<QueueMsg>(ptr);
 		if(msg.m_isPriority)
@@ -125,10 +159,32 @@ void Server::confTransition(const std::vector<n_network::t_msgptr>& message)
 void Server::output(std::vector<n_network::t_msgptr>& msgs) const
 {
 	const ServerState& st = state();
-	if(st.m_priorityMsgs.size())
-		m_out->createMessages(QueueMsg(st.m_priorityMsgs.front()), msgs);
-	else if(st.m_msgs.size())
-		m_out->createMessages(QueueMsg(st.m_msgs.front()), msgs);
+	double i = 0;
+	auto piter = st.m_priorityMsgs.begin();
+	auto niter = st.m_msgs.begin();
+	double size = m_maxSize*getTimeElapsed().getTime();
+	LOG_DEBUG("applicable size: ", size, ", elapsed time: ", getTimeElapsed());
+	while(true) {
+		if(piter != st.m_priorityMsgs.end()){
+			if(i + piter->m_size <= size){
+				m_out->createMessages(QueueMsg(*piter), msgs);
+				++piter;
+				i += piter->m_size;
+				continue;
+			}
+			break;
+		}
+		if(niter != st.m_msgs.end()){
+			if(i + niter->m_size <= size){
+				m_out->createMessages(QueueMsg(*niter), msgs);
+				++niter;
+				i += niter->m_size;
+				continue;
+			}
+			break;
+		}
+		break;
+	}
 }
 
 n_network::t_timestamp Server::lookAhead() const
@@ -207,7 +263,9 @@ SingleServerNetwork::SingleServerNetwork(std::size_t numGenerators, std::size_t 
         std::size_t priorityChance, QueueMsg::t_size rate, QueueMsg::t_size nsize, QueueMsg::t_size psize)
 	: n_model::CoupledModel("SingleServerNetwork")
 {
-	n_model::t_modelptr server = n_tools::createObject<Server>(rate);
+	QueueMsg::t_size k = numGenerators*nsize;
+	LOG_DEBUG("server network k = ", k);
+	n_model::t_modelptr server = n_tools::createObject<Server>(rate, k);
 	n_model::t_modelptr splitter = n_tools::createObject<Splitter>(splitterSize, nsize);
 	n_model::t_modelptr receiver = n_tools::createObject<Receiver>();
 	addSubModel(server);
@@ -227,7 +285,8 @@ FeedbackServerNetwork::FeedbackServerNetwork(std::size_t numGenerators,
         std::size_t priorityChance, QueueMsg::t_size rate, QueueMsg::t_size nsize, QueueMsg::t_size psize)
 	: n_model::CoupledModel("FeedbackServerNetwork")
 {
-	n_model::t_modelptr server = n_tools::createObject<Server>(rate);
+	QueueMsg::t_size k = numGenerators*nsize;
+	n_model::t_modelptr server = n_tools::createObject<Server>(rate, k);
 	n_model::t_modelptr splitter = n_tools::createObject<Splitter>(numGenerators, nsize);
 	addSubModel(server);
 	addSubModel(splitter);
