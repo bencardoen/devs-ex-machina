@@ -247,6 +247,15 @@ add_executable(${PROJECT_NAME}_phold
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
+
+add_executable(${PROJECT_NAME}_network
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/queuenetwork/queuenetwork.cpp
+    src/mainqueueserver.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
 add_executable(${PROJECT_NAME}_virus
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/examples/virus/virus.cpp
@@ -353,6 +362,7 @@ target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_T
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
