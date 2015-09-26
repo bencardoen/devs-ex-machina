@@ -426,6 +426,7 @@ TEST(SharedVector, concurrency){
 	for(size_t index = 0; index<protected_vector.size(); ++index){
 		EXPECT_EQ(protected_vector.get(index), accesses);
 	}
+        
 }
 
 TEST(VectorScheduler, basic_ops){

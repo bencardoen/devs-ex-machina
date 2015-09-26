@@ -117,7 +117,7 @@ private:
          * @param msg
          */
         virtual
-        void receiveMessage(const t_msgptr& msg)override;
+        void receiveMessage(t_msgptr msg)override;
 
 	/**
 	 * Reset lookahead to inf, after at least one model has changed state we need to get a

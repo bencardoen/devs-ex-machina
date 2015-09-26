@@ -251,7 +251,7 @@ public:
 	 * @attention locked by caller on msglock
 	 */
 	virtual
-	void receiveMessage(const t_msgptr&)override;
+	void receiveMessage(t_msgptr)override;
 
 	/**
 	 * Sets new gvt.

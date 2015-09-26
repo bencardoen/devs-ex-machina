@@ -701,7 +701,7 @@ public:
 	 * Sort message in individual receiving queue.
 	 */
 	virtual
-	void receiveMessage(const t_msgptr&);
+	void receiveMessage(t_msgptr);
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.

@@ -135,7 +135,7 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 	}
 }
 
-void Optimisticcore::receiveMessage(const t_msgptr& msg)
+void Optimisticcore::receiveMessage(t_msgptr msg)
 {
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
         bool msgtime_in_past = false;

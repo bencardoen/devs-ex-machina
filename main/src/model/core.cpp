@@ -671,7 +671,7 @@ void n_model::Core::rescheduleAll()
 }
 
 
-void n_model::Core::receiveMessage(const t_msgptr& )
+void n_model::Core::receiveMessage(t_msgptr )
 {
         assert(false);
 }

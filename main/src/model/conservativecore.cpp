@@ -98,14 +98,17 @@ void Conservativecore::updateEOT()
                 LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
         }
         
-	this->m_distributed_eot->lockEntry(getCoreID());
+        // We're the writers, so we don't need a lock to read.
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
-        if(!isInfinity(oldeot)  && oldeot > neweot){
-                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
-                // Don't remove braces, and don't throw unless you unlock first.
+        if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", m_time, " eot moving backward in time, BUG.");
+                throw std::logic_error("EOT moving back in time.");
         }
-	this->m_distributed_eot->set(this->getCoreID(), neweot);
-	this->m_distributed_eot->unlockEntry(getCoreID());
+        if(oldeot != neweot){
+                this->m_distributed_eot->lockEntry(getCoreID());
+                this->m_distributed_eot->set(this->getCoreID(), neweot);
+                this->m_distributed_eot->unlockEntry(getCoreID());
+        }
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
 }
@@ -183,7 +186,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
         }
 }
 
-void Conservativecore::receiveMessage(const t_msgptr& msg){
+void Conservativecore::receiveMessage(t_msgptr msg){
         m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
         
@@ -194,9 +197,9 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
         
         this->queuePendingMessage(msg); // do not store antimessage
 	
+#ifdef SAFETY_CHECKS
         const t_timestamp::t_time currenttime= this->getTime().getTime();       // Avoid x times locked getter
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
-        const t_timestamp::t_time eittime = this->getEit().getTime();
 
         if (msgtime < currenttime){
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
@@ -206,6 +209,7 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
         }
         // The case == is safe for conservative due to stalling.
         // The case > is normal.
+#endif
 }
 
 void Conservativecore::init(){
@@ -394,7 +398,7 @@ Conservativecore::calculateMinLookahead(){
          * D : 0->80, 80->90
          * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
          */
-        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() 
+        if(this->m_min_lookahead.getTime() <= m_time.getTime() 
                 && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){
