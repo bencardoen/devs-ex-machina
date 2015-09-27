@@ -87,9 +87,10 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                 this->m_received_messages->erase(MessageEntry(msg));
                 delete msg;
         }else{                                          // Not yet received (origin) OR processed
+                // This needs more work, with some parallell sims this segfaults.
                 if(msgtimeinpast){                      // Processed, destroy am
-                        LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
-                        delete msg;
+                        //LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
+                        //delete msg;
                 }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
                         if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass.");
@@ -97,7 +98,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                         }
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
-                                delete msg;             
+                                //delete msg;             
                         }
                 }
         }
@@ -144,7 +145,7 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         }
         
 	m_stats.logStat(MSGRCVD);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
+	//LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
         
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
@@ -357,18 +358,20 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 {
         
 	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
-	if (newgvt < this->getGVT() || isInfinity(newgvt) || isZero(newgvt)) {          
+#ifdef SAFETY_CHECKS
+	if (newgvt < this->getGVT() || isInfinity(newgvt) ) {          
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
 		return;
 	}
+#endif
 	
         this->lockSimulatorStep();              // implies msglock
         Core::setGVT(newgvt);           
 	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {      
-		if ((*senditer)->getTimeStamp() > this->getGVT()) {     // time value only ?
+		if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {     // time value only ?
 			break;
 		}
                 t_msgptr& ptr = *senditer;
