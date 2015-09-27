@@ -90,13 +90,6 @@ private:
         t_timestamp             m_last_sent_msgtime;
         
         /**
-	 * Protect access to Time.
-	 */
-	std::mutex 			m_timelock;
-        
-        std::atomic<size_t>             m_zombie_rounds;
-        
-        /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
          * >= our time, and we ourselves have produced all output at current time.
          * @return true This core can safely transition at the current time.
@@ -187,16 +180,9 @@ public:
 	syncTime()override;
         
         void sortIncoming(const std::vector<t_msgptr>& messages);
-
-	/**
-	 * Intercept any call to update the time, so that we ~never~ go higher than EIT.
-         * Lock actual changing to time (since controller can request time at any moment).
-	 */
-	void
-	setTime(const t_timestamp& newtime)override;
         
-        t_timestamp
-        getTime() override;
+        virtual
+        void setTime(const t_timestamp&)override;
 
 	/**
 	 * @brief Condense model depency graph to integer-index vector.
@@ -267,12 +253,6 @@ public:
          */
         void
         calculateMinLookahead();
-        
-        virtual std::size_t getZombieRounds()override{return m_zombie_rounds.load();}
-        
-        virtual void incrementZombieRounds()override{m_zombie_rounds.fetch_add(1);}
-        
-        virtual void resetZombieRounds()override{m_zombie_rounds.store(0);}
 
         //-------------statistics gathering--------------
 #ifdef USE_STAT

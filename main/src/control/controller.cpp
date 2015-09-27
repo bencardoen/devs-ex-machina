@@ -299,6 +299,8 @@ void Controller::simOPDEVS()
 
 void Controller::simCPDEVS()
 {
+        /// Threading:
+        // Core<>Controller are distinct (cvworker runs core).
 	std::mutex cvlock;
 	std::condition_variable cv;
 	std::mutex veclock;	// Lock for vector with signals
@@ -547,9 +549,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				set_flag(threadsignal[myid], n_threadflags::IDLE);
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
 			}
-			if(core->terminatedByFunctor()){
-				ctrl.distributeTerminationTime(core->getTime());
-			}
+			
 			/// Decide if everyone is idle.
 			// Can't be done by counting flags, these are too slow to be set.
 			// Atomic isIdle is faster.

@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
 	const t_eotvector& vc, const t_timevector& tc)
 	: Core(coreid, totalCores),
-	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_zombie_rounds(0)
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -101,7 +101,7 @@ void Conservativecore::updateEOT()
         // We're the writers, so we don't need a lock to read.
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
-                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", m_time, " eot moving backward in time, BUG.");
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
                 throw std::logic_error("EOT moving back in time.");
         }
         if(oldeot != neweot){
@@ -180,10 +180,8 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	t_timestamp corrected = std::min(this->getEit(), newtime);
 
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
-        {
-                std::lock_guard<std::mutex> lk(m_timelock);
-                Core::setTime(corrected);
-        }
+       
+        Core::setTime(corrected);
 }
 
 void Conservativecore::receiveMessage(t_msgptr msg){
@@ -295,7 +293,7 @@ void Conservativecore::runSmallStep(){
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // Don't need a lock, since we are the writer and we're reading here.
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == m_time.getTime())
+        if(outputtime == getTime().getTime())
                 return;
         
                 
@@ -305,7 +303,7 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // be found and break the lock.
         
         m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), m_time);
+        m_distributed_time->set(this->getCoreID(), getTime());
         m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
@@ -317,7 +315,7 @@ void Conservativecore::runSmallStepStalled()
          * Broadcast null msg time to others to try to break the deadlock.
          */
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == m_time.getTime()){
+        if(outputtime == getTime().getTime()){
                 updateEIT();
                 return;
         }
@@ -383,12 +381,6 @@ Conservativecore::sendMessage(const t_msgptr& msg){
 	this->m_network->acceptMessage(msg);
 }
 
-t_timestamp
-Conservativecore::getTime(){
-        std::lock_guard<std::mutex> lk(m_timelock);
-        return Core::getTime();
-}
-
 void
 Conservativecore::calculateMinLookahead(){
         /**
@@ -398,7 +390,7 @@ Conservativecore::calculateMinLookahead(){
          * D : 0->80, 80->90
          * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
          */
-        if(this->m_min_lookahead.getTime() <= m_time.getTime() 
+        if(this->m_min_lookahead.getTime() <= getTime().getTime() 
                 && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){

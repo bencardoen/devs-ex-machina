@@ -24,7 +24,7 @@ Optimisticcore::~Optimisticcore()
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, size_t cores)
 	: Core(coreid, cores), m_network(net), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
-	        t_timestamp::infinity()),m_zombie_rounds(0)
+	        t_timestamp::infinity())
 {
 }
 
@@ -229,7 +229,7 @@ void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& run
 			LOG_DEBUG("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
 		}
-		// Sleep in cvar, else we starve the sim thread.
+		// Sleep in cvar, else we starve the sim thread. // What happens if rungvt is set to false and we're still stuck here ?
 		{
 			std::unique_lock<std::mutex> cvunique(m_cvarlock);
 			this->m_wake_on_msg.wait(cvunique);
@@ -241,6 +241,7 @@ void Optimisticcore::receiveControl(const t_controlmsg& msg, int round, std::ato
 {
 // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
 // Also see snapshot_gvt.pdf
+        // Race check : id = const, read only.
 	if(rungvt==false){
 		LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
 		return;
@@ -357,20 +358,20 @@ Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::ato
 
 void Optimisticcore::setGVT(const t_timestamp& candidate)
 {
+        
 	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
-	Core::setGVT(newgvt);
-	if (newgvt < this->getGVT() || isInfinity(newgvt)) {
+	if (newgvt < this->getGVT() || isInfinity(newgvt) || isZero(newgvt)) {          
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
 		return;
 	}
-	// Have to erase msgs older than gvt, inform models, require Msglock, SimLock (model != synced)
-	// Simlock => msglock.
-	this->lockSimulatorStep();
+	
+        this->lockSimulatorStep();              // implies msglock
+        Core::setGVT(newgvt);           
 	// Find out how many sent messages we have with time <= gvt
 	auto senditer = m_sent_messages.begin();
 	for (; senditer != m_sent_messages.end(); ++senditer) {      
-		if ((*senditer)->getTimeStamp() > this->getGVT()) {
+		if ((*senditer)->getTimeStamp() > this->getGVT()) {     // time value only ?
 			break;
 		}
                 t_msgptr& ptr = *senditer;
@@ -379,19 +380,20 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
                 ptr = nullptr;
 #endif          
 	}
-	// Erase them.
+	
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ", distance(m_sent_messages.begin(), senditer),
 	        " sent messages to erase.");
-        /// TODO delete sent messages from begin() to senditer (not incl)
+        
 	m_sent_messages.erase(m_sent_messages.begin(), senditer);
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ", m_sent_messages.size());
-	// Update models
-	for (const auto& model : this->m_indexed_models) {
+	
+        for (const auto& model : this->m_indexed_models)
 		model->setGVT(newgvt);
-	}
 	// Reset state (note V-vector is reset by Mattern code.
+        
 	this->setColor(MessageColor::WHITE);
 	LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " painted core back to white, for next gvt calculation");
+        
 	this->unlockSimulatorStep();
 }
 
@@ -425,7 +427,6 @@ void n_model::Optimisticcore::unlockMessages()
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
-        /// Ownership semantics : receiver is always responsible for delete
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
 	if (this->isIdle()) {

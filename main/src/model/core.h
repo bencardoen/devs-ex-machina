@@ -119,13 +119,12 @@ struct statistics_collector{
  */
 class Core
 {
-protected:
+private:
 	/**
 	 * Current simulation time
 	 */
 	t_timestamp m_time;
 
-private:
 	/**
 	 * GVT.
 	 */
@@ -213,6 +212,8 @@ private:
         MessageEntry        m_token;
         
         std::vector<n_network::t_msgptr> m_mailfrom;
+        
+        std::size_t m_zombie_rounds;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -759,19 +760,13 @@ public:
 	/**
 	 * @return nr of consecutive simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
 	 */
-        virtual
 	std::size_t
-	getZombieRounds(){return 0;}
-        
-        /**
-         * 
-         */
-        virtual
+	getZombieRounds(){return m_zombie_rounds;}
+
         void
-        incrementZombieRounds(){;}
+        incrementZombieRounds(){++m_zombie_rounds;}
         
-        virtual
-        void resetZombieRounds(){;}
+        void resetZombieRounds(){m_zombie_rounds=0;}
 
 	virtual
 	MessageColor
