@@ -34,10 +34,13 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
         if(msgs.size()==0)
                 throw std::logic_error("Msgs not empty after processing ?");
 #endif
-        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
-        for(auto& ptr : msgs){
-                if(ptr->getSourceCore()==this->getCoreID())
+        // In optimistic, delete only local-local messages after processing.
+        for(t_msgptr& ptr : msgs){
+                if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
+                        ptr = nullptr;
+                        m_stats.logStat(DELMSG);
                         delete ptr;
+                }
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
 #endif   
@@ -87,9 +90,8 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                 this->m_received_messages->erase(MessageEntry(msg));
                 delete msg;
         }else{                                          // Not yet received (origin) OR processed
-                // This needs more work, with some parallell sims this segfaults.
                 if(msgtimeinpast){                      // Processed, destroy am
-                        //LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
+                        LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
                         //delete msg;
                 }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
                         if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
@@ -107,6 +109,11 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
 void Optimisticcore::markMessageStored(const t_msgptr& msg)
 {
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
+#ifdef SAFETY_CHECKS
+        if(msg->getSourceCore()!=this->getCoreID()){
+                throw std::logic_error("Storing msg not sent from this core.");
+        }
+#endif
 	this->m_sent_messages.push_back(msg);
 }
 

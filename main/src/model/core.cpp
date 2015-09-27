@@ -438,6 +438,7 @@ void n_model::Core::validateUUID(const n_model::uuid& id)
 #ifdef SAFETY_CHECKS
         if(! (id.m_core_id == m_coreid && id.m_local_id<m_indexed_models.size() )){
                 LOG_ERROR("Core ::", this->getCoreID(), " uuid check failed : ", id, " holding ", m_indexed_models.size());
+                LOG_FLUSH;
                 throw std::logic_error("UUID validation failed. Check logs.");
         }
 #endif  
