@@ -77,9 +77,11 @@ defaults.timeout = args.timeout_time
 devstoneEx = "./build/Benchmark/dxexmachina_devstone"
 pholdEx = "./build/Benchmark/dxexmachina_phold"
 connectEx = "./build/Benchmark/dxexmachina_interconnect"
+networkEx = "./build/Benchmark/dxexmachina_network"
 adevstoneEx = "./build/Benchmark/adevs_devstone"
 adevpholdEx = "./build/Benchmark/adevs_phold"
 adevconnectEx = "./build/Benchmark/adevs_interconnect"
+adevnetworkEx = "./build/Benchmark/adevs_network"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
@@ -116,10 +118,19 @@ def interconnectgen(simtype, executable, doRandom=False):
 
 randconnectgen = partial(interconnectgen, doRandom=True)
 
+
+def networkgen(simtype, executable, feedback=False):
+    for width in [10, 50, 100]:
+        for endTime in [args.endtime]:
+            yield list(chain([executable], simtype, ['-f' if feedback else '', '-w', width, '-t', endTime]))
+
+feedbacknetworkgen = partial(networkgen, feedback=True)
+
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
+networktArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
 
 
 # compilation functions
@@ -148,9 +159,11 @@ if __name__ == '__main__':
     dxdevc = partial(unifiedCompiler, 'dxexmachina_devstone', args.force)
     dxpholdc = partial(unifiedCompiler, 'dxexmachina_phold', args.force)
     dxconnectc = partial(unifiedCompiler, 'dxexmachina_interconnect', args.force)
+    dxnetworkc = partial(unifiedCompiler, 'dxexmachina_network', args.force)
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
     aconnectc = partial(unifiedCompiler, 'adevs_interconnect', args.force)
+    anetworkc = partial(unifiedCompiler, 'adevs_network', args.force)
     dxdevstone = SimType(
         defaults.Benchmark('devstone/classic', dxdevc, partial(devstonegen, simtypes.classic, devstoneEx), "dxexmachina devstone, classic"),
         defaults.Benchmark('devstone/optimistic', dxdevc, partial(devstonegen, simtypes.optimistic, devstoneEx), "dxexmachina devstone, optimistic"),
@@ -175,6 +188,16 @@ if __name__ == '__main__':
         defaults.Benchmark('randconnect/classic', dxconnectc, partial(randconnectgen, simtypes.classic, connectEx), "dxexmachina randomized high interconnect, classic"),
         defaults.Benchmark('randconnect/optimistic', dxconnectc, partial(randconnectgen, simtypes.optimistic, connectEx), "dxexmachina randomized high interconnect, optimistic"),
         defaults.Benchmark('randconnect/conservative', dxconnectc, partial(randconnectgen, simtypes.conservative, connectEx), "dxexmachina randomized high interconnect, conservative"),
+        )
+    dxnetwork = SimType(
+        defaults.Benchmark('network/classic', dxnetworkc, partial(networkgen, simtypes.classic, networkEx), "dxexmachina queue network, classic"),
+        defaults.Benchmark('network/optimistic', dxnetworkc, partial(networkgen, simtypes.optimistic, networkEx), "dxexmachina queue network, optimistic"),
+        defaults.Benchmark('network/conservative', dxnetworkc, partial(networkgen, simtypes.conservative, networkEx), "dxexmachina queue network, conservative"),
+        )
+    dxfeednetwork = SimType(
+        defaults.Benchmark('feednetwork/classic', dxnetworkc, partial(feedbacknetworkgen, simtypes.classic, networkEx), "dxexmachina queue network with feedback loop, classic"),
+        defaults.Benchmark('feednetwork/optimistic', dxnetworkc, partial(feedbacknetworkgen, simtypes.optimistic, networkEx), "dxexmachina queue network with feedback loop, optimistic"),
+        defaults.Benchmark('feednetwork/conservative', dxnetworkc, partial(feedbacknetworkgen, simtypes.conservative, networkEx), "dxexmachina queue network with feedback loop, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -201,18 +224,32 @@ if __name__ == '__main__':
         None,
         defaults.Benchmark('arandconnect/conservative', aconnectc, partial(randconnectgen, simtypes.conservative, adevconnectEx), "adevs randomized high interconnect, conservative"),
         )
+    anetwork = SimType(
+        defaults.Benchmark('network/classic', anetworkc, partial(networkgen, simtypes.classic, adevnetworkEx), "adevs queue network, classic"),
+        None,
+        defaults.Benchmark('network/conservative', anetworkc, partial(networkgen, simtypes.conservative, adevnetworkEx), "adevs queue network, conservative"),
+        )
+    afeednetwork = SimType(
+        defaults.Benchmark('feednetwork/classic', anetworkc, partial(feedbacknetworkgen, simtypes.classic, adevnetworkEx), "adevs queue network with feedback loop, classic"),
+        None,
+        defaults.Benchmark('feednetwork/conservative', anetworkc, partial(feedbacknetworkgen, simtypes.conservative, adevnetworkEx), "adevs queue network with feedback loop, conservative"),
+        )
     allBenchmark = [dxdevstone, dxranddevstone,
                     dxphold,
                     dxconnect, dxrandconnect,
+                    dxnetwork, dxfeednetwork,
                     adevstone, aranddevstone,
                     aphold,
-                    aconnect, arandconnect]
+                    aconnect, arandconnect,
+                    anetwork, afeednetwork]
     bmarkArgParses = [devsArg, devsArg,
                       pholdArg,
                       connectArg, connectArg,
+                      networktArg, networktArg,
                       devsArg, devsArg,
                       pholdArg,
-                      connectArg, connectArg]
+                      connectArg, connectArg,
+                      networktArg, networktArg]
     # do all the preparation stuff
     driver = defaults.defaultDriver
     analyzer = defaults.perfAnalyzer
