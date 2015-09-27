@@ -169,12 +169,9 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
         // ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
         // msg is not an antimessage here.
 	if (msg->getColor() == MessageColor::WHITE) {
-		{	// Raii, so that notified thread will not have to wait on lock.
-			std::lock_guard<std::mutex> lock(this->m_vlock);
-                        const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector to : ", value_cnt_vector);
-		}
-		this->m_wake_on_msg.notify_all();
+                std::lock_guard<std::mutex> lock(this->m_vlock);
+                const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector to : ", value_cnt_vector);
 	}
 }
 
@@ -229,10 +226,10 @@ void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& run
 			LOG_DEBUG("MCORE :: ", this->getCoreID(), " rungvt : V + C <=0; v= ", v_value, " C=",msgcount );
 			break;
 		}
-		// Sleep in cvar, else we starve the sim thread.
+		// We can't use a cvar here, if sim ends before we wake we hang the entire simulation.
 		{
-			std::unique_lock<std::mutex> cvunique(m_cvarlock);
-			this->m_wake_on_msg.wait(cvunique);
+			std::chrono::milliseconds ms { 1 };
+                        std::this_thread::sleep_for(ms);
 		}
 	}
 }
