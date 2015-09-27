@@ -115,7 +115,7 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 	for (const t_atomicmodelptr& atomic : atomics) {
 		//size_t coreID = m_allocator->allocate(model);
 		addModel(atomic, atomic->getCorenumber());
-		atomic->setKeepOldStates(isParallel(m_simType));
+		atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
 		LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
 	}
 	if (m_simType == SimType::DYNAMIC)

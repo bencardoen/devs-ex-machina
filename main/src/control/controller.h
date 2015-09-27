@@ -97,7 +97,7 @@ private:
 public:
 	Controller(std::string name, std::vector<t_coreptr>& cores,
 		std::shared_ptr<Allocator>& alloc,
-		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5, std::size_t turns=10000);
+		n_tracers::t_tracersetptr& tracers, size_t traceInterval = 5, std::size_t turns=1000000);
 
 	virtual ~Controller();
 

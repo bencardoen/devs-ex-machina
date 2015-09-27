@@ -24,7 +24,7 @@ using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
 
-enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS};
+enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS, DELMSG};
 
 /**
  * Typedefs used by core.
@@ -40,6 +40,7 @@ struct statistics_collector{
         n_tools::t_uintstat     m_reverts;
         n_tools::t_uintstat     m_msgs_sent;
         n_tools::t_uintstat     m_msgs_rcvd;
+        n_tools::t_uintstat     m_deleted_msgs;
         static std::string getName(std::size_t id, std::string name){
         	return std::string("_core") + n_tools::toString(id) + "/" + name;
         }
@@ -50,7 +51,8 @@ struct statistics_collector{
                 m_turns_stalled(getName(id, "stalled"), "turns"),
         	m_reverts(getName(id, "reverts"), ""),
         	m_msgs_sent(getName(id, "send"), "messages"),
-        	m_msgs_rcvd(getName(id, "received"), "messages")
+        	m_msgs_rcvd(getName(id, "received"), "messages"),
+                m_deleted_msgs(getName(id, "deleted"),"messages")
         {;}
         void printStats(std::ostream& out = std::cout) const noexcept
         {
@@ -61,7 +63,8 @@ struct statistics_collector{
 				<< m_turns_stalled
 				<< m_msgs_sent
 				<< m_msgs_rcvd
-				<< m_reverts;
+				<< m_reverts
+                                << m_deleted_msgs;
                 }catch(...){
                         LOG_ERROR("Exception caught in printStats()");
                 }
@@ -97,6 +100,10 @@ struct statistics_collector{
                         ++m_turns_stalled;
                         break;
                 }
+                case DELMSG:{
+                        ++m_deleted_msgs;
+                        break;
+                }
                 default:
                         LOG_ERROR("No such logstat type");
                         break;
@@ -112,12 +119,13 @@ struct statistics_collector{
  */
 class Core
 {
-private:
+protected:
 	/**
 	 * Current simulation time
 	 */
 	t_timestamp m_time;
 
+private:
 	/**
 	 * GVT.
 	 */
@@ -379,7 +387,7 @@ public:
 	 * @pre totime >= this->getGVT() && totime < this->getTime()
 	 */
 	virtual
-	void revert(const t_timestamp& /*totime*/){;}
+	void revert(const t_timestamp& /*totime*/){assert(false);}
 
 	/**
 	 * Add model to this core.
@@ -693,7 +701,7 @@ public:
 	 * Sort message in individual receiving queue.
 	 */
 	virtual
-	void receiveMessage(const t_msgptr&);
+	void receiveMessage(t_msgptr);
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.

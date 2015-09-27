@@ -79,6 +79,31 @@ public:
 	~SharedVector(){;}
 };
 
+template<typename T>
+class SharedAtomic{
+private:
+        const size_t  m_size;
+        std::vector<std::atomic<T>> m_atomics;
+        SharedAtomic()=delete;
+        SharedAtomic(const SharedAtomic&)=delete;
+        SharedAtomic(const SharedAtomic&&)=delete;
+        SharedAtomic& operator=(const SharedAtomic&)=delete;
+        SharedAtomic& operator=(const SharedAtomic&&)=delete;
+public:
+        ~SharedAtomic()=default;
+        explicit SharedAtomic(size_t sz, const T& value):m_size(sz),m_atomics(sz){
+                for(auto& at : m_atomics)
+                        at.store(value);
+        }
+        T get(size_t index){
+                return m_atomics[index].load();
+        }
+        
+        void set(size_t index, const T& val){
+                m_atomics[index].store(val);
+        }
+};
+
 } /* namespace n_tools */
 
 #endif /* SRC_TOOLS_SHAREDVECTOR_H_ */

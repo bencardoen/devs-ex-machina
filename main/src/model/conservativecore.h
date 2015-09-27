@@ -65,12 +65,6 @@ private:
          * timestamps and avoid backward walking eot values.
          */
         t_timevector    m_distributed_time;
-        
-        /**
-         * In case we're stalled, remember who has sent output and who hasn't to make
-         * sure we don't send duplicate messages.
-         */
-        std::unordered_map<std::string, t_timestamp>    m_generated_output_at;
 
 	/**
 	 * Store the cores that influence this core.
@@ -123,7 +117,7 @@ private:
          * @param msg
          */
         virtual
-        void receiveMessage(const t_msgptr& msg)override;
+        void receiveMessage(t_msgptr msg)override;
 
 	/**
 	 * Reset lookahead to inf, after at least one model has changed state we need to get a

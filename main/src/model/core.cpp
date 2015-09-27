@@ -464,8 +464,7 @@ void n_model::Core::runSmallStep()
 	}
 
 	// Query imminent models (who are about to fire transition)
-        m_imminents.clear();
-        m_externs.clear();
+
         this->getImminent(m_imminents);
         
         // Dynamic structured needs the list, but best before we add externals to it.
@@ -485,6 +484,8 @@ void n_model::Core::runSmallStep()
 
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
+        m_imminents.clear();
+        m_externs.clear();
 
 	// Do we need to continue ?
 	this->checkTerminationFunction();
@@ -598,15 +599,17 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 {
 #ifdef SAFETY_CHECKS
         if(msgs.size()==0)
-                throw std::logic_error("Msgs not empty after processing ?");
+                throw std::logic_error("Msgs empty after processing ?");
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(auto& ptr : msgs){
                 delete ptr;
+                m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
 #endif   
         }
+        
         msgs.clear();
 }
 
@@ -669,7 +672,7 @@ void n_model::Core::rescheduleAll()
 }
 
 
-void n_model::Core::receiveMessage(const t_msgptr& )
+void n_model::Core::receiveMessage(t_msgptr )
 {
         assert(false);
 }

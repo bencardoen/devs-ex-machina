@@ -42,7 +42,7 @@ Conservativecore::~Conservativecore()
 void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
-		const auto & message = *i;
+		t_msgptr message = *i;
                 validateUUID(message->getDstUUID());
 		this->receiveMessage(message);
 	}
@@ -98,14 +98,17 @@ void Conservativecore::updateEOT()
                 LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
         }
         
-	this->m_distributed_eot->lockEntry(getCoreID());
+        // We're the writers, so we don't need a lock to read.
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
-        if(!isInfinity(oldeot)  && oldeot > neweot){
-                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
-                // Don't remove braces, and don't throw unless you unlock first.
+        if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", m_time, " eot moving backward in time, BUG.");
+                throw std::logic_error("EOT moving back in time.");
         }
-	this->m_distributed_eot->set(this->getCoreID(), neweot);
-	this->m_distributed_eot->unlockEntry(getCoreID());
+        if(oldeot != neweot){
+                this->m_distributed_eot->lockEntry(getCoreID());
+                this->m_distributed_eot->set(this->getCoreID(), neweot);
+                this->m_distributed_eot->unlockEntry(getCoreID());
+        }
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
 }
@@ -183,7 +186,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
         }
 }
 
-void Conservativecore::receiveMessage(const t_msgptr& msg){
+void Conservativecore::receiveMessage(t_msgptr msg){
         m_stats.logStat(MSGRCVD);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
         
@@ -194,26 +197,19 @@ void Conservativecore::receiveMessage(const t_msgptr& msg){
         
         this->queuePendingMessage(msg); // do not store antimessage
 	
+#ifdef SAFETY_CHECKS
         const t_timestamp::t_time currenttime= this->getTime().getTime();       // Avoid x times locked getter
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
-        const t_timestamp::t_time eittime = this->getEit().getTime();
 
         if (msgtime < currenttime){
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
                 throw std::logic_error("Revert in conservativecore !!");
-        }else{
-                if (msgtime == currenttime && currenttime != eittime) {
-                                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
-                                        " msg follows: ", msg->toString());
-                                m_stats.logStat(REVERTS);
-                                this->revert(msgtime);
-                }
-                // Stalled round && equal time is ok (have not yet transitioned)
-                // msgtime > currenttime is always fine.
         }
-
+        // The case == is safe for conservative due to stalling.
+        // The case > is normal.
+#endif
 }
 
 void Conservativecore::init(){
@@ -297,45 +293,38 @@ void Conservativecore::runSmallStep(){
 }
 
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
-        // Two cases, either we have collected output already, in which case we need to remove the entry from the set
-        // Or we haven't in which case the entry stays put, and we mark it for the next round.
-        std::vector<t_raw_atomic> sortedimminents;
-        for(auto imminent : imminents){
-                const std::string& name = imminent->getName();
-                auto found = m_generated_output_at.find(name);
-                if(found != m_generated_output_at.end()){
-                        // Have an entry, check timestamps (possible stale entries)
-                        if(found->second.getTime()!=this->getTime().getTime()){
-                                // Stale entry, need to collect output and mark model at current time.
-                                sortedimminents.push_back(imminent);
-                                m_generated_output_at[name]=this->getTime();
-                        }else{
-                                // Have entry at current time, leave it (and leave this comment, compiler will remove it.)
-                                ;
-                        }
-                }
-                else{
-                        // No entry, so make one at current time.
-                        sortedimminents.push_back(imminent);
-                        m_generated_output_at[name]=this->getTime();
-                }
-        }
+        // Don't need a lock, since we are the writer and we're reading here.
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        if(outputtime == m_time.getTime())
+                return;
+        
+                
         // Base function handles all the rest (message routing etc..)
-        Core::collectOutput(sortedimminents);
+        Core::collectOutput(imminents);
         // Next, we're stalled, but can be entering deadlock. Signal out current Time so the tiebreaker can
         // be found and break the lock.
+        
         m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), this->getTime());
+        m_distributed_time->set(this->getCoreID(), m_time);
         m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 
 void Conservativecore::runSmallStepStalled()
 {
+        /**
+         * Time == Eit. Generate output (once), then check if we can advance next time.
+         * Broadcast null msg time to others to try to break the deadlock.
+         */
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        if(outputtime == m_time.getTime()){
+                updateEIT();
+                return;
+        }
         std::vector<t_raw_atomic> imms;
         this->getImminent(imms);
         
-        collectOutput(imms); // only collects output once
+        collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
         for(auto mdl : imms){
                 const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
                 this->scheduleModel(mdl->getLocalID(), last_scheduled);
@@ -409,7 +398,7 @@ Conservativecore::calculateMinLookahead(){
          * D : 0->80, 80->90
          * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
          */
-        if(this->m_min_lookahead.getTime() <= this->getTime().getTime() 
+        if(this->m_min_lookahead.getTime() <= m_time.getTime() 
                 && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){
