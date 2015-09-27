@@ -73,7 +73,7 @@ char getOpt(char* argv){
  * 	opdevs|pdevs run optimistic parallel simulation
  * The last value entered for an option will overwrite any previous values for that option.
  */
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-p PRIORITY] [-f] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]"
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-p PRIORITY] [-f] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"

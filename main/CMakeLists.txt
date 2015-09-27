@@ -329,6 +329,14 @@ SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
                     LINK_FLAGS "-fopenmp"
                     )
 
+add_executable(adevs_network
+    ${ADEVS_ROOT}/benchmarks/network.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
 ### INCLUDE PATHS ############################################################
 # These are found by the section above.
 include_directories(${Boost_INCLUDE_DIRS})             
@@ -368,4 +376,5 @@ target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)
 target_link_libraries( adevs_interconnect ${LIBS} adevs)
+target_link_libraries( adevs_network ${LIBS} adevs)
 ###############################################################################

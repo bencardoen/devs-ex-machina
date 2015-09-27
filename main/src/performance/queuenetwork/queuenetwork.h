@@ -22,7 +22,7 @@ struct QueueMsg
 {
 	typedef n_network::t_timestamp::t_time t_size;
 	t_size m_size;
-	n_network::t_timestamp::t_time m_startsize;
+	t_size m_startsize;
 	bool m_isPriority;
 
 	QueueMsg(t_size size, bool priority = false)
