@@ -146,6 +146,10 @@ int main(int argc, char** argv)
 			++i;
 			if(i < argc){
 				apn = toData<std::size_t>(std::string(*(++argvc)));
+                                if(apn < 2){
+                                        std::cerr << "Invalid depth size in phold, min==2\n";
+                                        hasError = true;
+                                }
 			} else {
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}

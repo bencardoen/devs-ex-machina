@@ -81,7 +81,7 @@ void Conservativecore::updateEOT()
 		x = this->m_min_lookahead;
 	}
 
-        // Replace with nullmsgtime + eps
+
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
 		y_sent = this->getTime()+t_timestamp::epsilon();
         

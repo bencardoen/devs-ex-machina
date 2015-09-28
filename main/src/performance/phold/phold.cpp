@@ -65,7 +65,12 @@ size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 	std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
 	m_rand.seed(event);
 	if (dist(m_rand) > m_percentageRemotes || m_remote.empty()) {
-		size_t chosen = m_local[distLocal(m_rand)];
+                size_t rnr = distLocal(m_rand);
+#ifdef SAFETY_CHECKS
+                size_t chosen = m_local.at(rnr);
+#else   
+                size_t chosen = m_local[rnr];
+#endif
 		LOG_INFO("[PHOLD] - Picked local: ", chosen);
 		return chosen;
 	} else {
@@ -90,7 +95,12 @@ n_model::t_timestamp HeavyPHOLDProcessor::timeAdvance() const
 void HeavyPHOLDProcessor::intTransition()
 {
 	LOG_INFO("[PHOLD] - ",getName()," does an INTERNAL TRANSITION");
+#ifdef SAFETY_CHECKS
+        if(state().m_events.size()==0)
+                throw std::out_of_range("Int Transition pop on empty.");
+#endif
 	state().m_events.pop_front();
+
 }
 
 void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> & message)

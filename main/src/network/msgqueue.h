@@ -45,7 +45,7 @@ public:
 #ifdef USE_STAT
 		m_msgcountstat += m_queue.size();
 #endif
-		auto contents(std::move(m_queue));
+                std::vector<Q> contents=m_queue;
 		m_queue.clear();
 		return contents;
 	}

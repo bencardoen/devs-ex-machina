@@ -24,7 +24,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -578,10 +578,7 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			if (flag_is_set(threadsignal[myid], n_threadflags::IDLE)) {
 				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
 				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				unset_flag(threadsignal[myid], n_threadflags::IDLE);
-				if (core->getTerminationTime() != ctrl.m_terminationTime) {// Core possibly idle due to term functor
-					ctrl.distributeTerminationTime(ctrl.m_terminationTime);	// but revert can invalidate that, need
-				}						// to reset all termtimes. (cascade!)
+				unset_flag(threadsignal[myid], n_threadflags::IDLE);						
 			}
 		}
 		if (core->isLive() or core->isIdle()) {
@@ -589,21 +586,6 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			core->runSmallStep();
 		}
 
-		bool skip_barrier = false;
-		{
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (not flag_is_set(threadsignal[myid], n_threadflags::FREE)) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        " switching flag to WAITING");
-				set_flag(threadsignal[myid], n_threadflags::ISWAITING);
-			} else {// Don't log, this can easily go into 100MB logs if anything at all goes wrong in the sim.
-				skip_barrier = true;
-			}
-		}
-		if (not skip_barrier) {
-			std::unique_lock<std::mutex> mylock(cvlock);
-			cv.wait(mylock, predicate);
-		}
 	}
 }
 
@@ -631,7 +613,11 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
         
 	/// First round done, let Pinit check if we have found a gvt.
 	first->receiveControl(cmsg, 1, gvtsafe);
-
+        if (gvtsafe == false) {
+                LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+                return;
+        }
+        
 	if (cmsg->isGvtFound()) {
 		cont.logStat(GVT_FOUND);
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
@@ -646,8 +632,17 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
-		for (std::size_t j = 1; j < corecount; ++j)
+		for (std::size_t j = 1; j < corecount; ++j){
 			cont.m_cores[j]->receiveControl(cmsg, 1, gvtsafe);
+                        if (gvtsafe == false) {
+                                LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+                                return;
+                        }       
+                }
+                if (gvtsafe == false) {
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
                 first->receiveControl(cmsg, 2, gvtsafe);  // Controlmessage must be passed to Invoking core again.
                 
 		if (cmsg->isGvtFound()) {
