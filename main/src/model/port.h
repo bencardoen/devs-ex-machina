@@ -344,6 +344,7 @@ void Port::createMessages(const DataType& message,
 	
 #ifndef NO_TRACER
 	{
+                // This message is simply to allow correct tracing of a model that generates output, but does not send it (ie trafficlight)
 		m_sentMessages.push_back(createMsg(
                                 srcuuid, uuid(0, 0),nowtime,
                                 std::numeric_limits<std::size_t>::max(), getPortID(),

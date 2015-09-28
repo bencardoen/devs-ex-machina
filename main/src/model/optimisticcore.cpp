@@ -15,8 +15,8 @@ using namespace n_network;
 
 Optimisticcore::~Optimisticcore()
 {
-	this->m_network.reset();
         for(auto& ptr : m_sent_messages){
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                 delete ptr;
         }
         m_sent_messages.clear();
@@ -39,6 +39,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
                         ptr = nullptr;
                         m_stats.logStat(DELMSG);
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                         delete ptr;
                 }
 #ifdef SAFETY_CHECKS
@@ -86,12 +87,13 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
         
         if(this->m_received_messages->contains(msg)){   // Have received it before, but not processed it.
-                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," original found ", msg->toString(), " deleting ");
                 this->m_received_messages->erase(MessageEntry(msg));
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 delete msg;
         }else{                                          // Not yet received (origin) OR processed
                 if(msgtimeinpast){                      // Processed, destroy am
                         LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
+                        //LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
                         //delete msg;
                 }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
                         if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
@@ -100,6 +102,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                         }
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
+                                //LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
                                 //delete msg;             
                         }
                 }
@@ -152,7 +155,8 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         }
         
 	m_stats.logStat(MSGRCVD);
-	//LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
+        
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message @", msg);
         
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
@@ -382,6 +386,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 			break;
 		}
                 t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                 delete ptr;
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;

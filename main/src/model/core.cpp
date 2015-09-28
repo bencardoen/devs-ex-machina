@@ -604,6 +604,7 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(auto& ptr : msgs){
                 delete ptr;
+                LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
