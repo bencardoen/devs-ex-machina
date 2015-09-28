@@ -510,15 +510,14 @@ void Controller::setZombieIdleThreshold(int threshold)
 	m_zombieIdleThreshold.store(threshold);
 }
 
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<std::size_t>& threadsignal,
-        std::mutex& vectorlock, std::size_t turns, Controller& ctrl)
+void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size_t myid, std::vector<std::size_t>& /*threadsignal*/,
+        std::mutex& /*vectorlock*/, std::size_t turns, Controller& ctrl)
 {
-	auto core = ctrl.m_cores[myid];
+        /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
+         *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
+         */
+	const auto& core = ctrl.m_cores[myid];
 	constexpr size_t YIELD_ZOMBIE = 25;	// @see Core::m_zombie_rounds
-	auto predicate = [&]()->bool {
-		std::lock_guard<std::mutex> lv(vectorlock);
-		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
-	};
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		if(core->getZombieRounds()>YIELD_ZOMBIE){
@@ -532,27 +531,9 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 			}
 		}
 
-		{	/// Intercept a direct order to stop myself.
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (flag_is_set(threadsignal[myid], n_threadflags::STOP)) {
-				core->setLive(false);
-				ctrl.m_rungvt.store(false);
-				return;
-			}
-		}
-
-		if (core->isIdle()) {
-			std::chrono::milliseconds ms{45};	// this is a partial solution to a hard problem
-			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
-			{					// lowers the probability of triggering deadlock.
-				std::lock_guard<std::mutex> signallock(vectorlock);
-				set_flag(threadsignal[myid], n_threadflags::IDLE);
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
-			}
-			
-			/// Decide if everyone is idle.
-			// Can't be done by counting flags, these are too slow to be set.
-			// Atomic isIdle is faster.
+		if (core->isIdle()) {                   // Find out if we can quit (idle instead of live since we can be stuck before termination time).
+			std::chrono::milliseconds ms{45};	// Check if we still need this to make running idle cores fair.
+			std::this_thread::sleep_for(ms);	
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
 				if( not coreentry->isIdle()){
@@ -561,24 +542,15 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 				}
 			}
 			if(quit){
-				if (not core->existTransientMessage()) {	// Final deathtrap : network has message, can't quit.
+				if (not core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					        " all other threads are stopped or idle, network is idle, quitting.");
-					ctrl.m_rungvt.store(false);
-					std::lock_guard<std::mutex> signallock(vectorlock);
-					set_flag(threadsignal[myid], n_threadflags::STOP);
+					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					" all other threads are stopped or idle, network still reports transients, idling.");
 				}
-			}
-		} else {
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (flag_is_set(threadsignal[myid], n_threadflags::IDLE)) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				unset_flag(threadsignal[myid], n_threadflags::IDLE);						
 			}
 		}
 		if (core->isLive() or core->isIdle()) {
@@ -587,6 +559,8 @@ void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
 		}
 
 	}
+        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        ctrl.m_rungvt.store(false);
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
@@ -596,12 +570,13 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		return;
 	}
         cont.logStat(GVT_START);
+        
 	const std::size_t corecount = cont.m_cores.size();
 	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
 	        t_timestamp::infinity());
 
         /// Let Pinit start first round
-        t_coreptr first = cont.m_cores[0];
+        const t_coreptr& first = cont.m_cores[0];
         first->receiveControl(cmsg, 0, gvtsafe);
 	for (size_t i = 1; i < corecount; ++i) {
 		cont.m_cores[i]->receiveControl(cmsg, 0, gvtsafe);

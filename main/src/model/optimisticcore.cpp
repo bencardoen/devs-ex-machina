@@ -20,6 +20,23 @@ Optimisticcore::~Optimisticcore()
                 delete ptr;
         }
         m_sent_messages.clear();
+        // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
+        // any of these is an antimessage.
+        if(m_network->havePendingMessages(this->getCoreID())){
+                LOG_DEBUG("OCORE::", this->getCoreID(), " destructor detected messages in network for us, purging.");
+                std::vector<t_msgptr>msgs = m_network->getMessages(this->getCoreID());
+                std::set<t_msgptr> deleted;     // Avoid double delete risk on antimessage following it's original
+                for(const auto& msgptr : msgs){
+                        if(msgptr->isAntiMessage()){
+                                if(deleted.find(msgptr)==deleted.end()){
+                                        LOG_DEBUG("Deleting ", msgptr, "inserting to avoid double free");
+                                        delete msgptr;
+                                }else{
+                                        LOG_DEBUG("Already deleted :: ",msgptr, "skipping.");
+                                }
+                        }
+                }
+        }
 }
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, size_t cores)

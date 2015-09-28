@@ -43,10 +43,11 @@ public:
 	purge(){
 		std::lock_guard<std::mutex> lock(m_lock);
 #ifdef USE_STAT
-		m_msgcountstat += m_queue.size();
+		m_msgcountstat += m_queue.size();       // This is fast, but only reports send messages, not all if there are remaining.
 #endif
-                std::vector<Q> contents=m_queue;
-		m_queue.clear();
+                std::vector<Q> contents;
+                contents.swap(m_queue);
+		m_queue.clear();        // Should not be necessary
 		return contents;
 	}
 
@@ -65,9 +66,23 @@ private:
 	n_tools::t_uintstat m_msgcountstat;
 	static std::size_t m_counter;
 public:
-	Msgqueue(): m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(++m_counter), "messages")
+	Msgqueue(): m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(m_counter++), "messages")
 {
 }
+        
+        ~Msgqueue(){
+#ifdef SAFETY_CHECKS
+                std::lock_guard<std::mutex> lock(m_lock); // This should not be necessary, but why risk it.
+                if(m_queue.size()!=0){
+                        LOG_DEBUG("QUEUE NETWORK not empty :: pointers follow:");
+                        for(const auto& msg : m_queue){
+                                if(std::is_pointer<Q>::value){
+                                        LOG_DEBUG(msg);
+                                }
+                        }
+                }
+#endif
+        }
 	/**
 	 * @brief Prints some basic stats.
 	 * @param out The output will be printed to this stream.

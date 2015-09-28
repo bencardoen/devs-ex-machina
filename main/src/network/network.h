@@ -35,6 +35,10 @@ public:
 	 * Create a network object with #cores.
 	 */
 	Network(size_t cores);
+        
+        /**
+         */
+        ~Network() = default;
 
 	/**
 	 * Called by a core pushing a message to the network.
