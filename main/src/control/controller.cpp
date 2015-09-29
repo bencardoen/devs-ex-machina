@@ -264,7 +264,6 @@ void Controller::simOPDEVS()
 	std::mutex veclock;	// Lock for vector with signals
 	std::vector<std::size_t> threadsignal;
 	threadsignal.reserve(m_cores.size());
-	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
 	for (auto& core : m_cores) {
@@ -286,7 +285,7 @@ void Controller::simOPDEVS()
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
 		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), deadlockVal, std::ref(*this)));
+		                std::ref(veclock), m_turns, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
@@ -517,23 +516,15 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
          *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
          */
 	const auto& core = ctrl.m_cores[myid];
-	constexpr size_t YIELD_ZOMBIE = 25;	// @see Core::m_zombie_rounds
 
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if(core->getZombieRounds()>YIELD_ZOMBIE){
+		if(core->getZombieRounds()>ctrl.m_zombieIdleThreshold.load()){
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
-			std::chrono::milliseconds ms{25};
-			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
-			int thres = ctrl.m_zombieIdleThreshold.load();
-			if(thres >= 0 && core->getZombieRounds() >= (size_t)thres) {
-				LOG_WARNING("CVWORKER: Reached zombie threshold (",thres,"), idling the core!");
-				core->setIdle(true);
-			}
+                        core->setIdle(true);
+                        core->setLive(false);
 		}
 
-		if (core->isIdle()) {                   // Find out if we can quit (idle instead of live since we can be stuck before termination time).
-			std::chrono::milliseconds ms{45};	// Check if we still need this to make running idle cores fair.
-			std::this_thread::sleep_for(ms);	
+		if (core->isIdle()) {                   // Is iedereen idle, indien ja, quit.
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
 				if( not coreentry->isIdle()){
@@ -541,10 +532,10 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
 					break;
 				}
 			}
-			if(quit){
+			if(quit){               /// Iedereen idle
 				if (not core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network is idle, quitting.");
+					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
 					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
 					return;
 				} else {
@@ -553,11 +544,8 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
 				}
 			}
 		}
-		if (core->isLive() or core->isIdle()) {
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
-			core->runSmallStep();
-		}
-
+                LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
+                core->runSmallStep();
 	}
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
         ctrl.m_rungvt.store(false);

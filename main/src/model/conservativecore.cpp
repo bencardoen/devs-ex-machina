@@ -29,6 +29,7 @@ void Conservativecore::getMessages()
 	if(messages.size()!= 0){
 		if(this->isIdle()){
 			this->setIdle(false);
+                        this->setLive(true);
 			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
 		}
 	}
@@ -395,10 +396,10 @@ Conservativecore::calculateMinLookahead(){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){
                         const t_timestamp la = model->lookAhead();
-                        
+#ifdef SAFETY_CHECKS
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");
-                        
+#endif                        
                         if(isInfinity(la))
                                 continue;
                         

@@ -16,7 +16,7 @@ using namespace n_network;
 Optimisticcore::~Optimisticcore()
 {
         for(auto& ptr : m_sent_messages){
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting sent message ", ptr);
                 delete ptr;
         }
         m_sent_messages.clear();
@@ -27,14 +27,12 @@ Optimisticcore::~Optimisticcore()
                 std::vector<t_msgptr>msgs = m_network->getMessages(this->getCoreID());
                 std::set<t_msgptr> deleted;     // Avoid double delete risk on antimessage following it's original
                 for(const auto& msgptr : msgs){
-                        if(msgptr->isAntiMessage()){
-                                if(deleted.find(msgptr)==deleted.end()){
-                                        LOG_DEBUG("Deleting ", msgptr, "inserting to avoid double free");
-                                        delete msgptr;
-                                }else{
-                                        LOG_DEBUG("Already deleted :: ",msgptr, "skipping.");
-                                }
-                        }
+                        if( msgptr->isAntiMessage() )
+                                deleted.insert(msgptr);
+                }
+                for(const auto& uaptr : deleted){
+                        LOG_DEBUG("OCORE::", this->getCoreID(), " destructor deleting ", uaptr);
+                        delete uaptr;
                 }
         }
 }
@@ -70,7 +68,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
 void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
 	// We're locked on msglock.
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message ", msg->toString());
+	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
         paintMessage(msg);
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
@@ -111,7 +109,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                 if(msgtimeinpast){                      // Processed, destroy am
                         LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                        delete msg;
+                        //delete msg;
                 }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
                         if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass.");
@@ -214,6 +212,7 @@ void Optimisticcore::getMessages()
 	if(messages.size()!= 0){
 		if(this->isIdle()){
 			this->setIdle(false);
+                        this->setLive(true);
 			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
 		}
 	}
@@ -390,7 +389,8 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 	if (newgvt < this->getGVT() || isInfinity(newgvt) ) {          
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
-		return;
+                LOG_FLUSH;
+		throw std::logic_error("Invalid GVT found");
 	}
 #endif
 	
@@ -403,6 +403,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 			break;
 		}
                 t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this-getCoreID(), "Deleting msg", ptr->toString());
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                 delete ptr;
 #ifdef SAFETY_CHECKS

@@ -692,7 +692,6 @@ void n_model::Core::getPendingMail()
         this->unlockMessages();
 	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
-	//std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
 	m_token.getMessage()->setTimeStamp(nowtime);
 
 	this->lockMessages();

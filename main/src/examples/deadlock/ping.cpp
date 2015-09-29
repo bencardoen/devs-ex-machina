@@ -32,8 +32,8 @@ void Ping::extTransition(const std::vector<n_network::t_msgptr> & )
 	PingState& st = state();
 	LOG_DEBUG("MODEL :: transitioning from : " , ToString<PingState>::exec(st));
 	if(st == PingState::WAITING){
-	st = PingState::RECEIVING;
-	return;
+                st = PingState::RECEIVING;
+                return;
 	}
 	assert(false);
 }
