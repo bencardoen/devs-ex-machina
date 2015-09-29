@@ -660,7 +660,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 	for (const auto& model : m_indexed_models) {
 		t_timestamp modellast = model->revert(totime);
 		// Bug lived here : Do not set time on model.
-                this->scheduleModel(model->getLocalID(), modellast);
+                this->scheduleModel(model->getLocalID(), modellast);  // Replace with direct push_back, don't need schedule's complexity.
 	}
 }
 
