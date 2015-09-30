@@ -52,7 +52,7 @@ private:
 	bool m_checkTermCond;
 	t_terminationfunctor m_terminationCondition;
 	size_t m_saveInterval;
-	std::atomic<int> m_zombieIdleThreshold;
+	std::atomic<size_t> m_zombieIdleThreshold;
 
 	std::vector<t_coreptr> m_cores;
 	std::shared_ptr<Allocator> m_allocator;
@@ -192,7 +192,7 @@ public:
 	/**
 	 * @brief forces "zombie" cores to go IDLE
 	 */
-	void setZombieIdleThreshold(int threshold = -1);
+	void setZombieIdleThreshold(size_t threshold = 10);
 
 private:
 	/**
@@ -242,9 +242,7 @@ private:
 	void runGVT(Controller&, std::atomic<bool>& rungvt);
 
 	friend
-	void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-	        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-	        Controller&);
+	void cvworker( std::size_t myid, std::size_t turns,Controller&);
 
 
 //-------------statistics gathering--------------
@@ -282,9 +280,7 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
  * @param vectorlock : lock threadsignal
  * @param turns : infinite loop cutoff value.
  */
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid,
-        std::vector<std::size_t>& threadsignal, std::mutex& vectorlock, std::size_t turns,
-        Controller&);
+void cvworker(std::size_t myid,std::size_t turns,Controller&);
 
 } /* namespace n_control */
 

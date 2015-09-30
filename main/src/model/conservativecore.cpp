@@ -27,8 +27,7 @@ void Conservativecore::getMessages()
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	if(messages.size()!= 0){
-		if(this->isIdle()){
-			this->setIdle(false);
+		if(!this->isLive()){	
                         this->setLive(true);
 			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
 		}

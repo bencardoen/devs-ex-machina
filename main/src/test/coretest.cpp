@@ -85,10 +85,7 @@ TEST(ModelScheduling, BasicOperations)
 	EXPECT_EQ(set.size(), 2u);
 	set.clear();
 	EXPECT_EQ(set.size(), 0u);
-	// This is evil, and is never guaranteed to work.
-	// A model entry with the same name is equal no matter what time is set.
-	// The alternative allows insertion multiple times (an error).
-	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
+	
 	me = ModelEntry(1, t_timestamp(1, 0));
 	you = ModelEntry(1, t_timestamp(1, 1));
 	EXPECT_TRUE(me == you);
@@ -163,6 +160,7 @@ TEST(DynamicCore, smallStep)
 	EXPECT_EQ(imms.size(), 0u);
 	c->setLive(true);
 	c->syncTime();
+        Core* core = c.get();
 	while(c->isLive()){
 		c->runSmallStep();
 		c->getLastImminents(imms);
@@ -174,7 +172,6 @@ TEST(DynamicCore, smallStep)
 	}
 	// This is not how to run a core, but a check of safety blocks.
 	c->setLive(true);
-	c->setIdle(false);
 	c->removeModel("Amodel");
         c->validateModels();
 	EXPECT_EQ(c->containsModel("Amodel"), false);
@@ -231,7 +228,7 @@ TEST(Core, terminationfunction)
 	c->removeModel("Amodel");
 }
 
-TEST(Optimisticcore, DISABLED_revert){
+TEST(Optimisticcore, revert){
         // Valgrind clear
 	RecordProperty("description", "Revert/timewarp basic tests.");
 	using namespace n_network;
@@ -343,7 +340,7 @@ TEST(Optimisticcore, revertidle){
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
-	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
+	EXPECT_TRUE( !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
         
         c2->runSmallStep();     // give tlight chance to delete amsgs.
@@ -605,7 +602,7 @@ TEST(Optimisticcore, revertstress){
 	}
 }
 
-TEST(Optimisticcore, DISABLED_revert_antimessaging){    // Disabled until optimistic segfault is traced to origin.
+TEST(Optimisticcore, revert_antimessaging){    
         // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");

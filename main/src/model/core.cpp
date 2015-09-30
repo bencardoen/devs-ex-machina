@@ -48,7 +48,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_idle(false), m_terminated_functor(false), m_cores(totalCores),
+                m_terminated_functor(false), m_cores(totalCores),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
@@ -394,7 +394,6 @@ void n_model::Core::syncTime()
 	if (this->getTime() >= this->getTerminationTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
 		this->setLive(false);
-		this->setIdle(true);
 	}
 }
 
@@ -411,17 +410,6 @@ n_network::t_timestamp n_model::Core::getGVT() const
 bool n_model::Core::isLive() const
 {
 	return m_live;
-}
-
-bool n_model::Core::isIdle() const
-{
-	return m_idle;
-}
-
-void n_model::Core::setIdle(bool idlestat)
-{
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " setting state to idle=", idlestat);
-	m_idle.store(idlestat);
 }
 
 void n_model::Core::setLive(bool b)
@@ -457,7 +445,7 @@ void n_model::Core::runSmallStep()
 	// This step can trigger a revert, which is why its before getImminent
 	this->getMessages();	// locked on msgs
 
-	if (this->isIdle()) {// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
+	if (!this->isLive()) {// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(),
 		        " skipping small Step, we're idle and got no messages.");
 		this->unlockSimulatorStep();
@@ -553,7 +541,6 @@ void n_model::Core::checkTerminationFunction()
 			if ((*m_termination_function)(model)) {
 				LOG_DEBUG("CORE: ", this->getCoreID(), " Termination function evaluated to true for model ", model->getName());
 				this->setLive(false);
-				this->setIdle(true);
 				this->setTerminationTime(this->getTime());
 				this->m_terminated_functor.store(true);
 				return;
@@ -747,7 +734,7 @@ void n_model::Core::revertTracerUntil(const t_timestamp& totime)
 void n_model::Core::logCoreState()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " time= ", this->getTime(), " gvt=", this->getGVT(), " live=",
-	        this->isLive(), " idle=", this->isIdle());
+	        this->isLive());
 }
 
 

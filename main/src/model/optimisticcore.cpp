@@ -212,8 +212,7 @@ void Optimisticcore::getMessages()
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	if(messages.size()!= 0){
-		if(this->isIdle()){
-			this->setIdle(false);
+		if(!this->isLive()){
                         this->setLive(true);
 			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
 		}
@@ -431,39 +430,54 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 
 void n_model::Optimisticcore::lockSimulatorStep()
 {
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
+#endif
 	this->m_locallock.lock();
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
+#endif
 }
 
 void n_model::Optimisticcore::unlockSimulatorStep()
 {
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " trying to unlock simulator core.");
+#endif
 	this->m_locallock.unlock();
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
+#endif
 }
 
 void n_model::Optimisticcore::lockMessages()
 {
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locking ... ");
+#endif
 	m_msglock.lock();
+#ifdef  LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locked ");
+#endif
 }
 
 void n_model::Optimisticcore::unlockMessages()
 {
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocking ...");
+#endif
 	m_msglock.unlock();
+#ifdef LOG_LOCK
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocked");
+#endif
 }
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
 	assert(totime.getTime() >= this->getGVT().getTime());
 	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
-	if (this->isIdle()) {
+	if (!this->isLive()) {
 		LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Core going from idle to active ");
-		this->setIdle(false);
 		this->setLive(true);
 		this->setTerminatedByFunctor(false);
 	}

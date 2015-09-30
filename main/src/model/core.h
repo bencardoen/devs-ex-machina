@@ -164,11 +164,6 @@ private:
 	n_tracers::t_tracersetptr m_tracers;
 
 	/**
-	 * Indicate if this core is beyond termination, but waiting on others.
-	 */
-	std::atomic<bool> m_idle;
-
-	/**
 	 * Marks if this core has triggered a terminated functor. This distinction is required
 	 * for timewarp, and for the controller to redistribute the current time at wich the
 	 * functor triggered as a new termination time (which in turn can be undone ...)
@@ -431,25 +426,14 @@ public:
         validateUUID(const n_model::uuid&);
 
 	/**
-	 * Indicates if Core is running, or halted.
+	 * Live indicates, with the execption of dynstructured, the core is considered
+         * in or beyond simulation. 
+         * In Single core simulation, live indicates simulation can proceed.
+         * In parallel, live indicates wether or not the core has work to do (which in case of revert
+         * can go back from dead to live).
 	 * @synchronized
 	 */
 	bool isLive() const;
-
-	/**
-	 * @return true if a Core has reached a termination condition, and is waiting for
-	 * other cores to finish. A Core can still be reactivated (isLive()==true) from this state.
-	 */
-	virtual
-	bool isIdle() const;
-
-	/**
-	 * Mark this core as having reached termination condition, but keep it alive (waiting for
-	 * other cores).
-	 */
-	virtual
-	void
-	setIdle(bool idlestate);
 
 	/**
 	 * Start/Stop core.

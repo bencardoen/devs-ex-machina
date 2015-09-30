@@ -32,7 +32,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-	m_zombieIdleThreshold.store(-1);
+	m_zombieIdleThreshold.store(10);
 }
 
 Controller::~Controller()
@@ -259,14 +259,9 @@ void Controller::simDEVS()
 
 void Controller::simOPDEVS()
 {
-	std::mutex cvlock;
-	std::condition_variable cv;
-	std::mutex veclock;	// Lock for vector with signals
-	std::vector<std::size_t> threadsignal;
-	threadsignal.reserve(m_cores.size());
 
 	// configure all cores
-	for (auto& core : m_cores) {
+	for (const auto& core : m_cores) {
 		core->setTracers(m_tracers);
 		core->init();
 
@@ -277,15 +272,13 @@ void Controller::simOPDEVS()
 
 		core->setLive(true);
 
-		threadsignal.push_back(n_threadflags::FREE);
 	}
 
 	this->m_rungvt.store(true);
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), m_turns, std::ref(*this)));
+		        std::thread(cvworker, i, m_turns, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
@@ -297,17 +290,10 @@ void Controller::simOPDEVS()
 }
 
 void Controller::simCPDEVS()
-{
-        /// Threading:
-        // Core<>Controller are distinct (cvworker runs core).
-	std::mutex cvlock;
-	std::condition_variable cv;
-	std::mutex veclock;	// Lock for vector with signals
-	std::vector<std::size_t> threadsignal;
-	threadsignal.reserve(m_cores.size());
+{	
 
 	// configure all cores
-	for (auto& core : m_cores) {
+	for (const auto& core : m_cores) {
 		core->setTracers(m_tracers);
 		core->init();
 
@@ -317,15 +303,13 @@ void Controller::simCPDEVS()
 			core->setTerminationFunction(m_terminationCondition);
 
 		core->setLive(true);
-
-		threadsignal.push_back(n_threadflags::FREE);
 	}
 
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), m_turns, std::ref(*this)));
+		        std::thread(cvworker, i, m_turns, std::ref(*this))
+                        );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
@@ -336,7 +320,7 @@ void Controller::simCPDEVS()
 
 void Controller::simDSDEVS()
 {
-	auto& core = m_cores.front(); // there is only one core in DS DEVS
+	const auto& core = m_cores.front(); // there is only one core in DS DEVS
 	core->setTracers(m_tracers);
 
 	core->init();
@@ -504,13 +488,12 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
-void Controller::setZombieIdleThreshold(int threshold)
+void Controller::setZombieIdleThreshold(size_t threshold)
 {
 	m_zombieIdleThreshold.store(threshold);
 }
 
-void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size_t myid, std::vector<std::size_t>& /*threadsignal*/,
-        std::mutex& /*vectorlock*/, std::size_t turns, Controller& ctrl)
+void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 {
         /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
          *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
@@ -520,14 +503,13 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		if(core->getZombieRounds()>ctrl.m_zombieIdleThreshold.load()){
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
-                        core->setIdle(true);
                         core->setLive(false);
 		}
 
-		if (core->isIdle()) {                   // Is iedereen idle, indien ja, quit.
+		if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
-				if( not coreentry->isIdle()){
+				if( coreentry->isLive()){
 					quit = false;
 					break;
 				}
