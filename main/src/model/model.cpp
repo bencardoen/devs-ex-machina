@@ -34,6 +34,11 @@ t_portptr Model::getPort(std::string name) const
 	for(const t_portptr ptr: m_oPorts)
 		if(ptr->getName() == name)
 			return ptr;
+#ifdef SAFETY CHECKS
+        LOG_ERROR("Port with name not found :: ", name , " in model ", this->m_name);
+        LOG_FLUSH;
+        throw std::logic_error("Port not found!);
+#endif
 	return nullptr;
 }
 

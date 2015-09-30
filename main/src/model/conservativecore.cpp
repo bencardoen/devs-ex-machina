@@ -369,9 +369,9 @@ bool Conservativecore::checkNullRelease(){
 }
 
 bool n_model::Conservativecore::existTransientMessage(){
-	bool b = this->m_network->networkHasMessages();
-	LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " network has messages ?=", b);
-	return b;
+	
+	// TODO remove call
+	return false;
 }
 
 void

@@ -20,11 +20,10 @@ using namespace n_network;
 
 TEST(Network, detectIdle){
 	n_network::Network n(4);
-	EXPECT_EQ(n.networkHasMessages(), false);
+	EXPECT_EQ(n.empty(), true);
 	t_msgptr msg = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(3, 0), t_timestamp(1, 0), 0, 0);
-//	msg->setDestinationCore(3);
 	n.acceptMessage(msg);
-	EXPECT_EQ(n.networkHasMessages(), true);
+	EXPECT_EQ(n.empty(), false);
         delete msg;
 }
 

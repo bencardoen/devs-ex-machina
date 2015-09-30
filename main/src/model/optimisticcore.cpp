@@ -22,14 +22,16 @@ Optimisticcore::~Optimisticcore()
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
         // any of these is an antimessage.
+        
         if(m_network->havePendingMessages(this->getCoreID())){
                 LOG_DEBUG("OCORE::", this->getCoreID(), " destructor detected messages in network for us, purging.");
                 std::vector<t_msgptr>msgs = m_network->getMessages(this->getCoreID());
                 std::set<t_msgptr> deleted;     // Avoid double delete risk on antimessage following it's original
                 for(const auto& msgptr : msgs){
-                        if( msgptr->isAntiMessage() )
+                        if( msgptr->isAntiMessage() )// invalid read
                                 deleted.insert(msgptr);
                 }
+                
                 for(const auto& uaptr : deleted){
                         LOG_DEBUG("OCORE::", this->getCoreID(), " destructor deleting ", uaptr);
                         delete uaptr;
@@ -386,7 +388,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
         
 	t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 #ifdef SAFETY_CHECKS
-	if (newgvt < this->getGVT() || isInfinity(newgvt) ) {          
+	if (newgvt.getTime() < this->getGVT().getTime() || isInfinity(newgvt) ) {          
 		LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
 		        this->getGVT());
                 LOG_FLUSH;
@@ -485,9 +487,9 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
 
 
 bool n_model::Optimisticcore::existTransientMessage(){
-	bool b = this->m_network->networkHasMessages();
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " network has messages ?=", b);
-	return b;
+        bool b = this->m_network->empty();
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " network is empty = ", b);
+	return !b;
 }
 
 void

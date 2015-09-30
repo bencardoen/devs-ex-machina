@@ -195,6 +195,7 @@ int main(int argc, char** argv)
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
+        n_control::Controller& controller = *ctrl;
 
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
 	        percentageRemotes);

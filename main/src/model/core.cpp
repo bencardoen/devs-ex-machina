@@ -261,7 +261,7 @@ n_model::Core::hasMail(size_t id){
 void n_model::Core::transition()
 {
         
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, and ");
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents");
         
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (auto imminent : m_imminents) {                     
@@ -285,6 +285,7 @@ void n_model::Core::transition()
 
 		}
 	}
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs, and ");
         for(auto external : m_externs){
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);

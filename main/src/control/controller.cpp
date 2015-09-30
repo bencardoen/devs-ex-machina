@@ -24,7 +24,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(10), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -516,7 +516,7 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
          *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
          */
 	const auto& core = ctrl.m_cores[myid];
-
+        LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 		if(core->getZombieRounds()>ctrl.m_zombieIdleThreshold.load()){
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
@@ -533,7 +533,7 @@ void cvworker(std::condition_variable& /*cv*/, std::mutex& /*cvlock*/, std::size
 				}
 			}
 			if(quit){               /// Iedereen idle
-				if (not core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
+				if ( ! core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
 					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
