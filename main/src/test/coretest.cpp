@@ -256,6 +256,7 @@ TEST(Optimisticcore, revert){
 	t_timestamp aftergvt(63,0);
 	
 	t_msgptr msgaftergvt = createRawObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
+        LOG_DEBUG("Creating ", msgaftergvt);
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
@@ -269,7 +270,7 @@ TEST(Optimisticcore, revert){
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
-        
+        // Message is not sent by any core.
 }
 
 

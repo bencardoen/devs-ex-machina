@@ -111,7 +111,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
                 if(msgtimeinpast){                      // Processed, destroy am
                         LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                        //delete msg;
+                        delete msg;
                 }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
                         if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass.");
