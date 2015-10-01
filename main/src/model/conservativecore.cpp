@@ -70,17 +70,12 @@ Conservativecore::setEit(const t_timestamp& neweit){
 void Conservativecore::updateEOT()
 {
         // Lookahead based
-	t_timestamp x = t_timestamp::infinity();
+	t_timestamp x_la = this->m_min_lookahead;
         // If we've generated output, eot=time
         t_timestamp y_sent = t_timestamp::infinity();
         // Next possible event
 	t_timestamp y_imminent = t_timestamp::infinity();
         t_timestamp y_pending = t_timestamp::infinity();
-        
-	if(! isInfinity(this->m_min_lookahead)){
-		x = this->m_min_lookahead;
-	}
-
 
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
 		y_sent = this->getTime()+t_timestamp::epsilon();
@@ -291,10 +286,10 @@ void Conservativecore::runSmallStep(){
 }
 
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
-        // Don't need a lock, since we are the writer and we're reading here.
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == getTime().getTime())
-                return;
+        if(outputtime == getTime().getTime()){
+                return;         // If we've collected output before (in a stalled round usually), return immediately.
+        }
         
                 
         // Base function handles all the rest (message routing etc..)
@@ -326,6 +321,7 @@ void Conservativecore::runSmallStepStalled()
                 }
                 
         }
+        // LA is the same (no state change).
         this->updateEOT();
         this->updateEIT();
 }
