@@ -175,10 +175,12 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message @", msg);
         
+        bool processed = (msgtime < this->getTime().getTime());
+        
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
-		this->handleAntiMessage(msg, msgtime_in_past);
+		this->handleAntiMessage(msg, processed);
 	} else {
 		this->queuePendingMessage(msg);
                 this->registerReceivedMessage(msg);         

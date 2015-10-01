@@ -115,6 +115,8 @@ public:
 	 * @brief Main loop, starts simulation
 	 */
 	void simulate();
+        
+        Core* getCore(size_t id){return m_cores[id].get();}
 
 	/**
 	 * @brief Sets the simulation type

@@ -1067,3 +1067,77 @@ TEST(Conservativecore, Deadlock){
                 //tracers->startTrace();
 	}
 }
+#include <performance/phold/phold.h>
+
+class PHoldAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+	std::size_t m_n;
+public:
+	PHoldAlloc(): m_maxn(0), m_n(0)
+	{
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
+		//all models may send to each other. There isn't really an optimal configuration.
+		return (m_n++)%coreAmount();
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
+		for(const n_model::t_atomicmodelptr& ptr: models){
+			std::size_t val = allocate(ptr);
+			ptr->setCorenumber(val);
+			LOG_DEBUG("Assigning model ", ptr->getName(), " to core ", val);
+		}
+	}
+};
+
+TEST(Conservativecore, PHOLD){
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLD";
+	conf.m_simType = n_control::SimType::CONSERVATIVE;
+	conf.m_coreAmount = 2;
+	conf.m_saveInterval = 0;
+	conf.m_zombieIdleThreshold = 100000;
+	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
+
+	auto ctrl = conf.createController();
+	t_timestamp endTime(100, 0);
+	ctrl->setTerminationTime(endTime);
+
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(1, 2, 1,
+	        10);
+	ctrl->addModel(d);
+        
+	Core* zero = ctrl->getCore(0);
+        zero->init();
+        zero->setTerminationTime(endTime);
+        Core* one = ctrl->getCore(1);
+        one->init();
+        one->setTerminationTime(endTime);
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+        zero->runSmallStep();
+        one->runSmallStep();
+	std::ofstream filestream("./phold.txt");
+	n_tools::CoutRedirect myRedirect(filestream);
+	ctrl->printStats(std::cout);
+	d->printStats(std::cout);
+}

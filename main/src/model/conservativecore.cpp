@@ -315,23 +315,17 @@ void Conservativecore::runSmallStepStalled()
          * Broadcast null msg time to others to try to break the deadlock.
          */
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == getTime().getTime()){
-                updateEIT();
-                return;
+        if(outputtime != getTime().getTime()){
+                std::vector<t_raw_atomic> imms;
+                this->getImminent(imms);
+
+                collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
+                for(auto mdl : imms){
+                        const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
+                        this->scheduleModel(mdl->getLocalID(), last_scheduled);
+                }
+                
         }
-        std::vector<t_raw_atomic> imms;
-        this->getImminent(imms);
-        
-        collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
-        for(auto mdl : imms){
-                const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
-                this->scheduleModel(mdl->getLocalID(), last_scheduled);
-        }
-        //We have no new states since our last lookahead calculation, so
-        //la values are unchanged.
-        //Eot does require an update if we have sent ^^^ output.
-        //Without updating eit, we'll never get out of a stalled round.
-        //this->calculateMinLookahead(); // DO NOT ENABLE, unless debugging.
         this->updateEOT();
         this->updateEIT();
 }
