@@ -160,7 +160,6 @@ TEST(DynamicCore, smallStep)
 	EXPECT_EQ(imms.size(), 0u);
 	c->setLive(true);
 	c->syncTime();
-        Core* core = c.get();
 	while(c->isLive()){
 		c->runSmallStep();
 		c->getLastImminents(imms);
