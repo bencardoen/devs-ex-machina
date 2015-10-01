@@ -443,9 +443,10 @@ void n_model::Core::runSmallStep()
 
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
+        // getMessages will also turn a core back to live in optimistc (in revert).
 	this->getMessages();	// locked on msgs
 
-	if (!this->isLive()) {// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
+	if (!this->isLive()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(),
 		        " skipping small Step, we're idle and got no messages.");
 		this->unlockSimulatorStep();

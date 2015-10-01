@@ -284,7 +284,7 @@ void Conservativecore::runSmallStep(){
                 if(timeStalled())       
                         invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
         }
-        else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
+        else{ // !stalled && released = fine, !stalled && !released =fine (limited by eit), stalled && released == fine
                 
                 Core::runSmallStep();   //  L -> UL
         }
@@ -337,28 +337,27 @@ bool Conservativecore::checkNullRelease(){
          * If all nulltimes are equal, but our own isn't we need at least 1 stalled round, 
          * so again return false.
          */
-        
+        LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, checking if all influencing cores have advanced equally far ");
         t_timestamp::t_time current_time = this->getTime().getTime();
-        for(const auto& influencing : this->m_influencees){
+        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
+        if(own_null != current_time ){
+                LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, our own time is not yet set as nulltime, return false.");
+                return false;
+        }
+        
+        for(auto influencing : this->m_influencees){
                 
                 this->m_distributed_time->lockEntry(influencing);
                 t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing).getTime();
                 this->m_distributed_time->unlockEntry(influencing);
                 
                 if(nulltime < current_time || isInfinity(t_timestamp(nulltime, 0))){
+                        LOG_DEBUG("Core :: ", this->getCoreID(), " Null check failed for id = ", influencing, " at " ,nulltime);
                         return false;
                 }        
         }
-        
-        
-        this->m_distributed_time->lockEntry(this->getCoreID());
-        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
-        this->m_distributed_time->unlockEntry(this->getCoreID());
-        if(own_null != current_time)
-                return false;
-        
-        return true;
-        
+        LOG_DEBUG("Core :: ", this->getCoreID(), " Null check passed, all influencing cores are at time >= ourselves.");
+        return true;       
 }
 
 bool n_model::Conservativecore::existTransientMessage(){

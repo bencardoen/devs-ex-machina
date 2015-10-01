@@ -1115,9 +1115,11 @@ TEST(Conservativecore, PHOLD){
 	Core* zero = ctrl->getCore(0);
         zero->init();
         zero->setTerminationTime(endTime);
+        zero->setLive(true);
         Core* one = ctrl->getCore(1);
         one->init();
         one->setTerminationTime(endTime);
+        one->setLive(true);
         zero->runSmallStep();
         one->runSmallStep();
         zero->runSmallStep();
