@@ -958,13 +958,13 @@ TEST(Conservativecore, Deadlock){
                 // Begin in processing state scheduled internal @ 10
                 // Eot = 0, Eit=0, time=0
                 LOG_INFO("1-------------------------------------------------");
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
+                c0->runSmallStep();     // Stalled round, check if core 1 has passed 0 ? , fails, mark nulltime=0
+                c1->runSmallStep();     // Same, but see that 0 has passed 0 as time, so simulation IS safe.
+                c2->runSmallStep();     // Same as above
                 // Eot becomes 10 (int), Eit moves to 10.
                 EXPECT_EQ(c0->getTime().getTime(), 0u);
-                EXPECT_EQ(c1->getTime().getTime(), 0u);
-                EXPECT_EQ(c2->getTime().getTime(), 0u);
+                EXPECT_EQ(c1->getTime().getTime(), 10u);
+                EXPECT_EQ(c2->getTime().getTime(), 10u);
                 
                 for(size_t i = 0; i<3; ++i){
                         EXPECT_EQ(timevector->get(i).getTime(), 0u); // 0 round is safe
@@ -973,19 +973,21 @@ TEST(Conservativecore, Deadlock){
                 
                 
                 LOG_INFO("2-------------------------------------------------");
-                // Time advances from 0 -> 10, don't do anything @0
+                
                
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
+                c0->runSmallStep();     // C0 sees that others have nulltime of 0, so simulate to 10. 
+                c1->runSmallStep();     // C1 : generate output @10, but C0 is behind, wait.
+                c2->runSmallStep();     // C2 : C1 has done all @10, so we're safe.
                 
                 EXPECT_EQ(c0->getTime().getTime(), 10u);
                 EXPECT_EQ(c1->getTime().getTime(), 10u);
                 EXPECT_EQ(c2->getTime().getTime(), 10u);
+                EXPECT_EQ(timevector->get(0).getTime(), 0u); // 0 round is safe, 10 has not run yet
+                EXPECT_EQ(eotvector->get(0).getTime(), 10u); // 10 round is next expected
                 
-                for(size_t i = 0; i<3; ++i){
-                        EXPECT_EQ(timevector->get(i).getTime(), 0u); // 0 round is safe, 10 has not run yet
-                        EXPECT_EQ(eotvector->get(i).getTime(), 10u); // 10 round is next expected
+                for(size_t i = 1; i<3; ++i){
+                        EXPECT_EQ(timevector->get(i).getTime(), 10u); // 0 round is safe, 10 has not run yet
+                        EXPECT_EQ(eotvector->get(i).getTime(), 10u); // 11 because both 1,2 have sent output. So earliest output = 11
                 }
                 
                 LOG_INFO("3-------------------------------------------------");

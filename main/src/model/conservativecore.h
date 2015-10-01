@@ -137,19 +137,14 @@ private:
 	updateEIT();
         
         /**
-         * If time == eit, only generate output for imminent models, but do not transition.
-         * We can only get in this state if we have either a msg with timestamp == now and/or
-         * a model imminent @ now. We're not allowed to transition, only to generate output (which will
-         * advance our EOT, and therefore advance other's eit.
-         * By the same reasoning, our eit will advance (eventually).
-         * In this simulation round we do not query the network for new messages (which we're not allowed to
-         * hand off to models), and we do not advance time (since time==eit, and our imminent model and or message is still
-         * pending @ time=now.
+        *
          */
         void
         runSmallStepStalled();
         
         t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
+        
+        t_timestamp getNullTime()const{return m_distributed_time->get(this->getCoreID());}
 
 public:
 	Conservativecore() = delete;

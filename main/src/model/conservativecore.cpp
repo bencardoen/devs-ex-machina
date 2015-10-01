@@ -68,24 +68,35 @@ Conservativecore::setEit(const t_timestamp& neweit){
 * 			none of the above : oo
 */
 void Conservativecore::updateEOT()
-{
+{       
         // Lookahead based
 	t_timestamp x_la = this->m_min_lookahead;
+        t_timestamp nulltime = this->getNullTime();
         // If we've generated output, eot=time
-        t_timestamp y_sent = t_timestamp::infinity();
-        // Next possible event
-	t_timestamp y_imminent = t_timestamp::infinity();
-        t_timestamp y_pending = t_timestamp::infinity();
+        t_timestamp x_sent = t_timestamp::infinity();
 
-	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
-		y_sent = this->getTime()+t_timestamp::epsilon();
+	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())     // NOT the same a null msg time, which is set even if there is nothing sent.
+		x_sent = this->getTime()+t_timestamp::epsilon();
+        else{
+                // Invalid LA (phold & friends), start edging eot forward iff !sent message.
+                if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead <= nulltime, starting CRAWLING mode, x-> now+eps ", x_la+t_timestamp::epsilon());
+                        x_la = nulltime+t_timestamp::epsilon();
+                }
+        }
         
+        /**
+         * Crawling: If LA is <= nulltime, & not sent msg, set x to nulltime+eps;
+         */
+        
+        
+        t_timestamp y_imminent = t_timestamp::infinity();
         if(!this->m_scheduler->empty())
                 y_imminent = this->m_scheduler->top().getTime();
         
-        y_pending = this->getFirstMessageTime();                // Message lock
+        t_timestamp y_pending = this->getFirstMessageTime();                // Message lock
 
-	t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
+	t_timestamp neweot(std::min({x_la, x_sent, y_imminent, y_pending}).getTime(),0);
         
         if(isInfinity(neweot)){
                 // Can only happen if all x,y == inf, meaning we can never receive a message, and have nothing to do.
@@ -95,6 +106,8 @@ void Conservativecore::updateEOT()
         
         // We're the writers, so we don't need a lock to read.
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
                 throw std::logic_error("EOT moving back in time.");
@@ -104,8 +117,6 @@ void Conservativecore::updateEOT()
                 this->m_distributed_eot->set(this->getCoreID(), neweot);
                 this->m_distributed_eot->unlockEntry(getCoreID());
         }
-        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
-        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
 }
 
 /**
@@ -270,14 +281,13 @@ void Conservativecore::runSmallStep(){
          *                      wait until the above becomes true : runSmallStepStalled (else eot /eit is not updated
          * TIME < EIT : normal round
          */
-        if(timeStalled() && !checkNullRelease()){
+        if(timeStalled() ){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
                 this->runSmallStepStalled();
-                
-                // RST updates eit, so recheck.
-                if(timeStalled())       
-                        invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
+                if(checkNullRelease()){         // Check after stalled run to avoid excess runs.
+                        Core::runSmallStep();
+                }
         }
         else{ // !stalled && released = fine, !stalled && !released =fine (limited by eit), stalled && released == fine
                 
