@@ -36,6 +36,7 @@ n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const 
 		m_color(MessageColor::WHITE),
 		m_antimessage(false),
                 m_delete_flag_set(false),
+                m_processed(false),
                 m_dst_uuid(dstUUID),
                 m_src_uuid(srcUUID)
 	{

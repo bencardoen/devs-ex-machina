@@ -270,7 +270,8 @@ TEST(Optimisticcore, revert){
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
-        // Message is not sent by any core.
+        // Message is not sent by any core, it's not processed, it's not queued so delete here (since it won't be otherwise)
+        delete msgaftergvt;
 }
 
 

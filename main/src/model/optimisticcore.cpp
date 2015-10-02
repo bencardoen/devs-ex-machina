@@ -53,6 +53,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
 #endif
         // In optimistic, delete only local-local messages after processing.
         for(t_msgptr& ptr : msgs){
+                ptr->setProcessed(true);
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
                         ptr = nullptr;
                         m_stats.logStat(DELMSG);
@@ -60,7 +61,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
                         delete ptr;
                 }
 #ifdef SAFETY_CHECKS
-                ptr = nullptr;
+                ptr = nullptr;          // This is only so that the vector (if it doesn't release the memory) has zeroed pointers.
 #endif   
         
         }
@@ -98,31 +99,31 @@ void Optimisticcore::paintMessage(const t_msgptr& msg)
 	msg->paint(this->getColor());
 }
 
-void Optimisticcore::handleAntiMessage(const t_msgptr& msg, bool msgtimeinpast)
+void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
         
-        if(this->m_received_messages->contains(msg)){   // Have received it before, but not processed it.
+        if(this->m_received_messages->contains(msg)){                   /// QUEUED
                 this->m_received_messages->erase(MessageEntry(msg));
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 delete msg;
-        }else{                                          // Not yet received (origin) OR processed
-                if(msgtimeinpast){                      // Processed, destroy am
-                        LOG_DEBUG("\tMCORE :: ",this->getCoreID()," antimessage is for processed msg, deleting am");
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                        delete msg;
-                }else{                                  // Not processed, not received, meaning origin an antimessage at same time in network.
-                        if(!msg->deleteFlagIsSet()){     // First time we see the pointer, remember.
-                                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass.");
+        }else{                                                          /// Not queued, so either never seen it, or allready processed
+                        
+                        if(msg->isProcessed()){         // Processed before, only antimessage ptr in transit.
+                                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Message is processed :: deleting ", msg);
+                                //delete msg;
+                                return;
+                        }
+                        if(!msg->deleteFlagIsSet()){    // Possibly never seen, delete both.
+                                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass:: ", msg);
                                 msg->setDeleteFlag();
                         }
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                                delete msg;             
+                                //delete msg;             
                         }
-                }
         }
 }
 
@@ -175,12 +176,11 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message @", msg);
         
-        bool processed = (msgtime < this->getTime().getTime());
         
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
-		this->handleAntiMessage(msg, processed);
+		this->handleAntiMessage(msg);
 	} else {
 		this->queuePendingMessage(msg);
                 this->registerReceivedMessage(msg);         
