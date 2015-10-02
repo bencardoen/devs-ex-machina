@@ -98,13 +98,6 @@ private:
         checkNullRelease();
         
         /**
-         * Whenever we're stalled but not yet deadlocked, sleep or idle or ....
-         * @attention: do not call in locked sections.
-         */
-        void
-        invokeStallingBehaviour();
-        
-        /**
          * Queue message, revert if time <= current time or if time < current time and stalled.
          * Notifies gvt algorithm.
          * @param msg

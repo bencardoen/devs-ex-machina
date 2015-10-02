@@ -56,16 +56,7 @@ Conservativecore::setEit(const t_timestamp& neweit){
 }
 
 /** Step 3 of CNPDEVS
-*     This assumes we're at eit, which we won't always be.
-*     So for us, use min(time, eit) wherever alg uses eit.
-* Pseudocode :
-* 	EOT(myid) = std::min(x,y)
-* 		x = eit + lookahead_min
-* 		y = 	if(sent_message)	eit+eps // have to increment, else we get deadlock!
-* 			else			top of scheduler (next event)
-*                       // what if : not sent message, time = 50, msg waiting @70, next event = 90
-*                       --> y = min(sent_msg, next_imminent, next_pendingmsg);
-* 			none of the above : oo
+* EOT is first output time (in the future).
 */
 void Conservativecore::updateEOT()
 {       
@@ -75,8 +66,9 @@ void Conservativecore::updateEOT()
         // If we've generated output, eot=time
         t_timestamp x_sent = t_timestamp::infinity();
 
-	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())     // NOT the same a null msg time, which is set even if there is nothing sent.
-		x_sent = this->getTime()+t_timestamp::epsilon();
+	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime()) {    
+		x_sent = this->getTime()+t_timestamp::epsilon();        // Safe because imminent time will have been recorded before.
+        }
         else{
                 // Invalid LA (phold & friends), start edging eot forward iff !sent message.
                 if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
@@ -91,8 +83,9 @@ void Conservativecore::updateEOT()
         
         
         t_timestamp y_imminent = t_timestamp::infinity();
-        if(!this->m_scheduler->empty())
+        if(!this->m_scheduler->empty()){        // TODO this can hang in double cycled sims.
                 y_imminent = this->m_scheduler->top().getTime();
+        }
         
         t_timestamp y_pending = this->getFirstMessageTime();                // Message lock
 
@@ -254,11 +247,6 @@ void Conservativecore::buildInfluenceeMap(){
 	}
 }
 
-void Conservativecore::invokeStallingBehaviour()
-{
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-}
-
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
@@ -269,29 +257,20 @@ bool Conservativecore::timeStalled(){
 
 void Conservativecore::runSmallStep(){
         
-        /**
-         * EIT == TIME : stall
-         *      if this is the first time this happens
-         *              generate output & mark nulltime as current ( iow runSmallStepStalled)
-         *      else 
-         *              // possible (but not guaranteed) deadlock
-         *              if(all null message time >= our time)// we're safe to simulate further 
-         *                      runSmallStep()
-         *              else 
-         *                      wait until the above becomes true : runSmallStepStalled (else eot /eit is not updated
-         * TIME < EIT : normal round
-         */
-        if(timeStalled() ){
+        if(timeStalled() ){             // EIT==TIME
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
                 this->runSmallStepStalled();
-                if(checkNullRelease()){         // Check after stalled run to avoid excess runs.
-                        Core::runSmallStep();
+                if(checkNullRelease()){                 // If all influencing cores nulltime >= our nulltime, don't waste another round and immediately continue.                
+                        Core::runSmallStep();   
+                }else{                                  // At least one influencing core < our nulltime, wait, but update EOT/EIT to signal others.
+                        updateEOT();            
+                        updateEIT();            
                 }
-        }
+        }                               // EIT > TIME
         else{ // !stalled && released = fine, !stalled && !released =fine (limited by eit), stalled && released == fine
-                
-                Core::runSmallStep();   //  L -> UL
+                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT < TIME ");
+                Core::runSmallStep();   
         }
 }
 
@@ -331,9 +310,6 @@ void Conservativecore::runSmallStepStalled()
                 }
                 
         }
-        // LA is the same (no state change).
-        this->updateEOT();
-        this->updateEIT();
 }
 
 bool Conservativecore::checkNullRelease(){
@@ -367,9 +343,7 @@ bool Conservativecore::checkNullRelease(){
 }
 
 bool n_model::Conservativecore::existTransientMessage(){
-	
-	// TODO remove call
-	return false;
+        return !m_network->empty();
 }
 
 void
