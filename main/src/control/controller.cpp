@@ -474,7 +474,7 @@ void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
 
 	LOG_DEBUG("removing model: ", model->getName());
 	//it is an atomic model. Just remove this one from the core
-	m_cores.front()->removeModelDS(model->getName());
+	m_cores.front()->removeModelDS(model->getLocalID());
 }
 
 void Controller::dsUndoDirectConnect()

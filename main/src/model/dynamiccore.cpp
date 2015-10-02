@@ -35,10 +35,9 @@ void DynamicCore::addModelDS(const t_atomicmodelptr& model){
         //this->validateModels();
 }
 
-void DynamicCore::removeModelDS(const std::string& name){
-        const t_atomicmodelptr model = this->getModel(name);
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DS :: got request to remove model : ", model->getName());
-        Core::removeModel(name);
+void DynamicCore::removeModelDS(std::size_t id) {
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DS :: got request to remove model : ", id);
+        Core::removeModel(id);
         //this->validateModels();
 }
 

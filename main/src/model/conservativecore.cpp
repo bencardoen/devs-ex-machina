@@ -85,10 +85,7 @@ void Conservativecore::updateEOT()
          */
         
         
-        t_timestamp y_imminent = t_timestamp::infinity();
-        if(!this->m_scheduler->empty()){        // TODO this can hang in double cycled sims.
-                y_imminent = this->m_scheduler->top().getTime();
-        }
+        t_timestamp y_imminent = m_heap_models.size()? m_heap_models.front()->getTimeNext(): t_timestamp::infinity();
 
         getMessages();
         t_timestamp y_pending = this->getFirstMessageTime();                // Message lock
@@ -225,13 +222,6 @@ void Conservativecore::init(){
         this->calculateMinLookahead();
 }
 
-
-void Conservativecore::initExistingSimulation(const t_timestamp& loaddate){
-	Core::initExistingSimulation(loaddate);
-	buildInfluenceeMap();
-        this->calculateMinLookahead();
-}
-
 void Conservativecore::buildInfluenceeMap(){
 	LOG_INFO("CCORE :: ", this->getCoreID(), " building influencee map.");
 	std::vector<std::size_t> temp(m_cores, 0);
@@ -305,15 +295,12 @@ void Conservativecore::runSmallStepStalled()
          */
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
         if(outputtime != getTime().getTime()){
-                std::vector<t_raw_atomic> imms;
-                this->getImminent(imms);
+                this->getImminent(m_imminents);
 
-                collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
-                for(auto mdl : imms){
-                        const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
-                        this->scheduleModel(mdl->getLocalID(), last_scheduled);
-                }
-                
+                collectOutput(m_imminents);            // after all output is sent, mark null msg time in m_distributed.
+                for(t_raw_atomic m: m_imminents)
+                	m->nextType() = NONE;
+                m_imminents.clear();
         }
 }
 

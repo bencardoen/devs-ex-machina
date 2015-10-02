@@ -189,13 +189,6 @@ public:
 	 */
 	void
 	init()override;
-
-	/**
-	 * When starting a core with serialized models from a previous run,
-	 * rebuild the influencee map in addition to the superclass init code.
-	 */
-	void
-	initExistingSimulation(const t_timestamp& loaddate)override;
         
         /**
 	 * Collect output from imminent models, sort them in the mailbag by destination name.
