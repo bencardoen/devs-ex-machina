@@ -209,15 +209,15 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 
 void Optimisticcore::getMessages()
 {
-	// TODO : in principle, we could reduce threading issues by detecting live here (earlier) iso
-	// after simulation.
+	bool wasLive = isLive();
+        this->setLive(true);
+        if(!wasLive)
+        	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-	LOG_INFO("MCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-	if(messages.size()!= 0){
-		if(!this->isLive()){
-                        this->setLive(true);
-			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
-		}
+	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+	if(messages.size()== 0 && ! wasLive){
+		setLive(false);
+		LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
 	}
 	this->sortIncoming(messages);
 }
