@@ -71,13 +71,14 @@ void Conservativecore::updateEOT()
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime()) {    
 		x_sent = this->getTime()+t_timestamp::epsilon();        // Safe because imminent time will have been recorded before.
         }
+        /**
         else{
                 // Invalid LA (phold & friends), start edging eot forward iff !sent message.
                 if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
                         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead <= nulltime, starting CRAWLING mode, x-> now+eps ", x_la+t_timestamp::epsilon());
                         x_la = nulltime+t_timestamp::epsilon();
                 }
-        }
+        }*/
         
         /**
          * Crawling: If LA is <= nulltime, & not sent msg, set x to nulltime+eps;
@@ -106,6 +107,7 @@ void Conservativecore::updateEOT()
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
+                LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
         if(oldeot != neweot){
