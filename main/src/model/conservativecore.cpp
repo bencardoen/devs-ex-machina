@@ -24,13 +24,15 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
+	bool wasLive = isLive();
+        this->setLive(true);
+        if(!wasLive)
+        	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-	if(messages.size()!= 0){
-		if(!this->isLive()){	
-                        this->setLive(true);
-			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
-		}
+	if(messages.size()== 0 && ! wasLive){
+		setLive(false);
+		LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
 	}
 	this->sortIncoming(messages);
 }
@@ -86,7 +88,8 @@ void Conservativecore::updateEOT()
         if(!this->m_scheduler->empty()){        // TODO this can hang in double cycled sims.
                 y_imminent = this->m_scheduler->top().getTime();
         }
-        
+
+        getMessages();
         t_timestamp y_pending = this->getFirstMessageTime();                // Message lock
 
 	t_timestamp neweot(std::min({x_la, x_sent, y_imminent, y_pending}).getTime(),0);
@@ -151,7 +154,7 @@ void Conservativecore::syncTime(){
         this->calculateMinLookahead();
 	this->updateEOT();
 	this->updateEIT();
-
+	getMessages();
 	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
 
 	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.

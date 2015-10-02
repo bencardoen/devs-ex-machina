@@ -471,7 +471,7 @@ void n_model::Core::runSmallStep()
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
-
+	getMessages();
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
         m_imminents.clear();
