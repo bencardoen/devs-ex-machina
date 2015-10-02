@@ -108,11 +108,13 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 this->m_received_messages->erase(MessageEntry(msg));
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 delete msg;
+                m_stats.logStat(DELMSG);
         }else{                                                          /// Not queued, so either never seen it, or allready processed
                         
                         if(msg->isProcessed()){         // Processed before, only antimessage ptr in transit.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Message is processed :: deleting ", msg);
-                                //delete msg;
+                                delete msg;
+                                m_stats.logStat(DELMSG);
                                 return;
                         }
                         if(!msg->deleteFlagIsSet()){    // Possibly never seen, delete both.
@@ -122,7 +124,8 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                                //delete msg;             
+                                delete msg;
+                                m_stats.logStat(DELMSG);
                         }
         }
 }
@@ -409,6 +412,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
                 LOG_DEBUG("MCORE:: ", this-getCoreID(), "Deleting msg", ptr->toString());
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                 delete ptr;
+                m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
 #endif          

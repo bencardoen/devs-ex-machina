@@ -189,7 +189,7 @@ void traceUntil(n_network::t_timestamp time)
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
 	std::vector<TraceMessageEntry> messages;
-	TraceMessage t(time.getTime(), [] {}, 0u);
+	TraceMessage t(time.getTime()-n_network::t_timestamp::epsilon().getTime(), [] {}, 0u);
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;
 	TraceMessage inf(n_network::t_timestamp::infinity(), [] {}, 0u);

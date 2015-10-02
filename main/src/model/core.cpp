@@ -262,12 +262,16 @@ void n_model::Core::transition()
 {
         
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents");
-        
+#ifdef SAFETY_CHECKS
+        if(m_imminents.size()> m_indexed_models.size())
+                throw std::logic_error("Error: more imminents than models.");
+#endif        
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (auto imminent : m_imminents) {                     
                 const size_t modelid = imminent->getLocalID();
 		if (!hasMail(modelid)) {			
 			assert(imminent->nextType()==INT);
+                        imminent->nextType()=n_model::NONE;
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
@@ -444,7 +448,7 @@ void n_model::Core::runSmallStep()
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
         // getMessages will also turn a core back to live in optimistc (in revert).
-	this->getMessages();	// locked on msgs
+	this->getMessages();	// locked on msgs 
 
 	if (!this->isLive()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(),
@@ -464,14 +468,15 @@ void n_model::Core::runSmallStep()
 	this->collectOutput(m_imminents);	
 
 	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();			
+	this->getPendingMail();	//		
 
 	// Transition depending on state.
 	this->transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
-	getMessages();
+	
+        //getMessages();          
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
         m_imminents.clear();
