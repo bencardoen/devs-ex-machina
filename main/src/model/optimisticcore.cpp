@@ -69,12 +69,11 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
 
 void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
-	// We're locked on msglock.
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
-        paintMessage(msg);
+	// We're locked on msglock. Don't change the ordering here.
+        this->countMessage(msg);        
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
-	this->countMessage(msg);					// Make sure Mattern is notified
+        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
 }
 
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
@@ -83,7 +82,7 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
         // size_t branch :: skip alloc of amsg entirely.
         m_stats.logStat(AMSGSENT);
 	
-	//this->paintMessage(msg);		
+        // Don't touch the color of the message.
 	msg->setAntiMessage(true);
         
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
@@ -91,11 +90,6 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
         // If you enable this, do so as well @receive side.
 	//this->countMessage(amsg);					
 	this->m_network->acceptMessage(msg);
-}
-
-void Optimisticcore::paintMessage(const t_msgptr& msg)
-{
-	msg->paint(this->getColor());
 }
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
@@ -147,13 +141,21 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 {
         /**
          * ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
-         * this->getColor() should be equal to the msg color, however, the message can
-         * be made slightly before the GVT code updates the color, resulting in a mismatch,
-         * which will then fail the algorithm with negative values. (issue #1)
-         * We can either force an update (locked), or just do as the algorithm says and use msgcolor.
+         * @pre Msgcolor == this.color
          */
-	if (msg->getColor() == MessageColor::WHITE) { // Don't use Core->color, alg specifies color = msgcolor here.
-		size_t j = msg->getDestinationCore();
+        std::lock_guard<std::mutex> colorlock(m_colorlock);
+        msg->paint(m_color);
+#ifdef SAFETY_CHECKS
+        // With the new lock in this function, only memory corruption or sender changing color of this message could
+        // trigger this check. Nonetheless, if it does we have a case of nasal demons, and want to know about it before they're seen.
+        if(msg->getColor()!=m_color){
+                LOG_ERROR("Message color not equal to core color : ", msg->toString());
+                LOG_FLUSH;
+                throw std::logic_error("Msg color not equal to core color, race detected.");
+        }
+#endif
+	if (m_color == MessageColor::WHITE) {           // getter is locked
+		const size_t j = msg->getDestinationCore();
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int val = ++(this->m_mcount_vector.getVector()[j]);

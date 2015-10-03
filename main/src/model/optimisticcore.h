@@ -109,14 +109,6 @@ private:
 	void
 	waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt);
 
-
-	/**
-	 * Set the color of msg with this core's color.
-	 */
-	virtual
-	void
-	paintMessage(const t_msgptr& msg)override;
-
 	void
 	setTred(t_timestamp);
 
