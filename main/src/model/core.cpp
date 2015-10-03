@@ -41,12 +41,7 @@ n_model::Core::checkInvariants(){
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
-        for(std::size_t i = 0; i < (m_heap_models.size()-2)/2; ++i){
-        	LOG_DEBUG("Testing time ", i, " <-> ", 2*i+2, ": ", m_heap_models[i]->getTimeNext().getTime(), " <-> ", m_heap_models[2*i+2]->getTimeNext().getTime());
-        	LOG_DEBUG("Testing time ", i, " <-> ", 2*i+1, ": ", m_heap_models[i]->getTimeNext().getTime(), " <-> ", m_heap_models[2*i+1]->getTimeNext().getTime());
-        	assert(m_heap_models[i]->getTimeNext().getTime() <= m_heap_models[2*i+2]->getTimeNext().getTime());
-        	assert(m_heap_models[i]->getTimeNext().getTime() <= m_heap_models[2*i+1]->getTimeNext().getTime());
-        }
+        assert(std::is_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator) && "The scheduler must be a heap.");
 #endif
 }
 
@@ -272,7 +267,13 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 
 void n_model::Core::printSchedulerState()
 {
-	std::cout << "We use a heap scheduler now. TODO: write a proper printSchedulerState function.";
+	LOG_DEBUG("Scheduler state at time ", getTime());
+	LOG_DEBUG("indexed models size: ", m_indexed_models.size());
+	LOG_DEBUG("   heap models size: ", m_heap_models.size());
+	for(t_raw_atomic m: m_heap_models){
+		LOG_DEBUG("   model: ", m->getName(), ", time: ", m->getTimeNext());
+	}
+
 }
 
 void

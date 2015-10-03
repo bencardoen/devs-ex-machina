@@ -32,6 +32,7 @@ void DynamicCore::addModelDS(const t_atomicmodelptr& model){
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DS ::  got model : ", model->getName());
         Core::addModel(model);
         model->setTime(this->getTime().getTime());
+        m_heap_models.push_back(model.get());
         //this->validateModels();
 }
 
@@ -44,6 +45,11 @@ void DynamicCore::removeModelDS(std::size_t id) {
 void DynamicCore::validateModels(){
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DS ::  revalidating models : ");
         this->initializeModels();
+        if(m_indexed_models.size() != m_heap_models.size()){
+        	m_heap_models.clear();
+        	for(t_atomicmodelptr& m: m_indexed_models)
+        		m_heap_models.push_back(m.get());
+        }
         this->rescheduleAll();
 }
 } /* namespace n_model */
