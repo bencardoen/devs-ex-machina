@@ -55,9 +55,8 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
         for(t_msgptr& ptr : msgs){
                 ptr->setProcessed(true);
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
-                        ptr = nullptr;
                         m_stats.logStat(DELMSG);
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(),"@",this->getTime(), " deleting ", ptr);
                         delete ptr;
                 }
 #ifdef SAFETY_CHECKS
@@ -84,7 +83,7 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
         // size_t branch :: skip alloc of amsg entirely.
         m_stats.logStat(AMSGSENT);
 	
-	this->paintMessage(msg);		
+	//this->paintMessage(msg);		
 	msg->setAntiMessage(true);
         
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
@@ -137,6 +136,7 @@ void Optimisticcore::markMessageStored(const t_msgptr& msg)
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
 #ifdef SAFETY_CHECKS
         if(msg->getSourceCore()!=this->getCoreID()){
+                LOG_FLUSH;
                 throw std::logic_error("Storing msg not sent from this core.");
         }
 #endif
@@ -165,7 +165,7 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 		std::lock_guard<std::mutex> lock(this->m_tredlock);
                 t_timestamp oldtred = m_tred;
 		m_tred = std::min(m_tred, msg->getTimeStamp());
-                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after receiving msg.");
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after sending msg.");
 	}
 }
 
@@ -313,21 +313,7 @@ Optimisticcore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic
                         }
                 }
                 else{
-                        // We still can only get here iff V+C <= 0 for all cores (including this one)
-                        // Either the algorithm failed with 2 colors, a race occurred, or a Core terminated.
-                        // The benign cases (terminated && race with C<0 can be solved by enabling this workaroud.)
-                        if(/*msg->countLeQZero()*/ false){
-                                t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
-                                // Put this info in the message
-                                msg->setGvtFound(true);
-                                msg->setGvt(GVT_approx);
-                                LOG_DEBUG(" GVT Found with non-zero vector ");
-                                msg->logMessageState(); 
-                        }
-                        else{   // Algorithm failure. Controller will log message state for us.
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
-                        }
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
                 }
                 /// There is no cleanup to be done, startGVT initializes core/msg.
         }
@@ -337,9 +323,7 @@ void
 Optimisticcore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
 {
         // ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
-        if (this->getColor() == MessageColor::WHITE) {	// Locked
-                // Probably not necessary, because messages can't be white during GVT calculation
-                // when red messages are present, better safe than sorry though
+        if (this->getColor() == MessageColor::WHITE) {
                 this->setTred(t_timestamp::infinity());
                 this->setColor(MessageColor::RED);
         }

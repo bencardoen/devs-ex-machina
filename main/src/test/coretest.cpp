@@ -1076,11 +1076,16 @@ TEST(Conservativecore, PHOLD){
         one->setLive(true);
         
         // Zero : @16 first event, One : @14 first event
+        // Zero <> One, so for each step up to 4 rounds are needed.
+        // Special cases : 1->2 @ 14, goes offline. Eot takes over role of time.
+        // checkNullrelease() added to updateEOT to preserve >= eot values. @see devstone cpdevs.
         for(size_t i = 0; i<40; ++i){
                 LOG_DEBUG("Round ----------------------------- ", i);
                 zero->runSmallStep();
                 one->runSmallStep();
         }
+        EXPECT_TRUE(zero->getTime() > 17u);
+        EXPECT_TRUE(one->getTime() > 17u);
 	std::ofstream filestream("./phold.txt");
 	n_tools::CoutRedirect myRedirect(filestream);
 	ctrl->printStats(std::cout);
