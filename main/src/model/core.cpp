@@ -311,9 +311,9 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 }
 
 
-void n_model::Core::rescheduleImminent(const std::vector<t_raw_atomic>& oldimms)
+void n_model::Core::rescheduleImminent()
 {
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", oldimms.size(), " models for next run.");
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
 	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
 }
 
@@ -429,7 +429,7 @@ void n_model::Core::runSmallStep()
 	this->transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
-	this->rescheduleImminent(m_imminents);
+	this->rescheduleImminent();
 	
         //getMessages();          
 	// Forward time to next message/firing.

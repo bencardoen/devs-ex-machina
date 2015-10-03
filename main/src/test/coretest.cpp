@@ -124,11 +124,11 @@ TEST(Core, CoreFlow)
         std::vector<t_raw_atomic> imminent;
 	c.getImminent(imminent);
 	EXPECT_EQ(imminent.size(), 2u);
-	c.rescheduleImminent(imminent);
+	c.rescheduleImminent();
 	c.syncTime();
         imminent.clear();
 	c.getImminent(imminent);
-	c.rescheduleImminent(imminent);
+	c.rescheduleImminent();
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(imminent.size(), 2u);

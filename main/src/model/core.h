@@ -478,7 +478,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::vector<t_raw_atomic>&);
+	rescheduleImminent();
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
