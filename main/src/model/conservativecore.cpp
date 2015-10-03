@@ -57,9 +57,7 @@ Conservativecore::setEit(const t_timestamp& neweit){
 	this->m_eit = neweit;
 }
 
-/** Step 3 of CNPDEVS
-* EOT is first output time (in the future).
-*/
+
 void Conservativecore::updateEOT()
 {       
         t_timestamp x_sent = t_timestamp::infinity();
@@ -67,15 +65,21 @@ void Conservativecore::updateEOT()
 		x_sent = this->getTime()+t_timestamp::epsilon();        // Safe because imminent time will have been recorded before.
         }
         
-        t_timestamp x_la = this->m_min_lookahead;
-        t_timestamp nulltime = this->getNullTime();
+        t_timestamp x_la(this->m_min_lookahead);
+        t_timestamp nulltime(this->getNullTime());
 
         // In a cycle, overwrite lookahead iff we have bypassed the value. Only LA can be bypassed, so reuse the variable.
         // Note that lookahead by default is recalculated if <= nulltime, so only if we don't find a new LA we can increment time.
         if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
-                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
-                " Lookahead <= nulltime, starting CRAWLING mode, x_la== ", x_la, " null + eps ", nulltime +t_timestamp::epsilon());
-                x_la = nulltime+t_timestamp::epsilon();
+                if(checkNullRelease()){ // We can't always crawl ahead, only if influencing are at least as far, else you risk decreasing eot.
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
+                        " Lookahead <= nulltime, starting CRAWLING mode, x_la== ", x_la, " null + eps ", nulltime +t_timestamp::epsilon());
+                        x_la = nulltime+t_timestamp::epsilon();
+                }else{
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
+                        " Lookahead <= nulltime, Can't advance EOT since not all cores have advanced equally :: x_la = nulltime ", nulltime);
+                        x_la = nulltime;
+                }
         }
 
         t_timestamp y_imminent = t_timestamp::infinity();
@@ -93,22 +97,25 @@ void Conservativecore::updateEOT()
                 LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " EOT=inf."); // Only allowed if it nevers goes back to real values.
         }
 #endif
-        const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        const t_timestamp oldeot(getEot());
         
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
-                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG. ::old= ", oldeot, "new= ",neweot);
                 LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
         
-        if(oldeot != neweot){
-                this->m_distributed_eot->lockEntry(getCoreID());
-                this->m_distributed_eot->set(this->getCoreID(), neweot);
-                this->m_distributed_eot->unlockEntry(getCoreID());
-        }
+        if(oldeot != neweot)
+                setEot(neweot);
+}
+
+void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here matters not for inlining, TU where this is called is always this class only.
+                m_distributed_eot->lockEntry(this->getCoreID());
+                m_distributed_eot->set(this->getCoreID(), ntime);
+                m_distributed_eot->unlockEntry(this->getCoreID());
 }
 
 /**
@@ -141,28 +148,47 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-	/** The algorithm says : advance until next time >= eit
-	 *  		-> then calculate EOT/EIT
-	 *  We'll advance anyway, but EOT/EIT have to be recalculated more to avoid
-	 *  slowing down. Case in point : EIT=oo, EOT=10, Time:10->20, EOT can never be behind current time.
-	 *
-	 */
+	
         this->calculateMinLookahead();
-	this->updateEOT();
+	this->updateEOT();                     
 	this->updateEIT();
-	getMessages();
-	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
+	const t_timestamp nextfired(this->getFirstImminentTime());
+        
+        getMessages();          // We've been promised by eit/eot that everything <eot is on the net, pull again so we can't miss a msg.
+	const t_timestamp firstmessagetime(this->getFirstMessageTime());
+        
+	t_timestamp newtime = std::min(firstmessagetime, nextfired);
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(),"@", this->getTime(), " New time is ", newtime, " =min( ", nextfired, " , ", firstmessagetime , ")");
+        
+	if (isInfinity(newtime)) {
+                const t_timestamp eot(this->getEot());
+                if(isInfinity(eot)){
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core no imms, no msgs, eot=inf, time stuck == zombie.");
+                        incrementZombieRounds();
+                        return;
+                }else{
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), "Newtime == inf, using non-inf eot : ", eot); // Don't use in the general case!
+                        newtime = eot;
+                }
+	}
+#ifdef SAFETY_CHECKS
+	if (this->getTime().getTime() > newtime.getTime()) {
+		LOG_ERROR("\tCORE :: ", this->getCoreID() ," Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
+                this->unlockSimulatorStep();
+		throw std::runtime_error("Core time going backwards. ");
+	}
+#endif
+	this->setTime(newtime);						
+									
+	this->resetZombieRounds();
 
-	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
-	//this->resetLookahead(); // No longer do this, x=inf edge case.
-
-	// If we've terminated, our EOT should be our current time, not what we've calculated.
-	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
-	if(this->getTime()>=this->getTerminationTime()){        // isIdle is dangerous here.
-		this->m_distributed_eot->lockEntry(getCoreID());
+	if (this->getTime() >= this->getTerminationTime()) {
+		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
+                this->m_distributed_eot->lockEntry(getCoreID());
                 this->m_distributed_eot->set(this->getCoreID(), t_timestamp::infinity());
 		//this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
 		this->m_distributed_eot->unlockEntry(getCoreID());
+		this->setLive(false);
 	}
 }
 

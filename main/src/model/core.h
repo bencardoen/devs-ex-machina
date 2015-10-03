@@ -240,18 +240,6 @@ private:
 
 	virtual
 	void
-	lockSimulatorStep(){
-		;
-	}
-
-	virtual
-	void
-	unlockSimulatorStep(){
-		;
-	}
-
-	virtual
-	void
 	lockMessages(){;}
 
 	virtual
@@ -301,6 +289,18 @@ protected:
          */
         void
         initializeModels();
+        
+        virtual
+	void
+	lockSimulatorStep(){
+		;
+	}
+
+	virtual
+	void
+	unlockSimulatorStep(){
+		;
+	}
         
 	/**
 	* Store received messages (local and networked)
@@ -708,6 +708,12 @@ public:
 	 */
 	t_timestamp
 	getFirstMessageTime();
+        
+        /**
+         * @return Time of first imminent model, or inf.
+         */
+        t_timestamp
+        getFirstImminentTime();
 
 
 	/**

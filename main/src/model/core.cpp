@@ -365,18 +365,24 @@ void n_model::Core::rescheduleImminent(const std::vector<t_raw_atomic>& oldimms)
 	}
 }
 
+
+t_timestamp 
+n_model::Core::getFirstImminentTime()
+{
+        t_timestamp nextimm = t_timestamp::infinity();
+	if (not this->m_scheduler->empty()) {
+		nextimm = this->m_scheduler->top().getTime();
+	}
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " @ current time ::  ", this->getTime(), " first imm == ", nextimm);
+        return nextimm;
+}
+
+
 void n_model::Core::syncTime()
 {
-	/**
-	 * We need to advance time from now [x,y] to  min(first message, first scheduled transition).
-	 * Most of this code are safety checks.
-	 * Locking : we're in SimulatorLock, and request/release Messagelock.
-	 */
-	t_timestamp nextfired = t_timestamp::infinity();
-	if (not this->m_scheduler->empty()) {
-		nextfired = this->m_scheduler->top().getTime();
-	}
+	t_timestamp nextfired = this->getFirstImminentTime();
 	const t_timestamp firstmessagetime(this->getFirstMessageTime());
+        
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	const t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {

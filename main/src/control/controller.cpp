@@ -282,7 +282,7 @@ void Controller::simOPDEVS()
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
-	//this->startGVTThread();	// Starts and joins GVT threads.
+	this->startGVTThread();	// Starts and joins GVT threads.
         
 	for (auto& t : m_threads) {
 		t.join();

@@ -804,7 +804,7 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(eotvector->get(0), (30u));            
         
         c1->runSmallStep();                             
-        EXPECT_EQ(c1->getTime(), 20u);
+        EXPECT_EQ(c1->getTime(), 30u);  // 30, not 20 Nothing to do -> new time = inf, but we have a non-inf LA, so at least that point is safe.
         EXPECT_EQ(c1->getEit(), (30u));
         
         LOG_INFO("4-------------------------------------------------");
@@ -817,7 +817,7 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(eotvector->get(0), 31u);            // Eot is updated before time is advanced. A message has been sent, so oldtime+eps = eot.
         
         c1->runSmallStep();                   // Model B 0->1          
-        EXPECT_EQ(c1->getTime().getTime(), 30u);
+        EXPECT_EQ(c1->getTime().getTime(), 31u);
         EXPECT_EQ(c1->getEit(), 31u);
         
         LOG_INFO("5-------------------------------------------------");
@@ -1076,7 +1076,7 @@ TEST(Conservativecore, PHOLD){
         one->setLive(true);
         
         // Zero : @16 first event, One : @14 first event
-        for(size_t i = 0; i<30; ++i){
+        for(size_t i = 0; i<40; ++i){
                 LOG_DEBUG("Round ----------------------------- ", i);
                 zero->runSmallStep();
                 one->runSmallStep();

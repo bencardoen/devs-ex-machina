@@ -189,6 +189,7 @@ void traceUntil(n_network::t_timestamp time)
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
 	std::vector<TraceMessageEntry> messages;
+        /**
 #ifdef SAFETY_CHECKS
         if(isZero(time)){
                 LOG_ERROR("unsigned 0-1, time arg = ", time, " id = ", coreID);
@@ -196,6 +197,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
                 LOG_FLUSH;
         }
 #endif
+         */
 	TraceMessage t(time.getTime()-n_network::t_timestamp::epsilon().getTime(), [] {}, 0u);
         
 	scheduler->unschedule_until(messages, &t);
