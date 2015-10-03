@@ -62,31 +62,24 @@ Conservativecore::setEit(const t_timestamp& neweit){
 */
 void Conservativecore::updateEOT()
 {       
-        // Lookahead based
-	t_timestamp x_la = this->m_min_lookahead;
-        t_timestamp nulltime = this->getNullTime();
-        // If we've generated output, eot=time
         t_timestamp x_sent = t_timestamp::infinity();
-
 	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime()) {    
 		x_sent = this->getTime()+t_timestamp::epsilon();        // Safe because imminent time will have been recorded before.
         }
-        /**
-        else{
-                // Invalid LA (phold & friends), start edging eot forward iff !sent message.
-                if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
-                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead <= nulltime, starting CRAWLING mode, x-> now+eps ", x_la+t_timestamp::epsilon());
-                        x_la = nulltime+t_timestamp::epsilon();
-                }
-        }*/
         
-        /**
-         * Crawling: If LA is <= nulltime, & not sent msg, set x to nulltime+eps;
-         */
-        
-        
+        t_timestamp x_la = this->m_min_lookahead;
+        t_timestamp nulltime = this->getNullTime();
+
+        // In a cycle, overwrite lookahead iff we have bypassed the value. Only LA can be bypassed, so reuse the variable.
+        // Note that lookahead by default is recalculated if <= nulltime, so only if we don't find a new LA we can increment time.
+        if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
+                " Lookahead <= nulltime, starting CRAWLING mode, x_la== ", x_la, " null + eps ", nulltime +t_timestamp::epsilon());
+                x_la = nulltime+t_timestamp::epsilon();
+        }
+
         t_timestamp y_imminent = t_timestamp::infinity();
-        if(!this->m_scheduler->empty()){        // TODO this can hang in double cycled sims.
+        if(!this->m_scheduler->empty()){       
                 y_imminent = this->m_scheduler->top().getTime();
         }
 
@@ -95,21 +88,22 @@ void Conservativecore::updateEOT()
 
 	t_timestamp neweot(std::min({x_la, x_sent, y_imminent, y_pending}).getTime(),0);
         
+#ifdef SAFETY_CHECKS
         if(isInfinity(neweot)){
-                // Can only happen if all x,y == inf, meaning we can never receive a message, and have nothing to do.
-                // So eot cannot go backward later on from infinity to a real value. Nonetheless, for now log this event.
-                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
+                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " EOT=inf."); // Only allowed if it nevers goes back to real values.
         }
-        
-        // We're the writers, so we don't need a lock to read.
+#endif
         const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
+        
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG.");
                 LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
+        
         if(oldeot != neweot){
                 this->m_distributed_eot->lockEntry(getCoreID());
                 this->m_distributed_eot->set(this->getCoreID(), neweot);

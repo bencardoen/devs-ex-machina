@@ -1074,24 +1074,13 @@ TEST(Conservativecore, PHOLD){
         one->init();
         one->setTerminationTime(endTime);
         one->setLive(true);
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
-        zero->runSmallStep();
-        one->runSmallStep();
+        
+        // Zero : @16 first event, One : @14 first event
+        for(size_t i = 0; i<30; ++i){
+                LOG_DEBUG("Round ----------------------------- ", i);
+                zero->runSmallStep();
+                one->runSmallStep();
+        }
 	std::ofstream filestream("./phold.txt");
 	n_tools::CoutRedirect myRedirect(filestream);
 	ctrl->printStats(std::cout);
