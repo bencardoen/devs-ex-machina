@@ -14,6 +14,7 @@
 #include "cereal/types/string.hpp"
 #include "cereal/types/unordered_map.hpp"
 #include "tools/vectorscheduler.h"
+#include "tools/heap.h"
 #include "cereal/types/vector.hpp"
 
 using n_network::MessageEntry;
@@ -314,7 +315,15 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 void n_model::Core::rescheduleImminent()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
-	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
+//	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
+	for(t_raw_atomic ptr: m_imminents){
+		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
+	}
+	for(t_raw_atomic ptr: m_externs){
+		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
+	}
 }
 
 
