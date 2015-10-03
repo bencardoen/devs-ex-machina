@@ -209,15 +209,18 @@ void n_model::Core::transition()
 {
         
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents");
-        
+#ifdef SAFETY_CHECKS
+        if(m_imminents.size()> m_indexed_models.size())
+                throw std::logic_error("Error: more imminents than models.");
+#endif        
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (auto imminent : m_imminents) {                     
                 const size_t modelid = imminent->getLocalID();
 		if (!hasMail(modelid)) {			
-			assert(imminent->nextType() == INT);
+			assert(imminent->nextType()==INT);
+                        imminent->nextType()=n_model::NONE;
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->doIntTransition();
-                        imminent->nextType() = n_model::NONE;
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
 		} else {
@@ -314,16 +317,21 @@ void n_model::Core::rescheduleImminent(const std::vector<t_raw_atomic>& oldimms)
 	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
 }
 
+
+t_timestamp 
+n_model::Core::getFirstImminentTime()
+{
+        t_timestamp nextimm = m_heap_models.size()? m_heap_models.front()->getTimeNext(): t_timestamp::infinity();
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " @ current time ::  ", this->getTime(), " first imm == ", nextimm);
+        return nextimm;
+}
+
+
 void n_model::Core::syncTime()
 {
-	/**
-	 * We need to advance time from now [x,y] to  min(first message, first scheduled transition).
-	 * Most of this code are safety checks.
-	 * Locking : we're in SimulatorLock, and request/release Messagelock.
-	 */
-	t_timestamp nextfired = m_heap_models.size()? m_heap_models.front()->getTimeNext(): t_timestamp::infinity();
-
+	t_timestamp nextfired = this->getFirstImminentTime();
 	const t_timestamp firstmessagetime(this->getFirstMessageTime());
+        
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	const t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {
@@ -395,7 +403,7 @@ void n_model::Core::runSmallStep()
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
         // getMessages will also turn a core back to live in optimistc (in revert).
-	this->getMessages();	// locked on msgs
+	this->getMessages();	// locked on msgs 
 
 	if (!this->isLive()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(),
@@ -415,14 +423,15 @@ void n_model::Core::runSmallStep()
 	this->collectOutput(m_imminents);	
 
 	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();			
+	this->getPendingMail();	//		
 
 	// Transition depending on state.
 	this->transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
-	getMessages();
+	
+        //getMessages();          
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
         m_imminents.clear();

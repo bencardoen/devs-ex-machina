@@ -134,6 +134,8 @@ private:
         
         /**
          * In optimistic, we can only safely destroy messages after gvt has been found.
+         * Clear the vector, but mark the pointers as being processed in case we ever get
+         * an antimessage for it.
          * @param msgs
          * @pre msg.size()>0
          * @post msg.size() == 0
@@ -154,7 +156,7 @@ protected:
 	 * @lock called by receiveMessage, which is in turn wrapped by the locked call sortIncoming()
 	 */
 	void
-	handleAntiMessage(const t_msgptr& msg, bool msgtime_indicates_processed);
+	handleAntiMessage(const t_msgptr& msg);
 
         /**
          * Allow msg to be traced by (among others the GVT algorithm)
