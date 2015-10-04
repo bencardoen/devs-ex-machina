@@ -2,6 +2,7 @@
  * core.h
  *      Author: Ben Cardoen
  */
+#include <tools/heapscheduler.h>
 #include "network/network.h"
 #include "model/terminationfunction.h"		// include atomicmodel
 #include "tools/schedulerfactory.h"
@@ -122,9 +123,10 @@ class Core
 {
 private:
 
-	struct HeapComparator
+	struct Comparator
 	{
-		bool operator()(const t_raw_atomic a, const t_raw_atomic b) const
+		inline
+		bool operator()(t_raw_atomic a, t_raw_atomic b) const
 		{
 			// need to test for greater than, because std::make_heap constructs a max heap
 			// and we need a min heap.
@@ -132,7 +134,8 @@ private:
 			t_timestamp bTime = b->getTimeNext();
 			return aTime > bTime;
 		}
-	} m_heapComparator;
+	};
+
 	/**
 	 * Current simulation time
 	 */
@@ -188,7 +191,7 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
-        std::vector<t_raw_atomic> m_heap_models;
+        n_tools::HeapScheduler<AtomicModel_impl, Comparator> m_heap;
 
         /**
          * Stores models that will transition in this simulation round.

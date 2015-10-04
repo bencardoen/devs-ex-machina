@@ -81,7 +81,7 @@ void Conservativecore::updateEOT()
                         x_la = nulltime;
                 }
         }
-        t_timestamp y_imminent = m_heap_models.size()? m_heap_models.front()->getTimeNext(): t_timestamp::infinity();
+        t_timestamp y_imminent = getFirstImminentTime();
 
         getMessages();
         t_timestamp y_pending = this->getFirstMessageTime();                // Message lock

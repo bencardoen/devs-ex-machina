@@ -36,13 +36,13 @@ n_model::Core::~Core()
 void
 n_model::Core::checkInvariants(){
 #ifdef SAFETY_CHECKS
-        if(this->m_heap_models.size() != this->m_indexed_models.size()){
+        if(this->m_heap.size() != this->m_indexed_models.size()){
                 const std::string msg = "Scheduler contains less models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
-        assert(std::is_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator) && "The scheduler must be a heap.");
+        assert(m_heap.isHeap() && "The scheduler must be a heap.");
 #endif
 }
 
@@ -127,7 +127,7 @@ bool n_model::Core::containsModel(const std::string& mname) const
 
 void n_model::Core::init()
 {
-	if (this->m_heap_models.size() != 0) {
+	if (this->m_heap.size() != 0) {
 		LOG_ERROR("\tCORE :: ", this->getCoreID(),
 		" scheduler is not empty on call to init(), cowardly refusing to corrupt state any further.");
 		return;
@@ -135,12 +135,12 @@ void n_model::Core::init()
         this->initializeModels();
 
         m_imm_ids.reserve(m_indexed_models.size());
-        m_heap_models.reserve(m_indexed_models.size());
+        m_heap.reserve(m_indexed_models.size());
         
 	for (auto& model : this->m_indexed_models) {
 		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);
 		model->setTime(modelTime);	// DO NOT use priority, model does this already
-		m_heap_models.push_back(model.get());
+		m_heap.push_back(model.get());
 		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
 	}
 	//schedule all models.
@@ -239,8 +239,7 @@ void n_model::Core::transition()
 		}
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
-			std::find(m_heap_models.begin(), m_heap_models.end(), imminent), m_heapComparator);
+		m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
                 printSchedulerState();
 	}
@@ -261,8 +260,7 @@ void n_model::Core::transition()
                 clearProcessedMessages(mail);
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
-			std::find(m_heap_models.begin(), m_heap_models.end(), external), m_heapComparator);
+		m_heap.update(id);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
                 printSchedulerState();
 		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
@@ -289,9 +287,9 @@ void n_model::Core::printSchedulerState()
 #ifdef LOGGING
 	LOG_DEBUG("Core :: ", getCoreID(), " Scheduler state at time ", getTime());
 	LOG_DEBUG("Core :: ", getCoreID(), " indexed models size: ", m_indexed_models.size());
-	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap_models.size());
+	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap.size());
 	std::size_t i = 0;
-	for(t_raw_atomic m: m_heap_models){
+	for(auto m: m_heap){
 		LOG_DEBUG("Core :: ", getCoreID(), "  ", i++, ":  model: ", m->getName(), ", time: ", m->getTimeNext());
 	}
 #endif
@@ -305,7 +303,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 	LOG_DEBUG("Core :: ", getCoreID(), " getting imminents.");
 	const n_network::t_timestamp::t_time mark = this->getTime().getTime();
 	LOG_DEBUG("Core :: ", getCoreID(), "   -> mark: ", mark);
-	std::size_t heapsize = m_heap_models.size();
+	std::size_t heapsize = m_heap.size();
 	m_imminentIndexes.push_back(0);
 
 	while(m_imminentIndexes.size()){
@@ -314,7 +312,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 		m_imminentIndexes.pop_back();
 		if(i >= heapsize)
 			continue;
-		const n_model::t_raw_atomic ptr = m_heap_models[i];
+		const n_model::t_raw_atomic ptr = m_heap[i];
 		const n_network::t_timestamp::t_time itemTime = ptr->getTimeNext().getTime();
 		assert(itemTime >= mark && "An item may not have a smaller next time than the calculated next time of the core.");
 		if(itemTime == mark){
@@ -348,7 +346,7 @@ void n_model::Core::rescheduleImminent()
 t_timestamp 
 n_model::Core::getFirstImminentTime()
 {
-        t_timestamp nextimm = m_heap_models.size()? m_heap_models.front()->getTimeNext(): t_timestamp::infinity();
+        t_timestamp nextimm = m_heap.size()? m_heap.front()->getTimeNext(): t_timestamp::infinity();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " @ current time ::  ", this->getTime(), " first imm == ", nextimm);
         return nextimm;
 }
@@ -546,10 +544,7 @@ void n_model::Core::removeModel(std::size_t id)
         t_raw_atomic model = m_indexed_models[id].get();
         std::swap(m_indexed_models[id], m_indexed_models.back());
         m_indexed_models.pop_back();
-        auto heapIter = std::find(m_heap_models.begin(), m_heap_models.end(), model);
-        assert(heapIter != m_heap_models.end() && "Tried to remove model that is not present in the scheduler.");
-        std::swap(*heapIter, m_heap_models.back());	//swap with last one and remove from the heap
-        m_heap_models.pop_back();
+        m_heap.remove(id);
         LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", model->getName());
 }
 
@@ -598,7 +593,7 @@ void n_model::Core::clearModels()
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing all models from core.");
         this->m_indexed_local_mail.clear();
         this->m_indexed_models.clear();
-	this->m_heap_models.clear();
+	this->m_heap.clear();
 	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0, 0));
 	this->m_gvt = t_timestamp(0, 0);
@@ -643,7 +638,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 void n_model::Core::rescheduleAll()
 {
 	LOG_DEBUG("CORE :: ", getCoreID(), " rescheduling all.");
-	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
+	m_heap.updateAll();
 	printSchedulerState();
 }
 
