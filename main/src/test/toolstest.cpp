@@ -570,9 +570,9 @@ struct HeapTestComparator
 
 TEST(HeapTest, heap_operations){
 	std::vector<int> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
 #define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator)
 #define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator)
-	std::iota(vec.begin(), vec.end(), 0);
 	EXPECT_TRUE(HEAP_TEST_ISHEAP);
 	vec[0] = -1;
 	EXPECT_TRUE(HEAP_TEST_ISHEAP);
@@ -602,6 +602,84 @@ TEST(HeapTest, heap_operations){
 	EXPECT_EQ(vec.size(), result.size());
 	for(std::size_t i = 0; i < vec.size(); ++i){
 		EXPECT_EQ(vec[i], result[i]);
+	}
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapTestUpdateVal
+{
+	std::size_t m_index;
+	int m_value;
+	constexpr HeapTestUpdateVal(int value = 0, std::size_t index = 0):
+		m_index(index), m_value(value)
+	{}
+
+	HeapTestUpdateVal& operator++()
+	{
+	  ++m_value;
+	  return *this;
+	}
+};
+
+struct HeapTestComparator2
+{
+	bool operator()(const HeapTestUpdateVal& a, const HeapTestUpdateVal& b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a.m_value > b.m_value);
+	}
+} heaptestcomparator2;
+struct HeapTestUpdator
+{
+	void operator()(HeapTestUpdateVal& item, std::size_t distance){
+		//we want a min heap, so we must test whether a > b and not a < b
+		LOG_DEBUG("updating value ", item.m_value, ',', item.m_index, " to index ", distance);
+		item.m_index = distance;
+	}
+} heaptestupdator;
+
+TEST(HeapTest, heap_operations_update){
+	std::vector<HeapTestUpdateVal> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator2)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator2, heaptestupdator)
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	LOG_DEBUG("vec[12] = 18");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<std::size_t> indexresult = {0, 1, 0, 3, 4, 0, 0, 7, 0, 9, 0, 0, 0, 0, 0, 15, 0, 0, 0, 19};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec[i].m_value, result[i]);
+		EXPECT_EQ(vec[i].m_index, indexresult[i]);
 	}
 #undef HEAP_TEST_ISHEAP
 #undef HEAP_TEST_UPDATE
