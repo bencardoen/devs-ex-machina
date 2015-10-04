@@ -16,6 +16,7 @@
 #include "tools/listscheduler.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
+#include "tools/heap.h"
 #include "model/modelentry.h"
 
 using std::cout;
@@ -557,4 +558,51 @@ TEST(IntrusiveScheduler, basic_ops){
         EXPECT_EQ(ids.size(), limit);
         for(auto mptr: models)
                 delete mptr;
+}
+
+struct HeapTestComparator
+{
+	bool operator()(int a, int b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a > b);
+	}
+} heaptestcomparator;
+
+TEST(HeapTest, heap_operations){
+	std::vector<int> vec(20);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator)
+	std::iota(vec.begin(), vec.end(), 0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec[i], result[i]);
+	}
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
 }
