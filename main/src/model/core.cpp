@@ -42,6 +42,8 @@ n_model::Core::checkInvariants(){
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " testing invariants.");
+        printSchedulerState();
         assert(m_heap.isHeap() && "The scheduler must be a heap.");
 #endif
 }
@@ -288,9 +290,9 @@ void n_model::Core::printSchedulerState()
 	LOG_DEBUG("Core :: ", getCoreID(), " Scheduler state at time ", getTime());
 	LOG_DEBUG("Core :: ", getCoreID(), " indexed models size: ", m_indexed_models.size());
 	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap.size());
-	std::size_t i = 0;
-	for(auto m: m_heap){
-		LOG_DEBUG("Core :: ", getCoreID(), "  ", i++, ":  model: ", m->getName(), ", time: ", m->getTimeNext());
+	for(std::size_t i = 0; i < m_heap.size(); ++i){
+		auto m = m_heap.heapAt(i);
+		LOG_DEBUG("Core :: ", getCoreID(), "  ", i,"\t", m_heap[m->getLocalID()], "\t:  model: ", m->getName(), ", time: ", m->getTimeNext());
 	}
 #endif
 }
@@ -312,7 +314,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 		m_imminentIndexes.pop_back();
 		if(i >= heapsize)
 			continue;
-		const n_model::t_raw_atomic ptr = m_heap[i];
+		const n_model::t_raw_atomic ptr = m_heap.heapAt(i);
 		const n_network::t_timestamp::t_time itemTime = ptr->getTimeNext().getTime();
 		assert(itemTime >= mark && "An item may not have a smaller next time than the calculated next time of the core.");
 		if(itemTime == mark){

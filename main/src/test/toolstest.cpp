@@ -16,7 +16,7 @@
 #include "tools/listscheduler.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
-#include "tools/heap.h"
+#include "tools/heapscheduler.h"
 #include "model/modelentry.h"
 
 using std::cout;
@@ -672,15 +672,103 @@ TEST(HeapTest, heap_operations_update){
 	vec[12] = 18;
 	LOG_DEBUG("vec[12] = 18");
 	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
 	HEAP_TEST_UPDATE(vec.begin()+12);
+	LOG_DEBUG("vec[12] = 18, after update");
 	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
 	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
 	std::vector<std::size_t> indexresult = {0, 1, 0, 3, 4, 0, 0, 7, 0, 9, 0, 0, 0, 0, 0, 15, 0, 0, 0, 19};
 	EXPECT_EQ(vec.size(), result.size());
+	EXPECT_EQ(vec.size(), indexresult.size());
 	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("Checking item ", i);
 		EXPECT_EQ(vec[i].m_value, result[i]);
 		EXPECT_EQ(vec[i].m_index, indexresult[i]);
 	}
+	LOG_DEBUG("Done");
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapSchedulerVal
+{
+	const int m_startvalue;
+	int m_value;
+	constexpr HeapSchedulerVal(int value = 0):
+		m_startvalue(value), m_value(value)
+	{}
+};
+
+struct HeapSchedulerComparator
+{
+	bool operator()(HeapSchedulerVal* a, HeapSchedulerVal* b) const{
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a->m_value > b->m_value);
+	}
+};
+
+TEST(HeapTest, heap_scheduler){
+	n_tools::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
+	for(std::size_t i = 0; i < 20; ++i){
+		vec.push_back(new HeapSchedulerVal(i));
+		EXPECT_EQ(vec.dirty(), i >= 5);
+	}
+#define HEAP_TEST_ISHEAP vec.isHeap()
+#define HEAP_TEST_UPDATE(x) vec.update(x)
+	EXPECT_TRUE(vec.dirty());
+	vec.updateAll();
+	EXPECT_FALSE(vec.dirty());
+	EXPECT_EQ(vec.size(), 20u);
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("testing item ", i);
+		EXPECT_EQ(vec.heapAt(i)->m_value, int(i));
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, int(i));
+	}
+	LOG_DEBUG("prior to testing for the first time.");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4]->m_value = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3]->m_value = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9]->m_value = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12]->m_value = 18;
+	LOG_DEBUG("vec[12] = 18, ", vec[12].m_index);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
+	HEAP_TEST_UPDATE(12);
+	LOG_DEBUG("vec[12] = 18, after update");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<int> indexresult = {4, 1, 2, 7, 0, 5, 6, 15, 8, 19, 10, 11, 12, 13, 14, 3, 16, 17, 18, 9};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec.heapAt(i)->m_value, result[i]);
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, indexresult[i]);
+	}
+	for(std::size_t i = 0; i < vec.size(); ++i)
+		delete vec[i];
 #undef HEAP_TEST_ISHEAP
 #undef HEAP_TEST_UPDATE
 }

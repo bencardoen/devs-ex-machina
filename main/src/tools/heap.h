@@ -51,6 +51,7 @@ template<typename RandomIterator, typename Compare>
 	std::size_t distance = std::distance(first, item);
 	std::size_t length = std::distance(first, last);
 	while(item < last) {
+		LOG_DEBUG("starting test with distance ", distance);
 		std::size_t leftD = distance*2+1;
 		if(leftD >= length)
 			return;

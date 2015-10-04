@@ -9,6 +9,7 @@
 #define SRC_TOOLS_HEAPSCHEDULER_H_
 
 #include "tools/heap.h"
+#include <assert.h>
 
 namespace n_tools {
 
@@ -57,8 +58,18 @@ private:
 	} m_upd;
 	std::vector<HeapElement> m_items;
 	std::vector<HeapElement*> m_indexed;
+	bool m_dirty;
 
 public:
+	HeapScheduler():
+		m_dirty(false)
+	{ }
+
+	HeapScheduler(std::size_t size):
+		m_dirty(false)
+	{
+		reserve(size);
+	}
 
 	inline
 	void reserve(std::size_t size)
@@ -70,7 +81,15 @@ public:
 	inline
 	std::size_t size() const
 	{
+		LOG_DEBUG("Getting size of scheduler: items size = ", m_items.size(), ", index size = ", m_indexed.size());
+		assert(m_items.size() == m_indexed.size() && "heapscheduler sizes not the same.");
 		return m_items.size();
+	}
+
+	inline
+	bool dirty() const
+	{
+		return m_dirty;
 	}
 
 	inline
@@ -98,6 +117,12 @@ public:
 	}
 
 	inline
+	Item* heapAt(std::size_t i) const
+	{
+		return m_indexed[i]->m_ptr;
+	}
+
+	inline
 	void clear()
 	{
 		m_items.clear();
@@ -107,23 +132,38 @@ public:
 	inline
 	void push_back(Item* item)
 	{
-		m_items.push_back(HeapElement(item, m_items.size()));
-		m_indexed.push_back(&(m_items.back()));
+		if(m_items.size() == m_items.capacity()){
+			m_items.push_back(HeapElement(item, m_items.size()));
+			m_indexed.clear();
+			m_dirty = true;
+		}else{
+			m_items.push_back(HeapElement(item, m_items.size()));
+			m_indexed.push_back(&(m_items.back()));
+		}
 	}
 
 	inline
 	void updateAll()
 	{
+		if(m_indexed.size() != m_items.size()){
+			m_indexed.clear();
+			m_indexed.reserve(m_items.size());
+			for(typename std::vector<HeapElement>::iterator it = m_items.begin(); it != m_items.end(); ++it){
+				m_indexed.push_back(&(*it));
+			}
+		}
 		std::make_heap(m_indexed.begin(), m_indexed.end(), m_comp);
 		for(std::size_t i = 0; i < m_indexed.size(); ++i){
 			m_indexed[i]->m_index = i;
 		}
+		m_dirty = false;
 	}
 
 	inline
 	void update(std::size_t index)
 	{
-		n_tools::fix_heap(m_indexed.begin(), m_indexed.end(), m_indexed.begin()+index, m_comp, m_upd);
+		assert(!m_dirty && "The heapscheduler is dirty.");
+		n_tools::fix_heap(m_indexed.begin(), m_indexed.end(), m_indexed.begin()+m_items[index].m_index, m_comp, m_upd);
 	}
 
 	inline
@@ -165,18 +205,20 @@ public:
 	inline
 	void remove(std::size_t index)
 	{
-		HeapElement* item = &(*(m_items.begin()+index));
+		HeapElement item = m_items[index];
+		LOG_DEBUG("Removing item ", index, " at heap index ", item.m_index);
 		std::swap(m_items[index], m_items.back());
 		m_items.pop_back();
-	        auto heapIter = std::find(m_indexed.begin(), m_indexed.end(), item);
-	        std::swap(*heapIter, m_indexed.back());	//swap with last one and remove from the heap
+	        std::swap(*(m_indexed.begin() + item.m_index), m_indexed.back());	//swap with last one and remove from the heap
 	        m_indexed.pop_back();
+	        m_indexed[item.m_index]->m_index = item.m_index;
+	        m_dirty = true;
 	}
 
 	inline
 	bool isHeap() const
 	{
-		return std::is_heap(m_indexed.begin(), m_indexed.end(), m_comp);
+		return (!m_dirty && std::is_heap(m_indexed.begin(), m_indexed.end(), m_comp));
 	}
 };
 } /* namespace n_tools */

@@ -45,7 +45,11 @@ void DynamicCore::removeModelDS(std::size_t id) {
 void DynamicCore::validateModels(){
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " DS ::  revalidating models : ");
         this->initializeModels();
+        if(m_heap.dirty())
+        	m_heap.updateAll();
         if(m_indexed_models.size() != m_heap.size()){
+        	//shouldn't happen, but you never know.
+        	LOG_DEBUG("Clearing scheduler.");
         	m_heap.clear();
         	for(t_atomicmodelptr& m: m_indexed_models)
         		m_heap.push_back(m.get());
