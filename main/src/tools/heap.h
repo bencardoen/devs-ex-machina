@@ -61,25 +61,31 @@ template<typename RandomIterator, typename Compare>
 		std::size_t leftD = distance*2+1;
 		if(leftD >= length)
 			return;
+		std::size_t rightD = distance*2+2;
+		bool testRight = rightD < length;
+		LOG_DEBUG("leftD: ", leftD, "  rightD: ", rightD, "  length: ", length, "  testRight: ", testRight, "  distance: ", distance);
 		RandomIterator left = first;
 		std::advance(left, leftD);
-		if(comp(*item, *left)){		//item < left
-			std::swap(*left, *item);
-			item = left;
-			distance = leftD;
-			continue;
-		} else {
-			std::size_t rightD = distance*2+2;
-			if(leftD >= length)
-				return;
-			RandomIterator right = first;
-			std::advance(right, rightD);
-			if(comp(*item, *right)) {		//item < left
-				std::swap(*right, *item);
-				item = right;
-				distance = rightD;
+		if(!testRight){
+			if(comp(*item, *left)){		//item < left && item < right
+				std::swap(*left, *item);
+				item = left;
+				distance = leftD;
 				continue;
 			}
+			break;
+		}
+		RandomIterator right = first;
+		std::advance(right, rightD);
+		//swap with the largest value!
+		bool useRight = comp(*left, *right);
+		RandomIterator test = useRight? right: left;
+		std::size_t newD = useRight? rightD: leftD;
+		if(comp(*item, *test)){		//item < max(left, right)
+			std::swap(*test, *item);
+			item = test;
+			distance = newD;
+			continue;
 		}
 		break;
 	}

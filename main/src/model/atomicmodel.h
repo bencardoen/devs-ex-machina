@@ -132,7 +132,9 @@ public:
         }
         
         t_transtype&
-        nextType(){return m_transition_type_next;}
+        nextType(){
+        	LOG_DEBUG("model ", getName(), " getting the next type ", int(m_transition_type_next));
+        	return m_transition_type_next;}
         
         const t_transtype&
         nextType()const{return m_transition_type_next;}

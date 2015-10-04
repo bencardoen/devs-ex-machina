@@ -215,12 +215,13 @@ void n_model::Core::transition()
                 throw std::logic_error("Error: more imminents than models.");
 #endif        
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
-	for (auto imminent : m_imminents) {                     
+	for (t_raw_atomic imminent : m_imminents) {
                 const size_t modelid = imminent->getLocalID();
-		if (!hasMail(modelid)) {			
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " imminent nextType() = ", int(imminent->nextType()));
+		if (!hasMail(modelid)) {
+                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			assert(imminent->nextType()==INT);
                         imminent->nextType()=n_model::NONE;
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
@@ -229,16 +230,23 @@ void n_model::Core::transition()
                         assert(imminent->nextType() == n_model::CONF);
                         imminent->nextType() = n_model::NONE;
 			imminent->setTimeElapsed(0);
-                        auto& mail = getMail(modelid);
+                        std::vector<t_msgptr>& mail = getMail(modelid);
 			imminent->doConfTransition(mail);		// Confluent
 			imminent->setTime(noncausaltime);
 			this->traceConf(getModel(modelid));
-                        clearProcessedMessages(mail);        
-
+                        clearProcessedMessages(mail);
+                        assert(!hasMail(modelid) && "After confluent transition, model may no longer have pending mail.");
 		}
+                printSchedulerState();
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
+		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+			std::find(m_heap_models.begin(), m_heap_models.end(), imminent), m_heapComparator);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
+                printSchedulerState();
 	}
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs, and ");
         for(auto external : m_externs){
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), "external nextType() = ", int(external->nextType()));
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing external transition for model ", external->getName());
@@ -249,8 +257,15 @@ void n_model::Core::transition()
 		external->setTime(noncausaltime);
 //		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(getModel(id));
-		//no need to do any of this fancy rescheduling.
+		//rescheduling.
                 clearProcessedMessages(mail);
+                printSchedulerState();
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
+		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+			std::find(m_heap_models.begin(), m_heap_models.end(), external), m_heapComparator);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
+                printSchedulerState();
+		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
 	}
 }
 
@@ -271,13 +286,15 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 
 void n_model::Core::printSchedulerState()
 {
-	LOG_DEBUG("Scheduler state at time ", getTime());
-	LOG_DEBUG("indexed models size: ", m_indexed_models.size());
-	LOG_DEBUG("   heap models size: ", m_heap_models.size());
+#ifdef LOGGING
+	LOG_DEBUG("Core :: ", getCoreID(), " Scheduler state at time ", getTime());
+	LOG_DEBUG("Core :: ", getCoreID(), " indexed models size: ", m_indexed_models.size());
+	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap_models.size());
+	std::size_t i = 0;
 	for(t_raw_atomic m: m_heap_models){
-		LOG_DEBUG("   model: ", m->getName(), ", time: ", m->getTimeNext());
+		LOG_DEBUG("Core :: ", getCoreID(), "  ", i++, ":  model: ", m->getName(), ", time: ", m->getTimeNext());
 	}
-
+#endif
 }
 
 void
@@ -314,16 +331,17 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 
 void n_model::Core::rescheduleImminent()
 {
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run. Since this should already have happened though, we just don't do anything and wait patiently until a dev removes this method.");
+	printSchedulerState();
 //	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
-	for(t_raw_atomic ptr: m_imminents){
-		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
-			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
-	}
-	for(t_raw_atomic ptr: m_externs){
-		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
-			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
-	}
+//	for(t_raw_atomic ptr: m_imminents){
+//		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+//			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
+//	}
+//	for(t_raw_atomic ptr: m_externs){
+//		n_tools::fix_heap(m_heap_models.begin(), m_heap_models.end(),
+//			std::find(m_heap_models.begin(), m_heap_models.end(), ptr), m_heapComparator);
+//	}
 }
 
 
@@ -601,8 +619,10 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
         const size_t id = msg->getDstUUID().m_local_id;
-        auto model = this->getModel(id).get();
+        t_raw_atomic model = this->getModel(id).get();
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
         if(!hasMail(id)){               // If recd msg size==0
+        	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " setting it's next transition type to |= external.");
                 if(model->nextType()==n_model::NONE){   // If INT is set, we get CONF so adding it to imminents risks duplicate transitions
                         m_externs.push_back(model);     // avoid map by checking state.
                 }
@@ -622,7 +642,9 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 
 void n_model::Core::rescheduleAll()
 {
+	LOG_DEBUG("CORE :: ", getCoreID(), " rescheduling all.");
 	std::make_heap(m_heap_models.begin(), m_heap_models.end(), m_heapComparator);
+	printSchedulerState();
 }
 
 
