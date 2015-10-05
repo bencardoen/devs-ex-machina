@@ -633,9 +633,11 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	for (const auto& model : m_indexed_models) {
 		/*t_timestamp modellast = */model->revert(totime);
-		m_heap.update(model->getLocalID());
+//		m_heap.update(model->getLocalID());
+		//one heap update is O(logN), N heap updates is O(NlogN)
+		//rebuilding the entire heap in one go is only O(3N)
 	}
-//	rescheduleAll();
+	rescheduleAll();
 }
 
 void n_model::Core::rescheduleAll()
