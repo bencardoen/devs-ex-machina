@@ -36,6 +36,7 @@ n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const 
 		m_color(MessageColor::WHITE),
 		m_antimessage(false),
                 m_delete_flag_set(false),
+                m_processed(false),
                 m_dst_uuid(dstUUID),
                 m_src_uuid(srcUUID)
 	{
@@ -67,13 +68,12 @@ n_network::operator!=(const n_network::Message& left, const n_network::Message& 
 
 bool
 n_network::operator<(const n_network::Message& left, const n_network::Message& right){
+        if(left == right)
+                return false;
         if(left.m_timestamp < right.m_timestamp)
                 return true;
-        else{ // >=
-                if(left.m_timestamp==right.m_timestamp) // ==
-                        return left.m_dst_uuid.m_local_id < right.m_dst_uuid.m_local_id;    // TODO check if we need even more...
-                else    
-                        return false;   // >
+        else{ 
+                return false;
         }
                
 }

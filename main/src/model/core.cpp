@@ -48,8 +48,8 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_idle(false), m_terminated_functor(false), m_cores(totalCores),
-                m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),
+                m_terminated_functor(false), m_cores(totalCores),
+                m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -261,13 +261,28 @@ n_model::Core::hasMail(size_t id){
 void n_model::Core::transition()
 {
         
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents, and ");
-        
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(),"@ ", this->getTime(), " Transitioning with ", m_imminents.size(), " imminents");
+#ifdef SAFETY_CHECKS
+        std::set<t_raw_atomic> transitioning;
+        for(auto i : m_imminents){
+                if(! transitioning.insert(i).second){
+                        LOG_ERROR("Duplicate entry in imminents :: ", i->getName());
+                        throw std::logic_error("Duplicate entry in imminents.");
+                }
+        }
+        for(auto e : m_externs){
+                if(! transitioning.insert(e).second){
+                        LOG_ERROR("Duplicate entry in imminents :: ", e->getName());
+                        throw std::logic_error("Duplicate entry in imminents.");
+                }
+        }        
+#endif        
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (auto imminent : m_imminents) {                     
                 const size_t modelid = imminent->getLocalID();
 		if (!hasMail(modelid)) {			
 			assert(imminent->nextType()==INT);
+                        imminent->nextType()=n_model::NONE;
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         imminent->doIntTransition();
@@ -286,6 +301,7 @@ void n_model::Core::transition()
 
 		}
 	}
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs, and ");
         for(auto external : m_externs){
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
@@ -361,18 +377,24 @@ void n_model::Core::rescheduleImminent(const std::vector<t_raw_atomic>& oldimms)
 	}
 }
 
+
+t_timestamp 
+n_model::Core::getFirstImminentTime()
+{
+        t_timestamp nextimm = t_timestamp::infinity();
+	if (not this->m_scheduler->empty()) {
+		nextimm = this->m_scheduler->top().getTime();
+	}
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " @ current time ::  ", this->getTime(), " first imm == ", nextimm);
+        return nextimm;
+}
+
+
 void n_model::Core::syncTime()
 {
-	/**
-	 * We need to advance time from now [x,y] to  min(first message, first scheduled transition).
-	 * Most of this code are safety checks.
-	 * Locking : we're in SimulatorLock, and request/release Messagelock.
-	 */
-	t_timestamp nextfired = t_timestamp::infinity();
-	if (not this->m_scheduler->empty()) {
-		nextfired = this->m_scheduler->top().getTime();
-	}
+	t_timestamp nextfired = this->getFirstImminentTime();
 	const t_timestamp firstmessagetime(this->getFirstMessageTime());
+        
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Candidate for new time is min( ", nextfired, " , ", firstmessagetime , " ) ");
 	const t_timestamp newtime = std::min(firstmessagetime, nextfired);
 	if (isInfinity(newtime)) {
@@ -394,7 +416,6 @@ void n_model::Core::syncTime()
 	if (this->getTime() >= this->getTerminationTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
 		this->setLive(false);
-		this->setIdle(true);
 	}
 }
 
@@ -413,17 +434,6 @@ bool n_model::Core::isLive() const
 	return m_live;
 }
 
-bool n_model::Core::isIdle() const
-{
-	return m_idle;
-}
-
-void n_model::Core::setIdle(bool idlestat)
-{
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " setting state to idle=", idlestat);
-	m_idle.store(idlestat);
-}
-
 void n_model::Core::setLive(bool b)
 {
 	m_live.store(b);
@@ -439,6 +449,7 @@ void n_model::Core::validateUUID(const n_model::uuid& id)
 #ifdef SAFETY_CHECKS
         if(! (id.m_core_id == m_coreid && id.m_local_id<m_indexed_models.size() )){
                 LOG_ERROR("Core ::", this->getCoreID(), " uuid check failed : ", id, " holding ", m_indexed_models.size());
+                LOG_FLUSH;
                 throw std::logic_error("UUID validation failed. Check logs.");
         }
 #endif  
@@ -454,9 +465,10 @@ void n_model::Core::runSmallStep()
 
 	// Noop in single core. Pull messages from network, sort them.
 	// This step can trigger a revert, which is why its before getImminent
-	this->getMessages();	// locked on msgs
+        // getMessages will also turn a core back to live in optimistc (in revert).
+	this->getMessages();	// locked on msgs 
 
-	if (this->isIdle()) {// If we're done, but the others aren't, check if we have reverted. If not, skip rest of work.
+	if (!this->isLive()) {
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(),
 		        " skipping small Step, we're idle and got no messages.");
 		this->unlockSimulatorStep();
@@ -474,14 +486,15 @@ void n_model::Core::runSmallStep()
 	this->collectOutput(m_imminents);	
 
 	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();			
+	this->getPendingMail();	//		
 
 	// Transition depending on state.
 	this->transition();		// NOTE: the scheduler can go empty() here.
 
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
-
+	
+        //getMessages();          
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
         m_imminents.clear();
@@ -552,7 +565,6 @@ void n_model::Core::checkTerminationFunction()
 			if ((*m_termination_function)(model)) {
 				LOG_DEBUG("CORE: ", this->getCoreID(), " Termination function evaluated to true for model ", model->getName());
 				this->setLive(false);
-				this->setIdle(true);
 				this->setTerminationTime(this->getTime());
 				this->m_terminated_functor.store(true);
 				return;
@@ -604,6 +616,7 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(auto& ptr : msgs){
                 delete ptr;
+                LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;
@@ -648,7 +661,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 }
                 model->nextType() |= n_model::EXT;
         }
-        getMail(id).push_back(std::move(msg));
+        getMail(id).push_back(msg);
 }
 
 
@@ -659,7 +672,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 	for (const auto& model : m_indexed_models) {
 		t_timestamp modellast = model->revert(totime);
 		// Bug lived here : Do not set time on model.
-                this->scheduleModel(model->getLocalID(), modellast);
+                this->scheduleModel(model->getLocalID(), modellast);  // Replace with direct push_back, don't need schedule's complexity.
 	}
 }
 
@@ -691,7 +704,6 @@ void n_model::Core::getPendingMail()
         this->unlockMessages();
 	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
-	//std::shared_ptr<n_network::Message> token = n_tools::createObject<n_network::Message>(uuid(), uuid(), nowtime, 0, 0);
 	m_token.getMessage()->setTimeStamp(nowtime);
 
 	this->lockMessages();
@@ -746,7 +758,7 @@ void n_model::Core::revertTracerUntil(const t_timestamp& totime)
 void n_model::Core::logCoreState()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " time= ", this->getTime(), " gvt=", this->getGVT(), " live=",
-	        this->isLive(), " idle=", this->isIdle());
+	        this->isLive());
 }
 
 

@@ -132,6 +132,7 @@ Port::~Port(){
 void Port::clearSentMessages()
 {
         for(auto& msg : m_sentMessages){
+                LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", msg);
                 delete msg;
 #ifdef SAFETY_CHECKS
                 msg=nullptr;
@@ -148,7 +149,7 @@ void Port::clearReceivedMessages()
 void Port::addMessage(const n_network::t_msgptr& message)
 {
 #ifndef  NO_TRACER
-	LOG_DEBUG("Added message ", message->getPayload(), ", we RECEIVED this message.");
+	LOG_DEBUG("Added message ", message->getPayload(), ", port receiving message.");
 	m_receivedMessages.push_back(message);
 #endif
 }

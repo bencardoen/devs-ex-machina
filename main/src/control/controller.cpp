@@ -24,7 +24,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(85), m_rungvt(false), m_turns(turns)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(10), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -32,7 +32,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-	m_zombieIdleThreshold.store(-1);
+	m_zombieIdleThreshold.store(10);
 }
 
 Controller::~Controller()
@@ -259,15 +259,9 @@ void Controller::simDEVS()
 
 void Controller::simOPDEVS()
 {
-	std::mutex cvlock;
-	std::condition_variable cv;
-	std::mutex veclock;	// Lock for vector with signals
-	std::vector<std::size_t> threadsignal;
-	threadsignal.reserve(m_cores.size());
-	constexpr std::size_t deadlockVal = 10000;	// If a thread fails to stop, provide a cutoff value.
 
 	// configure all cores
-	for (auto& core : m_cores) {
+	for (const auto& core : m_cores) {
 		core->setTracers(m_tracers);
 		core->init();
 
@@ -278,15 +272,13 @@ void Controller::simOPDEVS()
 
 		core->setLive(true);
 
-		threadsignal.push_back(n_threadflags::FREE);
 	}
 
 	this->m_rungvt.store(true);
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), deadlockVal, std::ref(*this)));
+		        std::thread(cvworker, i, m_turns, std::ref(*this)));
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
@@ -298,15 +290,10 @@ void Controller::simOPDEVS()
 }
 
 void Controller::simCPDEVS()
-{
-	std::mutex cvlock;
-	std::condition_variable cv;
-	std::mutex veclock;	// Lock for vector with signals
-	std::vector<std::size_t> threadsignal;
-	threadsignal.reserve(m_cores.size());
+{	
 
 	// configure all cores
-	for (auto& core : m_cores) {
+	for (const auto& core : m_cores) {
 		core->setTracers(m_tracers);
 		core->init();
 
@@ -316,15 +303,13 @@ void Controller::simCPDEVS()
 			core->setTerminationFunction(m_terminationCondition);
 
 		core->setLive(true);
-
-		threadsignal.push_back(n_threadflags::FREE);
 	}
 
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, std::ref(cv), std::ref(cvlock), i, std::ref(threadsignal),
-		                std::ref(veclock), m_turns, std::ref(*this)));
+		        std::thread(cvworker, i, m_turns, std::ref(*this))
+                        );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
 
@@ -335,7 +320,7 @@ void Controller::simCPDEVS()
 
 void Controller::simDSDEVS()
 {
-	auto& core = m_cores.front(); // there is only one core in DS DEVS
+	const auto& core = m_cores.front(); // there is only one core in DS DEVS
 	core->setTracers(m_tracers);
 
 	core->init();
@@ -503,108 +488,49 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
-void Controller::setZombieIdleThreshold(int threshold)
+void Controller::setZombieIdleThreshold(size_t threshold)
 {
 	m_zombieIdleThreshold.store(threshold);
 }
 
-void cvworker(std::condition_variable& cv, std::mutex& cvlock, std::size_t myid, std::vector<std::size_t>& threadsignal,
-        std::mutex& vectorlock, std::size_t turns, Controller& ctrl)
+void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 {
-	auto core = ctrl.m_cores[myid];
-	constexpr size_t YIELD_ZOMBIE = 25;	// @see Core::m_zombie_rounds
-	auto predicate = [&]()->bool {
-		std::lock_guard<std::mutex> lv(vectorlock);
-		return not flag_is_set(threadsignal[myid], n_threadflags::ISWAITING);
-	};
-
+        /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
+         *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
+         */
+	const auto& core = ctrl.m_cores[myid];
+        LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
 	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if(core->getZombieRounds()>YIELD_ZOMBIE){
+		if(core->getZombieRounds()>ctrl.m_zombieIdleThreshold.load()){
 			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
-			std::chrono::milliseconds ms{25};
-			std::this_thread::sleep_for(ms);// Don't kill a core, only yield.
-			int thres = ctrl.m_zombieIdleThreshold.load();
-			if(thres >= 0 && core->getZombieRounds() >= (size_t)thres) {
-				LOG_WARNING("CVWORKER: Reached zombie threshold (",thres,"), idling the core!");
-				core->setIdle(true);
-			}
+                        core->setLive(false);
 		}
 
-		{	/// Intercept a direct order to stop myself.
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (flag_is_set(threadsignal[myid], n_threadflags::STOP)) {
-				core->setLive(false);
-				ctrl.m_rungvt.store(false);
-				return;
-			}
-		}
-
-		if (core->isIdle()) {
-			std::chrono::milliseconds ms{45};	// this is a partial solution to a hard problem
-			std::this_thread::sleep_for(ms);	// Allow some time before checking all cores are idle
-			{					// lowers the probability of triggering deadlock.
-				std::lock_guard<std::mutex> signallock(vectorlock);
-				set_flag(threadsignal[myid], n_threadflags::IDLE);
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID()," threadsignal setting flag to IDLE");
-			}
-			if(core->terminatedByFunctor()){
-				ctrl.distributeTerminationTime(core->getTime());
-			}
-			/// Decide if everyone is idle.
-			// Can't be done by counting flags, these are too slow to be set.
-			// Atomic isIdle is faster.
+		if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
-				if( not coreentry->isIdle()){
+				if( coreentry->isLive()){
 					quit = false;
 					break;
 				}
 			}
-			if(quit){
-				if (not core->existTransientMessage()) {	// Final deathtrap : network has message, can't quit.
+			if(quit){               /// Iedereen idle
+				if ( ! core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network is idle, quitting.");
-					ctrl.m_rungvt.store(false);
-					std::lock_guard<std::mutex> signallock(vectorlock);
-					set_flag(threadsignal[myid], n_threadflags::STOP);
+					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
+					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					" all other threads are stopped or idle, network still reports transients, idling.");
 				}
 			}
-		} else {
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (flag_is_set(threadsignal[myid], n_threadflags::IDLE)) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        " core state changed from idle to working, unsetting flag from IDLE to FREE");
-				unset_flag(threadsignal[myid], n_threadflags::IDLE);
-				if (core->getTerminationTime() != ctrl.m_terminationTime) {// Core possibly idle due to term functor
-					ctrl.distributeTerminationTime(ctrl.m_terminationTime);	// but revert can invalidate that, need
-				}						// to reset all termtimes. (cascade!)
-			}
 		}
-		if (core->isLive() or core->isIdle()) {
-			LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
-			core->runSmallStep();
-		}
-
-		bool skip_barrier = false;
-		{
-			std::lock_guard<std::mutex> signallock(vectorlock);
-			if (not flag_is_set(threadsignal[myid], n_threadflags::FREE)) {
-				LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(),
-				        " switching flag to WAITING");
-				set_flag(threadsignal[myid], n_threadflags::ISWAITING);
-			} else {// Don't log, this can easily go into 100MB logs if anything at all goes wrong in the sim.
-				skip_barrier = true;
-			}
-		}
-		if (not skip_barrier) {
-			std::unique_lock<std::mutex> mylock(cvlock);
-			cv.wait(mylock, predicate);
-		}
+                LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
+                core->runSmallStep();
 	}
+        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        ctrl.m_rungvt.store(false);
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
@@ -614,12 +540,13 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 		return;
 	}
         cont.logStat(GVT_START);
+        
 	const std::size_t corecount = cont.m_cores.size();
 	t_controlmsg cmsg = n_tools::createObject<ControlMessage>(corecount, t_timestamp::infinity(),
 	        t_timestamp::infinity());
 
         /// Let Pinit start first round
-        t_coreptr first = cont.m_cores[0];
+        const t_coreptr& first = cont.m_cores[0];
         first->receiveControl(cmsg, 0, gvtsafe);
 	for (size_t i = 1; i < corecount; ++i) {
 		cont.m_cores[i]->receiveControl(cmsg, 0, gvtsafe);
@@ -631,7 +558,11 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
         
 	/// First round done, let Pinit check if we have found a gvt.
 	first->receiveControl(cmsg, 1, gvtsafe);
-
+        if (gvtsafe == false) {
+                LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+                return;
+        }
+        
 	if (cmsg->isGvtFound()) {
 		cont.logStat(GVT_FOUND);
 		LOG_INFO("Controller: found GVT after first round, gvt=", cmsg->getGvt(), " updating cores.");
@@ -646,8 +577,17 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
 			return;
 		}
-		for (std::size_t j = 1; j < corecount; ++j)
+		for (std::size_t j = 1; j < corecount; ++j){
 			cont.m_cores[j]->receiveControl(cmsg, 1, gvtsafe);
+                        if (gvtsafe == false) {
+                                LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+                                return;
+                        }       
+                }
+                if (gvtsafe == false) {
+			LOG_INFO("Controller rungvt set to false by some Core thread, stopping GVT.");
+			return;
+		}
                 first->receiveControl(cmsg, 2, gvtsafe);  // Controlmessage must be passed to Invoking core again.
                 
 		if (cmsg->isGvtFound()) {
@@ -660,7 +600,8 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			cont.m_lastGVT = cmsg->getGvt();
 		} else {
 			cont.logStat(GVT_FAILED);
-			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+                        gvtsafe.store(false);
+			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Stopping invocations of algorithm.");
                         cmsg->logMessageState();
 		}
 	}

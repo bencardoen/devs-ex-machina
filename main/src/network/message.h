@@ -73,6 +73,11 @@ protected:
          */
         bool m_delete_flag_set;
         
+        /**
+         * Mark message processed.
+         */
+        bool m_processed;
+        
         const n_model::uuid m_dst_uuid;
         
         const n_model::uuid m_src_uuid;
@@ -147,6 +152,10 @@ public:
         bool deleteFlagIsSet()const{return m_delete_flag_set;}
         
         void setDeleteFlag(){m_delete_flag_set=true;}
+        
+        bool isProcessed()const{return m_processed;}
+        
+        void setProcessed(bool b){m_processed=b;}
 
 	/**
 	 * @brief Returns the name of source port of the message.

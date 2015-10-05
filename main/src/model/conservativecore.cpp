@@ -14,7 +14,7 @@ namespace n_model {
 Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, std::size_t totalCores,
 	const t_eotvector& vc, const t_timevector& tc)
 	: Core(coreid, totalCores),
-	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity()),m_zombie_rounds(0)
+	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
         /// Make sure our nulltime is set correctly
         m_distributed_time->lockEntry(this->getCoreID());
@@ -24,13 +24,15 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
+	bool wasLive = isLive();
+        this->setLive(true);
+        if(!wasLive)
+        	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-	if(messages.size()!= 0){
-		if(this->isIdle()){
-			this->setIdle(false);
-			LOG_INFO("MCORE :: ", this->getCoreID(), " changing state from idle to non-idle since we have messages to process");
-		}
+	if(messages.size()== 0 && ! wasLive){
+		setLive(false);
+		LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
 	}
 	this->sortIncoming(messages);
 }
@@ -55,62 +57,65 @@ Conservativecore::setEit(const t_timestamp& neweit){
 	this->m_eit = neweit;
 }
 
-/** Step 3 of CNPDEVS
-*     This assumes we're at eit, which we won't always be.
-*     So for us, use min(time, eit) wherever alg uses eit.
-* Pseudocode :
-* 	EOT(myid) = std::min(x,y)
-* 		x = eit + lookahead_min
-* 		y = 	if(sent_message)	eit+eps // have to increment, else we get deadlock!
-* 			else			top of scheduler (next event)
-*                       // what if : not sent message, time = 50, msg waiting @70, next event = 90
-*                       --> y = min(sent_msg, next_imminent, next_pendingmsg);
-* 			none of the above : oo
-*/
+
 void Conservativecore::updateEOT()
-{
-        // Lookahead based
-	t_timestamp x = t_timestamp::infinity();
-        // If we've generated output, eot=time
-        t_timestamp y_sent = t_timestamp::infinity();
-        // Next possible event
-	t_timestamp y_imminent = t_timestamp::infinity();
-        t_timestamp y_pending = t_timestamp::infinity();
-        
-	if(! isInfinity(this->m_min_lookahead)){
-		x = this->m_min_lookahead;
-	}
-
-        // Replace with nullmsgtime + eps
-	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime())
-		y_sent = this->getTime()+t_timestamp::epsilon();
-        
-        if(!this->m_scheduler->empty())
-                y_imminent = this->m_scheduler->top().getTime();
-        
-        y_pending = this->getFirstMessageTime();                // Message lock
-
-	t_timestamp neweot(std::min({x, y_sent, y_imminent, y_pending}).getTime(),0);
-        
-        if(isInfinity(neweot)){
-                // Can only happen if all x,y == inf, meaning we can never receive a message, and have nothing to do.
-                // So eot cannot go backward later on from infinity to a real value. Nonetheless, for now log this event.
-                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Idle core, setting eot to infinity !!!.");
+{       
+        t_timestamp x_sent = t_timestamp::infinity();
+	if(this->getLastMsgSentTime().getTime()==this->getTime().getTime()) {    
+		x_sent = this->getTime()+t_timestamp::epsilon();        // Safe because imminent time will have been recorded before.
         }
         
-        // We're the writers, so we don't need a lock to read.
-        const t_timestamp oldeot = this->m_distributed_eot->get(this->getCoreID());
+        t_timestamp x_la(this->m_min_lookahead);
+        t_timestamp nulltime(this->getNullTime());
+
+        // In a cycle, overwrite lookahead iff we have bypassed the value. Only LA can be bypassed, so reuse the variable.
+        // Note that lookahead by default is recalculated if <= nulltime, so only if we don't find a new LA we can increment time.
+        if(!isInfinity(nulltime) && x_la.getTime()<= nulltime.getTime()){
+                if(checkNullRelease()){ // We can't always crawl ahead, only if influencing are at least as far, else you risk decreasing eot.
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
+                        " Lookahead <= nulltime, starting CRAWLING mode, x_la== ", x_la, " null + eps ", nulltime +t_timestamp::epsilon());
+                        x_la = nulltime+t_timestamp::epsilon();
+                }else{
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
+                        " Lookahead <= nulltime, Can't advance EOT since not all cores have advanced equally :: x_la = nulltime ", nulltime);
+                        x_la = nulltime;
+                }
+        }
+
+        t_timestamp y_imminent = t_timestamp::infinity();
+        if(!this->m_scheduler->empty()){       
+                y_imminent = this->m_scheduler->top().getTime();
+        }
+
+        getMessages();
+        t_timestamp y_pending = this->getFirstMessageTime();                // Message lock
+
+	t_timestamp neweot(std::min({x_la, x_sent, y_imminent, y_pending}).getTime(),0);
+        
+#ifdef SAFETY_CHECKS
+        if(isInfinity(neweot)){
+                LOG_WARNING("CCORE:: ", this->getCoreID(), " time: ", getTime(), " EOT=inf."); // Only allowed if it nevers goes back to real values.
+        }
+#endif
+        const t_timestamp oldeot(getEot());
+        
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
+        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
+        
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
-                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", m_time, " eot moving backward in time, BUG.");
+                LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG. ::old= ", oldeot, "new= ",neweot);
+                LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
-        if(oldeot != neweot){
-                this->m_distributed_eot->lockEntry(getCoreID());
-                this->m_distributed_eot->set(this->getCoreID(), neweot);
-                this->m_distributed_eot->unlockEntry(getCoreID());
-        }
-        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x = ", x);
-        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " y_sent ", y_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
+        
+        if(oldeot != neweot)
+                setEot(neweot);
+}
+
+void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here matters not for inlining, TU where this is called is always this class only.
+                m_distributed_eot->lockEntry(this->getCoreID());
+                m_distributed_eot->set(this->getCoreID(), ntime);
+                m_distributed_eot->unlockEntry(this->getCoreID());
 }
 
 /**
@@ -143,28 +148,47 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-	/** The algorithm says : advance until next time >= eit
-	 *  		-> then calculate EOT/EIT
-	 *  We'll advance anyway, but EOT/EIT have to be recalculated more to avoid
-	 *  slowing down. Case in point : EIT=oo, EOT=10, Time:10->20, EOT can never be behind current time.
-	 *
-	 */
+	
         this->calculateMinLookahead();
-	this->updateEOT();
+	this->updateEOT();                     
 	this->updateEIT();
+	const t_timestamp nextfired(this->getFirstImminentTime());
+        
+        getMessages();          // We've been promised by eit/eot that everything <eot is on the net, pull again so we can't miss a msg.
+	const t_timestamp firstmessagetime(this->getFirstMessageTime());
+        
+	t_timestamp newtime = std::min(firstmessagetime, nextfired);
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(),"@", this->getTime(), " New time is ", newtime, " =min( ", nextfired, " , ", firstmessagetime , ")");
+        
+	if (isInfinity(newtime)) {
+                const t_timestamp eot(this->getEot());
+                if(isInfinity(eot)){
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core no imms, no msgs, eot=inf, time stuck == zombie.");
+                        incrementZombieRounds();
+                        return;
+                }else{
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), "Newtime == inf, using non-inf eot : ", eot); // Don't use in the general case!
+                        newtime = eot;
+                }
+	}
+#ifdef SAFETY_CHECKS
+	if (this->getTime().getTime() > newtime.getTime()) {
+		LOG_ERROR("\tCORE :: ", this->getCoreID() ," Synctime is setting time backward ?? now:", this->getTime(), " new time :", newtime);
+                this->unlockSimulatorStep();
+		throw std::runtime_error("Core time going backwards. ");
+	}
+#endif
+	this->setTime(newtime);						
+									
+	this->resetZombieRounds();
 
-	Core::syncTime();	// Multicore has no syncTime, explicitly invoke top base class.
-
-	// If we don't reset the min lookahead, we'll get in a corrupt state very fast.
-	//this->resetLookahead(); // No longer do this, x=inf edge case.
-
-	// If we've terminated, our EOT should be our current time, not what we've calculated.
-	// Else a dependent kernel can get hung up, since in Idle() state we'll never get here again.
-	if(this->getTime()>=this->getTerminationTime()){        // isIdle is dangerous here.
-		this->m_distributed_eot->lockEntry(getCoreID());
+	if (this->getTime() >= this->getTerminationTime()) {
+		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
+                this->m_distributed_eot->lockEntry(getCoreID());
                 this->m_distributed_eot->set(this->getCoreID(), t_timestamp::infinity());
 		//this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
 		this->m_distributed_eot->unlockEntry(getCoreID());
+		this->setLive(false);
 	}
 }
 
@@ -180,10 +204,8 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 	t_timestamp corrected = std::min(this->getEit(), newtime);
 
 	LOG_INFO("CCORE :: ", this->getCoreID(), " corrected time ", corrected , " == min ( Eit = ", this->getEit(), ", ", newtime, " )");
-        {
-                std::lock_guard<std::mutex> lk(m_timelock);
-                Core::setTime(corrected);
-        }
+       
+        Core::setTime(corrected);
 }
 
 void Conservativecore::receiveMessage(t_msgptr msg){
@@ -250,11 +272,6 @@ void Conservativecore::buildInfluenceeMap(){
 	}
 }
 
-void Conservativecore::invokeStallingBehaviour()
-{
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-}
-
 void Conservativecore::resetLookahead(){
 	this->m_min_lookahead = t_timestamp::infinity();
 }
@@ -265,38 +282,28 @@ bool Conservativecore::timeStalled(){
 
 void Conservativecore::runSmallStep(){
         
-        /**
-         * EIT == TIME : stall
-         *      if this is the first time this happens
-         *              generate output & mark nulltime as current ( iow runSmallStepStalled)
-         *      else 
-         *              // possible (but not guaranteed) deadlock
-         *              if(all null message time >= our time)// we're safe to simulate further 
-         *                      runSmallStep()
-         *              else 
-         *                      wait until the above becomes true : runSmallStepStalled (else eot /eit is not updated
-         * TIME < EIT : normal round
-         */
-        if(timeStalled() && !checkNullRelease()){
+        if(timeStalled() ){             // EIT==TIME
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
                 this->runSmallStepStalled();
-                
-                // RST updates eit, so recheck.
-                if(timeStalled())       
-                        invokeStallingBehaviour();      // Still stalled (not yet deadlocked), backoff.
-        }
-        else{   // 3 cases : 2x not stalled (fine), stalled&released, fine
-                
-                Core::runSmallStep();   //  L -> UL
+                if(checkNullRelease()){                 // If all influencing cores nulltime >= our nulltime, don't waste another round and immediately continue.                
+                        Core::runSmallStep();   
+                }else{                                  // At least one influencing core < our nulltime, wait, but update EOT/EIT to signal others.
+                        updateEOT();            
+                        updateEIT();            
+                }
+        }                               // EIT > TIME
+        else{ // !stalled && released = fine, !stalled && !released =fine (limited by eit), stalled && released == fine
+                LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT < TIME ");
+                Core::runSmallStep();   
         }
 }
 
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
-        // Don't need a lock, since we are the writer and we're reading here.
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == m_time.getTime())
-                return;
+        if(outputtime == getTime().getTime()){
+                return;         // If we've collected output before (in a stalled round usually), return immediately.
+        }
         
                 
         // Base function handles all the rest (message routing etc..)
@@ -305,7 +312,7 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // be found and break the lock.
         
         m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), m_time);
+        m_distributed_time->set(this->getCoreID(), getTime());
         m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
@@ -317,25 +324,17 @@ void Conservativecore::runSmallStepStalled()
          * Broadcast null msg time to others to try to break the deadlock.
          */
         const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
-        if(outputtime == m_time.getTime()){
-                updateEIT();
-                return;
+        if(outputtime != getTime().getTime()){
+                std::vector<t_raw_atomic> imms;
+                this->getImminent(imms);
+
+                collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
+                for(auto mdl : imms){
+                        const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
+                        this->scheduleModel(mdl->getLocalID(), last_scheduled);
+                }
+                
         }
-        std::vector<t_raw_atomic> imms;
-        this->getImminent(imms);
-        
-        collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
-        for(auto mdl : imms){
-                const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
-                this->scheduleModel(mdl->getLocalID(), last_scheduled);
-        }
-        //We have no new states since our last lookahead calculation, so
-        //la values are unchanged.
-        //Eot does require an update if we have sent ^^^ output.
-        //Without updating eit, we'll never get out of a stalled round.
-        //this->calculateMinLookahead(); // DO NOT ENABLE, unless debugging.
-        this->updateEOT();
-        this->updateEIT();
 }
 
 bool Conservativecore::checkNullRelease(){
@@ -345,34 +344,31 @@ bool Conservativecore::checkNullRelease(){
          * If all nulltimes are equal, but our own isn't we need at least 1 stalled round, 
          * so again return false.
          */
-        
+        LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, checking if all influencing cores have advanced equally far ");
         t_timestamp::t_time current_time = this->getTime().getTime();
-        for(const auto& influencing : this->m_influencees){
+        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
+        if(own_null != current_time ){
+                LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, our own time is not yet set as nulltime, return false.");
+                return false;
+        }
+        
+        for(auto influencing : this->m_influencees){
                 
                 this->m_distributed_time->lockEntry(influencing);
                 t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing).getTime();
                 this->m_distributed_time->unlockEntry(influencing);
                 
                 if(nulltime < current_time || isInfinity(t_timestamp(nulltime, 0))){
+                        LOG_DEBUG("Core :: ", this->getCoreID(), " Null check failed for id = ", influencing, " at " ,nulltime);
                         return false;
                 }        
         }
-        
-        
-        this->m_distributed_time->lockEntry(this->getCoreID());
-        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
-        this->m_distributed_time->unlockEntry(this->getCoreID());
-        if(own_null != current_time)
-                return false;
-        
-        return true;
-        
+        LOG_DEBUG("Core :: ", this->getCoreID(), " Null check passed, all influencing cores are at time >= ourselves.");
+        return true;       
 }
 
 bool n_model::Conservativecore::existTransientMessage(){
-	bool b = this->m_network->networkHasMessages();
-	LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " network has messages ?=", b);
-	return b;
+        return !m_network->empty();
 }
 
 void
@@ -381,12 +377,6 @@ Conservativecore::sendMessage(const t_msgptr& msg){
         this->m_last_sent_msgtime = msg->getTimeStamp();
 	LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sending message ", msg->toString());
 	this->m_network->acceptMessage(msg);
-}
-
-t_timestamp
-Conservativecore::getTime(){
-        std::lock_guard<std::mutex> lk(m_timelock);
-        return Core::getTime();
 }
 
 void
@@ -398,15 +388,15 @@ Conservativecore::calculateMinLookahead(){
          * D : 0->80, 80->90
          * Min LA = 70, 75, 80, 90, 120 (without all checked 80,90 would have been missed
          */
-        if(this->m_min_lookahead.getTime() <= m_time.getTime() 
+        if(this->m_min_lookahead.getTime() <= getTime().getTime() 
                 && !isInfinity(this->m_min_lookahead)){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){
                         const t_timestamp la = model->lookAhead();
-                        
+#ifdef SAFETY_CHECKS
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");
-                        
+#endif                        
                         if(isInfinity(la))
                                 continue;
                         

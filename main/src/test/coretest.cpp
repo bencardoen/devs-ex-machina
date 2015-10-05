@@ -85,10 +85,7 @@ TEST(ModelScheduling, BasicOperations)
 	EXPECT_EQ(set.size(), 2u);
 	set.clear();
 	EXPECT_EQ(set.size(), 0u);
-	// This is evil, and is never guaranteed to work.
-	// A model entry with the same name is equal no matter what time is set.
-	// The alternative allows insertion multiple times (an error).
-	// It's written as a test to detect if/when somebody clobbers the logic of the operators in devious ways.
+	
 	me = ModelEntry(1, t_timestamp(1, 0));
 	you = ModelEntry(1, t_timestamp(1, 1));
 	EXPECT_TRUE(me == you);
@@ -174,7 +171,6 @@ TEST(DynamicCore, smallStep)
 	}
 	// This is not how to run a core, but a check of safety blocks.
 	c->setLive(true);
-	c->setIdle(false);
 	c->removeModel("Amodel");
         c->validateModels();
 	EXPECT_EQ(c->containsModel("Amodel"), false);
@@ -260,6 +256,7 @@ TEST(Optimisticcore, revert){
 	t_timestamp aftergvt(63,0);
 	
 	t_msgptr msgaftergvt = createRawObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
+        LOG_DEBUG("Creating ", msgaftergvt);
 
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
@@ -273,7 +270,8 @@ TEST(Optimisticcore, revert){
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
-        
+        // Message is not sent by any core, it's not processed, it's not queued so delete here (since it won't be otherwise)
+        delete msgaftergvt;
 }
 
 
@@ -343,7 +341,7 @@ TEST(Optimisticcore, revertidle){
 	c1->logCoreState();
 	c1->runSmallStep();	// Imminent = cop : 300,1 , internal transition, time 300:1->500:1, go to terminated, idle
 	c1->logCoreState();
-	EXPECT_TRUE(c1->isIdle() && !c1->isLive());
+	EXPECT_TRUE( !c1->isLive());
 	c1->runSmallStep();	// idle, does nothing.
         
         c2->runSmallStep();     // give tlight chance to delete amsgs.
@@ -605,7 +603,7 @@ TEST(Optimisticcore, revertstress){
 	}
 }
 
-TEST(Optimisticcore, revert_antimessaging){
+TEST(Optimisticcore, revert_antimessaging){    
         // Valgrind clear
 	RecordProperty("description", "Try to break revert by doing illogical tests.");
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
@@ -781,58 +779,48 @@ TEST(Conservativecore, Abstract){
         // EOT = 10, EIT=oo                  
         EXPECT_TRUE(isInfinity(c0->getEit()));
         EXPECT_EQ(eotvector->get(0), (10u));
+        EXPECT_EQ(c0->getTime().getTime(), 10u);
         // Stalled time=0, eit=0
         c1->runSmallStep();
         EXPECT_EQ(c1->getEit(), (10u));
         
         LOG_INFO("2-------------------------------------------------");
         // C0 is no longer stalled, eit == oo.
-        c0->runSmallStep();       // Move time to 10
-        EXPECT_EQ(c0->getTime().getTime(), 10u);
-        // EOT = 10, EIT=oo                  
-        EXPECT_TRUE(isInfinity(c0->getEit()));
-        EXPECT_EQ(eotvector->get(0), (10u));            // We have sent a msg at 10, so eot is still 10
-        // Normal round, advance to 10 (eit=10).
-        // La stays at 30, no output.
-        c1->runSmallStep();                             // Nothing to do at 0, move time to 10
-        EXPECT_EQ(c1->getTime(), 10u);
-        EXPECT_EQ(c1->getEit(), (10u));
-        LOG_INFO("3-------------------------------------------------");
-        
-        c0->runSmallStep();                   // Model A 0->1
+        c0->runSmallStep();       
         EXPECT_EQ(c0->getTime().getTime(), 20u);
         
         EXPECT_TRUE(isInfinity(c0->getEit()));
         EXPECT_EQ(eotvector->get(0), (20u));            
         
         c1->runSmallStep();                             
-        EXPECT_EQ(c1->getTime(), 10u);
+        EXPECT_EQ(c1->getTime(), 20u);
         EXPECT_EQ(c1->getEit(), (20u));
+        LOG_INFO("3-------------------------------------------------");
+        
+        c0->runSmallStep();                   // Model A 0->1
+        EXPECT_EQ(c0->getTime().getTime(), 30u);
+        
+        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(eotvector->get(0), (30u));            
+        
+        c1->runSmallStep();                             
+        EXPECT_EQ(c1->getTime(), 30u);  // 30, not 20 Nothing to do -> new time = inf, but we have a non-inf LA, so at least that point is safe.
+        EXPECT_EQ(c1->getEit(), (30u));
         
         LOG_INFO("4-------------------------------------------------");
         
         
         c0->runSmallStep();                   // Model A 1->2
-        EXPECT_EQ(c0->getTime().getTime(), 30u);
+        EXPECT_EQ(c0->getTime().getTime(), 40u);
         
         EXPECT_TRUE(isInfinity(c0->getEit()));
-        EXPECT_EQ(eotvector->get(0), 30u);            
+        EXPECT_EQ(eotvector->get(0), 31u);            // Eot is updated before time is advanced. A message has been sent, so oldtime+eps = eot.
         
         c1->runSmallStep();                   // Model B 0->1          
-        EXPECT_EQ(c1->getTime().getTime(), 20u);
-        EXPECT_EQ(c1->getEit(), 30u);
-        LOG_INFO("5-------------------------------------------------");
-        
-        c0->runSmallStep();                   // Model A 2->3
-        EXPECT_EQ(c0->getTime().getTime(), 40u);        
-        
-        EXPECT_TRUE(isInfinity(c0->getEit()));
-        EXPECT_EQ(eotvector->get(0), 31u);            // Message sent @30, so EOT=31
-        
-        c1->runSmallStep();                   // Model B 1->2
-        EXPECT_EQ(c1->getTime().getTime(), 30u);
+        EXPECT_EQ(c1->getTime().getTime(), 31u);
         EXPECT_EQ(c1->getEit(), 31u);
-        LOG_INFO("6-------------------------------------------------");
+        
+        LOG_INFO("5-------------------------------------------------");
         
 	c0->runSmallStep();                   // Model A 3->4
         EXPECT_EQ(c0->getTime().getTime(), 50u);
@@ -961,13 +949,13 @@ TEST(Conservativecore, Deadlock){
                 // Begin in processing state scheduled internal @ 10
                 // Eot = 0, Eit=0, time=0
                 LOG_INFO("1-------------------------------------------------");
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
+                c0->runSmallStep();     // Stalled round, check if core 1 has passed 0 ? , fails, mark nulltime=0
+                c1->runSmallStep();     // Same, but see that 0 has passed 0 as time, so simulation IS safe.
+                c2->runSmallStep();     // Same as above
                 // Eot becomes 10 (int), Eit moves to 10.
                 EXPECT_EQ(c0->getTime().getTime(), 0u);
-                EXPECT_EQ(c1->getTime().getTime(), 0u);
-                EXPECT_EQ(c2->getTime().getTime(), 0u);
+                EXPECT_EQ(c1->getTime().getTime(), 10u);
+                EXPECT_EQ(c2->getTime().getTime(), 10u);
                 
                 for(size_t i = 0; i<3; ++i){
                         EXPECT_EQ(timevector->get(i).getTime(), 0u); // 0 round is safe
@@ -976,97 +964,130 @@ TEST(Conservativecore, Deadlock){
                 
                 
                 LOG_INFO("2-------------------------------------------------");
-                // Time advances from 0 -> 10, don't do anything @0
+                
                
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
+                c0->runSmallStep();     // C0 sees that others have nulltime of 0, so simulate to 10. 
+                c1->runSmallStep();     // C1 : generate output @10, but C0 is behind, wait.
+                c2->runSmallStep();     // C2 : C1 has done all @10, so we're safe.
                 
                 EXPECT_EQ(c0->getTime().getTime(), 10u);
                 EXPECT_EQ(c1->getTime().getTime(), 10u);
                 EXPECT_EQ(c2->getTime().getTime(), 10u);
+                EXPECT_EQ(timevector->get(0).getTime(), 0u); // 0 round is safe, 10 has not run yet
+                EXPECT_EQ(eotvector->get(0).getTime(), 10u); // 10 round is next expected
                 
-                for(size_t i = 0; i<3; ++i){
-                        EXPECT_EQ(timevector->get(i).getTime(), 0u); // 0 round is safe, 10 has not run yet
-                        EXPECT_EQ(eotvector->get(i).getTime(), 10u); // 10 round is next expected
-                }
+                
+                EXPECT_EQ(timevector->get(1).getTime(), 10u); // Core 0 @ 0, so can't advance.
+                EXPECT_EQ(eotvector->get(1).getTime(), 10u); // Since we can't advance, stay on 10 (imminent==10, msg=11)
+                EXPECT_EQ(timevector->get(2).getTime(), 10u); // Core 1 has passed round 10, do a full transition but stay @eit
+                EXPECT_EQ(eotvector->get(2).getTime(), 11u); // Update eot to 11 since we have sent a message and did a full round.
                 
                 LOG_INFO("3-------------------------------------------------");
-                // Eit = 10, mark round 10 as safe, collect output = {msgs}.
-                // Stall time, no transitions
                 
-                c0->runSmallStep();
-                c1->runSmallStep();
+                c0->runSmallStep(); // Transition @ 10
+                c1->runSmallStep(); 
                 c2->runSmallStep();
                 
-                EXPECT_EQ(c0->getTime().getTime(), 10u);
-                EXPECT_EQ(c1->getTime().getTime(), 10u);
-                EXPECT_EQ(c2->getTime().getTime(), 10u);
+                EXPECT_EQ(c0->getTime().getTime(), 11u); // Eot_2 == 11, so [11 is safe.
+                EXPECT_EQ(c1->getTime().getTime(), 11u); // 
+                EXPECT_EQ(c2->getTime().getTime(), 11u); //
                 
-                for(size_t i = 0; i<3; ++i){
-                        EXPECT_EQ(timevector->get(i).getTime(), 10u); // 10 round is safe
-                        EXPECT_EQ(eotvector->get(i).getTime(), 10u); // 10, we have sent a message, but transitions are pending @10, as are messages.
-                }
+                
+                EXPECT_EQ(timevector->get(0).getTime(), 10u); 
+                EXPECT_EQ(eotvector->get(0).getTime(), 11u); 
+                EXPECT_EQ(timevector->get(1).getTime(), 10u); 
+                EXPECT_EQ(eotvector->get(1).getTime(), 11u); 
+                EXPECT_EQ(timevector->get(2).getTime(), 10u); 
+                EXPECT_EQ(eotvector->get(2).getTime(), 11u); 
                 
                 LOG_INFO("4-------------------------------------------------");
-                // Internal transition @ 10, since everyone has generated output (null release).
+                
                
                 c0->runSmallStep();
                 c1->runSmallStep();
                 c2->runSmallStep();
                 
                 
-                EXPECT_EQ(c0->getTime().getTime(), 10u); // C0 depends on c2, so time is stuck at eit
-                EXPECT_EQ(c1->getTime().getTime(), 11u); // C0's eot = 11, so time can move to 11.
-                EXPECT_EQ(c2->getTime().getTime(), 11u); // Idem
+                EXPECT_EQ(c0->getTime().getTime(), 11u); 
+                EXPECT_EQ(c1->getTime().getTime(), 15u); 
+                EXPECT_EQ(c2->getTime().getTime(), 15u); 
                 
-                for(size_t i = 0; i<3; ++i){
-                        EXPECT_EQ(timevector->get(i).getTime(), 10u); // 10 round is safe
-                        EXPECT_EQ(eotvector->get(i).getTime(), 11u); // 10, we have sent @ time 10.
-                }
+                EXPECT_EQ(timevector->get(0).getTime(), 11u); 
+                EXPECT_EQ(eotvector->get(0).getTime(), 15u); 
+                EXPECT_EQ(timevector->get(1).getTime(), 11u); 
+                EXPECT_EQ(eotvector->get(1).getTime(), 15u); 
+                EXPECT_EQ(timevector->get(2).getTime(), 11u); 
+                EXPECT_EQ(eotvector->get(2).getTime(), 15u); 
                 
-                LOG_INFO("5-------------------------------------------------");
-                // Core 0 advances from 10 -> 11 in time, but does nothing more.
-                // The others are allready at that value.
-               
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
-                
-                
-                EXPECT_EQ(c0->getTime().getTime(), 11u);
-                EXPECT_EQ(c1->getTime().getTime(), 11u);
-                EXPECT_EQ(c2->getTime().getTime(), 11u);
-                
-                EXPECT_EQ(timevector->get(0).getTime(), 10u);  // C0 has round 10 done, not 11
-                EXPECT_EQ(eotvector->get(0).getTime(), 11u);  
-                // C1 has done round 11, next trans = 15
-                EXPECT_EQ(timevector->get(1).getTime(), 11u);  
-                EXPECT_EQ(eotvector->get(1).getTime(), 15u);  
-                // Same for c2
-                EXPECT_EQ(timevector->get(2).getTime(), 11u);  
-                EXPECT_EQ(eotvector->get(2).getTime(), 15u);  
-                
-                LOG_INFO("5-------------------------------------------------");
-                // Everyone has eit = 15, advance time to 15 && stall.
-                // State is receiving.
-                c0->runSmallStep();
-                c1->runSmallStep();
-                c2->runSmallStep();
-                
-                
-                EXPECT_EQ(c0->getTime().getTime(), 11u);        // A round behind
-                EXPECT_EQ(c1->getTime().getTime(), 15u);
-                EXPECT_EQ(c2->getTime().getTime(), 15u);
-                
-                EXPECT_EQ(timevector->get(0).getTime(), 11u);  
-                EXPECT_EQ(eotvector->get(0).getTime(), 15u);  
-                // C1 has done round 11, next trans = 15
-                EXPECT_EQ(timevector->get(1).getTime(), 11u);  
-                EXPECT_EQ(eotvector->get(1).getTime(), 15u);  
-                // Same for c2
-                EXPECT_EQ(timevector->get(2).getTime(), 11u);  
-                EXPECT_EQ(eotvector->get(2).getTime(), 15u);  
-                //tracers->startTrace();
 	}
+}
+#include <performance/phold/phold.h>
+
+class PHoldAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+	std::size_t m_n;
+public:
+	PHoldAlloc(): m_maxn(0), m_n(0)
+	{
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
+		//all models may send to each other. There isn't really an optimal configuration.
+		return (m_n++)%coreAmount();
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
+		for(const n_model::t_atomicmodelptr& ptr: models){
+			std::size_t val = allocate(ptr);
+			ptr->setCorenumber(val);
+			LOG_DEBUG("Assigning model ", ptr->getName(), " to core ", val);
+		}
+	}
+};
+
+TEST(Conservativecore, PHOLD){
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLD";
+	conf.m_simType = n_control::SimType::CONSERVATIVE;
+	conf.m_coreAmount = 2;
+	conf.m_saveInterval = 0;
+	conf.m_zombieIdleThreshold = 100000;
+	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
+
+	auto ctrl = conf.createController();
+	t_timestamp endTime(100, 0);
+	ctrl->setTerminationTime(endTime);
+
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(1, 2, 1,
+	        10);
+	ctrl->addModel(d);
+        
+	Core* zero = ctrl->getCore(0);
+        zero->init();
+        zero->setTerminationTime(endTime);
+        zero->setLive(true);
+        Core* one = ctrl->getCore(1);
+        one->init();
+        one->setTerminationTime(endTime);
+        one->setLive(true);
+        
+        // Zero : @16 first event, One : @14 first event
+        // Zero <> One, so for each step up to 4 rounds are needed.
+        // Special cases : 1->2 @ 14, goes offline. Eot takes over role of time.
+        // checkNullrelease() added to updateEOT to preserve >= eot values. @see devstone cpdevs.
+        for(size_t i = 0; i<40; ++i){
+                LOG_DEBUG("Round ----------------------------- ", i);
+                zero->runSmallStep();
+                one->runSmallStep();
+        }
+        EXPECT_TRUE(zero->getTime() > 17u);
+        EXPECT_TRUE(one->getTime() > 17u);
+	std::ofstream filestream("./phold.txt");
+	n_tools::CoutRedirect myRedirect(filestream);
+	ctrl->printStats(std::cout);
+	d->printStats(std::cout);
 }

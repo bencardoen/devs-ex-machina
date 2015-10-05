@@ -107,7 +107,7 @@ public:
 	 * @param name The name of the port
 	 * @return a shared pointer to the port
 	 */
-	t_portptr getPort(std::string name) const;
+	const t_portptr& getPort(std::string name) const;
 
 	/**
 	 * @brief Removes a port from this model.

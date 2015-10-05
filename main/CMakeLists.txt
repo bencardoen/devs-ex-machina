@@ -34,6 +34,16 @@ find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Doxygen)
+
+
+SET(TCMALLOC_NAMES ${TCMALLOC_NAMES} tcmalloc)
+FIND_LIBRARY(TCMALLOC_LIBRARY
+      NAMES ${TCMALLOC_NAMES}
+      PATHS /usr/lib /usr/local/lib
+)
+if(TCMALLOC_LIBRARY)
+    MESSAGE(STATUS "TCMALLOC LIB FOUND")
+endif(TCMALLOC_LIBRARY)
 ###############################################################################
 
 
@@ -88,7 +98,7 @@ SET(CMAKE_CXX_FLAGS_RELEASE
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
@@ -103,6 +113,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     else()
         MESSAGE( STATUS"Working with Clang: threadsanitizer not supported")
     endif()
+else()
+        MESSAGE( STATUS"Using G++ : using flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
 endif()
 ###############################################################################
 
@@ -355,6 +368,9 @@ include_directories(
 ### LINKER ####################################################################
 # Register libraries needed.
 set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+if(TCMALLOC_LIBRARY)
+    set(LIBS ${LIBS} ) 
+endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ## Clang dies with a segfault of all things if the following linker flags are set

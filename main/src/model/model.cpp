@@ -22,19 +22,22 @@ Model::Model(std::string name)
 
 std::string Model::getName() const
 {
-	//return m_name;  // Do not enable, threadrace on COW implementation of std string
 	return n_tools::copyString(m_name);
 }
 
-t_portptr Model::getPort(std::string name) const
+const t_portptr& Model::getPort(std::string name) const
 {
-	for(const t_portptr ptr: m_iPorts)
+	for(const t_portptr& ptr: m_iPorts)
 		if(ptr->getName() == name)
 			return ptr;
-	for(const t_portptr ptr: m_oPorts)
+	for(const t_portptr& ptr: m_oPorts)
 		if(ptr->getName() == name)
 			return ptr;
-	return nullptr;
+#ifdef SAFETY_CHECKS
+        LOG_ERROR("Port with name not found :: ", name , " in model ", this->m_name);
+        LOG_FLUSH;
+#endif
+        throw std::logic_error("Port not found!");
 }
 
 void Model::setParent(Model* parent)

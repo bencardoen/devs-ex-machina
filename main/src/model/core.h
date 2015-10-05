@@ -119,13 +119,12 @@ struct statistics_collector{
  */
 class Core
 {
-protected:
+private:
 	/**
 	 * Current simulation time
 	 */
 	t_timestamp m_time;
 
-private:
 	/**
 	 * GVT.
 	 */
@@ -163,11 +162,6 @@ private:
 	 * Tracers.
 	 */
 	n_tracers::t_tracersetptr m_tracers;
-
-	/**
-	 * Indicate if this core is beyond termination, but waiting on others.
-	 */
-	std::atomic<bool> m_idle;
 
 	/**
 	 * Marks if this core has triggered a terminated functor. This distinction is required
@@ -213,6 +207,8 @@ private:
         MessageEntry        m_token;
         
         std::vector<n_network::t_msgptr> m_mailfrom;
+        
+        std::size_t m_zombie_rounds;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -241,18 +237,6 @@ private:
 	 */
 	void
 	checkTerminationFunction();
-
-	virtual
-	void
-	lockSimulatorStep(){
-		;
-	}
-
-	virtual
-	void
-	unlockSimulatorStep(){
-		;
-	}
 
 	virtual
 	void
@@ -305,6 +289,18 @@ protected:
          */
         void
         initializeModels();
+        
+        virtual
+	void
+	lockSimulatorStep(){
+		;
+	}
+
+	virtual
+	void
+	unlockSimulatorStep(){
+		;
+	}
         
 	/**
 	* Store received messages (local and networked)
@@ -430,25 +426,14 @@ public:
         validateUUID(const n_model::uuid&);
 
 	/**
-	 * Indicates if Core is running, or halted.
+	 * Live indicates, with the execption of dynstructured, the core is considered
+         * in or beyond simulation. 
+         * In Single core simulation, live indicates simulation can proceed.
+         * In parallel, live indicates wether or not the core has work to do (which in case of revert
+         * can go back from dead to live).
 	 * @synchronized
 	 */
 	bool isLive() const;
-
-	/**
-	 * @return true if a Core has reached a termination condition, and is waiting for
-	 * other cores to finish. A Core can still be reactivated (isLive()==true) from this state.
-	 */
-	virtual
-	bool isIdle() const;
-
-	/**
-	 * Mark this core as having reached termination condition, but keep it alive (waiting for
-	 * other cores).
-	 */
-	virtual
-	void
-	setIdle(bool idlestate);
 
 	/**
 	 * Start/Stop core.
@@ -723,6 +708,12 @@ public:
 	 */
 	t_timestamp
 	getFirstMessageTime();
+        
+        /**
+         * @return Time of first imminent model, or inf.
+         */
+        t_timestamp
+        getFirstImminentTime();
 
 
 	/**
@@ -734,13 +725,6 @@ public:
 	receiveControl(const t_controlmsg& /*controlmessage*/, int /*first*/, std::atomic<bool>& /*rungvt*/){
 		assert(false);
 	}
-
-	/**
-	 * Noop in single core. Paints message according to current color in core. (multicore).
-	 */
-	virtual
-	void
-	paintMessage(const t_msgptr&){;}
 
 	/**
 	 * Write current Core state to log.
@@ -759,19 +743,13 @@ public:
 	/**
 	 * @return nr of consecutive simulation steps this core hasn't been able to advance in time (no messages, nothing scheduled).
 	 */
-        virtual
 	std::size_t
-	getZombieRounds(){return 0;}
-        
-        /**
-         * 
-         */
-        virtual
+	getZombieRounds(){return m_zombie_rounds;}
+
         void
-        incrementZombieRounds(){;}
+        incrementZombieRounds(){++m_zombie_rounds;}
         
-        virtual
-        void resetZombieRounds(){;}
+        void resetZombieRounds(){m_zombie_rounds=0;}
 
 	virtual
 	MessageColor
