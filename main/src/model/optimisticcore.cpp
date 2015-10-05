@@ -55,9 +55,8 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
         for(t_msgptr& ptr : msgs){
                 ptr->setProcessed(true);
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
-                        ptr = nullptr;
                         m_stats.logStat(DELMSG);
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(),"@",this->getTime(), " deleting ", ptr);
                         delete ptr;
                 }
 #ifdef SAFETY_CHECKS
@@ -70,12 +69,11 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
 
 void Optimisticcore::sendMessage(const t_msgptr& msg)
 {
-	// We're locked on msglock.
-	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
-        paintMessage(msg);
+	// We're locked on msglock. Don't change the ordering here.
+        this->countMessage(msg);        
 	this->m_network->acceptMessage(msg);
 	this->markMessageStored(msg);
-	this->countMessage(msg);					// Make sure Mattern is notified
+        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
 }
 
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
@@ -84,7 +82,7 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
         // size_t branch :: skip alloc of amsg entirely.
         m_stats.logStat(AMSGSENT);
 	
-	this->paintMessage(msg);		
+        // Don't touch the color of the message.
 	msg->setAntiMessage(true);
         
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
@@ -92,11 +90,6 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
         // If you enable this, do so as well @receive side.
 	//this->countMessage(amsg);					
 	this->m_network->acceptMessage(msg);
-}
-
-void Optimisticcore::paintMessage(const t_msgptr& msg)
-{
-	msg->paint(this->getColor());
 }
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
@@ -137,6 +130,7 @@ void Optimisticcore::markMessageStored(const t_msgptr& msg)
 	LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " storing sent message", msg->toString());
 #ifdef SAFETY_CHECKS
         if(msg->getSourceCore()!=this->getCoreID()){
+                LOG_FLUSH;
                 throw std::logic_error("Storing msg not sent from this core.");
         }
 #endif
@@ -147,13 +141,21 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 {
         /**
          * ALGORITHM 1.4 (or Fujimoto page 121 send algorithm)
-         * this->getColor() should be equal to the msg color, however, the message can
-         * be made slightly before the GVT code updates the color, resulting in a mismatch,
-         * which will then fail the algorithm with negative values. (issue #1)
-         * We can either force an update (locked), or just do as the algorithm says and use msgcolor.
+         * @pre Msgcolor == this.color
          */
-	if (msg->getColor() == MessageColor::WHITE) { // Don't use Core->color, alg specifies color = msgcolor here.
-		size_t j = msg->getDestinationCore();
+        std::lock_guard<std::mutex> colorlock(m_colorlock);
+        msg->paint(m_color);
+#ifdef SAFETY_CHECKS
+        // With the new lock in this function, only memory corruption or sender changing color of this message could
+        // trigger this check. Nonetheless, if it does we have a case of nasal demons, and want to know about it before they're seen.
+        if(msg->getColor()!=m_color){
+                LOG_ERROR("Message color not equal to core color : ", msg->toString());
+                LOG_FLUSH;
+                throw std::logic_error("Msg color not equal to core color, race detected.");
+        }
+#endif
+	if (m_color == MessageColor::WHITE) {           // getter is locked
+		const size_t j = msg->getDestinationCore();
                 {
                         std::lock_guard<std::mutex> lock(this->m_vlock);
                         const int val = ++(this->m_mcount_vector.getVector()[j]);
@@ -165,7 +167,7 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 		std::lock_guard<std::mutex> lock(this->m_tredlock);
                 t_timestamp oldtred = m_tred;
 		m_tred = std::min(m_tred, msg->getTimeStamp());
-                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after receiving msg.");
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred, " after sending msg.");
 	}
 }
 
@@ -313,21 +315,7 @@ Optimisticcore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic
                         }
                 }
                 else{
-                        // We still can only get here iff V+C <= 0 for all cores (including this one)
-                        // Either the algorithm failed with 2 colors, a race occurred, or a Core terminated.
-                        // The benign cases (terminated && race with C<0 can be solved by enabling this workaroud.)
-                        if(/*msg->countLeQZero()*/ false){
-                                t_timestamp GVT_approx = std::min(msg->getTmin(), msg->getTred());
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " GVT approximation = min( ", msg->getTmin(), ",", msg->getTred(), ")");
-                                // Put this info in the message
-                                msg->setGvtFound(true);
-                                msg->setGvt(GVT_approx);
-                                LOG_DEBUG(" GVT Found with non-zero vector ");
-                                msg->logMessageState(); 
-                        }
-                        else{   // Algorithm failure. Controller will log message state for us.
-                                LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
-                        }
+                        LOG_DEBUG("MCORE :: ", this->getCoreID(), " 2nd round , P0 still has non-zero count vectors, quitting algorithm");
                 }
                 /// There is no cleanup to be done, startGVT initializes core/msg.
         }
@@ -337,9 +325,7 @@ void
 Optimisticcore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std::atomic<bool>& rungvt)
 {
         // ALGORITHM 1.6 (or Fujimoto page 121 control message receive algorithm)
-        if (this->getColor() == MessageColor::WHITE) {	// Locked
-                // Probably not necessary, because messages can't be white during GVT calculation
-                // when red messages are present, better safe than sorry though
+        if (this->getColor() == MessageColor::WHITE) {
                 this->setTred(t_timestamp::infinity());
                 this->setColor(MessageColor::RED);
         }

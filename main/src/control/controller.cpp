@@ -600,7 +600,8 @@ void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
 			cont.m_lastGVT = cmsg->getGvt();
 		} else {
 			cont.logStat(GVT_FAILED);
-			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Not doing anything.");
+                        gvtsafe.store(false);
+			LOG_ERROR("Controller : Algorithm did not find GVT in second round. Stopping invocations of algorithm.");
                         cmsg->logMessageState();
 		}
 	}

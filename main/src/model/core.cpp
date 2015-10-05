@@ -211,10 +211,21 @@ n_model::Core::hasMail(size_t id){
 void n_model::Core::transition()
 {
         
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_imminents.size(), " imminents");
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(),"@ ", this->getTime(), " Transitioning with ", m_imminents.size(), " imminents");
 #ifdef SAFETY_CHECKS
-        if(m_imminents.size()> m_indexed_models.size())
-                throw std::logic_error("Error: more imminents than models.");
+        std::set<t_raw_atomic> transitioning;
+        for(auto i : m_imminents){
+                if(! transitioning.insert(i).second){
+                        LOG_ERROR("Duplicate entry in imminents :: ", i->getName());
+                        throw std::logic_error("Duplicate entry in imminents.");
+                }
+        }
+        for(auto e : m_externs){
+                if(! transitioning.insert(e).second){
+                        LOG_ERROR("Duplicate entry in imminents :: ", e->getName());
+                        throw std::logic_error("Duplicate entry in imminents.");
+                }
+        }        
 #endif        
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 	for (t_raw_atomic imminent : m_imminents) {
@@ -625,7 +636,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 }
                 model->nextType() |= n_model::EXT;
         }
-        getMail(id).push_back(std::move(msg));
+        getMail(id).push_back(msg);
 }
 
 

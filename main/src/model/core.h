@@ -725,13 +725,6 @@ public:
 	}
 
 	/**
-	 * Noop in single core. Paints message according to current color in core. (multicore).
-	 */
-	virtual
-	void
-	paintMessage(const t_msgptr&){;}
-
-	/**
 	 * Write current Core state to log.
 	 */
 	void

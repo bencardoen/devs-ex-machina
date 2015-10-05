@@ -1,0 +1,699 @@
+desc: --stacks=yes
+cmd: ./adevs_devstone -d 10 -w 10 -t 500000
+time_unit: i
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=15112371
+mem_heap_B=392280
+mem_heap_extra_B=7752
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=24162384
+mem_heap_B=392312
+mem_heap_extra_B=7768
+mem_stacks_B=1848
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=35465742
+mem_heap_B=392360
+mem_heap_extra_B=7792
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=49922684
+mem_heap_B=392424
+mem_heap_extra_B=7824
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=5
+#-----------
+time=65659607
+mem_heap_B=392488
+mem_heap_extra_B=7856
+mem_stacks_B=1960
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=80914248
+mem_heap_B=392568
+mem_heap_extra_B=7896
+mem_stacks_B=2088
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=92271658
+mem_heap_B=392616
+mem_heap_extra_B=7920
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=106726681
+mem_heap_B=392696
+mem_heap_extra_B=7960
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=116229499
+mem_heap_B=392744
+mem_heap_extra_B=7984
+mem_stacks_B=4480
+heap_tree=peak
+n6: 392744 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n2: 264000 0x1107B8: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 237600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 211200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 184800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 158400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 132000 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 105600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 79200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n2: 52800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n1: 26400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+           n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+ n1: 72704 0x4EE31EE: _GLOBAL__sub_I_eh_alloc.cc (eh_alloc.cc:117)
+  n1: 72704 0x371A40F638: call_init.part.0 (dl-init.c:72)
+   n1: 72704 0x371A40F749: _dl_init (dl-init.c:30)
+    n1: 72704 0x371A400CB8: ??? (in /usr/lib64/ld-2.21.so)
+     n1: 72704 0x5: ???
+      n1: 72704 0xFFEFFFFB5: ???
+       n1: 72704 0xFFEFFFFC6: ???
+        n1: 72704 0xFFEFFFFC9: ???
+         n1: 72704 0xFFEFFFFCC: ???
+          n1: 72704 0xFFEFFFFCF: ???
+           n1: 72704 0xFFEFFFFD2: ???
+            n0: 72704 0xFFEFFFFD5: ???
+ n0: 19128 in 28 places, all below massif's threshold (01.00%)
+ n2: 15360 0x11771C: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 14080 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 12672 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 11392 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 10112 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 8832 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 7552 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 6272 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n1: 4992 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 4992 in 2 places, all below massif's threshold (01.00%)
+         n0: 1280 in 1 place, below massif's threshold (01.00%)
+        n0: 1280 in 1 place, below massif's threshold (01.00%)
+       n0: 1280 in 1 place, below massif's threshold (01.00%)
+      n0: 1280 in 1 place, below massif's threshold (01.00%)
+     n0: 1280 in 1 place, below massif's threshold (01.00%)
+    n0: 1280 in 1 place, below massif's threshold (01.00%)
+   n0: 1408 in 2 places, all below massif's threshold (01.00%)
+  n0: 1280 in 1 place, below massif's threshold (01.00%)
+ n1: 13872 0x111232: .LTHUNK2.lto_priv.93 (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 13872 in 6 places, all below massif's threshold (01.00%)
+ n2: 7680 0x1176EF: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 7040 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 6336 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 5696 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 5056 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n1: 4416 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 4416 in 2 places, all below massif's threshold (01.00%)
+      n0: 640 in 1 place, below massif's threshold (01.00%)
+     n0: 640 in 1 place, below massif's threshold (01.00%)
+    n0: 640 in 1 place, below massif's threshold (01.00%)
+   n0: 704 in 2 places, all below massif's threshold (01.00%)
+  n0: 640 in 1 place, below massif's threshold (01.00%)
+#-----------
+snapshot=10
+#-----------
+time=135697139
+mem_heap_B=392872
+mem_heap_extra_B=8048
+mem_stacks_B=2088
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=153182569
+mem_heap_B=392984
+mem_heap_extra_B=8104
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=172416659
+mem_heap_B=393144
+mem_heap_extra_B=8184
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=188153376
+mem_heap_B=393288
+mem_heap_extra_B=8256
+mem_stacks_B=2080
+heap_tree=empty
+#-----------
+snapshot=14
+#-----------
+time=205638923
+mem_heap_B=393560
+mem_heap_extra_B=8392
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=215781988
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2288
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=232922439
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1944
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=240268423
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=257408921
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2088
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=272100790
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2144
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=281895323
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2032
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=294138608
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=313727871
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2016
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=328419769
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=340663371
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2032
+heap_tree=detailed
+n6: 393832 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n2: 264000 0x1107B8: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 237600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 211200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 184800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 158400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 132000 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 105600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 79200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n2: 52800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n1: 26400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+           n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+ n1: 72704 0x4EE31EE: _GLOBAL__sub_I_eh_alloc.cc (eh_alloc.cc:117)
+  n1: 72704 0x371A40F638: call_init.part.0 (dl-init.c:72)
+   n1: 72704 0x371A40F749: _dl_init (dl-init.c:30)
+    n1: 72704 0x371A400CB8: ??? (in /usr/lib64/ld-2.21.so)
+     n1: 72704 0x5: ???
+      n1: 72704 0xFFEFFFFB5: ???
+       n1: 72704 0xFFEFFFFC6: ???
+        n1: 72704 0xFFEFFFFC9: ???
+         n1: 72704 0xFFEFFFFCC: ???
+          n1: 72704 0xFFEFFFFCF: ???
+           n1: 72704 0xFFEFFFFD2: ???
+            n0: 72704 0xFFEFFFFD5: ???
+ n0: 20216 in 28 places, all below massif's threshold (01.00%)
+ n2: 15360 0x11771C: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 14080 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 12672 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 11392 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 10112 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 8832 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 7552 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 6272 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n1: 4992 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 4992 in 2 places, all below massif's threshold (01.00%)
+         n0: 1280 in 1 place, below massif's threshold (01.00%)
+        n0: 1280 in 1 place, below massif's threshold (01.00%)
+       n0: 1280 in 1 place, below massif's threshold (01.00%)
+      n0: 1280 in 1 place, below massif's threshold (01.00%)
+     n0: 1280 in 1 place, below massif's threshold (01.00%)
+    n0: 1280 in 1 place, below massif's threshold (01.00%)
+   n0: 1408 in 2 places, all below massif's threshold (01.00%)
+  n0: 1280 in 1 place, below massif's threshold (01.00%)
+ n1: 13872 0x111232: .LTHUNK2.lto_priv.93 (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 13872 in 6 places, all below massif's threshold (01.00%)
+ n2: 7680 0x1176EF: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 7040 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 6336 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 5696 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 5056 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n1: 4416 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 4416 in 2 places, all below massif's threshold (01.00%)
+      n0: 640 in 1 place, below massif's threshold (01.00%)
+     n0: 640 in 1 place, below massif's threshold (01.00%)
+    n0: 640 in 1 place, below massif's threshold (01.00%)
+   n0: 704 in 2 places, all below massif's threshold (01.00%)
+  n0: 640 in 1 place, below massif's threshold (01.00%)
+#-----------
+snapshot=25
+#-----------
+time=357804755
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2040
+heap_tree=empty
+#-----------
+snapshot=26
+#-----------
+time=370048526
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=27
+#-----------
+time=382292242
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1832
+heap_tree=empty
+#-----------
+snapshot=28
+#-----------
+time=399433636
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=29
+#-----------
+time=416574917
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=30
+#-----------
+time=431267444
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=31
+#-----------
+time=448408659
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2280
+heap_tree=empty
+#-----------
+snapshot=32
+#-----------
+time=460652455
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=33
+#-----------
+time=470447555
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1752
+heap_tree=detailed
+n6: 393832 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n2: 264000 0x1107B8: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 237600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 211200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 184800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 158400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 132000 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 105600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 79200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n2: 52800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n1: 26400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+           n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+ n1: 72704 0x4EE31EE: _GLOBAL__sub_I_eh_alloc.cc (eh_alloc.cc:117)
+  n1: 72704 0x371A40F638: call_init.part.0 (dl-init.c:72)
+   n1: 72704 0x371A40F749: _dl_init (dl-init.c:30)
+    n1: 72704 0x371A400CB8: ??? (in /usr/lib64/ld-2.21.so)
+     n1: 72704 0x5: ???
+      n1: 72704 0xFFEFFFFB5: ???
+       n1: 72704 0xFFEFFFFC6: ???
+        n1: 72704 0xFFEFFFFC9: ???
+         n1: 72704 0xFFEFFFFCC: ???
+          n1: 72704 0xFFEFFFFCF: ???
+           n1: 72704 0xFFEFFFFD2: ???
+            n0: 72704 0xFFEFFFFD5: ???
+ n0: 20216 in 28 places, all below massif's threshold (01.00%)
+ n2: 15360 0x11771C: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 14080 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 12672 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 11392 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 10112 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 8832 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 7552 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 6272 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n1: 4992 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 4992 in 2 places, all below massif's threshold (01.00%)
+         n0: 1280 in 1 place, below massif's threshold (01.00%)
+        n0: 1280 in 1 place, below massif's threshold (01.00%)
+       n0: 1280 in 1 place, below massif's threshold (01.00%)
+      n0: 1280 in 1 place, below massif's threshold (01.00%)
+     n0: 1280 in 1 place, below massif's threshold (01.00%)
+    n0: 1280 in 1 place, below massif's threshold (01.00%)
+   n0: 1408 in 2 places, all below massif's threshold (01.00%)
+  n0: 1280 in 1 place, below massif's threshold (01.00%)
+ n1: 13872 0x111232: .LTHUNK2.lto_priv.93 (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 13872 in 6 places, all below massif's threshold (01.00%)
+ n2: 7680 0x1176EF: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 7040 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 6336 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 5696 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 5056 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n1: 4416 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 4416 in 2 places, all below massif's threshold (01.00%)
+      n0: 640 in 1 place, below massif's threshold (01.00%)
+     n0: 640 in 1 place, below massif's threshold (01.00%)
+    n0: 640 in 1 place, below massif's threshold (01.00%)
+   n0: 704 in 2 places, all below massif's threshold (01.00%)
+  n0: 640 in 1 place, below massif's threshold (01.00%)
+#-----------
+snapshot=34
+#-----------
+time=485140204
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1816
+heap_tree=empty
+#-----------
+snapshot=35
+#-----------
+time=504730407
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1920
+heap_tree=empty
+#-----------
+snapshot=36
+#-----------
+time=514525511
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2104
+heap_tree=empty
+#-----------
+snapshot=37
+#-----------
+time=529218161
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2040
+heap_tree=empty
+#-----------
+snapshot=38
+#-----------
+time=539013289
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=39
+#-----------
+time=558603519
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1864
+heap_tree=empty
+#-----------
+snapshot=40
+#-----------
+time=573296183
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2016
+heap_tree=empty
+#-----------
+snapshot=41
+#-----------
+time=583091330
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1928
+heap_tree=empty
+#-----------
+snapshot=42
+#-----------
+time=597784001
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2056
+heap_tree=empty
+#-----------
+snapshot=43
+#-----------
+time=607579116
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2056
+heap_tree=empty
+#-----------
+snapshot=44
+#-----------
+time=627169276
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1936
+heap_tree=empty
+#-----------
+snapshot=45
+#-----------
+time=636964374
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1840
+heap_tree=empty
+#-----------
+snapshot=46
+#-----------
+time=651657020
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=47
+#-----------
+time=661452179
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=48
+#-----------
+time=681042579
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1920
+heap_tree=empty
+#-----------
+snapshot=49
+#-----------
+time=700632822
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2072
+heap_tree=empty
+#-----------
+snapshot=50
+#-----------
+time=707978810
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1840
+heap_tree=empty
+#-----------
+snapshot=51
+#-----------
+time=715324795
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2032
+heap_tree=empty
+#-----------
+snapshot=52
+#-----------
+time=722670788
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=1960
+heap_tree=detailed
+n6: 393832 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n2: 264000 0x1107B8: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 237600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 211200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 184800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 158400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 132000 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 105600 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 79200 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n2: 52800 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n1: 26400 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+           n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 26400 0x10C3F5: main (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+ n1: 72704 0x4EE31EE: _GLOBAL__sub_I_eh_alloc.cc (eh_alloc.cc:117)
+  n1: 72704 0x371A40F638: call_init.part.0 (dl-init.c:72)
+   n1: 72704 0x371A40F749: _dl_init (dl-init.c:30)
+    n1: 72704 0x371A400CB8: ??? (in /usr/lib64/ld-2.21.so)
+     n1: 72704 0x5: ???
+      n1: 72704 0xFFEFFFFB5: ???
+       n1: 72704 0xFFEFFFFC6: ???
+        n1: 72704 0xFFEFFFFC9: ???
+         n1: 72704 0xFFEFFFFCC: ???
+          n1: 72704 0xFFEFFFFCF: ???
+           n1: 72704 0xFFEFFFFD2: ???
+            n0: 72704 0xFFEFFFFD5: ???
+ n0: 20216 in 28 places, all below massif's threshold (01.00%)
+ n2: 15360 0x11771C: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 14080 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 12672 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 11392 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 10112 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n2: 8832 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n2: 7552 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+        n2: 6272 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+         n1: 4992 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+          n0: 4992 in 2 places, all below massif's threshold (01.00%)
+         n0: 1280 in 1 place, below massif's threshold (01.00%)
+        n0: 1280 in 1 place, below massif's threshold (01.00%)
+       n0: 1280 in 1 place, below massif's threshold (01.00%)
+      n0: 1280 in 1 place, below massif's threshold (01.00%)
+     n0: 1280 in 1 place, below massif's threshold (01.00%)
+    n0: 1280 in 1 place, below massif's threshold (01.00%)
+   n0: 1408 in 2 places, all below massif's threshold (01.00%)
+  n0: 1280 in 1 place, below massif's threshold (01.00%)
+ n1: 13872 0x111232: .LTHUNK2.lto_priv.93 (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n0: 13872 in 6 places, all below massif's threshold (01.00%)
+ n2: 7680 0x1176EF: std::_Rb_tree_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > std::_Rb_tree<adevs::Digraph<unsigned long, int, double>::node, std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> >, std::_Select1st<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::less<adevs::Digraph<unsigned long, int, double>::node>, std::allocator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<adevs::Digraph<unsigned long, int, double>::node const, adevs::Bag<adevs::Digraph<unsigned long, int, double>::node> > >, std::piecewise_construct_t const&, std::tuple<adevs::Digraph<unsigned long, int, double>::node const&>&&, std::tuple<>&&) [clone .constprop.1] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+  n2: 7040 0x117D1E: adevs::Digraph<unsigned long, int, double>::couple(adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int, adevs::Devs<adevs::PortValue<unsigned long, int>, double>*, int) [clone .constprop.0] (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+   n2: 6336 0x110A4E: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+    n2: 5696 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+     n2: 5056 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+      n1: 4416 0x11072A: CoupledRecursion::CoupledRecursion(unsigned long, unsigned long, bool) (in /home/ben/workspace/devs-ex-machina/build/Benchmark/adevs_devstone)
+       n0: 4416 in 2 places, all below massif's threshold (01.00%)
+      n0: 640 in 1 place, below massif's threshold (01.00%)
+     n0: 640 in 1 place, below massif's threshold (01.00%)
+    n0: 640 in 1 place, below massif's threshold (01.00%)
+   n0: 704 in 2 places, all below massif's threshold (01.00%)
+  n0: 640 in 1 place, below massif's threshold (01.00%)
+#-----------
+snapshot=53
+#-----------
+time=730016797
+mem_heap_B=393832
+mem_heap_extra_B=8528
+mem_stacks_B=2016
+heap_tree=empty
