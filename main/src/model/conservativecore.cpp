@@ -16,18 +16,16 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 	: Core(coreid, totalCores),
 	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
-        /// Make sure our nulltime is set correctly
-        //m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), std::numeric_limits<t_timestamp::t_time>::max());
-        //m_distributed_time->unlockEntry(this->getCoreID());
+        ;
 }
 
 void Conservativecore::getMessages()
 {
 	bool wasLive = isLive();
         this->setLive(true);
-        if(!wasLive)
+        if(!wasLive){
         	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
+        }
 	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
 	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
 	if(messages.size()== 0 && ! wasLive){
@@ -113,9 +111,7 @@ void Conservativecore::updateEOT()
 }
 
 void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here matters not for inlining, TU where this is called is always this class only.
-                m_distributed_eot->lockEntry(this->getCoreID());
-                m_distributed_eot->set(this->getCoreID(), ntime);
-                m_distributed_eot->unlockEntry(this->getCoreID());
+                m_distributed_eot->set(this->getCoreID(), ntime.getTime());
 }
 
 /**
@@ -136,14 +132,11 @@ void Conservativecore::updateEIT()
 	LOG_INFO("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
 	for(size_t influence_id : m_influencees){
-		this->m_distributed_eot->lockEntry(influence_id);
-		const t_timestamp new_eot = this->m_distributed_eot->get(influence_id);
-		this->m_distributed_eot->unlockEntry(influence_id);
+		const t_timestamp new_eot(this->m_distributed_eot->get(influence_id),0);
 		min_eot_others = std::min(min_eot_others, new_eot);
 	}
-        const t_timestamp oldeot = this->getEit();
         
-        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", oldeot);
+        LOG_INFO("Core:: ", this->getCoreID(), " setting EIT == ",  min_eot_others, " from ", this->getEit());
 	this->setEit(min_eot_others);
 }
 
@@ -182,12 +175,9 @@ void Conservativecore::syncTime(){
 									
 	this->resetZombieRounds();
 
-	if (this->getTime() >= this->getTerminationTime()) {
+	if (this->getTime().getTime() >= this->getTerminationTime().getTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
-                this->m_distributed_eot->lockEntry(getCoreID());
-                this->m_distributed_eot->set(this->getCoreID(), t_timestamp::infinity());
-		//this->m_distributed_eot->set(this->getCoreID(), t_timestamp(this->getTime().getTime(), 0));
-		this->m_distributed_eot->unlockEntry(getCoreID());
+                this->m_distributed_eot->set(this->getCoreID(), std::numeric_limits<t_timestamp::t_time>::max());
 		this->setLive(false);
 	}
 }
@@ -304,16 +294,13 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         if(outputtime == getTime().getTime()){
                 return;         // If we've collected output before (in a stalled round usually), return immediately.
         }
-        
-                
+                      
         // Base function handles all the rest (message routing etc..)
         Core::collectOutput(imminents);
         // Next, we're stalled, but can be entering deadlock. Signal out current Time so the tiebreaker can
         // be found and break the lock.
         
-        //m_distributed_time->lockEntry(this->getCoreID());
         m_distributed_time->set(this->getCoreID(), getTime().getTime());
-        //m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 

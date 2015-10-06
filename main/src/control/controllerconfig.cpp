@@ -63,7 +63,7 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	case SimType::CONSERVATIVE:
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
-		t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(m_coreAmount, t_timestamp(0,0));
+		t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(m_coreAmount, 0u);
                 t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(m_coreAmount, std::numeric_limits<t_timestamp::t_time>::max());
 		for (size_t i = 0; i < m_coreAmount; ++i) {
 			coreMap.push_back(createObject<Conservativecore>(network, i, m_coreAmount, eotvector, timevector));
