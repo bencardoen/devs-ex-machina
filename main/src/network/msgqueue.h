@@ -23,8 +23,10 @@ class Msgqueue
 {
 private:
 	mutable std::mutex	m_lock;
+        std::atomic<size_t>     m_size;
 	std::vector<Q> 	m_queue;
 public:
+
 	/**
 	 * Add element to queue
 	 * @threadsafe
@@ -32,6 +34,7 @@ public:
 	void
 	push(const Q& element){
 		std::lock_guard<std::mutex> lock(m_lock);
+                ++m_size;
 		m_queue.push_back(element);
 	}
 
@@ -46,6 +49,7 @@ public:
 		m_msgcountstat += m_queue.size();       // This is fast, but only reports send messages, not all if there are remaining.
 #endif
                 std::vector<Q> contents;
+                m_size -= m_queue.size();
                 contents.swap(m_queue);
 		m_queue.clear();        // Should not be necessary
 		return contents;
@@ -56,8 +60,8 @@ public:
 	 */
 	inline std::size_t
 	size()const{
-		std::lock_guard<std::mutex> lock(m_lock);	// lock because size could change
-		return m_queue.size();
+		//std::lock_guard<std::mutex> lock(m_lock);	// lock because size could change
+		return m_size;
 	}
 
 //-------------statistics gathering--------------
@@ -66,7 +70,7 @@ private:
 	n_tools::t_uintstat m_msgcountstat;
 	static std::size_t m_counter;
 public:
-	Msgqueue(): m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(m_counter++), "messages")
+	Msgqueue():m_size(0), m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(m_counter++), "messages")
 {
 }
         

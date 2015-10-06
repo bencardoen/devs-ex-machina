@@ -26,13 +26,16 @@ void Conservativecore::getMessages()
         if(!wasLive){
         	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
         }
-	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-	if(messages.size()== 0 && ! wasLive){
-		setLive(false);
-		LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
+        if(this->m_network->havePendingMessages(this->getCoreID())){
+                std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
+                LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+                this->sortIncoming(messages);
+        }else{
+                if(! wasLive){
+                        setLive(false);
+                        LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
+                }
 	}
-	this->sortIncoming(messages);
 }
 
 Conservativecore::~Conservativecore()
