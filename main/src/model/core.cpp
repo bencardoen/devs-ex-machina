@@ -25,7 +25,7 @@ inline void validateTA(const n_network::t_timestamp& val){
 
 n_model::Core::~Core()
 {
-        delete m_token.getMessage();
+        n_tools::takeBack(m_token.getMessage());
 }
 
 void
@@ -229,7 +229,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
 
 #ifdef SAFETY_CHECKS		
-		for (const auto& msg : m_mailfrom) {
+		for (t_msgptr msg : m_mailfrom) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
                         validateUUID(msg->getSrcUUID());
 		}
@@ -273,7 +273,7 @@ void n_model::Core::transition()
         for(auto e : m_externs){
                 if(! transitioning.insert(e).second){
                         LOG_ERROR("Duplicate entry in imminents :: ", e->getName());
-                        throw std::logic_error("Duplicate entry in imminents.");
+                        throw std::logic_error("Duplicate entry in externs.");
                 }
         }        
 #endif        
@@ -297,11 +297,11 @@ void n_model::Core::transition()
 			imminent->setTime(noncausaltime);
 			this->traceConf(getModel(modelid));
                         clearProcessedMessages(mail);        
-
 		}
 	}
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs, and ");
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs");
         for(auto external : m_externs){
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing external transition for model ", external->getName());
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
 		external->setTimeElapsed(noncausaltime.getTime() - external->getTimeLast().getTime());
@@ -493,7 +493,6 @@ void n_model::Core::runSmallStep()
 	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent(m_imminents);
 	
-        //getMessages();          
 	// Forward time to next message/firing.
 	this->syncTime();				// locked on msgs
         m_imminents.clear();
@@ -613,13 +612,10 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                 throw std::logic_error("Msgs empty after processing ?");
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
-        for(auto& ptr : msgs){
-                delete ptr;
+        for(t_msgptr ptr : msgs){
+                n_tools::takeBack(ptr);
                 LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
-#ifdef SAFETY_CHECKS
-                ptr = nullptr;
-#endif   
         }
         
         msgs.clear();

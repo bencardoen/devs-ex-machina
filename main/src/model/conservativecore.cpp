@@ -17,9 +17,9 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 	m_network(n),m_eit(t_timestamp(0, 0)), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
         /// Make sure our nulltime is set correctly
-        m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), t_timestamp::infinity());
-        m_distributed_time->unlockEntry(this->getCoreID());
+        //m_distributed_time->lockEntry(this->getCoreID());
+        m_distributed_time->set(this->getCoreID(), std::numeric_limits<t_timestamp::t_time>::max());
+        //m_distributed_time->unlockEntry(this->getCoreID());
 }
 
 void Conservativecore::getMessages()
@@ -135,7 +135,7 @@ void Conservativecore::updateEIT()
 {
 	LOG_INFO("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating EIT:: eit_now = ", this->m_eit);
 	t_timestamp min_eot_others = t_timestamp::infinity();
-	for(const auto& influence_id : m_influencees){
+	for(size_t influence_id : m_influencees){
 		this->m_distributed_eot->lockEntry(influence_id);
 		const t_timestamp new_eot = this->m_distributed_eot->get(influence_id);
 		this->m_distributed_eot->unlockEntry(influence_id);
@@ -300,7 +300,7 @@ void Conservativecore::runSmallStep(){
 }
 
 void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
-        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID());
         if(outputtime == getTime().getTime()){
                 return;         // If we've collected output before (in a stalled round usually), return immediately.
         }
@@ -311,9 +311,9 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         // Next, we're stalled, but can be entering deadlock. Signal out current Time so the tiebreaker can
         // be found and break the lock.
         
-        m_distributed_time->lockEntry(this->getCoreID());
-        m_distributed_time->set(this->getCoreID(), getTime());
-        m_distributed_time->unlockEntry(this->getCoreID());
+        //m_distributed_time->lockEntry(this->getCoreID());
+        m_distributed_time->set(this->getCoreID(), getTime().getTime());
+        //m_distributed_time->unlockEntry(this->getCoreID());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 
@@ -323,7 +323,7 @@ void Conservativecore::runSmallStepStalled()
          * Time == Eit. Generate output (once), then check if we can advance next time.
          * Broadcast null msg time to others to try to break the deadlock.
          */
-        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID()).getTime();
+        const t_timestamp::t_time outputtime = m_distributed_time->get(this->getCoreID());
         if(outputtime != getTime().getTime()){
                 std::vector<t_raw_atomic> imms;
                 this->getImminent(imms);
@@ -346,7 +346,7 @@ bool Conservativecore::checkNullRelease(){
          */
         LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, checking if all influencing cores have advanced equally far ");
         t_timestamp::t_time current_time = this->getTime().getTime();
-        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID()).getTime();
+        t_timestamp::t_time own_null = this->m_distributed_time->get(this->getCoreID());
         if(own_null != current_time ){
                 LOG_DEBUG("Core :: ", this->getCoreID(), " stalled round, our own time is not yet set as nulltime, return false.");
                 return false;
@@ -354,9 +354,9 @@ bool Conservativecore::checkNullRelease(){
         
         for(auto influencing : this->m_influencees){
                 
-                this->m_distributed_time->lockEntry(influencing);
-                t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing).getTime();
-                this->m_distributed_time->unlockEntry(influencing);
+                //this->m_distributed_time->lockEntry(influencing);
+                t_timestamp::t_time nulltime = this->m_distributed_time->get(influencing);
+                //this->m_distributed_time->unlockEntry(influencing);
                 
                 if(nulltime < current_time || isInfinity(t_timestamp(nulltime, 0))){
                         LOG_DEBUG("Core :: ", this->getCoreID(), " Null check failed for id = ", influencing, " at " ,nulltime);

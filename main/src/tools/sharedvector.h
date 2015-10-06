@@ -96,7 +96,11 @@ public:
                         at.store(value);
         }
         T get(size_t index){
+#ifdef SAFETY_CHECKS
+                return m_atomics.at(index).load();
+#else
                 return m_atomics[index].load();
+#endif
         }
         
         void set(size_t index, const T& val){

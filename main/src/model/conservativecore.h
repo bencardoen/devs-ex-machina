@@ -18,7 +18,8 @@ namespace n_model {
  */
 typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_eotvector;
 
-typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_timevector;
+//typedef std::shared_ptr<n_tools::SharedVector<t_timestamp>> t_timevector;
+typedef std::shared_ptr<n_tools::SharedAtomic<t_timestamp::t_time>> t_timevector;
 
 /**
  * @brief Conservative formalism implementation of parallel simulation.
@@ -146,7 +147,7 @@ private:
         
         t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
         
-        t_timestamp getNullTime()const{return m_distributed_time->get(this->getCoreID());}
+        t_timestamp::t_time getNullTime()const{return m_distributed_time->get(this->getCoreID());}
 
 public:
 	Conservativecore() = delete;
