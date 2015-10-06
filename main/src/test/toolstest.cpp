@@ -17,6 +17,7 @@
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
 #include "tools/heapscheduler.h"
+#include "tools/misc.h"
 #include "model/modelentry.h"
 
 using std::cout;
@@ -771,4 +772,63 @@ TEST(HeapTest, heap_scheduler){
 		delete vec[i];
 #undef HEAP_TEST_ISHEAP
 #undef HEAP_TEST_UPDATE
+}
+
+TEST(NumericTest, sgnFunc){
+#define DOTEST(suffix) \
+	EXPECT_EQ(1, n_tools::sgn(1##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(2##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(10##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-1##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-2##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-10##suffix)); \
+	EXPECT_EQ(0, n_tools::sgn(0##suffix))
+
+	DOTEST(0);	//integer
+	DOTEST(.0);	//double
+	DOTEST(.0f);	//float
+	DOTEST(l);	//long int
+	DOTEST(ll);	//long long int
+#undef DOTEST
+}
+
+TEST(NumericTest, log2Func){
+	EXPECT_EQ(0, n_tools::intlog2(1));
+	EXPECT_EQ(1, n_tools::intlog2(2));
+	EXPECT_EQ(1, n_tools::intlog2(3));
+	EXPECT_EQ(2, n_tools::intlog2(4));
+	EXPECT_EQ(2, n_tools::intlog2(5));
+	EXPECT_EQ(2, n_tools::intlog2(6));
+#define DOTESTPART(k, type) \
+	EXPECT_EQ(k-1, n_tools::intlog2((type)((1 << k) -1))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)(1 << k))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)((1 << k) + 1)));
+#define DOTEST(type) \
+	DOTESTPART(3, type)\
+	DOTESTPART(4, type)\
+	DOTESTPART(5, type)\
+	DOTESTPART(6, type)\
+	DOTESTPART(7, type)\
+	DOTESTPART(8, type)\
+	DOTESTPART(9, type)\
+	DOTESTPART(10, type)\
+	DOTESTPART(11, type)\
+	DOTESTPART(12, type)\
+	DOTESTPART(13, type)\
+	DOTESTPART(14, type)\
+	DOTESTPART(15, type)\
+	DOTESTPART(16, type)\
+	DOTESTPART(17, type)\
+	DOTESTPART(18, type)\
+	DOTESTPART(19, type)\
+	DOTESTPART(20, type)\
+	DOTESTPART(21, type)
+
+	DOTEST(int)			//uses default one
+	DOTEST(unsigned int)
+	DOTEST(unsigned long)
+	DOTEST(unsigned long long)
+
+#undef DOTEST
+#undef DOTESTPART
 }
