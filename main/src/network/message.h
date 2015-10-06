@@ -16,6 +16,7 @@
 #include "tools/objectfactory.h"
 #include <sstream>
 #include <iosfwd>
+#include <atomic>
 
 class TestCereal;
 
@@ -65,7 +66,7 @@ protected:
 	/**
 	 * Is message an annihilator of the original ?
 	 */
-	bool m_antimessage;
+	std::atomic<bool> m_antimessage;
         
         /**
          * Edge case of original message immediately followed by antimessage, allow
@@ -120,7 +121,7 @@ public:
 	 */
 	void setAntiMessage(bool b)
 	{
-		m_antimessage = b;
+		m_antimessage.store(b);
 	}
 
 	/**

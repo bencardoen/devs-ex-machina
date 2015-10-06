@@ -741,8 +741,8 @@ TEST(Conservativecore, Abstract){
 	std::vector<t_coreptr> coreMap;
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 
-	t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(2, t_timestamp(0,0));
-        t_timevector timevector = createObject<SharedVector<t_timestamp>>(2, t_timestamp::infinity());
+        t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(2, 0u);
+        t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(2, std::numeric_limits<t_timestamp::t_time>::max());
 	auto c0 = createObject<Conservativecore>(network, 0, 2, eotvector, timevector);
 	auto c1 = createObject<Conservativecore>(network, 1, 2, eotvector, timevector);
 	coreMap.push_back(c0);
@@ -865,7 +865,7 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
         EXPECT_TRUE( isInfinity(c0->getEit()) );
-        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 5->6
         EXPECT_EQ(c1->getTime().getTime(), 70u);
@@ -876,7 +876,7 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
         EXPECT_TRUE( isInfinity(c0->getEit()) );
-        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 5->6
         // Lookahead has expired @60, but 6 returns inf as lookahead, so we set that.
@@ -889,7 +889,7 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
         EXPECT_TRUE( isInfinity(c0->getEit()) );
-        EXPECT_TRUE(isInfinity(eotvector->get(0)) );            // Eot is now infinity, c0 has nothing to do anymore
+        EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 6->7 finished
         EXPECT_EQ(c1->getTime().getTime(), 70u);
@@ -910,9 +910,9 @@ TEST(Conservativecore, Deadlock){
                 t_networkptr network = createObject<Network>(3);
                 std::vector<t_coreptr> coreMap;
                 std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(3);
-
-                t_eotvector eotvector = createObject<SharedVector<t_timestamp>>(3, t_timestamp(0,0));
-                t_timevector timevector = createObject<SharedVector<t_timestamp>>(3, t_timestamp::infinity());
+                
+                t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(3, 0u);
+                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(3, std::numeric_limits<t_timestamp::t_time>::max());
                 auto c0 = createObject<Conservativecore>(network, 0, 3, eotvector, timevector);
                 auto c1 = createObject<Conservativecore>(network, 1, 3, eotvector, timevector);
                 auto c2 = createObject<Conservativecore>(network, 2, 3, eotvector, timevector);
@@ -959,8 +959,8 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(c2->getTime().getTime(), 10u);
                 
                 for(size_t i = 0; i<3; ++i){
-                        EXPECT_EQ(timevector->get(i).getTime(), 0u); // 0 round is safe
-                        EXPECT_EQ(eotvector->get(i).getTime(), 10u); // 10 round is next expected
+                        EXPECT_EQ(timevector->get(i), 0u); // 0 round is safe
+                        EXPECT_EQ(eotvector->get(i), 10u); // 10 round is next expected
                 }
                 
                 
@@ -974,14 +974,14 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(c0->getTime().getTime(), 10u);
                 EXPECT_EQ(c1->getTime().getTime(), 10u);
                 EXPECT_EQ(c2->getTime().getTime(), 10u);
-                EXPECT_EQ(timevector->get(0).getTime(), 0u); // 0 round is safe, 10 has not run yet
-                EXPECT_EQ(eotvector->get(0).getTime(), 10u); // 10 round is next expected
+                EXPECT_EQ(timevector->get(0), 0u); // 0 round is safe, 10 has not run yet
+                EXPECT_EQ(eotvector->get(0), 10u); // 10 round is next expected
                 
                 
-                EXPECT_EQ(timevector->get(1).getTime(), 10u); // Core 0 @ 0, so can't advance.
-                EXPECT_EQ(eotvector->get(1).getTime(), 10u); // Since we can't advance, stay on 10 (imminent==10, msg=11)
-                EXPECT_EQ(timevector->get(2).getTime(), 10u); // Core 1 has passed round 10, do a full transition but stay @eit
-                EXPECT_EQ(eotvector->get(2).getTime(), 11u); // Update eot to 11 since we have sent a message and did a full round.
+                EXPECT_EQ(timevector->get(1), 10u); // Core 0 @ 0, so can't advance.
+                EXPECT_EQ(eotvector->get(1), 10u); // Since we can't advance, stay on 10 (imminent==10, msg=11)
+                EXPECT_EQ(timevector->get(2), 10u); // Core 1 has passed round 10, do a full transition but stay @eit
+                EXPECT_EQ(eotvector->get(2), 11u); // Update eot to 11 since we have sent a message and did a full round.
                 
                 LOG_INFO("3-------------------------------------------------");
                 
@@ -994,12 +994,12 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(c2->getTime().getTime(), 11u); //
                 
                 
-                EXPECT_EQ(timevector->get(0).getTime(), 10u); 
-                EXPECT_EQ(eotvector->get(0).getTime(), 11u); 
-                EXPECT_EQ(timevector->get(1).getTime(), 10u); 
-                EXPECT_EQ(eotvector->get(1).getTime(), 11u); 
-                EXPECT_EQ(timevector->get(2).getTime(), 10u); 
-                EXPECT_EQ(eotvector->get(2).getTime(), 11u); 
+                EXPECT_EQ(timevector->get(0), 10u); 
+                EXPECT_EQ(eotvector->get(0), 11u); 
+                EXPECT_EQ(timevector->get(1), 10u); 
+                EXPECT_EQ(eotvector->get(1), 11u); 
+                EXPECT_EQ(timevector->get(2), 10u); 
+                EXPECT_EQ(eotvector->get(2), 11u); 
                 
                 LOG_INFO("4-------------------------------------------------");
                 
@@ -1013,12 +1013,12 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(c1->getTime().getTime(), 15u); 
                 EXPECT_EQ(c2->getTime().getTime(), 15u); 
                 
-                EXPECT_EQ(timevector->get(0).getTime(), 11u); 
-                EXPECT_EQ(eotvector->get(0).getTime(), 15u); 
-                EXPECT_EQ(timevector->get(1).getTime(), 11u); 
-                EXPECT_EQ(eotvector->get(1).getTime(), 15u); 
-                EXPECT_EQ(timevector->get(2).getTime(), 11u); 
-                EXPECT_EQ(eotvector->get(2).getTime(), 15u); 
+                EXPECT_EQ(timevector->get(0), 11u); 
+                EXPECT_EQ(eotvector->get(0), 15u); 
+                EXPECT_EQ(timevector->get(1), 11u); 
+                EXPECT_EQ(eotvector->get(1), 15u); 
+                EXPECT_EQ(timevector->get(2), 11u); 
+                EXPECT_EQ(eotvector->get(2), 15u); 
                 
 	}
 }
