@@ -476,8 +476,9 @@ void n_model::Core::runSmallStep()
         m_imminents.clear();
         m_externs.clear();
 
-	// Do we need to continue ?
+#ifdef USE_FUNCTOR
 	this->checkTerminationFunction();
+#endif
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
