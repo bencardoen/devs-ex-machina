@@ -424,8 +424,10 @@ inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid ds
 		time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+#ifdef USE_FUNCTOR
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+#endif
 	return messagetobesend;
 }
 
@@ -443,8 +445,10 @@ inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_m
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+#ifdef USE_FUNCTOR        
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+#endif
 	return messagetobesend;
 }
 
@@ -462,11 +466,13 @@ inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_m
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+#ifdef USE_FUNCTOR
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+#endif
 	return messagetobesend;
 }
-///@}
+
 
 }
 
