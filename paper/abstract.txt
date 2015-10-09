@@ -1,4 +1,4 @@
-Implementation and performance analysis of a shared-memory parallel PDEVS simulator.
+Performance analysis of a parallel PDEVS simulator handling both conservative and optimistic protocols
 
 B. Cardoen, S. Manhaeve, T, Tuijn, Y. Van Tendeloo, K. Vanmechelen, H. Vangheluwe and J. Broeckhove
 Department of Computer Science, Universiteit Antwerpen
