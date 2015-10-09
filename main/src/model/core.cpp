@@ -56,7 +56,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_terminated_functor(false), m_rescheduleInParts(false), m_rescheduleLimit(0u), m_cores(totalCores),
+                m_terminated_functor(false), m_rescheduleInParts(false), m_cores(totalCores),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -147,6 +147,7 @@ void n_model::Core::init()
 	}
 	//schedule all models.
 	rescheduleAll();
+	m_heap.recalcKValue();
 }
 
 void n_model::Core::initializeModels()
@@ -164,7 +165,6 @@ void n_model::Core::initializeModels()
                 model->initUUID(this->getCoreID(), index);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
         }
-        recalcLimit();
 }
 
 void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
@@ -231,7 +231,7 @@ void n_model::Core::transition()
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 
 	const std::size_t k = m_imminents.size() + m_externs.size();
-	m_rescheduleInParts = (k <= m_rescheduleLimit);
+	m_rescheduleInParts = m_heap.singleReschedule(k);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), "calculating whether we should reschedule one by one: k=", k, " N=", m_indexed_models.size(), " oneByOne=", m_rescheduleInParts);
 
 	for (t_raw_atomic imminent : m_imminents) {
@@ -560,8 +560,8 @@ void n_model::Core::removeModel(std::size_t id)
         std::swap(m_indexed_models[id], m_indexed_models.back());
         m_indexed_models.pop_back();
         m_heap.remove(id);
-        recalcLimit();
-        LOG_INFO("\tCORE :: ", this->getCoreID(), " removed model : ", model->getName());
+        if(id < m_indexed_models.size())
+        	m_indexed_models[id]->getUUID().m_local_id = id;
 }
 
 void n_model::Core::setTime(const t_timestamp& t)
@@ -604,10 +604,9 @@ void n_model::Core::clearModels()
 {
 	assert(this->isLive() == false && "Clearing models during simulation is not supported.");
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " removing all models from core.");
-        this->m_indexed_local_mail.clear();
-        this->m_indexed_models.clear();
-	this->m_heap.clear();
-	m_rescheduleLimit = 0;
+        m_indexed_local_mail.clear();
+        m_indexed_models.clear();
+	m_heap.clear();
 	m_rescheduleInParts = false;
 	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0, 0));

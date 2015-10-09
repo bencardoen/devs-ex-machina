@@ -11,7 +11,6 @@
 #include "network/controlmessage.h"
 #include "tracers/tracers.h"
 #include "tools/statistic.h"
-#include "tools/misc.h"
 #include <set>
 #include <condition_variable>
 
@@ -194,7 +193,6 @@ protected:
         std::vector<t_atomicmodelptr> m_indexed_models;
         n_tools::HeapScheduler<AtomicModel_impl, Comparator> m_heap;
         bool m_rescheduleInParts;
-        std::size_t m_rescheduleLimit;
 
         /**
          * Stores models that will transition in this simulation round.
@@ -292,14 +290,6 @@ private:
         void
         clearProcessedMessages(std::vector<t_msgptr>& msgs);
 
-        inline
-        void recalcLimit()
-        {
-        	const std::size_t N = m_indexed_models.size();
-        	m_rescheduleLimit = N>1?(3*N/(n_tools::intlog2(N))):0;
-        	// one big reschedule takes O(3N)
-        	// individual updates take O(logN)*k
-        }
 protected:
         
         /**
