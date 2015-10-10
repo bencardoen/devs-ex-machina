@@ -58,7 +58,7 @@ private:
         /**
          * Unlocked accessor to eot value (read/read).
          */
-        t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID());}
+        t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID(), std::memory_order_relaxed);} // read/read
         
         /**
          * Unchecked setter.
@@ -145,7 +145,7 @@ private:
         
         t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
         
-        t_timestamp::t_time getNullTime()const{return m_distributed_time->get(this->getCoreID());}
+        t_timestamp::t_time getNullTime()const{return m_distributed_time->get(this->getCoreID(), std::memory_order_relaxed);}
 
 public:
 	Conservativecore() = delete;
