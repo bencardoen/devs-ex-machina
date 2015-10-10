@@ -47,7 +47,7 @@ n_model::Core::Core():
 
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
-                m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
+                m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
@@ -498,9 +498,9 @@ void n_model::Core::runSmallStep()
         m_imminents.clear();
         m_externs.clear();
 
-#ifdef USE_FUNCTOR
+
 	this->checkTerminationFunction();
-#endif
+
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
@@ -553,6 +553,7 @@ n_network::t_timestamp n_model::Core::getTerminationTime()
 
 void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
 {
+        LOG_DEBUG("Termination function == ", fun.get());
 	this->m_termination_function = fun;
 }
 
