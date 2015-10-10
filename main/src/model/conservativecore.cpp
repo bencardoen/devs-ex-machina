@@ -76,8 +76,7 @@ void Conservativecore::updateEOT()
                         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
                         " Lookahead <= nulltime, starting CRAWLING mode, x_la== ", x_la, " null + eps ", nulltime +t_timestamp::epsilon());
                         x_la = nulltime+t_timestamp::epsilon();
-                }
-                else{
+                }else{
                         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), 
                         " Lookahead <= nulltime, Can't advance EOT since not all cores have advanced equally :: x_la = nulltime ", nulltime);
                         x_la = nulltime;
@@ -182,8 +181,6 @@ void Conservativecore::syncTime(){
 	if (this->getTime().getTime() >= this->getTerminationTime().getTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
                 this->m_distributed_eot->set(this->getCoreID(), std::numeric_limits<t_timestamp::t_time>::max());
-                // Have to set nulltime, else we keep spinning.
-                this->m_distributed_time->set(this->getCoreID(), this->getTime().getTime());
 		this->setLive(false);
 	}
 }
@@ -282,12 +279,14 @@ void Conservativecore::runSmallStep(){
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT==TIME ");
                 m_stats.logStat(STAT_TYPE::STALLEDROUNDS);
                 this->runSmallStepStalled();
-                updateEOT();            
-                updateEIT();            
-                spinNullRelease();
-                Core::runSmallStep();   
+                if(checkNullRelease()){                 // If all influencing cores nulltime >= our nulltime, don't waste another round and immediately continue.                
+                        Core::runSmallStep();   
+                }else{                                  // At least one influencing core < our nulltime, wait, but update EOT/EIT to signal others.
+                        updateEOT();            
+                        updateEIT();            
+                }
         }                               // EIT > TIME
-        else{
+        else{ // !stalled && released = fine, !stalled && !released =fine (limited by eit), stalled && released == fine
                 LOG_DEBUG("CCORE :: ", this->getCoreID(), " EIT < TIME ");
                 Core::runSmallStep();   
         }
@@ -358,29 +357,6 @@ bool Conservativecore::checkNullRelease(){
         return true;       
 }
 
-void Conservativecore::spinNullRelease(){
-       
-        LOG_DEBUG("Core :: ", this->getCoreID(),"@" , this->getTime()," Entering spinlock on nulltimes.");
-        t_timestamp::t_time current_time = this->getTime().getTime();
-        
-        std::deque<std::size_t> waiting_for;
-        for(const auto& infl : m_influencees)
-                waiting_for.push_back(infl);
-        while(!waiting_for.empty()){
-                for(auto iter = waiting_for.begin(); iter != waiting_for.end();){
-                        const t_timestamp::t_time nulltime = this->m_distributed_time->get(*iter);
-                        if(nulltime >= current_time){
-                                LOG_DEBUG("Core :: ", this->getCoreID(),"@" , this->getTime()," nulltime ", nulltime, " released for ", *iter);
-                                iter = waiting_for.erase(iter);
-                        }
-                        else{
-                                ++iter;
-                        }
-                }
-        }
-        LOG_DEBUG("Core :: ", this->getCoreID(), " Null check passed, all influencing cores are at time >= ourselves.");
-}
-
 bool n_model::Conservativecore::existTransientMessage(){
         return !m_network->empty();
 }
@@ -411,7 +387,8 @@ Conservativecore::calculateMinLookahead(){
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");
 #endif                        
-
+                        if(isInfinity(la))
+                                continue;
                         
                         const t_timestamp last = model->getTimeLast();
                         m_min_lookahead = std::min(m_min_lookahead, (last+la));
