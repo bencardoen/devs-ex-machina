@@ -109,6 +109,13 @@ private:
         checkNullRelease();
         
         /**
+         * Wait until all others cores have a null time >= our own.
+         * @attention spinlock
+         */
+        void
+        spinNullRelease();
+        
+        /**
          * Queue message, revert if time <= current time or if time < current time and stalled.
          * Notifies gvt algorithm.
          * @param msg

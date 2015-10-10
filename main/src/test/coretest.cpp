@@ -898,7 +898,8 @@ TEST(Conservativecore, Abstract){
 }
 
 
-TEST(Conservativecore, Deadlock){
+TEST(Conservativecore, DISABLED_Deadlock){
+        /* This test is disabled because the cores now use spinlocks, which make non-threaded testing (step by step) impossible*/
         using n_examples_deadlock::Pingset;
 	std::ofstream filestream(TESTFOLDER "controller/tmp.txt");
 	{
@@ -1049,7 +1050,8 @@ public:
 	}
 };
 
-TEST(Conservativecore, PHOLD){
+TEST(Conservativecore, DISABLED_PHOLD){
+        /* This test is disabled because the cores now use spinlocks, which make non-threaded testing (step by step) impossible*/
         n_control::ControllerConfig conf;
 	conf.m_name = "PHOLD";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
