@@ -571,7 +571,7 @@ void n_model::Core::checkTerminationFunction()
 			}
 		}
 	} else {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
 	}
 }
 

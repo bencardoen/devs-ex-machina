@@ -103,11 +103,12 @@ void Conservativecore::updateEOT()
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         
+        /**
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG. ::old= ", oldeot, "new= ",neweot);
                 LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
-        }
+        }*/
         
         if(oldeot != neweot)
                 setEot(neweot);
@@ -182,7 +183,9 @@ void Conservativecore::syncTime(){
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
                 this->m_distributed_eot->set(this->getCoreID(), std::numeric_limits<t_timestamp::t_time>::max());
 		this->setLive(false);
-	}
+	}else{
+                this->m_distributed_eot->set(this->getCoreID(), this->getTime().getTime());
+        }       
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -282,7 +285,7 @@ void Conservativecore::runSmallStep(){
                 if(checkNullRelease()){                 // If all influencing cores nulltime >= our nulltime, don't waste another round and immediately continue.                
                         Core::runSmallStep();   
                 }else{                                  // At least one influencing core < our nulltime, wait, but update EOT/EIT to signal others.
-                        updateEOT();            
+                 //       updateEOT();            
                         updateEIT();            
                 }
         }                               // EIT > TIME
