@@ -363,15 +363,16 @@ void Conservativecore::spinNullRelease(){
         LOG_DEBUG("Core :: ", this->getCoreID(),"@" , this->getTime()," Entering spinlock on nulltimes.");
         t_timestamp::t_time current_time = this->getTime().getTime();
         
-        std::deque<std::size_t> waiting_for;
+        
+        m_checked_influencing.clear(); // stchk
         for(const auto& infl : m_influencees)
-                waiting_for.push_back(infl);
-        while(!waiting_for.empty()){
-                for(auto iter = waiting_for.begin(); iter != waiting_for.end();){
+                m_checked_influencing.push_back(infl);
+        while(!m_checked_influencing.empty()){
+                for(auto iter = m_checked_influencing.begin(); iter != m_checked_influencing.end();){
                         const t_timestamp::t_time nulltime = this->m_distributed_time->get(*iter);
                         if(nulltime >= current_time){
                                 LOG_DEBUG("Core :: ", this->getCoreID(),"@" , this->getTime()," nulltime ", nulltime, " released for ", *iter);
-                                iter = waiting_for.erase(iter);
+                                iter = m_checked_influencing.erase(iter);
                         }
                         else{
                                 ++iter;

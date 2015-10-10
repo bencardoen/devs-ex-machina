@@ -100,6 +100,8 @@ private:
          */
         t_timestamp             m_last_sent_msgtime;
         
+        std::deque<std::size_t> m_checked_influencing;
+        
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
          * >= our time, and we ourselves have produced all output at current time.
