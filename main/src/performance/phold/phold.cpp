@@ -10,9 +10,11 @@
 
 #ifdef FPTIME
 #define T_0 0.01	//timeadvance may NEVER be 0!
+#define T_STEP 0.01
 #define T_100 1.0
 #else
 #define T_0 1
+#define T_STEP 1
 #define T_100 100
 #endif
 
@@ -46,15 +48,23 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 {
 }
 
+template<typename T>
+constexpr T roundTo(T val, T gran)
+{
+	return std::round(val/gran)*gran;
+}
+
 EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 {
 #ifdef FPTIME
 	static std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+	m_rand.seed(event);
+	return roundTo(dist(m_rand), T_STEP);
 #else
 	static std::uniform_int_distribution<EventTime> dist(T_0, T_100);
-#endif
 	m_rand.seed(event);
 	return dist(m_rand);
+#endif
 }
 
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
@@ -152,7 +162,7 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
 {
-	return n_network::t_timestamp(T_0);
+	return T_STEP;
 }
 
 /*
