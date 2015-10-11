@@ -152,7 +152,7 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
 {
-	return n_network::t_timestamp(T_0);
+	return n_network::t_timestamp::epsilon();
 }
 
 /*
