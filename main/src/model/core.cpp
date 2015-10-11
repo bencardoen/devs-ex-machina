@@ -641,10 +641,12 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	const MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}else{
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ", msg->toString());
 		this->m_received_messages->erase(entry);
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}
 }
 
@@ -664,6 +666,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 
 void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " reverting and rescheduling all models.");
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
 	for (const auto& model : m_indexed_models) {
@@ -671,6 +674,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 		// Bug lived here : Do not set time on model.
                 this->scheduleModel(model->getLocalID(), modellast);  // Replace with direct push_back, don't need schedule's complexity.
 	}
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " done with reverting and rescheduling all models.");
 }
 
 void n_model::Core::rescheduleAll()

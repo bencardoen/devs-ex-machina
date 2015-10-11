@@ -221,6 +221,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	}
 	for (const TraceMessageEntry& mess : messages)
 		scheduler->push_back(mess);
+	LOG_DEBUG("revertTo finished messages");
 }
 
 void clearAll()

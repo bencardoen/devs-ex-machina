@@ -305,7 +305,6 @@ public:
 	 */
 	virtual std::string getPayload() const override
 	{
-		LOG_DEBUG("SpecializedMessage: getPayload");
 		std::stringstream ssr;
 		const DataType& data = getData();
 		ssr << data;
