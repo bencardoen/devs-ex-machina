@@ -18,10 +18,12 @@
 #ifdef FPTIME
 #define T_0 0.01	//timeadvance may NEVER be 0!
 #define T_100 1.0
+#define T_STEP 0.01
 #define T_INF 2.0
 #else
 #define T_0 1.0	//timeadvance may NEVER be 0!
 #define T_100 100.0
+#define T_STEP 1.0
 #define T_INF 200.0
 #endif
 
@@ -65,6 +67,11 @@ inline std::string toString(std::size_t i)
 
 const int inPort = -1;
 
+template<typename T>
+constexpr T roundTo(T val, T gran)
+{
+	return std::round(val/gran)*gran;
+}
 class HeavyPHOLDProcessor: public adevs::Atomic<t_event>
 {
 private:
@@ -93,7 +100,7 @@ private:
 	{
 		static std::uniform_real_distribution<t_eventTime> dist(T_0, T_100);
 		m_rand.seed(event);
-		return dist(m_rand);
+		return roundTo(dist(m_rand), T_STEP);
 	}
 public:
 	const std::string m_name;
@@ -212,7 +219,7 @@ public:
 
 	double lookahead()
 	{
-		return T_0;
+		return T_STEP;
 	}
 };
 
