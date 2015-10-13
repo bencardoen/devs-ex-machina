@@ -188,6 +188,7 @@ void traceUntil(n_network::t_timestamp time)
 
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
+	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
         /**
 #ifdef SAFETY_CHECKS
@@ -198,7 +199,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
         }
 #endif
          */
-	TraceMessage t(time.getTime()-n_network::t_timestamp::epsilon().getTime(), [] {}, 0u);
+	TraceMessage t(n_network::t_timestamp(time.getTime()-n_network::t_timestamp::epsilon().getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
         
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;
@@ -209,18 +210,25 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	if (coreID == std::numeric_limits<std::size_t>::max()) {
 		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(),
 		        " messages");
-		for (const TraceMessageEntry& mess : messagesLost)
+		for (const TraceMessageEntry& mess : messagesLost) {
+			LOG_DEBUG("-> reverting tracer message @", mess->getTime(), " from core ", mess->getCoreID());
 			n_tools::takeBack(mess.getPointer());
+		}
 	} else {
 		for (const TraceMessageEntry& mess : messagesLost) {
-			if (mess->getCoreID() != coreID)
+			if (mess->getCoreID() != coreID) {
+				LOG_DEBUG("-> keeping tracer message @", mess->getTime(), " from core ", mess->getCoreID());
 				scheduler->push_back(mess);
-			else
+			} else {
+				LOG_DEBUG("-> reverting tracer message @", mess->getTime(), " from core ", mess->getCoreID());
 				n_tools::takeBack(mess.getPointer());
+			}
 		}
 	}
-	for (const TraceMessageEntry& mess : messages)
+	for (const TraceMessageEntry& mess : messages) {
+		LOG_DEBUG("-> keeping tracer message @", mess->getTime(), " from core ", mess->getCoreID());
 		scheduler->push_back(mess);
+	}
 	LOG_DEBUG("revertTo finished messages");
 }
 
