@@ -178,7 +178,7 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
 {
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
         bool msgtime_in_past = false;
-        if(msgtime <= this->getTime().getTime()){       // <=, else you risk the edge case of extern/intern double transition instead of conf.
+        if(msgtime < this->getTime().getTime()){       // <=, else you risk the edge case of extern/intern double transition instead of conf.
                 msgtime_in_past=true;
         }
         
