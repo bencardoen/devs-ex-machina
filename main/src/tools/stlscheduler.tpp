@@ -9,12 +9,13 @@
 #include <utility>
 #include <algorithm>
 
+#include "stlscheduler.h"
+
 namespace n_tools {
 
 template<typename R>
 void STLScheduler<R>::push_back(const R& item) {
-	m_storage.push_front(item);
-        std::make_heap(m_storage.begin(),m_storage.end());
+	m_storage.push(item);
 }
 
 template<typename R>
@@ -25,14 +26,13 @@ std::size_t STLScheduler<R>::size() const {
 template<typename R>
 const R& STLScheduler<R>::top() {
         assert(m_storage.size()!=0);
-        return m_storage.front();
+        return m_storage.top();
 }
 
 template<typename R>
 R STLScheduler<R>::pop() {
         R val = this->top();
-        m_storage.pop_front();
-        std::make_heap(m_storage.begin(), m_storage.end());
+        m_storage.pop();
         return val;
 }
 
@@ -48,7 +48,8 @@ bool STLScheduler<R>::isLockable() const {
 
 template<typename R>
 void STLScheduler<R>::clear() {
-        m_storage.clear();
+        while(!m_storage.empty())
+                m_storage.pop();
 }
 
 template<typename R>
@@ -65,31 +66,20 @@ void STLScheduler<R>::unschedule_until(std::vector<R>& container,const R& elem)
 
 template<typename R>
 bool STLScheduler<R>::contains(const R& elem) const {
-        const size_t key(elem);
-        auto cmp = [key](const R& val)->bool{
-                return (key==size_t(val));
-        };
-        const auto& found = std::find_if(m_storage.begin(), m_storage.end(), cmp);
-        return found!=m_storage.end();
+        throw std::logic_error("Not supported");
+        return false;
+        
 }
 
 template<typename R>
 bool STLScheduler<R>::erase(const R& elem) {
-        const size_t key(elem);
-        auto cmp = [key](const R& val)->bool{
-                return (key==size_t(val));
-        };
-        auto found = std::find_if(m_storage.begin(), m_storage.end(), cmp);
-        if(found==m_storage.end())
-                return false;
-        m_storage.erase(found);
-        return true;
+        throw std::logic_error("Not supported");
+        return false;
 }
 
 template<typename R>
 void STLScheduler<R>::printScheduler()  {
-	for(auto iter=m_storage.rbegin(); iter!=m_storage.rend(); ++iter)
-                std::cout << *iter << std::endl;
+	throw std::logic_error("Not supported");
 }
 
 template<typename R>

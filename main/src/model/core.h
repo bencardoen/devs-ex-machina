@@ -311,6 +311,7 @@ protected:
 	 * Push msg onto pending stack of msgs. Called by revert, receive.
 	 * @lock Unlocked (ie locked by caller)
 	 */
+        virtual
 	void queuePendingMessage(const t_msgptr& msg);
         
         /**

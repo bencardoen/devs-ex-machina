@@ -8,6 +8,7 @@
 #include "tools/scheduler.h"
 #include <vector>
 #include <deque>
+#include <queue>
 #include <map>
 
 namespace n_tools {
@@ -25,7 +26,7 @@ private:
 
 	friend class SchedulerFactory<S> ;
         
-        std::deque<S>  m_storage;
+        std::priority_queue<S,std::deque<S>>  m_storage;
 
 public:
 	STLScheduler() {

@@ -17,6 +17,7 @@
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
 #include "model/modelentry.h"
+#include "network/messageentry.h"
 
 using std::cout;
 using std::endl;
@@ -467,39 +468,24 @@ TEST(VectorScheduler, basic_ops){
 }
 
 TEST(STLScheduler, basic_ops){
+        struct Entry{
+                
+                size_t m_time;
+                void * m_placeholder;
+                explicit constexpr Entry(size_t time, void* v=nullptr):m_time(time),m_placeholder(v){;}
+                bool operator<(const Entry& rhs)const{return m_time > rhs.m_time;}
+        };
+        
         using n_model::ModelEntry;
-        constexpr size_t limit = 1000;
+        constexpr size_t limit = 100000;
         using n_network::t_timestamp;
-        STLScheduler<ModelEntry> vscheduler;
-        std::vector<ModelEntry> scheduled;
-        for(size_t i = 0; i<limit; ++i){
-                ModelEntry entry(i, t_timestamp(i, 0u));
-                vscheduler.push_back(entry);
-                scheduled.push_back(entry);
-                EXPECT_TRUE(vscheduler.contains(entry));
-                EXPECT_EQ(vscheduler.size(), i+1);
+        STLScheduler<Entry> msgqueue;
+        for(size_t i = 0; i< limit; ++i){
+                msgqueue.push_back(Entry(limit-1-i));
         }
-        
-        for(size_t i = 0; i<limit; ++i){
-                ModelEntry entry(i, t_timestamp(424242422, 9999u));
-                EXPECT_TRUE(vscheduler.contains(entry));
+        for(size_t i = 0; i< limit; ++i){
+                EXPECT_EQ(msgqueue.pop().m_time, i);
         }
-        
-        for(const auto& entry : scheduled){
-                EXPECT_TRUE(vscheduler.contains(entry));
-                if(size_t(entry)%2==0){
-                        vscheduler.erase(entry);
-                        EXPECT_TRUE(!vscheduler.contains(entry));
-                }
-        }
-        
-        
-        EXPECT_EQ(vscheduler.size(), limit/2);
-        size_t oldsize = vscheduler.size();
-        std::vector<ModelEntry> popped;
-        ModelEntry last(9999999, t_timestamp(limit/2, 0));
-        vscheduler.unschedule_until(popped, last);
-        EXPECT_EQ(vscheduler.size(), oldsize-popped.size());
 }
 
 

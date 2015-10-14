@@ -145,6 +145,10 @@ private:
          * @see getNullTime()
          */
         t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID(), std::memory_order_relaxed);} // read/read
+        
+protected:
+        virtual void queuePendingMessage(const t_msgptr& msg)override;
+
 
 public:
 	Conservativecore() = delete;

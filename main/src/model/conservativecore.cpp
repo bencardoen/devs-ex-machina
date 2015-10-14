@@ -8,6 +8,7 @@
 #include <thread>
 #include <chrono>
 #include "model/conservativecore.h"
+#include "tools/stlscheduler.h"
 
 namespace n_model {
 
@@ -16,6 +17,8 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 	: Core(coreid, totalCores),
 	m_network(n),m_eit(0u), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
+        m_received_messages.reset();
+        m_received_messages=n_tools::createObject<n_tools::STLScheduler<n_network::MessageEntry>>();
         ;
 }
 
@@ -212,6 +215,10 @@ void Conservativecore::receiveMessage(t_msgptr msg){
         // The case == is safe for conservative due to stalling.
         // The case > is normal.
 #endif
+}
+
+void Conservativecore::queuePendingMessage(const t_msgptr& msg){
+        m_received_messages->push_back(MessageEntry(msg));
 }
 
 void Conservativecore::init(){
