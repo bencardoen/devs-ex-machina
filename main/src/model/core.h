@@ -454,15 +454,6 @@ public:
 	 */
 	virtual
 	void init();
-
-	/**
-	 * Initialize the Core/Kernel with a non-zero GVT.
-	 * Typically called after a Core is loaded with models who are in turn
-	 * created from a previously run simulation.
-	 * @attention run once, after load construction.
-	 */
-	virtual
-	void initExistingSimulation(const t_timestamp& loaddate);
         
         void
         getImminent(std::vector<t_raw_atomic>& imms);

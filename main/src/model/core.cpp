@@ -191,30 +191,6 @@ void n_model::Core::initializeModels()
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " uuid of ", model->getName() , " is ", model->getUUID().m_core_id, " local ", model->getUUID().m_local_id);
         }
 }
-       
-
-
-void n_model::Core::initExistingSimulation(const t_timestamp& loaddate){
-        assert(false);
-	if (this->m_scheduler->size() != 0) {
-		LOG_ERROR("\tCORE :: ", this->getCoreID(),
-		" scheduler is not empty on call to initExistingSimulation(), cowardly refusing to corrupt state any further.");
-		return;
-	}
-        
-	for (const auto& model : this->m_indexed_models) {
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " has ", model->getName());
-	}
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Reinitializing with loaddate ", loaddate );
-	this->m_gvt = loaddate;
-	this->m_time = loaddate;
-	for (const auto& model : this->m_indexed_models) {
-		LOG_INFO("Model ", model->getName(), " TImenext = ", model->getTimeNext(), " loaddate ", loaddate);
-		t_timestamp model_scheduled_time(model->getTimeNext().getTime(), 0); // model.second->timeAdvance();
-		this->scheduleModel(model->getLocalID(), model_scheduled_time);
-		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
-	}
-}
 
 void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 {
@@ -571,7 +547,7 @@ void n_model::Core::checkTerminationFunction()
 			}
 		}
 	} else {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
 	}
 }
 
