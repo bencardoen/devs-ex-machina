@@ -95,12 +95,20 @@ public:
                 for(auto& at : m_atomics)
                         at.store(value);
         }
-        T get(size_t index){
-                return m_atomics[index].load();
+        T get(size_t index, std::memory_order ordering=std::memory_order_seq_cst){
+#ifdef SAFETY_CHECKS
+                return m_atomics.at(index).load(ordering);
+#else
+                return m_atomics[index].load(ordering);
+#endif
         }
         
         void set(size_t index, const T& val){
+#ifdef SAFETY_CHECKS
+                m_atomics.at(index).store(val);
+#else
                 m_atomics[index].store(val);
+#endif
         }
 };
 

@@ -27,24 +27,6 @@ TEST(Network, detectIdle){
         delete msg;
 }
 
-TEST(Time, FactoryFunctions)
-{
-	auto first = makeTimeStamp();
-	auto second = makeTimeStamp();
-	auto aftersecond = makeCausalTimeStamp(second);
-	auto third = first;
-	EXPECT_TRUE(first.getTime() == third.getTime());
-	EXPECT_TRUE(second.getCausality() < aftersecond.getCausality());
-	EXPECT_TRUE(first < decltype(first)::infinity());
-	EXPECT_TRUE(first != decltype(first)::infinity());
-	t_timestamp zero(0,0);
-	t_timestamp selected(0,0);
-	EXPECT_EQ(zero, selected);
-	EXPECT_FALSE(zero > selected);
-	zero.increaseCausality(1);	// equivalent of select(selected).
-	EXPECT_TRUE(zero > selected);
-}
-
 TEST(Time, HashingOperators)
 {
 	const size_t TESTSIZE = 1000;

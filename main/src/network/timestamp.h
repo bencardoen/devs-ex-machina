@@ -243,35 +243,21 @@ public:
         static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
 };
 
+template<typename T, typename X>
+constexpr T Time<T, X>::MAXTIME;
+
+template<typename T, typename X>
+constexpr X Time<T, X>::MAXCAUSAL;
+
 } /* namespace n_network */
 //load the typedef from a different file
 #include "forwarddeclare/timestamp.h"
 
 namespace n_network {
 
-/**
- * Convenience function : make a TimeStamp object reflecting the current time.
- */
-inline t_timestamp makeTimeStamp(size_t causal = 0)
-{
-	static std::mutex lock;
-	std::lock_guard<std::mutex> locknow(lock);
-	t_timestamp::t_time now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return t_timestamp(now, causal);
-}
-
-/**
- * Given a t_timestamp, make another with identical time field, but happening after the
- * original.
- */
-inline constexpr t_timestamp makeCausalTimeStamp(const t_timestamp& before)
-{
-	return t_timestamp(before.getTime(), before.getCausality() + 1);
-}
-
 inline constexpr t_timestamp makeLatest(const t_timestamp& now)
 {
-	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
+	return t_timestamp(now.getTime(), t_timestamp::MAXCAUSAL);
 }
 
 } /* namespace n_network */
