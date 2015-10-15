@@ -130,7 +130,7 @@ public:
 
 	double lookahead()
 	{
-		return m_randomta? T_100 : T_STEP;
+		return m_randomta? T_STEP : T_100;
 	}
 };
 
