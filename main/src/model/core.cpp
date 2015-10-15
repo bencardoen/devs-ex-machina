@@ -401,6 +401,8 @@ void n_model::Core::syncTime()
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		incrementZombieRounds();
+		if(m_zombie_rounds == 1)
+			setTime(getTime() + n_network::t_timestamp::epsilon());
 		return;
 	}
 #ifdef SAFETY_CHECKS

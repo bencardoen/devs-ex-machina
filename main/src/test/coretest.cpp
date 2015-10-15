@@ -506,8 +506,12 @@ TEST(Optimisticcore, revertoffbyone){
 	network->acceptMessage(msg);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(), 108u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getTime().getTime(), 109u);// Model switched to oo, so time will advance with epsilon for one round.
 	EXPECT_EQ(c2->getZombieRounds(), 1u);	// so zombie round = 1;
+	c2->runSmallStep();
+	c2->logCoreState();
+	EXPECT_EQ(c2->getTime().getTime(), 109u);// Model switched to oo, so time will advance with epsilon for one round.
+	EXPECT_EQ(c2->getZombieRounds(), 2u);	// so zombie round = 2;
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
