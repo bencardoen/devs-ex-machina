@@ -20,7 +20,6 @@ class GVizWriter{
 private:
         std::mutex m_mu;
         std::ofstream m_file;
-        const std::string m_config_node;
         
         //@throws ios_base::failure
         GVizWriter(const std::string& outname);
@@ -44,6 +43,11 @@ public:
         
         ~GVizWriter();
         
+        /**
+         * Plot the graph of the static allocation & linkage of cores/models.
+         * If statistics are available, plot runtime connections (messages).
+         * @param core
+         */
         void
         writeObject(n_model::Core* core);
 

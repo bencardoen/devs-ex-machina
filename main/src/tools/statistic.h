@@ -81,6 +81,11 @@ public:
 		++m_data;
 		return *this;
 	}
+        
+        const t_datatype& getData()const
+        {
+                return m_data;
+        }
 
 	/**
 	 * @brief addition assignment operator
