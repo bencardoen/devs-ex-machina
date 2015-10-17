@@ -209,16 +209,6 @@ private:
         std::vector<n_network::t_msgptr> m_mailfrom;
         
         std::size_t m_zombie_rounds;
-
-	/**
-	 * Check if dest model is local, if not:
-	 * Looks up message in lookuptable, set coreid.
-	 * @post msg has correct destination id field set for network.
-	 * @attention For single core, checks if no message has destination to model not in core (assert).
-	 */
-	bool
-	virtual
-	isMessageLocal(const t_msgptr&)const;
         
         /**
          * Return current mail for the model.
@@ -284,6 +274,18 @@ protected:
         void
         scheduleModel(size_t id, t_timestamp t);
         
+	/**
+	 * Check if dest model is local, if not:
+	 * Looks up message in lookuptable, set coreid.
+	 * @post msg has correct destination id field set for network.
+	 * @attention For single core, checks if no message has destination to model not in core (assert).
+	 */
+	inline bool
+	isMessageLocal(t_msgptr msg)const
+	{
+		return (msg->getDestinationCore()==m_coreid);
+	}
+
         /**
          * Sort the vector of models by priority, sets indices in models.
          */
@@ -506,15 +508,6 @@ public:
 	 */
         virtual void
         collectOutput(std::vector<t_raw_atomic>& imminent);
-
-	/**
-	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
-	 */
-	virtual void sendMessage(const t_msgptr&)
-	{
-		assert(false && "A message for a remote core in a single core implemenation.");
-	}
 
 	/**
 	 * Pull messages from network.

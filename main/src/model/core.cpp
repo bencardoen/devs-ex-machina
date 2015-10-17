@@ -59,13 +59,6 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	assert(m_live == false);
 }
 
-
-
-bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
-{
-        return (msg->getDestinationCore()==m_coreid);
-}
-
 void n_model::Core::save(const std::string& fname)
 {
 	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
@@ -302,17 +295,10 @@ void n_model::Core::transition()
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
-	this->lockMessages();
         for(const auto& message : messages){
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
-		if (not this->isMessageLocal(message)) {
-                        m_stats.logStat(MSGSENT);
-			this->sendMessage(message);	// A noop for single core, multi core handles this.
-		} else {
-			this->queueLocalMessage(message);
-		}
+		this->queueLocalMessage(message);
 	}
-	this->unlockMessages();
 }
 
 void n_model::Core::printSchedulerState()
