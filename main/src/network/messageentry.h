@@ -69,7 +69,7 @@ public:
 
 	friend
 	std::ostream& operator<<(std::ostream& os, const MessageEntry& rhs){
-		os << rhs.getMessage()->toString();
+		os << rhs.getMessage() << ": " << rhs.getMessage()->toString();
 		return os;
 	}
 };

@@ -67,10 +67,11 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
         msgs.clear();
 }
 
-void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages)
+void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
 	this->lockMessages();
         for(const auto& message : messages){
+        	message->setCausality(++msgCount);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
                         m_stats.logStat(MSGSENT);
@@ -110,9 +111,12 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
 	// We're locked on msgs
+	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," entering handleAntiMessage with message ", msg);
 	LOG_DEBUG("\tMCORE :: ",this->getCoreID()," handling antimessage ", msg->toString());
         
-        if(this->m_received_messages->contains(msg)){                   /// QUEUED
+        if(this->m_received_messages->contains(MessageEntry(msg))){                   /// QUEUED
+                LOG_DEBUG("\tMCORE :: ",this->getCoreID()," we apparently found msg ", msg, " in the following scheduler:");
+                m_received_messages->printScheduler();
                 this->m_received_messages->erase(MessageEntry(msg));
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 delete msg;
@@ -190,7 +194,7 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
 {
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
         bool msgtime_in_past = false;
-        if(msgtime <= this->getTime().getTime()){       // <=, else you risk the edge case of extern/intern double transition instead of conf.
+        if(msgtime < this->getTime().getTime()){
                 msgtime_in_past=true;
         }
         
@@ -493,16 +497,21 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
 	//		  vv Simlock		  vv Messagelock
 	// Call chain :: singleStep->getMessages->sortIncoming -> receiveMessage() -> revert()
 
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting ", m_sent_messages.size(), " sent messages");
 	while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
 		auto msg = m_sent_messages.back();
+		LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
 		if (msg->getTimeStamp() >= totime) {
 			m_sent_messages.pop_back();
 			LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " revert : sent message > time , antimessagging. \n ", msg->toString() );
 			this->sendAntiMessage(msg);
 		} else {
+			LOG_DEBUG("MCORE:: ", this->getCoreID(), " message time < current time ", msg);
 			break;
 		}
 	}
+	LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
+
 	this->setTime(totime);
 	this->rescheduleAllRevert(totime);		// Make sure the scheduler is reloaded with fresh/stale models
 	this->revertTracerUntil(totime); 	// Finally, revert trace output

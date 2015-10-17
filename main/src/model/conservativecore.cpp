@@ -288,9 +288,10 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
 }
 
-void Conservativecore::sortMail(const std::vector<t_msgptr>& messages)
+void Conservativecore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
         for(const auto& message : messages){
+        	message->setCausality(++msgCount);
 		LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		if (not this->isMessageLocal(message)) {
                         m_stats.logStat(MSGSENT);

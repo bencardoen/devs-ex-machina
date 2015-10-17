@@ -48,7 +48,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
-                m_terminated_functor(false), m_cores(totalCores),
+                m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
                 m_scheduler(new n_tools::VectorScheduler<boost::heap::pairing_heap<ModelEntry>, ModelEntry>),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
@@ -193,6 +193,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
         m_mailfrom.clear();
+        std::size_t mailCount = m_msgStartCount;
 	for (auto model : imminents) {
 		model->doOutput(m_mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
@@ -204,7 +205,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 		}
 #endif
                 
-		this->sortMail(m_mailfrom);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
+		this->sortMail(m_mailfrom, mailCount);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
                 m_mailfrom.clear();
 	}
 }
@@ -293,9 +294,10 @@ void n_model::Core::transition()
 	}
 }
 
-void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
         for(const auto& message : messages){
+		message->setCausality(++msgCount);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		this->queueLocalMessage(message);
 	}
@@ -361,6 +363,8 @@ void n_model::Core::syncTime()
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		incrementZombieRounds();
+		if(m_zombie_rounds == 1)
+			setTime(getTime() + n_network::t_timestamp::epsilon());
 		return;
 	}
 #ifdef SAFETY_CHECKS
@@ -603,10 +607,12 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	const MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}else{
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ", msg->toString());
 		this->m_received_messages->erase(entry);
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}
 }
 
@@ -626,6 +632,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 
 void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " reverting and rescheduling all models.");
 	this->m_scheduler->clear();
 	assert(m_scheduler->empty());
 	for (const auto& model : m_indexed_models) {
@@ -633,6 +640,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 		// Bug lived here : Do not set time on model.
                 this->scheduleModel(model->getLocalID(), modellast);  // Replace with direct push_back, don't need schedule's complexity.
 	}
+	LOG_DEBUG("CORE:: ", this->getCoreID(), " done with reverting and rescheduling all models.");
 }
 
 void n_model::Core::rescheduleAll()

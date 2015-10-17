@@ -180,6 +180,7 @@ protected:
 	 * Total amount of cores.
 	 */
 	std::size_t m_cores;
+	std::size_t m_msgStartCount;
         
 private:
         /**
@@ -578,9 +579,8 @@ public:
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 * @lock: locks on messagelock.
 	 */
-	virtual
-	void
-	sortMail(const std::vector<t_msgptr>& messages);
+	virtual void
+	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
 
 	/**
 	 * Helper function, forward model to tracer.
