@@ -45,12 +45,20 @@ n_tools::GVizWriter::writeObject(n_model::Core* core){
                 m_file << '\t'<<model->getName() << " [fontsize=10]  ;\n";
         }
         m_file << "\t}\n";
+#ifdef USE_STAT
         size_t totalmsgs = core->m_stats.m_msgs_sent.getData();
+#else
+        size_t totalmsgs = 1;
+#endif
         for(const auto& model : core->m_indexed_models){
                 std::string from = model->getName();
                 for(const auto& oport : model->getOPorts()){
                         for(const auto& pc : oport->m_sendstat){
+#ifdef USE_STAT                                
                                 auto count = pc.second.getData();
+#else
+                                auto count = 0;
+#endif
                                 t_portptr_raw dport= pc.first;
                                 AtomicModel_impl* model = dynamic_cast<AtomicModel_impl*>(dport->getHost());
                                 std::string to = model->getName();
