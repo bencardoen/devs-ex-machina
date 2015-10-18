@@ -81,6 +81,14 @@
 #else
 #define LOG_FLUSH LOG_NOOP
 #endif
+#if LOG_LEVEL
+#define LOG_ARGV(argc, argv) \
+	LOG_BLOCK(LOG_GLOBAL.logDebug("DEBUG" " \t[ ", FILE_SHORT, " L: " STRINGIFY(__LINE__) " F: ", __FUNCTION__, "] \t");\
+	for(int i = 0; i < argc; ++i) { LOG_GLOBAL.logDebug(argv[i], ' ');} \
+	LOG_GLOBAL.logDebug('\n');)
+#else
+#define LOG_ARGV(argc, argv) LOG_NOOP
+#endif
 
 //macro for intitializing the global logger
 #if LOGGING==true

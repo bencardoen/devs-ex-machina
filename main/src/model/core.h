@@ -10,6 +10,7 @@
 #include "network/controlmessage.h"
 #include "tracers/tracers.h"
 #include "tools/statistic.h"
+#include "tools/gviz.h"
 #include <set>
 #include <condition_variable>
 
@@ -180,6 +181,7 @@ protected:
 	 * Total amount of cores.
 	 */
 	std::size_t m_cores;
+	std::size_t m_msgStartCount;
         
 private:
         /**
@@ -586,9 +588,8 @@ public:
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 * @lock: locks on messagelock.
 	 */
-	virtual
 	void
-	sortMail(const std::vector<t_msgptr>& messages);
+	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -774,10 +775,18 @@ public:
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
 
 
+        friend class n_tools::GVizWriter;
 //-------------statistics gathering--------------
 protected:
 	statistics_collector m_stats;
 public:
+#ifdef USE_VIZ
+        virtual void writeGraph(){
+                LOG_DEBUG("Calling gviz for core ::", this->m_coreid);
+                n_tools::GVizWriter::getWriter("sim.dot")->writeObject(this);
+        }
+#endif
+        
 #ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{

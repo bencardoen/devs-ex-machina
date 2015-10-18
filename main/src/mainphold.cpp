@@ -72,6 +72,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES]
 	"  If the same option is set multiple times, only the last value is taken.\n";
 int main(int argc, char** argv)
 {
+	LOG_ARGV(argc, argv);
 	const char optETime = 't';
 	const char optWidth = 'n';
 	const char optDepth = 's';
@@ -207,6 +208,10 @@ int main(int argc, char** argv)
 
 		ctrl->simulate();
 	}
+#ifdef USE_VIZ
+        ctrl->visualize();
+#endif        
+        
 #ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);

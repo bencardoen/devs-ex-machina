@@ -6,6 +6,7 @@
 #define MSGSCHEDULER_TPP
 
 #include <assert.h>
+#include "tools/globallog.h"
 
 namespace n_tools {
 
@@ -108,8 +109,7 @@ template<typename X, typename R>
 void MessageScheduler<X, R>::printScheduler()  {
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
-		R stored = *iter;
-		std::cout << stored << std::endl;
+		LOG_DEBUG(": ", *iter);
 	}
 }
 

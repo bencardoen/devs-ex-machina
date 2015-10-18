@@ -78,6 +78,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic
 
 int main(int argc, char** argv)
 {
+	LOG_ARGV(argc, argv);
 	// default values:
 	const char optETime = 't';
 	const char optWidth = 'w';

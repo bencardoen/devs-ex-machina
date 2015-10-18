@@ -21,6 +21,7 @@
 
 
 #include "tools/statistic.h"
+#include "tools/gviz.h"
 
 // Don't include atomicmodel here
 
@@ -41,6 +42,7 @@ class Model;
 class Port
 {
 	friend class ::TestCereal;
+        friend class n_tools::GVizWriter;
 private:
 	std::string m_name;
 	std::string m_hostname;
@@ -316,6 +318,7 @@ public:
 	 */
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
 
+        
 //-------------statistics gathering--------------
 //#ifdef USE_STAT
 private:

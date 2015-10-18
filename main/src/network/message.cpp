@@ -75,7 +75,6 @@ n_network::operator<(const n_network::Message& left, const n_network::Message& r
         else{ 
                 return false;
         }
-               
 }
 
 bool
