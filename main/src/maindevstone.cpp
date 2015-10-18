@@ -86,6 +86,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAM
 
 int main(int argc, char** argv)
 {
+	LOG_ARGV(argc, argv);
 	// default values:
 	const char optETime = 't';
 	const char optWidth = 'w';
@@ -201,6 +202,10 @@ int main(int argc, char** argv)
 #endif /* BENCHMARK */
 		ctrl->simulate();
 	}
+#ifdef USE_VIZ
+        ctrl->visualize();
+#endif
+
 #ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);

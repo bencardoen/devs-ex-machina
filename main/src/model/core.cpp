@@ -55,8 +55,8 @@ n_model::Core::Core():
 
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
-                m_terminated(false), m_termination_function(n_tools::createObject<n_model::TerminationFunctor>()),
-                m_terminated_functor(false), m_rescheduleInParts(false), m_cores(totalCores),
+                m_terminated(false),
+                m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -175,6 +175,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
         m_mailfrom.clear();
+        std::size_t mailCount = m_msgStartCount;
 	for (auto model : imminents) {
 		model->doOutput(m_mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
@@ -186,7 +187,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 		}
 #endif
                 
-		this->sortMail(m_mailfrom);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
+		this->sortMail(m_mailfrom, mailCount);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
                 m_mailfrom.clear();
 	}
 }
@@ -288,11 +289,12 @@ void n_model::Core::transition()
 	}
 }
 
-void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
 	this->lockMessages();
         for(const auto& message : messages){
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
+		message->setCausality(++msgCount);
 		if (not this->isMessageLocal(message)) {
                         m_stats.logStat(MSGSENT);
 			this->sendMessage(message);	// A noop for single core, multi core handles this.
@@ -377,6 +379,8 @@ void n_model::Core::syncTime()
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		incrementZombieRounds();
+		if(m_zombie_rounds == 1)
+			setTime(getTime() + n_network::t_timestamp::epsilon());
 		return;
 	}
 #ifdef SAFETY_CHECKS
@@ -476,9 +480,9 @@ void n_model::Core::runSmallStep()
         m_imminents.clear();
         m_externs.clear();
 
-#ifdef USE_FUNCTOR
+
 	this->checkTerminationFunction();
-#endif
+
 
 	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
@@ -531,6 +535,7 @@ n_network::t_timestamp n_model::Core::getTerminationTime()
 
 void n_model::Core::setTerminationFunction(const t_terminationfunctor& fun)
 {
+        LOG_DEBUG("Termination function == ", fun.get());
 	this->m_termination_function = fun;
 }
 
@@ -548,7 +553,7 @@ void n_model::Core::checkTerminationFunction()
 			}
 		}
 	} else {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Termination functor == nullptr, not evaluating.");
 	}
 }
 
@@ -556,7 +561,7 @@ void n_model::Core::removeModel(std::size_t id)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", id);
         
-        t_raw_atomic model = m_indexed_models[id].get();
+        //t_raw_atomic model = m_indexed_models[id].get();
         std::swap(m_indexed_models[id], m_indexed_models.back());
         m_indexed_models.pop_back();
         m_heap.remove(id);
@@ -618,10 +623,12 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 	const MessageEntry entry(msg);
 	if(not this->m_received_messages->contains(entry)){
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}else{
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ", msg->toString());
 		this->m_received_messages->erase(entry);
 		this->m_received_messages->push_back(entry);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
 	}
 }
 

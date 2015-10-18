@@ -208,6 +208,18 @@ public:
 		m_timestamp = now;
 	}
 
+	/**
+	 * @brief Sets the causality of the message
+	 * @param causal The new causality.
+	 * @note The simulator will automatically set the correct causality.
+	 * @see getTimeStamp
+	 * @see setTimeStamp
+	 */
+	void setCausality(const t_timestamp::t_causal causal)
+	{
+		m_timestamp = t_timestamp(m_timestamp.getTime(), causal);
+	}
+
 	virtual ~Message()
 	{
                 ;
@@ -305,7 +317,6 @@ public:
 	 */
 	virtual std::string getPayload() const override
 	{
-		LOG_DEBUG("SpecializedMessage: getPayload");
 		std::stringstream ssr;
 		const DataType& data = getData();
 		ssr << data;

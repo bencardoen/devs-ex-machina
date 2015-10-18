@@ -77,7 +77,6 @@ public:
 	HighInterconnect(std::size_t width, bool randomta)
 	: CoupledModel("High Interconnect")
 	{
-                
 		std::vector<n_model::t_atomicmodelptr> ptrs;
 		for(std::size_t i = 0; i < width; ++i){
 			n_model::t_atomicmodelptr pt = n_tools::createObject<Generator>(std::string("Generator") + n_tools::toString(i), 1000*i, randomta);

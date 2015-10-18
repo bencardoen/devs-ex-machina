@@ -507,8 +507,12 @@ TEST(Optimisticcore, revertoffbyone){
 	network->acceptMessage(msg);
 	c2->runSmallStep();
 	c2->logCoreState();
-	EXPECT_EQ(c2->getTime().getTime(), 108u);// Model switched to oo, so time will not advance.
+	EXPECT_EQ(c2->getTime().getTime(), 109u);// Model switched to oo, so time will advance with epsilon for one round.
 	EXPECT_EQ(c2->getZombieRounds(), 1u);	// so zombie round = 1;
+	c2->runSmallStep();
+	c2->logCoreState();
+	EXPECT_EQ(c2->getTime().getTime(), 109u);// Model switched to oo, so time will advance with epsilon for one round.
+	EXPECT_EQ(c2->getZombieRounds(), 2u);	// so zombie round = 2;
 
 
 	n_tracers::traceUntil(t_timestamp::infinity());
@@ -778,7 +782,7 @@ TEST(Conservativecore, Abstract){
         // Stalled time=0, eit=0
 	c0->runSmallStep();                   
         // EOT = 10, EIT=oo                  
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), (10u));
         EXPECT_EQ(c0->getTime().getTime(), 10u);
         // Stalled time=0, eit=0
@@ -790,7 +794,7 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();       
         EXPECT_EQ(c0->getTime().getTime(), 20u);
         
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), (20u));            
         
         c1->runSmallStep();                             
@@ -801,7 +805,7 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();                   // Model A 0->1
         EXPECT_EQ(c0->getTime().getTime(), 30u);
         
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), (30u));            
         
         c1->runSmallStep();                             
@@ -814,7 +818,7 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();                   // Model A 1->2
         EXPECT_EQ(c0->getTime().getTime(), 40u);
         
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), 31u);            // Eot is updated before time is advanced. A message has been sent, so oldtime+eps = eot.
         
         c1->runSmallStep();                   // Model B 0->1          
@@ -826,7 +830,7 @@ TEST(Conservativecore, Abstract){
 	c0->runSmallStep();                   // Model A 3->4
         EXPECT_EQ(c0->getTime().getTime(), 50u);
                     
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), 50u);            // Next event = imminent @50, so change eot from 30->50
         
         c1->runSmallStep();                   // Model B 2->3 
@@ -837,7 +841,7 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();                   // Model A 4->5
         EXPECT_EQ(c0->getTime().getTime(), 60u);
                     
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), 60u);            
         
         c1->runSmallStep();                   // Model B 3->4
@@ -853,7 +857,7 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();                   // Model A 5->6
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
-        EXPECT_TRUE(isInfinity(c0->getEit()));
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_EQ(eotvector->get(0), 61u);            
         
         c1->runSmallStep();                   // Model B 4->5
@@ -864,36 +868,36 @@ TEST(Conservativecore, Abstract){
         c0->runSmallStep();                   // Model A 6->7
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
-        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 5->6
         EXPECT_EQ(c1->getTime().getTime(), 70u);
-        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        EXPECT_EQ(c1->getEit(), t_timestamp::MAXTIME);
         LOG_INFO("10-------------------------------------------------");
         
         c0->runSmallStep();                   // Model A @7
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
-        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 5->6
         // Lookahead has expired @60, but 6 returns inf as lookahead, so we set that.
         EXPECT_EQ(c1->getTime().getTime(), 70u);
-        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        EXPECT_EQ(c1->getEit(), t_timestamp::MAXTIME);
         
         LOG_INFO("11-------------------------------------------------");
         
         c0->runSmallStep();                   // Model A @7
         EXPECT_EQ(c0->getTime().getTime(), 70u);
                     
-        EXPECT_TRUE( isInfinity(c0->getEit()) );
+        EXPECT_EQ(c0->getEit(), t_timestamp::MAXTIME);
         EXPECT_TRUE(isInfinity(t_timestamp(eotvector->get(0),0u)) );            // Eot is now infinity, c0 has nothing to do anymore
         
         c1->runSmallStep();                   // Model B 6->7 finished
         EXPECT_EQ(c1->getTime().getTime(), 70u);
-        EXPECT_TRUE( isInfinity(c1->getEit()) );
+        EXPECT_EQ(c1->getEit(), t_timestamp::MAXTIME);
         tracers->startTrace();
 	}
 }

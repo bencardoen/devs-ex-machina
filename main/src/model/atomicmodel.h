@@ -154,7 +154,7 @@ public:
         }
         
         size_t getCoreID()const{
-                assert(m_uuid.m_core_id != (size_t) m_corenumber && "Core id corrupt");// if cnr = -1, still fine to compare (2^64 - 1)
+                assert(m_uuid.m_core_id == (size_t) m_corenumber && "Core id corrupt");// if cnr = -1, still fine to compare (2^64 - 1)
                 return m_uuid.m_core_id;
         }
 

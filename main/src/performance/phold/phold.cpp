@@ -203,12 +203,11 @@ PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t perce
 	}
 
 	for (size_t i = 0; i < processors.size(); ++i) {
-		for (size_t j = 0, k = 0; j < processors.size(); ++j) {
+		for (size_t j = 0; j < processors.size(); ++j) {
 			if (i == j)
 				continue;
-			connectPorts(processors[i]->getOPorts()[k],
+			connectPorts(processors[i]->getOPorts()[j],
 			        processors[j]->getIPorts()[0]);
-			++k;
 		}
 	}
 }

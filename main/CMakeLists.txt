@@ -90,7 +90,7 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_FUNCTOR"
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ"
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
@@ -124,17 +124,6 @@ endif()
 ###############################################################################
 
 
-### Release build - All compilers#############################################
-# Only use this for production code
-# 
-# Note : fPIC flag is needed if you built GTest with fPIE/fPIC\
-# SET(OPTIMIZATION_FLAG "-O3")
-# if (${APPLE})
-#   SET(OPTIMIZATION_FLAG "-O1")
-# endif()
-# SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAG} -fPIE -march=native -g ${flagstdc11}")
-###############################################################################
-
 add_library( 
     DEVSEXMACHINACORE
     OBJECT
@@ -162,6 +151,7 @@ add_library(
     src/network/network.cpp
     src/tracers/policies.cpp
     src/tracers/tracemessage.cpp
+    src/tools/gviz.cpp
     )
 
 # 2 packages of the devs simulator that compile on log level 15 and 0
