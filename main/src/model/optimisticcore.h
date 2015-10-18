@@ -258,20 +258,6 @@ public:
 	unlockSimulatorStep()override;
 
 	/**
-	 * Request lock on [pending|sent|processed] messages.
-	 */
-	virtual
-	void
-	lockMessages()override;
-
-	/**
-	 * Release lock on [pending|sent|processed] messages.
-	 */
-	virtual
-	void
-	unlockMessages()override;
-
-	/**
 	 * Returns true if the network detects a pending message for any core.
 	 */
 	bool
@@ -291,12 +277,6 @@ public:
 	 * @synchronized
 	 */
 	t_timestamp getTime()override;
-
-	void
-	setTerminationTime(t_timestamp)override;
-
-	t_timestamp
-	getTerminationTime()override;
 
         
 

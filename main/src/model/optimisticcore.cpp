@@ -221,27 +221,28 @@ void Optimisticcore::getMessages()
 {
 	bool wasLive = isLive();
         this->setLive(true);
-        if(!wasLive)
+        if(!wasLive){
         	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
-	std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-	LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-	if(messages.size()== 0 && ! wasLive){
-		setLive(false);
-		LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
+        }
+        if(this->m_network->havePendingMessages(this->getCoreID())){
+                std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
+                LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+                this->sortIncoming(messages);
+        }else{
+                if(! wasLive){
+                        setLive(false);
+                        LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
+                }
 	}
-	this->sortIncoming(messages);
 }
 
 void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
-	// Locking could be done inside the for loop, but would make dissecting logs much more difficult.
-	this->lockMessages();
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		const auto & message = *i;
                 validateUUID(message->getDstUUID());
 		this->receiveMessage(message);
 	}
-	this->unlockMessages();
 }
 
 void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& rungvt)
@@ -447,28 +448,6 @@ void n_model::Optimisticcore::unlockSimulatorStep()
 #endif
 }
 
-void n_model::Optimisticcore::lockMessages()
-{
-#ifdef LOG_LOCK
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locking ... ");
-#endif
-	m_msglock.lock();
-#ifdef  LOG_LOCK
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msgs locked ");
-#endif
-}
-
-void n_model::Optimisticcore::unlockMessages()
-{
-#ifdef LOG_LOCK
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocking ...");
-#endif
-	m_msglock.unlock();
-#ifdef LOG_LOCK
-	LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " msg unlocked");
-#endif
-}
-
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
 	assert(totime.getTime() >= this->getGVT().getTime());
@@ -542,16 +521,4 @@ void
 n_model::Optimisticcore::setTred(t_timestamp val){
 	std::lock_guard<std::mutex> lock(m_tredlock);
 	this->m_tred = val;
-}
-
-void n_model::Optimisticcore::setTerminationTime(t_timestamp endtime)
-{
-	std::lock_guard<std::mutex> lock(m_timelock);
-	Core::setTerminationTime(endtime);
-}
-
-n_network::t_timestamp n_model::Optimisticcore::getTerminationTime()
-{
-	std::lock_guard<std::mutex> lock(m_timelock);
-	return Core::getTerminationTime();
 }

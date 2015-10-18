@@ -66,34 +66,6 @@ bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
         return (msg->getDestinationCore()==m_coreid);
 }
 
-void n_model::Core::save(const std::string& fname)
-{
-	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchive(fs);
-
-	std::vector<ModelEntry> scheduler;
-	while (not m_scheduler->empty()) {
-		scheduler.push_back(m_scheduler->pop());
-	}
-
-	oarchive(m_indexed_models, scheduler);
-}
-
-void n_model::Core::load(const std::string& fname)
-{
-	std::fstream fs (fname, std::fstream::in | std::fstream::binary);
-	cereal::BinaryInputArchive iarchive(fs);
-
-	std::vector<ModelEntry> scheduler;
-
-	iarchive(m_indexed_models, scheduler);
-
-
-	while (not scheduler.empty()) {
-		m_scheduler->push_back(scheduler.back());
-		scheduler.pop_back();
-	}
-}
 
 void n_model::Core::addModel(const t_atomicmodelptr& model)
 {
@@ -769,17 +741,4 @@ n_model::Core::getColor(){
 void
 n_model::Core::setColor(MessageColor){
 	assert(false);
-}
-
-void n_model::Core::serialize(n_serialization::t_oarchive& archive) {
-	archive(m_time, m_gvt);
-}
-
-void n_model::Core::serialize(n_serialization::t_iarchive& archive) {
-	archive(m_time, m_gvt);
-}
-
-void n_model::Core::load_and_construct(n_serialization::t_iarchive&, cereal::construct<n_model::Core>& construct )
-{
-	construct();
 }
