@@ -41,7 +41,7 @@ Optimisticcore::~Optimisticcore()
 
 Optimisticcore::Optimisticcore(const t_networkptr& net, std::size_t coreid, size_t cores)
 	: Core(coreid, cores), m_network(net), m_color(MessageColor::WHITE), m_mcount_vector(cores), m_tred(
-	        t_timestamp::infinity())
+	        t_timestamp::infinity()),m_tmin(0u)
 {
 }
 
@@ -308,7 +308,7 @@ Optimisticcore::finalizeGVTRound(const t_controlmsg& msg, int round, std::atomic
         } else {                /// C vector is != 0
                 if(round == 1){ 
                         LOG_DEBUG("MCORE :: ", this->getCoreID(), " process init received control message, starting 2nd round");
-                        msg->setTmin(this->getTime());
+                        msg->setTmin(this->getTMin());
                         msg->setTred(std::min(msg->getTred(), this->getTred()));
                         LOG_DEBUG("MCORE :: ", this->getCoreID(), " Starting 2nd round with tmin ", msg->getTmin(), " tred ", msg->getTred(), ")");
                         t_count& count = msg->getCountVector();
@@ -340,7 +340,7 @@ Optimisticcore::receiveControlWorker(const t_controlmsg& msg, int /*round*/, std
         // Equivalent to sending message, controlmessage is passed to next core.
         t_timestamp msg_tmin = msg->getTmin();
         t_timestamp msg_tred = msg->getTred();
-        msg->setTmin(std::min(msg_tmin, this->getTime()));
+        msg->setTmin(std::min(msg_tmin, this->getTMin()));
         msg->setTred(std::min(msg_tred, this->getTred()));
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Updating tmin to ", msg->getTmin(), " tred = ", msg->getTred());
         t_count& Count = msg->getCountVector();
@@ -363,7 +363,7 @@ Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std::ato
 	}
         LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT received first control message, starting first round");
         this->setColor(MessageColor::RED);
-        msg->setTmin(this->getTime());
+        msg->setTmin(this->getTMin());
         msg->setTred(t_timestamp::infinity());
         LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(), " tmin = ", msg->getTmin());
         t_count& count = msg->getCountVector();
@@ -499,16 +499,18 @@ n_model::Optimisticcore::getColor(){
 	return m_color;
 }
 
+/**
+ * Locking strategy explained :
+ *      get/set time has a very high call frequency
+ *      sim thread : write/read on time
+ *      gvt thread : read on time.
+ *      So if we share tmin between them (which is what gvt uses time for), and update (locked)
+ *      that value sim t updates time, we avoid the unnecessary lock on reading our own writes.
+ */
 void
 n_model::Optimisticcore::setTime(const t_timestamp& newtime){
-	std::lock_guard<std::mutex> lock(m_timelock);
+        this->setTMin(newtime);
 	Core::setTime(newtime);
-}
-
-t_timestamp
-n_model::Optimisticcore::getTime(){
-	std::lock_guard<std::mutex> lock(m_timelock);
-	return Core::getTime();
 }
 
 t_timestamp

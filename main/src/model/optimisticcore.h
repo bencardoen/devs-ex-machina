@@ -44,11 +44,6 @@ private:
 	std::mutex			m_vlock;
 
 	/**
-	 * Lock required for condition variable used in GVT calculation.
-	 */
-	std::mutex			m_cvarlock;
-
-	/**
 	 * Simulation lock
 	 */
 	std::mutex			m_locallock;
@@ -57,11 +52,6 @@ private:
 	 * Synchronize access to color.
 	 */
 	std::mutex			m_colorlock;
-
-	/**
-	 * Message lock. Excludes access to [sent|processed|pending]
-	 */
-	std::mutex			m_msglock;
 
 	/**
 	 * Lock for Tred value (as described in Mattern's GVT algorithm
@@ -74,12 +64,12 @@ private:
 	 * (Mattern)
 	 */
 	t_timestamp			m_tred;
-
-	/**
-	 * Protect access to Time.
-	 * @attention Needed for GVT (among other things).
-	 */
-	std::mutex 			m_timelock;
+        
+        /**
+         * Tmin is <= first unprocessed message, which is equivalent of time().
+         * @synchronized
+         */
+        std::atomic<t_timestamp::t_time>        m_tmin;
 
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
@@ -114,6 +104,12 @@ private:
 
 	t_timestamp
 	getTred();
+        
+        t_timestamp
+        getTMin()const{return m_tmin.load();}
+        
+        void
+        setTMin(const t_timestamp& t){m_tmin.store(t.getTime());}
         
         void
         receiveControlWorker(const t_controlmsg&, int round, std::atomic<bool>& rungvt);
@@ -265,18 +261,10 @@ public:
 
 	/**
 	 * Set current time to new value.
-	 * @synchronized
+	 * @synchronized on tmin, updates it to new value.
 	 */
 	void
 	setTime(const t_timestamp&)override;
-
-	/**
-	 * Get Current simulation time.
-	 * This is a timestamp equivalent to the first model scheduled to transition at the end of a simulation phase (step).
-	 * @note The causal field is to be disregarded, it is not relevant here.
-	 * @synchronized
-	 */
-	t_timestamp getTime()override;
 
         
 
