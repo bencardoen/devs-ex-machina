@@ -10,6 +10,7 @@
 #include "network/controlmessage.h"
 #include "tracers/tracers.h"
 #include "tools/statistic.h"
+#include "tools/gviz.h"
 #include <set>
 #include <condition_variable>
 
@@ -773,10 +774,18 @@ public:
 	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
 
 
+        friend class n_tools::GVizWriter;
 //-------------statistics gathering--------------
 protected:
 	statistics_collector m_stats;
 public:
+#ifdef USE_VIZ
+        virtual void writeGraph(){
+                LOG_DEBUG("Calling gviz for core ::", this->m_coreid);
+                n_tools::GVizWriter::getWriter("sim.dot")->writeObject(this);
+        }
+#endif
+        
 #ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{

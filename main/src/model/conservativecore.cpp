@@ -157,25 +157,23 @@ void Conservativecore::syncTime(){
 		throw std::runtime_error("Core time going backwards. ");
 	}
 #endif
-	this->setTime(newtime);						
-									
+	this->setTime(newtime);										
 	this->resetZombieRounds();
 
-        // todo : if we start working with functors, there is an edge case where nulltime has to be set to inf as well.
+        /**
+         * If we terminate in conservative, make sure we release any hold we have on the other cores.
+         * We can use inf() for eot, but nulltime has inf() as a default (not initialized). We can signal that we did
+         * round (now + eps()) instead.
+         */
 	if (this->getTime().getTime() >= this->getTerminationTime().getTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
                 setEot(t_timestamp::MAXTIME);
+                setNullTime((this->getTime()+t_timestamp::epsilon()).getTime());
 		setLive(false);
 	}       
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
-	/** Step 1/2 of algoritm:
-	 * 	Advance state until time >= eit.
-	 * 	A kernel works in rounds however, so we only enforce here that the
-	 * 	kernel time never advances beyond eit.
-	 */
-        
 	LOG_INFO("CCORE :: ", this->getCoreID(), " got request to forward time from ", this->getTime(), " to ", newtime);
 
 	t_timestamp corrected = std::min(t_timestamp(this->getEit(),0u), newtime);

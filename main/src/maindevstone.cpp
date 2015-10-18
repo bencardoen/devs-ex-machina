@@ -202,6 +202,10 @@ int main(int argc, char** argv)
 #endif /* BENCHMARK */
 		ctrl->simulate();
 	}
+#ifdef USE_VIZ
+        ctrl->visualize();
+#endif
+
 #ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);

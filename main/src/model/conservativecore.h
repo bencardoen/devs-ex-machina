@@ -241,6 +241,7 @@ public:
          */
         void
         calculateMinLookahead();
+        
 
         //-------------statistics gathering--------------
 #ifdef USE_STAT

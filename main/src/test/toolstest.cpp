@@ -14,6 +14,7 @@
 #include "tools/coutredirect.h"
 #include "tools/sharedvector.h"
 #include "tools/listscheduler.h"
+#include "tools/gviz.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
 #include "model/modelentry.h"
@@ -557,4 +558,25 @@ TEST(IntrusiveScheduler, basic_ops){
         EXPECT_EQ(ids.size(), limit);
         for(auto mptr: models)
                 delete mptr;
+}
+
+
+TEST(Vizwriter, creation){
+        std::vector<GVizWriter*> ptrs(std::thread::hardware_concurrency(), nullptr);
+        auto tfun = [&ptrs](size_t tid)->void{
+                n_tools::GVizWriter* writer = GVizWriter::getWriter("a test");
+                EXPECT_FALSE(writer==nullptr);
+                ptrs[tid]=writer;
+        };
+        std::vector<std::thread> threads;
+        for(size_t i = 0; i<std::thread::hardware_concurrency(); ++i){
+                threads.push_back(std::thread(tfun, i));
+        }
+        for(auto& t : threads)
+                t.join();
+        // Let main ask a copy of the ptr.
+        n_tools::GVizWriter* writer = GVizWriter::getWriter("a test");
+        for(auto ptr : ptrs)
+                EXPECT_EQ(ptr, writer);
+        delete writer;
 }

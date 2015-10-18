@@ -246,7 +246,17 @@ private:
 	friend
 	void cvworker( std::size_t myid, std::size_t turns,Controller&);
 
-
+#ifdef USE_VIZ
+public:
+        void visualize(){
+                LOG_DEBUG("Controller :: have ", m_cores.size(), " cores");
+                for(const auto& core : m_cores){
+                        core->writeGraph();
+                }
+                delete n_tools::GVizWriter::getWriter("sim.dot");
+        }
+#endif
+        
 //-------------statistics gathering--------------
 //#ifdef USE_STAT
 private:
@@ -261,8 +271,11 @@ public:
 			<< m_gvtSecondRound
 			<< m_gvtFound
 			<< m_gvtFailed;
-		for(const auto& i:m_cores)
+                
+		for(const auto& i:m_cores){
 			i->printStats(out);
+                }
+                
 	}
 //#endif
 };
