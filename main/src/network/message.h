@@ -100,16 +100,17 @@ public:
 		const std::size_t& destport, const std::size_t& sourceport);
 
         const n_model::uuid&
-        getSrcUUID()const{return m_src_uuid;}
+        getSrcUUID()const
+        {
+                return m_src_uuid;
+        }
         
         const n_model::uuid&
-        getDstUUID()const{return m_dst_uuid;}
+        getDstUUID()const
+        {
+                return m_dst_uuid;
+        }
         
-	/**
-	 * @brief Returns the destination core.
-	 * @return the destination core
-	 * @see setDestinationCore
-	 */
 	std::size_t getDestinationCore() const
 	{
 		return m_dst_uuid.m_core_id;
@@ -124,31 +125,26 @@ public:
 		m_antimessage.store(b);
 	}
 
-	/**
-	 * @brief Returns whether or not this message is marked as an antimessage.
-	 * @return whether or not this message is marked as an antimessage
-	 * @see setAntiMessage
-	 */
 	bool isAntiMessage() const
 	{
 		return m_antimessage;
 	}
 
-	/**
-	 * @brief Returns the source core.
-	 * @note The source core is the core that simulates the model that created this message.
-	 */
 	std::size_t getSourceCore() const
 	{
 		return m_src_uuid.m_core_id;
 	}
 
-	/**
-	 * @brief Returns the name of the destination port.
-	 * @return The full name of the destination port.
-	 */
 	std::size_t getDstPort() const
-	{ return m_destination_port; }
+	{ 
+                return m_destination_port; 
+        }
+        
+        std::size_t getSrcPort() const
+	{ 
+                return m_source_port; 
+        }
+
         
         bool deleteFlagIsSet()const{return m_delete_flag_set;}
         
@@ -157,13 +153,6 @@ public:
         bool isProcessed()const{return m_processed;}
         
         void setProcessed(bool b){m_processed=b;}
-
-	/**
-	 * @brief Returns the name of source port of the message.
-	 * @return The full name of the source port.
-	 */
-	std::size_t getSrcPort() const
-	{ return m_source_port; }
 
 	//can't remove. Needed by tracer
 	/**
@@ -261,6 +250,7 @@ public:
 
 	friend
 	bool operator!=(const Message& left, const Message& right);
+        
 };
 
 /**

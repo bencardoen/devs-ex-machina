@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"
+#include "network/mid.h"
 #include <gtest/gtest.h>
 #include <queue>
 #include <thread>
@@ -169,4 +170,41 @@ TEST(Message, ContentTest){
 	EXPECT_EQ(res.c, control.c);
 	EXPECT_EQ(res.d, control.d);
 	EXPECT_NE(data.i, control.i);
+}
+
+TEST(Message, PackedID){
+	mid z;
+        EXPECT_EQ(z.coreid(), 0u);
+        EXPECT_EQ(z.portid(), 0u);
+        EXPECT_EQ(z.modelid(), 0u);
+        size_t p = 255;
+        size_t c = 255;
+        size_t m = 12345;
+        mid myid(255, 255, 12345);
+        EXPECT_EQ(myid.coreid(), c);
+        EXPECT_EQ(myid.portid(), p);
+        EXPECT_EQ(myid.modelid(), m);
+        {
+                mid t;
+                for(size_t i = 0; i< 256; ++i){
+                        t.setportid(i);
+                        EXPECT_EQ(t.coreid(), 0u);
+                        EXPECT_EQ(t.modelid(), 0u);
+                        EXPECT_EQ(t.portid(), i);
+                }
+                
+                for(size_t i = 0; i< 256; ++i){
+                        t.setcoreid(i);
+                        EXPECT_EQ(t.coreid(), i);
+                        EXPECT_EQ(t.modelid(), 0u);
+                        EXPECT_EQ(t.portid(), 255);
+                }
+                
+                for(size_t i = 0; i< (1ULL << 12); i+=7){ // 2^48 is a ~bit~ much for a test.
+                        t.setmodelid(i);
+                        EXPECT_EQ(t.coreid(), 255);
+                        EXPECT_EQ(t.modelid(), i);
+                        EXPECT_EQ(t.portid(), 255);
+                }
+        }
 }
