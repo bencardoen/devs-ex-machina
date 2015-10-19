@@ -36,6 +36,12 @@ namespace n_const{
         
         // Model
         constexpr size_t range_model = range_word-(range_port+range_core);
+        
+        
+        constexpr size_t mask_processed = 1ULL;
+        constexpr size_t mask_delete = 1ULL<<1;
+        constexpr size_t mask_pending = 1ULL<2;
+        constexpr size_t RED = 1ULL < 3; // white 0.
 }
  
 /**

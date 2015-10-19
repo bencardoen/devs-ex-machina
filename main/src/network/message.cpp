@@ -33,8 +33,8 @@ n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const 
 		m_timestamp(time_made),
 		m_destination_port(destport),
 		m_source_port(sourceport),
-		m_color(MessageColor::WHITE),
 		m_antimessage(false),
+                m_color(MessageColor::WHITE),
                 m_delete_flag_set(false),
                 m_processed(false),
                 m_dst_uuid(dstUUID),
@@ -50,8 +50,8 @@ n_network::Message::toString() const
 	std::stringstream result;
 	result << "Message from " << this->getSrcPort() << " to " << this->getDstPort();
 	result << " @" << m_timestamp;
-	result << " from model " << getSrcUUID() ;
-	result << " to model " << getDstUUID() ;
+	result << " from model " << getSourceModel() ;
+	result << " to model " << getDestinationModel() ;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
 	if(m_antimessage){

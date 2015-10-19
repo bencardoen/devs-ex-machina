@@ -25,9 +25,14 @@ namespace n_network {
 /**
  * Denote cut-type in gvt synchronization.
  */
-enum MessageColor
+enum MessageColor : uint8_t
 {
 	WHITE = 0, RED = 1
+};
+
+enum Status
+{
+        DELETE=2, PROCESSED=4, PENDING=8
 };
 
 std::ostream&
@@ -55,18 +60,12 @@ protected:
 	 * Port id of source port.
 	 */
 	const std::size_t m_source_port;
-
-	/**
-	 * Color in synchronization algorithms.
-	 * @default WHITE
-	 * @see MessageColor
-	 */
-	MessageColor m_color;
-
 	/**
 	 * Is message an annihilator of the original ?
 	 */
 	std::atomic<bool> m_antimessage;
+        
+	std::atomic<uint8_t> m_color;
         
         /**
          * Edge case of original message immediately followed by antimessage, allow
@@ -82,6 +81,8 @@ protected:
         const n_model::uuid m_dst_uuid;
         
         const n_model::uuid m_src_uuid;
+        
+        
 
 
 public:
@@ -99,27 +100,37 @@ public:
 		const t_timestamp& time_made,
 		const std::size_t& destport, const std::size_t& sourceport);
 
-        const n_model::uuid&
-        getSrcUUID()const
-        {
-                return m_src_uuid;
-        }
-        
-        const n_model::uuid&
-        getDstUUID()const
-        {
-                return m_dst_uuid;
+        std::size_t getDstPort() const
+	{ 
+                return m_destination_port; 
         }
         
 	std::size_t getDestinationCore() const
 	{
 		return m_dst_uuid.m_core_id;
 	}
+        
+        std::size_t getDestinationModel() const
+        {
+                return m_dst_uuid.m_local_id;
+        }
+        
+        std::size_t getSourceCore() const
+	{
+		return m_src_uuid.m_core_id;
+	}
+        
+        std::size_t getSourceModel()const
+        {
+                return m_src_uuid.m_local_id;
+        }
+        
+        std::size_t getSrcPort() const
+	{ 
+                return m_source_port; 
+        }
 
-	/**
-	 * @brief Sets whether or not this message will act as an antimessage
-	 * @param b If true, this message becomes an antimessage, otherwise, it becomes a normal message.
-	 */
+	// Synchronized status
 	void setAntiMessage(bool b)
 	{
 		m_antimessage.store(b);
@@ -129,21 +140,26 @@ public:
 	{
 		return m_antimessage;
 	}
-
-	std::size_t getSourceCore() const
+        
+	MessageColor getColor() const
 	{
-		return m_src_uuid.m_core_id;
+#ifdef SAFETY_CHECKS
+                if(m_color.load()>1)
+                        throw std::logic_error("Enum to int value out of range");
+#endif
+                return static_cast<MessageColor>(m_color.load());       // Safe with the above check. UB otherwise.
 	}
 
-	std::size_t getDstPort() const
-	{ 
-                return m_destination_port; 
-        }
-        
-        std::size_t getSrcPort() const
-	{ 
-                return m_source_port; 
-        }
+	/**
+	 * @brief Sets the message color
+	 * @param newcolor The new message color
+	 * @note The message color is part of the GVT calculation.
+	 * @see getColor
+	 */
+	void paint(MessageColor newcolor)
+	{
+		this->m_color = newcolor; // Enum to int is safe. (and type range match)
+	}
 
         
         bool deleteFlagIsSet()const{return m_delete_flag_set;}
@@ -213,26 +229,7 @@ public:
 	{
                 ;
 	}
-
-	/**
-	 * @brief Returns the message color.
-	 * @note The message color is part of the GVT calculation.
-	 */
-	MessageColor getColor() const
-	{
-		return m_color;
-	}
-
-	/**
-	 * @brief Sets the message color
-	 * @param newcolor The new message color
-	 * @note The message color is part of the GVT calculation.
-	 * @see getColor
-	 */
-	void paint(MessageColor newcolor)
-	{
-		this->m_color = newcolor;
-	}
+        
         friend
         bool operator<(const Message& left, const Message& right);
         
@@ -345,8 +342,8 @@ struct hash<n_network::Message>
 		std::stringstream ss;
 		ss << message.getSrcPort()
 			<< message.getDstPort()
-			<< message.getDstUUID().m_local_id
-			<< message.getSrcUUID().m_local_id
+			<< message.getDestinationModel()
+			<< message.getSourceModel()
 		        << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);

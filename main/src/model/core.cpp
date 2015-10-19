@@ -207,8 +207,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 
 #ifdef SAFETY_CHECKS		
 		for (t_msgptr msg : m_mailfrom) {
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-                        validateUUID(msg->getSrcUUID());
+                        validateUUID(uuid(msg->getSourceCore(),msg->getSourceModel()));
 		}
 #endif
                 
@@ -632,7 +631,7 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
-        const size_t id = msg->getDstUUID().m_local_id;
+        const size_t id = msg->getDestinationModel();
         auto model = this->getModel(id).get();
         if(!hasMail(id)){               // If recd msg size==0
                 if(model->nextType()==n_model::NONE){   // If INT is set, we get CONF so adding it to imminents risks duplicate transitions

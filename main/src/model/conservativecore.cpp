@@ -46,7 +46,9 @@ void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		t_msgptr message = *i;
-                validateUUID(message->getDstUUID());
+#ifdef SAFETY_CHECKS
+                validateUUID(uuid(message->getDestinationCore(), message->getDestinationModel()));
+#endif
 		this->receiveMessage(message);
 	}
 }
