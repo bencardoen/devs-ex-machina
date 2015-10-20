@@ -101,7 +101,7 @@ TEST(Message, operators){
 TEST(Message, Antimessage){
 	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
 	t_shared_msgptr msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(55,0), 3u, 2u);
-	t_shared_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
+	t_shared_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
 	scheduler->push_back(MessageEntry(msg.get()));
 	EXPECT_TRUE(scheduler->contains(MessageEntry(msg.get())));
 	scheduler->erase(MessageEntry(antimessage.get()));
@@ -115,7 +115,7 @@ TEST(Message, Smoketest){
 
 	for(size_t i = 0; i<1000; ++i){
 		t_msgptr msg = createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), 3u, 2u);
-		t_msgptr antimessage = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
+		t_msgptr antimessage = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDestinationPort(), msg->getSourcePort());
 		EXPECT_FALSE(scheduler->contains(MessageEntry(msg)));
 		size_t oldsize = scheduler->size();
 		scheduler->push_back(MessageEntry(msg));
@@ -143,17 +143,17 @@ std::ostream& operator<<(std::ostream& o, const MyStruct& m){
 
 TEST(Message, ContentTest){
 	t_shared_msgptr msgStr = n_tools::createObject<SpecializedMessage<std::string>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, "payload");
-        EXPECT_FALSE(msgStr->deleteFlagIsSet());
-	EXPECT_EQ(msgStr->getDstPort(), 3u);
-	EXPECT_EQ(msgStr->getSrcPort(), 2u);
+        EXPECT_FALSE(msgStr->flagIsSet(Status::DELETE));
+	EXPECT_EQ(msgStr->getDestinationPort(), 3u);
+	EXPECT_EQ(msgStr->getSourcePort(), 2u);
 	EXPECT_EQ(msgStr->getPayload(), "payload");
 	EXPECT_EQ(msgStr->getDestinationCore(), 42u);
 	std::string str = n_network::getMsgPayload<std::string>(msgStr.get());
 	EXPECT_EQ(str, "payload");
 
 	t_shared_msgptr msgDouble = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, 3.14);
-	EXPECT_EQ(msgDouble->getDstPort(), 3u);
-	EXPECT_EQ(msgDouble->getSrcPort(), 2u);
+	EXPECT_EQ(msgDouble->getDestinationPort(), 3u);
+	EXPECT_EQ(msgDouble->getSourcePort(), 2u);
 	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
 	const double& doub = n_network::getMsgPayload<double>(msgDouble.get());
 	EXPECT_EQ(doub, 3.14);
@@ -161,8 +161,8 @@ TEST(Message, ContentTest){
 	MyStruct data = {-2, 't', 42.24};
 	MyStruct control = data;
 	t_shared_msgptr msgMyStruct = n_tools::createObject<SpecializedMessage<MyStruct>>(n_model::uuid(1, 0), n_model::uuid(42, 0), 1, 3u, 2u, data);
-	EXPECT_EQ(msgMyStruct->getDstPort(), 3u);
-	EXPECT_EQ(msgMyStruct->getSrcPort(), 2u);
+	EXPECT_EQ(msgMyStruct->getDestinationPort(), 3u);
+	EXPECT_EQ(msgMyStruct->getSourcePort(), 2u);
 	EXPECT_EQ(msgDouble->getDestinationCore(), 42u);
 	const MyStruct& res = n_network::getMsgPayload<MyStruct>(msgMyStruct.get());
 	data.i++;
@@ -207,4 +207,50 @@ TEST(Message, PackedID){
                         EXPECT_EQ(t.portid(), 255);
                 }
         }
+}
+
+TEST(Message, Integrity){
+	t_shared_msgptr msg = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(255, 1024), n_model::uuid(254, 2096), t_timestamp(1,1), 255, 249, std::numeric_limits<double>::max());
+	const double& d = n_network::getMsgPayload<double>(msg.get());
+	EXPECT_EQ(d, std::numeric_limits<double>::max());
+        EXPECT_EQ(msg->getColor(), MessageColor::WHITE);
+        msg->paint(MessageColor::RED);
+        EXPECT_FALSE(msg->isAntiMessage());
+        msg->setAntiMessage(true);
+        EXPECT_TRUE(msg->isAntiMessage());
+        EXPECT_EQ(msg->getColor(), MessageColor::RED);
+        EXPECT_FALSE(msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::DELETE);
+        EXPECT_FALSE(!msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::PROCESSED);
+        EXPECT_FALSE(!msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::PENDING);
+        EXPECT_FALSE(!msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::DELETE, false);
+        EXPECT_FALSE(msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::PROCESSED, false);
+        EXPECT_FALSE(msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(!msg->flagIsSet(Status::PENDING));
+        msg->setFlag(Status::PENDING, false);
+        EXPECT_FALSE(msg->flagIsSet(Status::DELETE));
+        EXPECT_FALSE(msg->flagIsSet(Status::PROCESSED));
+        EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
+        std::cout << sizeof(SpecializedMessage<double>) << std::endl;
+        EXPECT_EQ(msg->getSourcePort(),249u);
+        EXPECT_EQ(msg->getSourceCore(),255u);
+        EXPECT_EQ(msg->getSourceModel(),1024u);
+        EXPECT_EQ(msg->getDestinationPort(),255u);
+        EXPECT_EQ(msg->getDestinationCore(),254u);
+        EXPECT_EQ(msg->getDestinationModel(),2096u);
 }

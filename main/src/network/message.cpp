@@ -27,28 +27,26 @@ n_network::operator<<(std::ostream& os, const n_network::MessageColor& c){
 }
 
 
-n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made,
+n_network::Message::Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID, const t_timestamp& time_made,
 				const std::size_t& destport, const std::size_t& sourceport)
 		:
 		m_timestamp(time_made),
-		m_destination_port(destport),
-		m_source_port(sourceport),
+                m_src_id(sourceport, srcUUID.m_core_id, srcUUID.m_local_id),
+                m_dst_id(destport, dstUUID.m_core_id, dstUUID.m_local_id),
 		m_antimessage(false),
                 m_color(MessageColor::WHITE),
-                m_delete_flag_set(false),
-                m_processed(false),
+                m_status_flags(0u),
                 m_dst_uuid(dstUUID),
                 m_src_uuid(srcUUID)
 	{
-		LOG_DEBUG("initializing message with modeldest ", dstUUID);
+		LOG_DEBUG("Message created with values :: ", this->toString());
 	}
-
 
 std::string
 n_network::Message::toString() const
 {
 	std::stringstream result;
-	result << "Message from " << this->getSrcPort() << " to " << this->getDstPort();
+	result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
 	result << " @" << m_timestamp;
 	result << " from model " << getSourceModel() ;
 	result << " to model " << getDestinationModel() ;
@@ -104,8 +102,8 @@ n_network::operator==(const n_network::Message& left, const n_network::Message& 
                 &&
                 left.m_src_uuid==right.m_src_uuid
                 &&
-                left.getDstPort() == right.getDstPort()
+                left.getDestinationPort() == right.getDestinationPort()
                 &&
-                left.getSrcPort() == right.getSrcPort()
+                left.getSourcePort() == right.getSourcePort()
                 );
  }

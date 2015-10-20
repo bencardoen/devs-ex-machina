@@ -14,6 +14,7 @@
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
+#include "mid.h"
 #include <sstream>
 #include <iosfwd>
 #include <atomic>
@@ -22,27 +23,18 @@ class TestCereal;
 
 namespace n_network {
 
-/**
- * Denote cut-type in gvt synchronization.
- */
-enum MessageColor : uint8_t
-{
-	WHITE = 0, RED = 1
-};
 
-enum Status
-{
-        DELETE=2, PROCESSED=4, PENDING=8
-};
+enum MessageColor : uint8_t{WHITE = 0, RED = 1};
+// Msg status. Note that the assigned values are to be orthogonal.
+enum Status : uint8_t{DELETE=1, PROCESSED=2, PENDING=4};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
 
 /**
- * A Message representing either an event passed between models , or synchronization token
- * between cores.
+ * A Message representing either an event passed between models.
  */
-class Message
+class __attribute__((aligned(64)))Message
 {
 	friend class ::TestCereal;
 protected:
@@ -50,40 +42,29 @@ protected:
 	 * Time message is created (by model/port)
 	 */
 	t_timestamp m_timestamp;
+        
+        const mid             m_src_id;
+        
+        const mid             m_dst_id;
 
-	/**
-	 * Port id of destination port.
-	 */
-	const std::size_t m_destination_port;
-
-	/**
-	 * Port id of source port.
-	 */
-	const std::size_t m_source_port;
 	/**
 	 * Is message an annihilator of the original ?
 	 */
 	std::atomic<bool> m_antimessage;
         
+        // Not boolean to make (possible) switch to n-color less painful.
 	std::atomic<uint8_t> m_color;
         
-        /**
-         * Edge case of original message immediately followed by antimessage, allow
-         * receiver to mark this message a 'to be deleted' without ever entering any queue.
-         */
-        bool m_delete_flag_set;
-        
-        /**
-         * Mark message processed.
-         */
-        bool m_processed;
+        uint8_t         m_status_flags;
         
         const n_model::uuid m_dst_uuid;
         
         const n_model::uuid m_src_uuid;
         
-        
-
+        Message(const Message&) = delete;
+        Message(const Message&&) = delete;
+        Message& operator=(const Message&)=delete;
+        Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -96,13 +77,13 @@ public:
 	 * @param sourceport	full name of source port
 	 * @note	Color is set by default to white.
 	 */
-	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID,
 		const t_timestamp& time_made,
 		const std::size_t& destport, const std::size_t& sourceport);
 
-        std::size_t getDstPort() const
+        std::size_t getDestinationPort() const
 	{ 
-                return m_destination_port; 
+                return m_dst_id.portid();
         }
         
 	std::size_t getDestinationCore() const
@@ -125,12 +106,11 @@ public:
                 return m_src_uuid.m_local_id;
         }
         
-        std::size_t getSrcPort() const
+        std::size_t getSourcePort() const
 	{ 
-                return m_source_port; 
+                return m_src_id.portid();
         }
 
-	// Synchronized status
 	void setAntiMessage(bool b)
 	{
 		m_antimessage.store(b);
@@ -145,7 +125,7 @@ public:
 	{
 #ifdef SAFETY_CHECKS
                 if(m_color.load()>1)
-                        throw std::logic_error("Enum to int value out of range");
+                        throw std::logic_error("Int to enum value out of range");
 #endif
                 return static_cast<MessageColor>(m_color.load());       // Safe with the above check. UB otherwise.
 	}
@@ -162,13 +142,19 @@ public:
 	}
 
         
-        bool deleteFlagIsSet()const{return m_delete_flag_set;}
+        void setFlag(Status newst, bool value=true)
+        {
+                if(value)
+                        m_status_flags |= newst;
+                else
+                        m_status_flags &= ~newst;
+        }
         
-        void setDeleteFlag(){m_delete_flag_set=true;}
-        
-        bool isProcessed()const{return m_processed;}
-        
-        void setProcessed(bool b){m_processed=b;}
+        bool flagIsSet(Status st)const
+        {
+                return (m_status_flags & st);   
+                //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+        }
 
 	//can't remove. Needed by tracer
 	/**
@@ -340,8 +326,8 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSrcPort()
-			<< message.getDstPort()
+		ss << message.getSourcePort()
+			<< message.getDestinationPort()
 			<< message.getDestinationModel()
 			<< message.getSourceModel()
 		        << message.getTimeStamp();

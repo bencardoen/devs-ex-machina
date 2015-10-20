@@ -53,7 +53,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
 #endif
         // In optimistic, delete only local-local messages after processing.
         for(t_msgptr& ptr : msgs){
-                ptr->setProcessed(true);
+                ptr->setFlag(Status::PROCESSED);
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
                         m_stats.logStat(DELMSG);
                         LOG_DEBUG("MCORE:: ", this->getCoreID(),"@",this->getTime(), " deleting ", ptr);
@@ -108,16 +108,15 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 m_stats.logStat(DELMSG);
         }else{                                                          /// Not queued, so either never seen it, or allready processed
                         
-                        if(msg->isProcessed()){         // Processed before, only antimessage ptr in transit.
+                        if(msg->flagIsSet(Status::PROCESSED)){// Processed before, only antimessage ptr in transit.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Message is processed :: deleting ", msg);
                                 delete msg;
-
                                 m_stats.logStat(DELMSG);
                                 return;
                         }
-                        if(!msg->deleteFlagIsSet()){    // Possibly never seen, delete both.
+                        if(!msg->flagIsSet(Status::DELETE)){    // Possibly never seen, delete both.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : first pass:: ", msg);
-                                msg->setDeleteFlag();
+                                msg->setFlag(Status::DELETE);
                         }
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");

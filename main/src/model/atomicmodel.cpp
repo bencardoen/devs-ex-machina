@@ -237,7 +237,7 @@ void AtomicModel_impl::deliverMessages(const std::vector<n_network::t_msgptr>& m
 {
 #ifdef SAFETY_CHECKS
 	for(const n_network::t_msgptr& msg: message)
-		m_iPorts.at(msg->getDstPort())->addMessage(msg);
+		m_iPorts.at(msg->getDestinationPort())->addMessage(msg);
 #else /* SAFETY_CHECKS */
 	for(const n_network::t_msgptr& msg: message)
 		m_iPorts[msg->getDstPort()]->addMessage(msg);
