@@ -56,7 +56,7 @@ namespace n_const{
  * Bitfields were avoided for a nr of reasons, the first being loss of control over allocation size. In the current implementation, the 
  * whole field fits into a word/register for maximal speed.
  */
-struct __attribute__((packed, aligned(8))) mid{
+struct __attribute__((packed)) mid{
 private:
         t_word  m_storage;
         // Masks for each individual identifier. 1 for each corresponding bitfield position, 0 otherwise.

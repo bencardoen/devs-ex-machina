@@ -34,9 +34,7 @@ n_network::Message::Message(const n_model::uuid& srcUUID, const n_model::uuid& d
 		m_timestamp(time_made),
                 m_src_id(sourceport, srcUUID.m_core_id, srcUUID.m_local_id),
                 m_dst_id(destport, dstUUID.m_core_id, dstUUID.m_local_id),
-		m_antimessage(false),
-                m_color(MessageColor::WHITE),
-                m_status_flags(0u)
+                m_atomic_flags(0u)
 	{
 #ifdef  SAFETY_CHECKS
                 if(std::max(destport, sourceport) > n_const::port_max)
@@ -59,8 +57,8 @@ n_network::Message::toString() const
 	result << " to model " << getDestinationModel() ;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
-	if(m_antimessage){
-		result << " anti="<< std::boolalpha << m_antimessage;
+	if(isAntiMessage()){
+		result << " anti="<< std::boolalpha << isAntiMessage();
 	}
 	return result.str();
 }

@@ -361,8 +361,6 @@ void Port::createMessages(const DataType& message,
 		container.reserve(m_outs.size());
 		for (const t_outconnect& pair : m_outs) {
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
-                        size_t spid = pair.first->getPortID();
-                        size_t dpid = getPortID();
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				nowtime,
 				pair.first->getPortID(), getPortID(),
@@ -374,8 +372,6 @@ void Port::createMessages(const DataType& message,
 	} else {
 		container.reserve(container.size() + m_coupled_outs.size());
 		for (const t_outconnect& pair : m_coupled_outs) {
-                        size_t spid = pair.first->getPortID();
-                        size_t dpid = getPortID();
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				nowtime,
 				pair.first->getPortID(), getPortID(),

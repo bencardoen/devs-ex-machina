@@ -26,15 +26,15 @@ namespace n_network {
 
 enum MessageColor : uint8_t{WHITE = 0, RED = 1};
 // Msg status. Note that the assigned values are to be orthogonal.
-enum Status : uint8_t{DELETE=1, PROCESSED=2, PENDING=4};
+enum Status : uint8_t{DELETE=2, PROCESSED=4, PENDING=8, ANTI=16};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
 
 /**
- * A Message representing either an event passed between models.
+ * A Message representing an event passed between models.
  */
-class __attribute__((aligned(64)))Message
+class __attribute__((aligned(4)))Message
 {
 	friend class ::TestCereal;
 protected:
@@ -43,19 +43,18 @@ protected:
 	 */
 	t_timestamp m_timestamp;
         
+        /**
+         * Unique source identifier.
+         */ 
         const mid             m_src_id;
         
+        /**
+         * Unique destination identifier.
+         */
         const mid             m_dst_id;
-
-	/**
-	 * Is message an annihilator of the original ?
-	 */
-	std::atomic<bool> m_antimessage;
         
         // Not boolean to make (possible) switch to n-color less painful.
-	std::atomic<uint8_t> m_color;
-        
-        uint8_t         m_status_flags;
+	std::atomic<uint8_t> m_atomic_flags __attribute__((aligned(4)));
         
         Message(const Message&) = delete;
         Message(const Message&&) = delete;
@@ -109,21 +108,20 @@ public:
 
 	void setAntiMessage(bool b)
 	{
-		m_antimessage.store(b);
+                if(b)
+                        m_atomic_flags |= Status::ANTI;
+                else
+                        m_atomic_flags &= ~Status::ANTI;
 	}
 
 	bool isAntiMessage() const
 	{
-		return m_antimessage;
+		return (m_atomic_flags & Status::ANTI);
 	}
         
 	MessageColor getColor() const
-	{
-#ifdef SAFETY_CHECKS
-                if(m_color.load()>1)
-                        throw std::logic_error("Int to enum value out of range");
-#endif
-                return static_cast<MessageColor>(m_color.load());       // Safe with the above check. UB otherwise.
+	{       
+                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
 	}
 
 	/**
@@ -134,21 +132,24 @@ public:
 	 */
 	void paint(MessageColor newcolor)
 	{
-		this->m_color = newcolor; // Enum to int is safe. (and type range match)
+                if(newcolor==MessageColor::RED)
+                        m_atomic_flags |= newcolor;
+                else
+                        m_atomic_flags &= ~MessageColor::RED;
 	}
 
         
         void setFlag(Status newst, bool value=true)
         {
                 if(value)
-                        m_status_flags |= newst;
+                        m_atomic_flags |= newst;
                 else
-                        m_status_flags &= ~newst;
+                        m_atomic_flags &= ~newst;
         }
         
         bool flagIsSet(Status st)const
         {
-                return (m_status_flags & st);   
+                return (m_atomic_flags & st);   
                 //In general should be (flag & mask) == mask, but conversion to bool serves fine.
         }
 
@@ -247,7 +248,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class SpecializedMessage: public Message
+class __attribute__((aligned(4)))SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;
