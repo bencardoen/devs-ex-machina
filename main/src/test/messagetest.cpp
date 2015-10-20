@@ -207,10 +207,11 @@ TEST(Message, PackedID){
                         EXPECT_EQ(t.portid(), 255);
                 }
         }
+        std::cerr << sizeof(SpecializedMessage<double>) << std::endl;
 }
 
 TEST(Message, Integrity){
-	t_shared_msgptr msg = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(255, 1024), n_model::uuid(254, 2096), t_timestamp(1,1), 255, 249, std::numeric_limits<double>::max());
+	t_shared_msgptr msg = n_tools::createObject<SpecializedMessage<double>>(n_model::uuid(n_const::core_max, n_const::model_max), n_model::uuid(254, 2096), t_timestamp(1,1), n_const::port_max, 249, std::numeric_limits<double>::max());
 	const double& d = n_network::getMsgPayload<double>(msg.get());
 	EXPECT_EQ(d, std::numeric_limits<double>::max());
         EXPECT_EQ(msg->getColor(), MessageColor::WHITE);
@@ -248,9 +249,9 @@ TEST(Message, Integrity){
         EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
         std::cout << sizeof(SpecializedMessage<double>) << std::endl;
         EXPECT_EQ(msg->getSourcePort(),249u);
-        EXPECT_EQ(msg->getSourceCore(),255u);
-        EXPECT_EQ(msg->getSourceModel(),1024u);
-        EXPECT_EQ(msg->getDestinationPort(),255u);
+        EXPECT_EQ(msg->getSourceCore(),n_const::port_max);
+        EXPECT_EQ(msg->getSourceModel(),n_const::model_max);
+        EXPECT_EQ(msg->getDestinationPort(),n_const::core_max);
         EXPECT_EQ(msg->getDestinationCore(),254u);
         EXPECT_EQ(msg->getDestinationModel(),2096u);
 }

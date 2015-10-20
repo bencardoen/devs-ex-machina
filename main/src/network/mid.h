@@ -7,21 +7,19 @@
 
 namespace n_network{
 
-
-/**
- * The constants defined in this namespace constrict the unique identifiers of ports/models/cores.
- * Packed together they form in the struct m(essage)id(entifier) a unique id for a port/model in a core.
- * In the current implementation, this results in :
- *      2^8 ports per model
- *      2^48 models per core
- *      2^8 cores.
- *      In single core, you can (try to) use 2^56 ports before ever risking a collision.
- * 
- * If you're reaching one of the above limits, it's possible to redefine these constants to increase/decrease ranges.
- * Don't ever break the constraint : range(storage) >= sum(range(parts)).
- */
-typedef uint64_t                t_word;
 namespace n_const{
+        /**
+        * The constants defined in this namespace constrict the unique identifiers of ports/models/cores.
+        * Packed together they form in the struct m(essage)id(entifier) a unique id for a port/model in a core.
+        * In the current implementation, this results in :
+        *      2^8 ports per model
+        *      2^48 models per core
+        *      2^8 cores.
+        *      In single core, you can (try to) use 2^56 ports before ever risking a collision.
+        * 
+        * If you're reaching one of the above limits, it's possible to redefine these constants to increase/decrease ranges.
+        * Don't ever break the constraint : range(storage) >= sum(range(parts)).
+        */
         // Unit = bit.
         // Ranges should sum to this field's bitsize.
         constexpr size_t range_word = 64;
@@ -29,21 +27,29 @@ namespace n_const{
         // Port
         constexpr size_t range_port = 8;
         constexpr size_t offset_port = range_word-range_port;
+        /**
+         * Maximum usable identifier for a port.
+         */
+        constexpr size_t port_max = (1ULL<<range_port)-1;
         
         // Core
         constexpr size_t range_core = 8;
         constexpr size_t offset_core = offset_port - range_core;
+        /**
+         * Maximum usable identifier for a core.
+         */
+        constexpr size_t core_max = (1ULL<<range_core)-1;
         
         // Model
         constexpr size_t range_model = range_word-(range_port+range_core);
+        /**
+         * Maximum usable identifier for a model.
+         */
+        constexpr size_t model_max = (1ULL<<range_model)-1;
         
         
-        constexpr size_t mask_processed = 1ULL;
-        constexpr size_t mask_delete = 1ULL<<1;
-        constexpr size_t mask_pending = 1ULL<2;
-        constexpr size_t RED = 1ULL < 3; // white 0.
 }
- 
+ typedef uint64_t                t_word;
 /**
  * Message identifier. Uniquely references port/core/model instance.
  * @attention : attributes are not required for the moment, they will be if the user starts changing the sizes of the mapped fields. 
@@ -54,6 +60,7 @@ struct __attribute__((packed, aligned(8))) mid{
 private:
         t_word  m_storage;
         // Masks for each individual identifier. 1 for each corresponding bitfield position, 0 otherwise.
+
         static constexpr size_t pmask = ((1ULL << n_const::range_port)-1)<<n_const::offset_port;
         static constexpr size_t cmask = ((1ULL << n_const::range_core)-1)<<n_const::offset_core;
         static constexpr size_t mmask = ((1ULL << n_const::range_model)-1);

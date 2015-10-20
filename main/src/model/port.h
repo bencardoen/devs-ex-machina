@@ -350,9 +350,10 @@ void Port::createMessages(const DataType& message,
                 // This message is simply to allow correct tracing of a model that generates output, but does not send it (ie trafficlight)
 		m_sentMessages.push_back(createMsg(
                                 srcuuid, uuid(0, 0),nowtime,
-                                std::numeric_limits<std::size_t>::max(), getPortID(),
+                                getPortID(), getPortID(),
                                 message, nullptr)
-                );
+                );// Use dst==src to avoid overflow.
+                
 	}
 #endif
 	// We want to iterate over the correct ports (whether we use direct connect or not)
@@ -360,6 +361,8 @@ void Port::createMessages(const DataType& message,
 		container.reserve(m_outs.size());
 		for (const t_outconnect& pair : m_outs) {
 			// We now know everything, we create the message, apply the zFunction and push it on the vector
+                        size_t spid = pair.first->getPortID();
+                        size_t dpid = getPortID();
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				nowtime,
 				pair.first->getPortID(), getPortID(),
@@ -371,6 +374,8 @@ void Port::createMessages(const DataType& message,
 	} else {
 		container.reserve(container.size() + m_coupled_outs.size());
 		for (const t_outconnect& pair : m_coupled_outs) {
+                        size_t spid = pair.first->getPortID();
+                        size_t dpid = getPortID();
 			container.push_back(createMsg(srcuuid, pair.first->getModelUUID(),
 				nowtime,
 				pair.first->getPortID(), getPortID(),

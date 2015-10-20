@@ -5,6 +5,7 @@
  *      Author: Ben Cardoen
  */
 #include <iostream>
+#include <string>
 #include <cassert>
 #include "network/message.h"
 #include "cereal/types/string.hpp"
@@ -35,10 +36,16 @@ n_network::Message::Message(const n_model::uuid& srcUUID, const n_model::uuid& d
                 m_dst_id(destport, dstUUID.m_core_id, dstUUID.m_local_id),
 		m_antimessage(false),
                 m_color(MessageColor::WHITE),
-                m_status_flags(0u),
-                m_dst_uuid(dstUUID),
-                m_src_uuid(srcUUID)
+                m_status_flags(0u)
 	{
+#ifdef  SAFETY_CHECKS
+                if(std::max(destport, sourceport) > n_const::port_max)
+                        throw std::out_of_range("Port id out of range." + std::to_string(std::max(destport,sourceport)) );
+                if(std::max(srcUUID.m_core_id, dstUUID.m_core_id) > n_const::core_max)
+                        throw std::out_of_range("Core id out of range.");
+                if(std::max(srcUUID.m_local_id, dstUUID.m_local_id) > n_const::model_max)
+                        throw std::out_of_range("Model id out of range.");
+#endif
 		LOG_DEBUG("Message created with values :: ", this->toString());
 	}
 
@@ -98,12 +105,8 @@ n_network::operator==(const n_network::Message& left, const n_network::Message& 
         return(
                 left.getTimeStamp() == right.getTimeStamp()
                 &&
-                left.m_dst_uuid==right.m_dst_uuid
+                left.m_dst_id==right.m_dst_id
                 &&
-                left.m_src_uuid==right.m_src_uuid
-                &&
-                left.getDestinationPort() == right.getDestinationPort()
-                &&
-                left.getSourcePort() == right.getSourcePort()
+                left.m_src_id==right.m_src_id
                 );
  }

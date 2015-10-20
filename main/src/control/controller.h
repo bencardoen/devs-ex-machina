@@ -72,7 +72,6 @@ private:
 	 * A GVT thread will run [5ms |run| interval | interval | ... ].
 	 * @attention : The OS will schedule at least interval sleep time, but more is of course possible.
 	 * @synchronized
-	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
 	 */
 	std::atomic<std::size_t> m_sleep_gvt_thread;
 
@@ -148,8 +147,6 @@ public:
 	 * @brief Start thread for GVT
 	 */
 	void startGVTThread();
-
-//	void checkForTemporaryIrreversible();
 
 	/**
 	 * @brief Adds a connection during Dynamic Structured DEVS

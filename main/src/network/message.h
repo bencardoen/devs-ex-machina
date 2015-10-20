@@ -57,10 +57,6 @@ protected:
         
         uint8_t         m_status_flags;
         
-        const n_model::uuid m_dst_uuid;
-        
-        const n_model::uuid m_src_uuid;
-        
         Message(const Message&) = delete;
         Message(const Message&&) = delete;
         Message& operator=(const Message&)=delete;
@@ -88,22 +84,22 @@ public:
         
 	std::size_t getDestinationCore() const
 	{
-		return m_dst_uuid.m_core_id;
+		return m_dst_id.coreid();
 	}
         
         std::size_t getDestinationModel() const
         {
-                return m_dst_uuid.m_local_id;
+                return m_dst_id.modelid();
         }
         
         std::size_t getSourceCore() const
 	{
-		return m_src_uuid.m_core_id;
+		return m_src_id.coreid();
 	}
         
         std::size_t getSourceModel()const
         {
-                return m_src_uuid.m_local_id;
+                return m_src_id.modelid();
         }
         
         std::size_t getSourcePort() const
