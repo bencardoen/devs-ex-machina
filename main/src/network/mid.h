@@ -10,13 +10,7 @@ namespace n_network{
 namespace n_const{
         /**
         * The constants defined in this namespace constrict the unique identifiers of ports/models/cores.
-        * Packed together they form in the struct m(essage)id(entifier) a unique id for a port/model in a core.
-        * In the current implementation, this results in :
-        *      2^8 ports per model
-        *      2^48 models per core
-        *      2^8 cores.
-        *      In single core, you can (try to) use 2^56 ports before ever risking a collision.
-        * 
+        * Packed together they form in the struct m(essage)id(entifier) a unique id for a port/model in a core. 
         * If you're reaching one of the above limits, it's possible to redefine these constants to increase/decrease ranges.
         * Don't ever break the constraint : range(storage) >= sum(range(parts)).
         */
@@ -25,7 +19,7 @@ namespace n_const{
         constexpr size_t range_word = 64;
         
         // Port
-        constexpr size_t range_port = 8;
+        constexpr size_t range_port = 16;
         constexpr size_t offset_port = range_word-range_port;
         /**
          * Maximum usable identifier for a port.
@@ -47,7 +41,7 @@ namespace n_const{
          */
         constexpr size_t model_max = (1ULL<<range_model)-1;
         
-        
+        static_assert(range_port + range_model + range_core <= range_word, "SUm ranges bitfields > allocated size.");
 }
  typedef uint64_t                t_word;
 /**

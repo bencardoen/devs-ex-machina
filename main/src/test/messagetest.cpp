@@ -186,30 +186,27 @@ TEST(Message, PackedID){
         EXPECT_EQ(myid.modelid(), m);
         {
                 mid t;
-                for(size_t i = 0; i< 256; ++i){
+                for(size_t i = 0; i <= n_const::port_max; ++i){
                         t.setportid(i);
                         EXPECT_EQ(t.coreid(), 0u);
                         EXPECT_EQ(t.modelid(), 0u);
                         EXPECT_EQ(t.portid(), i);
                 }
                 
-                for(size_t i = 0; i< 256; ++i){
+                for(size_t i = 0; i<= n_const::core_max; ++i){
                         t.setcoreid(i);
                         EXPECT_EQ(t.coreid(), i);
                         EXPECT_EQ(t.modelid(), 0u);
-                        EXPECT_EQ(t.portid(), 255);
+                        EXPECT_EQ(t.portid(), n_const::port_max);
                 }
                 
-                for(size_t i = 0; i< (1ULL << 12); i+=7){ // 2^48 is a ~bit~ much for a test.
+                for(size_t i = 1; i<= n_const::model_max; i*=2){ // 2^48 is a ~bit~ much for a test.
                         t.setmodelid(i);
-                        EXPECT_EQ(t.coreid(), 255);
+                        EXPECT_EQ(t.coreid(), n_const::core_max);
                         EXPECT_EQ(t.modelid(), i);
-                        EXPECT_EQ(t.portid(), 255);
+                        EXPECT_EQ(t.portid(), n_const::port_max);
                 }
         }
-        std::cerr << sizeof(Message) << std::endl;
-        std::cerr << sizeof(SpecializedMessage<double>) << std::endl;
-        std::cerr << sizeof(t_timestamp) << std::endl;
 }
 
 TEST(Message, Integrity){
@@ -250,9 +247,9 @@ TEST(Message, Integrity){
         EXPECT_FALSE(msg->flagIsSet(Status::PROCESSED));
         EXPECT_FALSE(msg->flagIsSet(Status::PENDING));
         EXPECT_EQ(msg->getSourcePort(),249u);
-        EXPECT_EQ(msg->getSourceCore(),n_const::port_max);
+        EXPECT_EQ(msg->getSourceCore(),n_const::core_max);
         EXPECT_EQ(msg->getSourceModel(),n_const::model_max);
-        EXPECT_EQ(msg->getDestinationPort(),n_const::core_max);
+        EXPECT_EQ(msg->getDestinationPort(),n_const::port_max);
         EXPECT_EQ(msg->getDestinationCore(),254u);
         EXPECT_EQ(msg->getDestinationModel(),2096u);
         delete msg;
