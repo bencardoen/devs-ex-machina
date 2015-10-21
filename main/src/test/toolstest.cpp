@@ -17,7 +17,12 @@
 #include "tools/gviz.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
+#include "boost/pool/object_pool.hpp"
+#include "boost/pool/singleton_pool.hpp"
 #include "model/modelentry.h"
+#include <algorithm>
+#include <random>
+
 
 using std::cout;
 using std::endl;
@@ -579,4 +584,128 @@ TEST(Vizwriter, creation){
         for(auto ptr : ptrs)
                 EXPECT_EQ(ptr, writer);
         delete writer;
+}
+
+TEST(Pool, MessageBasics){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        boost::object_pool<Message> pl;
+        Message* rawmem = pl.malloc();
+        Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+        pl.free(rawmem);
+}
+
+/// The following tests are prototyping code to find out which approach could be beneficial for our use cases.
+
+TEST(ObjectPool, Timing){
+        /**
+         * ObjectPool : slow, autodestroys objects @exit
+         * need placement new.
+         * Fast iff you reuse the memory
+         */
+        // Simulate w200, 10 steps ~ 25MB
+        constexpr size_t testsize = 40000;
+        constexpr size_t rounds = 10;
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        boost::object_pool<Message> pl;
+        for(size_t j = 0; j<rounds; ++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message* rawmem = pl.malloc();
+                        Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs)
+                        pl.free(p);
+                mptrs.clear();
+        }
+}
+
+TEST(New, Timing){
+        
+        // Simulate w200, 10 steps ~ 25MB
+        auto engine = std::default_random_engine{};
+        constexpr size_t testsize = 40000;
+        constexpr size_t rounds = 20;
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message * msgconstructed = new Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
+                for(auto p : mptrs)
+                        delete p;
+                
+        }
+}
+
+
+TEST(RawPoolOrdered, Timing){
+        /**
+         * Pool : allows hints to preallocation, ordered (a la vector) 
+         * chunks or basic allocation. Pretty fast.
+         */
+        // Simulate w200, 10 steps ~ 25MB
+        auto engine = std::default_random_engine{};
+        constexpr size_t testsize = 40000;
+        constexpr size_t rounds = 20;
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        boost::pool<> pl(sizeof(Message));
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message* rawmem = (Message*)pl.ordered_malloc();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
+                for(auto p : mptrs)
+                        pl.ordered_free(p);
+                
+        }
+}
+
+TEST(RawPool, Timing){
+        auto engine = std::default_random_engine{};
+        
+       /**
+         * Pool : allows hints to preallocation, ordered (a la vector) 
+         * chunks or basic allocation. Pretty fast.
+         */
+        // Simulate w200, 10 steps ~ 25MB
+        constexpr size_t testsize = 40000;
+        constexpr size_t rounds = 20;
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        boost::pool<> pl(sizeof(Message));
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message* rawmem = (Message*)pl.malloc();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
+                for(auto p : mptrs)
+                        pl.free(p);
+                
+        }
 }

@@ -340,7 +340,7 @@ include_directories(
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
     set(LIBS ${LIBS} ) 
 endif()
