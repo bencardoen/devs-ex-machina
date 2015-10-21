@@ -612,16 +612,14 @@ TEST(ObjectPool, Timing){
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
-        boost::object_pool<Message> pl;
         for(size_t j = 0; j<rounds; ++j){
+                boost::object_pool<Message> pl(testsize);
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rawmem = pl.malloc();
                         Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         mptrs[i]=msgconstructed;
                 }
-                for(auto p : mptrs)
-                        pl.free(p);
                 mptrs.clear();
         }
 }
@@ -631,7 +629,7 @@ TEST(New, Timing){
         // Simulate w200, 10 steps ~ 25MB
         auto engine = std::default_random_engine{};
         constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 20;
+        constexpr size_t rounds = 40;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
@@ -659,12 +657,12 @@ TEST(RawPoolOrdered, Timing){
         // Simulate w200, 10 steps ~ 25MB
         auto engine = std::default_random_engine{};
         constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 20;
+        constexpr size_t rounds = 40;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
-        boost::pool<> pl(sizeof(Message));
+        boost::pool<> pl(sizeof(Message), testsize);
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rawmem = (Message*)pl.ordered_malloc();
@@ -689,12 +687,12 @@ TEST(RawPool, Timing){
          */
         // Simulate w200, 10 steps ~ 25MB
         constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 20;
+        constexpr size_t rounds = 40;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
-        boost::pool<> pl(sizeof(Message));
+        boost::pool<> pl(sizeof(Message), testsize);
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rawmem = (Message*)pl.malloc();
