@@ -398,6 +398,8 @@ public:
 
 typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
 
+typedef n_model::AtomicModel_impl* t_raw_atomic;
+
 
 template<typename T>
 class AtomicModel: public AtomicModel_impl

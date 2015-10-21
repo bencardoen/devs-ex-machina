@@ -2,11 +2,11 @@
  * HeapScheduler.h
  *
  *  Created on: Oct 4, 2015
- *      Author: lttlemoi
+ *      Author: Devs Ex Machina
  */
 
-#ifndef SRC_TOOLS_HEAPSCHEDULER_H_
-#define SRC_TOOLS_HEAPSCHEDULER_H_
+#ifndef SRC_SCHEDULER_HEAPSCHEDULER_H_
+#define SRC_SCHEDULER_HEAPSCHEDULER_H_
 
 #include "tools/heap.h"
 #include "tools/misc.h"
@@ -385,4 +385,4 @@ public:
 };
 } /* namespace n_tools */
 
-#endif /* SRC_TOOLS_HEAPSCHEDULER_H_ */
+#endif /* SRC_SCHEDULER_HEAPSCHEDULER_H_ */

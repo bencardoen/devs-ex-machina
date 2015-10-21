@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <scheduler/heapscheduler.h>
 #include <iostream>
 #include <vector>
 #include <list>
@@ -17,7 +18,6 @@
 #include "tools/gviz.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
-#include "tools/heapscheduler.h"
 #include "tools/misc.h"
 #include "model/modelentry.h"
 

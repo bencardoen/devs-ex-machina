@@ -136,7 +136,6 @@ void n_model::Core::init()
 	}
         this->initializeModels();
 
-        m_imm_ids.reserve(m_indexed_models.size());
         m_heap.reserve(m_indexed_models.size());
         
 	for (auto& model : this->m_indexed_models) {
@@ -326,26 +325,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 	LOG_DEBUG("Core :: ", getCoreID(), " getting imminents.");
 	const n_network::t_timestamp::t_time mark = this->getTime().getTime();
 	LOG_DEBUG("Core :: ", getCoreID(), "   -> mark: ", mark);
-	std::size_t heapsize = m_heap.size();
-	m_imminentIndexes.push_back(0);
-
-	while(m_imminentIndexes.size()){
-		std::size_t i = m_imminentIndexes.back();
-		LOG_DEBUG("Core :: ", getCoreID(), "   -> back i: ", i);
-		m_imminentIndexes.pop_back();
-		if(i >= heapsize)
-			continue;
-		const n_model::t_raw_atomic ptr = m_heap.heapAt(i);
-		const n_network::t_timestamp::t_time itemTime = ptr->getTimeNext().getTime();
-		assert(itemTime >= mark && "An item may not have a smaller next time than the calculated next time of the core.");
-		if(itemTime == mark){
-			imms.push_back(ptr);
-			ptr->nextType() |= INT;
-			m_imminentIndexes.push_back(i*2u+2u);
-			m_imminentIndexes.push_back(i*2u+1u);
-		}
-	}
-	assert(m_imminentIndexes.empty() && "no longer imminent indexes to check.");
+	m_heap.unschedule_until(imms, mark);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imms.size(), " imminents @ time " , this->getTime() );
 }
 

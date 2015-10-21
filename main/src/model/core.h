@@ -2,16 +2,16 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include <tools/heapscheduler.h>
 #include "network/network.h"
 #include "model/terminationfunction.h"		// include atomicmodel
-#include "tools/schedulerfactory.h"
 #include "model/modelentry.h"
 #include "network/messageentry.h"
 #include "network/controlmessage.h"
+#include "scheduler/modelscheduler.h"
 #include "tracers/tracers.h"
-#include "tools/statistic.h"
 #include "tools/gviz.h"
+#include "tools/schedulerfactory.h"
+#include "tools/statistic.h"
 #include <set>
 #include <condition_variable>
 
@@ -20,7 +20,6 @@
 
 namespace n_model {
 
-typedef n_model::AtomicModel_impl* t_raw_atomic;
 
 using n_network::t_networkptr;
 using n_network::t_msgptr;
@@ -124,19 +123,6 @@ class Core
 {
 private:
 
-	struct Comparator
-	{
-		inline
-		bool operator()(t_raw_atomic a, t_raw_atomic b) const
-		{
-			// need to test for greater than, because std::make_heap constructs a max heap
-			// and we need a min heap.
-			t_timestamp aTime = a->getTimeNext();
-			t_timestamp bTime = b->getTimeNext();
-			return aTime > bTime;
-		}
-	};
-
 	/**
 	 * Current simulation time
 	 */
@@ -192,7 +178,7 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
-        n_tools::HeapScheduler<AtomicModel_impl, Comparator> m_heap;
+        n_tools::t_ModelHeap m_heap;
         bool m_rescheduleInParts;
 
         /**
@@ -212,19 +198,12 @@ private:
          * Messages to process in a current round.
          */
         std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
-        
-        /**
-         * Working vector for getting the imminent models
-         */
-        std::vector<std::size_t> m_imminentIndexes;
 
         /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_raw_atomic>   m_externs;
-        
-        std::vector<ModelEntry> m_imm_ids;
         
         /**
          * Cached token used to check for messages.
