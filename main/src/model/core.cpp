@@ -56,7 +56,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
-                m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
+                m_terminated_functor(false),m_rescheduleInParts(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -239,15 +239,15 @@ void n_model::Core::transition()
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " imminent nextType() = ", int(imminent->nextType()));
 		if (!hasMail(modelid)) {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
-			assert(imminent->nextType()==INT);
-                        imminent->nextType()=n_model::NONE;
+			assert(imminent->nextType()==AtomicModel_impl::INT);
+                        imminent->markNone();
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
 		} else {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
-                        assert(imminent->nextType() == n_model::CONF);
-                        imminent->nextType() = n_model::NONE;
+                        assert(imminent->nextType() == AtomicModel_impl::CONF);
+                        imminent->markNone();
 			imminent->setTimeElapsed(0);
                         std::vector<t_msgptr>& mail = getMail(modelid);
 			imminent->doConfTransition(mail);		// Confluent
@@ -271,8 +271,8 @@ void n_model::Core::transition()
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing external transition for model ", external->getName());
 		external->setTimeElapsed(noncausaltime.getTime() - external->getTimeLast().getTime());
 		external->doExtTransition(mail);
-                assert(external->nextType()==EXT);
-                external->nextType() = n_model::NONE;
+                assert(external->nextType() == AtomicModel_impl::EXT);
+                external->markNone();
 		external->setTime(noncausaltime);
 //		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(getModel(id));
@@ -310,10 +310,7 @@ void n_model::Core::printSchedulerState()
 	LOG_DEBUG("Core :: ", getCoreID(), " Scheduler state at time ", getTime());
 	LOG_DEBUG("Core :: ", getCoreID(), " indexed models size: ", m_indexed_models.size());
 	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap.size());
-	for(std::size_t i = 0; i < m_heap.size(); ++i){
-		auto m = m_heap.heapAt(i);
-		LOG_DEBUG("Core :: ", getCoreID(), "  ", i,"\t", m_heap[m->getLocalID()], "\t:  model: ", m->getName(), ", time: ", m->getTimeNext());
-	}
+	m_heap.printScheduler("Core :: ", getCoreID());
 #endif
 }
 
@@ -325,7 +322,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 	LOG_DEBUG("Core :: ", getCoreID(), " getting imminents.");
 	const n_network::t_timestamp::t_time mark = this->getTime().getTime();
 	LOG_DEBUG("Core :: ", getCoreID(), "   -> mark: ", mark);
-	m_heap.unschedule_until(imms, mark);
+	m_heap.findUntil(imms, mark);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Have ", imms.size(), " imminents @ time " , this->getTime() );
 }
 
@@ -343,7 +340,7 @@ void n_model::Core::rescheduleImminent()
 t_timestamp 
 n_model::Core::getFirstImminentTime()
 {
-        t_timestamp nextimm = m_heap.size()? m_heap.front()->getTimeNext(): t_timestamp::infinity();
+        t_timestamp nextimm = m_heap.topTime();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " @ current time ::  ", this->getTime(), " first imm == ", nextimm);
         return nextimm;
 }
@@ -619,10 +616,10 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
         if(!hasMail(id)){               // If recd msg size==0
         	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " setting it's next transition type to |= external.");
-                if(model->nextType()==n_model::NONE){   // If INT is set, we get CONF so adding it to imminents risks duplicate transitions
+                if(model->nextType()==AtomicModel_impl::NONE){   // If INT is set, we get CONF so adding it to imminents risks duplicate transitions
                         m_externs.push_back(model);     // avoid map by checking state.
                 }
-                model->nextType() |= n_model::EXT;
+                model->markExternal();
         }
         getMail(id).push_back(msg);
 }

@@ -128,7 +128,6 @@ public:
 	inline
 	std::size_t size() const
 	{
-		LOG_DEBUG("Getting size of scheduler: items size = ", m_index.size(), ", index size = ", m_heap.size());
 		assert((!m_dirty || m_index.size() == m_heap.size()) && "heapscheduler sizes not the same.");
 		return m_index.size();
 	}
@@ -235,6 +234,8 @@ public:
 	/**
 	 * Updates the internal heap so that the heap property is met.
 	 * If the heap was dirty before, it becomes clean.
+	 *
+	 * Complexity: O(3N) with N the total amount of items in the scheduler.
 	 * @see dirty
 	 */
 	inline

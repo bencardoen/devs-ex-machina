@@ -25,10 +25,6 @@ namespace n_model {
 
 typedef uint8_t t_transtype;
 
-constexpr t_transtype NONE=0;
-constexpr t_transtype EXT=1;
-constexpr t_transtype INT=2;
-constexpr t_transtype CONF=3;   // EXT | INT
 
 class AtomicModel_impl: public Model
 {
@@ -94,6 +90,13 @@ protected:
 	t_timestamp m_lastRead;
 
 public:
+
+	static constexpr t_transtype NONE=0;
+	static constexpr t_transtype EXT=1;
+	static constexpr t_transtype INT=EXT<<1;
+	static constexpr t_transtype CONF=INT|EXT;   // EXT | INT
+	static_assert(NONE != EXT && EXT != INT && INT != CONF && EXT != CONF && NONE != CONF, "");
+
 	AtomicModel_impl() = delete;
 
 	/**
@@ -136,7 +139,19 @@ public:
         	LOG_DEBUG("model ", getName(), " getting the next type ", int(m_transition_type_next));
         	return m_transition_type_next;}
         
-        const t_transtype&
+        inline void
+        markInternal()
+        { m_transition_type_next |= INT; }
+
+        inline void
+        markExternal()
+        { m_transition_type_next |= EXT; }
+
+        inline void
+        markNone()
+        { m_transition_type_next = NONE; }
+
+        t_transtype
         nextType()const{return m_transition_type_next;}
         
         /**

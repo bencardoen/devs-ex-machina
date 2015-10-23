@@ -286,7 +286,7 @@ void Conservativecore::runSmallStepStalled()
 
                 collectOutput(m_imminents);            // after all output is sent, mark null msg time in m_distributed.
                 for(t_raw_atomic m: m_imminents)
-                	m->nextType() = NONE;
+                	m->nextType() = AtomicModel_impl::NONE;
                 m_imminents.clear();
         }
 }
