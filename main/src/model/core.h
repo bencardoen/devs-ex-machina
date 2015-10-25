@@ -179,7 +179,6 @@ protected:
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
         n_tools::t_ModelHeap m_heap;
-        bool m_rescheduleInParts;
 
         /**
          * Stores models that will transition in this simulation round.

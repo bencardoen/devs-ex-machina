@@ -51,8 +51,24 @@ private:
 
         typedef n_tools::HeapScheduler<n_model::AtomicModel_impl, ModelComparator> t_base;
 
+        bool m_updateSingle;
+
 public:
-        using t_base::HeapScheduler;
+	/**
+	 * Default constructor. Constructs an empty heap scheduler.
+	 */
+        ModelHeapScheduler():
+		t_base(), m_updateSingle(true)
+	{ }
+
+	/**
+	 * Constructs a new, empty heap scheduler
+	 * @param size	Reserves this amount of size, so that subsequent pushes up until that size
+	 * 		do not result in the heap becoming dirty.
+	 */
+        ModelHeapScheduler(std::size_t size):
+		t_base(size), m_updateSingle(true)
+	{ }
 
         /**
          * @brief Finds all items with a next internal transition time smaller than or equal to some timestamp.
@@ -149,6 +165,22 @@ public:
 		assert(contains(elem) && "Can't update an item that the scheduler doesn't have.");
 		update(elem->getLocalID());
         }
+
+	/**
+	 * @brief Signals the size of the next batch of updates.
+	 */
+	inline
+	void
+	signalUpdateSize(std::size_t k)
+	{
+		recalcKValue();
+		m_updateSingle = singleReschedule(k);
+	}
+
+	inline
+	bool
+	doSingleUpdate() const
+	{ return m_updateSingle; }
 };
 
 //specialization for if no additional message is added to printScheduler

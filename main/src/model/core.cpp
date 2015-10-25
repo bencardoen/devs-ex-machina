@@ -56,7 +56,7 @@ n_model::Core::Core():
 n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
-                m_terminated_functor(false),m_rescheduleInParts(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
+                m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -231,8 +231,8 @@ void n_model::Core::transition()
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 
 	const std::size_t k = m_imminents.size() + m_externs.size();
-	m_rescheduleInParts = m_heap.singleReschedule(k);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), "calculating whether we should reschedule one by one: k=", k, " N=", m_indexed_models.size(), " oneByOne=", m_rescheduleInParts);
+	m_heap.signalUpdateSize(k);
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), "calculating whether we should reschedule one by one: k=", k, " N=", m_indexed_models.size(), " oneByOne=", m_heap.doSingleUpdate());
 
 	for (t_raw_atomic imminent : m_imminents) {
                 const size_t modelid = imminent->getLocalID();
@@ -258,7 +258,7 @@ void n_model::Core::transition()
 		}
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-		if(m_rescheduleInParts)
+		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
                 printSchedulerState();
@@ -280,7 +280,7 @@ void n_model::Core::transition()
                 clearProcessedMessages(mail);
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-		if(m_rescheduleInParts)
+		if(m_heap.doSingleUpdate())
 			m_heap.update(id);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
                 printSchedulerState();
@@ -330,7 +330,7 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 void n_model::Core::rescheduleImminent()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
-	if(!m_rescheduleInParts){
+	if(!m_heap.doSingleUpdate()){
 		m_heap.updateAll();
 	}
 	printSchedulerState();
@@ -589,7 +589,7 @@ void n_model::Core::clearModels()
         m_indexed_local_mail.clear();
         m_indexed_models.clear();
 	m_heap.clear();
-	m_rescheduleInParts = false;
+
 	this->m_received_messages->clear();
 	this->setTime(t_timestamp(0, 0));
 	this->m_gvt = t_timestamp(0, 0);
