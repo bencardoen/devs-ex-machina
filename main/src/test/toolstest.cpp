@@ -17,6 +17,7 @@
 #include "tools/gviz.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
+#include "tools/pools.h"
 #include "boost/pool/object_pool.hpp"
 #include "boost/pool/singleton_pool.hpp"
 #include "model/modelentry.h"
@@ -695,13 +696,12 @@ TEST(SlabPool, Timing){
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
-        void * vrawmem = malloc(sizeof(Message)*testsize);      // Ideally, allocate in pagesizes.
+        Pool<Message, SlabPool<Message>> pl(testsize);
         std::vector<Message*> mptrs(testsize);
         for(size_t j = 0; j<rounds;++j){
-                Message* rawmem = (Message*)vrawmem;
                 for(size_t i = 0; i<testsize; ++i){
+                        Message* rawmem = pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        ++rawmem;
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
@@ -709,7 +709,7 @@ TEST(SlabPool, Timing){
                 for(auto p : mptrs){
                         // Be fair, we have to call destructor to compare with new/pools. The memory is never released.
                         p->~Message();
+                        pl.deallocate(p);
                 }
         }
-        free(vrawmem);
 }
