@@ -597,17 +597,28 @@ TEST(Pool, MessageBasics){
         pl.free(rawmem);
 }
 
-/// The following tests are prototyping code to find out which approach could be beneficial for our use cases.
+
+
+/**The following tests are prototyping code to find out which approach could be beneficial for our use cases.
+ * In the message creation/handling we allocate N messages for usage in 1 round, then deallocate them. 
+ * There are 2 costs we can avoid : deallocation ( we will need that memory again ), and fragmentation.
+ * Since we don't allocate other object types in that stage, fragmentation is not that expensive (~5/10 %). Fragmentation will occur but all holes
+ * will be filled since objectsize is the same. This is shown in the difference between pools vs new. 
+ * However, avoiding deallocation and reusing the old memory gains ~30% in runtime (new v objectpool/slabpool).
+ * The hard part will, as always, be integrating this in parallel cores where the messages are not deallocated all at once, but even then 
+ * we can fall back to pool<> for a modest 12% decrease in runtime.
+ */
+//#define testsize 160000 //inconnect fta w400 , represent 16e5 * 64byte = ~ 100 MB
+#define testsize 40000 //inconnect fta w200 , represent 4e4 * 64byte = ~2.4 MB
+#define rounds 1000 // -t rounds*100
 
 TEST(ObjectPool, Timing){
         /**
-         * ObjectPool : slow, autodestroys objects @exit
-         * need placement new.
-         * Fast iff you reuse the memory
+         * ObjectPool 
+         * Allocate N objects, do not deallocate per object but at end of scope/life destroy the pool.
+         * Only allocated objects get their ~ called.
+         * Tricky to integrate in (multi) core.
          */
-        // Simulate w200, 10 steps ~ 25MB
-        constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 10;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
@@ -618,6 +629,7 @@ TEST(ObjectPool, Timing){
                         Message* rawmem = pl.malloc();
                         Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
                 mptrs.clear();
@@ -625,11 +637,7 @@ TEST(ObjectPool, Timing){
 }
 
 TEST(New, Timing){
-        
-        // Simulate w200, 10 steps ~ 25MB
-        auto engine = std::default_random_engine{};
-        constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 40;
+        // The reference new/delete sequence we now use.
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
@@ -641,69 +649,67 @@ TEST(New, Timing){
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
-                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
+                
                 for(auto p : mptrs)
                         delete p;
                 
         }
 }
 
-
-TEST(RawPoolOrdered, Timing){
-        /**
-         * Pool : allows hints to preallocation, ordered (a la vector) 
-         * chunks or basic allocation. Pretty fast.
+// Don't use ordered, there is no justification/need for it and it is very much slower.
+TEST(RawPool, Timing){
+       /**
+         * Pool : 
+         * Has overhead compared to new, but can be faster for equal sized objects.
+         * Ordered malloc is too expensive and we don't need it here.
          */
-        // Simulate w200, 10 steps ~ 25MB
-        auto engine = std::default_random_engine{};
-        constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 40;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
-        boost::pool<> pl(sizeof(Message), testsize);
+        // Allocate Message sized objects, with an initial grab of testsize objects from OS.
+        boost::pool<> pl(sizeof(Message),testsize); 
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
-                        Message* rawmem = (Message*)pl.ordered_malloc();
+                        Message * rawmem = (Message*) pl.malloc();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
-                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
-                for(auto p : mptrs)
-                        pl.ordered_free(p);
+        
+                for(auto p : mptrs){
+                        // Placement new, so we have to call destructor manually.
+                        p->~Message();
+                        pl.free(p);
+                }
                 
         }
 }
 
-TEST(RawPool, Timing){
-        auto engine = std::default_random_engine{};
-        
-       /**
-         * Pool : allows hints to preallocation, ordered (a la vector) 
-         * chunks or basic allocation. Pretty fast.
+TEST(SlabPool, Timing){
+        /**
+         * Use the fact that we know how many messages will be generated, to allocate once all we will ever need,
+         * and then keep reusing that memory (without the overhead of free lists).
          */
-        // Simulate w200, 10 steps ~ 25MB
-        constexpr size_t testsize = 40000;
-        constexpr size_t rounds = 40;
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
+        void * vrawmem = malloc(sizeof(Message)*testsize);      // Ideally, allocate in pagesizes.
         std::vector<Message*> mptrs(testsize);
-        boost::pool<> pl(sizeof(Message), testsize);
         for(size_t j = 0; j<rounds;++j){
+                Message* rawmem = (Message*)vrawmem;
                 for(size_t i = 0; i<testsize; ++i){
-                        Message* rawmem = (Message*)pl.malloc();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        ++rawmem;
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
-                std::shuffle(std::begin(mptrs), std::end(mptrs), engine);
-                for(auto p : mptrs)
-                        pl.free(p);
-                
+                for(auto p : mptrs){
+                        // Be fair, we have to call destructor to compare with new/pools. The memory is never released.
+                        p->~Message();
+                }
         }
+        free(vrawmem);
 }
