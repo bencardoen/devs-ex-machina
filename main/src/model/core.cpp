@@ -36,7 +36,7 @@ n_model::Core::~Core()
 void
 n_model::Core::checkInvariants(){
 #ifdef SAFETY_CHECKS
-        if(this->m_heap.size() != this->m_indexed_models.size()){
+        if(this->m_heap.indexSize() != this->m_indexed_models.size()){
                 const std::string msg = "Scheduler contains less models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
@@ -44,7 +44,8 @@ n_model::Core::checkInvariants(){
         }
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " testing invariants.");
         printSchedulerState();
-        assert(m_heap.isHeap() && "The scheduler must be a heap.");
+
+        m_heap.testInvariant();
 #endif
 }
 
@@ -94,7 +95,7 @@ void n_model::Core::load(const std::string& fname)
 void n_model::Core::addModel(const t_atomicmodelptr& model)
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Add model called on core::  got model : ", model->getName());
-	std::string mname = model->getName();
+        model->initUUID(getCoreID(), m_indexed_models.size());
         this->m_indexed_models.push_back(model);
 }
 

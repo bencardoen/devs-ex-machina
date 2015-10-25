@@ -7,6 +7,7 @@
 #define SCHEDULER_H
 
 #include <memory>
+#include "tools/globallog.h"
 
 namespace n_tools {
 
@@ -117,14 +118,14 @@ public:
 
 	virtual
 	void
-	printScheduler() = 0;
+	printScheduler() const = 0;
 
 	/**
 	 * Test any invariant that has to hold during modifying operations.
 	 */
 	virtual
 	void
-	testInvariant()=0;
+	testInvariant() const = 0;
         
         /**
          * If item (key) is present in heap, overwrite it, else insert.

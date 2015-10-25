@@ -105,16 +105,19 @@ bool UnSynchronizedScheduler<X, R>::erase(const R& elem) {
 }
 
 template<typename X, typename R>
-void UnSynchronizedScheduler<X, R>::printScheduler()  {
+void UnSynchronizedScheduler<X, R>::printScheduler() const {
+#if LOGGING
+	LOG_DEBUG("Printing scheduler:");
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
 		R stored = *iter;
-		std::cout << stored << std::endl;
+		LOG_DEBUG("  ", stored);
 	}
+#endif
 }
 
 template<typename X, typename R>
-void UnSynchronizedScheduler<X, R>::testInvariant() {
+void UnSynchronizedScheduler<X, R>::testInvariant() const {
 	if(m_storage.size() != m_hashtable.size()){
 		std::stringstream ss;
 		ss << "Invariant Scheduler failed :: \n";

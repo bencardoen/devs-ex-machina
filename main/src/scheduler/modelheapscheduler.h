@@ -47,7 +47,7 @@ private:
         /**
          * Working vector for getting the imminent models
          */
-        std::vector<std::size_t> m_imminentIndexes;
+        mutable std::vector<std::size_t> m_imminentIndexes;
 
         typedef n_tools::HeapScheduler<n_model::AtomicModel_impl, ModelComparator> t_base;
 
@@ -78,7 +78,7 @@ public:
          * Complexity: O(k) where k is the amount of found items. Therefore, at most O(N).
          */
 	void
-	findUntil(std::vector<n_model::t_raw_atomic> &container, const n_network::t_timestamp& mark)
+	findUntil(std::vector<n_model::t_raw_atomic> &container, const n_network::t_timestamp& mark) const
 	{
 		std::size_t heapsize = size();
 		m_imminentIndexes.push_back(0);
@@ -147,7 +147,12 @@ public:
 	testInvariant()
 	{ assert(isHeap() && "Heap scheduler heap property is violated"); }
 
+	inline
+	std::size_t indexSize() const
+	{ return t_base::size(); }
+
 	using t_base::update;	//keeps the void update(std::size_t) overload available.
+	using t_base::updateAll;
 
 	/**
 	 * @brief Updates a single item.
