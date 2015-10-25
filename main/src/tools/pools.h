@@ -5,14 +5,16 @@
 #define SRC_TOOLS_POOLS_H_
 
 #include <new>
-#include <vector>
+#include "boost/pool/object_pool.hpp"
+#include "boost/pool/pool.hpp"
+#include "boost/pool/singleton_pool.hpp"
 
 
 
 namespace n_tools {
 
 /**
- * Interface for Pools. Specialize per pool type.
+ * Interface for Pools. 
  * @param Object : Pool provides memory in chunks of sizeof(Object).
  * @param P : the underlying Pool type
  */
@@ -25,19 +27,19 @@ class Pool{
                  * @param nsize if applicable, set the step size with which the pool increases if it runs out of memory.
                  * @note : nsize can be ignored by the pool, psize is a guarantee that the pool will provide either space for none(alloc fail) or at least psize objects.
                  */
-                explicit Pool(size_t psize, size_t nsize=0){;}
+                explicit Pool(size_t psize, size_t nsize=0);
                 
                 /**
                  * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
                  * pool itself or this has happened by the deallocate function.
                  */
-                ~Pool(){;}
+                ~Pool();
                 
                 /**
                  * @return A pointer to the next free (uninitialized) object.
                  * @throw bad_alloc if the pool cannot service the request.
                  */
-                Object* allocate(){return nullptr;}
+                Object* allocate();
                 
                 /**
                  * Destroy parameter
@@ -45,14 +47,17 @@ class Pool{
                  * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
                  * @throw bad_alloc if O does not belong to this pool.
                  */
-                void deallocate(Object* O){
-                        ;
-                }
+                void deallocate(Object* O);
 };
 
 
 /**
- * Single use case pool : create (at most) N objects, and keep reusing the memory.
+ * Static pool with very little overhead.
+ * Allocates at construction all the memory it will need as indicated by the user,
+ * reuses that memory if all ptrs have been collected.
+ * @attention: obviously this pool should only be used in a usage pattern where you cycle
+ * between alloc(n), dealloc(n) with a predetermined limit on n. The simplicity of this pool
+ * allows a severe reduction in runtime.
  */
 template<typename T>
 class SlabPool{
@@ -132,8 +137,9 @@ class SlabPool{
                 }
 };
 
-/*
- * Partial Specialization for SlabPool.
+/**
+ * Static pool with very little overhead, but applies only to selected use case
+ * @see SlabPool.
  */
 template<typename Object>
 class Pool<Object, SlabPool<Object>>
@@ -177,8 +183,8 @@ class Pool<Object, SlabPool<Object>>
 };
 
 /**
- * Forwarding specialization to malloc/free.
- * Useful for comparing pools wrt n/d perf.
+ * Forwarding specialisation to malloc/free.
+ * Implemented as a pass-through for, among others, comparing to pools.
  */
 template<typename Object>
 class Pool<Object, std::false_type>
@@ -218,6 +224,151 @@ class Pool<Object, std::false_type>
                 }
 };
 
+/**
+ * Specialisation for boost object pool.
+ * The usage pattern for this pool is create (pool) once, at end of scope let
+ * the pool handle destruction. Deallocation is supported but expensive.
+ */
+template<typename Object>
+class Pool<Object, boost::object_pool<Object>>{
+        private:
+                boost::object_pool<Object> m_pool;
+        public:
+                /**
+                 * Create new pool.
+                 * @param psize Pool can hold at least psize objects
+                 * @param nsize if applicable, set the step size with which the pool increases if it runs out of memory.
+                 * @note : nsize can be ignored by the pool, psize is a guarantee that the pool will provide either space for none(alloc fail) or at least psize objects.
+                 */
+                explicit Pool(size_t psize, size_t nsize=0):m_pool((nsize == 0)? psize : nsize){}// opool(nsize), so need to convert here.
+                
+                /**
+                 * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
+                 * pool itself or this has happened by the deallocate function.
+                 */
+                ~Pool(){}
+                
+                /**
+                 * @return A pointer to the next free (uninitialized) object.
+                 * @throw bad_alloc if the pool cannot service the request.
+                 */
+                Object* allocate()
+                {
+                        return m_pool.malloc();
+                }
+                
+                /**
+                 * Destroy parameter
+                 * @pre O->~Object() has not been called, O was allocated by this pool.
+                 * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
+                 * @throw bad_alloc if O does not belong to this pool.
+                 * @attention : this is very expensive for this type of pool. Its intended usage is create pool, allocate objects 
+                 * and then self destruct (whole pool) @exit scope.
+                 */
+                void deallocate(Object* O)
+                {
+                        O->~Object();
+                        m_pool.free(O);
+                }
+};
+
+/**
+ * Specialisation for the generic boost pool.
+ * Has slight overhead over new/delete, but can be faster.
+ */
+template<typename Object> 
+class Pool<Object, boost::pool<>>{
+        private:
+                boost::pool<>   m_pool;
+        public:
+                /**
+                 * Create new pool.
+                 * @param psize Pool can hold at least psize objects
+                 * @nsize = ignored, the pool grows module psize
+                 */
+                explicit Pool(size_t psize, size_t /*nsize*/=0):m_pool(sizeof(Object), psize){}
+                
+                /**
+                 * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
+                 * pool itself or this has happened by the deallocate function.
+                 */
+                ~Pool(){}
+                
+                /**
+                 * @return A pointer to the next free (uninitialized) object.
+                 * @throw bad_alloc if the pool cannot service the request.
+                 */
+                Object* allocate()
+                {
+                        return (Object*) m_pool.malloc();
+                }
+                
+                /**
+                 * Destroy parameter
+                 * @pre O->~Object() has not been called, O was allocated by this pool.
+                 * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
+                 * @throw bad_alloc if O does not belong to this pool.
+                 */
+                void deallocate(Object* O)
+                {
+                        O->~Object();
+                        m_pool.free(O);
+                }
+};
+
+
+
+struct DXPoolTag{}; // Needed for singleton pools to differentiate between allocators.
+template<typename Object>
+using spool =  boost::singleton_pool<DXPoolTag, sizeof(Object)>;
+/**
+ * Singleton pool, use this if the pool has to be shared between threads.
+ */
+template<typename Object> 
+class Pool<Object, spool<Object>>{
+        
+        public:
+                /**
+                 * Create new pool.
+                 * All parameters are ignored (template parameters for pooltype).
+                 */
+                explicit Pool(size_t /*psize*/, size_t /*nsize*/=0){}
+                
+                /**
+                 * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
+                 * pool itself or this has happened by the deallocate function.
+                 */
+                ~Pool(){}
+                
+                /**
+                 * @return A pointer to the next free (uninitialized) object.
+                 * @throw bad_alloc if the pool cannot service the request.
+                 */
+                Object* allocate()
+                {
+                        return (Object*) spool<Object>::malloc();
+                }
+                
+                /**
+                 * Destroy parameter
+                 * @pre O->~Object() has not been called, O was allocated by this pool.
+                 * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
+                 * @throw bad_alloc if O does not belong to this pool.
+                 */
+                void deallocate(Object* O)
+                {
+                        O->~Object();
+                        spool<Object>::free(O);
+                }
+};
+
+// Instantiation so that compile errors are detected if the code changes (e.g) not using a pool type in the project and introducing a bug
+// for that particular pool could go unnoticed a long time.
+template class Pool<int, boost::object_pool<int>>;
+template class Pool<int, boost::pool<int>>;
+template class Pool<int, SlabPool<int>>;
+template class Pool<int, std::false_type>;
+template class Pool<int, spool<int>>;
 
 } /* namespace n_tools */
 

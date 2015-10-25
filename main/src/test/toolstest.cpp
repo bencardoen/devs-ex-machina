@@ -600,18 +600,9 @@ TEST(Pool, MessageBasics){
 
 
 
-/**The following tests are prototyping code to find out which approach could be beneficial for our use cases.
- * In the message creation/handling we allocate N messages for usage in 1 round, then deallocate them. 
- * There are 2 costs we can avoid : deallocation ( we will need that memory again ), and fragmentation.
- * Since we don't allocate other object types in that stage, fragmentation is not that expensive (~5/10 %). Fragmentation will occur but all holes
- * will be filled since objectsize is the same. This is shown in the difference between pools vs new. 
- * However, avoiding deallocation and reusing the old memory gains ~30% in runtime (new v objectpool/slabpool).
- * The hard part will, as always, be integrating this in parallel cores where the messages are not deallocated all at once, but even then 
- * we can fall back to pool<> for a modest 12% decrease in runtime.
- */
-//#define testsize 160000 //inconnect fta w400 , represent 16e5 * 64byte = ~ 100 MB
+
 #define testsize 40000 //inconnect fta w200 , represent 4e4 * 64byte = ~2.4 MB
-#define rounds 1000 // -t rounds*100
+#define rounds 10 // -t rounds*100
 
 TEST(ObjectPool, Timing){
         /**
@@ -625,9 +616,9 @@ TEST(ObjectPool, Timing){
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
         for(size_t j = 0; j<rounds; ++j){
-                boost::object_pool<Message> pl(testsize);
+                Pool<Message, boost::object_pool<Message>> pl(testsize);
                 for(size_t i = 0; i<testsize; ++i){
-                        Message* rawmem = pl.malloc();
+                        Message* rawmem = pl.allocate();
                         Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
@@ -643,22 +634,25 @@ TEST(New, Timing){
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
+        Pool<Message, std::false_type> pl(testsize);
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
-                        Message * msgconstructed = new Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        Message* rmem = pl.allocate();
+                        Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
                 
-                for(auto p : mptrs)
-                        delete p;
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
                 
         }
 }
 
-// Don't use ordered, there is no justification/need for it and it is very much slower.
-TEST(RawPool, Timing){
+
+TEST(Pool, Timing){
        /**
          * Pool : 
          * Has overhead compared to new, but can be faster for equal sized objects.
@@ -669,10 +663,10 @@ TEST(RawPool, Timing){
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
         // Allocate Message sized objects, with an initial grab of testsize objects from OS.
-        boost::pool<> pl(sizeof(Message),testsize); 
+        Pool<Message, boost::pool<>> pl(testsize); 
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
-                        Message * rawmem = (Message*) pl.malloc();
+                        Message * rawmem = (Message*) pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
@@ -680,13 +674,39 @@ TEST(RawPool, Timing){
                 }
         
                 for(auto p : mptrs){
-                        // Placement new, so we have to call destructor manually.
-                        p->~Message();
-                        pl.free(p);
+                        pl.deallocate(p);
                 }
                 
         }
 }
+
+TEST(TsPool, Timing){
+       /**
+         * Singleton pool, threadsafe variant of pool.
+         */
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        // Allocate Message sized objects, with an initial grab of testsize objects from OS.
+        Pool<Message, spool<Message>> pl(0,0); 
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message * rawmem = (Message*) pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+        
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+                
+        }
+}
+
+
 
 TEST(SlabPool, Timing){
         /**
@@ -707,8 +727,6 @@ TEST(SlabPool, Timing){
                         mptrs[i]=msgconstructed;
                 }
                 for(auto p : mptrs){
-                        // Be fair, we have to call destructor to compare with new/pools. The memory is never released.
-                        p->~Message();
                         pl.deallocate(p);
                 }
         }

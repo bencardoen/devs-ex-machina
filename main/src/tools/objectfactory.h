@@ -28,7 +28,8 @@ std::shared_ptr<T> createObject(Args&&... args)
  * 		This may change in the future so be warned!
  */
 template<typename T, typename ... Args>
-T* createRawObject(Args&&... args){
+T* createRawObject(Args&&... args)
+{
 	return new T(args...);
 }
 
@@ -36,7 +37,8 @@ T* createRawObject(Args&&... args){
  * Takes back a pointer created by createRawObject and clears its memory
  */
 template<typename T>
-void takeBack(T* pointer){
+void takeBack(T* pointer)
+{
 	delete pointer;
 }
 
