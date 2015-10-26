@@ -212,9 +212,10 @@ public:
 	}
 
 	/*
-	 * Adds a new item to the heap.
-	 * @note If this results in internal relocations, the heap becomes dirty.
+	 * Adds a new item to the heap. This item may not be present in the heap already.
+	 * @note If this operation results in internal relocations, the heap becomes dirty.
 	 * @see dirty
+	 * @see update if you want to reschedule an item instead.
 	 */
 	inline
 	void push_back(Item* item)
@@ -261,6 +262,10 @@ public:
 	 * Updates a single item.
 	 * @precondition The heap is not dirty.
 	 * @see dirty
+	 * @see singleReschedule
+	 * @see updateAll
+	 *
+	 * Complexity: O(log(N)) with N the total amount of items in the scheduler.
 	 */
 	inline
 	void update(std::size_t index)

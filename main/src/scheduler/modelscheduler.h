@@ -14,6 +14,11 @@
 
 namespace n_tools {
 
+/**
+ * @brief Helper struct for easier creation of schedulers.
+ * @tparam Container The top level container of the model scheduler.
+ * @tparam Heap If applicable, the underlying heap structure.
+ */
 template<template<typename...T> class Container, template<typename...T> class Heap>
 struct ModelScheduler
 {

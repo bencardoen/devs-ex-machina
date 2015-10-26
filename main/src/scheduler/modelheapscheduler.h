@@ -55,7 +55,7 @@ private:
 
 public:
 	/**
-	 * Default constructor. Constructs an empty heap scheduler.
+	 * Default constructor. Constructs an empty model heap scheduler.
 	 */
         ModelHeapScheduler():
 		t_base(), m_updateSingle(true)
@@ -153,6 +153,7 @@ public:
 
 	using t_base::update;	//keeps the void update(std::size_t) overload available.
 	using t_base::updateAll;
+	using t_base::clear;
 
 	/**
 	 * @brief Updates a single item.
@@ -173,6 +174,16 @@ public:
 
 	/**
 	 * @brief Signals the size of the next batch of updates.
+	 *
+	 * Signaling the size of the next batch of updates helps the scheduler in deciding
+	 * whether a 1 by 1 update approach is better than rebuilding the entire scheduler.
+	 * @param k The amount of updates in the next batch of operations.
+	 * @see doSingleUpdate
+	 * @note Some scheduler implementations may use this method to fix the internal state.
+	 * 	The correct order of calls to findUntil, update/updateAll and signalUpdateSize is the following:
+	 * 		1. findUntil
+	 * 		2. signalUpdateSize
+	 * 		3. update/updateAll
 	 */
 	inline
 	void
@@ -182,6 +193,14 @@ public:
 		m_updateSingle = singleReschedule(k);
 	}
 
+	/**
+	 * If true, the scheduler has determined that subsequent calls to update
+	 * will have a lower complexity than one call to updateAll.
+	 * Otherwise, it is advised to use one call to updateAll to reschedule all items.
+	 * @see signalUpdateSize
+	 * @see update
+	 * @see updateAll
+	 */
 	inline
 	bool
 	doSingleUpdate() const

@@ -179,6 +179,7 @@ protected:
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
         n_tools::t_defaultModelScheduler m_heap;
+//        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
         /**
          * Stores models that will transition in this simulation round.

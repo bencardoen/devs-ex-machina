@@ -147,7 +147,6 @@ void n_model::Core::init()
 	}
 	//schedule all models.
 	rescheduleAll();
-	m_heap.recalcKValue();
 }
 
 void n_model::Core::initializeModels()
