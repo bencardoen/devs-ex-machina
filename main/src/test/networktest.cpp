@@ -95,7 +95,7 @@ void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
 
 TEST(Network, threadsafety)
 {
-	const size_t cores = std::max(std::thread::hardware_concurrency(), 8u);
+	const size_t cores = std::thread::hardware_concurrency() > 8u ? 8u : std::thread::hardware_concurrency();
 	if(cores <= 1){
 		LOG_WARNING("No threads available for threaded test.");
 		return;
