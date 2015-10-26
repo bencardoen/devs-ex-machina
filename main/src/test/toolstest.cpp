@@ -401,7 +401,7 @@ TEST(SharedVector, concurrency){
 	 * Try to block as much as possible on the shared vector to trigger races/deadlock.
 	 */
 	size_t accesses = 100000;
-	const size_t num_threads = std::max(std::thread::hardware_concurrency(), 8);
+	const size_t num_threads = std::max(std::thread::hardware_concurrency(), 8u);
 	accesses *= num_threads; // avoid ugly division below.
 	if(num_threads < 2){
 		LOG_INFO("Refusing to test threads without threading support.");
