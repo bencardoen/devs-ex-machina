@@ -19,7 +19,7 @@ void testOPool(size_t testsize, size_t rounds){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rawmem = pl.allocate();
                         Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        msgconstructed->setAntiMessage(true);
+                        //msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
                 mptrs.clear();
@@ -33,7 +33,7 @@ void testDPool(size_t testsize, size_t rounds){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rmem = pl.allocate();
                         Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        msgconstructed->setAntiMessage(true);
+                        //msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
                 
@@ -53,7 +53,7 @@ void testPool(size_t testsize, size_t rounds){
                 for(size_t i = 0; i<testsize; ++i){
                         Message * rawmem = (Message*) pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        msgconstructed->setAntiMessage(true);
+                        //msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
         
@@ -72,7 +72,7 @@ void testTSPool(size_t testsize, size_t rounds){
                 for(size_t i = 0; i<testsize; ++i){
                         Message * rawmem = (Message*) pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        msgconstructed->setAntiMessage(true);
+                        //msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
         
@@ -92,7 +92,7 @@ void testSlabPool(size_t testsize, size_t rounds){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rawmem = pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        msgconstructed->setAntiMessage(true);
+                        //msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
                 for(auto p : mptrs){

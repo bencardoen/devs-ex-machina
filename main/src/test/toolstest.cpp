@@ -22,6 +22,8 @@
 #include "boost/pool/singleton_pool.hpp"
 #include "model/modelentry.h"
 #include <algorithm>
+#include "tools/pools.h"
+#include "network/message.h"
 #include <random>
 
 
@@ -730,4 +732,27 @@ TEST(SlabPool, Timing){
                         pl.deallocate(p);
                 }
         }
+}
+
+
+TEST(Pool, getPool){
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        /**
+         * When we create a message, at creation we know the type of the message. In handling the message, we 
+         * only look at the base class pointer, which poses the difficulty of deallocating it (we no longer know 
+         * the exact derived type). This means we can't find the exact pool (which uses compile time typing).
+         * A solution is storing this information in the message object itself, via a mechanism somewhat similar 
+         * to double dispatch. This test checks if our assumption about the type-safety in this mechanism is correct.
+         */
+        // The pool used is the slabpool, which detects by bad_alloc if the alloc/dealloc is not handled by the 
+        // same instance.
+        
+        // Construction (port createMessages, we know the type)
+        n_network::Message* rawmsg = n_tools::getPool<n_network::SpecializedMessage<double>>().allocate();
+        n_network::Message* smsg = new(rawmsg) n_network::SpecializedMessage<double>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, 3.1415);
+        // Pass around the pointer as a ptr to Base.
+        // Invoke a virtual function, which then can reference the correct Pool<virtual type>.
+        smsg->releaseMe(); 
+        // If we get here, we haven't seen a bad_alloc.
 }

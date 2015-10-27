@@ -14,6 +14,7 @@
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
+#include "tools/pools.h"
 #include "mid.h"
 #include <sstream>
 #include <iosfwd>
@@ -195,6 +196,16 @@ public:
 	{
 		m_timestamp = now;
 	}
+        
+        /**
+         * Deregister object with pool.
+         * @pre This object was allocated using the registered pool. This will invoke the destructor.
+         * @post The object is no longer accessible.
+         */
+        virtual void releaseMe()
+        {
+                n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
 
 	/**
 	 * @brief Sets the causality of the message
@@ -292,6 +303,16 @@ public:
 		ssr << data;
 		return ssr.str();
 	}
+        
+        /**
+         * Deregister object with pool. This will invoke the destructor.
+         * @pre This object was allocated using the registered pool.
+         * @post This object is no longer accessible.
+         */
+        virtual void releaseMe()override
+        {
+                n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
 
 };
 

@@ -365,10 +365,21 @@ class Pool<Object, spool<Object>>{
 // Instantiation so that compile errors are detected if the code changes (e.g) not using a pool type in the project and introducing a bug
 // for that particular pool could go unnoticed a long time.
 template class Pool<int, boost::object_pool<int>>;
-template class Pool<int, boost::pool<int>>;
+template class Pool<int, boost::pool<>>;
 template class Pool<int, SlabPool<int>>;
 template class Pool<int, std::false_type>;
 template class Pool<int, spool<int>>;
+
+template<typename Object>
+using ObjectPool = Pool<Object, SlabPool<Object>>;
+
+template<typename T>
+ObjectPool<T>&
+getPool()
+{
+        thread_local ObjectPool<T> pool(400);
+        return pool;
+}
 
 } /* namespace n_tools */
 

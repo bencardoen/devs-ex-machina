@@ -6,6 +6,7 @@
  *      Using the following url as help : http://eli.thegreenplace.net/2014/variadic-templates-in-c/
  */
 #include <memory>
+#include "tools/pools.h"
 
 #ifndef SRC_TOOLS_OBJECTFACTORY_H_
 #define SRC_TOOLS_OBJECTFACTORY_H_
