@@ -106,15 +106,18 @@ bool MessageScheduler<X, R>::erase(const R& elem) {
 }
 
 template<typename X, typename R>
-void MessageScheduler<X, R>::printScheduler()  {
+void MessageScheduler<X, R>::printScheduler() const {
+#if LOGGING
+	LOG_DEBUG("Printing scheduler:");
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
-		LOG_DEBUG(": ", *iter);
+		LOG_DEBUG(" ", *iter);
 	}
+#endif
 }
 
 template<typename X, typename R>
-void MessageScheduler<X, R>::testInvariant() {
+void MessageScheduler<X, R>::testInvariant() const {
 	if(m_storage.size() != m_hashtable.size()){
 		std::stringstream ss;
 		ss << "Invariant Scheduler failed :: \n";

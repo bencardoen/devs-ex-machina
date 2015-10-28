@@ -87,13 +87,17 @@ bool STLScheduler<R>::erase(const R& elem) {
 }
 
 template<typename R>
-void STLScheduler<R>::printScheduler()  {
-	for(auto iter=m_storage.rbegin(); iter!=m_storage.rend(); ++iter)
-                std::cout << *iter << std::endl;
+void STLScheduler<R>::printScheduler() const {
+#if LOGGING
+	LOG_DEBUG("Printing scheduler:");
+	for(auto iter=m_storage.rbegin(); iter!=m_storage.rend(); ++iter){
+		LOG_DEBUG(" ", *iter);
+	}
+#endif
 }
 
 template<typename R>
-void STLScheduler<R>::testInvariant() {
+void STLScheduler<R>::testInvariant() const {
 	
 }
 

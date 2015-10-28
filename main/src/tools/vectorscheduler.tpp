@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <utility>
+#include "tools/globallog.h"
 
 namespace n_tools {
 
@@ -102,19 +103,23 @@ bool VectorScheduler<X, R>::erase(const R& elem) {
 }
 
 template<typename X, typename R>
-void VectorScheduler<X, R>::printScheduler()  {
+void VectorScheduler<X, R>::printScheduler() const {
+#if LOGGING
+	LOG_DEBUG("Printing scheduler:");
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
-		std::cout << *iter << std::endl;
+		LOG_DEBUG(" ", *iter);
 	}
+#endif
 }
 
 template<typename X, typename R>
-void VectorScheduler<X, R>::testInvariant() {
+void VectorScheduler<X, R>::testInvariant() const {
 	size_t count_keys=0;
         for(const auto& entry : m_keys)
                 if(entry.second)
                         ++count_keys;
+        LOG_DEBUG("count_keys: ", count_keys, " size(): ", size());
         if(count_keys != size())
                 throw std::logic_error("Scheduler invariant broken : keys!=heap items");
 }

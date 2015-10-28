@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <scheduler/heapscheduler.h>
 #include <iostream>
 #include <vector>
 #include <list>
@@ -17,6 +18,7 @@
 #include "tools/gviz.h"
 #include "tools/stlscheduler.h"
 #include "tools/flags.h"
+#include "tools/misc.h"
 #include "model/modelentry.h"
 
 using std::cout;
@@ -560,7 +562,6 @@ TEST(IntrusiveScheduler, basic_ops){
                 delete mptr;
 }
 
-
 TEST(Vizwriter, creation){
         std::vector<GVizWriter*> ptrs(std::thread::hardware_concurrency(), nullptr);
         auto tfun = [&ptrs](size_t tid)->void{
@@ -579,4 +580,276 @@ TEST(Vizwriter, creation){
         for(auto ptr : ptrs)
                 EXPECT_EQ(ptr, writer);
         delete writer;
+}
+
+struct HeapTestComparator
+{
+	bool operator()(int a, int b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a > b);
+	}
+} heaptestcomparator;
+
+TEST(HeapTest, heap_operations){
+	std::vector<int> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator)
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec[i], result[i]);
+	}
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapTestUpdateVal
+{
+	std::size_t m_index;
+	int m_value;
+	constexpr HeapTestUpdateVal(int value = 0, std::size_t index = 0):
+		m_index(index), m_value(value)
+	{}
+
+	HeapTestUpdateVal& operator++()
+	{
+	  ++m_value;
+	  return *this;
+	}
+};
+
+struct HeapTestComparator2
+{
+	bool operator()(const HeapTestUpdateVal& a, const HeapTestUpdateVal& b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a.m_value > b.m_value);
+	}
+} heaptestcomparator2;
+struct HeapTestUpdator
+{
+	void operator()(HeapTestUpdateVal& item, std::size_t distance){
+		//we want a min heap, so we must test whether a > b and not a < b
+		LOG_DEBUG("updating value ", item.m_value, ',', item.m_index, " to index ", distance);
+		item.m_index = distance;
+	}
+} heaptestupdator;
+
+TEST(HeapTest, heap_operations_update){
+	std::vector<HeapTestUpdateVal> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator2)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator2, heaptestupdator)
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	LOG_DEBUG("vec[12] = 18");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	LOG_DEBUG("vec[12] = 18, after update");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<std::size_t> indexresult = {0, 1, 0, 3, 4, 0, 0, 7, 0, 9, 0, 0, 0, 0, 0, 15, 0, 0, 0, 19};
+	EXPECT_EQ(vec.size(), result.size());
+	EXPECT_EQ(vec.size(), indexresult.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("Checking item ", i);
+		EXPECT_EQ(vec[i].m_value, result[i]);
+		EXPECT_EQ(vec[i].m_index, indexresult[i]);
+	}
+	LOG_DEBUG("Done");
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapSchedulerVal
+{
+	const int m_startvalue;
+	int m_value;
+	constexpr HeapSchedulerVal(int value = 0):
+		m_startvalue(value), m_value(value)
+	{}
+};
+
+struct HeapSchedulerComparator
+{
+	bool operator()(HeapSchedulerVal* a, HeapSchedulerVal* b) const{
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a->m_value > b->m_value);
+	}
+};
+
+TEST(HeapTest, heap_scheduler){
+	n_tools::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
+	for(std::size_t i = 0; i < 20; ++i){
+		vec.push_back(new HeapSchedulerVal(i));
+		EXPECT_EQ(vec.dirty(), i >= 5);
+	}
+#define HEAP_TEST_ISHEAP vec.isHeap()
+#define HEAP_TEST_UPDATE(x) vec.update(x)
+	EXPECT_TRUE(vec.dirty());
+	vec.updateAll();
+	EXPECT_FALSE(vec.dirty());
+	EXPECT_EQ(vec.size(), 20u);
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("testing item ", i);
+		EXPECT_EQ(vec.heapAt(i)->m_value, int(i));
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, int(i));
+	}
+	LOG_DEBUG("prior to testing for the first time.");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4]->m_value = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3]->m_value = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9]->m_value = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12]->m_value = 18;
+	LOG_DEBUG("vec[12] = 18, ", vec[12].m_index);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
+	HEAP_TEST_UPDATE(12);
+	LOG_DEBUG("vec[12] = 18, after update");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<int> indexresult = {4, 1, 2, 7, 0, 5, 6, 15, 8, 19, 10, 11, 12, 13, 14, 3, 16, 17, 18, 9};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec.heapAt(i)->m_value, result[i]);
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, indexresult[i]);
+	}
+	for(std::size_t i = 0; i < vec.size(); ++i)
+		delete vec[i];
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+TEST(NumericTest, sgnFunc){
+#define DOTEST(suffix) \
+	EXPECT_EQ(1, n_tools::sgn(1##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(2##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(10##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-1##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-2##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-10##suffix)); \
+	EXPECT_EQ(0, n_tools::sgn(0##suffix))
+
+	DOTEST(0);	//integer
+	DOTEST(.0);	//double
+	DOTEST(.0f);	//float
+	DOTEST(l);	//long int
+	DOTEST(ll);	//long long int
+#undef DOTEST
+}
+
+TEST(NumericTest, log2Func){
+	EXPECT_EQ(0, n_tools::intlog2(1));
+	EXPECT_EQ(1, n_tools::intlog2(2));
+	EXPECT_EQ(1, n_tools::intlog2(3));
+	EXPECT_EQ(2, n_tools::intlog2(4));
+	EXPECT_EQ(2, n_tools::intlog2(5));
+	EXPECT_EQ(2, n_tools::intlog2(6));
+#define DOTESTPART(k, type) \
+	EXPECT_EQ(k-1, n_tools::intlog2((type)((1 << k) -1))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)(1 << k))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)((1 << k) + 1)));
+#define DOTEST(type) \
+	DOTESTPART(3, type)\
+	DOTESTPART(4, type)\
+	DOTESTPART(5, type)\
+	DOTESTPART(6, type)\
+	DOTESTPART(7, type)\
+	DOTESTPART(8, type)\
+	DOTESTPART(9, type)\
+	DOTESTPART(10, type)\
+	DOTESTPART(11, type)\
+	DOTESTPART(12, type)\
+	DOTESTPART(13, type)\
+	DOTESTPART(14, type)\
+	DOTESTPART(15, type)\
+	DOTESTPART(16, type)\
+	DOTESTPART(17, type)\
+	DOTESTPART(18, type)\
+	DOTESTPART(19, type)\
+	DOTESTPART(20, type)\
+	DOTESTPART(21, type)
+
+	DOTEST(int)			//uses default one
+	DOTEST(unsigned int)
+	DOTEST(unsigned long)
+	DOTEST(unsigned long long)
+
+#undef DOTEST
+#undef DOTESTPART
 }
