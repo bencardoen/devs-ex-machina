@@ -14,6 +14,7 @@
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
+#include "mid.h"
 #include <sstream>
 #include <iosfwd>
 #include <atomic>
@@ -22,22 +23,18 @@ class TestCereal;
 
 namespace n_network {
 
-/**
- * Denote cut-type in gvt synchronization.
- */
-enum MessageColor
-{
-	WHITE = 0, RED = 1
-};
+
+enum MessageColor : uint8_t{WHITE = 0, RED = 1};
+// Msg status. Note that the assigned values are to be orthogonal.
+enum Status : uint8_t{DELETE=2, PROCESSED=4, PENDING=8, ANTI=16};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
 
 /**
- * A Message representing either an event passed between models , or synchronization token
- * between cores.
+ * A Message representing an event passed between models.
  */
-class Message
+class __attribute__((aligned(64)))Message
 {
 	friend class ::TestCereal;
 protected:
@@ -45,44 +42,24 @@ protected:
 	 * Time message is created (by model/port)
 	 */
 	t_timestamp m_timestamp;
-
-	/**
-	 * Port id of destination port.
-	 */
-	const std::size_t m_destination_port;
-
-	/**
-	 * Port id of source port.
-	 */
-	const std::size_t m_source_port;
-
-	/**
-	 * Color in synchronization algorithms.
-	 * @default WHITE
-	 * @see MessageColor
-	 */
-	MessageColor m_color;
-
-	/**
-	 * Is message an annihilator of the original ?
-	 */
-	std::atomic<bool> m_antimessage;
         
         /**
-         * Edge case of original message immediately followed by antimessage, allow
-         * receiver to mark this message a 'to be deleted' without ever entering any queue.
-         */
-        bool m_delete_flag_set;
+         * Unique source identifier.
+         */ 
+        const mid             m_src_id;
         
         /**
-         * Mark message processed.
+         * Unique destination identifier.
          */
-        bool m_processed;
+        const mid             m_dst_id;
         
-        const n_model::uuid m_dst_uuid;
+        // Not boolean to make (possible) switch to n-color less painful.
+	std::atomic<uint8_t> m_atomic_flags __attribute__((aligned(4)));
         
-        const n_model::uuid m_src_uuid;
-
+        Message(const Message&) = delete;
+        Message(const Message&&) = delete;
+        Message& operator=(const Message&)=delete;
+        Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -95,75 +72,86 @@ public:
 	 * @param sourceport	full name of source port
 	 * @note	Color is set by default to white.
 	 */
-	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
+	Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID,
 		const t_timestamp& time_made,
 		const std::size_t& destport, const std::size_t& sourceport);
 
-        const n_model::uuid&
-        getSrcUUID()const{return m_src_uuid;}
+        std::size_t getDestinationPort() const
+	{ 
+                return m_dst_id.portid();
+        }
         
-        const n_model::uuid&
-        getDstUUID()const{return m_dst_uuid;}
-        
-	/**
-	 * @brief Returns the destination core.
-	 * @return the destination core
-	 * @see setDestinationCore
-	 */
 	std::size_t getDestinationCore() const
 	{
-		return m_dst_uuid.m_core_id;
+		return m_dst_id.coreid();
 	}
+        
+        std::size_t getDestinationModel() const
+        {
+                return m_dst_id.modelid();
+        }
+        
+        std::size_t getSourceCore() const
+	{
+		return m_src_id.coreid();
+	}
+        
+        std::size_t getSourceModel()const
+        {
+                return m_src_id.modelid();
+        }
+        
+        std::size_t getSourcePort() const
+	{ 
+                return m_src_id.portid();
+        }
 
-	/**
-	 * @brief Sets whether or not this message will act as an antimessage
-	 * @param b If true, this message becomes an antimessage, otherwise, it becomes a normal message.
-	 */
 	void setAntiMessage(bool b)
 	{
-		m_antimessage.store(b);
+                if(b)
+                        m_atomic_flags |= Status::ANTI;
+                else
+                        m_atomic_flags &= ~Status::ANTI;
 	}
 
-	/**
-	 * @brief Returns whether or not this message is marked as an antimessage.
-	 * @return whether or not this message is marked as an antimessage
-	 * @see setAntiMessage
-	 */
 	bool isAntiMessage() const
 	{
-		return m_antimessage;
+		return (m_atomic_flags & Status::ANTI);
+	}
+        
+	MessageColor getColor() const
+	{       
+                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
 	}
 
 	/**
-	 * @brief Returns the source core.
-	 * @note The source core is the core that simulates the model that created this message.
+	 * @brief Sets the message color
+	 * @param newcolor The new message color
+	 * @note The message color is part of the GVT calculation.
+	 * @see getColor
 	 */
-	std::size_t getSourceCore() const
+	void paint(MessageColor newcolor)
 	{
-		return m_src_uuid.m_core_id;
+                if(newcolor==MessageColor::RED)
+                        m_atomic_flags |= newcolor;
+                else
+                        m_atomic_flags &= ~MessageColor::RED;
 	}
 
-	/**
-	 * @brief Returns the name of the destination port.
-	 * @return The full name of the destination port.
-	 */
-	std::size_t getDstPort() const
-	{ return m_destination_port; }
         
-        bool deleteFlagIsSet()const{return m_delete_flag_set;}
+        void setFlag(Status newst, bool value=true)
+        {
+                if(value)
+                        m_atomic_flags |= newst;
+                else
+                        m_atomic_flags &= ~newst;
+        }
         
-        void setDeleteFlag(){m_delete_flag_set=true;}
-        
-        bool isProcessed()const{return m_processed;}
-        
-        void setProcessed(bool b){m_processed=b;}
-
-	/**
-	 * @brief Returns the name of source port of the message.
-	 * @return The full name of the source port.
-	 */
-	std::size_t getSrcPort() const
-	{ return m_source_port; }
+        bool flagIsSet(Status st)const
+        {
+                return (m_atomic_flags & st);   
+                //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+        }
 
 	//can't remove. Needed by tracer
 	/**
@@ -224,26 +212,7 @@ public:
 	{
                 ;
 	}
-
-	/**
-	 * @brief Returns the message color.
-	 * @note The message color is part of the GVT calculation.
-	 */
-	MessageColor getColor() const
-	{
-		return m_color;
-	}
-
-	/**
-	 * @brief Sets the message color
-	 * @param newcolor The new message color
-	 * @note The message color is part of the GVT calculation.
-	 * @see getColor
-	 */
-	void paint(MessageColor newcolor)
-	{
-		this->m_color = newcolor;
-	}
+        
         friend
         bool operator<(const Message& left, const Message& right);
         
@@ -261,6 +230,7 @@ public:
 
 	friend
 	bool operator!=(const Message& left, const Message& right);
+        
 };
 
 /**
@@ -278,7 +248,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class SpecializedMessage: public Message
+class __attribute__((aligned(64)))SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;
@@ -353,10 +323,10 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSrcPort()
-			<< message.getDstPort()
-			<< message.getDstUUID().m_local_id
-			<< message.getSrcUUID().m_local_id
+		ss << message.getSourcePort()
+			<< message.getDestinationPort()
+			<< message.getDestinationModel()
+			<< message.getSourceModel()
 		        << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);
