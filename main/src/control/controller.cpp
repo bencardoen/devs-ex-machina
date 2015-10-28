@@ -12,6 +12,7 @@
 #include <chrono>
 #include <fstream>
 #include "tools/objectfactory.h"
+#include "tools/pools.h"
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/polymorphic.hpp"
 
@@ -32,6 +33,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
+        n_tools::getMainThreadID();     // Register main's thread id.
 	m_zombieIdleThreshold.store(10);
 }
 

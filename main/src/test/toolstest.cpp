@@ -1028,3 +1028,17 @@ TEST(Pool, getPool){
         smsg->releaseMe(); 
         // If we get here, we haven't seen a bad_alloc.
 }
+
+TEST(Threading, DetectMain)
+{
+        std::thread::id mid = n_tools::getMainThreadID();
+        std::vector<std::thread> ts;
+        for(size_t i = 0; i < 4; ++i)
+        {
+                ts.push_back(std::thread([&]()->void{EXPECT_FALSE(getMainThreadID() == std::this_thread::get_id());}));
+        }
+        for(auto& t : ts)
+                t.join();
+        EXPECT_EQ(mid, n_tools::getMainThreadID());
+        EXPECT_EQ(std::this_thread::get_id(), n_tools::getMainThreadID());
+}

@@ -8,10 +8,27 @@
 #include "boost/pool/object_pool.hpp"
 #include "boost/pool/pool.hpp"
 #include "boost/pool/singleton_pool.hpp"
+#include <thread>
+#include <atomic>
+#include <mutex>
 
 
 
 namespace n_tools {
+
+
+/**
+ * Record the id of the first thread entering this function, and return that value for all calls.
+ * @pre main() enter this function first
+ */
+inline
+std::thread::id getMainThreadID()
+{
+        static std::thread::id main_id;
+        static std::once_flag flagid;
+        std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
+        return main_id;
+}
 
 /**
  * Interface for Pools. 
