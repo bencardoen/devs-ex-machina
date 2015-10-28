@@ -4,13 +4,14 @@
  */
 #include "network/network.h"
 #include "model/terminationfunction.h"		// include atomicmodel
-#include "tools/schedulerfactory.h"
 #include "model/modelentry.h"
 #include "network/messageentry.h"
 #include "network/controlmessage.h"
+#include "scheduler/modelscheduler.h"
 #include "tracers/tracers.h"
-#include "tools/statistic.h"
 #include "tools/gviz.h"
+#include "tools/schedulerfactory.h"
+#include "tools/statistic.h"
 #include <set>
 #include <condition_variable>
 
@@ -19,11 +20,11 @@
 
 namespace n_model {
 
-typedef n_model::AtomicModel_impl* t_raw_atomic;
 
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
+
 
 enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS, DELMSG};
 
@@ -121,6 +122,7 @@ struct statistics_collector{
 class Core
 {
 private:
+
 	/**
 	 * Current simulation time
 	 */
@@ -176,6 +178,14 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
+        n_tools::t_defaultModelScheduler m_heap;
+//        n_tools::t_Vector_PairingHeap_scheduler m_heap;
+
+        /**
+         * Stores models that will transition in this simulation round.
+         * This vector shrinks/expands during the simulation steps.
+         */
+        std::vector<t_raw_atomic>   m_imminents;
 
 	/**
 	 * Total amount of cores.
@@ -188,20 +198,12 @@ private:
          * Messages to process in a current round.
          */
         std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
-        
-        /**
-         * Stores models that will transition in this simulation round.
-         * This vector shrinks/expands during the simulation steps.
-         */
-        std::vector<t_raw_atomic>   m_imminents;
-        
+
         /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_raw_atomic>   m_externs;
-        
-        std::vector<ModelEntry> m_imm_ids;
         
         /**
          * Cached token used to check for messages.
@@ -270,21 +272,6 @@ private:
         clearProcessedMessages(std::vector<t_msgptr>& msgs);
 
 protected:
-	/**
-	* Stores the model(entries) in ascending (urgent first) scheduled time.
-	*/
-	t_scheduler m_scheduler;
-        
-        /**
-	 * Schedule model.name @ time t.
-	 * @pre id is a model in this core.
-	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
-	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
-	 * can still be wrong. (see coretest.cpp revertedgecases).
-         * @deprecated
-	 */
-        void
-        scheduleModel(size_t id, t_timestamp t);
         
         /**
          * Sort the vector of models by priority, sets indices in models.
@@ -476,7 +463,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::vector<t_raw_atomic>&);
+	rescheduleImminent();
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
@@ -637,12 +624,12 @@ public:
 	 */
         virtual
 	void
-	removeModel(const std::string& name);
+	removeModel(std::size_t id);
         
         // Move this and use dyn_ptr in DS. works for now.
         virtual
 	void
-	removeModelDS(const std::string& /*name*/){assert(false);}
+	removeModelDS(std::size_t /*id*/){assert(false);}
         
         // Move this and use dyn_ptr in DS. works for now.
         virtual

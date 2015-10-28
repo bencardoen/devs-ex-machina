@@ -81,8 +81,8 @@ public:
 class Generator : public n_model::AtomicModel<void>
 {
 private:
-	const n_model::t_portptr m_out;
 public:
+	const n_model::t_portptr m_out;
 	Generator();
 	virtual ~Generator();
 

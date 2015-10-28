@@ -124,11 +124,11 @@ TEST(Core, CoreFlow)
         std::vector<t_raw_atomic> imminent;
 	c.getImminent(imminent);
 	EXPECT_EQ(imminent.size(), 2u);
-	c.rescheduleImminent(imminent);
+	c.rescheduleImminent();
 	c.syncTime();
         imminent.clear();
 	c.getImminent(imminent);
-	c.rescheduleImminent(imminent);
+	c.rescheduleImminent();
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(imminent.size(), 2u);
@@ -168,13 +168,14 @@ TEST(DynamicCore, smallStep)
 			EXPECT_EQ(imms[0],modelfrom.get());
 			EXPECT_EQ(imms[1], modelto.get());
 		}
+	        c->validateModels();
 	}
 	// This is not how to run a core, but a check of safety blocks.
 	c->setLive(true);
-	c->removeModel("Amodel");
+	c->removeModelDS(modelfrom->getLocalID());
         c->validateModels();
 	EXPECT_EQ(c->containsModel("Amodel"), false);
-	c->removeModel("toBen");
+	c->removeModelDS(modelto->getLocalID());
         c->validateModels();
 	EXPECT_EQ(c->containsModel("toBen"), false);
 	c->printSchedulerState();
@@ -224,7 +225,7 @@ TEST(Core, terminationfunction)
 	t_timestamp coretimeafter = c->getTime();
 	EXPECT_TRUE(coretimebefore < coretimeafter);
 	EXPECT_TRUE(c->isLive() == false);
-	c->removeModel("Amodel");
+	c->removeModel(modelfrom->getLocalID());
 }
 
 TEST(Optimisticcore, revert){

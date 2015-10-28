@@ -203,7 +203,7 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 		LOG_INFO("  depth > 1!");
 		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta);
 		addSubModel(recurse);
-		connectPorts(recv, recurse->getPort("in_event1"));
+		connectPorts(recv, recurse->getIPorts()[0]);
 	}
 
 	//create the list of processors and link them up
@@ -214,18 +214,18 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 		addSubModel(proc);
 		if(i == 0){
 			if(depth > 1){
-				connectPorts(recurse->getPort("out_event1"), proc->getPort("in_event1"));
+				connectPorts(recurse->getOPorts()[0], proc->getIPorts()[0]);
 			} else {
-				connectPorts(recv, proc->getPort("in_event1"));
+				connectPorts(recv, proc->getIPorts()[0]);
 			}
 		} else {
-			connectPorts(prev->getPort("out_event1"), proc->getPort("in_event1"));
+			connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
 		}
 		prev = proc;
 	}
 
 	//connect end of line with higher level.
-	connectPorts(prev->getPort("out_event1"), send);
+	connectPorts(prev->getOPorts()[0], send);
 }
 
 CoupledRecursion::~CoupledRecursion()
@@ -243,10 +243,7 @@ DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
 	addSubModel(gen);
 	addSubModel(recurse);
 
-	connectPorts(gen->getPort("out_event1"), recurse->getPort("in_event1"));
-
-	if(randomta)
-		srand (static_cast <unsigned> (time(0))); // seed once in this simulation
+	connectPorts(gen->m_out, recurse->getIPorts()[0]);
 }
 
 DEVStone::~DEVStone()

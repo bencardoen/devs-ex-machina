@@ -7,6 +7,7 @@
 #define SCHEDULER_H
 
 #include <memory>
+#include "tools/globallog.h"
 
 namespace n_tools {
 
@@ -22,7 +23,7 @@ namespace n_tools {
  *
  * Unschedule_until relies on a sane implementation of operator==()
  */
-template<typename T>
+template<typename T, typename Time = T, typename TConstRef = const T&>
 class Scheduler
 {
 protected:
@@ -52,7 +53,7 @@ public:
 	 * @note : An item can be pushed with the same priority, but never with the same hash value twice.
 	 * @throws bad_alloc in out of memory conditions.
 	 */
-	virtual void push_back(const T&) = 0;
+	virtual void push_back(TConstRef) = 0;
 
 	virtual size_t size() const = 0;
 
@@ -65,7 +66,7 @@ public:
 	 * @pre (not this.empty())
 	 * @throws std::out_of_range if empty().
 	 */
-	virtual const T& top() = 0;
+	virtual TConstRef top() = 0;
 
 	/**
 	 * @brief pop Remove the first entry in the scheduler.
@@ -89,7 +90,7 @@ public:
 	 */
 	virtual
 	void
-	unschedule_until(std::vector<T>& container, const T& time) = 0;
+	unschedule_until(std::vector<T>& container, const Time& time) = 0;
 
 	/**
 	 * Remove all items from the scheduler.
@@ -104,7 +105,7 @@ public:
 	 */
 	virtual
 	bool
-	contains(const T& elem) const= 0;
+	contains(TConstRef elem) const= 0;
 
 	/**
 	 * Erase the element from the scheduler if present.
@@ -113,18 +114,18 @@ public:
 	 */
 	virtual
 	bool
-	erase(const T& elem) = 0;
+	erase(TConstRef elem) = 0;
 
 	virtual
 	void
-	printScheduler() = 0;
+	printScheduler() const = 0;
 
 	/**
 	 * Test any invariant that has to hold during modifying operations.
 	 */
 	virtual
 	void
-	testInvariant()=0;
+	testInvariant() const = 0;
         
         /**
          * If item (key) is present in heap, overwrite it, else insert.
@@ -132,15 +133,22 @@ public:
          */
         virtual
         void
-        update(const T&){;}
+        update(TConstRef){;}
+
+         /**
+          * Updates all present items
+          */
+        virtual
+        void
+        updateAll(){;}
         
         virtual
         void
         hintSize(size_t /*expected_size*/){;}
 };
 
-template<typename T>
-bool Scheduler<T>::isLockable() const
+template<typename T, typename Time, typename TConstRef>
+bool Scheduler<T, Time, TConstRef>::isLockable() const
 {
 	return false;
 }

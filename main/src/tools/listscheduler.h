@@ -150,15 +150,18 @@ public:
 	}
 
 	virtual
-	void printScheduler() override
+	void printScheduler() const override
 	{
+#if LOGGING
+		LOG_DEBUG("Printing scheduler:");
 		for (const auto& elem : m_storage) {
-			std::cout << elem << std::endl;
+			LOG_DEBUG("   ", elem);
 		}
+#endif
 	}
 
 	virtual
-	void testInvariant() override{
+	void testInvariant() const override{
 		if(m_storage.size() != m_hashtable.size()){
 			std::stringstream ss;
 			ss << "Invariant Scheduler failed :: \n";
@@ -288,14 +291,14 @@ public:
 	}
 
 	virtual
-	void printScheduler() override
+	void printScheduler() const override
 	{
 		std::lock_guard<std::mutex> lock(m_lock);
 		Listscheduler<T>::printScheduler();
 	}
 
 	virtual
-	void testInvariant()override
+	void testInvariant() const override
 	{
 		std::lock_guard<std::mutex> lock(m_lock);
 		Listscheduler<T>::testInvariant();

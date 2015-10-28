@@ -111,11 +111,11 @@ public:
 
 	virtual
 	void
-	printScheduler()override;
+	printScheduler() const override;
 
 	virtual
 	void
-	testInvariant()override;
+	testInvariant() const override;
 
 };
 
