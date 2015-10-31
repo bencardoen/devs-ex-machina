@@ -7,7 +7,7 @@
  */
 #include <memory>
 #include "tools/globallog.h"
-#include "tools/pools.h"
+#include "pools/pools.h"
 
 #ifndef SRC_TOOLS_OBJECTFACTORY_H_
 #define SRC_TOOLS_OBJECTFACTORY_H_
@@ -47,19 +47,22 @@ void takeBack(T* pointer)
 template<typename T, typename ... Args>
 T* createPooledObject(Args&&... args)
 {
+        
         /**
-        T* mem = getPool<T>().allocate();
+        T* mem = n_pools::getPool<T>().allocate();
         T* obj = new (mem) T(args...);
         return obj;
         */
         // This allows conservative/optimistic to bypass pools, but is very slow.
-        if(std::this_thread::get_id() == getMainThreadID()){
-                T* mem = getPool<T>().allocate();
+        
+        if(std::this_thread::get_id() == n_pools::getMainThreadID()){
+                T* mem = n_pools::getPool<T>().allocate();
                 T* obj = new (mem) T(args...);
                 LOG_DEBUG("Allocating pooled msg : ", obj);
                 return obj;
         }else
                 return createRawObject<T>(args...);
+        
         
 }
 
@@ -69,17 +72,20 @@ T* createPooledObject(Args&&... args)
 template<typename T>
 void destroyPooledObject(T* t)
 {
-        /**
+        
         LOG_DEBUG("Deallocating pooled msg : ", t);
-        getPool<T>().deallocate(t);
+        /**
+        n_pools::getPool<T>().deallocate(t);
          */
         // Same as with createPooled.
-        if(std::this_thread::get_id()==getMainThreadID()){
+        
+        if(std::this_thread::get_id()==n_pools::getMainThreadID()){
                 LOG_DEBUG("Deallocating pooled msg : ", t);
-                getPool<T>().deallocate(t);
+                n_pools::getPool<T>().deallocate(t);
         }
         else
                 takeBack<T>(t);
+        
 }
 
 

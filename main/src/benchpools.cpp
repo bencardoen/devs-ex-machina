@@ -2,7 +2,7 @@
 #include <set>
 #include <map>
 #include <sstream>
-#include "tools/pools.h"
+#include "pools/pools.h"
 #include "network/message.h"
 #include "model/uuid.h"
 
@@ -86,7 +86,7 @@ void testTSPool(size_t testsize, size_t rounds){
 
 
 void testSlabPool(size_t testsize, size_t rounds){
-        Pool<Message, SlabPool<Message>> pl(testsize);
+        SlabPool<Message>> pl(testsize);
         std::vector<Message*> mptrs(testsize);
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){

@@ -23,7 +23,7 @@
 #include "boost/pool/singleton_pool.hpp"
 #include "model/modelentry.h"
 #include <algorithm>
-#include "tools/pools.h"
+#include "pools/pools.h"
 #include "network/message.h"
 #include <random>
 
@@ -878,40 +878,15 @@ TEST(Pool, MessageBasics){
 #define testsize 40000 //inconnect fta w200 , represent 4e4 * 64byte = ~2.4 MB
 #define rounds 10 // -t rounds*100
 
-TEST(ObjectPool, Timing){
-        /**
-         * ObjectPool 
-         * Allocate N objects, do not deallocate per object but at end of scope/life destroy the pool.
-         * Only allocated objects get their ~ called.
-         * Tricky to integrate in (multi) core.
-         */
-        using n_network::Message;
-        using n_model::uuid;
-        using n_network::t_timestamp;
-        std::vector<Message*> mptrs(testsize);
-        for(size_t j = 0; j<rounds; ++j){
-                Pool<Message, boost::object_pool<Message>> pl(testsize);
-                for(size_t i = 0; i<testsize; ++i){
-                        Message* rawmem = pl.allocate();
-                        Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
-                        msgconstructed->setAntiMessage(true);
-                        mptrs[i]=msgconstructed;
-                }
-                mptrs.clear();
-        }
-}
 
-TEST(New, Timing){
-        // The reference new/delete sequence we now use.
+void timePool(n_pools::PoolInterface<n_network::Message>* pl){
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
         std::vector<Message*> mptrs(testsize);
-        Pool<Message, std::false_type> pl(testsize);
         for(size_t j = 0; j<rounds;++j){
                 for(size_t i = 0; i<testsize; ++i){
-                        Message* rmem = pl.allocate();
+                        Message* rmem = pl->allocate();
                         Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         msgconstructed->setAntiMessage(true);
@@ -919,124 +894,52 @@ TEST(New, Timing){
                 }
                 
                 for(auto p : mptrs){
-                        pl.deallocate(p);
+                        pl->deallocate(p);
                 }
                 
         }
 }
 
-
-TEST(Pool, Timing){
-       /**
-         * Pool : 
-         * Has overhead compared to new, but can be faster for equal sized objects.
-         * Ordered malloc is too expensive and we don't need it here.
-         */
-        using n_network::Message;
-        using n_model::uuid;
-        using n_network::t_timestamp;
-        std::vector<Message*> mptrs(testsize);
-        // Allocate Message sized objects, with an initial grab of testsize objects from OS.
-        Pool<Message, boost::pool<>> pl(testsize); 
-        for(size_t j = 0; j<rounds;++j){
-                for(size_t i = 0; i<testsize; ++i){
-                        Message * rawmem = (Message*) pl.allocate();
-                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
-                        msgconstructed->setAntiMessage(true);
-                        mptrs[i]=msgconstructed;
-                }
-        
-                for(auto p : mptrs){
-                        pl.deallocate(p);
-                }
-                
-        }
-}
-
-TEST(TsPool, Timing){
-       /**
-         * Singleton pool, threadsafe variant of pool.
-         */
-        using n_network::Message;
-        using n_model::uuid;
-        using n_network::t_timestamp;
-        std::vector<Message*> mptrs(testsize);
-        // Allocate Message sized objects, with an initial grab of testsize objects from OS.
-        Pool<Message, spool<Message>> pl(0,0); 
-        for(size_t j = 0; j<rounds;++j){
-                for(size_t i = 0; i<testsize; ++i){
-                        Message * rawmem = (Message*) pl.allocate();
-                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
-                        msgconstructed->setAntiMessage(true);
-                        mptrs[i]=msgconstructed;
-                }
-        
-                for(auto p : mptrs){
-                        pl.deallocate(p);
-                }
-                
-        }
+TEST(New, Timing)
+{
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, std::false_type>(testsize);
+        timePool(pl);
+        delete pl;
 }
 
 
+TEST(BoostPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, boost::pool<>>(testsize);
+        timePool(pl);
+        delete pl;
+}
 
 TEST(SlabPool, Timing){
-        /**
-         * Use the fact that we know how many messages will be generated, to allocate once all we will ever need,
-         * and then keep reusing that memory (without the overhead of free lists).
-         */
-        using n_network::Message;
-        using n_model::uuid;
-        using n_network::t_timestamp;
-        Pool<Message, SlabPool<Message>> pl(testsize);
-        std::vector<Message*> mptrs(testsize);
-        for(size_t j = 0; j<rounds;++j){
-                for(size_t i = 0; i<testsize; ++i){
-                        Message* rawmem = pl.allocate();
-                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
-                        msgconstructed->setAntiMessage(true);
-                        mptrs[i]=msgconstructed;
-                }
-                for(auto p : mptrs){
-                        pl.deallocate(p);
-                }
-        }
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::SlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
 }
 
-
-TEST(Pool, getPool){
-        using n_model::uuid;
-        using n_network::t_timestamp;
-        /**
-         * When we create a message, at creation we know the type of the message. In handling the message, we 
-         * only look at the base class pointer, which poses the difficulty of deallocating it (we no longer know 
-         * the exact derived type). This means we can't find the exact pool (which uses compile time typing).
-         * A solution is storing this information in the message object itself, via a mechanism somewhat similar 
-         * to double dispatch. This test checks if our assumption about the type-safety in this mechanism is correct.
-         */
-        // The pool used is the slabpool, which detects by bad_alloc if the alloc/dealloc is not handled by the 
-        // same instance.
-        
-        // Construction (port createMessages, we know the type)
-        n_network::Message* rawmsg = n_tools::getPool<n_network::SpecializedMessage<double>>().allocate();
-        n_network::Message* smsg = new(rawmsg) n_network::SpecializedMessage<double>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, 3.1415);
-        // Pass around the pointer as a ptr to Base.
-        // Invoke a virtual function, which then can reference the correct Pool<virtual type>.
-        smsg->releaseMe(); 
-        // If we get here, we haven't seen a bad_alloc.
+TEST(StackPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::StackPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
 }
 
-TEST(Pool, SlabPool){
+TEST(DSlabPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::DynamicSlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(Pool, DynamicSlabPool){
         using n_network::Message;
         using n_model::uuid;
         using n_network::t_timestamp;
         size_t psize=4;
-        size_t tsize=3;
-        size_t rsize=2;
-        Pool<Message, SlabPool<Message>> pl(psize);
+        size_t tsize=11;        // trigger at least 2 resize operations.
+        size_t rsize=3;         
+        n_pools::DynamicSlabPool<Message> pl(psize);
         std::vector<Message*> mptrs(tsize);
         for(size_t j = 0; j<rsize;++j){
                 for(size_t i = 0; i<tsize; ++i){
@@ -1049,8 +952,35 @@ TEST(Pool, SlabPool){
                         pl.deallocate(p);
                 }
         }
+        EXPECT_EQ(pl.size(), (floor(tsize/psize)+1)*psize);
+        EXPECT_EQ(pl.allocated(), 0u);
 }
 
+TEST(Pool, StackPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=4;
+        size_t tsize=9;
+        size_t rsize=3;
+        n_pools::StackPool<Message> pl(psize);
+        std::vector<Message*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+        EXPECT_EQ(pl.size(), (floor(tsize/psize)+1)*psize);
+        EXPECT_EQ(pl.allocated(), 0u);
+}
+
+// For some reason compilation fails if struct is defined inside a testcase.
 struct mystr{
                 int i; 
                 double j;
@@ -1061,19 +991,18 @@ TEST(Factory, PoolCalls){
         mystr * ptrtostr = n_tools::createPooledObject<mystr>(1, 31.4);
         EXPECT_EQ(ptrtostr->i, 1);
         n_tools::destroyPooledObject<mystr>(ptrtostr);
-        auto& pool = getPool<mystr>();
 }
 
 TEST(Threading, DetectMain)
 {
-        std::thread::id mid = n_tools::getMainThreadID();
+        std::thread::id mid = n_pools::getMainThreadID();
         std::vector<std::thread> ts;
         for(size_t i = 0; i < 4; ++i)
         {
-                ts.push_back(std::thread([&]()->void{EXPECT_FALSE(getMainThreadID() == std::this_thread::get_id());}));
+                ts.push_back(std::thread([&]()->void{EXPECT_FALSE(n_pools::getMainThreadID() == std::this_thread::get_id());}));
         }
         for(auto& t : ts)
                 t.join();
-        EXPECT_EQ(mid, n_tools::getMainThreadID());
-        EXPECT_EQ(std::this_thread::get_id(), n_tools::getMainThreadID());
+        EXPECT_EQ(mid, n_pools::getMainThreadID());
+        EXPECT_EQ(std::this_thread::get_id(), n_pools::getMainThreadID());
 }

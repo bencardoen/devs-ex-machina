@@ -1,8 +1,8 @@
 /**
  * Memory pools
  */
-#ifndef SRC_TOOLS_POOLS_H_
-#define SRC_TOOLS_POOLS_H_
+#ifndef SRC_POOLS_POOLS_H_
+#define SRC_POOLS_POOLS_H_
 
 #include <new>
 #include "boost/pool/object_pool.hpp"
@@ -11,6 +11,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <deque>
 
 /**
  * Here be dragons...
@@ -19,7 +20,7 @@
 
 
 
-namespace n_tools {
+namespace n_pools {
 
 /**
  * Helper structure, defines a contigous slice of memory that a pool uses.
@@ -33,12 +34,13 @@ private:
 public:
         pool_lane():m_base_addr(nullptr),m_size(0){;}
         constexpr pool_lane(T* pt, size_t sz):m_base_addr(pt),m_size(sz){;}
-        constexpr size_t size(){return m_size;}
-        constexpr T* begin(){return m_base_addr;}
-        // end() always points to object beyond any container/range in STL, 
-        // but that pointer may well be the base_addr of the next pool which could
-        // be very unfortunate.
-        constexpr T* last(){return m_base_addr + (m_size-1);}
+        constexpr size_t size()const{return m_size;}
+        constexpr T* begin()const{return m_base_addr;}
+        
+        /**
+         * In STL end() points to the last object + 1, so be explicit about what we return here.
+         */
+        constexpr T* last()const{return m_base_addr + (m_size-1);}
 };
 
 /**
@@ -54,15 +56,18 @@ std::thread::id getMainThreadID()
         return main_id;
 }
 
+/**
+ * This class erases the type of pool in use, allowing threads to register their own pools.
+ */
 template<typename T>
 class PoolInterface
 {
 public:
         typedef T t_type_pooled;
-        explicit PoolInterface(size_t init, size_t step=0){;}
+        PoolInterface()=default;
         virtual ~PoolInterface(){;}
-        T* allocate() = 0;
-        void deallocate(T*) = 0;
+        virtual T* allocate() = 0;
+        virtual void deallocate(T*) = 0;
 };
 
 /**
@@ -71,7 +76,7 @@ public:
  * @param P : the underlying Pool type
  */
 template<typename Object, typename P>
-class Pool{
+class Pool:public PoolInterface<Object>{
         public:
                 /**
                  * Create new pool.
@@ -91,7 +96,7 @@ class Pool{
                  * @return A pointer to the next free (uninitialized) object.
                  * @throw bad_alloc if the pool cannot service the request.
                  */
-                Object* allocate();
+                virtual Object* allocate()override;
                 
                 /**
                  * Destroy parameter
@@ -99,7 +104,7 @@ class Pool{
                  * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
                  * @throw bad_alloc if O does not belong to this pool.
                  */
-                void deallocate(Object* O);
+                virtual void deallocate(Object* O)override;
 };
 
 
@@ -113,7 +118,7 @@ class Pool{
  * @note : this pool by its very definition will detect over-deallocation.
  */
 template<typename T>
-class SlabPool{
+class SlabPool:public PoolInterface<T>{
         private:
                 /**
                  * #malloc() - #free()
@@ -159,7 +164,7 @@ class SlabPool{
                  * @return A pointer to the next free object.
                  * @throw bad_alloc if allocated()>size()
                  */
-                T* allocate()
+                T* allocate()override
                 {
                         if(m_allocated < m_osize){
                                 ++m_allocated;
@@ -176,7 +181,7 @@ class SlabPool{
                  * Indicate T* is no longer required.
                  * If the alloc count reaches zero, the pool can be reused.
                  */
-                void deallocate(T*)
+                void deallocate(T*)override
                 {
                         // In future, look up part of pool based on T* range, and mark for reuse iff all ptrs returned.
                         if(m_allocated){
@@ -195,7 +200,7 @@ class SlabPool{
  * Use only for cyclic allocate(n)/deallocate(n) patterns.
  */
 template<typename T>
-class DynamicSlabPool{
+class DynamicSlabPool:public PoolInterface<T>{
          private:
                 /**
                  * #malloc() - #free()
@@ -206,8 +211,14 @@ class DynamicSlabPool{
                  */
                 size_t          m_osize;
                 
+                /**
+                 * Nr of objects per contiguous block of memory (lane)
+                 */
                 size_t          m_slabsize;
                 
+                /**
+                 * Index of lane in use. Invariant : all ptrs < m_pools[m_current_lane] are allocated.
+                 */
                 size_t          m_current_lane;
                 
                 std::vector<pool_lane<T>> m_pools;
@@ -216,11 +227,6 @@ class DynamicSlabPool{
                  * Points to the next free object.
                  */
                 T*      m_currptr;
-                
-                T*      allocNewSlab(size_t objs)
-                {
-                        return nullptr;
-                }
         public:
                 explicit DynamicSlabPool(size_t poolsize):m_allocated(0),m_osize(poolsize),m_slabsize(poolsize),m_current_lane(0)
                 {
@@ -252,15 +258,25 @@ class DynamicSlabPool{
                  * If allocated() == size(), tries to grab a new block of memory to allocate.
                  * @throw bad_alloc if expanding memory fails.
                  */
-                T* allocate()
+                T* allocate()override
                 {
                         if(m_allocated < m_osize){
                                 ++m_allocated;
-                                return m_currptr++;
+                                T * npointer = m_currptr;
+                                if(m_currptr == m_pools[m_current_lane].last()){        // Make sure we skip to the next lane
+                                        if(m_current_lane < m_pools.size()-1)           // if there is one
+                                                m_currptr = m_pools[++m_current_lane].begin();
+                                        else{
+                                                m_currptr = nullptr;                    // Can be left out, going to realloc next time.
+                                        }
+                                }
+                                else{
+                                        ++m_currptr;
+                                }
+                                return npointer;
                         }
                         else
                         {       
-                                // Use expanding size if needed.
                                 T * fblock = (T*) malloc(sizeof(T)*m_slabsize);
                                 if(!fblock)
                                         throw std::bad_alloc();
@@ -277,7 +293,7 @@ class DynamicSlabPool{
                  * Indicate T* is no longer required.
                  * If the alloc count reaches zero, the pool can be reused.
                  */
-                void deallocate(T*)
+                void deallocate(T*)override
                 {
                         // In future, look up part of pool based on T* range, and mark for reuse iff all ptrs returned.
                         // Take care here to jump backwards across lanes as well.
@@ -301,7 +317,7 @@ class DynamicSlabPool{
  * on usage.
  */
 template<typename T>
-class StackPool{
+class StackPool:public PoolInterface<T>{
          private:
                 /**
                  * Total size of available + allocated blocks.
@@ -352,7 +368,7 @@ class StackPool{
                  * If allocated() == size(), tries to grab a new block of memory to allocate.
                  * @throw bad_alloc if expanding memory fails.
                  */
-                T* allocate()
+                T* allocate()override
                 {
                         if(m_free.size() != 0){
                                 T* next = m_free.back();
@@ -375,7 +391,7 @@ class StackPool{
                 /**
                  * Indicate T* is no longer required.
                  */
-                void deallocate(T* t)
+                void deallocate(T* t)override
                 {
                         if(m_free.size()!=m_osize){
                                 m_free.push_back(t);
@@ -387,56 +403,11 @@ class StackPool{
 };
 
 /**
- * Static pool with very little overhead, but applies only to selected use case
- * @see SlabPool.
- */
-template<typename Object>
-class Pool<Object, SlabPool<Object>>
-{
-        private:
-                SlabPool<Object>        m_pool;
-        public:
-                /**
-                 * Create new pool.
-                 * @param psize Pool can hold exactly psize objects
-                 * @param nsize = ignored, this is a static pool.
-                 */
-                explicit Pool(size_t psize, size_t /*nsize*/=0):m_pool(psize){;}
-                
-                /**
-                 * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
-                 * pool itself or this has happened by the deallocate function.
-                 * @note : RAII, no explicit code required.
-                 */
-                ~Pool(){;}
-                
-                /**
-                 * @return A pointer to the next free (uninitialized) object.
-                 * @throw bad_alloc if the pool cannot service the request.
-                 */
-                Object* allocate()
-                {
-                        return m_pool.allocate();
-                }
-                
-                /**
-                 * Destroy parameter
-                 * @pre O->~Object() has not been called, O was allocated by this pool.
-                 * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
-                 * @throw bad_alloc if O does not belong to this pool.
-                 */
-                void deallocate(Object* O)
-                {
-                        m_pool.deallocate(O);
-                }
-};
-
-/**
  * Forwarding specialisation to malloc/free.
  * Implemented as a pass-through for, among others, comparing to pools.
  */
 template<typename Object>
-class Pool<Object, std::false_type>
+class Pool<Object, std::false_type>:public PoolInterface<Object>
 {
           public:
                 /**
@@ -457,7 +428,8 @@ class Pool<Object, std::false_type>
                  * @return A pointer to the next free (uninitialized) object.
                  * @throw bad_alloc if the pool cannot service the request.
                  */
-                Object* allocate(){
+                Object* allocate()override
+                {
                         return (Object*) std::malloc(sizeof(Object));
                 }
                 
@@ -467,57 +439,10 @@ class Pool<Object, std::false_type>
                  * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
                  * @throw bad_alloc if O does not belong to this pool.
                  */
-                void deallocate(Object* O){
+                void deallocate(Object* O)override
+                {
                         O->~Object();
                         std::free(O);
-                }
-};
-
-/**
- * Specialisation for boost object pool.
- * The usage pattern for this pool is create (pool) once, at end of scope let
- * the pool handle destruction. Deallocation is supported but expensive.
- */
-template<typename Object>
-class Pool<Object, boost::object_pool<Object>>{
-        private:
-                boost::object_pool<Object> m_pool;
-        public:
-                /**
-                 * Create new pool.
-                 * @param psize Pool can hold at least psize objects
-                 * @param nsize if applicable, set the step size with which the pool increases if it runs out of memory.
-                 * @note : nsize can be ignored by the pool, psize is a guarantee that the pool will provide either space for none(alloc fail) or at least psize objects.
-                 */
-                explicit Pool(size_t psize, size_t nsize=0):m_pool((nsize == 0)? psize : nsize){}// opool(nsize), so need to convert here.
-                
-                /**
-                 * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
-                 * pool itself or this has happened by the deallocate function.
-                 */
-                ~Pool(){}
-                
-                /**
-                 * @return A pointer to the next free (uninitialized) object.
-                 * @throw bad_alloc if the pool cannot service the request.
-                 */
-                Object* allocate()
-                {
-                        return m_pool.malloc();
-                }
-                
-                /**
-                 * Destroy parameter
-                 * @pre O->~Object() has not been called, O was allocated by this pool.
-                 * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
-                 * @throw bad_alloc if O does not belong to this pool.
-                 * @attention : this is very expensive for this type of pool. Its intended usage is create pool, allocate objects 
-                 * and then self destruct (whole pool) @exit scope.
-                 */
-                void deallocate(Object* O)
-                {
-                        O->~Object();
-                        m_pool.free(O);
                 }
 };
 
@@ -526,7 +451,7 @@ class Pool<Object, boost::object_pool<Object>>{
  * Has slight overhead over new/delete, but can be faster.
  */
 template<typename Object> 
-class Pool<Object, boost::pool<>>{
+class Pool<Object, boost::pool<>>:public PoolInterface<Object>{
         private:
                 boost::pool<>   m_pool;
         public:
@@ -547,7 +472,7 @@ class Pool<Object, boost::pool<>>{
                  * @return A pointer to the next free (uninitialized) object.
                  * @throw bad_alloc if the pool cannot service the request.
                  */
-                Object* allocate()
+                Object* allocate()override
                 {
                         return (Object*) m_pool.malloc();
                 }
@@ -558,7 +483,7 @@ class Pool<Object, boost::pool<>>{
                  * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
                  * @throw bad_alloc if O does not belong to this pool.
                  */
-                void deallocate(Object* O)
+                void deallocate(Object* O)override
                 {
                         O->~Object();
                         m_pool.free(O);
@@ -572,7 +497,7 @@ using spool =  boost::singleton_pool<DXPoolTag, sizeof(Object)>;
  * Singleton pool, use this if the pool has to be shared between threads.
  */
 template<typename Object> 
-class Pool<Object, spool<Object>>{
+class Pool<Object, spool<Object>>:public PoolInterface<Object>{
         
         public:
                 /**
@@ -591,7 +516,7 @@ class Pool<Object, spool<Object>>{
                  * @return A pointer to the next free (uninitialized) object.
                  * @throw bad_alloc if the pool cannot service the request.
                  */
-                Object* allocate()
+                Object* allocate()override
                 {
                         return (Object*) spool<Object>::malloc();
                 }
@@ -602,7 +527,7 @@ class Pool<Object, spool<Object>>{
                  * @post O->~Object() is invoked. Memory @O is returned to the pool (but may or may not be returned to the OS).
                  * @throw bad_alloc if O does not belong to this pool.
                  */
-                void deallocate(Object* O)
+                void deallocate(Object* O)override
                 {
                         O->~Object();
                         spool<Object>::free(O);
@@ -611,23 +536,24 @@ class Pool<Object, spool<Object>>{
 
 // Instantiation so that compile errors are detected if the code changes (e.g) not using a pool type in the project and introducing a bug
 // for that particular pool could go unnoticed a long time.
-template class Pool<int, boost::object_pool<int>>;
 template class Pool<int, boost::pool<>>;
-template class Pool<int, SlabPool<int>>;
 template class Pool<int, std::false_type>;
-template class Pool<int, spool<int>>;
 
 template<typename Object>
-using ObjectPool = Pool<Object, SlabPool<Object>>;
+using ObjectPool = DynamicSlabPool<Object>;
 
+/**
+ * Get the thread local pool for type T.
+ * @return an unsynchronized pool that allocates memory chunks sizeof(T).
+ */
 template<typename T>
 ObjectPool<T>&
 getPool()
 {
-        thread_local ObjectPool<T> pool(10000);
+        thread_local ObjectPool<T> pool(6400); // ~ roughly 10 pages worth of messages, good enough for w80 iconnect.
         return pool;
 }
 
-} /* namespace n_tools */
+} /* namespace n_pools */
 
-#endif /* SRC_TOOLS_POOLS_H_ */
+#endif /* SRC_POOLS_POOLS_H_ */

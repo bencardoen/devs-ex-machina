@@ -8,9 +8,8 @@
 #include "tools/coutredirect.h"
 #include "performance/highInterconnect/hinterconnect.h"
 #include "tools/stringtools.h"
-#include "tools/pools.h"
+#include "pools/pools.h"
 #include "control/allocator.h"
-
 #include "tools/statistic.h"
 
 LOG_INIT("interconnect.log")
@@ -81,7 +80,7 @@ int main(int argc, char** argv)
 {
 	LOG_ARGV(argc, argv);
 	// default values:
-        volatile std::thread::id mainid = n_tools::getMainThreadID();
+        volatile std::thread::id mainid = n_pools::getMainThreadID();
 	const char optETime = 't';
 	const char optWidth = 'w';
 	const char optHelp = 'h';

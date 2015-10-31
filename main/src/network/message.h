@@ -14,7 +14,7 @@
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
-#include "tools/pools.h"
+#include "pools/pools.h"
 #include "mid.h"
 #include <sstream>
 #include <iosfwd>
