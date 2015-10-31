@@ -34,6 +34,23 @@ T* createRawObject(Args&&... args)
 	return new T(args...);
 }
 
+template<typename T, typename ... Args>
+T* createPooledObject(Args&&... args)
+{
+        T* mem = getPool<T>().allocate();
+        T* obj = new (mem) T(args...);
+        return obj;
+}
+
+/**
+ * Call only iff runtime type of t == T.
+ */
+template<typename T>
+void destroyPooledObject(T* t)
+{
+        getPool<T>().deallocate(t);
+}
+
 /**
  * Takes back a pointer created by createRawObject and clears its memory
  */

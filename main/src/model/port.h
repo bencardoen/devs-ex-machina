@@ -424,7 +424,8 @@ inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid ds
 	std::size_t destport, std::size_t sourceport,
         const DataType& msg, t_zfunc func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createRawObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
+        // TODO POOLS
+	n_network::t_msgptr messagetobesend = n_tools::createPooledObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
 		time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
@@ -444,6 +445,7 @@ inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_m
 	std::size_t destport, std::size_t sourceport,
 	const std::string& msg, t_zfunc func)
 {
+        // TODO POOLS
 	n_network::t_msgptr messagetobesend =
 		n_tools::createRawObject<n_network::SpecializedMessage<std::string>>(
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);

@@ -16,6 +16,25 @@
 
 namespace n_tools {
 
+/**
+ * Helper structure, defines a contigous slice of memory that a pool uses.
+ */
+template<typename T>
+struct pool_lane{
+private:
+        T* m_base_addr;
+        // Lane can hold exactly m_size objects, so m_base_addr += (m_size-1) points to the last object
+        size_t m_size;
+public:
+        pool_lane():m_base_addr(nullptr),m_size(0){;}
+        constexpr pool_lane(T* pt, size_t sz):m_base_addr(pt),m_size(sz){;}
+        constexpr size_t size(){return m_size;}
+        constexpr T* begin(){return m_base_addr;}
+        // end() always points to object beyond any container/range in STL, 
+        // but that pointer may well be the base_addr of the next pool which could
+        // be very unfortunate.
+        constexpr T* last(){return m_base_addr + (m_size-1);}
+};
 
 /**
  * Record the id of the first thread entering this function, and return that value for all calls.
@@ -29,6 +48,17 @@ std::thread::id getMainThreadID()
         std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
         return main_id;
 }
+
+template<typename T>
+class PoolInterface
+{
+public:
+        typedef T t_type_pooled;
+        explicit PoolInterface(size_t init, size_t step=0){;}
+        virtual ~PoolInterface(){;}
+        T* allocate() = 0;
+        void deallocate(T*) = 0;
+};
 
 /**
  * Interface for Pools. 
@@ -333,8 +363,6 @@ class Pool<Object, boost::pool<>>{
                 }
 };
 
-
-
 struct DXPoolTag{}; // Needed for singleton pools to differentiate between allocators.
 template<typename Object>
 using spool =  boost::singleton_pool<DXPoolTag, sizeof(Object)>;
@@ -394,7 +422,7 @@ template<typename T>
 ObjectPool<T>&
 getPool()
 {
-        thread_local ObjectPool<T> pool(400);
+        thread_local ObjectPool<T> pool(40000);
         return pool;
 }
 

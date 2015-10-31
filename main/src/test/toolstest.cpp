@@ -1029,6 +1029,40 @@ TEST(Pool, getPool){
         // If we get here, we haven't seen a bad_alloc.
 }
 
+TEST(Pool, SlabPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=4;
+        size_t tsize=3;
+        size_t rsize=2;
+        Pool<Message, SlabPool<Message>> pl(psize);
+        std::vector<Message*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+}
+
+TEST(Factory, PoolCalls){
+        struct mystr{
+                int i; 
+                double j;
+                constexpr explicit mystr(int pi, double pj):i(pi), j(pj){;}
+        };
+        mystr * ptrtostr = n_tools::createPooledObject<mystr>(1, 31.4);
+        EXPECT_EQ(ptrtostr->i, 1);
+        n_tools::destroyPooledObject<mystr>(ptrtostr);
+        auto& pool = getPool<mystr>();
+}
+
 TEST(Threading, DetectMain)
 {
         std::thread::id mid = n_tools::getMainThreadID();

@@ -11,6 +11,58 @@
 
 namespace n_tools{
 
+/** Cannot partially specialize, so only provide template for size_t (argument type).
+ *  These templates (try to) protect against mixing 32/64 bit unsigned ints into the compiler
+ *  intrinsics.
+ *  Return position of first set bit (MSB->LSB) in param, or sizeof(param)*8 if param = 0.
+ *  Use the convenience function pos_first_one, not the template functions.
+ */
+template<size_t>
+size_t firstbitsetimp(size_t);
+
+// Specialization for 32 bit unsigned using compiler intrinsics. This should reduce to asm bsr on intel.
+template<>
+inline
+size_t firstbitsetimp<4>(size_t i)
+{
+        return __builtin_clz(i);
+}
+
+// Specialization for 64 bit unsigned.
+template<>
+inline
+size_t firstbitsetimp<8>(size_t i)
+{
+        return __builtin_clzl(i);
+}
+
+/**
+ * Returns the position (MSB->LSB) of the first one in param, or sizeof(param)*8 if param==0.
+ */
+inline
+size_t pos_first_one(size_t i)
+{
+        return firstbitsetimp<sizeof(i)>(i);
+}
+
+/**
+ * Naive O(N) detection of firstbitset.
+ * Rightshift param until 0.
+ * @param ex : 0010 -> [0]001 -> [00]01 -> [000]0. 3 shifts, size-nr shifts = 1
+ * @param i The bit index of the first 1 (MSB->LSB) if i != 0, else sizeof(i)
+ * @return 
+ */
+inline
+size_t fbsnaive(size_t i)
+{
+        size_t shiftcount = 0;
+        while(i){
+                i = i >> 1ull;
+                ++shiftcount;
+        }
+        return (sizeof(i)*8)-shiftcount;             
+}
+
 /**
  * @pre flag is power of 2
  */
