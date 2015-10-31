@@ -160,7 +160,7 @@ public:
 
 	double getProcTime(size_t event) const
 	{
-		static std::uniform_real_distribution<double> dist(T_75, T_125);
+		std::uniform_real_distribution<double> dist(T_75, T_125);
 		m_rand.seed((event + m_counter + m_eventsHad)*m_counter);
 		return roundTo<double>(dist(m_rand), T_STEP);
 	}

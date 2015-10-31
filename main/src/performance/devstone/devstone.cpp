@@ -144,11 +144,11 @@ constexpr T roundTo(T val, T gran)
 t_counter Processor::getProcTime(size_t event) const
 {
 #ifdef FPTIME
-	static std::uniform_real_distribution<t_counter> dist(T_75, T_125);
+	std::uniform_real_distribution<t_counter> dist(T_75, T_125);
 	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return roundTo(dist(m_rand), T_STEP);
 #else
-	static std::uniform_int_distribution<t_counter> dist(T_75, T_125);
+	std::uniform_int_distribution<t_counter> dist(T_75, T_125);
 	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return dist(m_rand);
 #endif

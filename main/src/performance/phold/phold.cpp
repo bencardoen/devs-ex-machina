@@ -23,7 +23,7 @@ namespace n_benchmarks_phold {
 
 std::size_t getRand(std::size_t event, t_randgen& randgen)
 {
-	static std::uniform_int_distribution<std::size_t> dist(0, 60000);
+	std::uniform_int_distribution<std::size_t> dist(0, 60000);
 	randgen.seed(event);
 	return dist(randgen);
 }
@@ -57,11 +57,11 @@ constexpr T roundTo(T val, T gran)
 EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 {
 #ifdef FPTIME
-	static std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+	std::uniform_real_distribution<EventTime> dist(T_0, T_100);
 	m_rand.seed(event);
 	return roundTo(dist(m_rand), T_STEP);
 #else
-	static std::uniform_int_distribution<EventTime> dist(T_0, T_100);
+	std::uniform_int_distribution<EventTime> dist(T_0, T_100);
 	m_rand.seed(event);
 	return dist(m_rand);
 #endif
@@ -70,7 +70,7 @@ EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 {
 	LOG_INFO("[PHOLD] - Getting next destination. [Local=",m_local.size(),"] [Remote=",m_remote.size(),"]");
-	static std::uniform_int_distribution<std::size_t> dist(0, 100);
+	std::uniform_int_distribution<std::size_t> dist(0, 100);
 	std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
 	std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
 	m_rand.seed(event);

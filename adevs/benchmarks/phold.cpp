@@ -41,7 +41,7 @@ typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random 
 
 std::size_t getRand(std::size_t event, t_randgen& randgen)
 {
-	static std::uniform_int_distribution<std::size_t> dist(0, 60000);
+	std::uniform_int_distribution<std::size_t> dist(0, 60000);
 	randgen.seed(event);
 	return dist(randgen);
 }
@@ -75,7 +75,6 @@ constexpr T roundTo(T val, T gran)
 class HeavyPHOLDProcessor: public adevs::Atomic<t_event>
 {
 private:
-	static std::size_t procCounter;
 	const std::size_t m_percentageRemotes;
 	const size_t m_iter;
 	const std::vector<std::size_t> m_local;
@@ -86,7 +85,7 @@ private:
 
 	size_t getNextDestination(size_t event) const
 	{
-		static std::uniform_int_distribution<std::size_t> dist(0, 100);
+		std::uniform_int_distribution<std::size_t> dist(0, 100);
 		std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
 		std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
 		m_rand.seed(event);
@@ -98,7 +97,7 @@ private:
 	}
 	t_eventTime getProcTime(t_payload event) const
 	{
-		static std::uniform_real_distribution<t_eventTime> dist(T_0, T_100);
+		std::uniform_real_distribution<t_eventTime> dist(T_0, T_100);
 		m_rand.seed(event);
 		return roundTo(dist(m_rand), T_STEP);
 	}
