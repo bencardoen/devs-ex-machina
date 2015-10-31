@@ -60,7 +60,6 @@ const int outPort = 1;
 class Processor: public adevs::Atomic<t_event>
 {
 private:
-	static std::size_t procCounter;
 	//state
 	t_counter m_event1_counter;
 	t_event m_event1;
@@ -72,13 +71,13 @@ private:
 	mutable t_randgen m_rand;
 public:
 	const std::size_t m_counter;
-	Processor(bool randta = false):
+	Processor(bool randta = false, std::size_t num = 0):
 		adevs::Atomic<t_event>(),
 		m_event1_counter(inf),
 		m_event1(empty),
 		m_eventsHad(0),
 		m_randta(randta),
-		m_counter(procCounter++)
+		m_counter(num)
 	{
 //		std::cout << "processor " << m_counter << " was born!\n";
 	}
@@ -167,8 +166,6 @@ public:
 	}
 };
 
-std::size_t Processor::procCounter = 0;
-
 class Generator: public adevs::Atomic<t_event>
 {
 	void delta_int()
@@ -210,18 +207,18 @@ class CoupledRecursion: public adevs::Digraph<std::size_t>
 public:
 	std::vector<Component*> m_components;
 	/// Assigns the model component set to c
-	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta):
+	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num):
 		adevs::Digraph<std::size_t>()
 	{
 		assert(width > 0 && "The width must me at least 1.");
 		if(depth > 1)
 		{
-			Component* c = new CoupledRecursion(width, depth-1, randomta);
+			Component* c = new CoupledRecursion(width, depth-1, randomta, num);
 			m_components.push_back(c);
 			add(c);
 		}
 		for(std::size_t i = 0; i < width; ++i){
-			Component* c = new Processor(randomta);
+			Component* c = new Processor(randomta, num++);
 			m_components.push_back(c);
 			add(c);
 		}
@@ -249,8 +246,9 @@ class DEVSTone: public adevs::Digraph<std::size_t>
 public:
 	Component* m_gen;
 	Component* m_proc;
+	std::size_t num = 0;
 	DEVSTone(std::size_t width, std::size_t depth, bool randomta):
-		m_gen(new Generator()), m_proc(new CoupledRecursion(width, depth, randomta))
+		m_gen(new Generator()), m_proc(new CoupledRecursion(width, depth, randomta, num))
 	{
 		add(m_gen);
 		add(m_proc);

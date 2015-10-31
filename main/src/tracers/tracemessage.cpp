@@ -191,7 +191,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
 
-	TraceMessage t(n_network::t_timestamp(time.getTime()-n_network::t_timestamp::epsilon().getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
+	TraceMessage t(n_network::t_timestamp(time.getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
         
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;

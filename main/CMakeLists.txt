@@ -192,9 +192,11 @@ add_executable(${PROJECT_NAME}
     #src/examples/trafficsystem/collector.cpp
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
+    src/performance/highInterconnect/hinterconnect.cpp
     src/test/basiccerealtestclasses.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
+    src/test/benchmarktest.cpp
     src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/modeltest.cpp
