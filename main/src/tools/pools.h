@@ -110,6 +110,7 @@ class Pool{
  * @attention: obviously this pool should only be used in a usage pattern where you cycle
  * between alloc(n), dealloc(n) with a predetermined limit on n. The simplicity of this pool
  * allows a severe reduction in runtime.
+ * @note : this pool by its very definition will detect over-deallocation.
  */
 template<typename T>
 class SlabPool{
@@ -184,6 +185,202 @@ class SlabPool{
                                         m_currptr=m_pool;
                         }
                         else{
+                                throw std::bad_alloc();
+                        }
+                }
+};
+
+/**
+ * A version of the SlabPool that expands if its limits are reached. 
+ * Use only for cyclic allocate(n)/deallocate(n) patterns.
+ */
+template<typename T>
+class DynamicSlabPool{
+         private:
+                /**
+                 * #malloc() - #free()
+                 */
+                size_t          m_allocated;
+                /**
+                 * Total size of available + allocated blocks.
+                 */
+                size_t          m_osize;
+                
+                size_t          m_slabsize;
+                
+                size_t          m_current_lane;
+                
+                std::vector<pool_lane<T>> m_pools;
+                
+                /**
+                 * Points to the next free object.
+                 */
+                T*      m_currptr;
+                
+                T*      allocNewSlab(size_t objs)
+                {
+                        return nullptr;
+                }
+        public:
+                explicit DynamicSlabPool(size_t poolsize):m_allocated(0),m_osize(poolsize),m_slabsize(poolsize),m_current_lane(0)
+                {
+                        T * fblock = (T*) malloc(sizeof(T)*poolsize);
+                        if(! fblock)
+                                throw std::bad_alloc();
+                        m_pools.push_back(pool_lane<T>(fblock, poolsize));
+                        m_currptr = m_pools[0].begin();
+                }
+                
+                ~DynamicSlabPool()
+                {
+                        for(auto lane : m_pools)
+                                std::free(lane.begin());
+                }
+                
+                size_t size()const
+                {
+                        return m_osize;
+                }
+                
+                size_t allocated()const
+                {
+                        return m_allocated;
+                }
+                
+                /**
+                 * @return A pointer to the next free object.
+                 * If allocated() == size(), tries to grab a new block of memory to allocate.
+                 * @throw bad_alloc if expanding memory fails.
+                 */
+                T* allocate()
+                {
+                        if(m_allocated < m_osize){
+                                ++m_allocated;
+                                return m_currptr++;
+                        }
+                        else
+                        {       
+                                // Use expanding size if needed.
+                                T * fblock = (T*) malloc(sizeof(T)*m_slabsize);
+                                if(!fblock)
+                                        throw std::bad_alloc();
+                                m_pools.push_back(pool_lane<T>(fblock, m_slabsize));
+                                ++m_current_lane;
+                                m_osize += m_pools[m_current_lane].size();
+                                m_currptr = m_pools[m_current_lane].begin();
+                                ++m_allocated;
+                                return m_currptr++;
+                        }
+                }
+                
+                /**
+                 * Indicate T* is no longer required.
+                 * If the alloc count reaches zero, the pool can be reused.
+                 */
+                void deallocate(T*)
+                {
+                        // In future, look up part of pool based on T* range, and mark for reuse iff all ptrs returned.
+                        // Take care here to jump backwards across lanes as well.
+                        if(m_allocated){
+                                --m_allocated;
+                                if(!m_allocated){
+                                        m_current_lane = 0;
+                                        m_currptr=m_pools[0].begin();
+                                }
+                        }
+                        else{
+                                throw std::bad_alloc();
+                        }
+                }
+};
+
+
+/**
+ * Expanding pool with a stack as free-list.
+ * In principle can decrease page faults by reusing frequently used pointers, but this depends
+ * on usage.
+ */
+template<typename T>
+class StackPool{
+         private:
+                /**
+                 * Total size of available + allocated blocks.
+                 */
+                size_t          m_osize;
+                
+                size_t          m_slabsize;                
+                
+                /**
+                 * Blocks of slabsize objects.
+                 */
+                std::vector<pool_lane<T>> m_pools;
+                
+                /**
+                 * LIFO freelist.
+                 */
+                std::deque<T*>  m_free;
+                
+        public:
+                explicit StackPool(size_t poolsize):m_osize(poolsize),m_slabsize(poolsize)
+                {
+                        T * fblock = (T*) malloc(sizeof(T)*poolsize);
+                        if(! fblock)
+                                throw std::bad_alloc();
+                        m_pools.push_back(pool_lane<T>(fblock, poolsize));
+                        for(size_t i = 0; i<poolsize; ++i)
+                                m_free.push_back(fblock++);
+                }
+                
+                ~StackPool()
+                {
+                        for(auto lane : m_pools)
+                                std::free(lane.begin());
+                }
+                
+                constexpr size_t size()const
+                {
+                        return m_osize;
+                }
+                
+                constexpr size_t allocated()const
+                {
+                        return size()-m_free.size();
+                }
+                
+                /**
+                 * @return A pointer to the next free object.
+                 * If allocated() == size(), tries to grab a new block of memory to allocate.
+                 * @throw bad_alloc if expanding memory fails.
+                 */
+                T* allocate()
+                {
+                        if(m_free.size() != 0){
+                                T* next = m_free.back();
+                                m_free.pop_back();
+                                return next;
+                        }
+                        else{       
+                                T * fblock = (T*) malloc(sizeof(T)*m_slabsize);
+                                if(!fblock)
+                                        throw std::bad_alloc();
+                                m_pools.push_back(pool_lane<T>(fblock, m_slabsize));
+                                m_osize += m_pools.back().size();
+                                // Push any except the last (which we immediately need)
+                                for(size_t i = 0; i < m_slabsize-1; ++i)
+                                        m_free.push_back(fblock++);
+                                return fblock;
+                        }
+                }
+                
+                /**
+                 * Indicate T* is no longer required.
+                 */
+                void deallocate(T* t)
+                {
+                        if(m_free.size()!=m_osize){
+                                m_free.push_back(t);
+                        }
+                        else{   // Usually a sign of either double free or crossover between pools.
                                 throw std::bad_alloc();
                         }
                 }
@@ -427,7 +624,7 @@ template<typename T>
 ObjectPool<T>&
 getPool()
 {
-        thread_local ObjectPool<T> pool(40000);
+        thread_local ObjectPool<T> pool(10000);
         return pool;
 }
 

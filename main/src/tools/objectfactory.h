@@ -47,6 +47,12 @@ void takeBack(T* pointer)
 template<typename T, typename ... Args>
 T* createPooledObject(Args&&... args)
 {
+        /**
+        T* mem = getPool<T>().allocate();
+        T* obj = new (mem) T(args...);
+        return obj;
+        */
+        // This allows conservative/optimistic to bypass pools, but is very slow.
         if(std::this_thread::get_id() == getMainThreadID()){
                 T* mem = getPool<T>().allocate();
                 T* obj = new (mem) T(args...);
@@ -54,6 +60,7 @@ T* createPooledObject(Args&&... args)
                 return obj;
         }else
                 return createRawObject<T>(args...);
+        
 }
 
 /**
@@ -62,6 +69,11 @@ T* createPooledObject(Args&&... args)
 template<typename T>
 void destroyPooledObject(T* t)
 {
+        /**
+        LOG_DEBUG("Deallocating pooled msg : ", t);
+        getPool<T>().deallocate(t);
+         */
+        // Same as with createPooled.
         if(std::this_thread::get_id()==getMainThreadID()){
                 LOG_DEBUG("Deallocating pooled msg : ", t);
                 getPool<T>().deallocate(t);

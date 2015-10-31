@@ -42,7 +42,7 @@ FIND_LIBRARY(TCMALLOC_LIBRARY
       PATHS /usr/lib /usr/local/lib
 )
 if(TCMALLOC_LIBRARY)
-    MESSAGE(STATUS "TCMALLOC LIB FOUND" -ltcmalloc)
+    MESSAGE(STATUS "TCMALLOC LIB FOUND")
 endif(TCMALLOC_LIBRARY)
 ###############################################################################
 
@@ -346,7 +346,7 @@ include_directories(
 # Register libraries needed.
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
-    set(LIBS ${LIBS}) 
+    set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
