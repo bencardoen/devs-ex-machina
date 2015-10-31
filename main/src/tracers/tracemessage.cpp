@@ -14,6 +14,7 @@
 #include <sstream>
 
 using namespace n_tools;
+using namespace n_scheduler;
 
 namespace n_tracers {
 

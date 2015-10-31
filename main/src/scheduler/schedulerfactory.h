@@ -8,7 +8,7 @@
 #ifndef SCHEDULERFACTORY_H
 #define SCHEDULERFACTORY_H
 
-namespace n_tools {
+namespace n_scheduler {
 
 /**
  * @brief The Storage enum Defines a user preference for the storage type the

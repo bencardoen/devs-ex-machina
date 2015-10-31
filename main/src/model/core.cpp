@@ -57,7 +57,7 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
                 m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
-		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
+		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::MAP)),
 		m_stats(m_coreid)
                 
 {

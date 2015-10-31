@@ -13,7 +13,7 @@
 #include "scheduler/msgscheduler.h"
 #include "scheduler/listscheduler.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 
 template<typename X>

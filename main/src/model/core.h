@@ -31,8 +31,8 @@ enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS, DE
 /**
  * Typedefs used by core.
  */
-typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
-typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
+typedef n_scheduler::t_defaultModelScheduler t_scheduler;
+typedef std::shared_ptr<n_scheduler::Scheduler<MessageEntry>> t_msgscheduler;
 
 struct statistics_collector{
         n_tools::t_uintstat     m_amsg_sent;
@@ -178,7 +178,7 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
-        n_tools::t_defaultModelScheduler m_heap;
+        t_scheduler m_heap;
 //        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
         /**

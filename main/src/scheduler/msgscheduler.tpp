@@ -8,7 +8,7 @@
 #include <assert.h>
 #include "tools/globallog.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 template<typename X, typename R>
 void MessageScheduler<X, R>::push_back(const R& item) {

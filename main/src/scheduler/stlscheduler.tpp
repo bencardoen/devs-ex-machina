@@ -9,7 +9,7 @@
 #include <utility>
 #include <algorithm>
 
-namespace n_tools {
+namespace n_scheduler {
 
 template<typename R>
 void STLScheduler<R>::push_back(const R& item) {

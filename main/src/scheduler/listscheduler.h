@@ -13,7 +13,7 @@
 #include "scheduler/scheduler.h"
 #include <sstream>
 
-namespace n_tools {
+namespace n_scheduler {
 
 // Forward declare friend
 template<typename T>
@@ -306,6 +306,6 @@ public:
 	}
 };
 
-} /* namespace n_model */
+} /* namespace n_scheduler */
 
 #endif /* SRC_SCHEDULER_LISTSCHEDULER_H_ */

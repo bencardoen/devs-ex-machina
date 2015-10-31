@@ -12,7 +12,7 @@
 #include "scheduler/genericmodelscheduler.h"
 #include "model/atomicmodel.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 /**
  * @brief Helper struct for easier creation of schedulers.
@@ -32,9 +32,9 @@ struct ModelScheduler<ModelHeapScheduler, Heap>
 };
 
 typedef ModelScheduler<ModelHeapScheduler, std::vector>::t_type t_defaultModelScheduler;
-typedef ModelScheduler<n_tools::VectorScheduler, boost::heap::pairing_heap>::t_type t_Vector_PairingHeap_scheduler;
+typedef ModelScheduler<n_scheduler::VectorScheduler, boost::heap::pairing_heap>::t_type t_Vector_PairingHeap_scheduler;
 
-} /* namespace n_tools */
+} /* namespace n_scheduler */
 
 
 

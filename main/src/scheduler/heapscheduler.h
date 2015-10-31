@@ -12,7 +12,7 @@
 #include "tools/misc.h"
 #include <assert.h>
 
-namespace n_tools {
+namespace n_scheduler {
 
 /**
  * A scheduler based on a heap. This scheduler is best used when a limited number of items must be kept
@@ -389,6 +389,6 @@ public:
         	m_kValue = N>1?(3*N/(n_tools::intlog2(N))):0;
 	};
 };
-} /* namespace n_tools */
+} /* namespace n_scheduler */
 
 #endif /* SRC_SCHEDULER_HEAPSCHEDULER_H_ */

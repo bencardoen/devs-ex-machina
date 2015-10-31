@@ -9,7 +9,7 @@
 #include <memory>
 #include "tools/globallog.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 /**
  * Interface for all Scheduler instances.
@@ -218,12 +218,12 @@ struct ExampleItem
 // Last but not least : a == b => hash(a) == hash(b) but not the other way around.
 namespace std {
 template<>
-struct hash<n_tools::ExampleItem>
+struct hash<n_scheduler::ExampleItem>
 {
-	size_t operator()(const n_tools::ExampleItem& item) const
+	size_t operator()(const n_scheduler::ExampleItem& item) const
 	{
 		// Defer hash of item to hash of 1 member. To use many, look at boost's implementation of hash combine.
-		return hash<n_tools::ExampleItem::timetype>()(item.prior);
+		return hash<n_scheduler::ExampleItem::timetype>()(item.prior);
 	}
 };
 }

@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <sstream>
 
-namespace n_tools {
+namespace n_scheduler {
 
 // Forward declare friend
 template<typename T>

@@ -14,7 +14,7 @@
 #include "model/atomicmodel.h"
 #include "tools/globallog.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 template<typename S>
 class ModelHeapScheduler: public Scheduler<S> {
@@ -41,7 +41,7 @@ struct ModelComparator
  * Items are kept in a min heap, where the order is based on the next internal transition time.
  */
 template<>
-class ModelHeapScheduler<n_model::t_raw_atomic>: public n_tools::HeapScheduler<n_model::AtomicModel_impl, ModelComparator>
+class ModelHeapScheduler<n_model::t_raw_atomic>: public n_scheduler::HeapScheduler<n_model::AtomicModel_impl, ModelComparator>
 {
 private:
         /**
@@ -49,7 +49,7 @@ private:
          */
         mutable std::vector<std::size_t> m_imminentIndexes;
 
-        typedef n_tools::HeapScheduler<n_model::AtomicModel_impl, ModelComparator> t_base;
+        typedef n_scheduler::HeapScheduler<n_model::AtomicModel_impl, ModelComparator> t_base;
 
         bool m_updateSingle;
 
@@ -216,7 +216,7 @@ ModelHeapScheduler<n_model::t_raw_atomic>::printScheduler<>()
 	printScheduler("");
 }
 
-} /* namespace n_tools */
+} /* namespace n_scheduler */
 
 
 

@@ -26,6 +26,7 @@ using std::endl;
 using std::atomic;
 using std::thread;
 using namespace n_tools;
+using namespace n_scheduler;
 typedef ExampleItem t_TypeUsed;
 
 /**
@@ -731,7 +732,7 @@ struct HeapSchedulerComparator
 };
 
 TEST(HeapTest, heap_scheduler){
-	n_tools::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
+	n_scheduler::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
 	for(std::size_t i = 0; i < 20; ++i){
 		vec.push_back(new HeapSchedulerVal(i));
 		EXPECT_EQ(vec.dirty(), i >= 5);

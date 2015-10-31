@@ -53,7 +53,7 @@ TEST(Message, operators){
                 delete msgafter;
         }
         
-	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
+	auto scheduler = n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false);
 	
         t_msgptr am;
         /// Create N objects, test push/contains
@@ -98,7 +98,7 @@ TEST(Message, operators){
 }
 
 TEST(Message, Antimessage){
-	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
+	auto scheduler = n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false);
 	t_shared_msgptr msg = createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(55,0), 3u, 2u);
 	t_shared_msgptr antimessage = n_tools::createObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), msg->getTimeStamp(), msg->getDstPort(), msg->getSrcPort());
 	scheduler->push_back(MessageEntry(msg.get()));
@@ -110,7 +110,7 @@ TEST(Message, Antimessage){
 
 TEST(Message, Smoketest){
 	//// Try to break scheduler.
-	auto scheduler = n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false);
+	auto scheduler = n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false);
 
 	for(size_t i = 0; i<1000; ++i){
 		t_msgptr msg = createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(1, 0), t_timestamp(0,i), 3u, 2u);
