@@ -1,17 +1,17 @@
 #ifndef SCHEDULERFACTORY_TPP
 #define SCHEDULERFACTORY_TPP
 
-#include "tools/synchronizedscheduler.h"
-#include "tools/unsynchronizedscheduler.h"
-#include "tools/msgscheduler.h"
 #include <boost/heap/binomial_heap.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/heap/pairing_heap.hpp>
 #include <boost/heap/skew_heap.hpp>
 #include <boost/heap/d_ary_heap.hpp>
-#include "tools/msgscheduler.h"
-#include "tools/listscheduler.h"
-#include "schedulerfactory.h"
+#include <scheduler/synchronizedscheduler.h>
+#include <scheduler/unsynchronizedscheduler.h>
+#include "scheduler/msgscheduler.h"
+
+#include "scheduler/msgscheduler.h"
+#include "scheduler/listscheduler.h"
 
 namespace n_tools {
 

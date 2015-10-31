@@ -2,13 +2,13 @@
  * @author Ben Cardoen.
  */
 
-#ifndef MSGSCHEDULER_H
-#define MSGSCHEDULER_H
+#ifndef SYNCHRONIZEDSCHEDULER_H
+#define SYNCHRONIZEDSCHEDULER_H
 
-#include "tools/scheduler.h"
+#include "scheduler/scheduler.h"
 #include <mutex>
 #include <unordered_map>
-#include <map>
+#include <sstream>
 
 namespace n_tools {
 
@@ -17,14 +17,29 @@ template<typename T>
 class SchedulerFactory;
 
 /**
- * Unlocked Scheduler.
- * Each item can be stored once (for equal hash values).
+ * @brief A synchronized Scheduler.
+ * This class provides basic scheduling facilities, with a lock on
+ * each member function.
+ * This means that it is thread safe for single function calls, but has to
+ * be externally locked in e.g.:
+ * if(not empty())
+ *      pop()
+ * With 2-n threads, this can still fail.
+ * The correct version:
+ *
+ * mutex mylock;
+ * {   // Use anonymous block for RAII unlock
+ *     std::lock_guard<mutex> lock(mylock);
+ *     if(not s.empty()){
+ *       s.pop();
+ *     }
+ * }// Lock_guard unlocks always here.
  * @see SchedulerFactory for construction.
  * @param X Storage type
  * @param S Item type
  */
 template<typename X, typename S>
-class MessageScheduler: public Scheduler<S> {
+class SynchronizedScheduler: public Scheduler<S> {
 public:
 	typedef typename X::handle_type t_handle;
 private:
@@ -33,21 +48,25 @@ private:
 	 */
 	X m_storage;
 
-	//typedef std::unordered_map<S, t_handle> t_hashtable;
-        typedef std::map<S, t_handle> t_hashtable;
+	typedef std::unordered_map<S, t_handle> t_hashtable;
 
 	t_hashtable m_hashtable;
 
 	friend class SchedulerFactory<S> ;
 
+	/**
+	 * @brief m_lock Internal mutex.
+	 */
+	mutable std::mutex m_lock;
+
 protected:
-	MessageScheduler() {
+	SynchronizedScheduler() {
 		;
 	}
 
 public:
 
-	virtual ~MessageScheduler() {
+	virtual ~SynchronizedScheduler() {
 		;
 	}
 
@@ -120,5 +139,5 @@ public:
 };
 
 }
-#include "msgscheduler.tpp"
+#include <scheduler/synchronizedscheduler.tpp>
 #endif

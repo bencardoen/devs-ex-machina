@@ -5,12 +5,13 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
+#include "scheduler/schedulerfactory.h"
 #include "tracers/tracemessage.h"
-#include "tools/schedulerfactory.h"
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"
 #include <thread>
 #include <future>
+#include <sstream>
 
 using namespace n_tools;
 

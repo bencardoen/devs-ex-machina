@@ -2,16 +2,16 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include "network/network.h"
-#include "model/terminationfunction.h"		// include atomicmodel
 #include "model/modelentry.h"
-#include "network/messageentry.h"
+#include "model/terminationfunction.h"		// include atomicmodel
 #include "network/controlmessage.h"
+#include "network/messageentry.h"
+#include "network/network.h"
 #include "scheduler/modelscheduler.h"
-#include "tracers/tracers.h"
+#include "scheduler/schedulerfactory.h"
 #include "tools/gviz.h"
-#include "tools/schedulerfactory.h"
 #include "tools/statistic.h"
+#include "tracers/tracers.h"
 #include <set>
 #include <condition_variable>
 

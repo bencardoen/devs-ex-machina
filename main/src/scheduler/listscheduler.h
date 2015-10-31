@@ -5,12 +5,13 @@
  *      Author: Ben Cardoen
  */
 
-#ifndef SRC_TOOLS_LISTSCHEDULER_H_
-#define SRC_TOOLS_LISTSCHEDULER_H_
+#ifndef SRC_SCHEDULER_LISTSCHEDULER_H_
+#define SRC_SCHEDULER_LISTSCHEDULER_H_
 
 #include <list>
 #include <unordered_map>
-#include "tools/scheduler.h"
+#include "scheduler/scheduler.h"
+#include <sstream>
 
 namespace n_tools {
 
@@ -307,4 +308,4 @@ public:
 
 } /* namespace n_model */
 
-#endif /* SRC_TOOLS_LISTSCHEDULER_H_ */
+#endif /* SRC_SCHEDULER_LISTSCHEDULER_H_ */

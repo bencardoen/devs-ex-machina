@@ -10,7 +10,7 @@
 
 
 #include <scheduler/heapscheduler.h>
-#include "tools/scheduler.h"
+#include <scheduler/scheduler.h>
 #include "model/atomicmodel.h"
 #include "tools/globallog.h"
 

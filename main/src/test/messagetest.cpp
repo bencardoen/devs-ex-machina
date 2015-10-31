@@ -6,8 +6,8 @@
  */
 #include "network/message.h"
 #include "network/messageentry.h"
-#include "tools/scheduler.h"
-#include "tools/schedulerfactory.h"
+#include "scheduler/scheduler.h"
+#include "scheduler/schedulerfactory.h"
 #include <unordered_map>
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"

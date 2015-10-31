@@ -2,12 +2,14 @@
  * @author Ben Cardoen.
  */
 
-#ifndef VECTORSCHEDULER_H
-#define VECTORSCHEDULER_H
+#ifndef UNSYNCHRONIZEDSCHEDULER_H
+#define UNSYNCHRONIZEDSCHEDULER_H
 
-#include "tools/scheduler.h"
-#include <vector>
+#include "scheduler/scheduler.h"
+#include <mutex>
+#include <unordered_map>
 #include <map>
+#include <sstream>
 
 namespace n_tools {
 
@@ -17,14 +19,13 @@ class SchedulerFactory;
 
 /**
  * Unlocked Scheduler.
- * Each item can be stored once, using operator size_t() on type S resulting in a unique key.
- * std::less<T> is used for the heap operations in max heap logic.
+ * Each item can be stored once (for equal hash values).
  * @see SchedulerFactory for construction.
  * @param X Storage type
  * @param S Item type
  */
 template<typename X, typename S>
-class VectorScheduler: public Scheduler<S> {
+class UnSynchronizedScheduler: public Scheduler<S> {
 public:
 	typedef typename X::handle_type t_handle;
 private:
@@ -33,20 +34,21 @@ private:
 	 */
 	X m_storage;
 
-	typedef std::vector<std::pair<t_handle, bool>> t_keys;
+	typedef std::unordered_map<S, t_handle> t_hashtable;
+        //typedef std::map<S, t_handle> t_hashtable;
 
-	t_keys m_keys;
+	t_hashtable m_hashtable;
 
 	friend class SchedulerFactory<S> ;
 
-public:
-	VectorScheduler() {
+protected:
+	UnSynchronizedScheduler() {
 		;
 	}
 
 public:
 
-	virtual ~VectorScheduler() {
+	virtual ~UnSynchronizedScheduler() {
 		;
 	}
 
@@ -95,7 +97,7 @@ public:
 
 	virtual
 	void
-	unschedule_until(std::vector<S> &container, const S& elem) override;
+	unschedule_until(std::vector<S> &container, const S& time) override;
 
 	void
 	clear() override;
@@ -115,16 +117,9 @@ public:
 	virtual
 	void
 	testInvariant() const override;
-        
-        virtual
-        void
-        hintSize(size_t expected)override;
-        
-        virtual
-        void
-        update(const S& elem)override;
+
 };
 
 }
-#include "vectorscheduler.tpp"
+#include <scheduler/unsynchronizedscheduler.tpp>
 #endif

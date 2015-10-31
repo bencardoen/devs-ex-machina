@@ -11,8 +11,8 @@
 #include "model/atomicmodel.h"
 #include "model/modelentry.h"
 #include "tools/globallog.h"
-#include "tools/msgscheduler.h"
-#include "tools/vectorscheduler.h"
+#include "scheduler/msgscheduler.h"
+#include "scheduler/vectorscheduler.h"
 #include <boost/heap/pairing_heap.hpp>
 #include <type_traits>
 

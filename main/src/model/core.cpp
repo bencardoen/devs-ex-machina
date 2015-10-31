@@ -13,8 +13,6 @@
 #include "cereal/archives/binary.hpp"
 #include "cereal/types/string.hpp"
 #include "cereal/types/unordered_map.hpp"
-#include "tools/vectorscheduler.h"
-#include "tools/heap.h"
 #include "cereal/types/vector.hpp"
 
 using n_network::MessageEntry;

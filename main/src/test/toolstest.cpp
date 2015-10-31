@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <scheduler/heapscheduler.h>
 #include <iostream>
 #include <vector>
 #include <list>
@@ -7,16 +6,17 @@
 #include <queue>
 #include <algorithm>
 #include <random>
-#include "tools/schedulerfactory.h"
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <scheduler/heapscheduler.h>
+#include "scheduler/schedulerfactory.h"
+#include "scheduler/listscheduler.h"
+#include "scheduler/stlscheduler.h"
 #include "tools/globallog.h"
 #include "tools/coutredirect.h"
 #include "tools/sharedvector.h"
-#include "tools/listscheduler.h"
 #include "tools/gviz.h"
-#include "tools/stlscheduler.h"
 #include "tools/flags.h"
 #include "tools/misc.h"
 #include "model/modelentry.h"

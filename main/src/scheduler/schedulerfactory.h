@@ -2,8 +2,8 @@
  * @author Ben Cardoen.
  */
 
-#include "tools/scheduler.h"
-#include "tools/vectorscheduler.h"
+#include "scheduler/scheduler.h"
+#include "scheduler/vectorscheduler.h"
 
 #ifndef SCHEDULERFACTORY_H
 #define SCHEDULERFACTORY_H
@@ -78,6 +78,6 @@ public:
 };
 
 }
-#include "schedulerfactory.tpp"
+#include <scheduler/schedulerfactory.tpp>
 
 #endif // SCHEDULERFACTORY_H

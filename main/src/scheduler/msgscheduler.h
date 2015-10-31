@@ -2,13 +2,14 @@
  * @author Ben Cardoen.
  */
 
-#ifndef UNSYNCHRONIZEDSCHEDULER_H
-#define UNSYNCHRONIZEDSCHEDULER_H
+#ifndef MSGSCHEDULER_H
+#define MSGSCHEDULER_H
 
-#include "tools/scheduler.h"
+#include <scheduler/scheduler.h>
 #include <mutex>
 #include <unordered_map>
 #include <map>
+#include <sstream>
 
 namespace n_tools {
 
@@ -24,7 +25,7 @@ class SchedulerFactory;
  * @param S Item type
  */
 template<typename X, typename S>
-class UnSynchronizedScheduler: public Scheduler<S> {
+class MessageScheduler: public Scheduler<S> {
 public:
 	typedef typename X::handle_type t_handle;
 private:
@@ -33,21 +34,21 @@ private:
 	 */
 	X m_storage;
 
-	typedef std::unordered_map<S, t_handle> t_hashtable;
-        //typedef std::map<S, t_handle> t_hashtable;
+	//typedef std::unordered_map<S, t_handle> t_hashtable;
+        typedef std::map<S, t_handle> t_hashtable;
 
 	t_hashtable m_hashtable;
 
 	friend class SchedulerFactory<S> ;
 
 protected:
-	UnSynchronizedScheduler() {
+	MessageScheduler() {
 		;
 	}
 
 public:
 
-	virtual ~UnSynchronizedScheduler() {
+	virtual ~MessageScheduler() {
 		;
 	}
 
@@ -120,5 +121,5 @@ public:
 };
 
 }
-#include "unsynchronizedscheduler.tpp"
+#include "msgscheduler.tpp"
 #endif
