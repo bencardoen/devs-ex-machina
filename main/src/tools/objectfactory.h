@@ -6,6 +6,7 @@
  *      Using the following url as help : http://eli.thegreenplace.net/2014/variadic-templates-in-c/
  */
 #include <memory>
+#include "tools/globallog.h"
 #include "tools/pools.h"
 
 #ifndef SRC_TOOLS_OBJECTFACTORY_H_
@@ -34,23 +35,6 @@ T* createRawObject(Args&&... args)
 	return new T(args...);
 }
 
-template<typename T, typename ... Args>
-T* createPooledObject(Args&&... args)
-{
-        T* mem = getPool<T>().allocate();
-        T* obj = new (mem) T(args...);
-        return obj;
-}
-
-/**
- * Call only iff runtime type of t == T.
- */
-template<typename T>
-void destroyPooledObject(T* t)
-{
-        getPool<T>().deallocate(t);
-}
-
 /**
  * Takes back a pointer created by createRawObject and clears its memory
  */
@@ -59,6 +43,33 @@ void takeBack(T* pointer)
 {
 	delete pointer;
 }
+
+template<typename T, typename ... Args>
+T* createPooledObject(Args&&... args)
+{
+        if(std::this_thread::get_id() == getMainThreadID()){
+                T* mem = getPool<T>().allocate();
+                T* obj = new (mem) T(args...);
+                LOG_DEBUG("Allocating pooled msg : ", obj);
+                return obj;
+        }else
+                return createRawObject<T>(args...);
+}
+
+/**
+ * Call only iff runtime type of t == T.
+ */
+template<typename T>
+void destroyPooledObject(T* t)
+{
+        if(std::this_thread::get_id()==getMainThreadID()){
+                LOG_DEBUG("Deallocating pooled msg : ", t);
+                getPool<T>().deallocate(t);
+        }
+        else
+                takeBack<T>(t);
+}
+
 
 #if USE_SAFE_CAST
 template<class T>

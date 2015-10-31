@@ -204,7 +204,8 @@ public:
          */
         virtual void releaseMe()
         {
-                n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
         }
 
 	/**
@@ -311,7 +312,8 @@ public:
          */
         virtual void releaseMe()override
         {
-                n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
         }
 
 };

@@ -1051,12 +1051,13 @@ TEST(Pool, SlabPool){
         }
 }
 
-TEST(Factory, PoolCalls){
-        struct mystr{
+struct mystr{
                 int i; 
                 double j;
                 constexpr explicit mystr(int pi, double pj):i(pi), j(pj){;}
         };
+
+TEST(Factory, PoolCalls){
         mystr * ptrtostr = n_tools::createPooledObject<mystr>(1, 31.4);
         EXPECT_EQ(ptrtostr->i, 1);
         n_tools::destroyPooledObject<mystr>(ptrtostr);

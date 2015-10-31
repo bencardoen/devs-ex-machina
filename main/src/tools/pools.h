@@ -12,6 +12,11 @@
 #include <atomic>
 #include <mutex>
 
+/**
+ * Here be dragons...
+ * The pools are NOT intended to be shared between threads (which obliterates any hint of performance)
+ */
+
 
 
 namespace n_tools {

@@ -133,7 +133,8 @@ void Port::clearSentMessages()
 {
         for(auto& msg : m_sentMessages){
                 LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", msg);
-                delete msg;
+                // TODO POOLS : Same as in ~Optimistic, thread id has changed, we cannot delete safely here.
+                //msg->releaseMe();
 #ifdef SAFETY_CHECKS
                 msg=nullptr;
 #endif
