@@ -53,7 +53,7 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 
 	bool wasFromGenerator = false;
 	for(const n_network::t_msgptr& msg: message){
-		if(msg->getDstPort() == 4){
+		if(msg->getDestinationPort() == 4){
 			wasFromGenerator = true;
 			st.m_temperature = n_network::getMsgPayload<double>(msg);
 			st.m_phase = getNext(st.m_phase, st.m_temperature);
@@ -65,7 +65,7 @@ void FireCell::extTransition(const std::vector<n_network::t_msgptr>& message)
 	if(!wasFromGenerator){
 		for(const n_network::t_msgptr& msg: message){
 			double msgTemp = n_network::getMsgPayload<double>(msg);
-			switch(msg->getDstPort()){
+			switch(msg->getDestinationPort()){
 			case 0u:
 				st.m_surroundingTemp[0] = msgTemp;
 				break;

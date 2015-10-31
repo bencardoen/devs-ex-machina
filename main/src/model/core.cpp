@@ -56,7 +56,7 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
-                m_token(n_tools::createRawObject<n_network::Message>(uuid(), uuid(), m_time, 0, 0)),m_zombie_rounds(0),
+                m_token(n_tools::createRawObject<n_network::Message>(uuid(0,0), uuid(0,0), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::MAP)),
 		m_stats(m_coreid)
                 
@@ -179,8 +179,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 
 #ifdef SAFETY_CHECKS		
 		for (t_msgptr msg : m_mailfrom) {
-                        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " msg uuid info == src::", msg->getSrcUUID(), " dst:: ", msg->getDstUUID());
-                        validateUUID(msg->getSrcUUID());
+                        validateUUID(uuid(msg->getSourceCore(),msg->getSourceModel()));
 		}
 #endif
                 
@@ -609,7 +608,7 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
-        const size_t id = msg->getDstUUID().m_local_id;
+        const size_t id = msg->getDestinationModel();
         t_raw_atomic model = this->getModel(id).get();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
         if(!hasMail(id)){               // If recd msg size==0

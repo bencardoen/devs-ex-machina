@@ -5,6 +5,7 @@
  *      Author: Ben Cardoen
  */
 #include <iostream>
+#include <string>
 #include <cassert>
 #include "network/message.h"
 #include "cereal/types/string.hpp"
@@ -27,35 +28,37 @@ n_network::operator<<(std::ostream& os, const n_network::MessageColor& c){
 }
 
 
-n_network::Message::Message(n_model::uuid srcUUID, n_model::uuid dstUUID, const t_timestamp& time_made,
+n_network::Message::Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID, const t_timestamp& time_made,
 				const std::size_t& destport, const std::size_t& sourceport)
 		:
 		m_timestamp(time_made),
-		m_destination_port(destport),
-		m_source_port(sourceport),
-		m_color(MessageColor::WHITE),
-		m_antimessage(false),
-                m_delete_flag_set(false),
-                m_processed(false),
-                m_dst_uuid(dstUUID),
-                m_src_uuid(srcUUID)
+                m_src_id(sourceport, srcUUID.m_core_id, srcUUID.m_local_id),
+                m_dst_id(destport, dstUUID.m_core_id, dstUUID.m_local_id),
+                m_atomic_flags(0u)
 	{
-		LOG_DEBUG("initializing message with modeldest ", dstUUID);
+#ifdef  SAFETY_CHECKS
+                if(std::max(destport, sourceport) > n_const::port_max)
+                        throw std::out_of_range("Port id out of range." + std::to_string(std::max(destport,sourceport)) );
+                if(std::max(srcUUID.m_core_id, dstUUID.m_core_id) > n_const::core_max)
+                        throw std::out_of_range("Core id out of range.");
+                if(std::max(srcUUID.m_local_id, dstUUID.m_local_id) > n_const::model_max)
+                        throw std::out_of_range("Model id out of range.");
+#endif
+		LOG_DEBUG("Message created with values :: ", this->toString());
 	}
-
 
 std::string
 n_network::Message::toString() const
 {
 	std::stringstream result;
-	result << "Message from " << this->getSrcPort() << " to " << this->getDstPort();
+	result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
 	result << " @" << m_timestamp;
-	result << " from model " << getSrcUUID() ;
-	result << " to model " << getDstUUID() ;
+	result << " from model " << getSourceModel() ;
+	result << " to model " << getDestinationModel() ;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
-	if(m_antimessage){
-		result << " anti="<< std::boolalpha << m_antimessage;
+	if(isAntiMessage()){
+		result << " anti="<< std::boolalpha << isAntiMessage();
 	}
 	return result.str();
 }
@@ -100,12 +103,8 @@ n_network::operator==(const n_network::Message& left, const n_network::Message& 
         return(
                 left.getTimeStamp() == right.getTimeStamp()
                 &&
-                left.m_dst_uuid==right.m_dst_uuid
+                left.m_dst_id==right.m_dst_id
                 &&
-                left.m_src_uuid==right.m_src_uuid
-                &&
-                left.getDstPort() == right.getDstPort()
-                &&
-                left.getSrcPort() == right.getSrcPort()
+                left.m_src_id==right.m_src_id
                 );
  }

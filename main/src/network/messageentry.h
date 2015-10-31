@@ -29,7 +29,7 @@ public:
 	const t_msgptr&
 	getMessage()const{return m_message;}
         
-        explicit operator size_t()const{return m_message->getDstUUID().m_local_id;}
+        explicit operator size_t()const{return m_message->getDestinationModel();} // TODO do we still need this ?
 
 	friend
 	bool operator<(const MessageEntry& left, const MessageEntry& right){        
