@@ -572,7 +572,6 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(t_msgptr ptr : msgs){
-                //n_tools::takeBack(ptr);
                 // TODO POOL
                 ptr->releaseMe();
                 LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
@@ -629,10 +628,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	for (const auto& model : m_indexed_models) {
-		/*t_timestamp modellast = */model->revert(totime);
-//		m_heap.update(model->getLocalID());
-		//one heap update is O(logN), N heap updates is O(NlogN)
-		//rebuilding the entire heap in one go is only O(3N)
+		model->revert(totime);
 	}
 	rescheduleAll();
 }

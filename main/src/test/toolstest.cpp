@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <array>
+#include <vector>
 #include <queue>
 #include <algorithm>
 #include <random>
@@ -934,17 +935,18 @@ TEST(DSlabPool, Timing){
 
 TEST(Pool, DynamicSlabPool){
         using n_network::Message;
+        using n_network::SpecializedMessage;
         using n_model::uuid;
         using n_network::t_timestamp;
-        size_t psize=4;
+        size_t psize=2;
         size_t tsize=11;        // trigger at least 2 resize operations.
-        size_t rsize=3;         
-        n_pools::DynamicSlabPool<Message> pl(psize);
-        std::vector<Message*> mptrs(tsize);
+        size_t rsize=2;         
+        n_pools::DynamicSlabPool<SpecializedMessage<std::string>> pl(psize);
+        std::vector<SpecializedMessage<std::string>*> mptrs(tsize);
         for(size_t j = 0; j<rsize;++j){
                 for(size_t i = 0; i<tsize; ++i){
                         Message* rawmem = pl.allocate();
-                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        SpecializedMessage<std::string>* msgconstructed = new(rawmem) SpecializedMessage<std::string>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, "abc");
                         EXPECT_EQ(msgconstructed->getSourceCore(), 1);
                         mptrs[i]=msgconstructed;
                 }

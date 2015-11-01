@@ -260,7 +260,6 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
                     )
 add_executable(${PROJECT_NAME}_benchpools
-    src/network/message.cpp
     src/benchpools.cpp
 )
 
@@ -346,7 +345,7 @@ include_directories(
 # Register libraries needed.
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
-    set(LIBS ${LIBS}) 
+    set(LIBS ${LIBS} ) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
@@ -364,7 +363,7 @@ target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_benchpools ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)

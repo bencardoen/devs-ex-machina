@@ -44,48 +44,28 @@ void takeBack(T* pointer)
 	delete pointer;
 }
 
+/**
+ * Create an object from a pool.
+ * @param args (optionally empty) argument list for (any) constructor of type T. 
+ */
 template<typename T, typename ... Args>
 T* createPooledObject(Args&&... args)
 {
-        
-        /**
-        T* mem = n_pools::getPool<T>().allocate();
+        T* mem = n_pools::getPool<T>()->allocate();     // Calling thread gets a dedicated pool.
         T* obj = new (mem) T(args...);
+        LOG_DEBUG("Allocating pooled msg : ", obj);
         return obj;
-        */
-        // This allows conservative/optimistic to bypass pools, but is very slow.
-        
-        if(std::this_thread::get_id() == n_pools::getMainThreadID()){
-                T* mem = n_pools::getPool<T>().allocate();
-                T* obj = new (mem) T(args...);
-                LOG_DEBUG("Allocating pooled msg : ", obj);
-                return obj;
-        }else
-                return createRawObject<T>(args...);
-        
-        
 }
 
 /**
  * Call only iff runtime type of t == T.
+ * @return Destructor of t is invoked, object pointed to by t is no longer valid.
  */
 template<typename T>
 void destroyPooledObject(T* t)
 {
-        
         LOG_DEBUG("Deallocating pooled msg : ", t);
-        /**
-        n_pools::getPool<T>().deallocate(t);
-         */
-        // Same as with createPooled.
-        
-        if(std::this_thread::get_id()==n_pools::getMainThreadID()){
-                LOG_DEBUG("Deallocating pooled msg : ", t);
-                n_pools::getPool<T>().deallocate(t);
-        }
-        else
-                takeBack<T>(t);
-        
+        n_pools::getPool<T>()->deallocate(t);
 }
 
 

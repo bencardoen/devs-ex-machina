@@ -14,38 +14,27 @@
 #include <deque>
 
 /**
- * Here be dragons...
- * The pools are NOT intended to be shared between threads (which obliterates any hint of performance)
+ * Each thread has a pool, but only if the pool is ever called.
+ * Usage:
+ * PoolInterface<T>* pool = getPool<T>();       // tsafe lazy init of pool @ first run.
+ * Object* o = new (pool->allocate()) Object(constructor_params);
+ * ...
+ * getPool<T>()->deallocate(o);
+ * 
+ * 
+ * Or the safe variant:
+ * Object* o  = createPooledObject<T>(args);
+ * destroyPooledObject<T>(o);
  */
 
 
 
 namespace n_pools {
 
-/**
- * Helper structure, defines a contigous slice of memory that a pool uses.
- */
-template<typename T>
-struct pool_lane{
-private:
-        T* m_base_addr;
-        // Lane can hold exactly m_size objects, so m_base_addr += (m_size-1) points to the last object
-        size_t m_size;
-public:
-        pool_lane():m_base_addr(nullptr),m_size(0){;}
-        constexpr pool_lane(T* pt, size_t sz):m_base_addr(pt),m_size(sz){;}
-        constexpr size_t size()const{return m_size;}
-        constexpr T* begin()const{return m_base_addr;}
-        
-        /**
-         * In STL end() points to the last object + 1, so be explicit about what we return here.
-         */
-        constexpr T* last()const{return m_base_addr + (m_size-1);}
-};
 
 /**
  * Record the id of the first thread entering this function, and return that value for all calls.
- * @pre main() enter this function first
+ * @pre main() enters this function first
  */
 inline
 std::thread::id getMainThreadID()
@@ -66,8 +55,17 @@ public:
         typedef T t_type_pooled;
         PoolInterface()=default;
         virtual ~PoolInterface(){;}
+        /**
+         * @return A contiguous block of sizeof(T) bytes, aligned for an object of type T.
+         * @throws bad_alloc if allocation fails for any reason.
+         */
         virtual T* allocate() = 0;
-        virtual void deallocate(T*) = 0;
+        
+        /**
+         * @pre *t is an instance of type T, [t, ++t) is allocated by this pool.
+         * @post ~T() is called before memory is returned to the pool (may or may not be returned to OS).
+         */
+        virtual void deallocate(T* t) = 0;
 };
 
 /**
@@ -107,27 +105,48 @@ class Pool:public PoolInterface<Object>{
                 virtual void deallocate(Object* O)override;
 };
 
+/**
+ * Helper structure, defines a contiguous slice of memory that a pool uses.
+ */
+template<typename T>
+struct pool_lane{
+private:
+        T* m_base_addr;
+        // Lane can hold exactly m_size objects, so m_base_addr += (m_size-1) points to the last object
+        size_t m_size;
+public:
+        pool_lane():m_base_addr(nullptr),m_size(0){;}
+        constexpr pool_lane(T* pt, size_t sz):m_base_addr(pt),m_size(sz){;}
+        constexpr size_t size()const{return m_size;}
+        constexpr T* begin()const{return m_base_addr;}
+        
+        /**
+         * In STL end() points to the last object + 1, so be explicit about what we return here.
+         */
+        constexpr T* last()const{return m_base_addr + (m_size-1);}
+};
 
 /**
- * Static pool with very little overhead.
+ * Static (size) pool with very little overhead.
  * Allocates at construction all the memory it will need as indicated by the user,
  * reuses that memory if all ptrs have been collected.
  * @attention: obviously this pool should only be used in a usage pattern where you cycle
  * between alloc(n), dealloc(n) with a predetermined limit on n. The simplicity of this pool
  * allows a severe reduction in runtime.
- * @note : this pool by its very definition will detect over-deallocation.
+ * @note : this pool is useful in testing to detect increasing leakage and/or overdeallocation.
  */
 template<typename T>
 class SlabPool:public PoolInterface<T>{
         private:
                 /**
-                 * #malloc() - #free()
+                 * Return the nr of allocated objects.
                  */
                 size_t          m_allocated;
                 /**
                  * Requested pool size
                  */
                 size_t          m_osize;
+                
                 /**
                  * Begin address of pool.
                  */
@@ -160,6 +179,7 @@ class SlabPool:public PoolInterface<T>{
                 }
                 
                 /**
+                 * O(1)
                  * @pre allocated() < size()
                  * @return A pointer to the next free object.
                  * @throw bad_alloc if allocated()>size()
@@ -170,20 +190,17 @@ class SlabPool:public PoolInterface<T>{
                                 ++m_allocated;
                                 return m_currptr++;
                         }
-                        else
-                        {
-                                // In future, allow expanding of pool (but requires a smart (jumping) ptr.
-                                throw std::bad_alloc();
-                        }
+                        throw std::bad_alloc();
                 }
                 
                 /**
+                 * O(1)
                  * Indicate T* is no longer required.
                  * If the alloc count reaches zero, the pool can be reused.
                  */
-                void deallocate(T*)override
+                void deallocate(T* t)override
                 {
-                        // In future, look up part of pool based on T* range, and mark for reuse iff all ptrs returned.
+                        t->~T();
                         if(m_allocated){
                                 --m_allocated;
                                 if(!m_allocated)
@@ -202,9 +219,7 @@ class SlabPool:public PoolInterface<T>{
 template<typename T>
 class DynamicSlabPool:public PoolInterface<T>{
          private:
-                /**
-                 * #malloc() - #free()
-                 */
+                // Tracks parity of the pool alloc/dealloc.
                 size_t          m_allocated;
                 /**
                  * Total size of available + allocated blocks.
@@ -234,7 +249,7 @@ class DynamicSlabPool:public PoolInterface<T>{
                         if(! fblock)
                                 throw std::bad_alloc();
                         m_pools.push_back(pool_lane<T>(fblock, poolsize));
-                        m_currptr = m_pools[0].begin();
+                        m_currptr = fblock;
                 }
                 
                 ~DynamicSlabPool()
@@ -243,6 +258,7 @@ class DynamicSlabPool:public PoolInterface<T>{
                                 std::free(lane.begin());
                 }
                 
+                // Current nr of objects this pool can (in an empty state) allocate.
                 size_t size()const
                 {
                         return m_osize;
@@ -255,56 +271,46 @@ class DynamicSlabPool:public PoolInterface<T>{
                 
                 /**
                  * @return A pointer to the next free object.
-                 * If allocated() == size(), tries to grab a new block of memory to allocate.
                  * @throw bad_alloc if expanding memory fails.
                  */
                 T* allocate()override
                 {
-                        if(m_allocated < m_osize){
-                                ++m_allocated;
-                                T * npointer = m_currptr;
-                                if(m_currptr == m_pools[m_current_lane].last()){        // Make sure we skip to the next lane
-                                        if(m_current_lane < m_pools.size()-1)           // if there is one
-                                                m_currptr = m_pools[++m_current_lane].begin();
-                                        else{
-                                                m_currptr = nullptr;                    // Can be left out, going to realloc next time.
-                                        }
+                        ++m_allocated;
+                        T* next = m_currptr;
+                        if(m_currptr == m_pools[m_current_lane].last()){        // eolane
+                                if(m_current_lane == m_pools.size()-1){         // last lane == curr
+                                        T* nextlane = (T*) std::malloc( sizeof(T) * m_slabsize);
+                                        if(!nextlane)
+                                                throw std::bad_alloc();
+                                        m_pools.push_back(pool_lane<T>(nextlane, m_slabsize));
+                                        m_osize+=m_slabsize;
                                 }
-                                else{
-                                        ++m_currptr;
-                                }
-                                return npointer;
+                                m_currptr = m_pools[++m_current_lane].begin();  // skip to next lane
                         }
-                        else
-                        {       
-                                T * fblock = (T*) malloc(sizeof(T)*m_slabsize);
-                                if(!fblock)
-                                        throw std::bad_alloc();
-                                m_pools.push_back(pool_lane<T>(fblock, m_slabsize));
-                                ++m_current_lane;
-                                m_osize += m_pools[m_current_lane].size();
-                                m_currptr = m_pools[m_current_lane].begin();
-                                ++m_allocated;
-                                return m_currptr++;
+                        else{
+                                ++m_currptr;
                         }
+                        return next;
                 }
                 
                 /**
                  * Indicate T* is no longer required.
                  * If the alloc count reaches zero, the pool can be reused.
                  */
-                void deallocate(T*)override
+                void deallocate(T* t)override
                 {
                         // In future, look up part of pool based on T* range, and mark for reuse iff all ptrs returned.
                         // Take care here to jump backwards across lanes as well.
                         if(m_allocated){
+                                t->~T();
                                 --m_allocated;
-                                if(!m_allocated){
+                                if(!m_allocated){  // allocated == 0, iow pool is free, reset counters.
                                         m_current_lane = 0;
                                         m_currptr=m_pools[0].begin();
                                 }
                         }
                         else{
+                                // Can't deallocate what we don't have allocated
                                 throw std::bad_alloc();
                         }
                 }
@@ -394,6 +400,7 @@ class StackPool:public PoolInterface<T>{
                 void deallocate(T* t)override
                 {
                         if(m_free.size()!=m_osize){
+                                t->~T();
                                 m_free.push_back(t);
                         }
                         else{   // Usually a sign of either double free or crossover between pools.
@@ -534,25 +541,51 @@ class Pool<Object, spool<Object>>:public PoolInterface<Object>{
                 }
 };
 
-// Instantiation so that compile errors are detected if the code changes (e.g) not using a pool type in the project and introducing a bug
-// for that particular pool could go unnoticed a long time.
-template class Pool<int, boost::pool<>>;
-template class Pool<int, std::false_type>;
+/**
+ * Registers a pool per thread.
+ * @pre main has called getMainThreadID() at least once as first caller.
+ */
+template<typename T>
+PoolInterface<T>* 
+initializePool(size_t psize);
 
+
+/// Register desired pooltypes here.
+// Single core usage
 template<typename Object>
-using ObjectPool = DynamicSlabPool<Object>;
+using SCObjectPool = Pool<Object, boost::pool<>>;
+// Multicore usage
+template<typename Object>
+using MCObjectPool = Pool<Object,std::false_type>;
 
 /**
  * Get the thread local pool for type T.
  * @return an unsynchronized pool that allocates memory chunks sizeof(T).
  */
 template<typename T>
-ObjectPool<T>&
+PoolInterface<T>*
 getPool()
 {
-        thread_local ObjectPool<T> pool(6400); // ~ roughly 10 pages worth of messages, good enough for w80 iconnect.
-        return pool;
+        thread_local constexpr size_t initpoolsize = 10000;     // Could be just static.
+        thread_local std::unique_ptr<PoolInterface<T>> pool(initializePool<T>(initpoolsize));
+        return pool.get();
 }
+
+/**
+ * Registers a pool per thread.
+ * @pre main has called getMainThreadID() at least once as first caller.
+ * @param psize : initial size of the pool.
+ */
+template<typename T>
+PoolInterface<T>* 
+initializePool(size_t psize)
+{
+        if(getMainThreadID()==std::this_thread::get_id())
+                return new SCObjectPool<T>(psize);
+        else
+                return new MCObjectPool<T>(psize);
+}
+
 
 } /* namespace n_pools */
 

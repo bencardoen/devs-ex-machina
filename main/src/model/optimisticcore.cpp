@@ -21,7 +21,7 @@ Optimisticcore::~Optimisticcore()
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting sent message ", ptr);
                 // We're back on main's thread, cannot call our pool.
                 // TODO POOLS
-                //ptr->releaseMe();
+                ptr->releaseMe();
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
@@ -39,7 +39,7 @@ Optimisticcore::~Optimisticcore()
                 for(const auto& uaptr : deleted){
                         LOG_DEBUG("OCORE::", this->getCoreID(), " destructor deleting ", uaptr);
                         // TODO see above.
-                        //uaptr->releaseMe();
+                        uaptr->releaseMe();
                 }
         }
 }
@@ -408,7 +408,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
                 t_msgptr& ptr = *senditer;
                 LOG_DEBUG("MCORE:: ", this-getCoreID(), "Deleting msg", ptr->toString());
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
-                // TODO pools
+                // TODO pools : GVT runs on a different thread than the allocating thread.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
