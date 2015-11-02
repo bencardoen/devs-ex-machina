@@ -978,7 +978,7 @@ TEST(Pool, StackPool){
                         pl.deallocate(p);
                 }
         }
-        EXPECT_EQ(pl.size(), (floor(tsize/psize)+1)*psize);
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
         EXPECT_EQ(pl.allocated(), 0u);
 }
 

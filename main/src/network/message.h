@@ -54,7 +54,6 @@ protected:
          */
         const mid             m_dst_id;
         
-        // Not boolean to make (possible) switch to n-color less painful.
 	std::atomic<uint8_t> m_atomic_flags __attribute__((aligned(4)));
         
         Message(const Message&) = delete;
@@ -122,7 +121,7 @@ public:
         
 	MessageColor getColor() const
 	{       
-                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
+                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);
 	}
 
 	/**

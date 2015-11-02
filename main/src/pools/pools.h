@@ -330,9 +330,7 @@ class StackPool:public PoolInterface<T>{
                 /**
                  * Total size of available + allocated blocks.
                  */
-                size_t          m_osize;
-                
-                size_t          m_slabsize;                
+                size_t          m_osize;     
                 
                 /**
                  * Blocks of slabsize objects.
@@ -345,7 +343,7 @@ class StackPool:public PoolInterface<T>{
                 std::deque<T*>  m_free;
                 
         public:
-                explicit StackPool(size_t poolsize):m_osize(poolsize),m_slabsize(poolsize)
+                explicit StackPool(size_t poolsize):m_osize(poolsize)
                 {
                         T * fblock = (T*) malloc(sizeof(T)*poolsize);
                         if(! fblock)
@@ -384,14 +382,14 @@ class StackPool:public PoolInterface<T>{
                                 return next;
                         }
                         else{       
-                                T * fblock = (T*) malloc(sizeof(T)*m_slabsize);
+                                T * fblock = (T*) malloc(sizeof(T)*m_osize);
                                 if(!fblock)
                                         throw std::bad_alloc();
-                                m_pools.push_back(pool_lane<T>(fblock, m_slabsize));
-                                m_osize += m_pools.back().size();
-                                // Push any except the last (which we immediately need)
-                                for(size_t i = 0; i < m_slabsize-1; ++i)
+                                m_pools.push_back(pool_lane<T>(fblock, m_osize));
+                                for(size_t i = 0; i < m_osize-1; ++i)
                                         m_free.push_back(fblock++);
+                                m_osize *= 2;
+                                assert(fblock == m_pools.back().last());
                                 return fblock;
                         }
                 }

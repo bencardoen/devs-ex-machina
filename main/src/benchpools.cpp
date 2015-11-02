@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
         s >> r;
         std::string ptype(argv[3]);
         std::map<std::string, PoolInterface<Msg>*>  pnames{     
-                                                        {"bpool",new n_pools::Pool<Msg, boost::pool<>>(tsize/4)},{"slabpool",new n_pools::SlabPool<Msg>(tsize)},
-                                                        {"dynpool",new n_pools::DynamicSlabPool<Msg>(tsize/4)} ,{"stackpool", new n_pools::StackPool<Msg>(tsize/4)},
+                                                        {"bpool",new n_pools::Pool<Msg, boost::pool<>>(128)},{"slabpool",new n_pools::SlabPool<Msg>(tsize)},
+                                                        {"dynpool",new n_pools::DynamicSlabPool<Msg>(128)} ,{"stackpool", new n_pools::StackPool<Msg>(128)},
                                                         {"newdel", new n_pools::Pool<Msg, std::false_type>(tsize/2)}
                                                           };
         size_t allocsize = (tsize*sizeof(Msg))/(1024*1024);
