@@ -358,6 +358,16 @@ void Controller::simDSDEVS()
 
 void Controller::startGVTThread()
 {
+	std::thread charlie(&beginGVT, std::ref(*this), std::ref(m_rungvt));
+	charlie.join();
+	LOG_INFO("Controller:: GVT thread joined");
+}
+
+
+
+//void Controller::startGVTThread()
+void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
+{
 	constexpr std::size_t infguard = 100;
 	std::size_t i = 0;
 
@@ -367,13 +377,16 @@ void Controller::startGVTThread()
 			m_rungvt.store(false);
 			break;	// No join, have not started thread.
 		}
-		std::chrono::milliseconds ms { this->getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
+		//std::chrono::milliseconds ms { this->getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
+		std::chrono::milliseconds ms { ctrl.getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
 		std::this_thread::sleep_for(ms);
-		LOG_INFO("Controller:: starting GVT thread");
-		std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
-		runnxt.join();
+		//LOG_INFO("Controller:: starting GVT thread");
+		LOG_INFO("Controller:: starting GVT");
+		runGVT(ctrl, m_rungvt);
+		//std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
+		//runnxt.join();
 	}
-	LOG_INFO("Controller:: GVT thread joined.");
+	//LOG_INFO("Controller:: GVT thread joined.");
 }
 
 bool Controller::check()

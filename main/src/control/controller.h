@@ -277,6 +277,8 @@ public:
 //#endif
 };
 
+void beginGVT(Controller&, std::atomic<bool>& rungvt);
+
 /**
  * Find GVT using Mattern's algorithm.
  * @param rungvt : thread interrupt flag.
