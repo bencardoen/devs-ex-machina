@@ -14,36 +14,36 @@
 #include <deque>
 
 /**
- * Each thread has a pool, but only if the pool is ever called.
+ * A pool is thread local. 
+ * At compile time the (static) types of the objects to pool are registered, 
+ * the pool itself is only created at the first call to getPool<T>. 
+ * It is destructed after the thread exits and returns all
+ * memory to the OS. Note that this does NOT imply that the destructor is called 
+ * for objects that weren't deallocated. 
+ * For T with trivial destructor, this is a non-issue, else ensure deallocate is called.
+ * 
+ * @attention : Call the pool with the __declared__ (static) type of the object, NEVER the
+ * dynamic type.
+ * 
  * Usage:
- * PoolInterface<T>* pool = getPool<T>();       // tsafe lazy init of pool @ first run.
- * Object* o = new (pool->allocate()) Object(constructor_params);
- * ...
- * getPool<T>()->deallocate(o);
+ *      {
+ *      Object* o  = createPooledObject<T>(args);
+ *      destroyPooledObject<T>(o);
+ *      }
  * 
- * 
- * Or the safe variant:
- * Object* o  = createPooledObject<T>(args);
- * destroyPooledObject<T>(o);
+ * This usually (+- logging, statistics etc) resolves to :
+ *      {
+ *      PoolInterface<T>* pool = getPool<T>();      
+ *      Object* o = new (pool->allocate()) Object(constructor_params);
+ *      ...
+ *      getPool<T>()->deallocate(o);
+ *      }
+ *
  */
 
 
 
 namespace n_pools {
-
-
-/**
- * Record the id of the first thread entering this function, and return that value for all calls.
- * @pre main() enters this function first
- */
-inline
-std::thread::id getMainThreadID()
-{
-        static std::thread::id main_id;
-        static std::once_flag flagid;
-        std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
-        return main_id;
-}
 
 /**
  * This class erases the type of pool in use, allowing threads to register their own pools.
@@ -569,6 +569,21 @@ getPool()
         thread_local constexpr size_t initpoolsize = 10000;     // Could be just static.
         thread_local std::unique_ptr<PoolInterface<T>> pool(initializePool<T>(initpoolsize));
         return pool.get();
+}
+
+
+
+/**
+ * Record the id of the first thread entering this function, and return that value for all calls.
+ * @pre main() enters this function first
+ */
+inline
+std::thread::id getMainThreadID()
+{
+        static std::thread::id main_id;
+        static std::once_flag flagid;
+        std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
+        return main_id;
 }
 
 /**

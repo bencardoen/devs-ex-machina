@@ -44,14 +44,14 @@ int main(int argc, char** argv) {
         s.clear();
         s << testrounds;
         s >> r;
-        std::cerr << tsize << std::endl;
         std::string ptype(argv[3]);
         std::map<std::string, PoolInterface<Msg>*>  pnames{     
-                                                        {"bpool",new n_pools::Pool<Msg, boost::pool<>>(tsize)},{"slabpool",new n_pools::SlabPool<Msg>(tsize)},
-                                                        {"dynpool",new n_pools::DynamicSlabPool<Msg>(tsize)} ,{"stackpool", new n_pools::StackPool<Msg>(tsize)}
+                                                        {"bpool",new n_pools::Pool<Msg, boost::pool<>>(tsize/4)},{"slabpool",new n_pools::SlabPool<Msg>(tsize)},
+                                                        {"dynpool",new n_pools::DynamicSlabPool<Msg>(tsize/4)} ,{"stackpool", new n_pools::StackPool<Msg>(tsize/4)},
+                                                        {"newdel", new n_pools::Pool<Msg, std::false_type>(tsize/2)}
                                                           };
         size_t allocsize = (tsize*sizeof(Msg))/(1024*1024);
-        std::cout << "Benchmark will allocate at least " << allocsize << " MB " << std::endl;
+        //std::cout << "Benchmark will allocate at least " << allocsize << " MB " << std::endl;
         const auto& found = pnames.find(ptype);
         if(found==pnames.end()){
                 std::cout << "Failed to find pooltype" << std::endl;
@@ -59,5 +59,7 @@ int main(int argc, char** argv) {
         }else{
                 testPool(tsize, r,found->second);
         }
+        for(auto& n_p : pnames)
+                delete n_p->second;
                 
 }

@@ -982,7 +982,7 @@ TEST(Pool, StackPool){
         EXPECT_EQ(pl.allocated(), 0u);
 }
 
-// For some reason compilation fails if struct is defined inside a testcase.
+// Compilation fails if struct is defined inside a testcase.
 struct mystr{
                 int i; 
                 double j;
