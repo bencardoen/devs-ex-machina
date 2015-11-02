@@ -115,7 +115,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
 else()
         MESSAGE( STATUS"Using G++ : using flto")
-        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto -ggdb")
 endif()
 ###############################################################################
 

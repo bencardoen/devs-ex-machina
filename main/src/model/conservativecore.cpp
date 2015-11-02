@@ -49,7 +49,9 @@ void Conservativecore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
 	for( auto i = messages.begin(); i != messages.end(); i++) {
 		t_msgptr message = *i;
-                validateUUID(message->getDstUUID());
+#ifdef SAFETY_CHECKS
+                validateUUID(uuid(message->getDestinationCore(), message->getDestinationModel()));
+#endif
 		this->receiveMessage(message);
 	}
 }
@@ -84,11 +86,7 @@ void Conservativecore::updateEOT()
                         x_la = nulltime;
                 }
         }
-
-        t_timestamp y_imminent = t_timestamp::infinity();
-        if(!this->m_scheduler->empty()){       
-                y_imminent = this->m_scheduler->top().getTime();
-        }
+        t_timestamp y_imminent = getFirstImminentTime();
 
         getMessages();
         t_timestamp y_pending = this->getFirstMessageTime();                
@@ -294,11 +292,11 @@ void Conservativecore::runSmallStepStalled()
                 this->getImminent(imms);
 
                 collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
-                for(auto mdl : imms){
-                        const t_timestamp last_scheduled = mdl->getTimeLast() + mdl->timeAdvance();                
-                        this->scheduleModel(mdl->getLocalID(), last_scheduled);
-                }
-                
+
+                collectOutput(m_imminents);            // after all output is sent, mark null msg time in m_distributed.
+                for(t_raw_atomic m: m_imminents)
+                	m->nextType() = AtomicModel_impl::NONE;
+                m_imminents.clear();
         }
 }
 

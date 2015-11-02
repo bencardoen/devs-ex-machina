@@ -65,6 +65,7 @@ sighandler_t defSigSegv;
 sighandler_t defSigTerm;
 sighandler_t defSigAbrt;
 sighandler_t defSigInt;
+sighandler_t defSigFpe;
 
 /**
  * @brief Installs custom signal handlers
@@ -74,6 +75,7 @@ int installHandler(){
 	defSigTerm = std::signal(SIGTERM, &signalHandler);
 	defSigAbrt = std::signal(SIGABRT, &signalHandler);
 	defSigInt = std::signal(SIGINT, &signalHandler);
+	defSigFpe = std::signal(SIGFPE, &signalHandler);
 
 	return 0;
 }
@@ -84,6 +86,7 @@ void restoreHandler()
 	std::signal(SIGTERM, defSigTerm);
 	std::signal(SIGABRT, defSigAbrt);
 	std::signal(SIGINT, defSigInt);
+	std::signal(SIGFPE, defSigFpe);
 }
 
 int handlerSet = installHandler();

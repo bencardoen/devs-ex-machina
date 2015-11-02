@@ -78,12 +78,15 @@ bool STLScheduler<R>::erase(const R& elem) {
 }
 
 template<typename R>
-void STLScheduler<R>::printScheduler()  {
-	throw std::logic_error("Not supported");
+void STLScheduler<R>::printScheduler() const {
+#if LOGGING
+        // Can't iterate over pqueue, todo.
+        assert(false);
+#endif
 }
 
 template<typename R>
-void STLScheduler<R>::testInvariant() {
+void STLScheduler<R>::testInvariant() const {
 	
 }
 

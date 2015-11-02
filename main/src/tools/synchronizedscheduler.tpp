@@ -110,17 +110,20 @@ bool SynchronizedScheduler<X, R>::erase(const R& elem) {
 }
 
 template<typename X, typename R>
-void SynchronizedScheduler<X, R>::printScheduler()  {
+void SynchronizedScheduler<X, R>::printScheduler() const {
+#if LOGGING
+	LOG_DEBUG("Printing scheduler:");
 	std::lock_guard<std::mutex> lock(m_lock);
 	auto iter = m_storage.ordered_begin();
 	for(;iter != m_storage.ordered_end(); ++iter){
 		R stored = *iter;
-		std::cout << stored << std::endl;
+		LOG_DEBUG("  ", stored);
 	}
+#endif
 }
 
 template<typename X, typename R>
-void SynchronizedScheduler<X, R>::testInvariant(){
+void SynchronizedScheduler<X, R>::testInvariant() const {
 	if(m_storage.size() != m_hashtable.size()){
 		throw std::logic_error("Invariant of scheduler violated, sizes of heap and map do not match!!");
 	}
