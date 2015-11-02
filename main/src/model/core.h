@@ -498,7 +498,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
+	 * @attention assert(false) in single core TODO cereal
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -737,7 +737,7 @@ public:
 	virtual
 	void
 	setColor(MessageColor mc);
-	
+
 
         friend class n_tools::GVizWriter;
 //-------------statistics gathering--------------

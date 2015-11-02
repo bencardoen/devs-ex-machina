@@ -14,7 +14,6 @@
 namespace n_model {
 class CoupledModel: public Model
 {
-	friend class ::TestCereal;
 private:
 	/**
 	 * Tests whether a connection from one port to the other is legal.
