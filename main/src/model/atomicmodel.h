@@ -14,12 +14,7 @@
 #include <assert.h>
 #include <map>
 #include "tools/globallog.h"
-#include "serialization/archive.h"
-#include "cereal/types/polymorphic.hpp"
-#include "cereal/access.hpp"
 #include <set>
-
-class TestCereal;
 
 namespace n_model {
 
@@ -28,7 +23,6 @@ typedef uint8_t t_transtype;
 
 class AtomicModel_impl: public Model
 {
-	friend class ::TestCereal;
 private:
 	static size_t nextPriority()
 	{
@@ -387,28 +381,6 @@ public:
 	 * @brief Sets the elapsed time since the previous internal transition.
 	 */
 	void setTimeElapsed(t_timestamp elapsed);
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct);
 };
 
 typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
@@ -481,7 +453,5 @@ public:
 	}
 };
 }	// end namespace
-
-CEREAL_REGISTER_TYPE(n_model::AtomicModel_impl)
 
 #endif /* ATOMICMODEL_H_ */

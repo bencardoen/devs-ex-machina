@@ -100,25 +100,5 @@ t_timestamp TrafficLight::lookAhead() const
 	return t_timestamp::epsilon();
 }
 
-void TrafficLight::serialize(n_serialization::t_oarchive& archive)
-{
-	LOG_INFO("SERIALIZATION: Saving Traffic Light '", getName());
-	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
-}
-
-void TrafficLight::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
-	LOG_INFO("SERIALIZATION: Loaded Traffic Light '", getName());
-}
-
-
-void TrafficLight::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficLight>& construct)
-{
-	LOG_DEBUG("TrafficLight: Load and Construct");
-	construct("");
-	construct->serialize(archive);
-}
-
 }
 
