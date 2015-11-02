@@ -363,32 +363,6 @@ void Controller::startGVTThread()
 	LOG_INFO("Controller:: GVT thread joined");
 }
 
-
-
-//void Controller::startGVTThread()
-void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
-{
-	constexpr std::size_t infguard = 100;
-	std::size_t i = 0;
-
-	while(m_rungvt.load()==true){
-		if(infguard < ++i){
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
-			m_rungvt.store(false);
-			break;	// No join, have not started thread.
-		}
-		//std::chrono::milliseconds ms { this->getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
-		std::chrono::milliseconds ms { ctrl.getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
-		std::this_thread::sleep_for(ms);
-		//LOG_INFO("Controller:: starting GVT thread");
-		LOG_INFO("Controller:: starting GVT");
-		runGVT(ctrl, m_rungvt);
-		//std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
-		//runnxt.join();
-	}
-	//LOG_INFO("Controller:: GVT thread joined.");
-}
-
 bool Controller::check()
 {
 	for (const auto& core : m_cores) {
@@ -544,6 +518,24 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 	}
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
         ctrl.m_rungvt.store(false);
+}
+
+void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
+{
+	constexpr std::size_t infguard = 100;
+	std::size_t i = 0;
+
+	while(m_rungvt.load()==true){
+		if(infguard < ++i){
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
+			m_rungvt.store(false);
+			break;	// No join, have not started thread.
+		}
+		std::chrono::milliseconds ms { ctrl.getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
+		std::this_thread::sleep_for(ms);
+		LOG_INFO("Controller:: starting GVT");
+		runGVT(ctrl, m_rungvt);
+	}
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)
