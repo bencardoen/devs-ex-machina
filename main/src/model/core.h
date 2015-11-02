@@ -356,17 +356,7 @@ public:
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
 	virtual ~Core();
-
-	/**
-	 * Serialize this core to file fname.
-	 */
-	void save(const std::string& fname);
-
-	/**
-	 * Load this core from file fname;
-	 */
-	void load(const std::string& fname);
-
+	
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 * @pre totime >= this->getGVT() && totime < this->getTime()

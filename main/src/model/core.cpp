@@ -70,16 +70,6 @@ bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
         return (msg->getDestinationCore()==m_coreid);
 }
 
-void n_model::Core::save(const std::string& fname)
-{
-
-}
-
-void n_model::Core::load(const std::string& fname)
-{
-
-}
-
 void n_model::Core::addModel(const t_atomicmodelptr& model)
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Add model called on core::  got model : ", model->getName());
