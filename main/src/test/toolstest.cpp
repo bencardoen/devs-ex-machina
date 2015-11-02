@@ -954,7 +954,7 @@ TEST(Pool, DynamicSlabPool){
                         pl.deallocate(p);
                 }
         }
-        EXPECT_EQ(pl.size(), (floor(tsize/psize)+1)*psize);
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
         EXPECT_EQ(pl.allocated(), 0u);
 }
 
@@ -995,16 +995,20 @@ TEST(Factory, PoolCalls){
         n_tools::destroyPooledObject<mystr>(ptrtostr);
 }
 
-TEST(Threading, DetectMain)
+TEST(Threading, DetectMainNoSyscall)
 {
-        std::thread::id mid = n_pools::getMainThreadID();
+        n_pools::setMain();
         std::vector<std::thread> ts;
         for(size_t i = 0; i < 4; ++i)
         {
-                ts.push_back(std::thread([&]()->void{EXPECT_FALSE(n_pools::getMainThreadID() == std::this_thread::get_id());}));
+                ts.push_back(std::thread(
+                                [&]()->void{
+                                        EXPECT_FALSE(n_pools::isMain());
+                                        }
+                                        )
+                        );
         }
         for(auto& t : ts)
                 t.join();
-        EXPECT_EQ(mid, n_pools::getMainThreadID());
-        EXPECT_EQ(std::this_thread::get_id(), n_pools::getMainThreadID());
+        EXPECT_TRUE(n_pools::isMain());
 }

@@ -29,7 +29,6 @@ void testPool(size_t testsize, size_t rounds, PoolInterface<Msg>* pool){
 }
 
 int main(int argc, char** argv) {
-        getMainThreadID();
         if(argc != 4){
                 std::cout << "Usage : objectcount rounds pooltype" << std::endl;
                 return 0;
@@ -60,6 +59,6 @@ int main(int argc, char** argv) {
                 testPool(tsize, r,found->second);
         }
         for(auto& n_p : pnames)
-                delete n_p->second;
+                delete n_p.second;
                 
 }

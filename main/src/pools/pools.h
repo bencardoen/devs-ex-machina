@@ -243,7 +243,9 @@ class DynamicSlabPool:public PoolInterface<T>{
                  */
                 T*      m_currptr;
         public:
-                explicit DynamicSlabPool(size_t poolsize):m_allocated(0),m_osize(poolsize),m_slabsize(poolsize),m_current_lane(0)
+                explicit DynamicSlabPool(size_t poolsize):
+                                m_allocated(0),m_osize(poolsize),
+                                m_slabsize(poolsize),m_current_lane(0)
                 {
                         T * fblock = (T*) malloc(sizeof(T)*poolsize);
                         if(! fblock)
@@ -279,11 +281,11 @@ class DynamicSlabPool:public PoolInterface<T>{
                         T* next = m_currptr;
                         if(m_currptr == m_pools[m_current_lane].last()){        // eolane
                                 if(m_current_lane == m_pools.size()-1){         // last lane == curr
-                                        T* nextlane = (T*) std::malloc( sizeof(T) * m_slabsize);
+                                        T* nextlane = (T*) std::malloc( sizeof(T) * m_osize);
                                         if(!nextlane)
                                                 throw std::bad_alloc();
-                                        m_pools.push_back(pool_lane<T>(nextlane, m_slabsize));
-                                        m_osize+=m_slabsize;
+                                        m_pools.push_back(pool_lane<T>(nextlane, m_osize));
+                                        m_osize*=2;
                                 }
                                 m_currptr = m_pools[++m_current_lane].begin();  // skip to next lane
                         }
@@ -553,7 +555,8 @@ initializePool(size_t psize);
 /// Register desired pooltypes here.
 // Single core usage
 template<typename Object>
-using SCObjectPool = Pool<Object, boost::pool<>>;
+//using SCObjectPool = Pool<Object, boost::pool<>>;
+using SCObjectPool = DynamicSlabPool<Object>;
 // Multicore usage
 template<typename Object>
 using MCObjectPool = Pool<Object,std::false_type>;
@@ -566,17 +569,20 @@ template<typename T>
 PoolInterface<T>*
 getPool()
 {
-        thread_local constexpr size_t initpoolsize = 10000;     // Could be just static.
+        thread_local constexpr size_t initpoolsize = 128;     // Could be just static.
         thread_local std::unique_ptr<PoolInterface<T>> pool(initializePool<T>(initpoolsize));
         return pool.get();
 }
 
 
+/// Helper functions
 
 /**
  * Record the id of the first thread entering this function, and return that value for all calls.
  * @pre main() enters this function first
+ * @deprecated : use isMain()/setMain()
  */
+/**
 inline
 std::thread::id getMainThreadID()
 {
@@ -585,6 +591,29 @@ std::thread::id getMainThreadID()
         std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
         return main_id;
 }
+*/
+
+/**
+ * Use isMain() to check if main is set, or setMain() to do so.
+ */
+inline
+bool& isMainImpl__()
+{
+        thread_local bool is_main = false;
+        return is_main;
+}
+
+/**
+ * @pre setMain() has been called by, you guessed it, main().
+ */
+inline
+bool isMain()
+{
+        return isMainImpl__();
+}
+
+inline
+void setMain(){isMainImpl__()=true;}
 
 /**
  * Registers a pool per thread.
@@ -595,11 +624,16 @@ template<typename T>
 PoolInterface<T>* 
 initializePool(size_t psize)
 {
+        return ( isMain() ? (PoolInterface<T>*) new SCObjectPool<T>(psize) : (PoolInterface<T>*) new MCObjectPool<T>(psize) );
+                /**
         if(getMainThreadID()==std::this_thread::get_id())
                 return new SCObjectPool<T>(psize);
         else
                 return new MCObjectPool<T>(psize);
+                 */
 }
+
+
 
 
 } /* namespace n_pools */

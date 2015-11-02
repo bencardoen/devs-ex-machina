@@ -33,7 +33,8 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-        n_pools::getMainThreadID();     // Register main's thread id.
+        //n_pools::getMainThreadID();     // Register main's thread id.
+        n_pools::setMain();
 	m_zombieIdleThreshold.store(10);
 }
 

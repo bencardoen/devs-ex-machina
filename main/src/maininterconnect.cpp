@@ -80,7 +80,6 @@ int main(int argc, char** argv)
 {
 	LOG_ARGV(argc, argv);
 	// default values:
-        volatile std::thread::id mainid = n_pools::getMainThreadID();
 	const char optETime = 't';
 	const char optWidth = 'w';
 	const char optHelp = 'h';
