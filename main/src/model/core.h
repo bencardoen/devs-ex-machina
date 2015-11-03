@@ -174,18 +174,18 @@ private:
 	std::atomic<bool> m_terminated_functor;
         
 protected:        
-        /**
-         * Stores modelptrs sorted on ascending priority.
-         */
-        std::vector<t_atomicmodelptr> m_indexed_models;
-        n_tools::t_defaultModelScheduler m_heap;
+    /**
+     * Stores modelptrs sorted on ascending priority.
+     */
+    std::vector<t_atomicmodelptr> m_indexed_models;
+    n_tools::t_defaultModelScheduler m_heap;
 //        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
-        /**
-         * Stores models that will transition in this simulation round.
-         * This vector shrinks/expands during the simulation steps.
-         */
-        std::vector<t_raw_atomic>   m_imminents;
+    /**
+     * Stores models that will transition in this simulation round.
+     * This vector shrinks/expands during the simulation steps.
+     */
+    std::vector<t_raw_atomic>   m_imminents;
 
 	/**
 	 * Total amount of cores.
@@ -194,25 +194,25 @@ protected:
 	std::size_t m_msgStartCount;
         
 private:
-        /**
-         * Messages to process in a current round.
-         */
-        std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
+    /**
+     * Messages to process in a current round.
+     */
+    std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
 
-        /**
-         * Stores models that will transition in this simulation round.
-         * This vector shrinks/expands during the simulation steps.
-         */
-        std::vector<t_raw_atomic>   m_externs;
-        
-        /**
-         * Cached token used to check for messages.
-         */
-        MessageEntry        m_token;
-        
-        std::vector<n_network::t_msgptr> m_mailfrom;
-        
-        std::size_t m_zombie_rounds;
+    /**
+     * Stores models that will transition in this simulation round.
+     * This vector shrinks/expands during the simulation steps.
+     */
+    std::vector<t_raw_atomic>   m_externs;
+    
+    /**
+     * Cached token used to check for messages.
+     */
+    MessageEntry        m_token;
+    
+    std::vector<n_network::t_msgptr> m_mailfrom;
+    
+    std::size_t m_zombie_rounds;
 
 	/**
 	 * Check if dest model is local, if not:
@@ -224,17 +224,17 @@ private:
 	virtual
 	isMessageLocal(const t_msgptr&)const;
         
-        /**
-         * Return current mail for the model.
-         */
-        std::vector<t_msgptr>&
-        getMail(size_t id);
-        
-        /**
-         * Check if a model has mail pending.
-         */
-        bool
-        hasMail(size_t id);
+    /**
+     * Return current mail for the model.
+     */
+    std::vector<t_msgptr>&
+    getMail(size_t id);
+    
+    /**
+     * Check if a model has mail pending.
+     */
+    bool
+    hasMail(size_t id);
 
 	/**
 	 * After a simulation step, verify that we need to continue.
@@ -250,36 +250,36 @@ private:
 	void
 	unlockMessages(){;}
         
-        /**
-         * Check that the internal state of the core is still sane.
-         * @throw std::logic_error
-         */
-        virtual
-        void
-        checkInvariants();
-        
-        /**
-         * After a transition (and trace call), the processed messages
-         * are no longer needed (except in optimistic). In conservative and single core,
-         * the messages are safe to destroy. This method is virtual to allow optimistic to override
-         * this behaviour.
-         * @param msgs is the vector of msgptrs processed by a single model in a confluent/external transition.
-         * @pre msgs.size()>0
-         * @post msgs.size()==0
-         */
-        virtual
-        void
-        clearProcessedMessages(std::vector<t_msgptr>& msgs);
+    /**
+     * Check that the internal state of the core is still sane.
+     * @throw std::logic_error
+     */
+    virtual
+    void
+    checkInvariants();
+    
+    /**
+     * After a transition (and trace call), the processed messages
+     * are no longer needed (except in optimistic). In conservative and single core,
+     * the messages are safe to destroy. This method is virtual to allow optimistic to override
+     * this behaviour.
+     * @param msgs is the vector of msgptrs processed by a single model in a confluent/external transition.
+     * @pre msgs.size()>0
+     * @post msgs.size()==0
+     */
+    virtual
+    void
+    clearProcessedMessages(std::vector<t_msgptr>& msgs);
 
 protected:
         
-        /**
-         * Sort the vector of models by priority, sets indices in models.
-         */
-        void
-        initializeModels();
-        
-        virtual
+    /**
+     * Sort the vector of models by priority, sets indices in models.
+     */
+    void
+    initializeModels();
+    
+    virtual
 	void
 	lockSimulatorStep(){
 		;
@@ -302,11 +302,11 @@ protected:
 	 */
 	void queuePendingMessage(const t_msgptr& msg);
         
-        /**
-         * Store a generated message between models in this core for local
-         * handling. (ie avoid the heap)
-         */
-        void queueLocalMessage(const t_msgptr& msg);
+    /**
+     * Store a generated message between models in this core for local
+     * handling. (ie avoid the heap)
+     */
+    void queueLocalMessage(const t_msgptr& msg);
 
 	/**
 	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
@@ -327,11 +327,11 @@ protected:
 	void
 	rescheduleAllRevert(const t_timestamp& totime);
         
-        /**
-         * Wipe the scheduler clear, and ask each model for a new scheduled entry.
-         */
-        void
-        rescheduleAll();
+    /**
+     * Wipe the scheduler clear, and ask each model for a new scheduled entry.
+     */
+    void
+    rescheduleAll();
 
 	/**
 	 * Called by subclasses, undo tracing up to a time < totime, with totime >= gvt.
@@ -356,17 +356,7 @@ public:
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
 	virtual ~Core();
-
-	/**
-	 * Serialize this core to file fname.
-	 */
-	void save(const std::string& fname);
-
-	/**
-	 * Load this core from file fname;
-	 */
-	void load(const std::string& fname);
-
+	
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 * @pre totime >= this->getGVT() && totime < this->getTime()
@@ -381,8 +371,8 @@ public:
         virtual
 	void addModel(const t_atomicmodelptr& model);
         
-        // Move this and use dyn_ptr in DS. works for now.
-        virtual
+    // Move this and use dyn_ptr in DS. works for now.
+    virtual
 	void addModelDS(const t_atomicmodelptr& /*model*/){assert(false);}
 
 	/**
@@ -398,8 +388,8 @@ public:
 	t_atomicmodelptr
 	getModel(const std::string& name)const;
         
-        const t_atomicmodelptr&
-        getModel(size_t index)const;
+    const t_atomicmodelptr&
+    getModel(size_t index)const;
 
 	/**
 	 * Check if model is present in core.
@@ -407,12 +397,12 @@ public:
 	bool
 	containsModel(const std::string& name)const;
         
-        /**
-         * Check if the model's uuid references a local model.
-         * Depends on safety_checks macro
-         */
-        void
-        validateUUID(const n_model::uuid&);
+    /**
+     * Check if the model's uuid references a local model.
+     * Depends on safety_checks macro
+     */
+    void
+    validateUUID(const n_model::uuid&);
 
 	/**
 	 * Live indicates, with the execption of dynstructured, the core is considered
@@ -498,7 +488,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
+	 * @attention assert(false) in single core TODO cereal
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -737,28 +727,6 @@ public:
 	virtual
 	void
 	setColor(MessageColor mc);
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
 
 
         friend class n_tools::GVizWriter;

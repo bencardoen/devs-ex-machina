@@ -8,7 +8,6 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "serialization/archive.h"
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -26,9 +25,6 @@
 // Don't include atomicmodel here
 
 
-
-class TestCereal;
-
 namespace n_model {
 
 class Port;
@@ -41,12 +37,11 @@ class Model;
 
 class Port
 {
-	friend class ::TestCereal;
-        friend class n_tools::GVizWriter;
+    friend class n_tools::GVizWriter;
 private:
 	std::string m_name;
 	std::string m_hostname;
-        std::size_t m_portid;
+    std::size_t m_portid;
 	bool m_inputPort;
 
 	//vectors for single connections
@@ -62,16 +57,16 @@ private:
 
 	bool m_usingDirectConnect;
         
-        Model* m_hostmodel;
-        
-        // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
-        // atomicmodel, but createMessages is templated (and header defined) so we can't call 
-        // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
-        const uuid&
-        getModelUUID()const;
-        
-        n_network::t_timestamp
-        imminentTime()const;
+    Model* m_hostmodel;
+    
+    // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
+    // atomicmodel, but createMessages is templated (and header defined) so we can't call 
+    // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
+    const uuid&
+    getModelUUID()const;
+    
+    n_network::t_timestamp
+    imminentTime()const;
 
 public:
 	/**
@@ -83,7 +78,7 @@ public:
 	 */
 	Port(const std::string& name, Model* host, std::size_t portid, bool inputPort);
         
-        ~Port();
+    ~Port();
 
 	/**
 	 * Returns the name of the port
@@ -295,29 +290,6 @@ public:
 	Model* getHost()
 	{return m_hostmodel;}
 
-//-------------serialization---------------------
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
-
         
 //-------------statistics gathering--------------
 //#ifdef USE_STAT
@@ -392,7 +364,6 @@ namespace
 /**
  * @brief Struct for forcing array to pointer type degeneration.
  */
-///@{
 template<class T>
 struct array2ptr
 {
@@ -404,7 +375,6 @@ struct array2ptr<T[N]>
 {
     typedef const T * type;
 };
-///@}
 
 /**
  * @brief Type specific implementation for creating a single message
@@ -414,7 +384,6 @@ struct array2ptr<T[N]>
  * @param msg The data send with this message
  * @param func The ZFunction that must be applied on this message
  */
-///@{
 /**
  * @brief Base case. Used for everything except strings
  */

@@ -13,8 +13,6 @@
 #include "tools/objectfactory.h"
 #include "tools/macros.h"
 #include <assert.h>
-#include "serialization/archive.h"
-#include "cereal/types/polymorphic.hpp"
 #include <typeinfo>
 
 // representation of states
@@ -192,28 +190,6 @@ public:
 	{
 		m_timeNext = timeNext;
 	}
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct);
 
 	};
 

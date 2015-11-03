@@ -8,10 +8,6 @@
 #include <string>
 #include <cassert>
 #include "network/message.h"
-#include "cereal/types/string.hpp"
-#include "cereal/types/map.hpp"
-#include "cereal/types/vector.hpp"
-#include "cereal/types/memory.hpp"
 
 
 std::ostream&
@@ -66,18 +62,18 @@ n_network::Message::toString() const
 
 bool
 n_network::operator!=(const n_network::Message& left, const n_network::Message& right){
-		return (not (left == right));
-	}
+	return (not (left == right));
+}
 
 bool
 n_network::operator<(const n_network::Message& left, const n_network::Message& right){
-        if(left == right)
-                return false;
-        if(left.m_timestamp < right.m_timestamp)
-                return true;
-        else{ 
-                return false;
-        }
+    if(left == right)
+        return false;
+    if(left.m_timestamp < right.m_timestamp)
+        return true;
+    else{ 
+        return false;
+    }
 }
 
 bool
@@ -100,11 +96,11 @@ n_network::operator>(const n_network::Message& left, const n_network::Message& r
  bool
 n_network::operator==(const n_network::Message& left, const n_network::Message& right){
         // short circuit, tstamp will fail first.
-        return(
-                left.getTimeStamp() == right.getTimeStamp()
-                &&
-                left.m_dst_id==right.m_dst_id
-                &&
-                left.m_src_id==right.m_src_id
-                );
+    return(
+        left.getTimeStamp() == right.getTimeStamp()
+        &&
+        left.m_dst_id==right.m_dst_id
+        &&
+        left.m_src_id==right.m_src_id
+        );
  }

@@ -21,8 +21,6 @@ namespace n_control{
 	class Controller;
 }
 
-class TestCereal;
-
 namespace n_model {
 
 using n_network::t_timestamp;
@@ -31,7 +29,6 @@ using n_network::t_timestamp;
 class Model
 {
 	friend n_control::Controller;
-	friend class ::TestCereal;
 private:
 	std::string m_name;
 	bool removedInPort;
@@ -189,30 +186,7 @@ public:
 	 * @note The user doesn't have to worry about this one.
 	 */
 	virtual void setController(n_control::Controller* newControl);
-
-//-------------serialization---------------------
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Model>& construct);
-
+	
 
 //-------------statistics gathering--------------
 public:

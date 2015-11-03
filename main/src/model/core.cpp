@@ -10,12 +10,8 @@
 #include "model/core.h"
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
-#include "cereal/archives/binary.hpp"
-#include "cereal/types/string.hpp"
-#include "cereal/types/unordered_map.hpp"
 #include "tools/vectorscheduler.h"
 #include "tools/heap.h"
-#include "cereal/types/vector.hpp"
 
 using n_network::MessageEntry;
 using n_network::t_timestamp;
@@ -72,24 +68,6 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
 bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
 {
         return (msg->getDestinationCore()==m_coreid);
-}
-
-void n_model::Core::save(const std::string& fname)
-{
-	std::fstream fs (fname, std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	cereal::BinaryOutputArchive oarchive(fs);
-
-	oarchive(m_indexed_models);
-}
-
-void n_model::Core::load(const std::string& fname)
-{
-	std::fstream fs (fname, std::fstream::in | std::fstream::binary);
-	cereal::BinaryInputArchive iarchive(fs);
-
-	std::vector<ModelEntry> scheduler;
-
-	iarchive(m_indexed_models);
 }
 
 void n_model::Core::addModel(const t_atomicmodelptr& model)
@@ -746,15 +724,3 @@ n_model::Core::setColor(MessageColor){
 	assert(false);
 }
 
-void n_model::Core::serialize(n_serialization::t_oarchive& archive) {
-	archive(m_time, m_gvt);
-}
-
-void n_model::Core::serialize(n_serialization::t_iarchive& archive) {
-	archive(m_time, m_gvt);
-}
-
-void n_model::Core::load_and_construct(n_serialization::t_iarchive&, cereal::construct<n_model::Core>& construct )
-{
-	construct();
-}

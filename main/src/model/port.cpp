@@ -6,11 +6,6 @@
  */
 
 #include "model/port.h"
-#include "cereal/types/string.hpp"
-#include "cereal/types/map.hpp"
-#include "cereal/types/vector.hpp"
-#include "cereal/types/memory.hpp"
-#include "cereal/types/polymorphic.hpp"
 #include "tools/stringtools.h"
 #include "tools/objectfactory.h"
 #include "model.h"
@@ -218,37 +213,6 @@ void Port::clearConnections()
 		ptr.first->removeInPort(this);
 	}
 	m_outs.clear();
-}
-
-void Port::serialize(n_serialization::t_oarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, m_portid,
-//			m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-			m_usingDirectConnect);
-}
-
-void Port::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, m_portid,
-//			m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-			m_usingDirectConnect);
-}
-
-void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )
-{
-	/*std::string name;
-	std::string hostname;
-	bool inputPort;
-
-	archive(name, hostname, inputPort);
-	construct(name, hostname, inputPort);*/
-
-	construct("", nullptr, 0, false);
-	construct->serialize(archive);
 }
 
 }
