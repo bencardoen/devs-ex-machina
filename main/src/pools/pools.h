@@ -126,6 +126,8 @@ public:
         constexpr T* last()const{return m_base_addr + (m_size-1);}
 };
 
+
+///// ARENA POOLS
 /**
  * Static (size) pool with very little overhead.
  * Allocates at construction all the memory it will need as indicated by the user,
@@ -318,6 +320,8 @@ class DynamicSlabPool:public PoolInterface<T>{
                 }
 };
 
+
+//// General pools
 
 /**
  * Expanding pool with a stack as free-list.

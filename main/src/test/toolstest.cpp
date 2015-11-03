@@ -25,6 +25,7 @@
 #include "model/modelentry.h"
 #include <algorithm>
 #include "pools/pools.h"
+#include "pools/cfpool.h"
 #include "network/message.h"
 #include <random>
 
@@ -995,6 +996,19 @@ TEST(Factory, PoolCalls){
         n_tools::destroyPooledObject<mystr>(ptrtostr);
 }
 
+TEST(Bits, FBS)
+{
+        size_t i = 1;
+        size_t j = 1;
+        size_t rng = sizeof(i)*8;
+        while(i){
+                EXPECT_EQ(n_tools::firstbitset<sizeof(i)>(i), rng-j);
+                i = i<<1;
+                ++j;
+        }
+                
+}
+
 TEST(Threading, DetectMainNoSyscall)
 {
         n_pools::setMain();
@@ -1011,4 +1025,35 @@ TEST(Threading, DetectMainNoSyscall)
         for(auto& t : ts)
                 t.join();
         EXPECT_TRUE(n_pools::isMain());
+}
+
+TEST(Pool, CFPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::set<Message*> ptrs;
+        size_t psize=65;
+        size_t tsize=65;
+        size_t rsize=2;
+        n_pools::CFPool<Message> pl(psize);
+        std::vector<Message*> mptrs;
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs.push_back(msgconstructed);
+                        if (!ptrs.insert(msgconstructed).second){
+                                std::cerr << "Double ptr " << msgconstructed << std::endl;
+                                throw 42;
+                        }
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+                ptrs.clear();
+                mptrs.clear();
+        }
+        //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
 }
