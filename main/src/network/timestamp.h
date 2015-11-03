@@ -8,7 +8,6 @@
 #ifndef SRC_NETWORK_TIMESTAMP_H_
 #define SRC_NETWORK_TIMESTAMP_H_
 
-#include "serialization/archive.h"
 #include <chrono>
 #include <mutex>
 #include <cmath>
@@ -201,46 +200,26 @@ public:
 			infinity():
 			Time(lhs.m_timestamp - rhs.m_timestamp, std::min(lhs.m_causal, rhs.m_causal));
 	}
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive)
-	{
-		archive(m_timestamp, m_causal);
-	}
         
-        /**
-         * Return true if the time part of the timestamp is infinite.
-        * @attention not the same as ==infinity(), since that also checks causality.
-        */
-        friend
-        constexpr bool isInfinity(const Time& arg){
-                return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
-        }
-        
-        /**
-         * Return true if the time object equals the default constructor. (ignoring causality)
-         */
-        friend
-        constexpr bool isZero(const Time& arg){
-                return (arg.m_timestamp == Time::t_time());
-        }
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive)
-	{
-		archive(m_timestamp, m_causal);
-	}
-        
-        static constexpr t_time MAXTIME = std::numeric_limits<Time::t_time>::max();
-        static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
+    /**
+     * Return true if the time part of the timestamp is infinite.
+    * @attention not the same as ==infinity(), since that also checks causality.
+    */
+    friend
+    constexpr bool isInfinity(const Time& arg){
+            return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
+    }
+    
+    /**
+     * Return true if the time object equals the default constructor. (ignoring causality)
+     */
+    friend
+    constexpr bool isZero(const Time& arg){
+            return (arg.m_timestamp == Time::t_time());
+    }
+    
+    static constexpr t_time MAXTIME = std::numeric_limits<Time::t_time>::max();
+    static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
 };
 
 template<typename T, typename X>

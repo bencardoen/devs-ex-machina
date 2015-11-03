@@ -94,26 +94,6 @@ public:
 		//return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
                 return (os<<rhs.getID() << " scheduled at " << rhs.m_scheduled_at);
 	}
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive)
-	{
-		archive(m_localid, m_scheduled_at);
-	}
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive)
-	{
-		archive(m_localid, m_scheduled_at);
-	}
 };
 
 }

@@ -11,12 +11,9 @@
 #include "model/model.h"
 #include "tools/objectfactory.h"
 
-class TestCereal;
-
 namespace n_model {
 class CoupledModel: public Model
 {
-	friend class ::TestCereal;
 private:
 	/**
 	 * Tests whether a connection from one port to the other is legal.
@@ -101,30 +98,6 @@ public:
 
 	void setController(n_control::Controller* newControl) override;
 
-//-------------serialization---------------------
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<CoupledModel>& construct);
-
-
 //-------------statistics gathering--------------
 public:
 	/**
@@ -142,7 +115,5 @@ public:
 
 typedef std::shared_ptr<CoupledModel> t_coupledmodelptr;
 }
-
-CEREAL_REGISTER_TYPE(n_model::CoupledModel)
 
 #endif /* COUPLEDMODEL_H_ */

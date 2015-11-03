@@ -6,7 +6,6 @@
  */
 
 #include "model/zfunc.h"
-#include "cereal/types/string.hpp"
 
 namespace n_model {
 
@@ -17,18 +16,6 @@ ZFunc::~ZFunc()
 n_network::t_msgptr ZFunc::operator()(const n_network::t_msgptr& msg)
 {
 	return msg;
-}
-
-void ZFunc::serialize(n_serialization::t_oarchive& archive)
-{
-	std::string x = "";
-	archive(x);
-}
-
-void ZFunc::serialize(n_serialization::t_iarchive& archive)
-{
-	std::string x;
-	archive(x);
 }
 
 ZFuncCombo::ZFuncCombo(const t_zfunc& left, const t_zfunc& right):

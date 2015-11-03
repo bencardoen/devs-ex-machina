@@ -21,23 +21,5 @@ TrafficSystem::TrafficSystem(std::string name) : CoupledModel(name) {
 
 }
 
-void TrafficSystem::serialize(n_serialization::t_oarchive& archive)
-{
-	LOG_INFO("SERIALIZATION: Saving Traffic System '", getName());
-	archive(cereal::virtual_base_class<CoupledModel>( this ));
-}
-
-void TrafficSystem::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(cereal::virtual_base_class<CoupledModel>( this ));
-	LOG_INFO("SERIALIZATION: Loaded Traffic System '", getName());
-}
-
-void TrafficSystem::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficSystem>& construct)
-{
-	construct("");
-	construct->serialize(archive);
-}
-
 }
 
