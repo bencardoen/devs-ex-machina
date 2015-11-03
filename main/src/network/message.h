@@ -8,7 +8,6 @@
 #ifndef SRC_NETWORK_MESSAGE_H_
 #define SRC_NETWORK_MESSAGE_H_
 
-#include "serialization/archive.h"
 #include "network/timestamp.h"
 #include "tools/stringtools.h"
 #include "tools/globallog.h"
@@ -18,8 +17,6 @@
 #include <sstream>
 #include <iosfwd>
 #include <atomic>
-
-class TestCereal;
 
 namespace n_network {
 
@@ -36,30 +33,29 @@ operator<<(std::ostream& os, const MessageColor& c);
  */
 class __attribute__((aligned(64)))Message
 {
-	friend class ::TestCereal;
 protected:
 	/**
 	 * Time message is created (by model/port)
 	 */
 	t_timestamp m_timestamp;
         
-        /**
-         * Unique source identifier.
-         */ 
-        const mid             m_src_id;
-        
-        /**
-         * Unique destination identifier.
-         */
-        const mid             m_dst_id;
-        
-        // Not boolean to make (possible) switch to n-color less painful.
+    /**
+     * Unique source identifier.
+     */ 
+    const mid             m_src_id;
+    
+    /**
+     * Unique destination identifier.
+     */
+    const mid             m_dst_id;
+    
+    // Not boolean to make (possible) switch to n-color less painful.
 	std::atomic<uint8_t> m_atomic_flags __attribute__((aligned(4)));
         
-        Message(const Message&) = delete;
-        Message(const Message&&) = delete;
-        Message& operator=(const Message&)=delete;
-        Message& operator=(const Message&&)=delete;
+    Message(const Message&) = delete;
+    Message(const Message&&) = delete;
+    Message& operator=(const Message&)=delete;
+    Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -73,45 +69,45 @@ public:
 	 * @note	Color is set by default to white.
 	 */
 	Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID,
-		const t_timestamp& time_made,
-		const std::size_t& destport, const std::size_t& sourceport);
+	const t_timestamp& time_made,
+	const std::size_t& destport, const std::size_t& sourceport);
 
-        std::size_t getDestinationPort() const
+    std::size_t getDestinationPort() const
 	{ 
-                return m_dst_id.portid();
-        }
+        return m_dst_id.portid();
+    }
         
 	std::size_t getDestinationCore() const
 	{
 		return m_dst_id.coreid();
 	}
         
-        std::size_t getDestinationModel() const
-        {
-                return m_dst_id.modelid();
-        }
+    std::size_t getDestinationModel() const
+    {
+            return m_dst_id.modelid();
+    }
         
-        std::size_t getSourceCore() const
+    std::size_t getSourceCore() const
 	{
 		return m_src_id.coreid();
 	}
         
-        std::size_t getSourceModel()const
-        {
-                return m_src_id.modelid();
-        }
+    std::size_t getSourceModel()const
+    {
+            return m_src_id.modelid();
+    }
         
-        std::size_t getSourcePort() const
+    std::size_t getSourcePort() const
 	{ 
-                return m_src_id.portid();
-        }
+        return m_src_id.portid();
+    }
 
 	void setAntiMessage(bool b)
 	{
-                if(b)
-                        m_atomic_flags |= Status::ANTI;
-                else
-                        m_atomic_flags &= ~Status::ANTI;
+        if(b)
+            m_atomic_flags |= Status::ANTI;
+        else
+            m_atomic_flags &= ~Status::ANTI;
 	}
 
 	bool isAntiMessage() const
@@ -121,7 +117,7 @@ public:
         
 	MessageColor getColor() const
 	{       
-                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
+        return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
 	}
 
 	/**
@@ -132,26 +128,26 @@ public:
 	 */
 	void paint(MessageColor newcolor)
 	{
-                if(newcolor==MessageColor::RED)
-                        m_atomic_flags |= newcolor;
-                else
-                        m_atomic_flags &= ~MessageColor::RED;
+        if(newcolor==MessageColor::RED)
+            m_atomic_flags |= newcolor;
+        else
+            m_atomic_flags &= ~MessageColor::RED;
 	}
 
         
-        void setFlag(Status newst, bool value=true)
-        {
-                if(value)
-                        m_atomic_flags |= newst;
-                else
-                        m_atomic_flags &= ~newst;
-        }
+    void setFlag(Status newst, bool value=true)
+    {
+        if(value)
+            m_atomic_flags |= newst;
+        else
+            m_atomic_flags &= ~newst;
+    }
         
-        bool flagIsSet(Status st)const
-        {
-                return (m_atomic_flags & st);   
-                //In general should be (flag & mask) == mask, but conversion to bool serves fine.
-        }
+    bool flagIsSet(Status st)const
+    {
+        return (m_atomic_flags & st);   
+        //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+    }
 
 	//can't remove. Needed by tracer
 	/**
@@ -210,20 +206,20 @@ public:
 
 	virtual ~Message()
 	{
-                ;
+        ;
 	}
         
-        friend
-        bool operator<(const Message& left, const Message& right);
-        
-        friend
-        bool operator<=(const Message& left, const Message& right);
-        
-        friend
-        bool operator>=(const Message& left, const Message& right);
-        
-        friend
-        bool operator>(const Message& left, const Message& right);
+    friend
+    bool operator<(const Message& left, const Message& right);
+    
+    friend
+    bool operator<=(const Message& left, const Message& right);
+    
+    friend
+    bool operator>=(const Message& left, const Message& right);
+    
+    friend
+    bool operator>(const Message& left, const Message& right);
 
 	friend
 	bool operator==(const Message& left, const Message& right);
@@ -271,7 +267,7 @@ public:
 	{
 	}
                 
-        ~SpecializedMessage(){;}        
+    ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -327,7 +323,7 @@ struct hash<n_network::Message>
 			<< message.getDestinationPort()
 			<< message.getDestinationModel()
 			<< message.getSourceModel()
-		        << message.getTimeStamp();
+		    << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);
 	}

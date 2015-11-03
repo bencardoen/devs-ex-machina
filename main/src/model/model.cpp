@@ -7,10 +7,6 @@
 
 #include "model/model.h"
 #include "control/controller.h"
-#include "cereal/types/string.hpp"
-#include "cereal/types/vector.hpp"
-#include "cereal/types/map.hpp"
-#include "cereal/types/deque.hpp"
 #include <algorithm>
 
 namespace n_model {
@@ -185,32 +181,6 @@ bool Model::allowDS() const
 	if (m_control)
 		return m_control->isInDSPhase();
 	return true;
-}
-
-void Model::serialize(n_serialization::t_oarchive& archive)
-{
-	LOG_INFO("SERIALIZATION: Saving Model '", getName(), "'");
-	archive(m_name, m_iPorts, m_oPorts);
-}
-
-void Model::serialize(n_serialization::t_iarchive& archive)
-{
-	LOG_DEBUG("MODEL: Serialize (load)");
-	archive(m_name, m_iPorts, m_oPorts);
-
-	LOG_INFO("SERIALIZATION: Loaded Model '", getName(), "'");
-}
-
-void Model::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Model>& construct)
-{
-	LOG_DEBUG("MODEL: Load and Construct");
-
-	std::string name;
-	archive(name);
-	construct(name);
-
-	archive(construct->m_iPorts);
-	archive(construct->m_oPorts);
 }
 
 }
