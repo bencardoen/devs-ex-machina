@@ -39,6 +39,19 @@ public:
 	}
 
 	/**
+	 * Insert a range of items to the queue
+	 * @threadsafe
+	 */
+	template<typename T>
+	void
+	insert(T begin, T end){
+		static_assert(std::is_same<typename std::iterator_traits<T>::value_type, Q>::value, "Can't insert a different type of items.");
+		std::lock_guard<std::mutex> lock(m_lock);
+		m_queue.insert(m_queue.end(), begin, end);
+		m_size += std::distance(begin, end);
+	}
+
+	/**
 	 * Return contents of queue.
 	 * @syncrhonized
 	 */

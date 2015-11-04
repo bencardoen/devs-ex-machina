@@ -50,6 +50,18 @@ public:
 	acceptMessage(const t_msgptr& msg);
 
 	/**
+	 * Adds an entire range of messages to the network.
+	 * These messages must all have the same core as destination.
+	 * @param coreID The id of the destination core
+	 * @param msgs A container of messages.
+	 * @pre: coreID is a valid core id.
+	 * @pre: All messages in msgs have coreID as destination.
+	 * @post: all messages will be queued for the destination core.
+	 */
+	void
+	giveMessages(size_t coreID, const std::vector<t_msgptr>& msgs);
+
+	/**
 	 * Called by a core when it is ready to process messages.
 	 * @return Any messages queued for calling core. (can be empty)
 	 * @attention locked

@@ -67,7 +67,23 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
         msgs.clear();
 }
 
-void Optimisticcore::sendMessage(const t_msgptr& msg)
+void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+{
+	this->lockMessages();
+        for(const auto& message : messages){
+        	message->setCausality(++msgCount);
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
+		if (not this->isMessageLocal(message)) {
+                        m_stats.logStat(MSGSENT);
+			this->sendMessage(message);	// A noop for single core, multi core handles this.
+		} else {
+			this->queueLocalMessage(message);
+		}
+	}
+	this->unlockMessages();
+}
+
+void Optimisticcore::sendMessage(t_msgptr msg)
 {
 	// We're locked on msglock. Don't change the ordering here.
         this->countMessage(msg);        

@@ -213,16 +213,6 @@ private:
     std::vector<n_network::t_msgptr> m_mailfrom;
     
     std::size_t m_zombie_rounds;
-
-	/**
-	 * Check if dest model is local, if not:
-	 * Looks up message in lookuptable, set coreid.
-	 * @post msg has correct destination id field set for network.
-	 * @attention For single core, checks if no message has destination to model not in core (assert).
-	 */
-	bool
-	virtual
-	isMessageLocal(const t_msgptr&)const;
         
     /**
      * Return current mail for the model.
@@ -290,6 +280,18 @@ protected:
 	unlockSimulatorStep(){
 		;
 	}
+
+    /**
+     * Check if dest model is local, if not:
+     * Looks up message in lookuptable, set coreid.
+     * @post msg has correct destination id field set for network.
+     * @attention For single core, checks if no message has destination to model not in core (assert).
+     */
+    inline bool
+    isMessageLocal(t_msgptr msg)const
+    {
+        return (msg->getDestinationCore()==m_coreid);
+    }
         
 	/**
 	* Store received messages (local and networked)
@@ -564,7 +566,7 @@ public:
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 * @lock: locks on messagelock.
 	 */
-	void
+	virtual void
 	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
 
 	/**

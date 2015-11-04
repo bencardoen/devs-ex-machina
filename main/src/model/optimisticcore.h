@@ -183,9 +183,15 @@ public:
 	void getMessages()override;
 
 	/**
+	 * Sort all mail.
+	 */
+	virtual void
+	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount) override;
+
+	/**
 	 * Lookup message destination core, fix address field and send to network.
 	 */
-	void sendMessage(const t_msgptr&)override;
+	void sendMessage(t_msgptr);
 
 	/**
 	 * A sent message needs to be stored up until GVT.
