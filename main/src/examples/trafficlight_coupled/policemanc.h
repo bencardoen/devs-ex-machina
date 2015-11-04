@@ -78,32 +78,8 @@ public:
 	t_timestamp timeAdvance() const override;
 	void output(std::vector<n_network::t_msgptr>& msgs) const override;
 	t_timestamp lookAhead() const override;
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Policeman>& construct);
 };
 
 }
-
-CEREAL_REGISTER_TYPE(n_examples_coupled::Policeman)
 
 #endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_POLICEMANC_H_ */

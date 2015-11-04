@@ -72,23 +72,5 @@ t_timestamp Policeman::lookAhead() const
 	return t_timestamp::infinity();
 }
 
-void Policeman::serialize(n_serialization::t_oarchive& archive)
-{
-	LOG_INFO("SERIALIZATION: Saving Policeman '", getName());
-	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
-}
-
-void Policeman::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(cereal::virtual_base_class<AtomicModel_impl>( this ));
-	LOG_INFO("SERIALIZATION: Loaded Policeman '", getName());
-}
-
-void Policeman::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Policeman>& construct)
-{
-	construct("");
-	construct->serialize(archive);
-}
-
 }
 

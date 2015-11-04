@@ -193,7 +193,6 @@ add_executable(${PROJECT_NAME}
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
     src/performance/highInterconnect/hinterconnect.cpp
-    src/test/basiccerealtestclasses.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
     src/test/benchmarktest.cpp
@@ -205,8 +204,6 @@ add_executable(${PROJECT_NAME}
     src/test/loggertest.cpp
     src/test/controllertest.cpp
     src/test/messagetest.cpp
-#    src/test/cerealtest.cpp
-    src/test/basiccerealtest.cpp
     src/test/performancetest.cpp
     src/test/testmodels.cpp
     src/main.cpp

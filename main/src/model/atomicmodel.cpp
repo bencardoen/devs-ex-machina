@@ -7,7 +7,6 @@
 #include "tools/globallog.h"
 
 #include "model/atomicmodel.h"
-#include "cereal/types/base_class.hpp"
 
 namespace n_model {
 
@@ -221,18 +220,6 @@ void AtomicModel_impl::setTimeElapsed(t_timestamp elapsed)
 	m_elapsed = elapsed;
 }
 
-void AtomicModel_impl::serialize(n_serialization::t_oarchive& archive)
-{
-	LOG_INFO("SERIALIZATION: Saving Atomic Model '", getName(), "' with timeNext = ", m_timeNext);
-	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
-}
-
-void AtomicModel_impl::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(cereal::virtual_base_class<Model>( this ), m_priority, m_corenumber, m_elapsed, m_lastRead);
-	LOG_INFO("SERIALIZATION: Loaded Atomic Model '", getName(), "' with timeNext = ", m_timeNext);
-}
-
 void AtomicModel_impl::deliverMessages(const std::vector<n_network::t_msgptr>& message)
 {
 #ifdef SAFETY_CHECKS
@@ -242,14 +229,6 @@ void AtomicModel_impl::deliverMessages(const std::vector<n_network::t_msgptr>& m
 	for(const n_network::t_msgptr& msg: message)
 		m_iPorts[msg->getDestinationPort()]->addMessage(msg);
 #endif /* SAFETY_CHECKS */
-}
-
-void AtomicModel_impl::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct)
-{
-	LOG_DEBUG("ATOMICMODEL: Load and Construct");
-
-	construct("temp");
-	construct->serialize(archive);
 }
 
 int AtomicModel_impl::getCorenumber() const

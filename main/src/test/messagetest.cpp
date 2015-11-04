@@ -9,6 +9,7 @@
 #include "scheduler/scheduler.h"
 #include "scheduler/schedulerfactory.h"
 #include <unordered_map>
+#include <unordered_set>
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"
 #include "network/mid.h"
