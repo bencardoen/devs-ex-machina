@@ -5,12 +5,13 @@
 #ifndef STLSCHEDULER_H
 #define STLSCHEDULER_H
 
-#include "tools/scheduler.h"
+#include "scheduler/scheduler.h"
 #include <vector>
 #include <deque>
 #include <map>
+#include <sstream>
 
-namespace n_tools {
+namespace n_scheduler {
 
 // Forward declare friend
 template<typename T>

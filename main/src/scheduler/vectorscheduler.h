@@ -2,15 +2,15 @@
  * @author Ben Cardoen.
  */
 
-#ifndef UNSYNCHRONIZEDSCHEDULER_H
-#define UNSYNCHRONIZEDSCHEDULER_H
+#ifndef VECTORSCHEDULER_H
+#define VECTORSCHEDULER_H
 
-#include "tools/scheduler.h"
-#include <mutex>
-#include <unordered_map>
+#include <scheduler/scheduler.h>
+#include <vector>
 #include <map>
+#include <sstream>
 
-namespace n_tools {
+namespace n_scheduler {
 
 // Forward declare friend
 template<typename T>
@@ -18,13 +18,14 @@ class SchedulerFactory;
 
 /**
  * Unlocked Scheduler.
- * Each item can be stored once (for equal hash values).
+ * Each item can be stored once, using operator size_t() on type S resulting in a unique key.
+ * std::less<T> is used for the heap operations in max heap logic.
  * @see SchedulerFactory for construction.
  * @param X Storage type
  * @param S Item type
  */
 template<typename X, typename S>
-class UnSynchronizedScheduler: public Scheduler<S> {
+class VectorScheduler: public Scheduler<S> {
 public:
 	typedef typename X::handle_type t_handle;
 private:
@@ -33,21 +34,20 @@ private:
 	 */
 	X m_storage;
 
-	typedef std::unordered_map<S, t_handle> t_hashtable;
-        //typedef std::map<S, t_handle> t_hashtable;
+	typedef std::vector<std::pair<t_handle, bool>> t_keys;
 
-	t_hashtable m_hashtable;
+	t_keys m_keys;
 
 	friend class SchedulerFactory<S> ;
 
-protected:
-	UnSynchronizedScheduler() {
+public:
+	VectorScheduler() {
 		;
 	}
 
 public:
 
-	virtual ~UnSynchronizedScheduler() {
+	virtual ~VectorScheduler() {
 		;
 	}
 
@@ -96,7 +96,7 @@ public:
 
 	virtual
 	void
-	unschedule_until(std::vector<S> &container, const S& time) override;
+	unschedule_until(std::vector<S> &container, const S& elem) override;
 
 	void
 	clear() override;
@@ -116,9 +116,16 @@ public:
 	virtual
 	void
 	testInvariant() const override;
-
+        
+        virtual
+        void
+        hintSize(size_t expected)override;
+        
+        virtual
+        void
+        update(const S& elem)override;
 };
 
 }
-#include "unsynchronizedscheduler.tpp"
+#include "vectorscheduler.tpp"
 #endif

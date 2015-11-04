@@ -65,7 +65,7 @@ private:
 	mutable t_randgen m_rand;
 public:
 	const std::size_t m_num;
-	Processor(std::string name, bool randomta);
+	Processor(std::string name, bool randomta, std::size_t num);
 	virtual ~Processor();
 
 	virtual n_model::t_timestamp timeAdvance() const;
@@ -95,7 +95,7 @@ public:
 class CoupledRecursion : public n_model::CoupledModel
 {
 public:
-	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta);
+	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num);
 	virtual ~CoupledRecursion();
 };
 

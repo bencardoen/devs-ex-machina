@@ -9,7 +9,7 @@
 #include <utility>
 #include "tools/globallog.h"
 
-namespace n_tools {
+namespace n_scheduler {
 
 template<typename X, typename R>
 void VectorScheduler<X, R>::push_back(const R& item) {

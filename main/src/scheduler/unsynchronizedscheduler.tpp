@@ -7,7 +7,7 @@
 
 #include <assert.h>
 
-namespace n_tools {
+namespace n_scheduler {
 
 template<typename X, typename R>
 void UnSynchronizedScheduler<X, R>::push_back(const R& item) {

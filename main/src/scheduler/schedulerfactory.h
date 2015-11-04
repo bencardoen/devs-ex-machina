@@ -2,13 +2,13 @@
  * @author Ben Cardoen.
  */
 
-#include "tools/scheduler.h"
-#include "tools/vectorscheduler.h"
+#include "scheduler/scheduler.h"
+#include "scheduler/vectorscheduler.h"
 
 #ifndef SCHEDULERFACTORY_H
 #define SCHEDULERFACTORY_H
 
-namespace n_tools {
+namespace n_scheduler {
 
 /**
  * @brief The Storage enum Defines a user preference for the storage type the
@@ -78,6 +78,6 @@ public:
 };
 
 }
-#include "schedulerfactory.tpp"
+#include <scheduler/schedulerfactory.tpp>
 
 #endif // SCHEDULERFACTORY_H

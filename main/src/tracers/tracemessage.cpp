@@ -5,14 +5,16 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
+#include "scheduler/schedulerfactory.h"
 #include "tracers/tracemessage.h"
-#include "tools/schedulerfactory.h"
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"
 #include <thread>
 #include <future>
+#include <sstream>
 
 using namespace n_tools;
+using namespace n_scheduler;
 
 namespace n_tracers {
 
@@ -191,7 +193,7 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
 
-	TraceMessage t(n_network::t_timestamp(time.getTime()-n_network::t_timestamp::epsilon().getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
+	TraceMessage t(n_network::t_timestamp(time.getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
         
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;

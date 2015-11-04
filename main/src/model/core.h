@@ -2,16 +2,16 @@
  * core.h
  *      Author: Ben Cardoen
  */
-#include "network/network.h"
-#include "model/terminationfunction.h"		// include atomicmodel
 #include "model/modelentry.h"
-#include "network/messageentry.h"
+#include "model/terminationfunction.h"		// include atomicmodel
 #include "network/controlmessage.h"
+#include "network/messageentry.h"
+#include "network/network.h"
 #include "scheduler/modelscheduler.h"
-#include "tracers/tracers.h"
+#include "scheduler/schedulerfactory.h"
 #include "tools/gviz.h"
-#include "tools/schedulerfactory.h"
 #include "tools/statistic.h"
+#include "tracers/tracers.h"
 #include <set>
 #include <condition_variable>
 
@@ -31,8 +31,8 @@ enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS, DE
 /**
  * Typedefs used by core.
  */
-typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
-typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
+typedef n_scheduler::t_defaultModelScheduler t_scheduler;
+typedef std::shared_ptr<n_scheduler::Scheduler<MessageEntry>> t_msgscheduler;
 
 struct statistics_collector{
         n_tools::t_uintstat     m_amsg_sent;
@@ -174,11 +174,11 @@ private:
 	std::atomic<bool> m_terminated_functor;
         
 protected:        
-    /**
-     * Stores modelptrs sorted on ascending priority.
-     */
-    std::vector<t_atomicmodelptr> m_indexed_models;
-    n_tools::t_defaultModelScheduler m_heap;
+        /**
+         * Stores modelptrs sorted on ascending priority.
+         */
+        std::vector<t_atomicmodelptr> m_indexed_models;
+        t_scheduler m_heap;
 //        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
     /**
@@ -213,16 +213,6 @@ private:
     std::vector<n_network::t_msgptr> m_mailfrom;
     
     std::size_t m_zombie_rounds;
-
-	/**
-	 * Check if dest model is local, if not:
-	 * Looks up message in lookuptable, set coreid.
-	 * @post msg has correct destination id field set for network.
-	 * @attention For single core, checks if no message has destination to model not in core (assert).
-	 */
-	bool
-	virtual
-	isMessageLocal(const t_msgptr&)const;
         
     /**
      * Return current mail for the model.
@@ -290,6 +280,18 @@ protected:
 	unlockSimulatorStep(){
 		;
 	}
+
+    /**
+     * Check if dest model is local, if not:
+     * Looks up message in lookuptable, set coreid.
+     * @post msg has correct destination id field set for network.
+     * @attention For single core, checks if no message has destination to model not in core (assert).
+     */
+    inline bool
+    isMessageLocal(t_msgptr msg)const
+    {
+        return (msg->getDestinationCore()==m_coreid);
+    }
         
 	/**
 	* Store received messages (local and networked)
@@ -564,7 +566,7 @@ public:
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 * @lock: locks on messagelock.
 	 */
-	void
+	virtual void
 	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
 
 	/**

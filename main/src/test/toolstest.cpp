@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <scheduler/heapscheduler.h>
 #include <iostream>
 #include <vector>
 #include <list>
@@ -7,16 +6,17 @@
 #include <queue>
 #include <algorithm>
 #include <random>
-#include "tools/schedulerfactory.h"
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <scheduler/heapscheduler.h>
+#include "scheduler/schedulerfactory.h"
+#include "scheduler/listscheduler.h"
+#include "scheduler/stlscheduler.h"
 #include "tools/globallog.h"
 #include "tools/coutredirect.h"
 #include "tools/sharedvector.h"
-#include "tools/listscheduler.h"
 #include "tools/gviz.h"
-#include "tools/stlscheduler.h"
 #include "tools/flags.h"
 #include "tools/misc.h"
 #include "model/modelentry.h"
@@ -26,6 +26,7 @@ using std::endl;
 using std::atomic;
 using std::thread;
 using namespace n_tools;
+using namespace n_scheduler;
 typedef ExampleItem t_TypeUsed;
 
 /**
@@ -731,7 +732,7 @@ struct HeapSchedulerComparator
 };
 
 TEST(HeapTest, heap_scheduler){
-	n_tools::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
+	n_scheduler::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
 	for(std::size_t i = 0; i < 20; ++i){
 		vec.push_back(new HeapSchedulerVal(i));
 		EXPECT_EQ(vec.dirty(), i >= 5);
