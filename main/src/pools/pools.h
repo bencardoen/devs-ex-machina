@@ -584,7 +584,7 @@ getPool()
  * @pre main() enters this function first
  * @deprecated : use isMain()/setMain()
  */
-/**
+
 inline
 std::thread::id getMainThreadID()
 {
@@ -593,7 +593,7 @@ std::thread::id getMainThreadID()
         std::call_once(flagid, [&]()->void{main_id=std::this_thread::get_id();});
         return main_id;
 }
-*/
+
 
 /**
  * Use isMain() to check if main is set, or setMain() to do so.
@@ -627,12 +627,13 @@ PoolInterface<T>*
 initializePool(size_t psize)
 {
         return ( isMain() ? (PoolInterface<T>*) new SCObjectPool<T>(psize) : (PoolInterface<T>*) new MCObjectPool<T>(psize) );
-                /**
+        /**
         if(getMainThreadID()==std::this_thread::get_id())
                 return new SCObjectPool<T>(psize);
         else
                 return new MCObjectPool<T>(psize);
-                 */
+         * */
+                 
 }
 
 

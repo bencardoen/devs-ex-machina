@@ -10,6 +10,7 @@ int main(int argc, char** argv)
 {
 	LOG_ARGV(argc, argv);
 	::testing::InitGoogleTest(&argc, argv);
+        n_pools::setMain();
 	//gtest intercepts exceptions, else we need try/catch to force stackunwind.
 	return RUN_ALL_TESTS();
 }

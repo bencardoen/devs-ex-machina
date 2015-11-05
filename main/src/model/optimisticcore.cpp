@@ -18,29 +18,19 @@ Optimisticcore::~Optimisticcore()
         // Destructors are run on main(), our pool is live but we can't access it anymore.
         // Do not delete ptrs here.
         for(auto& ptr : m_sent_messages){
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting sent message ", ptr);
+                LOG_ERROR("MCORE:: ", this->getCoreID(), " HAVE ", ptr, " in  m_sent_messages @ destruction.");
                 // We're back on main's thread, cannot call our pool.
                 // TODO POOLS
-                ptr->releaseMe();
+                //ptr->releaseMe();
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
         // any of these is an antimessage.
         
         if(m_network->havePendingMessages(this->getCoreID())){
-                LOG_DEBUG("OCORE::", this->getCoreID(), " destructor detected messages in network for us, purging.");
-                std::vector<t_msgptr>msgs = m_network->getMessages(this->getCoreID());
-                std::set<t_msgptr> deleted;     // Avoid double delete risk on antimessage following it's original
-                for(const auto& msgptr : msgs){
-                        if( msgptr->isAntiMessage() )// invalid read
-                                deleted.insert(msgptr);
-                }
-                
-                for(const auto& uaptr : deleted){
-                        LOG_DEBUG("OCORE::", this->getCoreID(), " destructor deleting ", uaptr);
-                        // TODO see above.
-                        uaptr->releaseMe();
-                }
+                LOG_ERROR("OCORE::", this->getCoreID(), " destructor detected messages in network for us, purging.");
+                // Pull them in case another thread is waiting on network idle.
+                std::vector<t_msgptr>msgs = m_network->getMessages(this->getCoreID());                
         }
 }
 
