@@ -11,12 +11,12 @@
 #include "model/atomicmodel.h"
 #include "model/modelentry.h"
 #include "tools/globallog.h"
-#include "tools/msgscheduler.h"
-#include "tools/vectorscheduler.h"
+#include "scheduler/msgscheduler.h"
+#include "scheduler/vectorscheduler.h"
 #include <boost/heap/pairing_heap.hpp>
 #include <type_traits>
 
-namespace n_tools {
+namespace n_scheduler {
 
 
 /**
@@ -28,11 +28,11 @@ namespace n_tools {
  * @tparam Heap The container needs a heap data structure to order the atomic models by scheduled time.
  * @precondition The Container class is a subclass of n_tools::Scheduler.
  */
-template<template<typename...T> class Container = n_tools::VectorScheduler, template<typename...T> class Heap = boost::heap::pairing_heap>
+template<template<typename...T> class Container = n_scheduler::VectorScheduler, template<typename...T> class Heap = boost::heap::pairing_heap>
 class GenericModelScheduler: public Container<Heap<n_model::ModelEntry>, n_model::ModelEntry>
 {
 private:
-	static_assert(std::is_base_of<n_tools::Scheduler<n_model::ModelEntry>,
+	static_assert(std::is_base_of<n_scheduler::Scheduler<n_model::ModelEntry>,
 					Container<Heap<n_model::ModelEntry>, n_model::ModelEntry>>::value,
 			"The container type must be a derived class of n_tools::Scheduler.");
 
@@ -285,6 +285,6 @@ public:
 	using t_base::testInvariant;
 };
 
-} /* namespace n_tools */
+} /* namespace n_scheduler */
 
 #endif /* SRC_SCHEDULER_GENERICMODELSCHEDULER_H_ */

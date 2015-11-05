@@ -179,21 +179,12 @@ add_executable(${PROJECT_NAME}
     src/examples/forestfire/firecellstate.cpp
     src/examples/forestfire/firegenerator.cpp
     src/examples/forestfire/firespread.cpp
-    #src/examples/trafficsystem/car.cpp
-    #src/examples/trafficsystem/city_small.cpp
-    #src/examples/trafficsystem/query.cpp
-    #src/examples/trafficsystem/queryack.cpp
-    #src/examples/trafficsystem/building.cpp
-    #src/examples/trafficsystem/residence.cpp
-    #src/examples/trafficsystem/commercial.cpp
-    #src/examples/trafficsystem/roadsegment.cpp
-    #src/examples/trafficsystem/road.cpp
-    #src/examples/trafficsystem/intersection.cpp
-    #src/examples/trafficsystem/collector.cpp
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
+    src/performance/highInterconnect/hinterconnect.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
+    src/test/benchmarktest.cpp
     src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/modeltest.cpp
@@ -256,6 +247,9 @@ add_executable(${PROJECT_NAME}_virus
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
                     )
+add_executable(${PROJECT_NAME}_benchpools
+    src/benchpools.cpp
+)
 
 # add_executable(${PROJECT_NAME}_traffic
 #     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
@@ -337,9 +331,9 @@ include_directories(
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
-    set(LIBS ${LIBS} ) 
+    set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
@@ -357,6 +351,7 @@ target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)

@@ -150,6 +150,7 @@ protected:
         virtual void queuePendingMessage(const t_msgptr& msg)override;
 
 
+        std::vector<std::vector<t_msgptr>> m_externalMessages;
 public:
 	Conservativecore() = delete;
 
@@ -202,12 +203,18 @@ public:
 	init()override;
         
         /**
-	 * Collect output from imminent models, sort them in the mailbag by destination name.
+	 * Collect output from imminent models, sort them in the mailbag by destination.
          * Marks those models that have generated output, since we may visit them several times.
 	 * @attention : generated messages (events) are timestamped by the current core time.
 	 */
 	virtual void
 	collectOutput(std::vector<t_raw_atomic>& imminents)override;
+
+	/**
+	 * Sort all mail.
+	 */
+	virtual void
+	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount) override;
 
 	/**
 	 * Return current Earliest input time.
@@ -222,11 +229,6 @@ public:
         virtual
 	void
 	runSmallStep()override;
-        
-        /**
-         * Records timestamp for eot, leaves actual handling to superclass.
-         */
-        virtual void sendMessage(const t_msgptr&)override;
         
         /**
 	 * Returns true if the network detects a pending message for any core.

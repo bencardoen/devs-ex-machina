@@ -10,7 +10,7 @@
 #include "model/core.h"
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
-#include "tools/vectorscheduler.h"
+#include "scheduler/vectorscheduler.h"
 #include "tools/heap.h"
 
 using n_network::MessageEntry;
@@ -55,19 +55,12 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
                 m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(0,0), uuid(0,0), m_time, 0, 0)),m_zombie_rounds(0),
-		m_received_messages(n_tools::SchedulerFactory<MessageEntry>::makeScheduler(n_tools::Storage::FIBONACCI, false, n_tools::KeyStorage::MAP)),
+		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::MAP)),
 		m_stats(m_coreid)
                 
 {
 	assert(m_time == t_timestamp(0, 0));
 	assert(m_live == false);
-}
-
-
-
-bool n_model::Core::isMessageLocal(const t_msgptr& msg) const
-{
-        return (msg->getDestinationCore()==m_coreid);
 }
 
 void n_model::Core::addModel(const t_atomicmodelptr& model)
@@ -266,18 +259,11 @@ void n_model::Core::transition()
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
-	this->lockMessages();
         for(const auto& message : messages){
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
 		message->setCausality(++msgCount);
-		if (not this->isMessageLocal(message)) {
-                        m_stats.logStat(MSGSENT);
-			this->sendMessage(message);	// A noop for single core, multi core handles this.
-		} else {
-			this->queueLocalMessage(message);
-		}
+		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
+		this->queueLocalMessage(message);
 	}
-	this->unlockMessages();
 }
 
 void n_model::Core::printSchedulerState()
@@ -549,7 +535,8 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(t_msgptr ptr : msgs){
-                n_tools::takeBack(ptr);
+                // TODO POOL
+                ptr->releaseMe();
                 LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
         }
@@ -604,10 +591,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	for (const auto& model : m_indexed_models) {
-		/*t_timestamp modellast = */model->revert(totime);
-//		m_heap.update(model->getLocalID());
-		//one heap update is O(logN), N heap updates is O(NlogN)
-		//rebuilding the entire heap in one go is only O(3N)
+		model->revert(totime);
 	}
 	rescheduleAll();
 }

@@ -13,6 +13,7 @@
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
+#include "pools/pools.h"
 #include "mid.h"
 #include <sstream>
 #include <iosfwd>
@@ -117,7 +118,7 @@ public:
         
 	MessageColor getColor() const
 	{       
-        return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);       // Safe with the above check. UB otherwise.
+                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);
 	}
 
 	/**
@@ -191,6 +192,17 @@ public:
 	{
 		m_timestamp = now;
 	}
+        
+        /**
+         * Deregister object with pool.
+         * @pre This object was allocated using the registered pool. This will invoke the destructor.
+         * @post The object is no longer accessible.
+         */
+        virtual void releaseMe()
+        {
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
 
 	/**
 	 * @brief Sets the causality of the message
@@ -288,6 +300,17 @@ public:
 		ssr << data;
 		return ssr.str();
 	}
+        
+        /**
+         * Deregister object with pool. This will invoke the destructor.
+         * @pre This object was allocated using the registered pool.
+         * @post This object is no longer accessible.
+         */
+        virtual void releaseMe()override
+        {
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
 
 };
 

@@ -8,8 +8,8 @@
 #include "tools/coutredirect.h"
 #include "performance/highInterconnect/hinterconnect.h"
 #include "tools/stringtools.h"
+#include "pools/pools.h"
 #include "control/allocator.h"
-
 #include "tools/statistic.h"
 
 LOG_INIT("interconnect.log")

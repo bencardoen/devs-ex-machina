@@ -8,7 +8,7 @@
 #include <thread>
 #include <chrono>
 #include "model/conservativecore.h"
-#include "tools/stlscheduler.h"
+#include "scheduler/stlscheduler.h"
 
 namespace n_model {
 
@@ -18,8 +18,8 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 	m_network(n),m_eit(0u), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
         m_received_messages.reset();
-        m_received_messages=n_tools::createObject<n_tools::STLScheduler<n_network::MessageEntry>>();
-        ;
+        m_received_messages=n_tools::createObject<n_scheduler::STLScheduler<n_network::MessageEntry>>();
+        m_externalMessages.resize(totalCores);
 }
 
 void Conservativecore::getMessages()
@@ -276,9 +276,36 @@ void Conservativecore::collectOutput(std::vector<t_raw_atomic>& imminents){
                 return;         // faster than remembering state. Don't collect output twice.
         }
                       
-        Core::collectOutput(imminents);
+        Core::collectOutput(imminents);	//collects all output and sorts it locally/globally
+        for(std::size_t i = 0; i < m_cores; ++i){
+        	if(i == getCoreID()) continue;
+        	std::vector<t_msgptr>& msgvec = m_externalMessages[i];
+        	if(msgvec.size()){
+        		//there's no point in requesting a lock on the network if we won't send anything
+        		LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " delivering ", msgvec.size(), " messages to core ", i);
+        		m_network->giveMessages(i, msgvec);
+        		msgvec.clear();
+        	}
+        }
         setNullTime(getTime().getTime());
         LOG_DEBUG("CCORE :: ", this->getCoreID(), " Null message time set @ :: ", this->getTime());
+}
+
+void Conservativecore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+{
+        for(const auto& message : messages){
+        	message->setCausality(++msgCount);
+		LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sorting message ", message->toString());
+		if (not this->isMessageLocal(message)) {
+                        m_stats.logStat(MSGSENT);
+			m_externalMessages[message->getDestinationCore()].push_back(message);
+			// At output collection, timestamp is set (the rest is of no interest to us here).
+			this->m_last_sent_msgtime = message->getTimeStamp();
+			LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " queued message ", message->toString());
+		} else {
+			this->queueLocalMessage(message);
+		}
+	}
 }
 
 void Conservativecore::runSmallStepStalled()
@@ -321,14 +348,6 @@ bool Conservativecore::checkNullRelease(){
 
 bool n_model::Conservativecore::existTransientMessage(){
         return !m_network->empty();
-}
-
-void
-Conservativecore::sendMessage(const t_msgptr& msg){
-        // At output collection, timestamp is set (color etc is of no interest to us here (and is not yet set)).
-        this->m_last_sent_msgtime = msg->getTimeStamp();
-	LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " sending message ", msg->toString());
-	this->m_network->acceptMessage(msg);
 }
 
 void
