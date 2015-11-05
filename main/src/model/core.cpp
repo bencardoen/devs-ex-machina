@@ -708,3 +708,11 @@ void
 n_model::Core::setColor(MessageColor){
 	assert(false);
 }
+
+
+void
+n_model::Core::clearState()
+{
+        for(const auto&  model : m_indexed_models)
+                model->clearState();
+}

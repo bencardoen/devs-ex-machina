@@ -724,6 +724,13 @@ public:
 	virtual
 	void
 	setColor(MessageColor mc);
+        
+        /**
+         * Invoke at end of simulation, clears remaining messages from buffers (should this be needed).
+         */
+        virtual
+        void
+        clearState();
 
 
         friend class n_tools::GVizWriter;

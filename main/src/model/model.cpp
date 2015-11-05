@@ -183,4 +183,11 @@ bool Model::allowDS() const
 	return true;
 }
 
+void Model::clearState()
+{
+        for (const auto& port : m_oPorts){
+		port->clearSentMessages();
+	}
+}
+
 }

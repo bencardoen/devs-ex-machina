@@ -41,7 +41,7 @@ class Port
 private:
 	std::string m_name;
 	std::string m_hostname;
-    std::size_t m_portid;
+        std::size_t m_portid;
 	bool m_inputPort;
 
 	//vectors for single connections
@@ -57,16 +57,16 @@ private:
 
 	bool m_usingDirectConnect;
         
-    Model* m_hostmodel;
-    
-    // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
-    // atomicmodel, but createMessages is templated (and header defined) so we can't call 
-    // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
-    const uuid&
-    getModelUUID()const;
-    
-    n_network::t_timestamp
-    imminentTime()const;
+        Model* m_hostmodel;
+
+        // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
+        // atomicmodel, but createMessages is templated (and header defined) so we can't call 
+        // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
+        const uuid&
+        getModelUUID()const;
+
+        n_network::t_timestamp
+        imminentTime()const;
 
 public:
 	/**
@@ -78,7 +78,7 @@ public:
 	 */
 	Port(const std::string& name, Model* host, std::size_t portid, bool inputPort);
         
-    ~Port();
+        ~Port();
 
 	/**
 	 * Returns the name of the port
