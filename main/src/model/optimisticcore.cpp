@@ -15,9 +15,13 @@ using namespace n_network;
 
 Optimisticcore::~Optimisticcore()
 {
+        // Destructors are run on main(), our pool is live but we can't access it anymore.
+        // Do not delete ptrs here.
         for(auto& ptr : m_sent_messages){
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting sent message ", ptr);
-                delete ptr;
+                // We're back on main's thread, cannot call our pool.
+                // TODO POOLS
+                ptr->releaseMe();
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
@@ -34,7 +38,8 @@ Optimisticcore::~Optimisticcore()
                 
                 for(const auto& uaptr : deleted){
                         LOG_DEBUG("OCORE::", this->getCoreID(), " destructor deleting ", uaptr);
-                        delete uaptr;
+                        // TODO see above.
+                        uaptr->releaseMe();
                 }
         }
 }
@@ -57,7 +62,7 @@ Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs){
                 if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){
                         m_stats.logStat(DELMSG);
                         LOG_DEBUG("MCORE:: ", this->getCoreID(),"@",this->getTime(), " deleting ", ptr);
-                        delete ptr;
+                        ptr->releaseMe();
                 }
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;          // This is only so that the vector (if it doesn't release the memory) has zeroed pointers.
@@ -119,14 +124,14 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 m_received_messages->printScheduler();
                 this->m_received_messages->erase(MessageEntry(msg));
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-                delete msg;
+                msg->releaseMe();
 
                 m_stats.logStat(DELMSG);
         }else{                                                          /// Not queued, so either never seen it, or allready processed
                         
                         if(msg->flagIsSet(Status::PROCESSED)){// Processed before, only antimessage ptr in transit.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Message is processed :: deleting ", msg);
-                                delete msg;
+                                msg->releaseMe();
                                 m_stats.logStat(DELMSG);
                                 return;
                         }
@@ -137,7 +142,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                                delete msg;
+                                msg->releaseMe();
                                 m_stats.logStat(DELMSG);
                         }
         }
@@ -419,7 +424,8 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
                 t_msgptr& ptr = *senditer;
                 LOG_DEBUG("MCORE:: ", this-getCoreID(), "Deleting msg", ptr->toString());
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
-                delete ptr;
+                // TODO pools : GVT runs on a different thread than the allocating thread.
+                ptr->releaseMe();
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;

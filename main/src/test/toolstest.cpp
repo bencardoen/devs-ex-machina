@@ -3,6 +3,7 @@
 #include <vector>
 #include <list>
 #include <array>
+#include <vector>
 #include <queue>
 #include <algorithm>
 #include <random>
@@ -19,7 +20,15 @@
 #include "tools/gviz.h"
 #include "tools/flags.h"
 #include "tools/misc.h"
+#include "boost/pool/object_pool.hpp"
+#include "boost/pool/singleton_pool.hpp"
 #include "model/modelentry.h"
+#include <algorithm>
+#include "pools/pools.h"
+#include "pools/cfpool.h"
+#include "network/message.h"
+#include <random>
+
 
 using std::cout;
 using std::endl;
@@ -853,4 +862,199 @@ TEST(NumericTest, log2Func){
 
 #undef DOTEST
 #undef DOTESTPART
+}
+
+TEST(Pool, MessageBasics){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        boost::object_pool<Message> pl;
+        Message* rawmem = pl.malloc();
+        Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+        pl.free(rawmem);
+}
+
+
+
+
+#define testsize 40000 //inconnect fta w200 , represent 4e4 * 64byte = ~2.4 MB
+#define rounds 10 // -t rounds*100
+
+
+void timePool(n_pools::PoolInterface<n_network::Message>* pl){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message* rmem = pl->allocate();
+                        Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+                
+                for(auto p : mptrs){
+                        pl->deallocate(p);
+                }
+                
+        }
+}
+
+TEST(New, Timing)
+{
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, std::false_type>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+
+TEST(BoostPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, boost::pool<>>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(SlabPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::SlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(StackPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::StackPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(DSlabPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::DynamicSlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(Pool, DynamicSlabPool){
+        using n_network::Message;
+        using n_network::SpecializedMessage;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=2;
+        size_t tsize=11;        // trigger at least 2 resize operations.
+        size_t rsize=2;         
+        n_pools::DynamicSlabPool<SpecializedMessage<std::string>> pl(psize);
+        std::vector<SpecializedMessage<std::string>*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        SpecializedMessage<std::string>* msgconstructed = new(rawmem) SpecializedMessage<std::string>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, "abc");
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
+}
+
+TEST(Pool, StackPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=4;
+        size_t tsize=9;
+        size_t rsize=3;
+        n_pools::StackPool<Message> pl(psize);
+        std::vector<Message*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
+}
+
+// Compilation fails if struct is defined inside a testcase.
+struct mystr{
+                int i; 
+                double j;
+                constexpr explicit mystr(int pi, double pj):i(pi), j(pj){;}
+        };
+
+TEST(Factory, PoolCalls){
+        mystr * ptrtostr = n_tools::createPooledObject<mystr>(1, 31.4);
+        EXPECT_EQ(ptrtostr->i, 1);
+        n_tools::destroyPooledObject<mystr>(ptrtostr);
+}
+
+TEST(Bits, FBS)
+{
+        size_t i = 1;
+        size_t j = 1;
+        size_t rng = sizeof(i)*8;
+        while(i){
+                EXPECT_EQ(n_tools::firstbitset<sizeof(i)>(i), rng-j);
+                i = i<<1;
+                ++j;
+        }
+                
+}
+
+TEST(Threading, DetectMainNoSyscall)
+{
+        n_pools::setMain();
+        std::vector<std::thread> ts;
+        for(size_t i = 0; i < 4; ++i)
+        {
+                ts.push_back(std::thread(
+                                [&]()->void{
+                                        EXPECT_FALSE(n_pools::isMain());
+                                        }
+                                        )
+                        );
+        }
+        for(auto& t : ts)
+                t.join();
+        EXPECT_TRUE(n_pools::isMain());
+}
+
+TEST(Pool, CFPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::set<Message*> ptrs;
+        size_t psize=65;
+        size_t tsize=65;
+        size_t rsize=2;
+        n_pools::CFPool<Message> pl(psize);
+        std::vector<Message*> mptrs;
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs.push_back(msgconstructed);
+                        if (!ptrs.insert(msgconstructed).second){
+                                std::cerr << "Double ptr " << msgconstructed << std::endl;
+                                throw 42;
+                        }
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+                ptrs.clear();
+                mptrs.clear();
+        }
+        //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
 }

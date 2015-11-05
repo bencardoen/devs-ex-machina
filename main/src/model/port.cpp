@@ -121,14 +121,17 @@ void Port::setInPortCoupled(const t_portptr_raw port)
 }
 
 Port::~Port(){
-        this->clearSentMessages();
+        // Don't delete here, creator pool is no longer valid (neither are the ptrs)
+        // This means that for Message<string> we get leaks at the moment for local (trace) messages only.
+        // The only workable alternative is a GCCollect like function BEFORE the simthread exits.
+        //this->clearSentMessages();
 }
 
 void Port::clearSentMessages()
 {
         for(auto& msg : m_sentMessages){
                 LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", msg);
-                delete msg;
+                msg->releaseMe();
 #ifdef SAFETY_CHECKS
                 msg=nullptr;
 #endif
