@@ -472,7 +472,7 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
 #ifdef SAFETY_CHECKS
                         auto id = std::this_thread::get_id();
                         for(Object* obj:m_objList)
-                                LOG_ERROR("thread ", id, " Didn't deallocate object ", obj, " ", obj->toString());
+                                LOG_ERROR("thread ", id, " Didn't deallocate object ", obj);
 #endif
                 }
 };

@@ -86,7 +86,6 @@ void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t
                 message->setCausality(++msgCount);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
                 if (not this->isMessageLocal(message)) {
-                        m_stats.logStat(MSGSENT);
                         this->sendMessage(message);	// A noop for single core, multi core handles this.
                 } else {
                         this->queueLocalMessage(message);
@@ -96,10 +95,11 @@ void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t
 
 void Optimisticcore::sendMessage(t_msgptr msg)
 {
-	// We're locked on msglock. Don't change the ordering here.
-        this->countMessage(msg);        
-	this->m_network->acceptMessage(msg);
-	this->markMessageStored(msg);
+        // We're locked on msglock. Don't change the ordering here.
+        m_stats.logStat(MSGSENT);
+        this->countMessage(msg);
+        this->m_network->acceptMessage(msg);
+        this->markMessageStored(msg);
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending message @",msg, " tostring: ", msg->toString() );
 }
 
@@ -275,7 +275,7 @@ void Optimisticcore::runSmallStep()
                         ptr = nullptr;
 #endif
                 }
-                for (auto iter2 = senditer; iter2 != m_sent_messages.end(); ++senditer) {
+                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
                         t_msgptr ptr = *iter2;
                         if (ptr->flagIsSet(Status::KILL)) {
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
@@ -286,7 +286,7 @@ void Optimisticcore::runSmallStep()
                                 ++iter2;
                         }
                 }
-                for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end(); ++senditer) {
+                for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
                         t_msgptr ptr = *aiter;
                         if (ptr->flagIsSet(Status::KILL)) {
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
