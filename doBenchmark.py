@@ -88,21 +88,18 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 
 # generators for the benchmark parameters
 def devstonegen(simtype, executable, doRandom=False):
-    for depth in [1, 2, 3]:  # , 4, 8, 16]:
-        for width in [2, 3, 4]:  # , 8, 16]:
-            for endTime in [args.endtime]:
-                if simtype is not simtypes.classic and (depth*width+1) < simtype[2]:
-                    continue
-                yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
-                # return
+    for depth in [10, 20, 30, 40]:  # , 4, 8, 16]:
+        for endTime in [args.endtime]:
+            yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
+            # return
 
 randdevstonegen = partial(devstonegen, doRandom=True)
 
 
 def pholdgen(simtype, executable):
-    for apn in [2, 4, 8, 16]:
-        for nodes in [2, 4]:  # , 8, 16, 32]:
-            for iterations in [16, 64, 256, 1024]:
+    for apn in [10]:
+        for nodes in [10, 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
+            for iterations in [0]:
                 for remotes in [10]:
                     for endTime in [args.endtime]:
                         yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
@@ -110,7 +107,7 @@ def pholdgen(simtype, executable):
 
 
 def interconnectgen(simtype, executable, doRandom=False):
-    for width in [2, 4, 8, 16]:
+    for width in [10, 20, 30, 40, 50, 60, 70]:
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
 
