@@ -256,6 +256,7 @@ void Controller::simDEVS()
 	}
         t_timestamp time = core->getTime();
         n_tracers::traceUntil(time);
+        core->clearState();
 }
 
 void Controller::simOPDEVS()
@@ -507,7 +508,7 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                         core->setLive(false);
 		}
 
-		if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
+		if (!core->isLive()) {          
 			bool quit = true;
 			for(const auto& coreentry : ctrl.m_cores ){
 				if( coreentry->isLive()){
@@ -515,11 +516,13 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 					break;
 				}
 			}
-			if(quit){               /// Iedereen idle
+			if(quit){               
 				if ( ! core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
 					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
 					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
+                                        // EXIT point 1:
+                                        core->clearState();
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
@@ -530,7 +533,9 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                 LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
                 core->runSmallStep();
 	}
+        /// EXIT point 2 : overrun counters.
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        core->clearState();
         ctrl.m_rungvt.store(false);
 }
 

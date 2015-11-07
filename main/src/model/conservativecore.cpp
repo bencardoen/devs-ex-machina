@@ -6,6 +6,7 @@
  */
 
 #include <thread>
+#include <string>
 #include <chrono>
 #include "model/conservativecore.h"
 #include "scheduler/stlscheduler.h"
@@ -177,6 +178,7 @@ void Conservativecore::syncTime(){
 	}
         
         this->updateDGVT();
+        gcCollect();
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -322,7 +324,7 @@ void Conservativecore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 #endif
         /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(t_msgptr ptr : msgs){
-                if(ptr->getSourceCore()==this->getCoreID()){
+                if(ptr->getSourceCore()==this->getCoreID() && ptr->getDestinationCore()==this->getCoreID()){ 
                         LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                         m_stats.logStat(DELMSG);
                         ptr->releaseMe();
@@ -463,6 +465,29 @@ Conservativecore::gcCollect()
                         m_sent_messages.erase(m_sent_messages.begin(), iter);
                 }
         }
+}
+
+
+
+void
+Conservativecore::clearState()
+{
+        Core::clearState(); // old tracing msgs.
+        for(t_msgptr ptr : m_sent_messages)
+        {
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " clearState:: deleting ", ptr);
+                m_stats.logStat(DELMSG);
+                // In future, move this into a ifdef safety checks.
+                size_t destid = ptr->getDestinationCore();
+                t_timestamp::t_time recv_time = m_distributed_time->get(destid);        
+                if(recv_time <= ptr->getTimeStamp().getTime()){
+                        LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
+                        LOG_FLUSH;
+                        throw std::logic_error("Pointer to message still in use !");
+                }
+                ptr->releaseMe();
+        }
+        m_sent_messages.clear(); // Should this function ever be called twice, make sure we don't actually delete things twice.
 }
 
 } /* namespace n_model */

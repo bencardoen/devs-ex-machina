@@ -278,6 +278,16 @@ public:
         void
         setDGVT(const t_timestamp::t_time& ng)const{m_distributed_time->set(m_distributed_time->size()-1, ng);}
         
+        /**
+         * @pre : simulation is done, calling thread id == current thread id
+         * @post : all sent messages not purged by gccollect are destroyed, as are all messages kept for tracing.
+         * @throws : std::logic_error if we can prove a message is still in use.
+         * @attention : call this once only.
+         */
+        virtual
+        void
+        clearState()override;
+        
 
         //-------------statistics gathering--------------
 #ifdef USE_STAT

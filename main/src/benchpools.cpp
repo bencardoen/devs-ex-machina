@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
                                                         {"dynpool",new n_pools::DynamicSlabPool<Msg>(128)} ,{"stackpool", new n_pools::StackPool<Msg>(128)},
                                                         {"newdel", new n_pools::Pool<Msg, std::false_type>(tsize/2)}
                                                           };
-        size_t allocsize = (tsize*sizeof(Msg))/(1024*1024);
+        //size_t allocsize = (tsize*sizeof(Msg))/(1024*1024);
         //std::cout << "Benchmark will allocate at least " << allocsize << " MB " << std::endl;
         const auto& found = pnames.find(ptype);
         if(found==pnames.end()){
