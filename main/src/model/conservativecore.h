@@ -14,6 +14,11 @@
 namespace n_model {
 
 /**
+ * If a simulator collects more than <value> sent messages, try to garbage collect them.
+ */
+static constexpr size_t GC_COLLECT_THRESHOLD=1024ull;
+
+/**
  * Stores the maximum of EOT values per kernel.
  */
 typedef std::shared_ptr<n_tools::SharedAtomic<t_timestamp::t_time>> t_eotvector;
@@ -262,17 +267,15 @@ public:
         void
         calculateMinLookahead();
         
-        // Avoid the Core::set/get GVT functions. 
-        // CDGVT is stored in shared memory, there is no point to duplicate it.
         /**
-         * Calculate GVT = {min (nullmsgtime[i] for all i)}-1.
+         * Calculate GVT < {min (nullmsgtime[i] for all i)}.
          * Writes new value in last field of nullmsgtime vector.
-         * distributed gvt, the gvt value is shared memory between threads.
+         * @attention : set?getGVT of Core are not used.
          */
         void
         updateDGVT();
         
-        // Distributed gvt, not != getGVT()
+
         t_timestamp::t_time
         getDGVT()const{return m_distributed_time->get(m_distributed_time->size()-1);}
         
@@ -282,6 +285,7 @@ public:
         
         /**
          * @pre : simulation is done, calling thread id == current thread id
+         * @pre : all simthreads have either terminated, or at null message time > any sent message to them.
          * @post : all sent messages not purged by gccollect are destroyed, as are all messages kept for tracing.
          * @throws : std::logic_error if we can prove a message is still in use.
          * @attention : call this once only.

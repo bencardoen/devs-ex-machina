@@ -28,6 +28,8 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
+        // Conservative cannot wake up. If we reach term time, we die.
+        /**
 	bool wasLive = isLive();
         this->setLive(true);
         if(!wasLive){
@@ -42,7 +44,14 @@ void Conservativecore::getMessages()
                         setLive(false);
                         LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
                 }
-	}
+	}*/
+        // Regardless of what happens, pull messages to avoid others stalling on network empty.
+        if(this->m_network->havePendingMessages(this->getCoreID())){
+                std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
+                LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
+                if(isLive())
+                        this->sortIncoming(messages);
+        }
 }
 
 Conservativecore::~Conservativecore()
@@ -133,15 +142,13 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-	
         this->calculateMinLookahead();
 	this->updateEOT();                     
 	this->updateEIT();
+        
 	const t_timestamp nextfired(this->getFirstImminentTime());
-        
         getMessages();          // We've been promised by eit/eot that everything <eot is on the net, pull again so we can't miss a msg.
-	const t_timestamp firstmessagetime(this->getFirstMessageTime());
-        
+	const t_timestamp firstmessagetime(this->getFirstMessageTime());  
 	t_timestamp newtime = std::min(firstmessagetime, nextfired);
         LOG_DEBUG("\tCORE :: ", this->getCoreID(),"@", this->getTime(), " New time is ", newtime, " =min( ", nextfired, " , ", firstmessagetime , ")");
         
@@ -165,12 +172,7 @@ void Conservativecore::syncTime(){
 	this->setTime(newtime);										
 	this->resetZombieRounds();
 
-        /**
-         * If we terminate in conservative, make sure we release any hold we have on the other cores.
-         * We can use inf() for eot, but nulltime has inf() as a default (not initialized). We can signal that we did
-         * round (now + eps()) instead.
-         */
-	if (this->getTime().getTime() >= this->getTerminationTime().getTime()) {
+	if (this->getTime().getTime() >= this->getTerminationTime()) {
 		LOG_DEBUG("\tCORE :: ",this->getCoreID() ," Reached termination time :: now: ", this->getTime(), " >= ", this->getTerminationTime());
                 setEot(t_timestamp::MAXTIME);
                 setNullTime((this->getTime()+t_timestamp::epsilon()).getTime());
@@ -178,7 +180,7 @@ void Conservativecore::syncTime(){
 	}
         
         this->updateDGVT();
-        if(m_sent_messages.size()>1024)
+        if(m_sent_messages.size()>GC_COLLECT_THRESHOLD)
                 gcCollect();
 }
 
@@ -413,7 +415,7 @@ void
 Conservativecore::updateDGVT()
 {       
         // Nullmessage time = time of output generation, not (yet) transition.
-        // gvt <= x-eps.
+        // gvt = x-eps.
         // Values to ignore are : 0 (0-eps = underflow), oo (not yet active core).
         if(!this->getCoreID()){
                 t_timestamp::t_time last = getDGVT();
@@ -451,7 +453,7 @@ Conservativecore::gcCollect()
                 for(; iter != m_sent_messages.end(); ++iter){
                         t_msgptr mptr = *iter;// debugging
                         t_timestamp::t_time msgtime = mptr->getTimeStamp().getTime();
-                        if(mptr->getTimeStamp().getTime()> dgvt){
+                        if(mptr->getTimeStamp().getTime()>= dgvt){
                                 break;
                         }
                         else{
@@ -474,6 +476,7 @@ void
 Conservativecore::clearState()
 {
         Core::clearState(); // old tracing msgs.
+        // @pre : for_each ptr : destination has processed the message. 
         for(t_msgptr ptr : m_sent_messages)
         {
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " clearState:: deleting ", ptr);
@@ -485,8 +488,9 @@ Conservativecore::clearState()
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
                         throw std::logic_error("Pointer to message still in use !");
+                }else{
+                        ptr->releaseMe();
                 }
-                ptr->releaseMe();
         }
         m_sent_messages.clear(); // Should this function ever be called twice, make sure we don't actually delete things twice.
 }

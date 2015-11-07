@@ -244,6 +244,9 @@ private:
 
 	friend
 	void cvworker( std::size_t myid, std::size_t turns,Controller&);
+        
+        friend
+	void cvworker_con( std::size_t myid, std::size_t turns,Controller&);
 
 #ifdef USE_VIZ
 public:
@@ -287,14 +290,17 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
 
 /**
  * Worker function. Runs a Core and communicates with other threads and GVT thread.
- * @param cv Queues working threads if main asks them to.
- * @param cvlock lock needed for cv
  * @param myid unique identifier, for logging it is best this is equal to coreid
- * @param threadsignal : stores thread signalling flags
- * @param vectorlock : lock threadsignal
  * @param turns : infinite loop cutoff value.
  */
 void cvworker(std::size_t myid,std::size_t turns,Controller&);
+
+/**
+ * Worker function. Runs a Core and communicates with other threads and GVT thread.
+ * @param myid unique identifier, for logging it is best this is equal to coreid
+ * @param turns : infinite loop cutoff value.
+ */
+void cvworker_con(std::size_t myid,std::size_t turns,Controller&);
 
 } /* namespace n_control */
 

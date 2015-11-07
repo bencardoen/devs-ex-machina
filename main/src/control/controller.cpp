@@ -310,7 +310,7 @@ void Controller::simCPDEVS()
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, i, m_turns, std::ref(*this))
+		        std::thread(cvworker_con, i, m_turns, std::ref(*this))
                         );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
@@ -537,6 +537,46 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
         core->clearState();
         ctrl.m_rungvt.store(false);
+}
+
+void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
+{
+        /**
+         * Conservative can per definition never go back in time, so once it reaches termination time, stop simulating.
+         * However, we still have to wait on all others th
+         */
+	const auto& core = ctrl.m_cores[myid];
+        LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
+        size_t i = 0;
+	for (; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
+
+		if (!core->isLive()) {          
+			core->getMessages(); // Make sure we pull all messages, though not strictly required to terminate.
+                        LOG_DEBUG(" Core no longer live :: ", core->getCoreID(), " exiting working function."); // don't log time (^sync)
+                        break;
+		}
+                LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i );
+                core->runSmallStep();
+	}
+        // Wait for all other cores to go idle.
+        // Should a core have reached the nr of turns (a safety catch), make sure we set Live ourselves.
+        if(i==turns)
+                core->setLive(false);
+        while(true){
+                size_t i = 0;
+                for(const auto& core : ctrl.m_cores){
+                        if(!core->isLive())
+                                ++i;
+                }
+                if(i == ctrl.m_cores.size())
+                        break;
+                else{
+                        std::this_thread::yield();
+                        i = 0;
+                }
+        }
+        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        core->clearState();
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)

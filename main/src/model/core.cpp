@@ -356,6 +356,7 @@ bool n_model::Core::isLive() const
 
 void n_model::Core::setLive(bool b)
 {
+        LOG_DEBUG("Core : ", this->getTime(), " id = ", this->getCoreID(), " going to live = ", b);
 	m_live.store(b);
 }
 
