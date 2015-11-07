@@ -74,7 +74,13 @@ private:
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
-	std::deque<t_msgptr>		m_sent_messages;
+        std::deque<t_msgptr>        m_sent_messages;
+        /**
+         * Sent anti messages, must be kept separate from the regular messages
+         */
+        std::deque<t_msgptr>        m_sent_antimessages;
+
+	bool m_removeGVTMessages;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -171,6 +177,10 @@ public:
          * Running cores while any destructor runs voids all pointer safety.
 	 */
 	virtual ~Optimisticcore();
+
+    void runSmallStep() override;
+
+    void shutDown() override;
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name

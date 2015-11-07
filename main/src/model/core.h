@@ -475,6 +475,14 @@ public:
 	virtual
 	void
 	runSmallStep();
+
+	/**
+	 * Called right before the simulation thread stops.
+	 * This method will clean up any left over memory before it's thread stops.
+	 */
+	virtual
+	void shutDown()
+	{};
         
         /**
 	 * Collect output from imminent models, sort them in the mailbag by destination name.

@@ -332,9 +332,9 @@ include_directories(
 ### LINKER ####################################################################
 # Register libraries needed.
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
-if(TCMALLOC_LIBRARY)
-    set(LIBS ${LIBS} -ltcmalloc) 
-endif()
+# if(TCMALLOC_LIBRARY)
+#     set(LIBS ${LIBS} -ltcmalloc) 
+# endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ## Clang dies with a segfault of all things if the following linker flags are set

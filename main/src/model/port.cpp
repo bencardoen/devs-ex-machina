@@ -129,6 +129,7 @@ Port::~Port(){
 
 void Port::clearSentMessages()
 {
+        LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", m_sentMessages.size(), " sent messages");
         for(auto& msg : m_sentMessages){
                 LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", msg);
                 msg->releaseMe();

@@ -24,7 +24,17 @@ namespace n_network {
 
 enum MessageColor : uint8_t{WHITE = 0, RED = 1};
 // Msg status. Note that the assigned values are to be orthogonal.
-enum Status : uint8_t{DELETE=2, PROCESSED=4, PENDING=8, ANTI=16};
+// 8 bits reserved for flags
+// 2^0: color
+// 2^1: delete? set by optimistic core for the case
+//              where a message is marked antimessage before it is received by the core
+// 2^2: processed? set by optimistic core when a message has been processed (used in a transition)
+// 2^3: TOERASE? set by optimistic core when a message in the scheduler is an antimessage,
+//               The core can then safely ignore it and set its kill flag
+// 2^4: ANTI? The message is an anti message
+// 2^5: KILL? The message can be safely killed by the sending core.
+// 2^6: HEAPED? The message has been put in a message scheduler in the receiving core.
+enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, TOERASE=8, ANTI=16, KILL=32, HEAPED=64};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
@@ -138,6 +148,7 @@ public:
         
     void setFlag(Status newst, bool value=true)
     {
+            LOG_DEBUG("setting ", newst, " flag of ", this, " ", toString(), " to ", value);
         if(value)
             m_atomic_flags |= newst;
         else

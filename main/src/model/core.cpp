@@ -227,6 +227,7 @@ void n_model::Core::transition()
 		}
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
+        imminent->clearSentMessages();
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
@@ -259,11 +260,11 @@ void n_model::Core::transition()
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
-        for(const auto& message : messages){
-		message->setCausality(++msgCount);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
-		this->queueLocalMessage(message);
-	}
+        for (const auto& message : messages) {
+                message->setCausality(++msgCount);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
+                this->queueLocalMessage(message);
+        }
 }
 
 void n_model::Core::printSchedulerState()
@@ -560,20 +561,26 @@ void n_model::Core::clearModels()
 
 void n_model::Core::queuePendingMessage(const t_msgptr& msg)
 {
-	const MessageEntry entry(msg);
-	if(not this->m_received_messages->contains(entry)){
-		this->m_received_messages->push_back(entry);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
-	}else{
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ", msg->toString());
-		this->m_received_messages->erase(entry);
-		this->m_received_messages->push_back(entry);
-		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
-	}
+        const MessageEntry entry(msg);
+        if (!msg->flagIsSet(Status::HEAPED)) {
+                this->m_received_messages->push_back(entry);
+                msg->setFlag(Status::HEAPED);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
+        } else {
+                LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
+                        msg->toString());
+                this->m_received_messages->erase(entry);
+                this->m_received_messages->push_back(entry);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
+        }
 }
 
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
+//        if(msg->flagIsSet(Status::TOERASE) {
+//          msg->setFlag(Status::TOERASE);
+//          return;
+//        }
         const size_t id = msg->getDestinationModel();
         t_raw_atomic model = this->getModel(id).get();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
@@ -585,6 +592,7 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 model->markExternal();
         }
         getMail(id).push_back(msg);
+        msg->setFlag(Status::PROCESSED);
 }
 
 
@@ -592,6 +600,7 @@ void n_model::Core::rescheduleAllRevert(const t_timestamp& totime)
 {
 	for (const auto& model : m_indexed_models) {
 		model->revert(totime);
+		model->clearSentMessages();
 	}
 	rescheduleAll();
 }
@@ -639,14 +648,21 @@ t_timestamp n_model::Core::getFirstMessageTime()
          * Only look at remote messages (opt& cons) for this value, 
          * current messages are (should be processed), so irrelevant.
          */
-	t_timestamp mintime = t_timestamp::infinity();
-	this->lockMessages();
-	if(not this->m_received_messages->empty()){
-		mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
-	}
-	this->unlockMessages();
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
-	return mintime;
+        t_timestamp mintime = t_timestamp::infinity();
+        this->lockMessages();
+        while (not this->m_received_messages->empty()) {
+                t_msgptr msg = this->m_received_messages->top().getMessage();
+                if (msg->flagIsSet(Status::TOERASE)) {
+                        this->m_received_messages->pop();
+                        msg->setFlag(Status::KILL);
+                } else {
+                        mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
+                        break;
+                }
+        }
+        this->unlockMessages();
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
+        return mintime;
 }
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
