@@ -178,7 +178,8 @@ void Conservativecore::syncTime(){
 	}
         
         this->updateDGVT();
-        gcCollect();
+        if(m_sent_messages.size()>1024)
+                gcCollect();
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -480,7 +481,7 @@ Conservativecore::clearState()
                 // In future, move this into a ifdef safety checks.
                 size_t destid = ptr->getDestinationCore();
                 t_timestamp::t_time recv_time = m_distributed_time->get(destid);        
-                if(recv_time <= ptr->getTimeStamp().getTime()){
+                if(recv_time <= ptr->getTimeStamp().getTime() && recv_time!=this->getTerminationTime().getTime()){
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
                         throw std::logic_error("Pointer to message still in use !");

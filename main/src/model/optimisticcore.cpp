@@ -112,14 +112,14 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 m_received_messages->printScheduler();
                 this->m_received_messages->erase(MessageEntry(msg));
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-                msg->releaseMe();
+                //msg->releaseMe();
 
                 m_stats.logStat(DELMSG);
         }else{                                                          /// Not queued, so either never seen it, or allready processed
                         
                         if(msg->flagIsSet(Status::PROCESSED)){// Processed before, only antimessage ptr in transit.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Message is processed :: deleting ", msg);
-                                msg->releaseMe();
+                                //msg->releaseMe();
                                 m_stats.logStat(DELMSG);
                                 return;
                         }
@@ -130,7 +130,7 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                         else{                           // Second time, delete.
                                 LOG_DEBUG("\tMCORE :: ",this->getCoreID()," Special case : second pass, deleting.");
                                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-                                msg->releaseMe();
+                                //msg->releaseMe();
                                 m_stats.logStat(DELMSG);
                         }
         }
@@ -414,7 +414,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
                 LOG_DEBUG("MCORE:: ", this-getCoreID(), "Deleting msg", ptr->toString());
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr);
                 // TODO pools : GVT runs on a different thread than the allocating thread.
-                ptr->releaseMe();
+                //ptr->releaseMe();
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
                 ptr = nullptr;

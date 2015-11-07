@@ -262,6 +262,8 @@ public:
         void
         calculateMinLookahead();
         
+        // Avoid the Core::set/get GVT functions. 
+        // CDGVT is stored in shared memory, there is no point to duplicate it.
         /**
          * Calculate GVT = {min (nullmsgtime[i] for all i)}-1.
          * Writes new value in last field of nullmsgtime vector.

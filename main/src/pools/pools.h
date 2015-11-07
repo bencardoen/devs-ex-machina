@@ -562,7 +562,8 @@ using SCObjectPool = Pool<Object, boost::pool<>>;
 //using SCObjectPool = DynamicSlabPool<Object>;
 // Multicore usage
 template<typename Object>
-using MCObjectPool = Pool<Object,std::false_type>;
+using MCObjectPool = Pool<Object, boost::pool<>>;
+//using MCObjectPool = Pool<Object,std::false_type>;
 
 /**
  * Get the thread local pool for type T.
