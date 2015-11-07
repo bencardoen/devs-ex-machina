@@ -210,7 +210,7 @@ void Conservativecore::receiveMessage(t_msgptr msg){
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
 
         if (msgtime < currenttime){
-                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
+                LOG_ERROR("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", currenttime,
 		        " msg follows: ", msg->toString());
                 m_stats.logStat(REVERTS);
                 LOG_FLUSH;
