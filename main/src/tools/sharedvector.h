@@ -9,6 +9,8 @@
 #define SRC_TOOLS_SHAREDVECTOR_H_
 
 #include <vector>
+#include <mutex>
+#include <atomic>
 #include <array>
 #include <deque>
 

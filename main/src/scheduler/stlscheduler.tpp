@@ -64,14 +64,14 @@ void STLScheduler<R>::unschedule_until(std::vector<R>& container,const R& elem)
 }
 
 template<typename R>
-bool STLScheduler<R>::contains(const R& elem) const {
+bool STLScheduler<R>::contains(const R& /*elem*/) const {
         throw std::logic_error("Not supported");
         return false;
         
 }
 
 template<typename R>
-bool STLScheduler<R>::erase(const R& elem) {
+bool STLScheduler<R>::erase(const R& /*elem*/) {
         throw std::logic_error("Not supported");
         return false;
 }

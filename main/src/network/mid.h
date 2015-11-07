@@ -5,6 +5,8 @@
 #ifndef MID_H_
 #define MID_H_
 
+#include <cstdint>
+
 namespace n_network{
 
 namespace n_const{

@@ -11,6 +11,7 @@
 #include <deque>
 #include <memory>
 #include <vector>
+#include <mutex>
 #include "tools/statistic.h"
 
 namespace n_network {

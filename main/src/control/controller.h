@@ -9,7 +9,9 @@
 #define SRC_CONTROL_CONTROLLER_H_
 
 #include <string>
+#include <vector>
 #include <functional>
+#include <atomic>
 #include <memory>
 #include <thread>
 #include <condition_variable>

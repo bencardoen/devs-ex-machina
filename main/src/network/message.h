@@ -18,6 +18,7 @@
 #include <sstream>
 #include <iosfwd>
 #include <atomic>
+#include <cstdint>
 
 namespace n_network {
 

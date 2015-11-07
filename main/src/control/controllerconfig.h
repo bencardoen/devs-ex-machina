@@ -19,6 +19,7 @@
 #include "model/conservativecore.h"
 #include <unordered_set>
 #include <thread>
+#include <atomic>
 #include <sstream>
 #include <vector>
 #include <chrono>

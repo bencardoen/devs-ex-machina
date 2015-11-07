@@ -9,6 +9,7 @@
 #define SRC_MODEL_ZFUNC_H_
 
 #include "network/message.h"
+#include <memory>
 
 namespace n_model {
 
