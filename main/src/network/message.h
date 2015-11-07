@@ -162,6 +162,8 @@ public:
 	virtual std::string getPayload() const
 	{
 		LOG_ERROR("Message::getPayload called on base class.");
+                LOG_FLUSH;
+                throw std::logic_error("Message::getPayload called on base class.");
 		return "";
 	}
 

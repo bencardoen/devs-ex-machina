@@ -256,7 +256,7 @@ TEST(Optimisticcore, revert){
 	t_timestamp gvt(62,0);
 	t_timestamp aftergvt(63,0);
 	
-	t_msgptr msgaftergvt = createRawObject<Message>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u);
+	t_msgptr msgaftergvt = createRawObject<SpecializedMessage<std::string>>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u,"a_test");
         LOG_DEBUG("Creating ", msgaftergvt);
 
 	coreone->setGVT(gvt);
