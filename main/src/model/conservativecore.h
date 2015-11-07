@@ -87,6 +87,8 @@ private:
          */
         t_timestamp             m_last_sent_msgtime;
         
+        std::deque<t_msgptr>   m_sent_messages;
+        
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
          * >= our time, and we ourselves have produced all output at current time.
@@ -136,15 +138,27 @@ private:
         
         void setNullTime(t_timestamp::t_time nlt){m_distributed_time->set(this->getCoreID(), nlt);}
         
-         /**
+        /**
          * @attention : synchronized (write/read)
          */
         void setEot(t_timestamp ntime);
         
-         /**
+        /**
          * @see getNullTime()
          */
         t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID(), std::memory_order_relaxed);} // read/read
+        
+        /**
+         * Only clear locally generated messages. Remotely received we ignore. (sender destroys).
+         * @param msgs
+         */
+        virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override;
+
+        /**
+         * Collect all messages with timestamp < gvt.
+         */
+        void
+        gcCollect();
         
 protected:
         virtual void queuePendingMessage(const t_msgptr& msg)override;
@@ -247,6 +261,22 @@ public:
          */
         void
         calculateMinLookahead();
+        
+        /**
+         * Calculate GVT = {min (nullmsgtime[i] for all i)}-1.
+         * Writes new value in last field of nullmsgtime vector.
+         * distributed gvt, the gvt value is shared memory between threads.
+         */
+        void
+        updateDGVT();
+        
+        // Distributed gvt, not != getGVT()
+        t_timestamp::t_time
+        getDGVT()const{return m_distributed_time->get(m_distributed_time->size()-1);}
+        
+        // sets the distributed gvt value. Only called by controlling core.
+        void
+        setDGVT(const t_timestamp::t_time& ng)const{m_distributed_time->set(m_distributed_time->size()-1, ng);}
         
 
         //-------------statistics gathering--------------

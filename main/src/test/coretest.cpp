@@ -746,7 +746,8 @@ TEST(Conservativecore, Abstract){
 	std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(2);
 
         t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(2, 0u);
-        t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(2, std::numeric_limits<t_timestamp::t_time>::max());
+        t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(2+1, std::numeric_limits<t_timestamp::t_time>::max());
+        timevector->set(timevector->size()-1, 0u);
 	auto c0 = createObject<Conservativecore>(network, 0, 2, eotvector, timevector);
 	auto c1 = createObject<Conservativecore>(network, 1, 2, eotvector, timevector);
 	coreMap.push_back(c0);
@@ -916,7 +917,8 @@ TEST(Conservativecore, Deadlock){
                 std::shared_ptr<n_control::Allocator> allocator = createObject<n_control::SimpleAllocator>(3);
                 
                 t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(3, 0u);
-                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(3, std::numeric_limits<t_timestamp::t_time>::max());
+                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(3+1, std::numeric_limits<t_timestamp::t_time>::max());
+                timevector->set(timevector->size()-1, 0u);
                 auto c0 = createObject<Conservativecore>(network, 0, 3, eotvector, timevector);
                 auto c1 = createObject<Conservativecore>(network, 1, 3, eotvector, timevector);
                 auto c2 = createObject<Conservativecore>(network, 2, 3, eotvector, timevector);
@@ -1004,6 +1006,11 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(eotvector->get(1), 11u); 
                 EXPECT_EQ(timevector->get(2), 10u); 
                 EXPECT_EQ(eotvector->get(2), 11u); 
+                
+                c0->updateDGVT();
+                EXPECT_EQ(c0->getDGVT(), c1->getDGVT());
+                EXPECT_EQ(c2->getDGVT(), c1->getDGVT());
+                EXPECT_EQ(c2->getDGVT(), 9u);
                 
                 LOG_INFO("4-------------------------------------------------");
                 

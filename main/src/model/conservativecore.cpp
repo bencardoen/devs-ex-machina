@@ -9,6 +9,7 @@
 #include <chrono>
 #include "model/conservativecore.h"
 #include "scheduler/stlscheduler.h"
+#include "network/timestamp.h"
 
 namespace n_model {
 
@@ -19,6 +20,8 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 {
         m_received_messages.reset();
         m_received_messages=n_tools::createObject<n_scheduler::STLScheduler<n_network::MessageEntry>>();
+        if(totalCores==m_distributed_time->size())
+                throw std::logic_error("NLTIME not aligned properly. !!");
         m_externalMessages.resize(totalCores);
 }
 
@@ -171,7 +174,9 @@ void Conservativecore::syncTime(){
                 setEot(t_timestamp::MAXTIME);
                 setNullTime((this->getTime()+t_timestamp::epsilon()).getTime());
 		setLive(false);
-	}       
+	}
+        
+        this->updateDGVT();
 }
 
 void Conservativecore::setTime(const t_timestamp& newtime){
@@ -299,6 +304,7 @@ void Conservativecore::sortMail(const std::vector<t_msgptr>& messages, std::size
 		if (not this->isMessageLocal(message)) {
                         m_stats.logStat(MSGSENT);
 			m_externalMessages[message->getDestinationCore()].push_back(message);
+                        m_sent_messages.push_back(message);
 			// At output collection, timestamp is set (the rest is of no interest to us here).
 			this->m_last_sent_msgtime = message->getTimeStamp();
 			LOG_DEBUG("\tCCORE :: ", this->getCoreID(), " queued message ", message->toString());
@@ -307,6 +313,25 @@ void Conservativecore::sortMail(const std::vector<t_msgptr>& messages, std::size
 		}
 	}
 }
+
+void Conservativecore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
+{
+        #ifdef SAFETY_CHECKS
+        if(msgs.size()==0)
+                throw std::logic_error("Msgs empty after processing ?");
+#endif
+        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
+        for(t_msgptr ptr : msgs){
+                if(ptr->getSourceCore()==this->getCoreID()){
+                        LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
+                        m_stats.logStat(DELMSG);
+                        ptr->releaseMe();
+                }
+        }
+        
+        msgs.clear();
+}
+
 
 void Conservativecore::runSmallStepStalled()
 {
@@ -378,6 +403,65 @@ Conservativecore::calculateMinLookahead(){
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);
         }else{
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead < time , skipping calculation. : ", m_min_lookahead);
+        }
+}
+
+void
+Conservativecore::updateDGVT()
+{       
+        // Nullmessage time = time of output generation, not (yet) transition.
+        // gvt <= x-eps.
+        // Values to ignore are : 0 (0-eps = underflow), oo (not yet active core).
+        if(!this->getCoreID()){
+                t_timestamp::t_time last = getDGVT();
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " DGVT calc: old = ", last);
+                t_timestamp::t_time current_min = std::numeric_limits<t_timestamp::t_time>::max();              
+                for(size_t i = 0;i<m_distributed_time->size()-1; ++i){
+                        t_timestamp::t_time inulltime = m_distributed_time->get(i, std::memory_order_relaxed);
+                        if(inulltime<= t_timestamp::epsilon() || (std::numeric_limits<t_timestamp::t_time>::max()==inulltime) ){
+                                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT calc: nulltime <= eps or oo for  ", i , " not going any further.");
+                                return;
+                        }else{
+                                current_min = std::min(inulltime, current_min);
+                        }        
+                }
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " DGVT calc: new ==  ", current_min - t_timestamp::epsilon().getTime());
+                setDGVT(current_min-t_timestamp::epsilon().getTime());
+        }
+}
+
+void 
+Conservativecore::gcCollect()
+{
+        /** GVT is point in time that all cores have passed. 
+         *  So messages with timestamp <= gvt are safe to delete.
+         */
+        if(m_sent_messages.empty())
+                return;
+        t_timestamp::t_time dgvt = getDGVT();
+        if(std::numeric_limits<t_timestamp::t_time>::max()==dgvt){
+                LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " DGVT  ==  inf, skipping gccollect. ");
+                return;
+        }else
+        {
+                std::deque<t_msgptr>::iterator iter = m_sent_messages.begin();
+                for(; iter != m_sent_messages.end(); ++iter){
+                        t_msgptr mptr = *iter;// debugging
+                        t_timestamp::t_time msgtime = mptr->getTimeStamp().getTime();
+                        if(mptr->getTimeStamp().getTime()> dgvt){
+                                break;
+                        }
+                        else{
+                                LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", mptr);
+                                m_stats.logStat(DELMSG);
+                                mptr->releaseMe();
+                        }
+                }
+                // Erase [begin, found)
+                if(std::distance(m_sent_messages.begin(), iter)){
+                        LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " gccollect erasing ::  ", std::distance(m_sent_messages.begin(),iter));
+                        m_sent_messages.erase(m_sent_messages.begin(), iter);
+                }
         }
 }
 

@@ -255,7 +255,8 @@ TEST(Controller, CONDEVS)
 		std::shared_ptr<Allocator> allocator = createObject<SimpleAllocator>(2);
 
 		t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(2, 0u);
-                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(2, std::numeric_limits<t_timestamp::t_time>::max());
+                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(3, std::numeric_limits<t_timestamp::t_time>::max());
+                timevector->set(timevector->size()-1, 0u);
 		auto c0 = createObject<Conservativecore>(network, 0, 2, eotvector, timevector);
 		auto c1 = createObject<Conservativecore>(network, 1, 2, eotvector, timevector);
 

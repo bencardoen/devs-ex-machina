@@ -64,7 +64,8 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	{
 		t_networkptr network = createObject<Network>(m_coreAmount);
 		t_eotvector eotvector = createObject<SharedAtomic<t_timestamp::t_time>>(m_coreAmount, 0u);
-                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(m_coreAmount, std::numeric_limits<t_timestamp::t_time>::max());
+                t_timevector timevector = createObject<SharedAtomic<t_timestamp::t_time>>(m_coreAmount+1, std::numeric_limits<t_timestamp::t_time>::max());
+                timevector->set(timevector->size()-1, 0u);
 		for (size_t i = 0; i < m_coreAmount; ++i) {
 			coreMap.push_back(createObject<Conservativecore>(network, i, m_coreAmount, eotvector, timevector));
 		}

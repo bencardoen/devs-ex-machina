@@ -112,6 +112,12 @@ public:
                 m_atomics[index].store(val);
 #endif
         }
+        
+        /**
+         * Nr of entries.
+         * @return 
+         */
+        constexpr size_t size()const{return m_size;}
 };
 
 } /* namespace n_tools */
