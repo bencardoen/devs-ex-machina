@@ -83,7 +83,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+            return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**
@@ -91,7 +91,7 @@ public:
 	 */
 	t_type& state()
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	        return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 };
