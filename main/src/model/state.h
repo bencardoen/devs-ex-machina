@@ -106,7 +106,7 @@ namespace n_model {
 using n_network::t_timestamp;
 
 class State;
-typedef std::shared_ptr<State> t_stateptr;
+typedef State* t_stateptr;
 
 /**
  * @brief Keeps track of the current state of a model.
@@ -207,7 +207,7 @@ public:
 
 	t_stateptr copyState() const override
 	{
-		return n_tools::createObject<State__impl<T>>(*this);
+		return new State__impl<T>(*this);
 	}
 
 
@@ -259,7 +259,7 @@ public:
 
 	t_stateptr copyState() const override
 	{
-		return n_tools::createObject<State__impl<void>>(*this);
+		return n_tools::createRawObject<State__impl<void>>(*this);
 	}
 
 

@@ -26,6 +26,18 @@ AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t
         LOG_DEBUG("\tAMODEL ctor :: name=", name, " m_prior= ", m_priority , " corenr=", m_corenumber);
 }
 
+AtomicModel_impl::~AtomicModel_impl()
+{
+        if(m_keepOldStates) {
+                for(t_stateptr st: m_oldStates) {
+                        n_tools::takeBack(st);
+                }
+        }
+        else {
+                n_tools::takeBack(m_state);
+        }
+}
+
 void AtomicModel_impl::intTransition()
 {
 	LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");
@@ -104,47 +116,53 @@ void AtomicModel_impl::doOutput(std::vector<n_network::t_msgptr>& msgs)
 
 void AtomicModel_impl::setGVT(t_timestamp gvt)
 {
-	assert(m_keepOldStates && "AtomicModel_impl::setGVT called while old states are not remembered.");
-	if (!m_keepOldStates) {
-		LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
-		return;
-	}
-	assert(!m_oldStates.empty() && "AtomicModel_impl::setGVT no memory!");
-	// Model has no memory of past
-	if (m_oldStates.empty()) {
-		LOG_ERROR("Model has no memory of past (no old states), no GVT happened!");
-		return;
-	}
+        assert(m_keepOldStates && "AtomicModel_impl::setGVT called while old states are not remembered.");
+        if (!m_keepOldStates) {
+                LOG_ERROR("Model has set m_keepOldStates to false, can't call setGVT!");
+                return;
+        }
+        assert(!m_oldStates.empty() && "AtomicModel_impl::setGVT no memory!");
+        // Model has no memory of past
+        if (m_oldStates.empty()) {
+                LOG_ERROR("Model has no memory of past (no old states), no GVT happened!");
+                return;
+        }
 
-	int index = 0;
-	int k = -1;
+        int index = 0;
+        int k = -1;
 
-	for (const auto& state : m_oldStates) {
-		if (state->m_timeLast >= gvt) {
-			k = std::max(0, index - 1);
-			break;
-		}
-		++index;
-	}
+        for (t_stateptr state : m_oldStates) {
+                if (state->m_timeLast >= gvt) {
+                        k = std::max(0, index - 1);
+                        break;
+                }
+                ++index;
+        }
 
-	if (k == -1) {
-		// model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
-                m_oldStates.erase(m_oldStates.begin(), (m_oldStates.end()-1));
-		//t_stateptr state = m_oldStates.back();
-		//m_oldStates.clear();
-		//m_oldStates.push_back(state);
-	} else if (k == 0) {
-		// Do nothing as nothing is to happen
-		// m_oldStates has 1 state before the GVT (the first element)
-		// the rest of m_oldStates consist of states with a timeLast
-		// greater than or equal to our GVT
-	} else {
-		// Only keep 1 state before GVT, and all states after it
-		//auto firstState = m_oldStates.begin() + k;
-		//auto lastState = m_oldStates.end();
-                m_oldStates.erase(m_oldStates.begin(), m_oldStates.begin()+k);
-		//m_oldStates = std::vector<t_stateptr>(firstState, lastState);
-	}
+        if (k == -1) {
+                // model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
+                for (auto iter = m_oldStates.begin(); iter < m_oldStates.end() - 1; ++iter) {
+                        n_tools::takeBack(*iter);
+                }
+                m_oldStates.erase(m_oldStates.begin(), (m_oldStates.end() - 1));
+                //t_stateptr state = m_oldStates.back();
+                //m_oldStates.clear();
+                //m_oldStates.push_back(state);
+        } else if (k == 0) {
+                // Do nothing as nothing is to happen
+                // m_oldStates has 1 state before the GVT (the first element)
+                // the rest of m_oldStates consist of states with a timeLast
+                // greater than or equal to our GVT
+        } else {
+                // Only keep 1 state before GVT, and all states after it
+                //auto firstState = m_oldStates.begin() + k;
+                //auto lastState = m_oldStates.end();
+                for (auto iter = m_oldStates.begin(); iter < m_oldStates.begin() + k; ++iter) {
+                        n_tools::takeBack(*iter);
+                }
+                m_oldStates.erase(m_oldStates.begin(), m_oldStates.begin() + k);
+                //m_oldStates = std::vector<t_stateptr>(firstState, lastState);
+        }
 }
 
 t_timestamp AtomicModel_impl::revert(t_timestamp time)
@@ -166,7 +184,7 @@ t_timestamp AtomicModel_impl::revert(t_timestamp time)
 		if ((*r_itStates)->m_timeLast < time) {
 			break;
 		}
-		index--;
+		--index;
 	}
 
 	t_stateptr state = m_oldStates[index];
@@ -174,6 +192,9 @@ t_timestamp AtomicModel_impl::revert(t_timestamp time)
 	this->m_timeNext = state->m_timeNext;
 
 	// Pop all obsolete states and set the last old_state as your new state
+	for(auto iter = m_oldStates.begin()+index+1; iter != m_oldStates.end(); ++iter) {
+            n_tools::takeBack(*iter);
+	}
 	this->m_oldStates.resize(index + 1);
 	this->m_state = state;
 
@@ -295,11 +316,11 @@ void AtomicModel_impl::copyState()
 {
 	if(!m_keepOldStates)
 		return;
-	//t_stateptr copy = m_state->copyState();
-	//assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
+	t_stateptr copy = m_state->copyState();
+	assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
 
-	m_oldStates.push_back( std::move(m_state->copyState()) );
-	m_state = m_oldStates.back();
+	m_oldStates.push_back( copy );
+	m_state = copy;
 }
 
 }

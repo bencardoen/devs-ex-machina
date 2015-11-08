@@ -60,22 +60,22 @@ public:
 	CellAtomicModel(std::string name, t_point pt, const T& value, std::size_t priority = 0):
 		CellAtomicModel_impl(name, pt, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	CellAtomicModel(std::string name, t_point pt, const T& value, int coreNum, std::size_t priority = 0):
 		CellAtomicModel_impl(name, pt, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	CellAtomicModel(std::string name, t_point pt, std::size_t priority = 0):
 		CellAtomicModel_impl(name, pt, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 	CellAtomicModel(std::string name, t_point pt, int coreNum, std::size_t priority = 0):
 		CellAtomicModel_impl(name, pt, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 
 	/**
@@ -83,7 +83,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+            return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**
@@ -91,7 +91,7 @@ public:
 	 */
 	t_type& state()
 	{
-		return std::static_pointer_cast<State__impl<t_type>>(getState())->m_value;
+	        return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 };
