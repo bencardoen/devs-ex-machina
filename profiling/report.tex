@@ -30,11 +30,12 @@ Slightly faster than adevs. A reasonable amount of messaging can be done without
 \subsection{Interconnect}
 Slower than adevs due to high volume of messages. This creates a very cache unfriendly pattern, combined with cost of allocation on the heap for dxex. 
 The completely cyclic dependencies of this model makes it very hard for our parallel implementations. Usage of pools reduces calls to new/malloc/sbrk, but can't eliminate it. Cache pattern is far harder to correct. Alignment of a Message on cache lines, and quadratic growing pools also help, but can't solve the problem.
-\section{Open issues to improve}
+\section{Open issues}
 \begin{itemize}
 	\item Conservative lookahead caching (devstone -r), cpdevs is forced to ask useless lookahead values.
-	\item Optimistic use pools in states.
-	\item Directconnect : Yentl's faster algorithm. Not (yet) implement since it does not show in profiling graphs as a significant (<1\%) cost.
+	\item Optimistic use pools in states. (from shared\_ptr to ptr), see profile opdevs in repo.
+	\item Optimistic hangs/too slow in cyclic (interconnect, phold)
+	\item Directconnect : Yentl's faster algorithm. Not (yet) implement since it does not show in profiling graphs as a significant ($<$1\%) cost.
 	\item Conservative : Exploit full dependency graph to calculate next event directly (unsure of benefits).
 \end{itemize}
 \section{Causes of slowdown (hardware)}

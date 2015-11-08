@@ -124,7 +124,7 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
 			k = std::max(0, index - 1);
 			break;
 		}
-		index++;
+		++index;
 	}
 
 	if (k == -1) {
