@@ -256,7 +256,7 @@ void Controller::simDEVS()
 	}
         t_timestamp time = core->getTime();
         n_tracers::traceUntil(time);
-        core->clearState();
+        core->shutDown();
 }
 
 void Controller::simOPDEVS()
@@ -522,7 +522,7 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
 					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
                                         // EXIT point 1:
-                                        core->clearState();
+                                        core->shutDown();
 					return;
 				} else {
 					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
@@ -535,7 +535,7 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 	}
         /// EXIT point 2 : overrun counters.
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
-        core->clearState();
+        core->shutDown();
         ctrl.m_rungvt.store(false);
 }
 
@@ -576,7 +576,7 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
                 }
         }
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
-        core->clearState();
+        core->shutDown();
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)

@@ -730,7 +730,7 @@ public:
          */
         virtual
         void
-        clearState();
+        shutDown();
 
 
         friend class n_tools::GVizWriter;

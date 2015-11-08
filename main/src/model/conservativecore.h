@@ -292,7 +292,7 @@ public:
          */
         virtual
         void
-        clearState()override;
+        shutDown()override;
         
 
         //-------------statistics gathering--------------

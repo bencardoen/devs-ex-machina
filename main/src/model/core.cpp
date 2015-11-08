@@ -712,7 +712,7 @@ n_model::Core::setColor(MessageColor){
 
 
 void
-n_model::Core::clearState()
+n_model::Core::shutDown()
 {
         for(const auto&  model : m_indexed_models)
                 model->clearState();

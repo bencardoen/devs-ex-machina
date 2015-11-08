@@ -473,9 +473,9 @@ Conservativecore::gcCollect()
 
 
 void
-Conservativecore::clearState()
+Conservativecore::shutDown()
 {
-        Core::clearState(); // old tracing msgs.
+        Core::shutDown(); // old tracing msgs.
         // @pre : for_each ptr : destination has processed the message. 
         for(t_msgptr ptr : m_sent_messages)
         {
@@ -487,6 +487,7 @@ Conservativecore::clearState()
                 if(recv_time <= ptr->getTimeStamp().getTime() && recv_time!=this->getTerminationTime().getTime()){
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
+                        
                         throw std::logic_error("Pointer to message still in use !");
                 }else{
                         ptr->releaseMe();
