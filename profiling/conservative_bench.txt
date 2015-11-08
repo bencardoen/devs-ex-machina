@@ -1,0 +1,101 @@
+PHOLD
+Performance counter stats for './dxexmachina_phold -n 10 -s 10 -t 500000 cpdevs -c 2' (5 runs):
+
+       5453.887127      task-clock (msec)         #    2.307 CPUs utilized          
+             2,955      context-switches          #    0.653 K/sec                  
+                23      cpu-migrations            #    0.005 K/sec                  
+             1,753      page-faults               #    0.387 K/sec                  
+    13,035,582,665      cycles                    #    2.880 GHz                    
+     7,491,735,164      stalled-cycles-frontend   #   69.16% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+    17,543,901,436      instructions              #    1.62  insns per cycle        
+                                                  #    0.31  stalled cycles per insn
+     2,898,003,751      branches                  #  640.198 M/sec                  
+        12,562,044      branch-misses             #    0.47% of all branches        
+
+       2.364132865 seconds time elapsed                                          ( +-  7.59% )
+
+Performance counter stats for './adevs_phold -n 10 -s 10 -t 500000 cpdevs -c 2' (5 runs):
+
+       4567.742179      task-clock (msec)         #    1.963 CPUs utilized          
+             1,145      context-switches          #    0.250 K/sec                  
+                 3      cpu-migrations            #    0.001 K/sec                  
+             1,045      page-faults               #    0.228 K/sec                  
+    10,912,054,025      cycles                    #    2.378 GHz                    
+     4,302,867,302      stalled-cycles-frontend   #   39.23% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+    18,088,577,286      instructions              #    1.65  insns per cycle        
+                                                  #    0.24  stalled cycles per insn
+     3,562,206,467      branches                  #  776.396 M/sec                  
+        12,202,193      branch-misses             #    0.34% of all branches        
+
+       2.327168181 seconds time elapsed                                          ( +-  0.64% )
+
+INTERCONNECT RANDOM
+ Performance counter stats for './dxexmachina_interconnect -w 70 -t 50000 -r cpdevs' (5 runs):
+
+       4844.999994      task-clock (msec)         #    3.279 CPUs utilized          
+             6,075      context-switches          #    0.001 M/sec                  
+                 5      cpu-migrations            #    0.001 K/sec                  
+             1,024      page-faults               #    0.209 K/sec                  
+    11,547,212,486      cycles                    #    2.362 GHz                    
+     6,976,669,617      stalled-cycles-frontend   #   59.84% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+    15,052,874,925      instructions              #    1.29  insns per cycle        
+                                                  #    0.47  stalled cycles per insn
+     2,753,885,035      branches                  #  563.216 M/sec                  
+         9,470,695      branch-misses             #    0.34% of all branches        
+
+       1.477804835 seconds time elapsed                                          ( +-  0.98% )
+
+
+Performance counter stats for './adevs_interconnect -w 70 -t 50000 -r cpdevs' (5 runs):
+
+       1374.392513      task-clock (msec)         #    3.166 CPUs utilized          
+             1,592      context-switches          #    0.001 M/sec                  
+                 4      cpu-migrations            #    0.003 K/sec                  
+               529      page-faults               #    0.365 K/sec                  
+     3,272,746,897      cycles                    #    2.257 GHz                    
+     1,784,828,470      stalled-cycles-frontend   #   51.70% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+     4,134,419,598      instructions              #    1.20  insns per cycle        
+                                                  #    0.45  stalled cycles per insn
+     1,124,274,075      branches                  #  775.459 M/sec                  
+         1,209,704      branch-misses             #    0.10% of all branches        
+
+       0.434146960 seconds time elapsed                                          ( +-  1.70% )
+
+INTERCONNECT FIXED
+
+ Performance counter stats for './dxexmachina_interconnect -w 70 -t 50000 cpdevs' (5 runs):
+
+       2194.919924      task-clock (msec)         #    3.388 CPUs utilized          
+             2,606      context-switches          #    0.001 M/sec                  
+                16      cpu-migrations            #    0.008 K/sec                  
+             1,467      page-faults               #    0.705 K/sec                  
+     5,239,446,305      cycles                    #    2.517 GHz                    
+     3,153,398,120      stalled-cycles-frontend   #   63.50% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+     7,043,220,160      instructions              #    1.42  insns per cycle        
+                                                  #    0.43  stalled cycles per insn
+     1,211,713,305      branches                  #  582.103 M/sec                  
+         3,581,831      branch-misses             #    0.32% of all branches        
+
+       0.647921448 seconds time elapsed                                          ( +-  2.69% )
+
+
+ Performance counter stats for './adevs_interconnect -w 70 -t 50000 cpdevs' (5 runs):
+
+        296.356473      task-clock (msec)         #    3.722 CPUs utilized          
+               329      context-switches          #    0.001 M/sec                  
+                 6      cpu-migrations            #    0.024 K/sec                  
+               588      page-faults               #    0.002 M/sec                  
+       699,981,177      cycles                    #    2.800 GHz                    
+       387,144,185      stalled-cycles-frontend   #   65.04% frontend cycles idle   
+   <not supported>      stalled-cycles-backend   
+       832,542,298      instructions              #    1.40  insns per cycle        
+                                                  #    0.40  stalled cycles per insn
+       234,573,819      branches                  #  938.319 M/sec                  
+           566,511      branch-misses             #    0.29% of all branches        
+
+       0.079629113 seconds time elapsed                                          ( +-  4.45% )
