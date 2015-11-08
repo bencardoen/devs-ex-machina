@@ -8,6 +8,8 @@
 
 #include <memory>
 #include "tools/globallog.h"
+#include <vector>
+#include <iostream>
 
 namespace n_scheduler {
 
