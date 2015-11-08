@@ -270,6 +270,9 @@ TEST(Optimisticcore, revert){
 	coreone->receiveMessage(msgaftergvt);		// this triggers a new revert, we were @67, now @63
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
+
+    coreone->setLive(false);
+	coreone->shutDown();
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
         // Message is not sent by any core, it's not processed, it's not queued so delete here (since it won't be otherwise)
         delete msgaftergvt;
@@ -351,6 +354,11 @@ TEST(Optimisticcore, revertidle){
 	n_tracers::clearAll();
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
+
+    c1->setLive(false);
+    c1->shutDown();
+    c2->setLive(false);
+    c2->shutDown();
 
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
@@ -434,6 +442,11 @@ TEST(Optimisticcore, revertedgecases){
 	n_tracers::clearAll();
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
+
+    c1->setLive(false);
+    c1->shutDown();
+    c2->setLive(false);
+    c2->shutDown();
 
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
@@ -520,6 +533,11 @@ TEST(Optimisticcore, revertoffbyone){
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
 
+    c1->setLive(false);
+    c1->shutDown();
+    c2->setLive(false);
+    c2->shutDown();
+
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
 		std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
@@ -599,6 +617,11 @@ TEST(Optimisticcore, revertstress){
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
 
+    c1->setLive(false);
+    c1->shutDown();
+    c2->setLive(false);
+    c2->shutDown();
+
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
 		std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
@@ -665,6 +688,11 @@ TEST(Optimisticcore, revert_antimessaging){
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
 
+    c1->setLive(false);
+    c1->shutDown();
+    c2->setLive(false);
+    c2->shutDown();
+
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
 		std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
@@ -729,8 +757,12 @@ TEST(Optimisticcore, GVT){
 				!=
 			std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[1])->getCorenumber());
 
-	}
 
+		    c1->setLive(false);
+		    c1->shutDown();
+		    c2->setLive(false);
+		    c2->shutDown();
+	}
 }
 
 

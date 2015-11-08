@@ -650,15 +650,8 @@ t_timestamp n_model::Core::getFirstMessageTime()
          */
         t_timestamp mintime = t_timestamp::infinity();
         this->lockMessages();
-        while (not this->m_received_messages->empty()) {
-                t_msgptr msg = this->m_received_messages->top().getMessage();
-                if (msg->flagIsSet(Status::TOERASE)) {
-                        this->m_received_messages->pop();
-                        msg->setFlag(Status::KILL);
-                } else {
-                        mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
-                        break;
-                }
+        if (not this->m_received_messages->empty()) {
+                mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
         }
         this->unlockMessages();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
