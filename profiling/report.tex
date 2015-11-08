@@ -8,9 +8,15 @@
 
 \maketitle
 \section{Accompanying documents}
-Benchmarks (on master) in separate pdf. Further benchmarks and profiling data in repository.
+In the repository (and included in mail) you'll find in folder profiling the following documents:
+\begin{itemize}
+	\item Benchmarks : DXvsADEVS.pdf a nr of benchmarks on a stable commit.
+	\item *.svg : profiling call graphs for all functional benchmarks
+	\item conservative\_bench.txt : Benchmarks after a nr of fixes to the implementation of conservative (complementary to the first pdf.)
+\end{itemize}
 
 \section{Improvements since abstract}
+Full details of all improvements can be seen in the git repository, the following is a short summary:
 \begin{itemize}
 	\item Conservative handles cyclic simulations.
 	\item Scheduler ported from Adevs + own heuristic.
@@ -19,7 +25,6 @@ Benchmarks (on master) in separate pdf. Further benchmarks and profiling data in
 	\subitem Thread local pools to avoid expensive cross-thread alloc/dealloc.
 	\subitem Gvt required for conservative, based on existing null message exchange.
 	\item Frequency of locking reduced, (sparse) usage of memory\_order\_relaxed. Where possible explicit	locking switched to atomic.
-	\item A (large) nr of bugfixes and code optimizations.
 \end{itemize}
 \section{Summarized results benchmarks}
 For the detailed results we refer to accompanying pdf and profiling call graphs.
@@ -46,7 +51,6 @@ A short illustration of key differences in hardware events for both simulators.
 	\item Branch prediction : Adevs : 4\%, dxex 0.08%
 	\item Cpu stalls : Adevs : 0.2 stalled cycle/instruction, dxex 0.8 stalled cycle/instruction.
 \end{itemize}
-The switches are (in single core) caused by syscalls (malloc, sbrk, free, time), in parallel by kernel space locking (mutex, thread, (depending on implementation atomics)).
 
 
 \end{document}
