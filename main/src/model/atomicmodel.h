@@ -13,6 +13,7 @@
 #include "network/message.h"	// include globallog
 #include <assert.h>
 #include <map>
+#include <deque>
 #include "tools/globallog.h"
 #include <set>
 
@@ -56,7 +57,7 @@ private:
 	t_timestamp m_timeNext;
 
 	t_stateptr m_state;
-	std::vector<t_stateptr> m_oldStates;
+	std::deque<t_stateptr> m_oldStates;
 
 protected:
 	// lower number -> higher priority

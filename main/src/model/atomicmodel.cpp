@@ -134,9 +134,10 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
 
 	if (k == -1) {
 		// model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
-		t_stateptr state = m_oldStates.back();
-		m_oldStates.clear();
-		m_oldStates.push_back(state);
+                m_oldStates.erase(m_oldStates.begin(), (m_oldStates.end()-1));
+		//t_stateptr state = m_oldStates.back();
+		//m_oldStates.clear();
+		//m_oldStates.push_back(state);
 	} else if (k == 0) {
 		// Do nothing as nothing is to happen
 		// m_oldStates has 1 state before the GVT (the first element)
@@ -144,9 +145,10 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
 		// greater than or equal to our GVT
 	} else {
 		// Only keep 1 state before GVT, and all states after it
-		auto firstState = m_oldStates.begin() + k;
-		auto lastState = m_oldStates.end();
-		m_oldStates = std::vector<t_stateptr>(firstState, lastState);
+		//auto firstState = m_oldStates.begin() + k;
+		//auto lastState = m_oldStates.end();
+                m_oldStates.erase(m_oldStates.begin(), m_oldStates.begin()+k);
+		//m_oldStates = std::vector<t_stateptr>(firstState, lastState);
 	}
 }
 
@@ -298,11 +300,11 @@ void AtomicModel_impl::copyState()
 {
 	if(!m_keepOldStates)
 		return;
-	t_stateptr copy = m_state->copyState();
-	assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
+	//t_stateptr copy = m_state->copyState();
+	//assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
 
-	m_oldStates.push_back(copy);
-	m_state = copy;
+	m_oldStates.push_back( std::move(m_state->copyState()) );
+	m_state = m_oldStates.back();
 }
 
 }
