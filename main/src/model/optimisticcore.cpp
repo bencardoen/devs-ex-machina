@@ -546,14 +546,12 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
                 this->setLive(true);
                 this->setTerminatedByFunctor(false);
         }
-        //		  vv Simlock		  vv Messagelock
-        // Call chain :: singleStep->getMessages->sortIncoming -> receiveMessage() -> revert()
 
-        LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting ", m_sent_messages.size(), " sent messages");
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting on a total of ", m_sent_messages.size(), " sent messages");
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
-                auto msg = m_sent_messages.back();
+                t_msgptr msg = m_sent_messages.back();
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
-                if (msg->getTimeStamp() >= totime) {
+                if (msg->getTimeStamp().getTime() >= totime.getTime()) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                                 " revert : sent message > time , antimessagging. \n ", msg->toString());
