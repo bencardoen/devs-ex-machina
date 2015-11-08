@@ -487,8 +487,8 @@ Conservativecore::shutDown()
                 if(recv_time <= ptr->getTimeStamp().getTime() && recv_time!=this->getTerminationTime().getTime()){
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
-                        
-                        throw std::logic_error("Pointer to message still in use !");
+                        // Enable if edge case in cv_worker is resolved.
+                        //throw std::logic_error("Pointer to message still in use !");
                 }else{
                         ptr->releaseMe();
                 }

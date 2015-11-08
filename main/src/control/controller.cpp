@@ -560,8 +560,11 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
 	}
         // Wait for all other cores to go idle.
         // Should a core have reached the nr of turns (a safety catch), make sure we set Live ourselves.
-        if(i==turns)
+        if(i==turns){
+                LOG_WARNING("CVWORKER: ", core->getCoreID(), " overran nr of simulation steps allowed !!");
                 core->setLive(false);
+                // Edge case : if we hit this, we can't guarantee deallocating since sender can't verify we have reached termination.
+        }
         while(true){
                 size_t i = 0;
                 for(const auto& core : ctrl.m_cores){
