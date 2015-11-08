@@ -116,7 +116,7 @@ public:
 	 */
 	AtomicModel_impl(std::string name, int corenumber, std::size_t priority = std::numeric_limits<size_t>::max());
         
-	virtual ~AtomicModel_impl() = default;
+	virtual ~AtomicModel_impl();
 
         /**
          * @return uuid object.
@@ -410,22 +410,22 @@ public:
 	AtomicModel(std::string name, const T& value, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	AtomicModel(std::string name, const T& value, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	AtomicModel(std::string name, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 
 	/**
@@ -433,7 +433,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return n_tools::staticCast<const State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticRawCast<const State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**
@@ -441,7 +441,7 @@ public:
 	 */
 	t_type& state()
 	{
-		return n_tools::staticCast<State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 };
@@ -456,12 +456,12 @@ public:
 	AtomicModel(std::string name, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<void>>());
+		initState(n_tools::createRawObject<State__impl<void>>());
 	}
 	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<void>>());
+		initState(n_tools::createRawObject<State__impl<void>>());
 	}
 };
 }	// end namespace

@@ -26,6 +26,12 @@ AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t
         LOG_DEBUG("\tAMODEL ctor :: name=", name, " m_prior= ", m_priority , " corenr=", m_corenumber);
 }
 
+AtomicModel_impl::~AtomicModel_impl()
+{
+        for(t_stateptr st: m_oldStates)
+                n_tools::takeBack(st);
+}
+
 void AtomicModel_impl::intTransition()
 {
 	LOG_ERROR("ATOMICMODEL: Not implemented: 'void n_model::AtomicModel::intTransition()'");

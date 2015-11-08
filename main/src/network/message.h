@@ -30,12 +30,10 @@ enum MessageColor : uint8_t{WHITE = 0, RED = 1};
 // 2^1: delete? set by optimistic core for the case
 //              where a message is marked antimessage before it is received by the core
 // 2^2: processed? set by optimistic core when a message has been processed (used in a transition)
-// 2^3: TOERASE? set by optimistic core when a message in the scheduler is an antimessage,
-//               The core can then safely ignore it and set its kill flag
+// 2^3: HEAPED? The message has been put in a message scheduler in the receiving core.
 // 2^4: ANTI? The message is an anti message
 // 2^5: KILL? The message can be safely killed by the sending core.
-// 2^6: HEAPED? The message has been put in a message scheduler in the receiving core.
-enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, TOERASE=8, ANTI=16, KILL=32, HEAPED=64};
+enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
