@@ -13,6 +13,7 @@
 #include <atomic>
 #include <mutex>
 #include <deque>
+#include <set>
 
 /**
  * A pool is thread local. 
@@ -89,7 +90,7 @@ class Pool:public PoolInterface<Object>{
                  * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
                  * pool itself or this has happened by the deallocate function.
                  */
-                ~Pool();
+                virtual ~Pool();
                 
                 /**
                  * @return A pointer to the next free (uninitialized) object.
@@ -421,6 +422,9 @@ class StackPool:public PoolInterface<T>{
 template<typename Object>
 class Pool<Object, std::false_type>:public PoolInterface<Object>
 {
+#ifdef SAFETY_CHECKS
+        std::set<Object*> m_objList;
+#endif
           public:
                 /**
                  * Create new pool.
@@ -434,7 +438,7 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                  * Destroy the pool. Deallocates, assumes that either destructor is called here by the 
                  * pool itself or this has happened by the deallocate function.
                  */
-                ~Pool(){;}
+//                ~Pool(){;}
                 
                 /**
                  * @return A pointer to the next free (uninitialized) object.
@@ -442,7 +446,11 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                  */
                 Object* allocate()override
                 {
-                        return (Object*) std::malloc(sizeof(Object));
+                        Object* obj = (Object*) std::malloc(sizeof(Object));
+#ifdef SAFETY_CHECKS
+                        m_objList.insert(obj);
+#endif
+                        return obj;
                 }
                 
                 /**
@@ -454,7 +462,19 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                 void deallocate(Object* O)override
                 {
                         O->~Object();
+#ifdef SAFETY_CHECKS
+                        m_objList.erase(O);
+#endif
                         std::free(O);
+                }
+
+                ~Pool()
+                {
+#ifdef SAFETY_CHECKS
+                        auto id = std::this_thread::get_id();
+                        for(Object* obj:m_objList)
+                                LOG_ERROR("thread ", id, " Didn't deallocate object ", obj);
+#endif
                 }
 };
 

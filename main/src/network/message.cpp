@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <bitset>
 #include "network/message.h"
 
 
@@ -47,12 +48,15 @@ std::string
 n_network::Message::toString() const
 {
 	std::stringstream result;
-	result << "Message from " << this->getSourcePort() << " to " << this->getDestinationPort();
+	result << "Message from port " << this->getSourcePort() << " to " << this->getDestinationPort();
 	result << " @" << m_timestamp;
 	result << " from model " << getSourceModel() ;
 	result << " to model " << getDestinationModel() ;
+    result << " from core " << getSourceCore() ;
+    result << " to core " << getDestinationCore() ;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
+	result << " flags: " << std::bitset<8>(m_atomic_flags.load());
 	if(isAntiMessage()){
 		result << " anti="<< std::boolalpha << isAntiMessage();
 	}

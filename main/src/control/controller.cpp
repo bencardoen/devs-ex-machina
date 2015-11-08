@@ -499,42 +499,42 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
         /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
          *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
          */
-	const auto& core = ctrl.m_cores[myid];
+        const auto& core = ctrl.m_cores[myid];
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
-	for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-		if(core->getZombieRounds()>ctrl.m_zombieIdleThreshold.load()){
-			LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(), " Core is zombie, yielding thread. [round ",core->getZombieRounds(),"]");
+        for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
+                if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold.load()) {
+                        LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(),
+                                " Core is zombie, yielding thread. [round ", core->getZombieRounds(), "]");
                         core->setLive(false);
-		}
-
-		if (!core->isLive()) {          
-			bool quit = true;
-			for(const auto& coreentry : ctrl.m_cores ){
-				if( coreentry->isLive()){
-					quit = false;
-					break;
-				}
-			}
-			if(quit){               
-				if ( ! core->existTransientMessage()) {	// If we've sent a message or there is one waiting, we can't quit (revert)
-					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					        " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
-					ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
-                                        // EXIT point 1:
+                }
+                if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
+                        bool quit = true;
+                        for (const auto& coreentry : ctrl.m_cores) {
+                                if (coreentry->isLive()) {
+                                        quit = false;
+                                        break;
+                                }
+                        }
+                        if (quit) {               /// Iedereen idle
+                                if (!core->existTransientMessage()) {// If we've sent a message or there is one waiting, we can't quit (revert)
+                                        LOG_INFO("CVWORKER: Thread ", std::this_thread::get_id(), " ", myid, " for core ", core->getCoreID(),
+                                                " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
+                                        ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
                                         core->shutDown();
-					return;
-				} else {
-					LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-					" all other threads are stopped or idle, network still reports transients, idling.");
-				}
-			}
-		}
-                LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i, " [zrounds:",core->getZombieRounds(),"]");
+                                        return;
+                                } else {
+                                        LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+                                                " all other threads are stopped or idle, network still reports transients, idling.");
+                                }
+                        }
+                }
+                LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i,
+                        " [zrounds:", core->getZombieRounds(), "]");
                 core->runSmallStep();
-	}
-        /// EXIT point 2 : overrun counters.
-        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        }
         core->shutDown();
+        LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(),
+                " exiting working function,  setting gvt intercept flag to false.");
         ctrl.m_rungvt.store(false);
 }
 

@@ -381,6 +381,18 @@ public:
 	 * @brief Sets the elapsed time since the previous internal transition.
 	 */
 	void setTimeElapsed(t_timestamp elapsed);
+
+	/**
+	 * Cleanup of all sent messages.
+	 */
+	void clearSentMessages()
+    {
+#ifndef NO_TRACER
+        for (const auto& port : m_oPorts) {
+            port->clearSentMessages();
+        }
+#endif
+    }
 };
 
 typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
