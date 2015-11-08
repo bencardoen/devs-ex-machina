@@ -730,7 +730,7 @@ public:
          */
         virtual
         void
-        shutDown();
+        shutDown(){;}
 
 
         friend class n_tools::GVizWriter;

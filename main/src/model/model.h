@@ -186,8 +186,6 @@ public:
 	 * @note The user doesn't have to worry about this one.
 	 */
 	virtual void setController(n_control::Controller* newControl);
-        
-        void clearState();
 	
 
 //-------------statistics gathering--------------

@@ -256,7 +256,6 @@ void Controller::simDEVS()
 	}
         t_timestamp time = core->getTime();
         n_tracers::traceUntil(time);
-        core->shutDown();
 }
 
 void Controller::simOPDEVS()
