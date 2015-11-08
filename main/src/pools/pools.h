@@ -558,8 +558,8 @@ initializePool(size_t psize);
 /// Register desired pooltypes here.
 // Single core usage
 template<typename Object>
-using SCObjectPool = Pool<Object, boost::pool<>>;
-//using SCObjectPool = DynamicSlabPool<Object>;
+//using SCObjectPool = Pool<Object, boost::pool<>>;
+using SCObjectPool = DynamicSlabPool<Object>;
 // Multicore usage
 template<typename Object>
 using MCObjectPool = Pool<Object, boost::pool<>>;
