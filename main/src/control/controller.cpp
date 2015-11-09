@@ -496,10 +496,14 @@ void Controller::setZombieIdleThreshold(size_t threshold)
 
 void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 {
-        /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
-         *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
-         */
         const auto& core = ctrl.m_cores[myid];
+        auto at_exit = [&]()->void{
+                ctrl.m_rungvt.store(false);
+                core->setLive(false);
+                LOG_DEBUG("Core ", core->getCoreID(), "exiting.");
+                core->shutDown();
+        };
+        
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
                 if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold.load()) {
@@ -507,7 +511,9 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                                 " Core is zombie, yielding thread. [round ", core->getZombieRounds(), "]");
                         core->setLive(false);
                 }
-                if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
+                        
+                
+                if (!core->isLive()) {
                         bool quit = true;
                         for (const auto& coreentry : ctrl.m_cores) {
                                 if (coreentry->isLive()) {
@@ -515,27 +521,25 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                                         break;
                                 }
                         }
-                        if (quit) {               /// Iedereen idle
+                        if (quit) {              
                                 if (!core->existTransientMessage()) {// If we've sent a message or there is one waiting, we can't quit (revert)
                                         LOG_INFO("CVWORKER: Thread ", std::this_thread::get_id(), " ", myid, " for core ", core->getCoreID(),
                                                 " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
-                                        ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
-                                        core->shutDown();
+                                        at_exit();
                                         return;
-                                } else {
-                                        LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-                                                " all other threads are stopped or idle, network still reports transients, idling.");
-                                }
+                                } 
+                                LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+                                " all other threads are stopped or idle, network still reports transients, idling.");
                         }
                 }
                 LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i,
                         " [zrounds:", core->getZombieRounds(), "]");
                 core->runSmallStep();
         }
-        core->shutDown();
+        
         LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(),
                 " exiting working function,  setting gvt intercept flag to false.");
-        ctrl.m_rungvt.store(false);
+        at_exit();
 }
 
 void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
@@ -550,7 +554,6 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
 	for (; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 
 		if (!core->isLive()) {          
-			core->getMessages(); // Make sure we pull all messages, though not strictly required to terminate.
                         LOG_DEBUG(" Core no longer live :: ", core->getCoreID(), " exiting working function."); // don't log time (^sync)
                         break;
 		}
@@ -562,7 +565,7 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
         if(i==turns){
                 LOG_WARNING("CVWORKER: ", core->getCoreID(), " overran nr of simulation steps allowed !!");
                 core->setLive(false);
-                // Edge case : if we hit this, we can't guarantee deallocating since sender can't verify we have reached termination.
+                // Edge case : if we hit this, we can't guarantee deallocation since sender can't verify we have reached termination.
         }
         while(true){
                 size_t i = 0;

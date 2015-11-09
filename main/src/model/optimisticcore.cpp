@@ -134,7 +134,9 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
                 m_received_messages->printScheduler();
-                this->m_received_messages->erase(MessageEntry(msg));
+                bool erased = this->m_received_messages->erase(MessageEntry(msg));
+                if(!erased)
+                        throw std::logic_error("Pending messages integrity failure!");
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 msg->setFlag(Status::KILL);
         } else if (msg->flagIsSet(Status::DELETE)) {
@@ -281,17 +283,7 @@ void Optimisticcore::runSmallStep()
                         ptr = nullptr;
 #endif
                 }
-//                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
-//                        t_msgptr ptr = *iter2;
-//                        if (ptr->flagIsSet(Status::KILL)) {
-//                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-//                                ptr->releaseMe();
-//                                m_stats.logStat(DELMSG);
-//                                iter2 = m_sent_messages.erase(iter2);
-//                        } else {
-//                                ++iter2;
-//                        }
-//                }
+
                 for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
                         t_msgptr ptr = *aiter;
                         if (ptr->flagIsSet(Status::KILL)) {
