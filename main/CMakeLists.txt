@@ -90,7 +90,7 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15"
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ"
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
@@ -115,7 +115,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
 else()
         MESSAGE( STATUS"Using G++ : using flto")
-        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto -ggdb")
 endif()
 ###############################################################################
 
@@ -123,17 +123,6 @@ endif()
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 ###############################################################################
 
-
-### Release build - All compilers#############################################
-# Only use this for production code
-# 
-# Note : fPIC flag is needed if you built GTest with fPIE/fPIC\
-# SET(OPTIMIZATION_FLAG "-O3")
-# if (${APPLE})
-#   SET(OPTIMIZATION_FLAG "-O1")
-# endif()
-# SET(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAG} -fPIE -march=native -g ${flagstdc11}")
-###############################################################################
 
 add_library( 
     DEVSEXMACHINACORE
@@ -162,6 +151,7 @@ add_library(
     src/network/network.cpp
     src/tracers/policies.cpp
     src/tracers/tracemessage.cpp
+    src/tools/gviz.cpp
     )
 
 # 2 packages of the devs simulator that compile on log level 15 and 0
@@ -189,22 +179,12 @@ add_executable(${PROJECT_NAME}
     src/examples/forestfire/firecellstate.cpp
     src/examples/forestfire/firegenerator.cpp
     src/examples/forestfire/firespread.cpp
-    #src/examples/trafficsystem/car.cpp
-    #src/examples/trafficsystem/city_small.cpp
-    #src/examples/trafficsystem/query.cpp
-    #src/examples/trafficsystem/queryack.cpp
-    #src/examples/trafficsystem/building.cpp
-    #src/examples/trafficsystem/residence.cpp
-    #src/examples/trafficsystem/commercial.cpp
-    #src/examples/trafficsystem/roadsegment.cpp
-    #src/examples/trafficsystem/road.cpp
-    #src/examples/trafficsystem/intersection.cpp
-    #src/examples/trafficsystem/collector.cpp
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
-    src/test/basiccerealtestclasses.cpp
+    src/performance/highInterconnect/hinterconnect.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
+    src/test/benchmarktest.cpp
     src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/modeltest.cpp
@@ -213,8 +193,6 @@ add_executable(${PROJECT_NAME}
     src/test/loggertest.cpp
     src/test/controllertest.cpp
     src/test/messagetest.cpp
-#    src/test/cerealtest.cpp
-    src/test/basiccerealtest.cpp
     src/test/performancetest.cpp
     src/test/testmodels.cpp
     src/main.cpp
@@ -278,6 +256,9 @@ add_executable(${PROJECT_NAME}_virus
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
                     )
+add_executable(${PROJECT_NAME}_benchpools
+    src/benchpools.cpp
+)
 
 # add_executable(${PROJECT_NAME}_traffic
 #     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
@@ -367,9 +348,10 @@ include_directories(
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
-    set(LIBS ${LIBS} ) 
+    MESSAGE( STATUS "Have tcmalloc, ignoring for the moment. --remove me if done with valgrind.")
+        set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
@@ -388,6 +370,7 @@ target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)

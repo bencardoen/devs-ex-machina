@@ -13,8 +13,6 @@
 #include "tools/objectfactory.h"
 #include "tools/macros.h"
 #include <assert.h>
-#include "serialization/archive.h"
-#include "cereal/types/polymorphic.hpp"
 #include <typeinfo>
 
 // representation of states
@@ -108,7 +106,7 @@ namespace n_model {
 using n_network::t_timestamp;
 
 class State;
-typedef std::shared_ptr<State> t_stateptr;
+typedef State* t_stateptr;
 
 /**
  * @brief Keeps track of the current state of a model.
@@ -193,28 +191,6 @@ public:
 		m_timeNext = timeNext;
 	}
 
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<State>& construct);
-
 	};
 
 
@@ -231,7 +207,7 @@ public:
 
 	t_stateptr copyState() const override
 	{
-		return n_tools::createObject<State__impl<T>>(*this);
+		return new State__impl<T>(*this);
 	}
 
 
@@ -283,7 +259,7 @@ public:
 
 	t_stateptr copyState() const override
 	{
-		return n_tools::createObject<State__impl<void>>(*this);
+		return n_tools::createRawObject<State__impl<void>>(*this);
 	}
 
 

@@ -83,7 +83,7 @@ private:
 			m_count = T_100;
 			return;
 		}
-		static std::uniform_real_distribution<double> dist(T_1, T_100);
+		std::uniform_real_distribution<double> dist(T_1, T_100);
 		std::uniform_int_distribution<std::size_t> dist2(0, std::numeric_limits<std::size_t>::max());
 		m_rand.seed(seed);
 		m_count = dist(m_rand);
@@ -130,7 +130,7 @@ public:
 
 	double lookahead()
 	{
-		return m_randomta? T_100 : T_STEP;
+		return m_randomta? T_STEP : T_100;
 	}
 };
 

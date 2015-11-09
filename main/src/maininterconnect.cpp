@@ -8,8 +8,8 @@
 #include "tools/coutredirect.h"
 #include "performance/highInterconnect/hinterconnect.h"
 #include "tools/stringtools.h"
+#include "pools/pools.h"
 #include "control/allocator.h"
-
 #include "tools/statistic.h"
 
 LOG_INIT("interconnect.log")
@@ -78,6 +78,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic
 
 int main(int argc, char** argv)
 {
+	LOG_ARGV(argc, argv);
 	// default values:
 	const char optETime = 't';
 	const char optWidth = 'w';

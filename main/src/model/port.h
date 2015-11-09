@@ -8,7 +8,6 @@
 #ifndef PORT_H_
 #define PORT_H_
 
-#include "serialization/archive.h"
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -21,12 +20,10 @@
 
 
 #include "tools/statistic.h"
+#include "tools/gviz.h"
 
 // Don't include atomicmodel here
 
-
-
-class TestCereal;
 
 namespace n_model {
 
@@ -40,7 +37,7 @@ class Model;
 
 class Port
 {
-	friend class ::TestCereal;
+    friend class n_tools::GVizWriter;
 private:
 	std::string m_name;
 	std::string m_hostname;
@@ -61,13 +58,13 @@ private:
 	bool m_usingDirectConnect;
         
         Model* m_hostmodel;
-        
+
         // Workaround, port is included in model -> atomicmodel, meaning we need to fwd declare
         // atomicmodel, but createMessages is templated (and header defined) so we can't call 
         // incomplete typed objects there. Soln is to get info from ptr in port.cpp (where we can get at atomicmodel)
         const uuid&
         getModelUUID()const;
-        
+
         n_network::t_timestamp
         imminentTime()const;
 
@@ -293,29 +290,7 @@ public:
 	Model* getHost()
 	{return m_hostmodel;}
 
-//-------------serialization---------------------
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct);
-
+        
 //-------------statistics gathering--------------
 //#ifdef USE_STAT
 private:
@@ -347,9 +322,10 @@ void Port::createMessages(const DataType& message,
                 // This message is simply to allow correct tracing of a model that generates output, but does not send it (ie trafficlight)
 		m_sentMessages.push_back(createMsg(
                                 srcuuid, uuid(0, 0),nowtime,
-                                std::numeric_limits<std::size_t>::max(), getPortID(),
+                                getPortID(), getPortID(),
                                 message, nullptr)
-                );
+                );// Use dst==src to avoid overflow.
+                
 	}
 #endif
 	// We want to iterate over the correct ports (whether we use direct connect or not)
@@ -388,7 +364,6 @@ namespace
 /**
  * @brief Struct for forcing array to pointer type degeneration.
  */
-///@{
 template<class T>
 struct array2ptr
 {
@@ -400,7 +375,6 @@ struct array2ptr<T[N]>
 {
     typedef const T * type;
 };
-///@}
 
 /**
  * @brief Type specific implementation for creating a single message
@@ -410,7 +384,6 @@ struct array2ptr<T[N]>
  * @param msg The data send with this message
  * @param func The ZFunction that must be applied on this message
  */
-///@{
 /**
  * @brief Base case. Used for everything except strings
  */
@@ -420,12 +393,14 @@ inline n_network::t_msgptr createMsgImpl(n_model::uuid srcUUID, n_model::uuid ds
 	std::size_t destport, std::size_t sourceport,
         const DataType& msg, t_zfunc func)
 {
-	n_network::t_msgptr messagetobesend = n_tools::createRawObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
+	n_network::t_msgptr messagetobesend = n_tools::createPooledObject<n_network::SpecializedMessage<DataType>>(srcUUID, dstUUID,
 		time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+
 	return messagetobesend;
 }
 
@@ -439,12 +414,14 @@ inline n_network::t_msgptr createMsgImpl<std::string>(n_model::uuid srcUUID, n_m
 	const std::string& msg, t_zfunc func)
 {
 	n_network::t_msgptr messagetobesend =
-		n_tools::createRawObject<n_network::SpecializedMessage<std::string>>(
+		n_tools::createPooledObject<n_network::SpecializedMessage<std::string>>(
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+    
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+
 	return messagetobesend;
 }
 
@@ -458,15 +435,17 @@ inline n_network::t_msgptr createMsgImpl<const char*>(n_model::uuid srcUUID, n_m
 	const char* const & msg, t_zfunc func)
 {
 	n_network::t_msgptr messagetobesend =
-		n_tools::createRawObject<n_network::SpecializedMessage<std::string>>(
+		n_tools::createPooledObject<n_network::SpecializedMessage<std::string>>(
 		srcUUID, dstUUID, time_made, destport, sourceport, msg);
 	// If the zFunction is defined AKA not equal to nullptr AKA implicitly cast to true
 	// Call the zFunction onto the message to be send
+
 	if (func)
 		messagetobesend = (*func)(messagetobesend);
+
 	return messagetobesend;
 }
-///@}
+
 
 }
 

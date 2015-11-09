@@ -63,7 +63,7 @@ public:
 	{
 	}
 
-	//needed for cereal. Don't use this one yourself.
+	//needed for cereal. Don't use this one yourself. TODO
 	//use the documented version instead!
 	constexpr Statistic():
 		m_name("__invalid_stat__"),
@@ -81,6 +81,11 @@ public:
 		++m_data;
 		return *this;
 	}
+        
+        const t_datatype& getData()const
+        {
+                return m_data;
+        }
 
 	/**
 	 * @brief addition assignment operator
@@ -134,7 +139,7 @@ public:
 	{
 	}
 
-	//needed by cereal. Don't use this one yourself.
+	//needed by cereal. Don't use this one yourself. TODO
 	//use the documented version instead!
 	constexpr Statistic()
 	{

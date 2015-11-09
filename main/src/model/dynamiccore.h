@@ -45,7 +45,7 @@ public:
         addModelDS(const t_atomicmodelptr& model)override;
         
         void
-        removeModelDS(const std::string& name)override;
+        removeModelDS(std::size_t id)override;
         
         /**
          * Whenever at least 1 model is altered in DS, call this

@@ -5,14 +5,16 @@
  *      Author: Stijn Manhaeve - Devs Ex Machina
  */
 
+#include "scheduler/schedulerfactory.h"
 #include "tracers/tracemessage.h"
-#include "tools/schedulerfactory.h"
 #include "tools/objectfactory.h"
 #include "tools/globallog.h"
 #include <thread>
 #include <future>
+#include <sstream>
 
 using namespace n_tools;
+using namespace n_scheduler;
 
 namespace n_tracers {
 
@@ -188,17 +190,10 @@ void traceUntil(n_network::t_timestamp time)
 
 void revertTo(n_network::t_timestamp time, std::size_t coreID)
 {
+	std::lock_guard<std::mutex> guard(mu);
 	std::vector<TraceMessageEntry> messages;
-        /**
-#ifdef SAFETY_CHECKS
-        if(isZero(time)){
-                LOG_ERROR("unsigned 0-1, time arg = ", time, " id = ", coreID);
-                throw std::out_of_range("Revert with 0 time");
-                LOG_FLUSH;
-        }
-#endif
-         */
-	TraceMessage t(time.getTime()-n_network::t_timestamp::epsilon().getTime(), [] {}, 0u);
+
+	TraceMessage t(n_network::t_timestamp(time.getTime(), n_network::t_timestamp::MAXCAUSAL), [] {}, 0u);
         
 	scheduler->unschedule_until(messages, &t);
 	std::vector<TraceMessageEntry> messagesLost;
@@ -207,20 +202,22 @@ void revertTo(n_network::t_timestamp time, std::size_t coreID)
 	LOG_DEBUG("revertTo: reverting back messages to time ", time, " from core ", coreID, " total of ",
 	        messagesLost.size(), " messages");
 	if (coreID == std::numeric_limits<std::size_t>::max()) {
-		LOG_DEBUG("revertTo: dumping all messages until time ", time, " total of ", messagesLost.size(),
-		        " messages");
-		for (const TraceMessageEntry& mess : messagesLost)
+		for (const TraceMessageEntry& mess : messagesLost) {
 			n_tools::takeBack(mess.getPointer());
+		}
 	} else {
 		for (const TraceMessageEntry& mess : messagesLost) {
-			if (mess->getCoreID() != coreID)
+			if (mess->getCoreID() != coreID) {
 				scheduler->push_back(mess);
-			else
+			} else {
 				n_tools::takeBack(mess.getPointer());
+			}
 		}
 	}
-	for (const TraceMessageEntry& mess : messages)
+	for (const TraceMessageEntry& mess : messages) {
 		scheduler->push_back(mess);
+	}
+	LOG_DEBUG("revertTo finished messages");
 }
 
 void clearAll()

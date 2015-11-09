@@ -57,9 +57,9 @@ void Generator::adjustCounter(std::size_t seed)
 	}
 
 #ifdef FPTIME
-	static std::uniform_real_distribution<t_counter> dist(T_1, T_100);
+	std::uniform_real_distribution<t_counter> dist(T_1, T_100);
 #else
-	static std::uniform_int_distribution<t_counter> dist(T_1, T_100);
+	std::uniform_int_distribution<t_counter> dist(T_1, T_100);
 #endif
 	std::uniform_int_distribution<std::size_t> dist2(0, std::numeric_limits<std::size_t>::max());
 	m_rand.seed(seed);
@@ -97,7 +97,7 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp Generator::lookAhead() const
 {
-	return n_network::t_timestamp(m_randomta? T_100 : T_STEP);
+	return n_network::t_timestamp(m_randomta? T_STEP : T_100);
 }
 
 Generator::~Generator()

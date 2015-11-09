@@ -14,7 +14,6 @@
 #include <assert.h>
 #include "examples/trafficlight_coupled/policemanc.h"
 #include "examples/trafficlight_coupled/trafficlightc.h"
-#include "cereal/archives/binary.hpp"
 
 namespace n_examples_coupled {
 
@@ -27,32 +26,8 @@ public:
 	TrafficSystem() = delete;
 	TrafficSystem(std::string name);
 	~TrafficSystem() {}
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<TrafficSystem>& construct);
 };
 
 }
-
-CEREAL_REGISTER_TYPE(n_examples_coupled::TrafficSystem)
 
 #endif /* MAIN_SRC_EXAMPLES_TRAFFICLIGHT_COUPLED_TRAFFICSYSTEMC_H_ */

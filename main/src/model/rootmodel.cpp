@@ -39,8 +39,6 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 	if (m_directConnected)
 		return m_components;
 	m_components.clear();
-
-	std::set<std::string> atomics;
 //	find all atomic models
 	{
 		std::deque<t_coupledmodelptr> toDo;
@@ -50,10 +48,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 			toDo.pop_front();
 			for (t_modelptr& current : top->getComponents()) {
 				t_atomicmodelptr atomic = std::dynamic_pointer_cast<AtomicModel_impl>(current);
-				if (atomic) {
-					//model = atomic
-					auto res = atomics.insert(atomic->getName());
-					assert(res.second && "All atomic models should have a unique name.");
+				if (atomic) { //model = atomic
 					m_components.push_back(atomic);
 				} else {
 					toDo.push_back(std::static_pointer_cast<CoupledModel>(current));
@@ -75,6 +70,8 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 		}
 	};
 	{
+		std::deque<record> worklistOut;
+		std::deque<t_portptr_raw> worklistIn;
 		// loop over all atomic models
 		for (t_atomicmodelptr& atomic : m_components) {
 			//loop over all its output ports
@@ -85,18 +82,17 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 				out->resetDirectConnect();
 				out->setUsingDirectConnect(true);
 				//loop over all outgoing connections
-				std::deque<record> worklist;
 				//get all outgoing connections
 				for (const t_outconnect& link : out->getOuts()) {
 					LOG_INFO("DIRCON: Worklist: ", out->getName(), " => ",
 					        link.first->getName());
-					worklist.emplace_back(out.get(), link.first, link.second);
+					worklistOut.emplace_back(out.get(), link.first, link.second);
 				}
 				//do the direct connect
-				while (!worklist.empty()) {
-					record rec = worklist.front();
-					worklist.pop_front();
-					if (atomics.find(rec.in->getHostName()) != atomics.end()) {
+				while (!worklistOut.empty()) {
+					record rec = worklistOut.front();
+					worklistOut.pop_front();
+					if (dynamic_cast<AtomicModel_impl*>(rec.in->getHost())) {
 						//link to atomic model, make the direct connection
 						LOG_INFO("DIRCON: Linking ", rec.out->getName(), "[OUT] to ",
 						        rec.in->getName(), "[IN]");
@@ -104,7 +100,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 					} else {
 						//this is a link to a port of a coupled devs!
 						//loop over its connected ports & squash the links together
-						for (t_outconnect link2 : rec.in->getOuts()) {
+						for (const t_outconnect& link2 : rec.in->getOuts()) {
 
 							t_zfunc replacement = nullptr;
 
@@ -125,7 +121,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 								replacement = link2.second;
 							}
 
-							worklist.emplace_back(rec.out, link2.first,
+							worklistOut.emplace_back(rec.out, link2.first,
 							        replacement);
 						}
 					}
@@ -136,18 +132,17 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 				LOG_INFO("DIRCON: Direct connecting inport ", in->getName());
 				in->resetDirectConnect();
 				in->setUsingDirectConnect(true);
-				std::deque<t_portptr_raw> worklist;
 
 				//get all incoming connections
 				std::vector<t_portptr_raw>& ins = in->getIns();
-				worklist.insert(worklist.end(), ins.begin(), ins.end());
-				LOG_INFO("DIRCON: Direct connecting inport ", in->getName(), " -> got all incoming connections: ", worklist.size());
+				worklistIn.insert(worklistIn.end(), ins.begin(), ins.end());
+				LOG_INFO("DIRCON: Direct connecting inport ", in->getName(), " -> got all incoming connections: ", worklistIn.size());
 				//do the direct connect
-				while (!worklist.empty()) {
-					LOG_INFO("DIRCON: direct connect incoming worklist size: ", worklist.size());
-					t_portptr_raw rec = worklist.front();
-					worklist.pop_front();
-					if (atomics.find(rec->getHostName()) != atomics.end()) {
+				while (!worklistIn.empty()) {
+					LOG_INFO("DIRCON: direct connect incoming worklist size: ", worklistIn.size());
+					t_portptr_raw rec = worklistIn.front();
+					worklistIn.pop_front();
+					if (dynamic_cast<AtomicModel_impl*>(rec->getHost())) {
 						//link to atomic model, make the direct connection
 						LOG_INFO("DIRCON: Linking ", in->getName(), "[IN] from ",
 						        rec->getName(), "[OUT]");
@@ -157,7 +152,7 @@ const std::vector<t_atomicmodelptr>& n_model::RootModel::directConnect(const t_c
 						LOG_INFO("DIRCON: direct connect incoming, processing port from coupled: ", rec->getName());
 						//loop over its connected ports & squash the links together
 						std::vector<t_portptr_raw>& ins2 = rec->getIns();
-						worklist.insert(worklist.end(), ins2.begin(), ins2.end());
+						worklistIn.insert(worklistIn.end(), ins2.begin(), ins2.end());
 					}
 				}
 			}

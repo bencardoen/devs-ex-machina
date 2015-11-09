@@ -45,13 +45,11 @@ ProcessorState::ProcessorState():
  * Processor
  */
 
-std::size_t Processor::m_numcounter = 1;
-
-Processor::Processor(std::string name, bool randomta)
-	: AtomicModel<ProcessorState>(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(m_numcounter++)
+Processor::Processor(std::string name, bool randomta, std::size_t num)
+	: AtomicModel<ProcessorState>(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(num)
 {
 	addInPort("in_event1");
-	LOG_DEBUG("Created devstone processor ", name);
+	LOG_DEBUG("Created devstone processor ", name, " with number ", m_num);
 }
 
 Processor::~Processor()
@@ -146,11 +144,11 @@ constexpr T roundTo(T val, T gran)
 t_counter Processor::getProcTime(size_t event) const
 {
 #ifdef FPTIME
-	static std::uniform_real_distribution<t_counter> dist(T_75, T_125);
+	std::uniform_real_distribution<t_counter> dist(T_75, T_125);
 	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return roundTo(dist(m_rand), T_STEP);
 #else
-	static std::uniform_int_distribution<t_counter> dist(T_75, T_125);
+	std::uniform_int_distribution<t_counter> dist(T_75, T_125);
 	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return dist(m_rand);
 #endif
@@ -186,7 +184,7 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta)
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
 	// If possible, split layers (CoupledRecursion) over cores in even chunks
@@ -201,31 +199,31 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 	n_model::t_coupledmodelptr recurse = nullptr;
 	if(depth > 1){
 		LOG_INFO("  depth > 1!");
-		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta);
+		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta, num);
 		addSubModel(recurse);
-		connectPorts(recv, recurse->getPort("in_event1"));
+		connectPorts(recv, recurse->getIPorts()[0]);
 	}
 
 	//create the list of processors and link them up
 	n_model::t_atomicmodelptr prev = nullptr;
 	for(std::size_t i = 0; i < width; ++i){
 		n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-					        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta);
+					        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++);
 		addSubModel(proc);
 		if(i == 0){
 			if(depth > 1){
-				connectPorts(recurse->getPort("out_event1"), proc->getPort("in_event1"));
+				connectPorts(recurse->getOPorts()[0], proc->getIPorts()[0]);
 			} else {
-				connectPorts(recv, proc->getPort("in_event1"));
+				connectPorts(recv, proc->getIPorts()[0]);
 			}
 		} else {
-			connectPorts(prev->getPort("out_event1"), proc->getPort("in_event1"));
+			connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
 		}
 		prev = proc;
 	}
 
 	//connect end of line with higher level.
-	connectPorts(prev->getPort("out_event1"), send);
+	connectPorts(prev->getOPorts()[0], send);
 }
 
 CoupledRecursion::~CoupledRecursion()
@@ -239,14 +237,12 @@ DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
 	: CoupledModel("DEVStone")
 {
 	auto gen = n_tools::createObject<Generator>();
-	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta);
+	std::size_t num = 0u;
+	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta, num);
 	addSubModel(gen);
 	addSubModel(recurse);
 
-	connectPorts(gen->getPort("out_event1"), recurse->getPort("in_event1"));
-
-	if(randomta)
-		srand (static_cast <unsigned> (time(0))); // seed once in this simulation
+	connectPorts(gen->m_out, recurse->getIPorts()[0]);
 }
 
 DEVStone::~DEVStone()

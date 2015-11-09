@@ -13,26 +13,17 @@
 #include "network/message.h"	// include globallog
 #include <assert.h>
 #include <map>
+#include <deque>
 #include "tools/globallog.h"
-#include "serialization/archive.h"
-#include "cereal/types/polymorphic.hpp"
-#include "cereal/access.hpp"
 #include <set>
-
-class TestCereal;
 
 namespace n_model {
 
 typedef uint8_t t_transtype;
 
-constexpr t_transtype NONE=0;
-constexpr t_transtype EXT=1;
-constexpr t_transtype INT=2;
-constexpr t_transtype CONF=3;   // EXT | INT
 
 class AtomicModel_impl: public Model
 {
-	friend class ::TestCereal;
 private:
 	static size_t nextPriority()
 	{
@@ -66,7 +57,7 @@ private:
 	t_timestamp m_timeNext;
 
 	t_stateptr m_state;
-	std::vector<t_stateptr> m_oldStates;
+	std::deque<t_stateptr> m_oldStates;
 
 protected:
 	// lower number -> higher priority
@@ -94,6 +85,13 @@ protected:
 	t_timestamp m_lastRead;
 
 public:
+
+	static constexpr t_transtype NONE=0;
+	static constexpr t_transtype EXT=1;
+	static constexpr t_transtype INT=EXT<<1;
+	static constexpr t_transtype CONF=INT|EXT;   // EXT | INT
+	static_assert(NONE != EXT && EXT != INT && INT != CONF && EXT != CONF && NONE != CONF, "");
+
 	AtomicModel_impl() = delete;
 
 	/**
@@ -119,7 +117,7 @@ public:
 	 */
 	AtomicModel_impl(std::string name, int corenumber, std::size_t priority = std::numeric_limits<size_t>::max());
         
-	virtual ~AtomicModel_impl() = default;
+	virtual ~AtomicModel_impl();
 
         /**
          * @return uuid object.
@@ -132,9 +130,23 @@ public:
         }
         
         t_transtype&
-        nextType(){return m_transition_type_next;}
+        nextType(){
+        	LOG_DEBUG("model ", getName(), " getting the next type ", int(m_transition_type_next));
+        	return m_transition_type_next;}
         
-        const t_transtype&
+        inline void
+        markInternal()
+        { m_transition_type_next |= INT; }
+
+        inline void
+        markExternal()
+        { m_transition_type_next |= EXT; }
+
+        inline void
+        markNone()
+        { m_transition_type_next = NONE; }
+
+        t_transtype
         nextType()const{return m_transition_type_next;}
         
         /**
@@ -152,7 +164,7 @@ public:
         }
         
         size_t getCoreID()const{
-                assert(m_uuid.m_core_id != (size_t) m_corenumber && "Core id corrupt");// if cnr = -1, still fine to compare (2^64 - 1)
+                assert(m_uuid.m_core_id == (size_t) m_corenumber && "Core id corrupt");// if cnr = -1, still fine to compare (2^64 - 1)
                 return m_uuid.m_core_id;
         }
 
@@ -372,29 +384,21 @@ public:
 	void setTimeElapsed(t_timestamp elapsed);
 
 	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
+	 * Cleanup of all sent messages.
 	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<AtomicModel_impl>& construct);
+	void clearSentMessages()
+    {
+#ifndef NO_TRACER
+        for (const auto& port : m_oPorts) {
+            port->clearSentMessages();
+        }
+#endif
+    }
 };
 
 typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;
+
+typedef n_model::AtomicModel_impl* t_raw_atomic;
 
 
 template<typename T>
@@ -407,22 +411,22 @@ public:
 	AtomicModel(std::string name, const T& value, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	AtomicModel(std::string name, const T& value, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>(value));
+		initState(n_tools::createRawObject<State__impl<t_type>>(value));
 	}
 	AtomicModel(std::string name, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<t_type>>());
+		initState(n_tools::createRawObject<State__impl<t_type>>());
 	}
 
 	/**
@@ -430,7 +434,7 @@ public:
 	 */
 	constexpr const t_type& state() const
 	{
-		return n_tools::staticCast<const State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticRawCast<const State__impl<t_type>>(getState())->m_value;
 	}
 
 	/**
@@ -438,7 +442,7 @@ public:
 	 */
 	t_type& state()
 	{
-		return n_tools::staticCast<State__impl<t_type>>(getState())->m_value;
+		return n_tools::staticRawCast<State__impl<t_type>>(getState())->m_value;
 	}
 
 };
@@ -453,18 +457,16 @@ public:
 	AtomicModel(std::string name, std::size_t priority = 0):
 		AtomicModel_impl(name, priority)
 	{
-		initState(n_tools::createObject<State__impl<void>>());
+		initState(n_tools::createRawObject<State__impl<void>>());
 	}
 	AtomicModel(std::string name, int coreNum, std::size_t priority = 0):
 		AtomicModel_impl(name, coreNum, priority)
 	{
-		initState(n_tools::createObject<State__impl<void>>());
+		initState(n_tools::createRawObject<State__impl<void>>());
 	}
 
 	virtual ~AtomicModel(){}
 };
 }	// end namespace
-
-CEREAL_REGISTER_TYPE(n_model::AtomicModel_impl)
 
 #endif /* ATOMICMODEL_H_ */

@@ -10,9 +10,11 @@
 
 #ifdef FPTIME
 #define T_0 0.01	//timeadvance may NEVER be 0!
+#define T_STEP 0.01
 #define T_100 1.0
 #else
 #define T_0 1
+#define T_STEP 1
 #define T_100 100
 #endif
 
@@ -21,7 +23,7 @@ namespace n_benchmarks_phold {
 
 std::size_t getRand(std::size_t event, t_randgen& randgen)
 {
-	static std::uniform_int_distribution<std::size_t> dist(0, 60000);
+	std::uniform_int_distribution<std::size_t> dist(0, 60000);
 	randgen.seed(event);
 	return dist(randgen);
 }
@@ -46,21 +48,29 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 {
 }
 
+template<typename T>
+constexpr T roundTo(T val, T gran)
+{
+	return std::round(val/gran)*gran;
+}
+
 EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 {
 #ifdef FPTIME
-	static std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+	std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+	m_rand.seed(event);
+	return roundTo(dist(m_rand), T_STEP);
 #else
-	static std::uniform_int_distribution<EventTime> dist(T_0, T_100);
-#endif
+	std::uniform_int_distribution<EventTime> dist(T_0, T_100);
 	m_rand.seed(event);
 	return dist(m_rand);
+#endif
 }
 
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 {
 	LOG_INFO("[PHOLD] - Getting next destination. [Local=",m_local.size(),"] [Remote=",m_remote.size(),"]");
-	static std::uniform_int_distribution<std::size_t> dist(0, 100);
+	std::uniform_int_distribution<std::size_t> dist(0, 100);
 	std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
 	std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
 	m_rand.seed(event);
@@ -152,7 +162,7 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
 {
-	return n_network::t_timestamp(T_0);
+	return T_STEP;
 }
 
 /*
@@ -193,12 +203,11 @@ PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t perce
 	}
 
 	for (size_t i = 0; i < processors.size(); ++i) {
-		for (size_t j = 0, k = 0; j < processors.size(); ++j) {
+		for (size_t j = 0; j < processors.size(); ++j) {
 			if (i == j)
 				continue;
-			connectPorts(processors[i]->getOPorts()[k],
+			connectPorts(processors[i]->getOPorts()[j],
 			        processors[j]->getIPorts()[0]);
-			++k;
 		}
 	}
 }

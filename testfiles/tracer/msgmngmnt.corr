@@ -1,16 +1,4 @@
 
-__  Current Time: 1____________________
-
-
-	CONFLUENT TRANSITION in model TestModel
-		Input Port Configuration:
-			port <portIn>:
-			port <portIn2>:
-		New State: This is a test state
-		Output Port Configuration:
-			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 2
-
 __  Current Time: 2____________________
 
 
@@ -41,16 +29,6 @@ __  Current Time: 4____________________
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 8
-
-__  Current Time: 5____________________
-
-
-	EXTERNAL TRANSITION in model TestModel
-		New State: This is a test state
-		Input Port Configuration:
-			port <portIn>:
-			port <portIn2>:
-		Next scheduled internal transition at time 10
 
 __  Current Time: 6____________________
 
@@ -83,14 +61,17 @@ __  Current Time: 8____________________
 			port <portIn2>:
 		Next scheduled internal transition at time 16
 
-__  Current Time: 9____________________
+__  Current Time: 10____________________
 
 
-	INTERNAL TRANSITION in model TestModel
+	CONFLUENT TRANSITION in model TestModel
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
 		New State: This is a test state
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
-		Next scheduled internal transition at time 18
+		Next scheduled internal transition at time 20
 
 __  Current Time: 11____________________
 
@@ -247,6 +228,16 @@ __  Current Time: 30____________________
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 60
 
+__  Current Time: 32____________________
+
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 64
+
 __  Current Time: 33____________________
 
 
@@ -327,6 +318,18 @@ __  Current Time: 42____________________
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 84
+
+__  Current Time: 43____________________
+
+
+	CONFLUENT TRANSITION in model TestModel
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 86
 
 __  Current Time: 58____________________
 
@@ -619,6 +622,16 @@ __  Current Time: 97____________________
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 194
 
+__  Current Time: 98____________________
+
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 196
+
 __  Current Time: 112____________________
 
 
@@ -754,6 +767,16 @@ __  Current Time: 129____________________
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 258
+
+__  Current Time: 131____________________
+
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 262
 
 __  Current Time: 132____________________
 
@@ -909,6 +932,15 @@ __  Current Time: 151____________________
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 302
+
+__  Current Time: 153____________________
+
+
+	INTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 306
 
 __  Current Time: 167____________________
 
@@ -1270,6 +1302,16 @@ __  Current Time: 228____________________
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 456
 
+__  Current Time: 230____________________
+
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 460
+
 __  Current Time: 231____________________
 
 
@@ -1425,6 +1467,15 @@ __  Current Time: 250____________________
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 500
 
+__  Current Time: 252____________________
+
+
+	INTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Output Port Configuration:
+			port <MyVerySpecialOutput>:
+		Next scheduled internal transition at time 504
+
 __  Current Time: 253____________________
 
 
@@ -1507,6 +1558,16 @@ __  Current Time: 262____________________
 		Output Port Configuration:
 			port <MyVerySpecialOutput>:
 		Next scheduled internal transition at time 524
+
+__  Current Time: 263____________________
+
+
+	EXTERNAL TRANSITION in model TestModel
+		New State: This is a test state
+		Input Port Configuration:
+			port <portIn>:
+			port <portIn2>:
+		Next scheduled internal transition at time 526
 
 __  Current Time: 278____________________
 

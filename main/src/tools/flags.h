@@ -11,6 +11,35 @@
 
 namespace n_tools{
 
+
+template<size_t>
+size_t firstbitset(size_t);
+
+template<>
+inline
+size_t firstbitset<8>(size_t i)
+{
+        return __builtin_clzl(i);
+}
+
+/**
+ * Naive O(N) detection of firstbitset.
+ * Rightshift param until 0.
+ * @param ex : 0010 -> [0]001 -> [00]01 -> [000]0. 3 shifts, size-nr shifts = 1
+ * @param i The bit index of the first 1 (MSB->LSB) if i != 0, else sizeof(i)
+ * @return 
+ */
+inline
+size_t fbsnaive(size_t i)
+{
+        size_t shiftcount = 0;
+        while(i){
+                i = i >> 1ull;
+                ++shiftcount;
+        }
+        return (sizeof(i)*8)-shiftcount;             
+}
+
 /**
  * @pre flag is power of 2
  */

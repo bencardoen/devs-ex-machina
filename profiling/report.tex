@@ -1,0 +1,56 @@
+\documentclass[]{article}
+
+%opening
+\title{Notes on DXExMachina performance.}
+\author{}
+
+\begin{document}
+
+\maketitle
+\section{Accompanying documents}
+In the repository (and included in mail) you'll find in folder profiling the following documents:
+\begin{itemize}
+	\item Benchmarks : DXvsADEVS.pdf a nr of benchmarks on a stable commit.
+	\item *.svg : profiling call graphs for all functional benchmarks
+	\item conservative\_bench.txt : Benchmarks after a nr of fixes to the implementation of conservative (complementary to the first pdf.)
+\end{itemize}
+
+\section{Improvements since abstract}
+Full details of all improvements can be seen in the git repository, the following is a short summary:
+\begin{itemize}
+	\item Conservative handles cyclic simulations.
+	\item Scheduler ported from Adevs + own heuristic.
+	\item Memory pooling.
+	\subitem Aligning messages on cache lines to avoid false sharing
+	\subitem Thread local pools to avoid expensive cross-thread alloc/dealloc.
+	\subitem Gvt required for conservative, based on existing null message exchange.
+	\item Frequency of locking reduced, (sparse) usage of memory\_order\_relaxed. Where possible explicit	locking switched to atomic.
+\end{itemize}
+\section{Summarized results benchmarks}
+For the detailed results we refer to accompanying pdf and profiling call graphs.
+\subsection{Devstone}
+Faster due to directconnect. Optimistic suffers from transitions at same time points (frequency reverts higher), can gain with random ta.
+\subsection{Phold}
+Slightly faster than adevs. A reasonable amount of messaging can be done without slowing down simulator. Most of the runtime is spent in rng.
+\subsection{Interconnect}
+Slower than adevs due to high volume of messages. This creates a very cache unfriendly pattern, combined with cost of allocation on the heap for dxex. 
+The completely cyclic dependencies of this model makes it very hard for our parallel implementations. Usage of pools reduces calls to new/malloc/sbrk, but can't eliminate it. Cache pattern is far harder to correct. Alignment of a Message on cache lines, and quadratic growing pools also help, but can't solve the problem.
+\section{Open issues}
+\begin{itemize}
+	\item Conservative lookahead caching (devstone -r), cpdevs is forced to ask useless lookahead values.
+	\item Optimistic use pools in states. (from shared\_ptr to ptr), see profile opdevs in repo.
+	\item Optimistic hangs/too slow in cyclic (interconnect, phold)
+	\item Directconnect : Yentl's faster algorithm. Not (yet) implement since it does not show in profiling graphs as a significant ($<$1\%) cost.
+	\item Conservative : Exploit full dependency graph to calculate next event directly (unsure of benefits).
+\end{itemize}
+\section{Causes of slowdown (hardware)}
+A short illustration of key differences in hardware events for both simulators.
+\begin{itemize}
+	\item Cache : Adevs : $<$ 1\% cache misses, dxex : $<$10\% cache misses
+	\item Context switches : Adevs : 4e-8 switches/cycles, dxex 3e-8 (conservative)
+	\item Branch prediction : Adevs : 4\%, dxex 0.08%
+	\item Cpu stalls : Adevs : 0.2 stalled cycle/instruction, dxex 0.8 stalled cycle/instruction.
+\end{itemize}
+
+
+\end{document}

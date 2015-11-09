@@ -6,6 +6,8 @@
  *      Using the following url as help : http://eli.thegreenplace.net/2014/variadic-templates-in-c/
  */
 #include <memory>
+#include "tools/globallog.h"
+#include "pools/pools.h"
 
 #ifndef SRC_TOOLS_OBJECTFACTORY_H_
 #define SRC_TOOLS_OBJECTFACTORY_H_
@@ -28,7 +30,8 @@ std::shared_ptr<T> createObject(Args&&... args)
  * 		This may change in the future so be warned!
  */
 template<typename T, typename ... Args>
-T* createRawObject(Args&&... args){
+T* createRawObject(Args&&... args)
+{
 	return new T(args...);
 }
 
@@ -36,9 +39,35 @@ T* createRawObject(Args&&... args){
  * Takes back a pointer created by createRawObject and clears its memory
  */
 template<typename T>
-void takeBack(T* pointer){
+void takeBack(T* pointer)
+{
 	delete pointer;
 }
+
+/**
+ * Create an object from a pool.
+ * @param args (optionally empty) argument list for (any) constructor of type T. 
+ */
+template<typename T, typename ... Args>
+T* createPooledObject(Args&&... args)
+{
+        T* mem = n_pools::getPool<T>()->allocate();     // Calling thread gets a dedicated pool.
+        T* obj = new (mem) T(args...);
+        LOG_DEBUG("Allocating pooled msg : ", obj);
+        return obj;
+}
+
+/**
+ * Call only iff runtime type of t == T.
+ * @return Destructor of t is invoked, object pointed to by t is no longer valid.
+ */
+template<typename T>
+void destroyPooledObject(T* t)
+{
+        LOG_DEBUG("Deallocating pooled msg : ", t);
+        n_pools::getPool<T>()->deallocate(t);
+}
+
 
 #if USE_SAFE_CAST
 template<class T>

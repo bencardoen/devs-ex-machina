@@ -1,0 +1,16 @@
+Performance analysis of a parallel PDEVS simulator handling both conservative and optimistic protocols
+
+B. Cardoen, S. Manhaeve, T, Tuijn, Y. Van Tendeloo, K. Vanmechelen, H. Vangheluwe and J. Broeckhove
+Department of Computer Science, Universiteit Antwerpen
+
+With the ever increasing complexity of simulation models, parallel simulation
+becomes necessary to perform the simulation within reasonable time bounds.
+The built-in parallelism of Parallel DEVS is often insufficient to tackle this
+problem on its own. Several synchronization algorithms have been proposed,
+each with a specific kind of simulation model in mind. Due to the significant
+differences between these algorithms, current Parallel DEVS simulation tools
+restrict themself to only one such algorithm. In this paper, we present a
+Parallel DEVS simulator, grafted on C++11, which offers both conservative and
+optimistic simulation. We evaluate the performance gain that can be obtained
+by choosing the most appropriate synchronization protocol. Our implementation
+is compared to ADEVS using hardware-level profiling on a spectrum of benchmarks.

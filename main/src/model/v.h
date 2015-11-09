@@ -7,6 +7,8 @@
 #ifndef SRC_MODEL_V_H_
 #define SRC_MODEL_V_H_
 
+#include <vector>
+
 namespace n_model {
 
 /**

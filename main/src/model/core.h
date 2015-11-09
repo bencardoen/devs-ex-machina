@@ -1,15 +1,17 @@
 /*
  * core.h
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen, Stijn Manhaeve
  */
-#include "network/network.h"
-#include "model/terminationfunction.h"		// include atomicmodel
-#include "tools/schedulerfactory.h"
 #include "model/modelentry.h"
-#include "network/messageentry.h"
+#include "model/terminationfunction.h"		// include atomicmodel
 #include "network/controlmessage.h"
-#include "tracers/tracers.h"
+#include "network/messageentry.h"
+#include "network/network.h"
+#include "scheduler/modelscheduler.h"
+#include "scheduler/schedulerfactory.h"
+#include "tools/gviz.h"
 #include "tools/statistic.h"
+#include "tracers/tracers.h"
 #include <set>
 #include <condition_variable>
 
@@ -18,19 +20,19 @@
 
 namespace n_model {
 
-typedef n_model::AtomicModel_impl* t_raw_atomic;
 
 using n_network::t_networkptr;
 using n_network::t_msgptr;
 using n_network::t_timestamp;
+
 
 enum STAT_TYPE{MSGSENT,MSGRCVD,AMSGSENT,AMSGRCVD,TURNS,REVERTS,STALLEDROUNDS, DELMSG};
 
 /**
  * Typedefs used by core.
  */
-typedef std::shared_ptr<n_tools::Scheduler<ModelEntry>> t_scheduler;
-typedef std::shared_ptr<n_tools::Scheduler<MessageEntry>> t_msgscheduler;
+typedef n_scheduler::t_defaultModelScheduler t_scheduler;
+typedef std::shared_ptr<n_scheduler::Scheduler<MessageEntry>> t_msgscheduler;
 
 struct statistics_collector{
         n_tools::t_uintstat     m_amsg_sent;
@@ -119,7 +121,8 @@ struct statistics_collector{
  */
 class Core
 {
-private:
+protected:
+
 	/**
 	 * Current simulation time
 	 */
@@ -175,57 +178,48 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
+        t_scheduler m_heap;
+//        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
-	/**
-	 * Total amount of cores.
-	 */
-	std::size_t m_cores;
-        
-private:
-        /**
-         * Messages to process in a current round.
-         */
-        std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
-        
         /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_raw_atomic>   m_imminents;
+
+	/**
+	 * Total amount of cores.
+	 */
+	std::size_t m_cores;
+	std::size_t m_msgStartCount;
         
+protected:
+        /**
+         * Messages to process in a current round.
+         */
+        std::vector<std::vector<t_msgptr>> m_indexed_local_mail;
+
         /**
          * Stores models that will transition in this simulation round.
          * This vector shrinks/expands during the simulation steps.
          */
         std::vector<t_raw_atomic>   m_externs;
-        
-        std::vector<ModelEntry> m_imm_ids;
-        
+
         /**
          * Cached token used to check for messages.
          */
         MessageEntry        m_token;
-        
+
         std::vector<n_network::t_msgptr> m_mailfrom;
-        
+
         std::size_t m_zombie_rounds;
 
-	/**
-	 * Check if dest model is local, if not:
-	 * Looks up message in lookuptable, set coreid.
-	 * @post msg has correct destination id field set for network.
-	 * @attention For single core, checks if no message has destination to model not in core (assert).
-	 */
-	bool
-	virtual
-	isMessageLocal(const t_msgptr&)const;
-        
         /**
          * Return current mail for the model.
          */
         std::vector<t_msgptr>&
         getMail(size_t id);
-        
+
         /**
          * Check if a model has mail pending.
          */
@@ -253,7 +247,7 @@ private:
         virtual
         void
         checkInvariants();
-        
+    
         /**
          * After a transition (and trace call), the processed messages
          * are no longer needed (except in optimistic). In conservative and single core,
@@ -268,39 +262,30 @@ private:
         clearProcessedMessages(std::vector<t_msgptr>& msgs);
 
 protected:
-	/**
-	* Stores the model(entries) in ascending (urgent first) scheduled time.
-	*/
-	t_scheduler m_scheduler;
-        
-        /**
-	 * Schedule model.name @ time t.
-	 * @pre id is a model in this core.
-	 * @post previous entry (name, ?) is replaced with (name, t), or a new entry is placed (name,t).
-	 * @attention : erasure is required in case revert requires cleaning of old scheduled entries, model->timelast
-	 * can still be wrong. (see coretest.cpp revertedgecases).
-         * @deprecated
-	 */
-        void
-        scheduleModel(size_t id, t_timestamp t);
         
         /**
          * Sort the vector of models by priority, sets indices in models.
          */
         void
         initializeModels();
-        
+    
         virtual
-	void
-	lockSimulatorStep(){
-		;
-	}
+        void
+        lockSimulatorStep(){
+                ;
+        }
 
 	virtual
 	void
 	unlockSimulatorStep(){
 		;
 	}
+
+        inline bool
+        isMessageLocal(t_msgptr msg)const
+        {
+            return (msg->getDestinationCore()==m_coreid);
+        }
         
 	/**
 	* Store received messages (local and networked)
@@ -311,6 +296,7 @@ protected:
 	 * Push msg onto pending stack of msgs. Called by revert, receive.
 	 * @lock Unlocked (ie locked by caller)
 	 */
+        virtual
 	void queuePendingMessage(const t_msgptr& msg);
         
         /**
@@ -367,17 +353,7 @@ public:
 	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
 	 */
 	virtual ~Core();
-
-	/**
-	 * Serialize this core to file fname.
-	 */
-	void save(const std::string& fname);
-
-	/**
-	 * Load this core from file fname;
-	 */
-	void load(const std::string& fname);
-
+	
 	/**
 	 * In optimistic simulation, revert models to earlier stage defined by totime.
 	 * @pre totime >= this->getGVT() && totime < this->getTime()
@@ -454,15 +430,6 @@ public:
 	 */
 	virtual
 	void init();
-
-	/**
-	 * Initialize the Core/Kernel with a non-zero GVT.
-	 * Typically called after a Core is loaded with models who are in turn
-	 * created from a previously run simulation.
-	 * @attention run once, after load construction.
-	 */
-	virtual
-	void initExistingSimulation(const t_timestamp& loaddate);
         
         void
         getImminent(std::vector<t_raw_atomic>& imms);
@@ -483,7 +450,7 @@ public:
 	 * Request a new timeadvance() value from the model, and place an entry (model, ta()) on the scheduler.
 	 */
 	void
-	rescheduleImminent(const std::vector<t_raw_atomic>&);
+	rescheduleImminent();
 
 	/**
 	 * Updates local time. The core time will advance to min(first transition, earliest received unprocessed message).
@@ -518,7 +485,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core, we can't use abstract functions (cereal)
+	 * @attention assert(false) in single core TODO cereal
 	 */
 	virtual void sendMessage(const t_msgptr&)
 	{
@@ -594,9 +561,8 @@ public:
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
 	 * @lock: locks on messagelock.
 	 */
-	virtual
-	void
-	sortMail(const std::vector<t_msgptr>& messages);
+	virtual void
+	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -645,12 +611,12 @@ public:
 	 */
         virtual
 	void
-	removeModel(const std::string& name);
+	removeModel(std::size_t id);
         
         // Move this and use dyn_ptr in DS. works for now.
         virtual
 	void
-	removeModelDS(const std::string& /*name*/){assert(false);}
+	removeModelDS(std::size_t /*id*/){assert(false);}
         
         // Move this and use dyn_ptr in DS. works for now.
         virtual
@@ -758,34 +724,27 @@ public:
 	virtual
 	void
 	setColor(MessageColor mc);
-
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive);
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive);
-
-	/**
-	 * Helper function for unserializing smart pointers to an object of this class.
-	 *
-	 * @param archive A container for the desired input stream
-	 * @param construct A helper struct for constructing the original object
-	 */
-	static void load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Core>& construct);
+        
+        /**
+         * Invoke at end of simulation, clears remaining messages from buffers (should this be needed).
+         */
+        virtual
+        void
+        shutDown(){;}
 
 
+        friend class n_tools::GVizWriter;
 //-------------statistics gathering--------------
 protected:
 	statistics_collector m_stats;
 public:
+#ifdef USE_VIZ
+        virtual void writeGraph(){
+                LOG_DEBUG("Calling gviz for core ::", this->m_coreid);
+                n_tools::GVizWriter::getWriter("sim.dot")->writeObject(this);
+        }
+#endif
+        
 #ifdef USE_STAT
 	virtual void printStats(std::ostream& out = std::cout) const
 	{

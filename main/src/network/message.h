@@ -8,80 +8,63 @@
 #ifndef SRC_NETWORK_MESSAGE_H_
 #define SRC_NETWORK_MESSAGE_H_
 
-#include "serialization/archive.h"
 #include "network/timestamp.h"
 #include "tools/stringtools.h"
 #include "tools/globallog.h"
 #include "model/uuid.h"
 #include "tools/objectfactory.h"
+#include "pools/pools.h"
+#include "mid.h"
 #include <sstream>
 #include <iosfwd>
-
-class TestCereal;
+#include <atomic>
+#include <cstdint>
 
 namespace n_network {
 
-/**
- * Denote cut-type in gvt synchronization.
- */
-enum MessageColor
-{
-	WHITE = 0, RED = 1
-};
+
+enum MessageColor : uint8_t{WHITE = 0, RED = 1};
+// Msg status. Note that the assigned values are to be orthogonal.
+// 8 bits reserved for flags
+// 2^0: color
+// 2^1: delete? set by optimistic core for the case
+//              where a message is marked antimessage before it is received by the core
+// 2^2: processed? set by optimistic core when a message has been processed (used in a transition)
+// 2^3: HEAPED? The message has been put in a message scheduler in the receiving core.
+// 2^4: ANTI? The message is an anti message
+// 2^5: KILL? The message can be safely killed by the sending core.
+enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
 
 /**
- * A Message representing either an event passed between models , or synchronization token
- * between cores.
+ * A Message representing an event passed between models.
  */
-class Message
+class /* __attribute__((aligned(64)))*/Message
 {
-	friend class ::TestCereal;
 protected:
 	/**
 	 * Time message is created (by model/port)
 	 */
 	t_timestamp m_timestamp;
-
-	/**
-	 * Port id of destination port.
-	 */
-	const std::size_t m_destination_port;
-
-	/**
-	 * Port id of source port.
-	 */
-	const std::size_t m_source_port;
-
-	/**
-	 * Color in synchronization algorithms.
-	 * @default WHITE
-	 * @see MessageColor
-	 */
-	MessageColor m_color;
-
-	/**
-	 * Is message an annihilator of the original ?
-	 */
-	bool m_antimessage;
         
-        /**
-         * Edge case of original message immediately followed by antimessage, allow
-         * receiver to mark this message a 'to be deleted' without ever entering any queue.
-         */
-        bool m_delete_flag_set;
+    /**
+     * Unique source identifier.
+     */ 
+    const mid             m_src_id;
+    
+    /**
+     * Unique destination identifier.
+     */
+    const mid             m_dst_id;
+    
+	std::atomic<uint8_t> m_atomic_flags;
         
-        /**
-         * Mark message processed.
-         */
-        bool m_processed;
-        
-        const n_model::uuid m_dst_uuid;
-        
-        const n_model::uuid m_src_uuid;
-
+    Message(const Message&) = delete;
+    Message(const Message&&) = delete;
+    Message& operator=(const Message&)=delete;
+    Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -94,75 +77,87 @@ public:
 	 * @param sourceport	full name of source port
 	 * @note	Color is set by default to white.
 	 */
-	Message(n_model::uuid srcUUID, n_model::uuid dstUUID,
-		const t_timestamp& time_made,
-		const std::size_t& destport, const std::size_t& sourceport);
+	Message(const n_model::uuid& srcUUID, const n_model::uuid& dstUUID,
+	const t_timestamp& time_made,
+	const std::size_t& destport, const std::size_t& sourceport);
 
-        const n_model::uuid&
-        getSrcUUID()const{return m_src_uuid;}
+    std::size_t getDestinationPort() const
+	{ 
+        return m_dst_id.portid();
+    }
         
-        const n_model::uuid&
-        getDstUUID()const{return m_dst_uuid;}
-        
-	/**
-	 * @brief Returns the destination core.
-	 * @return the destination core
-	 * @see setDestinationCore
-	 */
 	std::size_t getDestinationCore() const
 	{
-		return m_dst_uuid.m_core_id;
+		return m_dst_id.coreid();
 	}
+        
+    std::size_t getDestinationModel() const
+    {
+            return m_dst_id.modelid();
+    }
+        
+    std::size_t getSourceCore() const
+	{
+		return m_src_id.coreid();
+	}
+        
+    std::size_t getSourceModel()const
+    {
+            return m_src_id.modelid();
+    }
+        
+    std::size_t getSourcePort() const
+	{ 
+        return m_src_id.portid();
+    }
 
-	/**
-	 * @brief Sets whether or not this message will act as an antimessage
-	 * @param b If true, this message becomes an antimessage, otherwise, it becomes a normal message.
-	 */
 	void setAntiMessage(bool b)
 	{
-		m_antimessage = b;
+        if(b)
+            m_atomic_flags |= Status::ANTI;
+        else
+            m_atomic_flags &= ~Status::ANTI;
 	}
 
-	/**
-	 * @brief Returns whether or not this message is marked as an antimessage.
-	 * @return whether or not this message is marked as an antimessage
-	 * @see setAntiMessage
-	 */
 	bool isAntiMessage() const
 	{
-		return m_antimessage;
+		return (m_atomic_flags & Status::ANTI);
+	}
+        
+	MessageColor getColor() const
+	{       
+                return static_cast<MessageColor>(m_atomic_flags & MessageColor::RED);
 	}
 
 	/**
-	 * @brief Returns the source core.
-	 * @note The source core is the core that simulates the model that created this message.
+	 * @brief Sets the message color
+	 * @param newcolor The new message color
+	 * @note The message color is part of the GVT calculation.
+	 * @see getColor
 	 */
-	std::size_t getSourceCore() const
+	void paint(MessageColor newcolor)
 	{
-		return m_src_uuid.m_core_id;
+        if(newcolor==MessageColor::RED)
+            m_atomic_flags |= newcolor;
+        else
+            m_atomic_flags &= ~MessageColor::RED;
 	}
 
-	/**
-	 * @brief Returns the name of the destination port.
-	 * @return The full name of the destination port.
-	 */
-	std::size_t getDstPort() const
-	{ return m_destination_port; }
         
-        bool deleteFlagIsSet()const{return m_delete_flag_set;}
+    void setFlag(Status newst, bool value=true)
+    {
+            LOG_DEBUG("setting ", newst, " flag of ", this, " ", toString(), " to ", value);
+        if(value)
+            m_atomic_flags |= newst;
+        else
+            m_atomic_flags &= ~newst;
+    }
         
-        void setDeleteFlag(){m_delete_flag_set=true;}
-        
-        bool isProcessed()const{return m_processed;}
-        
-        void setProcessed(bool b){m_processed=b;}
-
-	/**
-	 * @brief Returns the name of source port of the message.
-	 * @return The full name of the source port.
-	 */
-	std::size_t getSrcPort() const
-	{ return m_source_port; }
+    bool flagIsSet(Status st)const
+    {
+        return (m_atomic_flags & st);   
+        //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+    }
 
 	//can't remove. Needed by tracer
 	/**
@@ -175,6 +170,8 @@ public:
 	virtual std::string getPayload() const
 	{
 		LOG_ERROR("Message::getPayload called on base class.");
+                LOG_FLUSH;
+                throw std::logic_error("Message::getPayload called on base class.");
 		return "";
 	}
 
@@ -206,48 +203,53 @@ public:
 	{
 		m_timestamp = now;
 	}
+        
+        /**
+         * Deregister object with pool.
+         * @pre This object was allocated using the registered pool. This will invoke the destructor.
+         * @post The object is no longer accessible.
+         */
+        virtual void releaseMe()
+        {
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
+
+	/**
+	 * @brief Sets the causality of the message
+	 * @param causal The new causality.
+	 * @note The simulator will automatically set the correct causality.
+	 * @see getTimeStamp
+	 * @see setTimeStamp
+	 */
+	void setCausality(const t_timestamp::t_causal causal)
+	{
+		m_timestamp = t_timestamp(m_timestamp.getTime(), causal);
+	}
 
 	virtual ~Message()
 	{
-                ;
+        ;
 	}
-
-	/**
-	 * @brief Returns the message color.
-	 * @note The message color is part of the GVT calculation.
-	 */
-	MessageColor getColor() const
-	{
-		return m_color;
-	}
-
-	/**
-	 * @brief Sets the message color
-	 * @param newcolor The new message color
-	 * @note The message color is part of the GVT calculation.
-	 * @see getColor
-	 */
-	void paint(MessageColor newcolor)
-	{
-		this->m_color = newcolor;
-	}
-        friend
-        bool operator<(const Message& left, const Message& right);
         
-        friend
-        bool operator<=(const Message& left, const Message& right);
-        
-        friend
-        bool operator>=(const Message& left, const Message& right);
-        
-        friend
-        bool operator>(const Message& left, const Message& right);
+    friend
+    bool operator<(const Message& left, const Message& right);
+    
+    friend
+    bool operator<=(const Message& left, const Message& right);
+    
+    friend
+    bool operator>=(const Message& left, const Message& right);
+    
+    friend
+    bool operator>(const Message& left, const Message& right);
 
 	friend
 	bool operator==(const Message& left, const Message& right);
 
 	friend
 	bool operator!=(const Message& left, const Message& right);
+        
 };
 
 /**
@@ -265,7 +267,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class SpecializedMessage: public Message
+class /*__attribute__((aligned(64)))*/SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;
@@ -288,7 +290,7 @@ public:
 	{
 	}
                 
-        ~SpecializedMessage(){;}        
+    ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -304,12 +306,22 @@ public:
 	 */
 	virtual std::string getPayload() const override
 	{
-		LOG_DEBUG("SpecializedMessage: getPayload");
 		std::stringstream ssr;
 		const DataType& data = getData();
 		ssr << data;
 		return ssr.str();
 	}
+        
+        /**
+         * Deregister object with pool. This will invoke the destructor.
+         * @pre This object was allocated using the registered pool.
+         * @post This object is no longer accessible.
+         */
+        virtual void releaseMe()override
+        {
+                n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
+        }
 
 };
 
@@ -341,11 +353,11 @@ struct hash<n_network::Message>
 	size_t operator()(const n_network::Message& message) const
 	{
 		std::stringstream ss;
-		ss << message.getSrcPort()
-			<< message.getDstPort()
-			<< message.getDstUUID().m_local_id
-			<< message.getSrcUUID().m_local_id
-		        << message.getTimeStamp();
+		ss << message.getSourcePort()
+			<< message.getDestinationPort()
+			<< message.getDestinationModel()
+			<< message.getSourceModel()
+		    << message.getTimeStamp();
 		std::string hashkey = ss.str();
 		return std::hash<std::string>()(hashkey);
 	}

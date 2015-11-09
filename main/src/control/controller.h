@@ -9,7 +9,9 @@
 #define SRC_CONTROL_CONTROLLER_H_
 
 #include <string>
+#include <vector>
 #include <functional>
+#include <atomic>
 #include <memory>
 #include <thread>
 #include <condition_variable>
@@ -72,7 +74,6 @@ private:
 	 * A GVT thread will run [5ms |run| interval | interval | ... ].
 	 * @attention : The OS will schedule at least interval sleep time, but more is of course possible.
 	 * @synchronized
-	 * @default value = 85 (ms). A lower value starves threads/increases CPU, a higher value uses more VMEM.
 	 */
 	std::atomic<std::size_t> m_sleep_gvt_thread;
 
@@ -148,8 +149,6 @@ public:
 	 * @brief Start thread for GVT
 	 */
 	void startGVTThread();
-
-//	void checkForTemporaryIrreversible();
 
 	/**
 	 * @brief Adds a connection during Dynamic Structured DEVS
@@ -245,8 +244,21 @@ private:
 
 	friend
 	void cvworker( std::size_t myid, std::size_t turns,Controller&);
+        
+        friend
+	void cvworker_con( std::size_t myid, std::size_t turns,Controller&);
 
-
+#ifdef USE_VIZ
+public:
+        void visualize(){
+                LOG_DEBUG("Controller :: have ", m_cores.size(), " cores");
+                for(const auto& core : m_cores){
+                        core->writeGraph();
+                }
+                delete n_tools::GVizWriter::getWriter("sim.dot");
+        }
+#endif
+        
 //-------------statistics gathering--------------
 //#ifdef USE_STAT
 private:
@@ -261,8 +273,11 @@ public:
 			<< m_gvtSecondRound
 			<< m_gvtFound
 			<< m_gvtFailed;
-		for(const auto& i:m_cores)
+                
+		for(const auto& i:m_cores){
 			i->printStats(out);
+                }
+                
 	}
 //#endif
 };
@@ -275,14 +290,17 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
 
 /**
  * Worker function. Runs a Core and communicates with other threads and GVT thread.
- * @param cv Queues working threads if main asks them to.
- * @param cvlock lock needed for cv
  * @param myid unique identifier, for logging it is best this is equal to coreid
- * @param threadsignal : stores thread signalling flags
- * @param vectorlock : lock threadsignal
  * @param turns : infinite loop cutoff value.
  */
 void cvworker(std::size_t myid,std::size_t turns,Controller&);
+
+/**
+ * Worker function. Runs a Core and communicates with other threads and GVT thread.
+ * @param myid unique identifier, for logging it is best this is equal to coreid
+ * @param turns : infinite loop cutoff value.
+ */
+void cvworker_con(std::size_t myid,std::size_t turns,Controller&);
 
 } /* namespace n_control */
 

@@ -27,24 +27,6 @@ TEST(Network, detectIdle){
         delete msg;
 }
 
-TEST(Time, FactoryFunctions)
-{
-	auto first = makeTimeStamp();
-	auto second = makeTimeStamp();
-	auto aftersecond = makeCausalTimeStamp(second);
-	auto third = first;
-	EXPECT_TRUE(first.getTime() == third.getTime());
-	EXPECT_TRUE(second.getCausality() < aftersecond.getCausality());
-	EXPECT_TRUE(first < decltype(first)::infinity());
-	EXPECT_TRUE(first != decltype(first)::infinity());
-	t_timestamp zero(0,0);
-	t_timestamp selected(0,0);
-	EXPECT_EQ(zero, selected);
-	EXPECT_FALSE(zero > selected);
-	zero.increaseCausality(1);	// equivalent of select(selected).
-	EXPECT_TRUE(zero > selected);
-}
-
 TEST(Time, HashingOperators)
 {
 	const size_t TESTSIZE = 1000;
@@ -111,9 +93,28 @@ void pull(size_t pushcount, size_t coreid, n_network::Network& net, size_t cores
                 delete msg;
 }
 
+void pushVector(size_t pushcount, size_t vectorcount, size_t coreid, n_network::Network& net, size_t cores)
+{
+	std::vector<t_msgptr> msgs;
+	msgs.reserve(vectorcount);
+	for (size_t i = 0; i < pushcount; ++i) {
+		for (size_t j = 0; j < cores; ++j) {
+			if (j == coreid)
+				continue;
+			for(size_t k = 0; k < vectorcount; ++k) {
+				t_msgptr msg = n_tools::createRawObject<Message>(n_model::uuid(0, 0), n_model::uuid(j, 0), t_timestamp(i, 0), 0, 0);
+				EXPECT_TRUE(msg->getDestinationCore() == j);
+				msgs.push_back(msg);
+			}
+			net.giveMessages(j, msgs);
+			msgs.clear();
+		}
+	}
+}
+
 TEST(Network, threadsafety)
 {
-	const size_t cores = std::thread::hardware_concurrency();
+	const size_t cores = std::thread::hardware_concurrency() > 8u ? 8u : std::thread::hardware_concurrency();
 	if(cores <= 1){
 		LOG_WARNING("No threads available for threaded test.");
 		return;
@@ -124,6 +125,47 @@ TEST(Network, threadsafety)
 	for (size_t i = 0; i < cores; ++i) {
 		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
 		workers.push_back(std::thread(pull, msgcount, i, std::ref(n), cores));
+	}
+	for (auto& t : workers) {
+		t.join();
+	}
+}
+
+TEST(Network, vectorthreadsafety)
+{
+	const size_t cores = std::thread::hardware_concurrency();
+	if(cores <= 1){
+		LOG_WARNING("No threads available for threaded test.");
+		return;
+	}
+	constexpr size_t msgcount = 500;
+	constexpr size_t vecsize = 3;
+	n_network::Network n(cores);
+	std::vector<std::thread> workers;
+	for (size_t i = 0; i < cores; ++i) {
+		workers.push_back(std::thread(pushVector, msgcount, vecsize, i, std::ref(n), cores));
+		workers.push_back(std::thread(pull, msgcount*vecsize, i, std::ref(n), cores));
+	}
+	for (auto& t : workers) {
+		t.join();
+	}
+}
+
+TEST(Network, mixedthreadsafety)
+{
+	const size_t cores = std::thread::hardware_concurrency();
+	if(cores <= 1){
+		LOG_WARNING("No threads available for threaded test.");
+		return;
+	}
+	constexpr size_t msgcount = 500;
+	constexpr size_t vecsize = 3;
+	n_network::Network n(cores);
+	std::vector<std::thread> workers;
+	for (size_t i = 0; i < cores; ++i) {
+		workers.push_back(std::thread(pushVector, msgcount, vecsize, i, std::ref(n), cores));
+		workers.push_back(std::thread(push, msgcount, i, std::ref(n), cores));
+		workers.push_back(std::thread(pull, msgcount*(vecsize+1), i, std::ref(n), cores));
 	}
 	for (auto& t : workers) {
 		t.join();

@@ -8,7 +8,6 @@
 #ifndef SRC_NETWORK_TIMESTAMP_H_
 #define SRC_NETWORK_TIMESTAMP_H_
 
-#include "serialization/archive.h"
 #include <chrono>
 #include <mutex>
 #include <cmath>
@@ -122,6 +121,23 @@ public:
 	{
 		this->m_causal += offset;
 	}
+        
+         /**
+         * Return true if the time part of the timestamp is infinite.
+        * @attention not the same as ==infinity(), since that also checks causality.
+        */
+        friend
+        constexpr bool isInfinity(const Time& arg){
+                return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
+        }
+
+        /**
+         * Return true if the time object equals the default constructor. (ignoring causality)
+         */
+        friend
+        constexpr bool isZero(const Time& arg){
+                return (arg.m_timestamp == Time::t_time());
+        }
 
 	friend std::ostream&
 	operator<<(std::ostream& os, const Time& t)
@@ -202,46 +218,15 @@ public:
 			Time(lhs.m_timestamp - rhs.m_timestamp, std::min(lhs.m_causal, rhs.m_causal));
 	}
 
-	/**
-	 * Serialize this object to the given archive
-	 *
-	 * @param archive A container for the desired output stream
-	 */
-	void serialize(n_serialization::t_oarchive& archive)
-	{
-		archive(m_timestamp, m_causal);
-	}
-        
-        /**
-         * Return true if the time part of the timestamp is infinite.
-        * @attention not the same as ==infinity(), since that also checks causality.
-        */
-        friend
-        constexpr bool isInfinity(const Time& arg){
-                return(arg.getTime() == std::numeric_limits<Time::t_time>::max());
-        }
-        
-        /**
-         * Return true if the time object equals the default constructor. (ignoring causality)
-         */
-        friend
-        constexpr bool isZero(const Time& arg){
-                return (arg.m_timestamp == Time::t_time());
-        }
-
-	/**
-	 * Unserialize this object to the given archive
-	 *
-	 * @param archive A container for the desired input stream
-	 */
-	void serialize(n_serialization::t_iarchive& archive)
-	{
-		archive(m_timestamp, m_causal);
-	}
-        
         static constexpr t_time MAXTIME = std::numeric_limits<Time::t_time>::max();
         static constexpr t_causal MAXCAUSAL = std::numeric_limits<Time::t_causal>::max();
 };
+
+template<typename T, typename X>
+constexpr T Time<T, X>::MAXTIME;
+
+template<typename T, typename X>
+constexpr X Time<T, X>::MAXCAUSAL;
 
 } /* namespace n_network */
 //load the typedef from a different file
@@ -249,29 +234,9 @@ public:
 
 namespace n_network {
 
-/**
- * Convenience function : make a TimeStamp object reflecting the current time.
- */
-inline t_timestamp makeTimeStamp(size_t causal = 0)
-{
-	static std::mutex lock;
-	std::lock_guard<std::mutex> locknow(lock);
-	t_timestamp::t_time now = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return t_timestamp(now, causal);
-}
-
-/**
- * Given a t_timestamp, make another with identical time field, but happening after the
- * original.
- */
-inline constexpr t_timestamp makeCausalTimeStamp(const t_timestamp& before)
-{
-	return t_timestamp(before.getTime(), before.getCausality() + 1);
-}
-
 inline constexpr t_timestamp makeLatest(const t_timestamp& now)
 {
-	return t_timestamp(now.getTime(), std::numeric_limits<t_timestamp::t_causal>::max());
+	return t_timestamp(now.getTime(), t_timestamp::MAXCAUSAL);
 }
 
 } /* namespace n_network */

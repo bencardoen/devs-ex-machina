@@ -6,11 +6,6 @@
  */
 
 #include "model/port.h"
-#include "cereal/types/string.hpp"
-#include "cereal/types/map.hpp"
-#include "cereal/types/vector.hpp"
-#include "cereal/types/memory.hpp"
-#include "cereal/types/polymorphic.hpp"
 #include "tools/stringtools.h"
 #include "tools/objectfactory.h"
 #include "model.h"
@@ -126,14 +121,18 @@ void Port::setInPortCoupled(const t_portptr_raw port)
 }
 
 Port::~Port(){
-        this->clearSentMessages();
+        // Don't delete here, creator pool is no longer valid (neither are the ptrs)
+        // This means that for Message<string> we get leaks at the moment for local (trace) messages only.
+        // The only workable alternative is a GCCollect like function BEFORE the simthread exits.
+        //this->clearSentMessages();
 }
 
 void Port::clearSentMessages()
 {
+        LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", m_sentMessages.size(), " sent messages");
         for(auto& msg : m_sentMessages){
                 LOG_DEBUG("PORT:: in model : ", this->getHost()->getName() , " deleting ", msg);
-                delete msg;
+                msg->releaseMe();
 #ifdef SAFETY_CHECKS
                 msg=nullptr;
 #endif
@@ -215,37 +214,6 @@ void Port::clearConnections()
 		ptr.first->removeInPort(this);
 	}
 	m_outs.clear();
-}
-
-void Port::serialize(n_serialization::t_oarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, m_portid,
-//			m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-			m_usingDirectConnect);
-}
-
-void Port::serialize(n_serialization::t_iarchive& archive)
-{
-	archive(m_name, m_hostname, m_inputPort, m_portid,
-//			m_ins, m_outs,
-//			m_coupled_outs, m_coupled_ins,
-//			m_sentMessages, m_receivedMessages,
-			m_usingDirectConnect);
-}
-
-void Port::load_and_construct(n_serialization::t_iarchive& archive, cereal::construct<Port>& construct )
-{
-	/*std::string name;
-	std::string hostname;
-	bool inputPort;
-
-	archive(name, hostname, inputPort);
-	construct(name, hostname, inputPort);*/
-
-	construct("", nullptr, 0, false);
-	construct->serialize(archive);
 }
 
 }

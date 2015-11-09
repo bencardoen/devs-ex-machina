@@ -3,26 +3,39 @@
 #include <vector>
 #include <list>
 #include <array>
+#include <vector>
 #include <queue>
 #include <algorithm>
 #include <random>
-#include "tools/schedulerfactory.h"
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <algorithm>
+#include <random>
+#include "boost/pool/object_pool.hpp"
+#include "boost/pool/singleton_pool.hpp"
+#include "scheduler/heapscheduler.h"
+#include "scheduler/schedulerfactory.h"
+#include "scheduler/listscheduler.h"
+#include "scheduler/stlscheduler.h"
 #include "tools/globallog.h"
 #include "tools/coutredirect.h"
 #include "tools/sharedvector.h"
-#include "tools/listscheduler.h"
-#include "tools/stlscheduler.h"
+#include "tools/gviz.h"
 #include "tools/flags.h"
+#include "tools/misc.h"
 #include "model/modelentry.h"
+#include "network/messageentry.h"
+#include "network/message.h"
+#include "pools/pools.h"
+#include "pools/cfpool.h"
 
 using std::cout;
 using std::endl;
 using std::atomic;
 using std::thread;
 using namespace n_tools;
+using namespace n_scheduler;
 typedef ExampleItem t_TypeUsed;
 
 /**
@@ -400,7 +413,7 @@ TEST(SharedVector, concurrency){
 	 * Try to block as much as possible on the shared vector to trigger races/deadlock.
 	 */
 	size_t accesses = 100000;
-	const size_t num_threads = std::thread::hardware_concurrency();
+	const size_t num_threads = std::thread::hardware_concurrency() > 8u ? 8u : std::thread::hardware_concurrency();
 	accesses *= num_threads; // avoid ugly division below.
 	if(num_threads < 2){
 		LOG_INFO("Refusing to test threads without threading support.");
@@ -467,39 +480,24 @@ TEST(VectorScheduler, basic_ops){
 }
 
 TEST(STLScheduler, basic_ops){
+        struct Entry{
+                
+                size_t m_time;
+                void * m_placeholder;
+                explicit constexpr Entry(size_t time, void* v=nullptr):m_time(time),m_placeholder(v){;}
+                bool operator<(const Entry& rhs)const{return m_time > rhs.m_time;}
+        };
+        
         using n_model::ModelEntry;
-        constexpr size_t limit = 1000;
+        constexpr size_t limit = 100000;
         using n_network::t_timestamp;
-        STLScheduler<ModelEntry> vscheduler;
-        std::vector<ModelEntry> scheduled;
-        for(size_t i = 0; i<limit; ++i){
-                ModelEntry entry(i, t_timestamp(i, 0u));
-                vscheduler.push_back(entry);
-                scheduled.push_back(entry);
-                EXPECT_TRUE(vscheduler.contains(entry));
-                EXPECT_EQ(vscheduler.size(), i+1);
+        STLScheduler<Entry> msgqueue;
+        for(size_t i = 0; i< limit; ++i){
+                msgqueue.push_back(Entry(limit-1-i));
         }
-        
-        for(size_t i = 0; i<limit; ++i){
-                ModelEntry entry(i, t_timestamp(424242422, 9999u));
-                EXPECT_TRUE(vscheduler.contains(entry));
+        for(size_t i = 0; i< limit; ++i){
+                EXPECT_EQ(msgqueue.pop().m_time, i);
         }
-        
-        for(const auto& entry : scheduled){
-                EXPECT_TRUE(vscheduler.contains(entry));
-                if(size_t(entry)%2==0){
-                        vscheduler.erase(entry);
-                        EXPECT_TRUE(!vscheduler.contains(entry));
-                }
-        }
-        
-        
-        EXPECT_EQ(vscheduler.size(), limit/2);
-        size_t oldsize = vscheduler.size();
-        std::vector<ModelEntry> popped;
-        ModelEntry last(9999999, t_timestamp(limit/2, 0));
-        vscheduler.unschedule_until(popped, last);
-        EXPECT_EQ(vscheduler.size(), oldsize-popped.size());
 }
 
 
@@ -557,4 +555,491 @@ TEST(IntrusiveScheduler, basic_ops){
         EXPECT_EQ(ids.size(), limit);
         for(auto mptr: models)
                 delete mptr;
+}
+
+TEST(Vizwriter, creation){
+        std::vector<GVizWriter*> ptrs(std::thread::hardware_concurrency(), nullptr);
+        auto tfun = [&ptrs](size_t tid)->void{
+                n_tools::GVizWriter* writer = GVizWriter::getWriter("a test");
+                EXPECT_FALSE(writer==nullptr);
+                ptrs[tid]=writer;
+        };
+        std::vector<std::thread> threads;
+        for(size_t i = 0; i<std::thread::hardware_concurrency(); ++i){
+                threads.push_back(std::thread(tfun, i));
+        }
+        for(auto& t : threads)
+                t.join();
+        // Let main ask a copy of the ptr.
+        n_tools::GVizWriter* writer = GVizWriter::getWriter("a test");
+        for(auto ptr : ptrs)
+                EXPECT_EQ(ptr, writer);
+        delete writer;
+}
+
+struct HeapTestComparator
+{
+	bool operator()(int a, int b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a > b);
+	}
+} heaptestcomparator;
+
+TEST(HeapTest, heap_operations){
+	std::vector<int> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator)
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec[i], result[i]);
+	}
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapTestUpdateVal
+{
+	std::size_t m_index;
+	int m_value;
+	constexpr HeapTestUpdateVal(int value = 0, std::size_t index = 0):
+		m_index(index), m_value(value)
+	{}
+
+	HeapTestUpdateVal& operator++()
+	{
+	  ++m_value;
+	  return *this;
+	}
+};
+
+struct HeapTestComparator2
+{
+	bool operator()(const HeapTestUpdateVal& a, const HeapTestUpdateVal& b){
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a.m_value > b.m_value);
+	}
+} heaptestcomparator2;
+struct HeapTestUpdator
+{
+	void operator()(HeapTestUpdateVal& item, std::size_t distance){
+		//we want a min heap, so we must test whether a > b and not a < b
+		LOG_DEBUG("updating value ", item.m_value, ',', item.m_index, " to index ", distance);
+		item.m_index = distance;
+	}
+} heaptestupdator;
+
+TEST(HeapTest, heap_operations_update){
+	std::vector<HeapTestUpdateVal> vec(20);
+	std::iota(vec.begin(), vec.end(), 0);
+#define HEAP_TEST_ISHEAP std::is_heap(vec.begin(), vec.end(), heaptestcomparator2)
+#define HEAP_TEST_UPDATE(x) n_tools::fix_heap(vec.begin(), vec.end(), x, heaptestcomparator2, heaptestupdator)
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0] = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin());
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4] = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3] = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9] = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(vec.begin()+9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12] = 18;
+	LOG_DEBUG("vec[12] = 18");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
+	HEAP_TEST_UPDATE(vec.begin()+12);
+	LOG_DEBUG("vec[12] = 18, after update");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<std::size_t> indexresult = {0, 1, 0, 3, 4, 0, 0, 7, 0, 9, 0, 0, 0, 0, 0, 15, 0, 0, 0, 19};
+	EXPECT_EQ(vec.size(), result.size());
+	EXPECT_EQ(vec.size(), indexresult.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("Checking item ", i);
+		EXPECT_EQ(vec[i].m_value, result[i]);
+		EXPECT_EQ(vec[i].m_index, indexresult[i]);
+	}
+	LOG_DEBUG("Done");
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+struct HeapSchedulerVal
+{
+	const int m_startvalue;
+	int m_value;
+	constexpr HeapSchedulerVal(int value = 0):
+		m_startvalue(value), m_value(value)
+	{}
+};
+
+struct HeapSchedulerComparator
+{
+	bool operator()(HeapSchedulerVal* a, HeapSchedulerVal* b) const{
+		//we want a min heap, so we must test whether a > b and not a < b
+		return (a->m_value > b->m_value);
+	}
+};
+
+TEST(HeapTest, heap_scheduler){
+	n_scheduler::HeapScheduler<HeapSchedulerVal, HeapSchedulerComparator> vec(5);
+	for(std::size_t i = 0; i < 20; ++i){
+		vec.push_back(new HeapSchedulerVal(i));
+		EXPECT_EQ(vec.dirty(), i >= 5);
+	}
+#define HEAP_TEST_ISHEAP vec.isHeap()
+#define HEAP_TEST_UPDATE(x) vec.update(x)
+	EXPECT_TRUE(vec.dirty());
+	vec.updateAll();
+	EXPECT_FALSE(vec.dirty());
+	EXPECT_EQ(vec.size(), 20u);
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		LOG_DEBUG("testing item ", i);
+		EXPECT_EQ(vec.heapAt(i)->m_value, int(i));
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, int(i));
+	}
+	LOG_DEBUG("prior to testing for the first time.");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = -1;
+	LOG_DEBUG("vec[0] = -1");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[0]->m_value = 2;
+	LOG_DEBUG("vec[0] = 2");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(0);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[4]->m_value = -1;
+	LOG_DEBUG("vec[4] = -1");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(4);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[3]->m_value = 17;
+	LOG_DEBUG("vec[3] = 17");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(3);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[9]->m_value = 20;
+	LOG_DEBUG("vec[9] = 20");
+	EXPECT_FALSE(HEAP_TEST_ISHEAP);
+	HEAP_TEST_UPDATE(9);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	vec[12]->m_value = 18;
+	LOG_DEBUG("vec[12] = 18, ", vec[12].m_index);
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, check before update");
+	HEAP_TEST_UPDATE(12);
+	LOG_DEBUG("vec[12] = 18, after update");
+	EXPECT_TRUE(HEAP_TEST_ISHEAP);
+	LOG_DEBUG("vec[12] = 18, after final check");
+	std::vector<int> result = {-1, 1, 2, 7, 2, 5, 6, 15, 8, 19, 10, 11, 18, 13, 14, 17, 16, 17, 18, 20};
+	std::vector<int> indexresult = {4, 1, 2, 7, 0, 5, 6, 15, 8, 19, 10, 11, 12, 13, 14, 3, 16, 17, 18, 9};
+	EXPECT_EQ(vec.size(), result.size());
+	for(std::size_t i = 0; i < vec.size(); ++i){
+		EXPECT_EQ(vec.heapAt(i)->m_value, result[i]);
+		EXPECT_EQ(vec.heapAt(i)->m_startvalue, indexresult[i]);
+	}
+	for(std::size_t i = 0; i < vec.size(); ++i)
+		delete vec[i];
+#undef HEAP_TEST_ISHEAP
+#undef HEAP_TEST_UPDATE
+}
+
+TEST(NumericTest, sgnFunc){
+#define DOTEST(suffix) \
+	EXPECT_EQ(1, n_tools::sgn(1##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(2##suffix)); \
+	EXPECT_EQ(1, n_tools::sgn(10##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-1##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-2##suffix)); \
+	EXPECT_EQ(-1, n_tools::sgn(-10##suffix)); \
+	EXPECT_EQ(0, n_tools::sgn(0##suffix))
+
+	DOTEST(0);	//integer
+	DOTEST(.0);	//double
+	DOTEST(.0f);	//float
+	DOTEST(l);	//long int
+	DOTEST(ll);	//long long int
+#undef DOTEST
+}
+
+TEST(NumericTest, log2Func){
+	EXPECT_EQ(0, n_tools::intlog2(1));
+	EXPECT_EQ(1, n_tools::intlog2(2));
+	EXPECT_EQ(1, n_tools::intlog2(3));
+	EXPECT_EQ(2, n_tools::intlog2(4));
+	EXPECT_EQ(2, n_tools::intlog2(5));
+	EXPECT_EQ(2, n_tools::intlog2(6));
+#define DOTESTPART(k, type) \
+	EXPECT_EQ(k-1, n_tools::intlog2((type)((1 << k) -1))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)(1 << k))); \
+	EXPECT_EQ(k, n_tools::intlog2((type)((1 << k) + 1)));
+#define DOTEST(type) \
+	DOTESTPART(3, type)\
+	DOTESTPART(4, type)\
+	DOTESTPART(5, type)\
+	DOTESTPART(6, type)\
+	DOTESTPART(7, type)\
+	DOTESTPART(8, type)\
+	DOTESTPART(9, type)\
+	DOTESTPART(10, type)\
+	DOTESTPART(11, type)\
+	DOTESTPART(12, type)\
+	DOTESTPART(13, type)\
+	DOTESTPART(14, type)\
+	DOTESTPART(15, type)\
+	DOTESTPART(16, type)\
+	DOTESTPART(17, type)\
+	DOTESTPART(18, type)\
+	DOTESTPART(19, type)\
+	DOTESTPART(20, type)\
+	DOTESTPART(21, type)
+
+	DOTEST(int)			//uses default one
+	DOTEST(unsigned int)
+	DOTEST(unsigned long)
+	DOTEST(unsigned long long)
+
+#undef DOTEST
+#undef DOTESTPART
+}
+
+TEST(Pool, MessageBasics){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        boost::object_pool<Message> pl;
+        Message* rawmem = pl.malloc();
+        Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+        pl.free(rawmem);
+}
+
+
+
+
+#define testsize 40000 //inconnect fta w200 , represent 4e4 * 64byte = ~2.4 MB
+#define rounds 10 // -t rounds*100
+
+
+void timePool(n_pools::PoolInterface<n_network::Message>* pl){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::vector<Message*> mptrs(testsize);
+        for(size_t j = 0; j<rounds;++j){
+                for(size_t i = 0; i<testsize; ++i){
+                        Message* rmem = pl->allocate();
+                        Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        msgconstructed->setAntiMessage(true);
+                        mptrs[i]=msgconstructed;
+                }
+                
+                for(auto p : mptrs){
+                        pl->deallocate(p);
+                }
+                
+        }
+}
+
+TEST(New, Timing)
+{
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, std::false_type>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+
+TEST(BoostPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::Pool<n_network::Message, boost::pool<>>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(SlabPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::SlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(StackPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::StackPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(DSlabPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::DynamicSlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
+TEST(Pool, DynamicSlabPool){
+        using n_network::Message;
+        using n_network::SpecializedMessage;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=2;
+        size_t tsize=11;        // trigger at least 2 resize operations.
+        size_t rsize=2;         
+        n_pools::DynamicSlabPool<SpecializedMessage<std::string>> pl(psize);
+        std::vector<SpecializedMessage<std::string>*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        SpecializedMessage<std::string>* msgconstructed = new(rawmem) SpecializedMessage<std::string>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, "abc");
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
+}
+
+TEST(Pool, StackPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        size_t psize=4;
+        size_t tsize=9;
+        size_t rsize=3;
+        n_pools::StackPool<Message> pl(psize);
+        std::vector<Message*> mptrs(tsize);
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs[i]=msgconstructed;
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+        }
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
+}
+
+// Compilation fails if struct is defined inside a testcase.
+struct mystr{
+                int i; 
+                double j;
+                constexpr explicit mystr(int pi, double pj):i(pi), j(pj){;}
+        };
+
+TEST(Factory, PoolCalls){
+        mystr * ptrtostr = n_tools::createPooledObject<mystr>(1, 31.4);
+        EXPECT_EQ(ptrtostr->i, 1);
+        n_tools::destroyPooledObject<mystr>(ptrtostr);
+}
+
+TEST(Bits, FBS)
+{
+        size_t i = 1;
+        size_t j = 1;
+        size_t rng = sizeof(i)*8;
+        while(i){
+                EXPECT_EQ(n_tools::firstbitset<sizeof(i)>(i), rng-j);
+                i = i<<1;
+                ++j;
+        }
+                
+}
+
+TEST(Threading, DetectMainNoSyscall)
+{
+        n_pools::setMain();
+        std::vector<std::thread> ts;
+        for(size_t i = 0; i < 4; ++i)
+        {
+                ts.push_back(std::thread(
+                                [&]()->void{
+                                        EXPECT_FALSE(n_pools::isMain());
+                                        }
+                                        )
+                        );
+        }
+        for(auto& t : ts)
+                t.join();
+        EXPECT_TRUE(n_pools::isMain());
+}
+
+TEST(Pool, CFPool){
+        using n_network::Message;
+        using n_model::uuid;
+        using n_network::t_timestamp;
+        std::set<Message*> ptrs;
+        size_t psize=65;
+        size_t tsize=65;
+        size_t rsize=2;
+        n_pools::CFPool<Message> pl(psize);
+        std::vector<Message*> mptrs;
+        for(size_t j = 0; j<rsize;++j){
+                for(size_t i = 0; i<tsize; ++i){
+                        Message* rawmem = pl.allocate();
+                        Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        mptrs.push_back(msgconstructed);
+                        if (!ptrs.insert(msgconstructed).second){
+                                std::cerr << "Double ptr " << msgconstructed << std::endl;
+                                throw 42;
+                        }
+                }
+                for(auto p : mptrs){
+                        pl.deallocate(p);
+                }
+                ptrs.clear();
+                mptrs.clear();
+        }
+        //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        EXPECT_EQ(pl.allocated(), 0u);
 }
