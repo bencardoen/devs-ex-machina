@@ -121,7 +121,7 @@ struct statistics_collector{
  */
 class Core
 {
-private:
+protected:
 
 	/**
 	 * Current simulation time
@@ -193,7 +193,7 @@ protected:
 	std::size_t m_cores;
 	std::size_t m_msgStartCount;
         
-private:
+protected:
         /**
          * Messages to process in a current round.
          */

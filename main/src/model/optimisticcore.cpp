@@ -267,6 +267,8 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 void Optimisticcore::runSmallStep()
 {
         // Find out how many sent messages we have with time <= gvt
+        this->lockSimulatorStep();
+
         if (m_removeGVTMessages) {
                 auto senditer = m_sent_messages.begin();
                 for (; senditer != m_sent_messages.end(); ++senditer) {
@@ -281,17 +283,17 @@ void Optimisticcore::runSmallStep()
                         ptr = nullptr;
 #endif
                 }
-                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
-                        t_msgptr ptr = *iter2;
-                        if (ptr->flagIsSet(Status::KILL)) {
-                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                                ptr->releaseMe();
-                                m_stats.logStat(DELMSG);
-                                iter2 = m_sent_messages.erase(iter2);
-                        } else {
-                                ++iter2;
-                        }
-                }
+//                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
+//                        t_msgptr ptr = *iter2;
+//                        if (ptr->flagIsSet(Status::KILL)) {
+//                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+//                                ptr->releaseMe();
+//                                m_stats.logStat(DELMSG);
+//                                iter2 = m_sent_messages.erase(iter2);
+//                        } else {
+//                                ++iter2;
+//                        }
+//                }
                 for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
                         t_msgptr ptr = *aiter;
                         if (ptr->flagIsSet(Status::KILL)) {
@@ -313,7 +315,50 @@ void Optimisticcore::runSmallStep()
                 m_removeGVTMessages = false;
         }
 
-        Core::runSmallStep();
+        m_stats.logStat(TURNS);
+
+        // Noop in single core. Pull messages from network, sort them.
+        // This step can trigger a revert, which is why its before getImminent
+            // getMessages will also turn a core back to live in optimistc (in revert).
+        this->getMessages();    // locked on msgs
+
+        if (!this->isLive()) {
+            LOG_DEBUG("\tCORE :: ", this->getCoreID(),
+                    " skipping small Step, we're idle and got no messages.");
+            this->unlockSimulatorStep();
+            return;
+        }
+
+        // Query imminent models (who are about to fire transition)
+
+            this->getImminent(m_imminents);
+
+            // Dynamic structured needs the list, but best before we add externals to it.
+            this->signalImminent(m_imminents);
+
+        // Get all produced messages, and route them.
+        this->collectOutput(m_imminents);
+
+        // Get msg < timenow, sort them for ext/conf.
+        this->getPendingMail(); //
+
+        // Transition depending on state.
+        this->transition();     // NOTE: the scheduler can go empty() here.
+
+        // Finally find out what next firing times are and place models accordingly.
+        this->rescheduleImminent();
+
+        // Forward time to next message/firing.
+        this->syncTime();               // locked on msgs
+            m_imminents.clear();
+            m_externs.clear();
+
+
+        this->checkTerminationFunction();
+
+
+        // Finally, unlock simulator.
+        this->unlockSimulatorStep();
 }
 
 void Optimisticcore::getMessages()
@@ -470,6 +515,7 @@ void Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std
         LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                 " GVT received first control message, starting first round");
         this->setColor(MessageColor::RED);
+        setTred(t_timestamp::infinity());
         msg->setTmin(this->getTMin());
         msg->setTred(t_timestamp::infinity());
         LOG_INFO("MCORE :: ", this->getCoreID(), " Starting GVT Calculating with tred value of ", msg->getTred(),
@@ -580,6 +626,7 @@ bool n_model::Optimisticcore::existTransientMessage()
 void n_model::Optimisticcore::setColor(MessageColor mc)
 {
         std::lock_guard<std::mutex> lock(m_colorlock);
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting color from ", (m_color==WHITE?"white":"red"), " to ", (mc==WHITE?"white":"red"));
         this->m_color = mc;
 }
 
@@ -612,5 +659,6 @@ t_timestamp n_model::Optimisticcore::getTred()
 void n_model::Optimisticcore::setTred(t_timestamp val)
 {
         std::lock_guard<std::mutex> lock(m_tredlock);
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting tRed from ", m_tred, " to ", val);
         this->m_tred = val;
 }

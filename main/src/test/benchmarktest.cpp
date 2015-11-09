@@ -302,7 +302,7 @@ TEST(Benchmark, phold_single)
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdSingle.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
 }
 
-TEST(Benchmark, DISABLED_phold_opt)
+TEST(Benchmark, phold_opt)
 {
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
