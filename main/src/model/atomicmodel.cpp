@@ -169,6 +169,7 @@ t_timestamp AtomicModel_impl::revert(t_timestamp time)
 {
 	if (!m_keepOldStates) {
 		LOG_ERROR("Model has set m_keepOldStates to false, can't call revert!");
+                throw std::logic_error("We're almost a markov chain, we really don't care what our past is.");
 		return t_timestamp::infinity();
 	}
 	auto r_itStates = m_oldStates.rbegin();
@@ -199,7 +200,7 @@ t_timestamp AtomicModel_impl::revert(t_timestamp time)
 	this->m_state = state;
 
 	// We return the m_timeNext of our current state
-	LOG_DEBUG("AMODEL:: revert for totime ", time, " returning ", this->m_timeNext);
+	LOG_DEBUG("AMODEL:: revert for totime ", time, " returning ", this->m_timeNext, " timelast = ", this->m_timeLast);
 	return this->m_timeNext;
 
 }

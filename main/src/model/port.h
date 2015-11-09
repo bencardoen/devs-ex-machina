@@ -351,6 +351,7 @@ void Port::createMessages(const DataType& message,
 #ifdef USE_STAT
 			++m_sendstat[pair.first];
 #endif
+                        LOG_DEBUG("Message created == ", container.back()->toString());
 		}
 	}
 }

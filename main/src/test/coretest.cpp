@@ -117,7 +117,6 @@ TEST(Core, CoreFlow)
 	t_msgptr mymessage = createRawObject<Message>(modelfrom->getUUID(), modelto->getUUID(), (0), portname_stub, portname_stub);
 	EXPECT_EQ(mymessage->getDestinationCore(), 0u);
 	EXPECT_EQ(mymessage->getSourceCore(), 0u);
-	c.init();
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());

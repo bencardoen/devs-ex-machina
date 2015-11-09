@@ -452,7 +452,6 @@ Conservativecore::gcCollect()
                 std::deque<t_msgptr>::iterator iter = m_sent_messages.begin();
                 for(; iter != m_sent_messages.end(); ++iter){
                         t_msgptr mptr = *iter;// debugging
-                        t_timestamp::t_time msgtime = mptr->getTimeStamp().getTime();
                         if(mptr->getTimeStamp().getTime()>= dgvt){
                                 break;
                         }

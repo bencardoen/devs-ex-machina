@@ -156,7 +156,10 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
 		m_outs[dest]->createMessages(r, msgs);
 		LOG_INFO("[PHOLD] - ",getName()," Ports created ", msgs.size(), " messages.");
-	}
+	}else
+        {
+                LOG_WARNING("[PHOLD] - ",getName()," no events on state ?!");
+        }
 }
 
 

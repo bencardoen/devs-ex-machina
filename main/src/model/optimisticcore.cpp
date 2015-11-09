@@ -20,9 +20,10 @@ Optimisticcore::~Optimisticcore()
         for (auto& ptr : m_sent_messages) {
                 LOG_ERROR("MCORE:: ", this->getCoreID(), " HAVE ", ptr,
                         " in  m_sent_messages @ destruction. This will result in an std::bad_alloc exception.");
-                // We're back on main's thread, cannot call our pool.
-                ptr->releaseMe();
-                m_stats.logStat(DELMSG);
+                // We're back on main's thread, cannot call our pool, and an exception in destructor makes 
+                // backtracing impossible.
+                //ptr->releaseMe();
+                //m_stats.logStat(DELMSG);
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
@@ -314,10 +315,9 @@ void Optimisticcore::runSmallStep()
 
         m_stats.logStat(TURNS);
 
-        // Noop in single core. Pull messages from network, sort them.
         // This step can trigger a revert, which is why its before getImminent
             // getMessages will also turn a core back to live in optimistc (in revert).
-        this->getMessages();    // locked on msgs
+        this->getMessages();
 
         if (!this->isLive()) {
             LOG_DEBUG("\tCORE :: ", this->getCoreID(),
@@ -328,10 +328,10 @@ void Optimisticcore::runSmallStep()
 
         // Query imminent models (who are about to fire transition)
 
-            this->getImminent(m_imminents);
+        this->getImminent(m_imminents);
 
-            // Dynamic structured needs the list, but best before we add externals to it.
-            this->signalImminent(m_imminents);
+        // Dynamic structured needs the list, but best before we add externals to it.
+        this->signalImminent(m_imminents);
 
         // Get all produced messages, and route them.
         this->collectOutput(m_imminents);
