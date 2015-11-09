@@ -197,7 +197,7 @@ public:
 	/**
 	 * Lookup message destination core, fix address field and send to network.
 	 */
-	void sendMessage(t_msgptr);
+	void sendMessage(t_msgptr)override;
 
 	/**
 	 * A sent message needs to be stored up until GVT.
