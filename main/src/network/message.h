@@ -41,7 +41,7 @@ operator<<(std::ostream& os, const MessageColor& c);
 /**
  * A Message representing an event passed between models.
  */
-class __attribute__((aligned(64)))Message
+class /* __attribute__((aligned(64)))*/Message
 {
 protected:
 	/**
@@ -59,8 +59,7 @@ protected:
      */
     const mid             m_dst_id;
     
-    // Not boolean to make (possible) switch to n-color less painful.
-	std::atomic<uint8_t> m_atomic_flags __attribute__((aligned(4)));
+	std::atomic<uint8_t> m_atomic_flags;
         
     Message(const Message&) = delete;
     Message(const Message&&) = delete;
@@ -268,7 +267,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class __attribute__((aligned(64)))SpecializedMessage: public Message
+class /*__attribute__((aligned(64)))*/SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;
