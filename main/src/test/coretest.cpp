@@ -932,6 +932,8 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c1->getTime().getTime(), 70u);
         EXPECT_EQ(c1->getEit(), t_timestamp::MAXTIME);
         tracers->startTrace();
+        c0->shutDown();
+        c1->shutDown();
 	}
 }
 
@@ -1062,7 +1064,9 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(eotvector->get(1), 15u); 
                 EXPECT_EQ(timevector->get(2), 11u); 
                 EXPECT_EQ(eotvector->get(2), 15u); 
-                
+                c0->shutDown();
+                c1->shutDown();
+                c2->shutDown();
 	}
 }
 #include <performance/phold/phold.h>
@@ -1134,4 +1138,6 @@ TEST(Conservativecore, PHOLD){
 	n_tools::CoutRedirect myRedirect(filestream);
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
+        zero->shutDown();
+        one->shutDown();
 }

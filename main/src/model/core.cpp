@@ -422,7 +422,7 @@ void n_model::Core::runSmallStep()
 	this->rescheduleImminent();
 	
 	// Forward time to next message/firing.
-	this->syncTime();				// locked on msgs
+	this->syncTime();				
         m_imminents.clear();
         m_externs.clear();
 

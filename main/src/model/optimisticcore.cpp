@@ -108,10 +108,7 @@ void Optimisticcore::sendMessage(t_msgptr msg)
 
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 {
-        // We're locked on msglock
-        // size_t branch :: skip alloc of amsg entirely.
         m_stats.logStat(AMSGSENT);
-
         // Don't touch the color of the message.
         msg->setAntiMessage(true);
 
@@ -349,9 +346,9 @@ void Optimisticcore::runSmallStep()
         this->rescheduleImminent();
 
         // Forward time to next message/firing.
-        this->syncTime();               // locked on msgs
-            m_imminents.clear();
-            m_externs.clear();
+        this->syncTime();               
+        m_imminents.clear();
+        m_externs.clear();
 
 
         this->checkTerminationFunction();
@@ -535,18 +532,18 @@ void Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std
 
 void Optimisticcore::setGVT(const t_timestamp& candidate)
 {
-
+        this->lockSimulatorStep();              
         t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 #ifdef SAFETY_CHECKS
         if (newgvt.getTime() < this->getGVT().getTime() || isInfinity(newgvt) ) {
                 LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
                         this->getGVT());
                 LOG_FLUSH;
+                this->unlockSimulatorStep();
                 throw std::logic_error("Invalid GVT found");
         }
 #endif
 
-        this->lockSimulatorStep();              // implies msglock
         Core::setGVT(newgvt);
         m_removeGVTMessages = true;
 
@@ -563,24 +560,19 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 
 void n_model::Optimisticcore::lockSimulatorStep()
 {
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
-#endif
+        
         this->m_locallock.lock();
-#ifdef LOG_LOCK
+        
         LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
-#endif
+
 }
 
 void n_model::Optimisticcore::unlockSimulatorStep()
 {
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " trying to unlock simulator core.");
-#endif
         this->m_locallock.unlock();
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
-#endif
 }
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)

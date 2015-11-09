@@ -178,9 +178,9 @@ public:
 	 */
 	virtual ~Optimisticcore();
 
-    void runSmallStep() override;
+        void runSmallStep() override;
 
-    void shutDown() override;
+        void shutDown() override;
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
