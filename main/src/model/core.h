@@ -487,7 +487,7 @@ public:
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
 	 * @attention assert(false) in single core TODO cereal
 	 */
-	virtual void sendMessage(const t_msgptr&)
+	virtual void sendMessage(t_msgptr)
 	{
 		assert(false && "A message for a remote core in a single core implemenation.");
 	}

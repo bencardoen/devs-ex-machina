@@ -108,9 +108,9 @@ class CFPool: public PoolInterface<T>
                         
                 }
                 
-                constexpr size_t size(){return m_osize;}
+                constexpr size_t size()const{return m_osize;}
                 
-                constexpr size_t allocated(){return m_allocated;}
+                constexpr size_t allocated()const{return m_allocated;}
 };
 
 
