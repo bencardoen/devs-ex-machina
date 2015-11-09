@@ -113,7 +113,12 @@ void n_model::Core::init()
 		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);
 		model->setTime(modelTime);	// DO NOT use priority, model does this already
 		m_heap.push_back(model.get());
-		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
+                if(m_tracers){
+                        m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
+                }
+                else{
+                        LOG_WARNING("No Tracers set on core!", this->getCoreID());
+                }
 	}
 	//schedule all models.
 	rescheduleAll();

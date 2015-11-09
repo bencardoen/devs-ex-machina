@@ -14,6 +14,7 @@
 #include <mutex>
 #include <deque>
 #include <set>
+#include "tools/globallog.h"
 
 /**
  * A pool is thread local. 

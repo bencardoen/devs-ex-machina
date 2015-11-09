@@ -90,7 +90,7 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ"
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
@@ -111,7 +111,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
         SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=thread" )
     else()
-        MESSAGE( STATUS"Working with Clang: threadsanitizer not supported")
+        MESSAGE( STATUS"Working with Clang: threadsanitizer not supported, enabling UBSAN")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined" )
     endif()
 else()
         MESSAGE( STATUS"Using G++ : using flto")
