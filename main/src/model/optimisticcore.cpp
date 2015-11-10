@@ -80,6 +80,7 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                                 ptr->toString());
                         ptr->releaseMe();
                 }
+                // else push on m_processed
         }
         msgs.clear();
 }
@@ -123,12 +124,14 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
+        // Store flag to save on atomics.
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " entering handleAntiMessage with message ", msg);
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " handling antimessage ", msg->toString());
 
         if (msg->flagIsSet(Status::PROCESSED)) {
                 // processed before, must do revert (handled elsewhere)
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, marking as KILL ", msg);
+                // Don't set kill, do it in revert on pushing.
                 msg->setFlag(Status::KILL);
         } else if (msg->flagIsSet(Status::HEAPED)) {
                 // is currently in the scheduler, mark as to erase
@@ -269,7 +272,8 @@ void Optimisticcore::runSmallStep()
         // Find out how many sent messages we have with time <= gvt
         this->lockSimulatorStep();
 
-        if (m_removeGVTMessages) {
+        if (m_removeGVTMessages) {      // move to gccollect
+                // In Gccollect, move over m_processed.
                 auto senditer = m_sent_messages.begin();
                 for (; senditer != m_sent_messages.end(); ++senditer) {
                         if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
@@ -569,6 +573,17 @@ void n_model::Optimisticcore::unlockSimulatorStep()
 
 void n_model::Optimisticcore::revert(const t_timestamp& totime)
 {
+        /** Heaped = true
+         *  for auto& in :
+         *   m_processed_messages until totime:
+         *              if not antimessage, push on pending
+         *              else set kill & lose
+         *  for ( riter .... )
+         *       if(riter < totime)
+         *              break
+         *       else
+         *              if(antimsg)...
+         */
         assert(totime.getTime() >= this->getGVT().getTime());
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
         if (!this->isLive()) {
