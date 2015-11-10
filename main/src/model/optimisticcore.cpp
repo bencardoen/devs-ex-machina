@@ -40,6 +40,7 @@ void Optimisticcore::initThread()
 {
         for (size_t index = 0; index < m_indexed_models.size(); ++index) {
                 const t_atomicmodelptr& model = m_indexed_models[index];
+                model->setKeepOldStates(true);
                 model->prepareSimulation();
                 LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " preparing model ", model->getName(), " for simulation.");
         }
@@ -94,6 +95,11 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                                 ptr->toString());
                         ptr->releaseMe();
                 }
+                else{
+                        /**
+                        m_processed_messages.push_back(ptr);
+                        */
+                }
         }
         msgs.clear();
 }
@@ -137,18 +143,22 @@ void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
+        // Store flag to save on atomics.
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " entering handleAntiMessage with message ", msg);
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " handling antimessage ", msg->toString());
 
         if (msg->flagIsSet(Status::PROCESSED)) {
                 // processed before, must do revert (handled elsewhere)
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, marking as KILL ", msg);
+                // Don't set kill, do it in revert on pushing.
                 msg->setFlag(Status::KILL);
         } else if (msg->flagIsSet(Status::HEAPED)) {
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
                 m_received_messages->printScheduler();
-                this->m_received_messages->erase(MessageEntry(msg));
+                bool erased = this->m_received_messages->erase(MessageEntry(msg));
+                if(!erased)
+                        throw std::logic_error("Pending messages integrity failure!");
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
                 msg->setFlag(Status::KILL);
         } else if (msg->flagIsSet(Status::DELETE)) {
@@ -598,9 +608,11 @@ void n_model::Optimisticcore::unlockSimulatorStep()
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
 }
 
-void n_model::Optimisticcore::revert(const t_timestamp& totime)
+void n_model::Optimisticcore::revert(const t_timestamp& rtime)
 {
-        assert(totime.getTime() >= this->getGVT().getTime());
+        const t_timestamp::t_time totime = rtime.getTime();
+        const t_timestamp::t_time gtime = this->getGVT().getTime();
+        assert(totime >= gtime);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
         if (!this->isLive()) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Core going from idle to active ");
@@ -612,7 +624,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
                 t_msgptr msg = m_sent_messages.back();
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
-                if (msg->getTimeStamp().getTime() >= totime.getTime()) {
+                if (msg->getTimeStamp().getTime() >= totime) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                                 " revert : sent message > time , antimessagging. \n ", msg->toString());
@@ -622,11 +634,30 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
                         break;
                 }
         }
+        /**
+        while(m_processed_messages.size()){
+                t_msgptr msg = m_processed_messages.back();
+                LOG_DEBUG("Revert :: handling processed msg :: ", msg, " ~ ", msg->toString());
+                t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
+                if(msgtime < totime)
+                        break;
+#ifdef SAFETY_CHECKS
+                if(!msg->flagIsSet(Status::PROCESSED) || !msg->flagIsSet(Status::HEAPED))
+                        throw std::logic_error("P/H not set on a PROCESSED msg.");
+#endif
+                if(!msg->flagIsSet(Status::ANTI)){
+                        msg->setFlag(Status::HEAPED);
+                        msg->setFlag(Status::PROCESSED, false);
+                        m_received_messages.push_back(msg);
+                }
+                m_processed_messages.pop_back();
+        }*/
+        
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
 
-        this->setTime(totime);
-        this->rescheduleAllRevert(totime);		// Make sure the scheduler is reloaded with fresh/stale models
-        this->revertTracerUntil(totime); 	// Finally, revert trace output
+        this->setTime(rtime);
+        this->rescheduleAllRevert(rtime);		// Make sure the scheduler is reloaded with fresh/stale models
+        this->revertTracerUntil(rtime); 	// Finally, revert trace output
 }
 
 bool n_model::Optimisticcore::existTransientMessage()

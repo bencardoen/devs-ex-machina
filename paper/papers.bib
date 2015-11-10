@@ -1,0 +1,200 @@
+% Main PythonPDEVS paper, used for describing the architecture
+@inproceedings{PythonPDEVS,
+    author    = {Van Tendeloo, Yentl and
+                 Vangheluwe, Hans},
+    title     = {{The Modular Architecture of the Python(P)DEVS Simulation Kernel}},
+    booktitle = {Spring Simulation Multi-Conference},
+    year      = {2014},
+    location  = {Tampa, Florida},
+    pages     = {387 -- 392},
+    publisher = {SCS},
+    keywords  = {DEVS, Simulation, Simulator Architecture}
+}
+
+% Classic DEVS introduction
+@book{ClassicDEVS,
+    author    = {Zeigler, Bernard P. and
+                 Praehofer, Herbert and
+                 Kim, Tag Gon},
+    title     = {Theory of Modeling and Simulation},
+    publisher = {Academic Press},
+    year      = {2000},
+    edition   = {second},
+}
+
+% Parallel DEVS introduction
+@inproceedings{ParallelDEVS,
+    author    = {Chow, Alex Chung Hen and
+                 Zeigler, Bernard P.},
+    title     = {{Parallel DEVS}: a parallel, hierarchical, modular, modeling formalism},
+    booktitle = {Proceedings of the 26th Winter Simulation Conference},
+    year      = {1994},
+    isbn      = {0-7803-2109-X},
+    pages     = {716--722},
+    numpages  = {7},
+    url       = {http://dl.acm.org/citation.cfm?id=193201.194336},
+    publisher = {SCS}
+}
+
+% ADEVS
+@misc{adevs,
+    title     = {{ADEVS}},
+    author    = {James J. Nutaro},
+    year      = {2015},
+    howpublished = "\url{http://www.ornl.gov/~1qn/adevs/}"
+}
+
+% Related work: combining different synchronization methods, but not the same as us
+@article{globaltimewarp,
+    author    = {Kim, Ki Hyung and
+                 Seong, Yeong Rak and
+                 Kim, Tag Gon and
+                 Park, Kyu Ho},
+    title     = {Distributed simulation of hierarchical {DEVS} models: Hierarchical scheduling locally and time warp globally},
+    journal   = {Transactions of the SCS},
+    year      = {1996},
+    volume    = {13},
+    number    = {3},
+    pages     = {135--154}
+}
+
+% introduction to synchronization protocols
+@book{FujimotoBook,
+    author    = {Fujimoto, Richard M.},
+    title     = {Parallel and Distribution Simulation Systems},
+    year      = {1999},
+    edition   = {1st},
+    publisher = {John Wiley \& Sons, Inc.},
+    address   = {New York, NY, USA},
+}
+
+% parallelism only on the level of LPs, not for parallel transition functions
+@inproceedings{Himmelspach,
+    author    = {Himmelspach, Jan and
+                 Uhrmacher, Adelinde M.},
+    title     = {Sequential processing of {PDEVS} models},
+    booktitle = {Proceedings of the 3rd European Modeling \& Simulation Symposium},
+    year      = {2006},
+    pages     = {239--244}
+}
+
+% direct connection paper
+@inproceedings{SymbolicFlattening,
+    author    = {Chen, Bin and
+                 Vangheluwe, Hans},
+    title     = {Symbolic flattening of {DEVS} models},
+    booktitle = {Summer Simulation Multiconference},
+    year      = {2010},
+    pages     = {209--218}
+}
+
+% PHOLD paper
+@inproceedings{PHOLD,
+    author    = {Fujimoto, Richard M.},
+    title     = {Performance of {Time Warp} under synthetic workkloads},
+    year      = {1990},
+    booktitle = {Proceedings of the SCS Multiconference on Distributed Simulation},
+}
+
+% DEVStone paper
+@inproceedings{DEVStone,
+    author    = {Glinsky, Ezequiel and
+                 Wainer, Gabriel},
+    title     = {{DEVStone}: a Benchmarking Technique for Studying Performance of {DEVS} Modeling and Simulation Environments},
+    booktitle = {Proceedings of the 2005 9th {IEEE/ACM} International Symposium on Distributed Simulation and Real-Time Applications},
+    year      = {2005},
+    pages     = {265--272}
+}
+
+% Activity as used in PythonPDEVS, showing how it is used, useful for future work section maybe
+@inproceedings{PythonPDEVS_ACTIMS,
+    author    = {Van Tendeloo, Yentl and
+                 Vangheluwe, Hans},
+    title     = {Activity in PythonPDEVS},
+    booktitle = {Activity-Based Modeling and Simulation},
+    year      = {2014}
+}
+
+% PythonPDEVS from the distributed/parallel point of view
+@inproceedings{PythonPDEVS2,
+    author                  = {Van Tendeloo, Yentl and
+                               Vangheluwe, Hans},
+    title                   = {{PythonPDEVS: a distributed Parallel DEVS simulator}},
+    booktitle               = {Proceedings of the 2015 Spring Simulation Multiconference},
+    series                  = {SpringSim '15},
+    year                    = {2015},
+    publisher               = {Society for Computer Simulation International},
+    pages                   = {844--851},
+}
+
+% Dynamic structure DEVS
+@article{DSDEVS,
+    author = {Barros, Fernando J.},
+    title = {Modeling formalisms for dynamic structure systems},
+    journal = {ACM Transactions on Modeling and Computer Simulation},
+    volume = {7},
+    year = {1997},
+    pages = {501--515}
+}
+
+% CD++ in parallel mode, but main focus is on the formalism
+@inproceedings{ParallelCellDEVS,
+    author                  = {Troccoli, Alejandro and
+                               Wainer, Gabriel},
+    title                   = {Implementing {Parallel Cell-DEVS}},
+    booktitle               = {Annual Simulation Symposium},
+    year                    = {2003},
+    pages                   = {273--280}
+}
+
+% Previous comparison between conservative and optimistic, though in two different tools, useful as background information in related work (to CD++)
+@inproceedings{Jafer,
+    author = {Jafer, Shafagh and Wainer, Gabriel},
+    title = {Conservative vs. Optimistic Parallel Simulation of DEVS and Cell-DEVS: A Comparative Study},
+    booktitle = {Proceedings of the 2010 Summer Computer Simulation Conference},
+    series = {SCSC '10},
+    year = {2010},
+    pages = {342--349},
+} 
+
+% Paper on some optimizations implemented in adevs
+@inproceedings{adevs_opt,
+  author = {Muzy, Alexandre and
+            Nutaro, James J.},
+  title = {Algorithms for efficient implementations of the {DEVS} \& {DSDEVS} abstract simulators},
+  booktitle = {1st Open International Conference on Modeling and Simulation (OICMS)},
+  year = {2005},
+  pages = {273--279}
+}
+
+% More background on Parallel CD++
+@inproceedings{Glinsky,
+  author = {Glinsky, Ezequiel and
+            Wainer, Gabriel},
+  title = {New Parallel Simulation Techniques of {DEVS} and {Cell-DEVS} in {CD++}},
+  booktitle = {Proceedings of the 39th annual Symposium on Simulation},
+  year = {2006},
+  pages = {244--251},
+}
+
+% Main activity paper
+@article{activity,
+  author    = {Muzy, Alexandre and
+               Varenne, Franck and
+               Zeigler, Bernard P. and
+               Caux, Jonathan and
+               Coquillard, Patrick and
+               Touraille, Luc and
+               Prunetti, Dominique and
+               Caillou, Philippe and
+               Michel, Olivier and
+               Hill, David R. C.},
+  title     = {Refounding of the activity concept? Towards a federative
+               paradigm for modeling and simulation},
+  journal   = {Simulation},
+  volume    = {89},
+  number    = {2},
+  year      = {2013},
+  pages     = {156--177},
+}
+

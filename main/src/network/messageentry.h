@@ -23,11 +23,11 @@ private:
 	t_msgptr	m_message;
 public:
 	MessageEntry() = delete;
-	MessageEntry(const t_msgptr& msg):m_message(msg){;}
-	virtual ~MessageEntry(){;}
+	constexpr MessageEntry(const t_msgptr& msg):m_message(msg){;}
+	~MessageEntry()=default;
 
-	const t_msgptr&
-	getMessage()const{return m_message;}
+        t_msgptr
+	constexpr getMessage()const{return m_message;}
         
         explicit operator size_t()const{return m_message->getDestinationModel();} // TODO do we still need this ?
 

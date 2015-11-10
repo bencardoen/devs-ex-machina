@@ -576,11 +576,9 @@ void n_model::Core::queuePendingMessage(const t_msgptr& msg)
                 msg->setFlag(Status::HEAPED);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
         } else {
-                LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
+                LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
                         msg->toString());
-                this->m_received_messages->erase(entry);
-                this->m_received_messages->push_back(entry);
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
+                throw std::logic_error("Pending msgs integrity failure.");
         }
 }
 

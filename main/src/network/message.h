@@ -49,22 +49,24 @@ protected:
 	 */
 	t_timestamp m_timestamp;
         
-    /**
-     * Unique source identifier.
-     */ 
-    const mid             m_src_id;
-    
-    /**
-     * Unique destination identifier.
-     */
-    const mid             m_dst_id;
-    
-	std::atomic<uint8_t> m_atomic_flags;
+        /**
+         * Unique source identifier.
+         */ 
+        const mid             m_src_id;
+
+        /**
+         * Unique destination identifier.
+         */
+        const mid             m_dst_id;
         
-    Message(const Message&) = delete;
-    Message(const Message&&) = delete;
-    Message& operator=(const Message&)=delete;
-    Message& operator=(const Message&&)=delete;
+        typedef uint8_t         t_flag_word;
+    
+	std::atomic<t_flag_word> m_atomic_flags;
+        
+        Message(const Message&) = delete;
+        Message(const Message&&) = delete;
+        Message& operator=(const Message&)=delete;
+        Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -81,35 +83,35 @@ public:
 	const t_timestamp& time_made,
 	const std::size_t& destport, const std::size_t& sourceport);
 
-    std::size_t getDestinationPort() const
-	{ 
-        return m_dst_id.portid();
-    }
+        std::size_t getDestinationPort() const
+        { 
+                return m_dst_id.portid();
+        }
         
 	std::size_t getDestinationCore() const
 	{
 		return m_dst_id.coreid();
 	}
         
-    std::size_t getDestinationModel() const
-    {
-            return m_dst_id.modelid();
-    }
+        std::size_t getDestinationModel() const
+        {
+                return m_dst_id.modelid();
+        }
         
-    std::size_t getSourceCore() const
+        std::size_t getSourceCore() const
 	{
 		return m_src_id.coreid();
 	}
         
-    std::size_t getSourceModel()const
-    {
+        std::size_t getSourceModel()const
+        {
             return m_src_id.modelid();
-    }
+        }
         
-    std::size_t getSourcePort() const
+        std::size_t getSourcePort() const
 	{ 
-        return m_src_id.portid();
-    }
+                return m_src_id.portid();
+        }
 
 	void setAntiMessage(bool b)
 	{
@@ -137,27 +139,27 @@ public:
 	 */
 	void paint(MessageColor newcolor)
 	{
-        if(newcolor==MessageColor::RED)
-            m_atomic_flags |= newcolor;
-        else
-            m_atomic_flags &= ~MessageColor::RED;
+                if(newcolor==MessageColor::RED)
+                    m_atomic_flags |= newcolor;
+                else
+                    m_atomic_flags &= ~MessageColor::RED;
 	}
 
         
-    void setFlag(Status newst, bool value=true)
-    {
+        void setFlag(Status newst, bool value=true)
+        {
             LOG_DEBUG("setting ", newst, " flag of ", this, " ", toString(), " to ", value);
-        if(value)
-            m_atomic_flags |= newst;
-        else
-            m_atomic_flags &= ~newst;
-    }
-        
-    bool flagIsSet(Status st)const
-    {
-        return (m_atomic_flags & st);   
-        //In general should be (flag & mask) == mask, but conversion to bool serves fine.
-    }
+            if(value)
+                m_atomic_flags |= newst;
+            else
+                m_atomic_flags &= ~newst;
+        }
+
+        bool flagIsSet(Status st)const
+        {
+            return (m_atomic_flags & st);   
+            //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+        }
 
 	//can't remove. Needed by tracer
 	/**
@@ -226,23 +228,29 @@ public:
 	{
 		m_timestamp = t_timestamp(m_timestamp.getTime(), causal);
 	}
+        
+        /**
+         * Get a copy of all flags. Use for unsynced access only (copy is synced).
+         */
+        t_flag_word
+        getFlags(){return m_atomic_flags.load();}
 
 	virtual ~Message()
 	{
         ;
 	}
         
-    friend
-    bool operator<(const Message& left, const Message& right);
-    
-    friend
-    bool operator<=(const Message& left, const Message& right);
-    
-    friend
-    bool operator>=(const Message& left, const Message& right);
-    
-    friend
-    bool operator>(const Message& left, const Message& right);
+        friend
+        bool operator<(const Message& left, const Message& right);
+
+        friend
+        bool operator<=(const Message& left, const Message& right);
+
+        friend
+        bool operator>=(const Message& left, const Message& right);
+
+        friend
+        bool operator>(const Message& left, const Message& right);
 
 	friend
 	bool operator==(const Message& left, const Message& right);

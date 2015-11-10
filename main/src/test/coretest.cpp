@@ -242,6 +242,7 @@ TEST(Optimisticcore, revert){
 	t_timestamp endtime(2000,0);
 	coreone->setTerminationTime(endtime);
 	coreone->init();
+	coreone->initThread();
 	coreone->syncTime();
 	EXPECT_EQ(coreone->getTime().getTime(), 58u);
 	
@@ -305,6 +306,7 @@ TEST(Optimisticcore, revertidle){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -312,6 +314,7 @@ TEST(Optimisticcore, revertidle){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -393,6 +396,7 @@ TEST(Optimisticcore, revertedgecases){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -400,6 +404,7 @@ TEST(Optimisticcore, revertedgecases){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -483,6 +488,7 @@ TEST(Optimisticcore, revertoffbyone){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -490,6 +496,7 @@ TEST(Optimisticcore, revertoffbyone){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -574,6 +581,7 @@ TEST(Optimisticcore, revertstress){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -581,6 +589,7 @@ TEST(Optimisticcore, revertstress){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -656,12 +665,14 @@ TEST(Optimisticcore, revert_antimessaging){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -726,6 +737,7 @@ TEST(Optimisticcore, GVT){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -733,6 +745,7 @@ TEST(Optimisticcore, GVT){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -794,6 +807,7 @@ TEST(Conservativecore, Abstract){
 	ctrl.addModel(m);
 	c0->setTracers(tracers);
 	c0->init();  // LA = oo
+    c0->initThread();
 	c0->setTerminationTime(endTime);
 	c0->setLive(true);
 	c0->logCoreState();
@@ -801,6 +815,7 @@ TEST(Conservativecore, Abstract){
 
 	c1->setTracers(tracers);
 	c1->init();  // LA = 30
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -969,19 +984,22 @@ TEST(Conservativecore, Deadlock){
                 ctrl.addModel(m);
                 
                 c0->setTracers(tracers);
-                c0->init();  
+                c0->init();
+                c0->initThread();
                 c0->setTerminationTime(endTime);
                 c0->setLive(true);
                 c0->logCoreState();
                 
                 c1->setTracers(tracers);
                 c1->init();  
+                c1->initThread();
                 c1->setTerminationTime(endTime);
                 c1->setLive(true);
                 c1->logCoreState();
                 
                 c2->setTracers(tracers);
-                c2->init();  
+                c2->init();
+                c2->initThread();
                 c2->setTerminationTime(endTime);
                 c2->setLive(true);
                 c2->logCoreState();
@@ -1115,10 +1133,12 @@ TEST(Conservativecore, PHOLD){
         
 	Core* zero = ctrl->getCore(0);
         zero->init();
+        zero->initThread();
         zero->setTerminationTime(endTime);
         zero->setLive(true);
         Core* one = ctrl->getCore(1);
         one->init();
+        one->initThread();
         one->setTerminationTime(endTime);
         one->setLive(true);
         
