@@ -216,7 +216,6 @@ void n_model::Core::transition()
 			this->traceInt(getModel(modelid));
 		} else {
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
-			imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         assert(imminent->nextType() == AtomicModel_impl::CONF);
                         imminent->markNone();
                         imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
