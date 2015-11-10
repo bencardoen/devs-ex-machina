@@ -1,8 +1,8 @@
 /*
- * Multicore.h
+ * optimisticcore.h.h
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen -- Tim Tuijn
+ *      Author: Ben Cardoen -- Tim Tuijn -- Stijn Manhaeve
  */
 
 #ifndef SRC_MODEL_OPTIMISTICCORE_H_
@@ -18,7 +18,7 @@ using n_network::MessageColor;
 namespace n_model {
 
 /**
- * Multicore implementation of Core class.
+ * Optimistic synchronizing simulation core.
  */
 class Optimisticcore: public Core
 {
@@ -74,13 +74,15 @@ private:
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
-        std::deque<t_msgptr>        m_sent_messages;
+        std::deque<t_msgptr>                    m_sent_messages;
         /**
          * Sent anti messages, must be kept separate from the regular messages
          */
-        std::deque<t_msgptr>        m_sent_antimessages;
+        std::deque<t_msgptr>                    m_sent_antimessages;
 
 	bool m_removeGVTMessages;
+        
+        std::deque<t_msgptr>                    m_processed_messages;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -135,6 +137,12 @@ private:
          * @post msg.size() == 0
          */
         virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override;
+        
+        /**
+         * Garbage collect @ chosen time.
+         * @pre is called by thread that simulates. 
+         */
+        void gcCollect();
 
         
 protected:

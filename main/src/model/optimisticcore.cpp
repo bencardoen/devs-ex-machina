@@ -272,42 +272,8 @@ void Optimisticcore::runSmallStep()
         // Find out how many sent messages we have with time <= gvt
         this->lockSimulatorStep();
 
-        if (m_removeGVTMessages) {      // move to gccollect
-                // In Gccollect, move over m_processed.
-                auto senditer = m_sent_messages.begin();
-                for (; senditer != m_sent_messages.end(); ++senditer) {
-                        if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
-                                break;
-                        }
-                        t_msgptr& ptr = *senditer;
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                        ptr->releaseMe();
-                        m_stats.logStat(DELMSG);
-#ifdef SAFETY_CHECKS
-                        ptr = nullptr;
-#endif
-                }
-
-                for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
-                        t_msgptr ptr = *aiter;
-                        if (ptr->flagIsSet(Status::KILL)) {
-                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                                ptr->releaseMe();
-                                m_stats.logStat(DELMSG);
-                                aiter = m_sent_antimessages.erase(aiter);
-                        } else {
-                                ++aiter;
-                        }
-                }
-
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
-                        distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
-
-                m_sent_messages.erase(m_sent_messages.begin(), senditer);
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
-                        m_sent_messages.size());
-                m_removeGVTMessages = false;
-        }
+        if(m_removeGVTMessages)
+                this->gcCollect();
 
         m_stats.logStat(TURNS);
 
@@ -658,4 +624,63 @@ void n_model::Optimisticcore::setTred(t_timestamp val)
         std::lock_guard<std::mutex> lock(m_tredlock);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting tRed from ", m_tred, " to ", val);
         this->m_tred = val;
+}
+
+void n_model::Optimisticcore::gcCollect()
+{
+
+        auto senditer = m_sent_messages.begin();
+        for (; senditer != m_sent_messages.end(); ++senditer) {
+                if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
+                        break;
+                }
+                t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                ptr->releaseMe();
+                m_stats.logStat(DELMSG);
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif
+        }
+        
+        // Processed need to be recovered iff !anti. (A->B<-C scenario)
+        // note : reverse iterators can't be used to erase, so you need something like erase((++riter).base())
+        /**
+        while(m_processed_messages.size())
+        {
+                t_msgptr& msg = m_processed_messages.back();
+#ifdef SAFETY_CHECKS
+                if (!msg->flagIsSet(Status::HEAPED) || !msg->flagIsSet(Status::PROCESSED)){
+                        LOG_ERROR("Processed msg with H or P flag not set ? ", msg);
+                        throw std::logic_error("Processed msg with H or P flag not set ? ");
+                }
+#endif          
+                if(msg->getTimeStamp().getTime() >= this->getGVT().getTime())
+                        break;
+                else{
+                        LOG_DEBUG("Removing processed msg ", msg);
+                        msg->setFlag(Status::KILL);
+                        m_processed_messages.pop_back();
+                }
+        }*/
+
+        for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
+                t_msgptr ptr = *aiter;
+                if (ptr->flagIsSet(Status::KILL)) {
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                        ptr->releaseMe();
+                        m_stats.logStat(DELMSG);
+                        aiter = m_sent_antimessages.erase(aiter);
+                } else {
+                        ++aiter;
+                }
+        }
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
+                distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
+
+        m_sent_messages.erase(m_sent_messages.begin(), senditer);
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
+                m_sent_messages.size());
+        m_removeGVTMessages = false;
 }
