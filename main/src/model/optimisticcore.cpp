@@ -80,7 +80,11 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                                 ptr->toString());
                         ptr->releaseMe();
                 }
-                // else push on m_processed
+                else{
+                        /**
+                        m_processed_messages.push_back(ptr);
+                        */
+                }
         }
         msgs.clear();
 }
@@ -537,20 +541,11 @@ void n_model::Optimisticcore::unlockSimulatorStep()
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
 }
 
-void n_model::Optimisticcore::revert(const t_timestamp& totime)
+void n_model::Optimisticcore::revert(const t_timestamp& rtime)
 {
-        /** Heaped = true
-         *  for auto& in :
-         *   m_processed_messages until totime:
-         *              if not antimessage, push on pending
-         *              else set kill & lose
-         *  for ( riter .... )
-         *       if(riter < totime)
-         *              break
-         *       else
-         *              if(antimsg)...
-         */
-        assert(totime.getTime() >= this->getGVT().getTime());
+        const t_timestamp::t_time totime = rtime.getTime();
+        const t_timestamp::t_time gtime = this->getGVT().getTime();
+        assert(totime >= gtime);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
         if (!this->isLive()) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Core going from idle to active ");
@@ -562,7 +557,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
                 t_msgptr msg = m_sent_messages.back();
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
-                if (msg->getTimeStamp().getTime() >= totime.getTime()) {
+                if (msg->getTimeStamp().getTime() >= totime) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                                 " revert : sent message > time , antimessagging. \n ", msg->toString());
@@ -572,11 +567,30 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
                         break;
                 }
         }
+        /**
+        while(m_processed_messages.size()){
+                t_msgptr msg = m_processed_messages.back();
+                LOG_DEBUG("Revert :: handling processed msg :: ", msg, " ~ ", msg->toString());
+                t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
+                if(msgtime < totime)
+                        break;
+#ifdef SAFETY_CHECKS
+                if(!msg->flagIsSet(Status::PROCESSED) || !msg->flagIsSet(Status::HEAPED))
+                        throw std::logic_error("P/H not set on a PROCESSED msg.");
+#endif
+                if(!msg->flagIsSet(Status::ANTI)){
+                        msg->setFlag(Status::HEAPED);
+                        msg->setFlag(Status::PROCESSED, false);
+                        m_received_messages.push_back(msg);
+                }
+                m_processed_messages.pop_back();
+        }*/
+        
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
 
-        this->setTime(totime);
-        this->rescheduleAllRevert(totime);		// Make sure the scheduler is reloaded with fresh/stale models
-        this->revertTracerUntil(totime); 	// Finally, revert trace output
+        this->setTime(rtime);
+        this->rescheduleAllRevert(rtime);		// Make sure the scheduler is reloaded with fresh/stale models
+        this->revertTracerUntil(rtime); 	// Finally, revert trace output
 }
 
 bool n_model::Optimisticcore::existTransientMessage()
@@ -634,7 +648,7 @@ void n_model::Optimisticcore::gcCollect()
                 if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
                         break;
                 }
-                t_msgptr& ptr = *senditer;
+                t_msgptr ptr = *senditer;
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
