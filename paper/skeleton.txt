@@ -1,0 +1,20 @@
+- Introduction
+- Background
+  * Parallel DEVS
+  * Conservative synchronization
+  * Optimistic synchronization
+  * C++11 parallelism
+- Features
+  * Inheritted from PythonPDEVS
+  * Different synchronization protocols
+- Performance
+  * Sequential simulation
+    + CPU usage
+    + Memory usage
+  * Parallel simulation
+    + Conservative
+    + Optimistic
+- Related work
+  * PythonPDEVS, adevs, CD++
+  * Warped (PCD++ etc.)
+- Conclusions

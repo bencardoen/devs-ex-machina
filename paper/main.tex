@@ -1,0 +1,107 @@
+\documentclass{scs}
+\copyrightnotice{
+	SpringSim-TMS/DEVS 2016 April 3-6, Pasadena, CA, USA
+	
+	\copyright 2016 Society for Modeling \& Simulation International (SCS) 
+}
+
+% Load basic packages
+\usepackage{balance}		% to better equalize the last page
+\usepackage{graphics}		% for EPS, load graphicx instead
+\usepackage{times}			% comment if you want LaTeX's default font
+\usepackage{url}			% llt: nicely formatted URLs
+\usepackage{dblfloatfix}	% allow placement of a page-width figure at top or bottom of page
+
+% llt: Define a global style for URLs, rather that the default one
+\makeatletter
+\def\url@leostyle{%
+  \@ifundefined{selectfont}{\def\UrlFont{\sf}}{\def\UrlFont{\small\bf\ttfamily}}}
+\makeatother
+\urlstyle{leo}
+
+% To make various LaTeX processors do the right thing with page size.
+\def\pprw{8.5in}
+\def\pprh{11in}
+\special{papersize=\pprw,\pprh}
+\setlength{\paperwidth}{\pprw}
+\setlength{\paperheight}{\pprh}
+\setlength{\pdfpagewidth}{\pprw}
+\setlength{\pdfpageheight}{\pprh}
+
+% Make sure hyperref comes last of your loaded packages,
+% to give it a fighting chance of not being over-written,
+% since its job is to redefine many LaTeX commands.
+\usepackage[pdftex]{hyperref}
+
+% create a shortcut to typeset table headings
+\newcommand\tabhead[1]{\small\textbf{#1}}
+
+% End of preamble. Here comes the document.
+\begin{document}
+
+\title{Performance analysis of a parallel PDEVS simulator handling both conservative and optimistic protocols}
+
+% This is not how it should be, but we have 7 authors with difficult affiliations...
+\author{
+\begin{tabular}{ccc}
+    Ben Cardoen\dag     & Stijn Manhaeve\dag    & Tim Tuijn\dag \\
+    \multicolumn{3}{c}{\email{\{firstname.lastname\}@student.uantwerpen.be}} \\
+    \\
+\end{tabular}\\
+\begin{tabular}{cc}
+    Yentl Van Tendeloo\dag  & Kurt Vanmechelen\dag \\
+    Hans Vangheluwe\dag\ddag & Jan Broeckhove\dag \\
+    \multicolumn{2}{c}{\email{\{firstname.lastname\}@uantwerpen.be}} \\
+    \\
+\end{tabular} \\
+\affaddr{\dag \space University of Antwerp, Belgium} \\
+\affaddr{\ddag \space McGill University, Canada} \\
+}
+
+\maketitle
+
+\begin{abstract}
+\input abstract.tex
+\end{abstract}
+
+%TODO fill in
+%\keywords{
+%	Guides; instructions; author's kit; conference publications;
+%	keywords should be separated by a semi-colon.
+%	\textcolor{red}{Optional section to be included in your final version, but strongly encouraged..}
+%}
+
+% ACM Classification Keywords
+%\category{I.6.1}{SIMULATION AND MODELING (e.g. Model Development). }
+%See: \url{http://www.acm.org/about/class/1998/} for more information and the full list of ACM classifiers and descriptors.
+%\textcolor{red}{Optional section to be included in your final version, but strongly encouraged.}
+
+\section{Introduction}
+\input 1-introduction.tex
+
+\section{Background}
+\input 2-background.tex
+
+\section{Features}
+\input 3-features.tex
+
+\section{Performance}
+\input 4-performance.tex
+
+\section{Related Work}
+\input 5-related-work.tex
+
+\section{Conclusions}
+\input 6-conclusions.tex
+
+\section*{ACKNOWLEDGMENTS}
+This work was partly funded with a PhD fellowship grant from the Research Foundation - Flanders (FWO).
+%TODO add other acknowledgments if necessary?
+
+%TODO actually cite them; just here to know how long the list of references would be
+\nocite{*}
+
+\bibliographystyle{scs}
+\bibliography{papers}
+
+\end{document}
