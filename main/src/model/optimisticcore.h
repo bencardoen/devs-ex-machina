@@ -159,6 +159,11 @@ protected:
         void
         registerReceivedMessage(const t_msgptr& msg);
         
+        /**
+         * perform garbage collection. Performed after a gvt is found.
+         */
+        void gcCollect();
+
 public:
 	Optimisticcore()=delete;
 	/**
@@ -177,6 +182,8 @@ public:
          * Running cores while any destructor runs voids all pointer safety.
 	 */
 	virtual ~Optimisticcore();
+
+    void initThread() override;
 
         void runSmallStep() override;
 

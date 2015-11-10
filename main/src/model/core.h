@@ -430,6 +430,13 @@ public:
 	 */
 	virtual
 	void init();
+
+	/**
+	 * Run at startup when the thread has already been started.
+	 * @attention : run this once and only once. Don't run this on the main thread if the core is multithreaded.
+	 */
+	virtual
+	void initThread();
         
         void
         getImminent(std::vector<t_raw_atomic>& imms);

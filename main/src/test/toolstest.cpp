@@ -856,7 +856,7 @@ TEST(Pool, MessageBasics){
         boost::object_pool<Message> pl;
         Message* rawmem = pl.malloc();
         Message * msgconstructed = new (rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+        EXPECT_EQ(msgconstructed->getSourceCore(), 1u);
         pl.free(rawmem);
 }
 
@@ -876,7 +876,7 @@ void timePool(n_pools::PoolInterface<n_network::Message>* pl){
                 for(size_t i = 0; i<testsize; ++i){
                         Message* rmem = pl->allocate();
                         Message * msgconstructed = new (rmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1u);
                         msgconstructed->setAntiMessage(true);
                         mptrs[i]=msgconstructed;
                 }
@@ -934,7 +934,7 @@ TEST(Pool, DynamicSlabPool){
                 for(size_t i = 0; i<tsize; ++i){
                         Message* rawmem = pl.allocate();
                         SpecializedMessage<std::string>* msgconstructed = new(rawmem) SpecializedMessage<std::string>( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6, "abc");
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1u);
                         mptrs[i]=msgconstructed;
                 }
                 for(auto p : mptrs){
@@ -958,7 +958,7 @@ TEST(Pool, StackPool){
                 for(size_t i = 0; i<tsize; ++i){
                         Message* rawmem = pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1u);
                         mptrs[i]=msgconstructed;
                 }
                 for(auto p : mptrs){
@@ -1027,7 +1027,7 @@ TEST(Pool, CFPool){
                 for(size_t i = 0; i<tsize; ++i){
                         Message* rawmem = pl.allocate();
                         Message * msgconstructed = new(rawmem) Message( uuid(1,1), uuid(2,2), t_timestamp(3,4), 5, 6);
-                        EXPECT_EQ(msgconstructed->getSourceCore(), 1);
+                        EXPECT_EQ(msgconstructed->getSourceCore(), 1u);
                         mptrs.push_back(msgconstructed);
                         if (!ptrs.insert(msgconstructed).second){
                                 std::cerr << "Double ptr " << msgconstructed << std::endl;

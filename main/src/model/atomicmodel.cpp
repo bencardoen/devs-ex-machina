@@ -28,14 +28,7 @@ AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t
 
 AtomicModel_impl::~AtomicModel_impl()
 {
-        if(m_keepOldStates) {
-                for(t_stateptr st: m_oldStates) {
-                        n_tools::takeBack(st);
-                }
-        }
-        else {
-                n_tools::takeBack(m_state);
-        }
+        delete m_state;
 }
 
 void AtomicModel_impl::intTransition()
@@ -142,7 +135,7 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
         if (k == -1) {
                 // model did not pass gvt yet, keep last state, rest can be forgotten (garbage-collection)
                 for (auto iter = m_oldStates.begin(); iter < m_oldStates.end() - 1; ++iter) {
-                        n_tools::takeBack(*iter);
+                        (*iter)->releaseMe();
                 }
                 m_oldStates.erase(m_oldStates.begin(), (m_oldStates.end() - 1));
                 //t_stateptr state = m_oldStates.back();
@@ -158,7 +151,7 @@ void AtomicModel_impl::setGVT(t_timestamp gvt)
                 //auto firstState = m_oldStates.begin() + k;
                 //auto lastState = m_oldStates.end();
                 for (auto iter = m_oldStates.begin(); iter < m_oldStates.begin() + k; ++iter) {
-                        n_tools::takeBack(*iter);
+                        (*iter)->releaseMe();
                 }
                 m_oldStates.erase(m_oldStates.begin(), m_oldStates.begin() + k);
                 //m_oldStates = std::vector<t_stateptr>(firstState, lastState);
@@ -194,7 +187,7 @@ t_timestamp AtomicModel_impl::revert(t_timestamp time)
 
 	// Pop all obsolete states and set the last old_state as your new state
 	for(auto iter = m_oldStates.begin()+index+1; iter != m_oldStates.end(); ++iter) {
-            n_tools::takeBack(*iter);
+            (*iter)->releaseMe();
 	}
 	this->m_oldStates.resize(index + 1);
 	this->m_state = state;
@@ -294,30 +287,13 @@ void AtomicModel_impl::initState(const t_stateptr& stateptr)
 {
 	assert(m_state == nullptr && "AtomicModel_impl::initState called while a valid state is already present.");
 	m_state = stateptr;
-	if(m_keepOldStates)
-		m_oldStates.push_back(stateptr);
 }
-
-//void AtomicModel_impl::setState(const t_stateptr& newState)
-//{
-//	if (newState == nullptr)
-//		return;
-//	m_state = newState;
-//	if (m_keepOldStates)
-//		m_oldStates.push_back(m_state);
-//	else {
-//		if (m_oldStates.size() != 0)
-//			m_oldStates.at(0) = m_state;
-//		else
-//			m_oldStates.push_back(m_state);
-//	}
-//}
 
 void AtomicModel_impl::copyState()
 {
 	if(!m_keepOldStates)
 		return;
-	t_stateptr copy = m_state->copyState();
+	t_stateptr copy = m_state->copyPooledState();
 	assert(copy != nullptr && "AtomicModel_impl::copyState received nullptr as copy.");
 
 	m_oldStates.push_back( copy );

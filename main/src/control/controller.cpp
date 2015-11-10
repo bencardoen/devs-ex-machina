@@ -500,6 +500,7 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
          *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
          */
         const auto& core = ctrl.m_cores[myid];
+        core->initThread();
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
                 if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold.load()) {
@@ -547,6 +548,7 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
 	const auto& core = ctrl.m_cores[myid];
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         size_t i = 0;
+        core->initThread();
 	for (; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 
 		if (!core->isLive()) {          

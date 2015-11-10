@@ -35,6 +35,16 @@ Optimisticcore::~Optimisticcore()
                 std::vector<t_msgptr> msgs = m_network->getMessages(this->getCoreID());
         }
 }
+
+void Optimisticcore::initThread()
+{
+        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                model->prepareSimulation();
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " preparing model ", model->getName(), " for simulation.");
+        }
+}
+
 void Optimisticcore::shutDown()
 {
         assert(!isLive() && "The core shouldn't be live when it is shut down!");
@@ -54,6 +64,10 @@ void Optimisticcore::shutDown()
         }
         for (const auto& ptr : m_indexed_models) {
                 ptr->clearSentMessages();
+        }
+        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                model->exitSimulation();
         }
         m_sent_messages.clear();
         m_sent_antimessages.clear();
@@ -262,25 +276,21 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
         }
 }
 
-void Optimisticcore::runSmallStep()
+void Optimisticcore::gcCollect()
 {
-        // Find out how many sent messages we have with time <= gvt
-        this->lockSimulatorStep();
-
-        if (m_removeGVTMessages) {
-                auto senditer = m_sent_messages.begin();
-                for (; senditer != m_sent_messages.end(); ++senditer) {
-                        if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
-                                break;
-                        }
-                        t_msgptr& ptr = *senditer;
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                        ptr->releaseMe();
-                        m_stats.logStat(DELMSG);
-#ifdef SAFETY_CHECKS
-                        ptr = nullptr;
-#endif
+        auto senditer = m_sent_messages.begin();
+        for (; senditer != m_sent_messages.end(); ++senditer) {
+                if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
+                        break;
                 }
+                t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                ptr->releaseMe();
+                m_stats.logStat(DELMSG);
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif
+        }
 //                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
 //                        t_msgptr ptr = *iter2;
 //                        if (ptr->flagIsSet(Status::KILL)) {
@@ -292,25 +302,40 @@ void Optimisticcore::runSmallStep()
 //                                ++iter2;
 //                        }
 //                }
-                for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
-                        t_msgptr ptr = *aiter;
-                        if (ptr->flagIsSet(Status::KILL)) {
-                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                                ptr->releaseMe();
-                                m_stats.logStat(DELMSG);
-                                aiter = m_sent_antimessages.erase(aiter);
-                        } else {
-                                ++aiter;
-                        }
+        for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
+                t_msgptr ptr = *aiter;
+                if (ptr->flagIsSet(Status::KILL)) {
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                        ptr->releaseMe();
+                        m_stats.logStat(DELMSG);
+                        aiter = m_sent_antimessages.erase(aiter);
+                } else {
+                        ++aiter;
                 }
+        }
 
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
-                        distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
+                distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
 
-                m_sent_messages.erase(m_sent_messages.begin(), senditer);
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
-                        m_sent_messages.size());
-                m_removeGVTMessages = false;
+        m_sent_messages.erase(m_sent_messages.begin(), senditer);
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
+                m_sent_messages.size());
+        m_removeGVTMessages = false;
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " calling setGVT on all models.");
+
+        n_network::t_timestamp newgvt = getGVT();
+        for (const auto& model : this->m_indexed_models)
+                model->setGVT(newgvt);
+}
+
+void Optimisticcore::runSmallStep()
+{
+        // Find out how many sent messages we have with time <= gvt
+        this->lockSimulatorStep();
+
+        if (m_removeGVTMessages) {
+                gcCollect();
         }
 
         m_stats.logStat(TURNS);
@@ -547,8 +572,6 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
         Core::setGVT(newgvt);
         m_removeGVTMessages = true;
 
-        for (const auto& model : this->m_indexed_models)
-                model->setGVT(newgvt);
         // Reset state (note V-vector is reset by Mattern code.
 
         this->setColor(MessageColor::WHITE);

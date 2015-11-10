@@ -124,6 +124,9 @@ void n_model::Core::init()
 	rescheduleAll();
 }
 
+void n_model::Core::initThread()
+{}
+
 void n_model::Core::initializeModels()
 {
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " initializing models ");

@@ -394,6 +394,30 @@ public:
         }
 #endif
     }
+
+	void prepareSimulation()
+	{
+	        if(m_keepOldStates){
+	                assert(m_oldStates.empty() && "There are still some straggler states left.");
+	                t_stateptr newState = m_state->copyPooledState();
+	                m_oldStates.push_back(newState);
+	                delete m_state;
+	                m_state = newState;
+	        }
+	}
+
+	void exitSimulation()
+	{
+            if(m_keepOldStates){
+                    assert(m_oldStates.size() && "State vector is empty after simulation is done.");
+                    t_stateptr newState = m_state->copyState();
+                    for(t_stateptr st: m_oldStates){
+                            st->releaseMe();
+                    }
+                    m_state = newState;
+                    m_oldStates.clear();
+            }
+	}
 };
 
 typedef std::shared_ptr<AtomicModel_impl> t_atomicmodelptr;

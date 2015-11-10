@@ -475,6 +475,7 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                         auto id = std::this_thread::get_id();
                         for(Object* obj:m_objList)
                                 LOG_ERROR("thread ", id, " Didn't deallocate object ", obj);
+                        assert(m_objList.empty() && "You have a memory leak somewhere... Please see the log file.");
 #endif
                 }
 };
