@@ -307,9 +307,12 @@ void Controller::simCPDEVS()
 	}
 
 
+    std::atomic_uint atint(0);
+    atint.store(m_cores.size());
+
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker_con, i, m_turns, std::ref(*this))
+		        std::thread(cvworker_con, i, m_turns, std::ref(*this), std::ref(atint))
                         );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
@@ -542,12 +545,15 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
         at_exit();
 }
 
-void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
+void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl, std::atomic_uint& atint)
 {
         /**
          * Conservative can per definition never go back in time, so once it reaches termination time, stop simulating.
          * However, we still have to wait on all others th
          */
+        static std::condition_variable cv;
+        static std::mutex mu;
+
 	const auto& core = ctrl.m_cores[myid];
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         size_t i = 0;
@@ -568,19 +574,30 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
                 core->setLive(false);
                 // Edge case : if we hit this, we can't guarantee deallocation since sender can't verify we have reached termination.
         }
-        while(true){
-                size_t i = 0;
-                for(const auto& core : ctrl.m_cores){
-                        if(!core->isLive())
-                                ++i;
-                }
-                if(i == ctrl.m_cores.size())
-                        break;
-                else{
-                        std::this_thread::yield();
-                        i = 0;
-                }
+        LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " decreasing atint.");
+        --atint;
+        if(atint.load()){
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " going to acquire lock.");
+                std::unique_lock<std::mutex> lk(mu);
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " acquired the lock.");
+                cv.wait(lk,  [&atint]{return !atint.load();});
+        } else {
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " notifying all.");
+                cv.notify_all();
         }
+//        while(true){
+//                size_t i = 0;
+//                for(const auto& core : ctrl.m_cores){
+//                        if(!core->isLive())
+//                                ++i;
+//                }
+//                if(i == ctrl.m_cores.size())
+//                        break;
+//                else{
+//                        std::this_thread::yield();
+//                        i = 0;
+//                }
+//        }
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
         core->shutDown();
 }
