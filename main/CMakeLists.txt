@@ -335,7 +335,7 @@ include_directories(
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
     MESSAGE( STATUS "Have tcmalloc, ignoring for the moment. --remove me if done with valgrind.")
-            set(LIBS ${LIBS} -ltcmalloc) 
+    #set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
