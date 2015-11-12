@@ -529,7 +529,7 @@ void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
 		if(infguard < ++i){
 			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
 			m_rungvt.store(false);
-			break;	// No join, have not started thread.
+			break;
 		}
 		std::chrono::milliseconds ms { ctrl.getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
 		std::this_thread::sleep_for(ms);
