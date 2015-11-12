@@ -114,7 +114,7 @@ void pushVector(size_t pushcount, size_t vectorcount, size_t coreid, n_network::
 
 TEST(Network, threadsafety)
 {
-	const size_t cores = std::thread::hardware_concurrency() > 8u ? 8u : std::thread::hardware_concurrency();
+	const size_t cores = std::max(std::thread::hardware_concurrency(), 8u);
 	if(cores <= 1){
 		LOG_WARNING("No threads available for threaded test.");
 		return;
@@ -133,7 +133,7 @@ TEST(Network, threadsafety)
 
 TEST(Network, vectorthreadsafety)
 {
-	const size_t cores = std::thread::hardware_concurrency();
+	const size_t cores = std::max(std::thread::hardware_concurrency(), 8u);
 	if(cores <= 1){
 		LOG_WARNING("No threads available for threaded test.");
 		return;
@@ -153,7 +153,7 @@ TEST(Network, vectorthreadsafety)
 
 TEST(Network, mixedthreadsafety)
 {
-	const size_t cores = std::thread::hardware_concurrency();
+	const size_t cores = std::max(std::thread::hardware_concurrency(), 8u);
 	if(cores <= 1){
 		LOG_WARNING("No threads available for threaded test.");
 		return;
