@@ -23,33 +23,6 @@ using namespace n_model;
 using namespace n_tools;
 using namespace n_network;
 
-class DevstoneAlloc: public n_control::Allocator
-{
-private:
-	std::size_t m_maxn;
-public:
-	DevstoneAlloc(): m_maxn(0){
-
-	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
-		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
-		if(p == nullptr)
-			return 0;
-		std::size_t res = p->m_num*coreAmount()/m_maxn;
-		if(res >= coreAmount())
-			res = coreAmount()-1;
-		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
-		return res;
-	}
-
-	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-		m_maxn = models.size();
-		assert(m_maxn && "Total amount of models can't be zero.");
-		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber(allocate(ptr));
-	}
-};
-
 class PHoldAlloc: public n_control::Allocator
 {
 private:
@@ -110,7 +83,7 @@ TEST(Benchmark, devstone_single)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
@@ -138,7 +111,7 @@ TEST(Benchmark, devstone_opt)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
@@ -166,7 +139,7 @@ TEST(Benchmark, devstone_cons)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
@@ -194,7 +167,7 @@ TEST(Benchmark, devstone_single_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
@@ -222,7 +195,7 @@ TEST(Benchmark, devstone_opt_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
@@ -250,7 +223,7 @@ TEST(Benchmark, devstone_cons_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
@@ -302,7 +275,7 @@ TEST(Benchmark, phold_single)
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdSingle.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
 }
 
-TEST(Benchmark, phold_opt)
+TEST(Benchmark, DISABLED_phold_opt)
 {
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
