@@ -166,7 +166,7 @@ private:
         gcCollect();
         
 protected:
-        virtual void queuePendingMessage(const t_msgptr& msg)override;
+        virtual void queuePendingMessage(t_msgptr msg)override;
 
 
         std::vector<std::vector<t_msgptr>> m_externalMessages;

@@ -11,8 +11,12 @@
 #include <stdlib.h>
 #include <thread>
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <cinttypes>
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
+#include "control/allocator.h"
 
 namespace n_benchmarks_phold {
 
@@ -81,6 +85,48 @@ class PHOLD: public n_model::CoupledModel
 public:
 	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes);
 	virtual ~PHOLD();
+};
+
+class PHoldAlloc: public n_control::Allocator
+{
+private:
+        // len(models);
+	std::size_t m_maxn;
+        // Last alloc id
+	std::size_t m_n;
+        // Bucketsize (ceiled)
+        std::size_t m_nodes_per_core;
+        
+public:
+	PHoldAlloc(): m_maxn(0), m_n(0), m_nodes_per_core(0)
+	{
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
+		
+		return (m_n++)%coreAmount();
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+        /**
+         *  Given that we have N models, C simulation cores and Phold : #nodes = A, #apn=S.
+         *  We want to allocate each N's submodels to exactly 1 core. 
+         *  Ideally this would correspond with a the N identifier for the subnodes, but we don't seem
+         *  to store this so distribute the list of generated models in stripes of length (size/cores).
+         *  If A does not match C, it is useless to run phold. (R is void of any meaning then).
+         */
+		m_maxn = models.size();
+                m_nodes_per_core = std::ceil(m_maxn / (double)coreAmount());
+		assert(m_maxn && "Total amount of models can't be zero.");
+		for(size_t i = 0; i< models.size(); ++i){
+                        std::lldiv_t qr = lldiv(i, m_nodes_per_core);
+			size_t coreid = qr.quot;
+                        if(coreid >= coreAmount()){     // overflow into the last core.
+                                coreid = coreAmount()-1;
+                        }
+			models[i]->setCorenumber(coreid);
+			LOG_DEBUG("Assigning model ", models[i]->getName(), " to core ", coreid);
+		}
+	}
 };
 
 } /* namespace n_benchmarks_phold */

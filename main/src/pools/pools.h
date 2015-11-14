@@ -16,6 +16,7 @@
 #include <set>
 #include "tools/globallog.h"
 
+
 /**
  * A pool is thread local. 
  * At compile time the (static) types of the objects to pool are registered, 

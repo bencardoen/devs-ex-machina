@@ -167,6 +167,9 @@ protected:
         void
         registerReceivedMessage(const t_msgptr& msg);
         
+        
+        void queuePendingMessage(t_msgptr msg)override;
+        
 
 public:
 	Optimisticcore()=delete;
@@ -187,7 +190,7 @@ public:
 	 */
 	virtual ~Optimisticcore();
 
-    void initThread() override;
+        void initThread() override;
 
         void runSmallStep() override;
 

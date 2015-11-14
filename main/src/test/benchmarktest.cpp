@@ -23,56 +23,9 @@ using namespace n_model;
 using namespace n_tools;
 using namespace n_network;
 
-class PHoldAlloc: public n_control::Allocator
-{
-private:
-	std::size_t m_maxn;
-	std::size_t m_n;
-public:
-	PHoldAlloc(): m_maxn(0), m_n(0)
-	{
-
-	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr&){
-		//all models may send to each other. There isn't really an optimal configuration.
-		return (m_n++)%coreAmount();
-	}
-
-	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-		m_maxn = models.size();
-		assert(m_maxn && "Total amount of models can't be zero.");
-		for(const n_model::t_atomicmodelptr& ptr: models){
-			std::size_t val = allocate(ptr);
-			ptr->setCorenumber(val);
-			LOG_DEBUG("Assigning model ", ptr->getName(), " to core ", val);
-		}
-	}
-};
-
-class InterconnectAlloc: public n_control::Allocator
-{
-private:
-	std::size_t m_maxn;
-public:
-	InterconnectAlloc(): m_maxn(0){
-
-	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr&){
-		return 0;
-	}
-
-	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-		m_maxn = models.size();
-		assert(m_maxn && "Total amount of models can't be zero.");
-		std::size_t i = 0;
-		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber((i++)%coreAmount());
-	}
-};
-
 #define SUBTESTFOLDER TESTFOLDER "benchmark/"
 
-constexpr t_timestamp::t_time eTime = 5000;
+constexpr t_timestamp::t_time eTime = 1000;
 
 
 TEST(Benchmark, devstone_single)
@@ -243,7 +196,7 @@ TEST(Benchmark, devstone_cons_r)
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneConservativeR.txt", SUBTESTFOLDER "devstoneSingleR.corr"), 0);
 }
 
-constexpr t_timestamp::t_time eTimePhold = 5000;
+constexpr t_timestamp::t_time eTimePhold = 500;
 
 TEST(Benchmark, phold_single)
 {
@@ -253,9 +206,9 @@ TEST(Benchmark, phold_single)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
-	std::size_t nodes = 3;
-	std::size_t apn = 3;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
+	std::size_t nodes = 4;
+	std::size_t apn = 2;
 	std::size_t iter = 0;
 	std::size_t percentageRemotes = 10;
 
@@ -275,17 +228,17 @@ TEST(Benchmark, phold_single)
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdSingle.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
 }
 
-TEST(Benchmark, DISABLED_phold_opt)
+TEST(Benchmark, phold_opt)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "PHOLD";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
-	std::size_t nodes = 3;
-	std::size_t apn = 3;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
+	std::size_t nodes = 4;
+	std::size_t apn = 2;
 	std::size_t iter = 0;
 	std::size_t percentageRemotes = 10;
 
@@ -305,17 +258,17 @@ TEST(Benchmark, DISABLED_phold_opt)
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdOptimistic.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
 }
 
-TEST(Benchmark, DISABLED_phold_cons)
+TEST(Benchmark, phold_cons)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "PHOLD";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
-	std::size_t nodes = 3;
-	std::size_t apn = 3;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
+	std::size_t nodes = 4;
+	std::size_t apn = 2;
 	std::size_t iter = 0;
 	std::size_t percentageRemotes = 10;
 
@@ -340,12 +293,12 @@ constexpr t_timestamp::t_time eTimeConnect = 5000;
 TEST(Benchmark, connect_single)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
 
@@ -367,12 +320,12 @@ TEST(Benchmark, connect_single)
 TEST(Benchmark, DISABLED_connect_opt)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
 
@@ -394,12 +347,12 @@ TEST(Benchmark, DISABLED_connect_opt)
 TEST(Benchmark, DISABLED_connect_cons)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
 
@@ -421,12 +374,12 @@ TEST(Benchmark, DISABLED_connect_cons)
 TEST(Benchmark, connect_single_r)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = true;
 
@@ -448,12 +401,12 @@ TEST(Benchmark, connect_single_r)
 TEST(Benchmark, DISABLED_connect_opt_r)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
 
@@ -475,12 +428,12 @@ TEST(Benchmark, DISABLED_connect_opt_r)
 TEST(Benchmark, DISABLED_connect_cons_r)
 {
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
 

@@ -45,11 +45,7 @@ n_tools::GVizWriter::writeObject(n_model::Core* core){
                 m_file << '\t'<<model->getName() << " [fontsize=10]  ;\n";
         }
         m_file << "\t}\n";
-#ifdef USE_STAT
-        size_t totalmsgs = core->m_stats.m_msgs_sent.getData();
-#else
-        size_t totalmsgs = 1;
-#endif
+
         for(const auto& model : core->m_indexed_models){
                 std::string from = model->getName();
                 for(const auto& oport : model->getOPorts()){
@@ -66,11 +62,11 @@ n_tools::GVizWriter::writeObject(n_model::Core* core){
                                 if(count){
                                         std::string color = "blue";
                                         if(model->getCoreID()!=core->getCoreID()) // intercore
-                                                m_file<<" [ label=\""<< count <<"\" penwidth="<<3*((double)count/(double)totalmsgs)<<", color=green, fontsize=7.0 ]";
+                                                m_file<<" [ label=\""<< count <<"\"pendwidth=0.5 , color=red, fontsize=7.0 ]";
                                         else //intracore
-                                                m_file<<" [ label=\""<<count<<"\" penwidth=0.5, color=blue,fontsize=8.0 ]"; 
+                                                m_file<<" [ label=\""<<count<<"\" penwidth=0.5, color=blue,fontsize=7.0 ]"; 
                                 }else{ // never sent
-                                        m_file<<" [ style=\"dotted\", pendwidth=0.2, arrowhead=\"onormal\"]";
+                                        m_file<<" [ style=\"dotted\", pendwidth=0.1, arrowhead=\"none\"]";
                                 }
                                 m_file << ";\n";
                         }

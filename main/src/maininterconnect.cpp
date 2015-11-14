@@ -188,6 +188,9 @@ int main(int argc, char** argv)
 #ifdef USE_STAT
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
-         
+#endif
+
+#ifdef USE_VIZ
+        ctrl->visualize();
 #endif
 }

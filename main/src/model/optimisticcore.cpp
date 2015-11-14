@@ -96,9 +96,8 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                         ptr->releaseMe();
                 }
                 else{
-                        /**
+                        // TODO mark change
                         m_processed_messages.push_back(ptr);
-                        */
                 }
         }
         msgs.clear();
@@ -129,29 +128,24 @@ void Optimisticcore::sendMessage(t_msgptr msg)
 
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 {
+        // An antimessage is still the same object, if you change the colour the 
+        // counting (gvt) will be corrupted.
         m_stats.logStat(AMSGSENT);
-        // Don't touch the color of the message.
         msg->setAntiMessage(true);
-
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
-        // Skip this, by definition any antimessage is beyond the cut-line of gvt.
-        // If you enable this, do so as well @receive side.
-        //this->countMessage(amsg);
-        this->m_network->acceptMessage(msg);
         m_sent_antimessages.push_back(msg);
+        this->m_network->acceptMessage(msg);
 }
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
-        // Store flag to save on atomics.
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " entering handleAntiMessage with message ", msg);
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " handling antimessage ", msg->toString());
-
+        // Storing the flag can speed up this process, but has to be done atomically because
+        // we set KILL (which the sending thread reads).
         if (msg->flagIsSet(Status::PROCESSED)) {
-                // processed before, must do revert (handled elsewhere)
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, marking as KILL ", msg);
-                // Don't set kill, do it in revert on pushing.
-                msg->setFlag(Status::KILL);
+                // Processed, so it is in m_processed, we can't touch it. Revert will clean it.
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, should be in processed queue ", msg);
         } else if (msg->flagIsSet(Status::HEAPED)) {
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
@@ -160,43 +154,17 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 if(!erased)
                         throw std::logic_error("Pending messages integrity failure!");
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
+                // TODO change with msg scheduler.
                 msg->setFlag(Status::KILL);
         } else if (msg->flagIsSet(Status::DELETE)) {
                 // we encountered this one before, just kill it.
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, marking as KILL ", msg);
                 msg->setFlag(Status::KILL);
         } else {
-                // we haven't seen this message yet, mark it as delete
+                // Not scheduled, not processed, so the first of a second pointer chasing.
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " first time we see this message, marking as DELETE ", msg);
                 msg->setFlag(Status::DELETE);
         }
-//        if (this->m_received_messages->contains(MessageEntry(msg))) {                   /// QUEUED
-//                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " we apparently found msg ", msg,
-//                        " in the following scheduler:");
-//                m_received_messages->printScheduler();
-//                this->m_received_messages->erase(MessageEntry(msg));
-//                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-//                msg->releaseMe();
-//
-//                m_stats.logStat(DELMSG);
-//        } else {                                          /// Not queued, so either never seen it, or allready processed
-//
-//                if (msg->flagIsSet(Status::PROCESSED)) {           // Processed before, only antimessage ptr in transit.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Message is processed :: deleting ", msg);
-//                        msg->releaseMe();
-//                        m_stats.logStat(DELMSG);
-//                        return;
-//                }
-//                if (!msg->flagIsSet(Status::DELETE)) {    // Possibly never seen, delete both.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Special case : first pass:: ", msg);
-//                        msg->setFlag(Status::DELETE);
-//                } else {                           // Second time, delete.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Special case : second pass, deleting.");
-//                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-//                        msg->releaseMe();
-//                        m_stats.logStat(DELMSG);
-//                }
-//        }
 }
 
 void Optimisticcore::markMessageStored(const t_msgptr& msg)
@@ -274,6 +242,20 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         }
 }
 
+void Optimisticcore::queuePendingMessage(t_msgptr msg)
+{
+        const MessageEntry entry(msg);
+        if (!msg->flagIsSet(Status::HEAPED)) {
+                this->m_received_messages->push_back(entry);
+                msg->setFlag(Status::HEAPED);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto pending msgs: ", msg);
+        } else {
+                LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
+                        msg->toString());
+                throw std::logic_error("Pending msgs integrity failure.");
+        }
+}
+
 void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 {
         // ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
@@ -291,9 +273,17 @@ void Optimisticcore::gcCollect()
         auto senditer = m_sent_messages.begin();
         for (; senditer != m_sent_messages.end(); ++senditer) {
                 if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " found msg >= gvt, stopping collect ");
                         break;
                 }
+                // Assuming gvt works, we can't see a non-processed msg here.
                 t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " gcollecting ", ptr);
+#ifdef SAFETY_CHECKS
+                if(!ptr->flagIsSet(Status::PROCESSED)){
+                        LOG_ERROR("GVT integrity failure :: id= ", this->getCoreID(), " for msg ", ptr, " not processed but gvt is past tstamp?");
+                }
+#endif
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
@@ -301,21 +291,12 @@ void Optimisticcore::gcCollect()
                 ptr = nullptr;
 #endif
         }
-//                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
-//                        t_msgptr ptr = *iter2;
-//                        if (ptr->flagIsSet(Status::KILL)) {
-//                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-//                                ptr->releaseMe();
-//                                m_stats.logStat(DELMSG);
-//                                iter2 = m_sent_messages.erase(iter2);
-//                        } else {
-//                                ++iter2;
-//                        }
-//                }
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " gccollecting antimessages ");
         for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
                 t_msgptr ptr = *aiter;
                 if (ptr->flagIsSet(Status::KILL)) {
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting antimessage ", ptr, " = ", ptr->toString());
                         ptr->releaseMe();
                         m_stats.logStat(DELMSG);
                         aiter = m_sent_antimessages.erase(aiter);
@@ -341,7 +322,6 @@ void Optimisticcore::gcCollect()
 
 void Optimisticcore::runSmallStep()
 {
-        // Find out how many sent messages we have with time <= gvt
         this->lockSimulatorStep();
 
         if (m_removeGVTMessages) {
@@ -623,7 +603,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting on a total of ", m_sent_messages.size(), " sent messages");
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
                 t_msgptr msg = m_sent_messages.back();
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg, " ", msg->toString());
                 if (msg->getTimeStamp().getTime() >= totime) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
@@ -634,7 +614,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
                         break;
                 }
         }
-        /**
+        
         while(m_processed_messages.size()){
                 t_msgptr msg = m_processed_messages.back();
                 LOG_DEBUG("Revert :: handling processed msg :: ", msg, " ~ ", msg->toString());
@@ -642,16 +622,19 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
                 if(msgtime < totime)
                         break;
 #ifdef SAFETY_CHECKS
-                if(!msg->flagIsSet(Status::PROCESSED) || !msg->flagIsSet(Status::HEAPED))
-                        throw std::logic_error("P/H not set on a PROCESSED msg.");
+                if(!msg->flagIsSet(Status::PROCESSED)){
+                        LOG_DEBUG("P not set on msg :: ", msg, " ", msg->toString());
+                        throw std::logic_error("P not set on a PROCESSED msg.");
+                }
 #endif
                 if(!msg->flagIsSet(Status::ANTI)){
                         msg->setFlag(Status::HEAPED);
                         msg->setFlag(Status::PROCESSED, false);
-                        m_received_messages.push_back(msg);
+                        if(!m_received_messages->contains(msg))
+                                m_received_messages->push_back(msg);
                 }
                 m_processed_messages.pop_back();
-        }*/
+        }
         
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
 

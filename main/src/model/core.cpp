@@ -327,8 +327,10 @@ void n_model::Core::syncTime()
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		incrementZombieRounds();
-		if(m_zombie_rounds == 1)
+		if(m_zombie_rounds == 1){
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), " Setting time to last+1 to avoid unnecessary revert.");
 			setTime(getTime() + n_network::t_timestamp::epsilon());
+                }
 		return;
 	}
 #ifdef SAFETY_CHECKS
@@ -568,20 +570,6 @@ void n_model::Core::clearModels()
 	this->m_gvt = t_timestamp(0, 0);
 }
 
-void n_model::Core::queuePendingMessage(const t_msgptr& msg)
-{
-        const MessageEntry entry(msg);
-        if (!msg->flagIsSet(Status::HEAPED)) {
-                this->m_received_messages->push_back(entry);
-                msg->setFlag(Status::HEAPED);
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
-        } else {
-                LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
-                        msg->toString());
-                throw std::logic_error("Pending msgs integrity failure.");
-        }
-}
-
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
 //        if(msg->flagIsSet(Status::TOERASE) {
@@ -631,21 +619,20 @@ void n_model::Core::getPendingMail()
 	 * Check if we have pending messages with time <= (time=now, caus=oo);
 	 * If so, add them to the mailbag
 	 */
-        this->lockMessages();
+        
         if(m_received_messages->empty()){
-                this->unlockMessages();
                 return;
         }
-        this->unlockMessages();
 	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
 	m_token.getMessage()->setTimeStamp(nowtime);
 
-	this->lockMessages();
 	this->m_received_messages->unschedule_until(messages, m_token);
 	this->unlockMessages();
-	for (const auto& entry : messages) 
+	for (const auto& entry : messages){
+                entry.getMessage()->setFlag(Status::HEAPED, false);
                 queueLocalMessage(entry.getMessage());
+        }
 
 }
 
@@ -656,26 +643,15 @@ t_timestamp n_model::Core::getFirstMessageTime()
          * current messages are (should be processed), so irrelevant.
          */
         t_timestamp mintime = t_timestamp::infinity();
-        this->lockMessages();
         if (not this->m_received_messages->empty()) {
                 mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
         }
-        this->unlockMessages();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
         return mintime;
 }
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
 {
-	if (isInfinity(newgvt)) {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
-		return;
-	}
-	if (newgvt.getTime() < this->getGVT().getTime()) {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
-		        this->getGVT(), " ignoring ");
-		return;
-	}
 	LOG_INFO("\tCORE :: ", this->getCoreID(), " Setting gvt from ::", this->getGVT(), " to ", newgvt.getTime());
 	this->m_gvt = t_timestamp(newgvt.getTime(), 0);
 }

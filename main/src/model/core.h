@@ -297,7 +297,7 @@ protected:
 	 * @lock Unlocked (ie locked by caller)
 	 */
         virtual
-	void queuePendingMessage(const t_msgptr& msg);
+	void queuePendingMessage(t_msgptr){assert(false);}
         
         /**
          * Store a generated message between models in this core for local
@@ -663,7 +663,6 @@ public:
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.
-	 * @locks on messagelock
 	 */
 	virtual
 	void getPendingMail();

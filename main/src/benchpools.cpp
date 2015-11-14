@@ -2,6 +2,7 @@
 #include <set>
 #include <map>
 #include <sstream>
+#include "tools/globallog.h"
 #include "pools/pools.h"
 
 
@@ -12,6 +13,7 @@ struct __attribute__((aligned(64)))Msg{
         Msg():v(0){;}
         explicit Msg(size_t iv):v(iv){;}
 };
+
 
 // Todo : the below functions could be folded into one and passed the pool as argument, with the exception of object_pool which then loses speed.
 void testPool(size_t testsize, size_t rounds, PoolInterface<Msg>* pool){

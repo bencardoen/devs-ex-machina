@@ -223,7 +223,7 @@ void Conservativecore::receiveMessage(t_msgptr msg){
 #endif
 }
 
-void Conservativecore::queuePendingMessage(const t_msgptr& msg){
+void Conservativecore::queuePendingMessage(t_msgptr msg){
         m_received_messages->push_back(MessageEntry(msg));
 }
 

@@ -23,7 +23,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(10), m_rungvt(false), m_turns(turns)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -596,7 +596,7 @@ void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
 
 	while(m_rungvt.load()==true){
 		if(infguard < ++i){
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking off.");
 			m_rungvt.store(false);
 			break;
 		}
