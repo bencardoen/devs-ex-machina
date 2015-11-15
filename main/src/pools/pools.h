@@ -492,7 +492,11 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                 {
                         Object* obj = (Object*) std::malloc(sizeof(Object));
 #ifdef SAFETY_CHECKS
-                        m_objList.insert(obj);
+                        // If this check fails, malloc &| heap are severely corrupted.
+                        if(! (m_objList.insert(obj).second)){
+                                LOG_ERROR("Pointer returned from allocate() still not accounted for :: severe memory corruption.", obj);
+                                throw std::bad_alloc();
+                        }       
 #endif
                         return obj;
                 }
@@ -507,7 +511,11 @@ class Pool<Object, std::false_type>:public PoolInterface<Object>
                 {
                         O->~Object();
 #ifdef SAFETY_CHECKS
-                        m_objList.erase(O);
+                        // Can be useful to detect cross-thread dealloc. (double free would be caught anyway).
+                        if(m_objList.erase(O)==0){
+                                LOG_ERROR("Double free :: ", O, " was either never allocated by this pool, or deallocated twice.");
+                                throw std::bad_alloc();
+                        }
 #endif
                         std::free(O);
                 }

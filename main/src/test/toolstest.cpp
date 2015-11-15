@@ -1018,10 +1018,10 @@ TEST(Pool, CFPool){
         using n_model::uuid;
         using n_network::t_timestamp;
         std::set<Message*> ptrs;
-        size_t psize=65;
-        size_t tsize=65;
+        size_t psize=64;
+        size_t tsize=64;
         size_t rsize=2;
-        n_pools::CFPool<Message> pl(psize);
+        n_pools::CFPool<Message> pl(psize); 
         std::vector<Message*> mptrs;
         for(size_t j = 0; j<rsize;++j){
                 for(size_t i = 0; i<tsize; ++i){
