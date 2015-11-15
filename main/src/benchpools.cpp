@@ -5,6 +5,8 @@
 #include "tools/globallog.h"
 #include "pools/pools.h"
 
+LOG_INIT("out.txt")
+
 
 using namespace n_pools;
 
