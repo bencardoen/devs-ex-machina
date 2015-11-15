@@ -1043,3 +1043,47 @@ TEST(Pool, CFPool){
         //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
         EXPECT_EQ(pl.allocated(), 0u);
 }
+
+TEST(Tools, p2){
+        size_t val = 1;
+        for(size_t i = 0; i<63; ++i){
+                val = val << 1ull;
+                EXPECT_TRUE(n_tools::is_power_2(val));
+                if(val!=2){
+                        EXPECT_FALSE(n_tools::is_power_2(val-1));
+                }
+        }
+}
+struct __attribute__((aligned(64))) teststruct{
+        size_t val;
+        char c;
+        size_t v2;
+        virtual void f(){;}
+        virtual ~teststruct(){;}
+};
+
+// If the alignment is incorrect, the vtable will have an invalid offset which
+// asan will detect (usually slightly before nasal demons arrive).
+struct __attribute__((aligned(64))) derivedts : public teststruct{
+        size_t pval;
+        virtual void f()override{;}
+};
+
+TEST(Tools, alignptr)
+{
+        derivedts* ts = (derivedts*)std::malloc(3*sizeof(derivedts));        // Alignment should be ~8 ymmv
+        derivedts* alignedts = n_pools::align_ptr(ts);
+        alignedts = new (alignedts) derivedts;
+        // A few accesses to check alignment asan warnings.
+        alignedts->val = 42;
+        alignedts->c = 'a';
+        alignedts->v2 = 41;
+        teststruct* bts = (teststruct*) alignedts;
+        bts->f();
+        uintptr_t low = (uintptr_t)alignedts;
+        ++alignedts;
+        uintptr_t high = (uintptr_t)alignedts;
+        EXPECT_EQ(high-low, 64u);       // ++ should have move 64.
+        EXPECT_EQ(low%64, 0u);          // original address should be 0 mod alignment.
+        std::free(ts);
+}

@@ -15,6 +15,7 @@
 #include <deque>
 #include <set>
 #include "tools/globallog.h"
+#include "tools/flags.h"
 
 
 /**
@@ -110,17 +111,52 @@ class Pool:public PoolInterface<Object>{
 };
 
 /**
+ * @param raw possibly unaligned pointer to T.
+ * @pre std::alignment_of<T>::value >=8 && power of 2.
+ * @post ((uintptr_t)returnvalue  % std::alignment_of<T>::value) == 0
+ */
+template<typename T>
+T* align_ptr(T* raw)
+{
+        constexpr size_t algn = std::alignment_of<T>::value;
+        static_assert(algn > 7 && n_tools::is_power_2(algn) , "Invalid alignment.");
+        uintptr_t ir = (uintptr_t) raw;
+        return ((!(ir%algn)) ? raw : (T*) ((ir+algn)&(~(algn-1ull))));
+/**     ^^ == vv
+        if((ir%algn)==0)
+                return raw;
+        else{
+                ir += algn;
+                ir &= ~(algn-1ull);
+                return (T*) ir;
+        }
+ */
+}
+
+/**
  * Helper structure, defines a contiguous slice of memory that a pool uses.
  */
 template<typename T>
 struct pool_lane{
 private:
+        // Pointer returned by malloc. Only this one can be returned to free.
+        T* m_raw_base;
+        // First valid (aligned ptr)
         T* m_base_addr;
         // Lane can hold exactly m_size objects, so m_base_addr += (m_size-1) points to the last object
         size_t m_size;
 public:
-        pool_lane():m_base_addr(nullptr),m_size(0){;}
-        constexpr pool_lane(T* pt, size_t sz):m_base_addr(pt),m_size(sz){;}
+        pool_lane():m_raw_base(nullptr),m_base_addr(nullptr),m_size(0){;}
+        /**
+         * Construct a new lane.
+         * @param pt : pointer returned by a malloc() call with allocated size at least sz+1
+         * @param sz : nr of objects this lane needs to provide.
+         */
+        constexpr pool_lane(T* pt, size_t sz):
+                m_raw_base(pt),
+                m_base_addr(align_ptr(pt)),
+                m_size(sz){;}
+        
         constexpr size_t size()const{return m_size;}
         constexpr T* begin()const{return m_base_addr;}
         
@@ -128,8 +164,12 @@ public:
          * In STL end() points to the last object + 1, so be explicit about what we return here.
          */
         constexpr T* last()const{return m_base_addr + (m_size-1);}
+        
+        /**
+         * Allocated pointer, only this can be returned to free.
+         */
+        constexpr T* raw()const{return m_raw_base;}
 };
-
 
 ///// ARENA POOLS
 /**
@@ -148,6 +188,7 @@ class SlabPool:public PoolInterface<T>{
                  * Return the nr of allocated objects.
                  */
                 size_t          m_allocated;
+                
                 /**
                  * Requested pool size
                  */
@@ -157,12 +198,13 @@ class SlabPool:public PoolInterface<T>{
                  * Begin address of pool.
                  */
                 T* const        m_pool;
+                
                 /**
                  * Points to the next free object.
                  */
                 T*      m_currptr;
         public:
-                explicit SlabPool(size_t poolsize):m_allocated(0),m_osize(poolsize),m_pool((T*) malloc(sizeof(T)*poolsize)),m_currptr(m_pool){
+                explicit SlabPool(size_t poolsize):m_allocated(0),m_osize(poolsize),m_pool((T*) malloc(sizeof(T)*(poolsize+1))),m_currptr(m_pool){
                         if(!m_pool)
                                 throw std::bad_alloc();
                 }
@@ -253,7 +295,7 @@ class DynamicSlabPool:public PoolInterface<T>{
                                 m_allocated(0),m_osize(poolsize),
                                 m_slabsize(poolsize),m_current_lane(0)
                 {
-                        T * fblock = (T*) malloc(sizeof(T)*poolsize);
+                        T * fblock = (T*) malloc(sizeof(T)*(poolsize+1));
                         if(! fblock)
                                 throw std::bad_alloc();
                         m_pools.push_back(pool_lane<T>(fblock, poolsize));
@@ -262,8 +304,8 @@ class DynamicSlabPool:public PoolInterface<T>{
                 
                 ~DynamicSlabPool()
                 {
-                        for(auto lane : m_pools)
-                                std::free(lane.begin());
+                        for(auto& lane : m_pools)
+                                std::free(lane.raw());
                 }
                 
                 // Current nr of objects this pool can (in an empty state) allocate.
@@ -287,7 +329,7 @@ class DynamicSlabPool:public PoolInterface<T>{
                         T* next = m_currptr;
                         if(m_currptr == m_pools[m_current_lane].last()){        // eolane
                                 if(m_current_lane == m_pools.size()-1){         // last lane == curr
-                                        T* nextlane = (T*) std::malloc( sizeof(T) * m_osize);
+                                        T* nextlane = (T*) std::malloc( sizeof(T) * (1+m_osize));
                                         if(!nextlane)
                                                 throw std::bad_alloc();
                                         m_pools.push_back(pool_lane<T>(nextlane, m_osize));
@@ -353,7 +395,7 @@ class StackPool:public PoolInterface<T>{
         public:
                 explicit StackPool(size_t poolsize):m_osize(poolsize)
                 {
-                        T * fblock = (T*) malloc(sizeof(T)*poolsize);
+                        T * fblock = (T*) malloc(sizeof(T)*(poolsize+1));
                         if(! fblock)
                                 throw std::bad_alloc();
                         m_pools.push_back(pool_lane<T>(fblock, poolsize));
@@ -364,7 +406,7 @@ class StackPool:public PoolInterface<T>{
                 ~StackPool()
                 {
                         for(auto lane : m_pools)
-                                std::free(lane.begin());
+                                std::free(lane.raw());
                 }
                 
                 constexpr size_t size()const
@@ -390,7 +432,7 @@ class StackPool:public PoolInterface<T>{
                                 return next;
                         }
                         else{       
-                                T * fblock = (T*) malloc(sizeof(T)*m_osize);
+                                T * fblock = (T*) malloc(sizeof(T)*(m_osize+1));
                                 if(!fblock)
                                         throw std::bad_alloc();
                                 m_pools.push_back(pool_lane<T>(fblock, m_osize));
@@ -653,13 +695,6 @@ PoolInterface<T>*
 initializePool(size_t psize)
 {
         return ( isMain() ? (PoolInterface<T>*) new SCObjectPool<T>(psize) : (PoolInterface<T>*) new MCObjectPool<T>(psize) );
-        /**
-        if(getMainThreadID()==std::this_thread::get_id())
-                return new SCObjectPool<T>(psize);
-        else
-                return new MCObjectPool<T>(psize);
-         * */
-                 
 }
 
 
