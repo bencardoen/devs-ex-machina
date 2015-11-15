@@ -30,6 +30,7 @@ constexpr t_timestamp::t_time eTime = 1000;
 
 TEST(Benchmark, devstone_single)
 {
+    LOG_MOVE("logs/bmarkDevstoneSingle.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::CLASSIC;
@@ -54,10 +55,12 @@ TEST(Benchmark, devstone_single)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneSingle.txt", SUBTESTFOLDER "devstoneSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, devstone_opt)
 {
+    LOG_MOVE("logs/bmarkDevstoneOpt.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
@@ -82,10 +85,12 @@ TEST(Benchmark, devstone_opt)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneOptimistic.txt", SUBTESTFOLDER "devstoneSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, devstone_cons)
 {
+    LOG_MOVE("logs/bmarkDevstoneCons.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
@@ -110,10 +115,12 @@ TEST(Benchmark, devstone_cons)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneConservative.txt", SUBTESTFOLDER "devstoneSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, devstone_single_r)
 {
+    LOG_MOVE("logs/bmarkDevstoneSingleR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::CLASSIC;
@@ -138,10 +145,12 @@ TEST(Benchmark, devstone_single_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneSingleR.txt", SUBTESTFOLDER "devstoneSingleR.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, devstone_opt_r)
 {
+    LOG_MOVE("logs/bmarkDevstoneOptR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
@@ -166,10 +175,12 @@ TEST(Benchmark, devstone_opt_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneOptimisticR.txt", SUBTESTFOLDER "devstoneSingleR.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, devstone_cons_r)
 {
+    LOG_MOVE("logs/bmarkDevstoneConsR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
@@ -194,12 +205,14 @@ TEST(Benchmark, devstone_cons_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "devstoneConservativeR.txt", SUBTESTFOLDER "devstoneSingleR.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 constexpr t_timestamp::t_time eTimePhold = 500;
 
 TEST(Benchmark, phold_single)
 {
+    LOG_MOVE("logs/bmarkPholdSingle.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "DEVStone";
 	conf.m_simType = n_control::SimType::CLASSIC;
@@ -226,10 +239,12 @@ TEST(Benchmark, phold_single)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdSingle.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, phold_opt)
 {
+    LOG_MOVE("logs/bmarkPholdOpt.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "PHOLD";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
@@ -256,10 +271,12 @@ TEST(Benchmark, phold_opt)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdOptimistic.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, phold_cons)
 {
+    LOG_MOVE("logs/bmarkPholdCons.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "PHOLD";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
@@ -286,12 +303,14 @@ TEST(Benchmark, phold_cons)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdConservative.txt", SUBTESTFOLDER "pholdSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 constexpr t_timestamp::t_time eTimeConnect = 5000;
 
 TEST(Benchmark, connect_single)
 {
+    LOG_MOVE("logs/bmarkConnectSingle.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CLASSIC;
@@ -315,10 +334,12 @@ TEST(Benchmark, connect_single)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectSingle.txt", SUBTESTFOLDER "connectSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, DISABLED_connect_opt)
 {
+    LOG_MOVE("logs/bmarkConnectOpt.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
@@ -342,10 +363,12 @@ TEST(Benchmark, DISABLED_connect_opt)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectOptimistic.txt", SUBTESTFOLDER "connectSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, DISABLED_connect_cons)
 {
+    LOG_MOVE("logs/bmarkConnectCons.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
@@ -369,10 +392,12 @@ TEST(Benchmark, DISABLED_connect_cons)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectConservative.txt", SUBTESTFOLDER "connectSingle.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, connect_single_r)
 {
+    LOG_MOVE("logs/bmarkConnectSingleR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CLASSIC;
@@ -396,10 +421,12 @@ TEST(Benchmark, connect_single_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectSingleR.txt", SUBTESTFOLDER "connectSingleR.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, DISABLED_connect_opt_r)
 {
+    LOG_MOVE("logs/bmarkConnectOptR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
@@ -423,10 +450,12 @@ TEST(Benchmark, DISABLED_connect_opt_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectOptimisticR.txt", SUBTESTFOLDER "connectSingleR.corr"), 0);
+    LOG_MOVE("out.txt", true);
 }
 
 TEST(Benchmark, DISABLED_connect_cons_r)
 {
+    LOG_MOVE("logs/bmarkConnectConsR.log", false);
 	n_control::ControllerConfig conf;
 	conf.m_name = "Interconnect";
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
@@ -450,4 +479,6 @@ TEST(Benchmark, DISABLED_connect_cons_r)
 	};
 
 	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "connectConservativeR.txt", SUBTESTFOLDER "connectSingleR.corr"), 0);
+
+    LOG_MOVE("out.txt", true);
 }
