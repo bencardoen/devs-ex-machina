@@ -106,7 +106,9 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
 {
         for (const auto& message : messages) {
-                message->setCausality(++msgCount);
+                message->setCausality(m_msgCurrentCount);
+                m_msgCurrentCount = m_msgCurrentCount==m_msgEndCount? m_msgStartCount: (m_msgCurrentCount+1);
+
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
                 if (not this->isMessageLocal(message)) {
                         this->sendMessage(message);	// A noop for single core, multi core handles this.
@@ -150,12 +152,13 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
                 m_received_messages->printScheduler();
-                bool erased = this->m_received_messages->erase(MessageEntry(msg));
-                if(!erased)
-                        throw std::logic_error("Pending messages integrity failure!");
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-                // TODO change with msg scheduler.
-                msg->setFlag(Status::KILL);
+//                bool erased = this->m_received_messages->erase(MessageEntry(msg));
+//                if(!erased)
+//                        throw std::logic_error("Pending messages integrity failure!");
+//                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
+//                // TODO change with msg scheduler.
+//                msg->setFlag(Status::KILL);
+                msg->setFlag(Status::ERASE);
         } else if (msg->flagIsSet(Status::DELETE)) {
                 // we encountered this one before, just kill it.
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, marking as KILL ", msg);

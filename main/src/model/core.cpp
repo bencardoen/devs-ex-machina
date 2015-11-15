@@ -54,6 +54,7 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
+                m_msgEndCount((id+1)*(std::numeric_limits<std::size_t>::max()/totalCores)-1), m_msgCurrentCount(m_msgStartCount),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(0,0), uuid(0,0), m_time, 0, 0)),m_zombie_rounds(0),
 		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::MAP)),
 		m_stats(m_coreid)
@@ -266,10 +267,11 @@ void n_model::Core::transition()
 	}
 }
 
-void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t&)
 {
         for (const auto& message : messages) {
-                message->setCausality(++msgCount);
+                message->setCausality(m_msgCurrentCount);
+                m_msgCurrentCount = m_msgCurrentCount==m_msgEndCount? m_msgStartCount: (m_msgCurrentCount+1);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
                 this->queueLocalMessage(message);
         }
@@ -626,8 +628,12 @@ void n_model::Core::getPendingMail()
 	this->m_received_messages->unschedule_until(messages, m_token);
 	this->unlockMessages();
 	for (const auto& entry : messages){
-                entry.getMessage()->setFlag(Status::HEAPED, false);
-                queueLocalMessage(entry.getMessage());
+	        auto msg = entry.getMessage();
+	        if(msg->flagIsSet(Status::ERASE)){
+	                msg->setFlag(Status::KILL);
+	        }
+                msg->setFlag(Status::HEAPED, false);
+                queueLocalMessage(msg);
         }
 
 }
@@ -639,8 +645,16 @@ t_timestamp n_model::Core::getFirstMessageTime()
          * current messages are (should be processed), so irrelevant.
          */
         t_timestamp mintime = t_timestamp::infinity();
-        if (not this->m_received_messages->empty()) {
+        while (not this->m_received_messages->empty()) {
+                const MessageEntry& msg = m_received_messages->top();
+                if(msg.getMessage()->flagIsSet(Status::ERASE)){
+                        t_msgptr msgptr = msg.getMessage();
+                        m_received_messages->pop();
+                        msgptr->setFlag(Status::KILL);
+                        continue;
+                }
                 mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
+                break;
         }
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
         return mintime;

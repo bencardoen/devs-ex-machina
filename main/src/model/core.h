@@ -192,6 +192,8 @@ protected:
 	 */
 	std::size_t m_cores;
 	std::size_t m_msgStartCount;
+	std::size_t m_msgEndCount;
+	std::size_t m_msgCurrentCount;
         
 protected:
         /**

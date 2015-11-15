@@ -33,7 +33,8 @@ enum MessageColor : uint8_t{WHITE = 0, RED = 1};
 // 2^3: HEAPED? The message has been put in a message scheduler in the receiving core.
 // 2^4: ANTI? The message is an anti message
 // 2^5: KILL? The message can be safely killed by the sending core.
-enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32};
+// 2^6: ERASE? When found in the message scheduler, this message can be safely ignored.
+enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32, ERASE=64};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
