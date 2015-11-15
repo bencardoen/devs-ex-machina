@@ -173,6 +173,22 @@ public:
 		m_out.rdbuf(m_buf);
 	}
 
+	/**
+	 * @brief Start writing to a different log file.
+	 * @param newFile The filename of the new file.
+	 * @param append [default = false]  If true, append subsequent log calls to the file.
+	 *                                  Otherwise, replace the file if it exists already.
+	 * Calling this function in a parallel program when other threads are accessing the logs will be safe, but might put unwanted data in either file.
+	 */
+	void logMove(const std::string& newFile, bool append=false){
+	        std::lock_guard<std::mutex> m(this->m_mutex);   //DEFINITELY lock here as we're deleting the buffer!
+	        m_out.flush();
+	        delete m_buf;
+	        m_filename = newFile;
+	        m_buf = new ASynchWriter(m_filename, append? (std::ios_base::app | std::ios_base::out): std::ios_base::out);  //will append
+	        m_out.rdbuf(m_buf);
+	}
+
 private:
 	std::string m_filename;
 	ASynchWriter* m_buf;
