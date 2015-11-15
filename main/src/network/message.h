@@ -298,7 +298,7 @@ public:
 	{
 	}
                 
-    ~SpecializedMessage(){;}        
+        ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -351,7 +351,8 @@ const T& getMsgPayload(const t_msgptr& msg){
 struct hazard_pointer{
         t_timestamp::t_time     m_msgtime;
         t_msgptr                m_ptr;
-        explicit constexpr hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
+        // todo Ben : figure out why this is not an error in clang.
+        explicit /*constexpr*/hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
 };
 
 

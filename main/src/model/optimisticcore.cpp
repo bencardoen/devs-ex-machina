@@ -316,7 +316,19 @@ void Optimisticcore::gcCollect()
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
                 m_sent_messages.size());
         
-        // Resize processed.
+        // Processed contains messages that are being deleted as we speak in other cores.
+        // Make sure we don't access the pointers by accident.
+        auto piter = m_processed_messages.begin();
+        for(;piter != m_processed_messages.end();++piter){
+                hazard_pointer hp = *piter;
+                if(hp.m_msgtime >= this->getGVT().getTime()){
+                        break;
+                }
+        }
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " erasing ",
+                std::distance(m_processed_messages.begin(), piter), " processed messages. ");
+        m_processed_messages.erase(m_processed_messages.begin(), piter);
+        
         m_removeGVTMessages = false;
 
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " calling setGVT on all models.");
