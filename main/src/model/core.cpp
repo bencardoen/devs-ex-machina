@@ -572,10 +572,7 @@ void n_model::Core::clearModels()
 
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
-//        if(msg->flagIsSet(Status::TOERASE) {
-//          msg->setFlag(Status::TOERASE);
-//          return;
-//        }
+        // Don't set flags on a message here, we do this in clearProcessed. (and not at all if we're in single/cons)
         const size_t id = msg->getDestinationModel();
         t_raw_atomic model = this->getModel(id).get();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
@@ -587,7 +584,6 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 model->markExternal();
         }
         getMail(id).push_back(msg);
-        msg->setFlag(Status::PROCESSED);
 }
 
 

@@ -273,18 +273,22 @@ void Optimisticcore::gcCollect()
         auto senditer = m_sent_messages.begin();
         for (; senditer != m_sent_messages.end(); ++senditer) {
                 if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " found msg >= gvt, stopping collect ");
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " found msg >= gvt, stopping collect ", (*senditer)->toString());
                         break;
                 }
-                // Assuming gvt works, we can't see a non-processed msg here.
+                
                 t_msgptr& ptr = *senditer;
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " gcollecting ", ptr);
+                LOG_FLUSH;
+                // If gvt is correct, messages has to be processed, and heap is not set.
 #ifdef SAFETY_CHECKS
-                if(!ptr->flagIsSet(Status::PROCESSED)){
+                if(!ptr->flagIsSet(Status::PROCESSED) || ptr->flagIsSet(Status::HEAPED)){
                         LOG_ERROR("GVT integrity failure :: id= ", this->getCoreID(), " for msg ", ptr, " not processed but gvt is past tstamp?");
+                        break;
                 }
-#endif
+#endif        
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                //if(ptr->flagIsSet(Status::KILL))        // A final guard.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
@@ -311,6 +315,19 @@ void Optimisticcore::gcCollect()
         m_sent_messages.erase(m_sent_messages.begin(), senditer);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
                 m_sent_messages.size());
+        
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " purging processed msgs. ");
+        auto prociter = m_processed_messages.begin();
+        for(; prociter != m_processed_messages.end(); ++prociter){
+                if((*prociter)->getTimeStamp().getTime()>=this->getGVT().getTime()){
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " first msg >= gvt = ", *prociter);
+                        break;
+                }
+                (*prociter)->setFlag(Status::KILL);
+        }
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " erasing  ", std::distance(m_processed_messages.begin(),prociter), " msgPOINTERS ");
+        m_processed_messages.erase(m_processed_messages.begin(), prociter);
+        
         m_removeGVTMessages = false;
 
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " calling setGVT on all models.");
