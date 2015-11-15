@@ -10,10 +10,8 @@
 
 #include "model/core.h"
 #include "model/v.h"
+#include "network/message.h"
 using n_network::MessageColor;
-
-
-
 
 namespace n_model {
 
@@ -82,7 +80,7 @@ private:
 
 	bool m_removeGVTMessages;
         
-        std::deque<t_msgptr>                    m_processed_messages;
+        std::deque<n_network::hazard_pointer>                    m_processed_messages;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message

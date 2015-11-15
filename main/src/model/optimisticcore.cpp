@@ -97,7 +97,7 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                 }
                 else{
                         // TODO mark change
-                        m_processed_messages.push_back(ptr);
+                        m_processed_messages.push_back(n_network::hazard_pointer(ptr));
                 }
         }
         msgs.clear();
@@ -316,18 +316,7 @@ void Optimisticcore::gcCollect()
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
                 m_sent_messages.size());
         
-        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " purging processed msgs. ");
-        auto prociter = m_processed_messages.begin();
-        for(; prociter != m_processed_messages.end(); ++prociter){
-                if((*prociter)->getTimeStamp().getTime()>=this->getGVT().getTime()){
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " first msg >= gvt = ", *prociter);
-                        break;
-                }
-                (*prociter)->setFlag(Status::KILL);
-        }
-        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " erasing  ", std::distance(m_processed_messages.begin(),prociter), " msgPOINTERS ");
-        m_processed_messages.erase(m_processed_messages.begin(), prociter);
-        
+        // Resize processed.
         m_removeGVTMessages = false;
 
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " calling setGVT on all models.");
@@ -633,22 +622,24 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
         }
         
         while(m_processed_messages.size()){
-                t_msgptr msg = m_processed_messages.back();
-                LOG_DEBUG("Revert :: handling processed msg :: ", msg, " ~ ", msg->toString());
-                t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
+                // DO NOT access the pointer itself
+                hazard_pointer msg = m_processed_messages.back();
+                LOG_DEBUG("Revert :: handling processed msg :: ", msg.m_ptr, " ~ ");
+                t_timestamp::t_time msgtime = msg.m_msgtime;
                 if(msgtime < totime)
                         break;
+                // From here the pointer is safe (if GVT is not failing.)
 #ifdef SAFETY_CHECKS
-                if(!msg->flagIsSet(Status::PROCESSED)){
-                        LOG_DEBUG("P not set on msg :: ", msg, " ", msg->toString());
+                if(!msg.m_ptr->flagIsSet(Status::PROCESSED)){
+                        LOG_DEBUG("P not set on msg :: ", msg.m_ptr, " ");
                         throw std::logic_error("P not set on a PROCESSED msg.");
                 }
 #endif
-                if(!msg->flagIsSet(Status::ANTI)){
-                        msg->setFlag(Status::HEAPED);
-                        msg->setFlag(Status::PROCESSED, false);
-                        if(!m_received_messages->contains(msg))
-                                m_received_messages->push_back(msg);
+                if(!msg.m_ptr->flagIsSet(Status::ANTI)){
+                        msg.m_ptr->setFlag(Status::HEAPED);
+                        msg.m_ptr->setFlag(Status::PROCESSED, false);
+                        if(!m_received_messages->contains(msg.m_ptr))
+                                m_received_messages->push_back(msg.m_ptr);
                 }
                 m_processed_messages.pop_back();
         }

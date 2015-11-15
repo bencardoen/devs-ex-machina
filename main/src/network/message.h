@@ -346,6 +346,15 @@ const T& getMsgPayload(const t_msgptr& msg){
         return n_tools::staticRawCast<const n_network::SpecializedMessage<T>>(msg)->getData();
 }
 
+
+// Timestamp is invariant of a message, but the object itself may be destroyed already.
+struct hazard_pointer{
+        t_timestamp::t_time     m_msgtime;
+        t_msgptr                m_ptr;
+        explicit constexpr hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
+};
+
+
 } // end namespace n_network
 
 /**
