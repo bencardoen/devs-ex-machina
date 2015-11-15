@@ -571,7 +571,7 @@ public:
 	 * @lock: locks on messagelock.
 	 */
 	virtual void
-	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
+	sortMail(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.

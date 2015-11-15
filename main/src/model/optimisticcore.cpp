@@ -103,7 +103,7 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
         msgs.clear();
 }
 
-void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages)
 {
         for (const auto& message : messages) {
                 message->setCausality(m_msgCurrentCount);

@@ -153,7 +153,6 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
         m_mailfrom.clear();
-        std::size_t mailCount = m_msgStartCount;
 	for (auto model : imminents) {
 		model->doOutput(m_mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
@@ -164,7 +163,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 		}
 #endif
                 
-		this->sortMail(m_mailfrom, mailCount);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
+		this->sortMail(m_mailfrom);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
                 m_mailfrom.clear();
 	}
 }
@@ -267,7 +266,7 @@ void n_model::Core::transition()
 	}
 }
 
-void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t&)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
         for (const auto& message : messages) {
                 message->setCausality(m_msgCurrentCount);
