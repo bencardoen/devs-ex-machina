@@ -276,7 +276,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class /*__attribute__((aligned(64)))*/SpecializedMessage: public Message
+class /*__attribute__((aligned(64)))*/ SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;

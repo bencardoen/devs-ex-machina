@@ -920,6 +920,12 @@ TEST(DSlabPool, Timing){
         delete pl;
 }
 
+TEST(CFPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::CFPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
 TEST(Pool, DynamicSlabPool){
         using n_network::Message;
         using n_network::SpecializedMessage;
@@ -1018,10 +1024,10 @@ TEST(Pool, CFPool){
         using n_model::uuid;
         using n_network::t_timestamp;
         std::set<Message*> ptrs;
-        size_t psize=65;
-        size_t tsize=65;
+        size_t psize=2;
+        size_t tsize=129;
         size_t rsize=2;
-        n_pools::CFPool<Message> pl(psize);
+        n_pools::CFPool<Message> pl(psize); 
         std::vector<Message*> mptrs;
         for(size_t j = 0; j<rsize;++j){
                 for(size_t i = 0; i<tsize; ++i){
@@ -1040,6 +1046,51 @@ TEST(Pool, CFPool){
                 ptrs.clear();
                 mptrs.clear();
         }
-        //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        pl.log_pool();
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
         EXPECT_EQ(pl.allocated(), 0u);
+}
+
+TEST(Tools, p2){
+        size_t val = 1;
+        for(size_t i = 0; i<63; ++i){
+                val = val << 1ull;
+                EXPECT_TRUE(n_tools::is_power_2(val));
+                if(val!=2){
+                        EXPECT_FALSE(n_tools::is_power_2(val-1));
+                }
+        }
+}
+struct __attribute__((aligned(64))) teststruct{
+        size_t val;
+        char c;
+        size_t v2;
+        virtual void f(){;}
+        virtual ~teststruct(){;}
+};
+
+// If the alignment is incorrect, the vtable will have an invalid offset which
+// asan will detect (usually slightly before nasal demons arrive).
+struct __attribute__((aligned(64))) derivedts : public teststruct{
+        size_t pval;
+        virtual void f()override{;}
+};
+
+TEST(Tools, alignptr)
+{
+        derivedts* ts = (derivedts*)std::malloc(3*sizeof(derivedts));        // Alignment should be ~8 ymmv
+        derivedts* alignedts = n_pools::align_ptr(ts);
+        alignedts = new (alignedts) derivedts;
+        // A few accesses to check alignment asan warnings.
+        alignedts->val = 42;
+        alignedts->c = 'a';
+        alignedts->v2 = 41;
+        teststruct* bts = (teststruct*) alignedts;
+        bts->f();
+        uintptr_t low = (uintptr_t)alignedts;
+        ++alignedts;
+        uintptr_t high = (uintptr_t)alignedts;
+        EXPECT_EQ(high-low, 64u);       // ++ should have move 64.
+        EXPECT_EQ(low%64, 0u);          // original address should be 0 mod alignment.
+        std::free(ts);
 }
