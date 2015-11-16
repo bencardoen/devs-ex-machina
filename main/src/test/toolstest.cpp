@@ -920,6 +920,12 @@ TEST(DSlabPool, Timing){
         delete pl;
 }
 
+TEST(CFPool, Timing){
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::DynamicSlabPool<n_network::Message>(testsize);
+        timePool(pl);
+        delete pl;
+}
+
 TEST(Pool, DynamicSlabPool){
         using n_network::Message;
         using n_network::SpecializedMessage;
@@ -1018,8 +1024,8 @@ TEST(Pool, CFPool){
         using n_model::uuid;
         using n_network::t_timestamp;
         std::set<Message*> ptrs;
-        size_t psize=64;
-        size_t tsize=64;
+        size_t psize=2;
+        size_t tsize=129;
         size_t rsize=2;
         n_pools::CFPool<Message> pl(psize); 
         std::vector<Message*> mptrs;
@@ -1040,7 +1046,8 @@ TEST(Pool, CFPool){
                 ptrs.clear();
                 mptrs.clear();
         }
-        //EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
+        pl.log_pool();
+        EXPECT_EQ(pl.size(), 1ull << (size_t((log2(tsize)+1))));
         EXPECT_EQ(pl.allocated(), 0u);
 }
 
