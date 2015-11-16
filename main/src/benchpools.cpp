@@ -11,7 +11,7 @@ LOG_INIT("out.txt")
 
 using namespace n_pools;
 
-struct __attribute__((aligned(64)))Msg{
+struct Msg{
         size_t v;
         Msg():v(0){;}
         explicit Msg(size_t iv):v(iv){;}
