@@ -921,7 +921,7 @@ TEST(DSlabPool, Timing){
 }
 
 TEST(CFPool, Timing){
-        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::DynamicSlabPool<n_network::Message>(testsize);
+        n_pools::PoolInterface<n_network::Message>* pl= new n_pools::CFPool<n_network::Message>(testsize);
         timePool(pl);
         delete pl;
 }

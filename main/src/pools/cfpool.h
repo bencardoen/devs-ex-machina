@@ -20,7 +20,7 @@ namespace n_pools{
  *  at base_ptr + i is free.
  */
 typedef uint64_t t_word;        // << choice is limited here to 32/64.
-typedef std::deque<t_word> t_mmap;
+typedef std::vector<t_word> t_mmap;
 
 constexpr size_t range_word = sizeof(t_word)*8;
 // In future, allow dyn bset ? Speed advantage of builtins and shifting is to tempting atm.
@@ -68,24 +68,14 @@ class CFPool: public PoolInterface<T>
 {
         private:
                 // Each lane holds [begin,end] T*, and a bitmap of allocated ptrs.
-                std::deque<stateful_lane<T>> m_lanes;
+                std::vector<stateful_lane<T>> m_lanes;
                 // Current max size (inc allocated).
                 std::size_t m_osize;
                 // Total allocated objects.
                 std::size_t m_allocated;
                 // Lane where last free pointer was found.
                 std::size_t m_lane_index;
-                
-                // allocated/size
-                double      m_load;
-                
-                // Can be used as a indicator for allocate to abandon search and realloc new lane.
-                double      m_treshold;    
-                
-                void update_load()
-                {
-                        m_load=(m_allocated/(double)m_osize);
-                }
+
                 
                 /**
                  * Create a new lane based on the current size of the pool.
@@ -110,7 +100,7 @@ class CFPool: public PoolInterface<T>
                 void log_pool()
                 {
                         LOG_DEBUG("CFPool :: size=", this->size(), " alloc = ", this->allocated());
-                        LOG_DEBUG("Lane index = ", m_lane_index, " load=", m_load, "treshold=",m_treshold);
+                        LOG_DEBUG("Lane index = ", m_lane_index);
                         for(const auto& lane : m_lanes){
                                 LOG_DEBUG("Lane from ", lane.begin()," to ", lane.last(), " size =", lane.size());
                                 LOG_DEBUG("Word index = ", lane.m_word_index);
@@ -134,11 +124,12 @@ class CFPool: public PoolInterface<T>
                 // see set_bit
                 void unset_bit(t_word& word, size_t pos)
                 {
+                        assert(sizeof(word)==8 && pos < range_word && "Invalid precondition set_bit");
                         word &= ~(1ull << (range_word - pos - 1ull));
                 }
                 
                 // @pre initsize > 0
-                CFPool(size_t initsize):m_osize(initsize),m_allocated(0),m_lane_index(0),m_load(0),m_treshold(1)
+                CFPool(size_t initsize):m_osize(initsize),m_allocated(0),m_lane_index(0)
                 {
                         T* fblock = (T*) std::malloc(sizeof(T)*(m_osize+1));
                         if(!fblock)
@@ -163,38 +154,45 @@ class CFPool: public PoolInterface<T>
                  */
                 T* allocate()override
                 {
-                        const size_t old_index = m_lane_index;
-                        for(;;){
-                                auto& lane = m_lanes[m_lane_index];
-                                size_t j = lane.m_word_index;
-                                for(;j<lane.m_map.size();){
-                                        t_word& word = lane.m_map[j];
-                                        if(word){
-                                                size_t i = n_tools::firstbitset<8>(word);        // leading zeros indicates which ptr is free
-                                                T* base = lane.begin();                   
-                                                word &= ~(1ull << (range_word-1ull-i));
-                                                ++m_allocated;
-                                                lane.m_word_index=j;
-                                                LOG_DEBUG("CFPOOL:: allocated ::  ", (base + (j*range_word) + i), "(word) r=", j,"c=",i, " in lane ", m_lane_index);
-                                                update_load();
-                                                return (base + (j*range_word) + i);
+                        if(m_allocated==m_osize){
+                                LOG_DEBUG("CFPool :: memory exhausted, reallocating new block.");
+                                auto& lane = alloc_lane();
+                                T* freeptr = lane.begin();
+                                ++m_allocated;
+                                unset_bit(lane.m_map.front(), 0);
+                                LOG_DEBUG("CFPOOL:: allocated ::  ", freeptr, "first of new lane.", m_lane_index);
+                                return freeptr;
+                        }else{
+                                const size_t old_index = m_lane_index;
+                                for(;;){
+                                        auto& lane = m_lanes[m_lane_index];
+                                        size_t j = lane.m_word_index;
+                                        for(;j<lane.m_map.size();){
+                                                t_word& word = lane.m_map[j];
+                                                if(word){
+                                                        const size_t i = n_tools::firstbitset<8>(word);        // leading zeros indicates which ptr is free
+                                                        T* rval = lane.begin() + (j*range_word) + i;
+                                                        unset_bit(word, i);
+                                                        ++m_allocated;
+                                                        lane.m_word_index=j;
+                                                        LOG_DEBUG("CFPOOL:: allocated ::  ", rval , "(word) r=", j,"c=",i, " in lane ", m_lane_index);
+                                                        return rval;
+                                                }
+                                                ++j;
                                         }
-                                        ++j;
+                                        lane.m_word_index=0;
+                                        ++m_lane_index;
+                                        m_lane_index %= m_lanes.size();
+                                        if(m_lane_index == old_index)   
+                                                break;
                                 }
-                                lane.m_word_index=0;
-                                ++m_lane_index;
-                                m_lane_index %= m_lanes.size();
-                                if(m_lane_index == old_index)   
-                                        break;
                         }
                         LOG_DEBUG("CFPool :: memory exhausted, reallocating new block.");
                         auto& lane = alloc_lane();
                         T* freeptr = lane.begin();
                         ++m_allocated;
-                        t_word& word = lane.m_map.front();
-                        word &= ~(1ull << (range_word-1ull));   // Neq w >>= 1, since word can be 111100...
+                        unset_bit(lane.m_map.front(), 0);
                         LOG_DEBUG("CFPOOL:: allocated ::  ", freeptr, "first of new lane.", m_lane_index);
-                        update_load();
                         return freeptr;
                 }
                 
@@ -216,27 +214,16 @@ class CFPool: public PoolInterface<T>
                                 uintptr_t dist = t - lane.begin(); // relies on if for oflow safety.
                                 if(t<= lane.last())
                                 {
-                                        std::lldiv_t rowcol = std::lldiv(dist , range_word); // row=word, col=bit
-                                        t_word& word = lane.m_map[rowcol.quot];
-#ifdef SAFETY_CHECKS
-                                        t_word prev = word;// Remember word before modifying, if the bit is set we want to check later.
-                                        if(rowcol.rem < 0 || ((range_word - rowcol.rem - 1ull) > 63)){
-                                                throw std::logic_error("Negative remainder");
-                                        }
-#endif
+                                        // %/ is signed, >= 0 since args are both unsigned
+                                        const size_t quot = dist/range_word;
+                                        const size_t rem = dist%range_word;
+                                        //std::div_t rowcol = std::div(dist , range_word); // row=word, col=bit division is hideously slow here
+                                        t_word& word = lane.m_map[quot];
                                         --m_allocated;
-                                        word |= (1ull << (range_word - rowcol.rem - 1ull));
-#ifdef SAFETY_CHECKS
-                                        if(word == prev){
-                                                LOG_ERROR("Dist == ", dist, " quot == ", rowcol.quot ," rem = ",rowcol.rem);
-                                                LOG_FLUSH;
-                                                throw std::logic_error("Double dealloc");
-                                        }
-#endif                                  
-                                        lane.m_word_index=rowcol.quot;
+                                        set_bit(word, rem);
+                                        lane.m_word_index=quot;
                                         t->~T();
-                                        LOG_DEBUG("CFPool :: deallocated ", t ," in lane ", index ," wordindex = ",rowcol.quot ,"bitpos =", rowcol.rem);
-                                        update_load();
+                                        LOG_DEBUG("CFPool :: deallocated ", t ," in lane ", index ," wordindex = ",quot ,"bitpos =", rem);
                                         return;
                                 }
                         }

@@ -4,6 +4,7 @@
 #include <sstream>
 #include "tools/globallog.h"
 #include "pools/pools.h"
+#include "pools/cfpool.h"
 
 LOG_INIT("out.txt")
 
@@ -51,7 +52,8 @@ int main(int argc, char** argv) {
         std::map<std::string, PoolInterface<Msg>*>  pnames{     
                                                         {"bpool",new n_pools::Pool<Msg, boost::pool<>>(128)},{"slabpool",new n_pools::SlabPool<Msg>(tsize)},
                                                         {"dynpool",new n_pools::DynamicSlabPool<Msg>(128)} ,{"stackpool", new n_pools::StackPool<Msg>(128)},
-                                                        {"newdel", new n_pools::Pool<Msg, std::false_type>(tsize/2)}
+                                                        {"newdel", new n_pools::Pool<Msg, std::false_type>(tsize/2)},
+                                                        {"cfpool",new n_pools::CFPool<Msg>(128)}
                                                           };
         //size_t allocsize = (tsize*sizeof(Msg))/(1024*1024);
         //std::cout << "Benchmark will allocate at least " << allocsize << " MB " << std::endl;
