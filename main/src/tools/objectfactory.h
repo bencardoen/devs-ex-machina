@@ -53,7 +53,7 @@ T* createPooledObject(Args&&... args)
 {
         T* mem = n_pools::getPool<T>()->allocate();     // Calling thread gets a dedicated pool.
         T* obj = new (mem) T(args...);
-        LOG_DEBUG("Allocating pooled msg : ", obj);
+        LOG_DEBUG("Allocating pooled object : ", obj);
         return obj;
 }
 
@@ -64,7 +64,7 @@ T* createPooledObject(Args&&... args)
 template<typename T>
 void destroyPooledObject(T* t)
 {
-        LOG_DEBUG("Deallocating pooled msg : ", t);
+        LOG_DEBUG("Deallocating pooled object : ", t);
         n_pools::getPool<T>()->deallocate(t);
 }
 

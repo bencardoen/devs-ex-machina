@@ -246,7 +246,7 @@ private:
 	void cvworker( std::size_t myid, std::size_t turns,Controller&);
         
         friend
-	void cvworker_con( std::size_t myid, std::size_t turns,Controller&);
+	void cvworker_con( std::size_t myid, std::size_t turns,Controller&, std::atomic_uint&);
 
 #ifdef USE_VIZ
 public:
@@ -282,6 +282,8 @@ public:
 //#endif
 };
 
+void beginGVT(Controller&, std::atomic<bool>& rungvt);
+
 /**
  * Find GVT using Mattern's algorithm.
  * @param rungvt : thread interrupt flag.
@@ -300,7 +302,7 @@ void cvworker(std::size_t myid,std::size_t turns,Controller&);
  * @param myid unique identifier, for logging it is best this is equal to coreid
  * @param turns : infinite loop cutoff value.
  */
-void cvworker_con(std::size_t myid,std::size_t turns,Controller&);
+void cvworker_con(std::size_t myid,std::size_t turns,Controller&, std::atomic_uint&);
 
 } /* namespace n_control */
 

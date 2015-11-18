@@ -54,8 +54,9 @@ n_model::Core::Core(std::size_t id, std::size_t totalCores)
 	:       m_time(0, 0), m_gvt(0, 0), m_coreid(id), m_live(false), m_termtime(t_timestamp::infinity()),
                 m_terminated(false),
                 m_terminated_functor(false), m_cores(totalCores), m_msgStartCount(id*(std::numeric_limits<std::size_t>::max()/totalCores)),
+                m_msgEndCount((id+1)*(std::numeric_limits<std::size_t>::max()/totalCores)-1), m_msgCurrentCount(m_msgStartCount),
                 m_token(n_tools::createRawObject<n_network::Message>(uuid(0,0), uuid(0,0), m_time, 0, 0)),m_zombie_rounds(0),
-		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::MAP)),
+		m_received_messages(n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false, n_scheduler::KeyStorage::NONE)),
 		m_stats(m_coreid)
                 
 {
@@ -113,11 +114,19 @@ void n_model::Core::init()
 		const t_timestamp modelTime(this->getTime().getTime() - model->getTimeElapsed().getTime(),0);
 		model->setTime(modelTime);	// DO NOT use priority, model does this already
 		m_heap.push_back(model.get());
-		m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
+                if(m_tracers){
+                        m_tracers->tracesInit(model, t_timestamp(0, model->getPriority()));
+                }
+                else{
+                        LOG_WARNING("No Tracers set on core!", this->getCoreID());
+                }
 	}
 	//schedule all models.
 	rescheduleAll();
 }
+
+void n_model::Core::initThread()
+{}
 
 void n_model::Core::initializeModels()
 {
@@ -144,7 +153,6 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
         m_mailfrom.clear();
-        std::size_t mailCount = m_msgStartCount;
 	for (auto model : imminents) {
 		model->doOutput(m_mailfrom);
 		LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got ", m_mailfrom.size(), " messages from ", model->getName());
@@ -155,7 +163,7 @@ void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 		}
 #endif
                 
-		this->sortMail(m_mailfrom, mailCount);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
+		this->sortMail(m_mailfrom);	// <-- Locked here on msglock. Don't pop_back, single clear = O(1)
                 m_mailfrom.clear();
 	}
 }
@@ -259,10 +267,11 @@ void n_model::Core::transition()
 	}
 }
 
-void n_model::Core::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 {
         for (const auto& message : messages) {
-                message->setCausality(++msgCount);
+                message->setCausality(m_msgCurrentCount);
+                m_msgCurrentCount = m_msgCurrentCount==m_msgEndCount? m_msgStartCount: (m_msgCurrentCount+1);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
                 this->queueLocalMessage(message);
         }
@@ -320,8 +329,10 @@ void n_model::Core::syncTime()
 	if (isInfinity(newtime)) {
 		LOG_WARNING("\tCORE :: ", this->getCoreID(), " Core has no new time (no msgs, no scheduled models), marking as zombie");
 		incrementZombieRounds();
-		if(m_zombie_rounds == 1)
+		if(m_zombie_rounds == 1){
+                        LOG_WARNING("\tCORE :: ", this->getCoreID(), " Setting time to last+1 to avoid unnecessary revert.");
 			setTime(getTime() + n_network::t_timestamp::epsilon());
+                }
 		return;
 	}
 #ifdef SAFETY_CHECKS
@@ -418,7 +429,7 @@ void n_model::Core::runSmallStep()
 	this->rescheduleImminent();
 	
 	// Forward time to next message/firing.
-	this->syncTime();				// locked on msgs
+	this->syncTime();				
         m_imminents.clear();
         m_externs.clear();
 
@@ -561,28 +572,9 @@ void n_model::Core::clearModels()
 	this->m_gvt = t_timestamp(0, 0);
 }
 
-void n_model::Core::queuePendingMessage(const t_msgptr& msg)
-{
-        const MessageEntry entry(msg);
-        if (!msg->flagIsSet(Status::HEAPED)) {
-                this->m_received_messages->push_back(entry);
-                msg->setFlag(Status::HEAPED);
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
-        } else {
-                LOG_WARNING("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
-                        msg->toString());
-                this->m_received_messages->erase(entry);
-                this->m_received_messages->push_back(entry);
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto received msgs: ", msg);
-        }
-}
-
 void n_model::Core::queueLocalMessage(const t_msgptr& msg)
 {
-//        if(msg->flagIsSet(Status::TOERASE) {
-//          msg->setFlag(Status::TOERASE);
-//          return;
-//        }
+        // Don't set flags on a message here, we do this in clearProcessed. (and not at all if we're in single/cons)
         const size_t id = msg->getDestinationModel();
         t_raw_atomic model = this->getModel(id).get();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " queueing message to model ", model->getName(), " with id ", id, " it already has messages: ", hasMail(id));
@@ -594,7 +586,6 @@ void n_model::Core::queueLocalMessage(const t_msgptr& msg)
                 model->markExternal();
         }
         getMail(id).push_back(msg);
-        msg->setFlag(Status::PROCESSED);
 }
 
 
@@ -626,21 +617,24 @@ void n_model::Core::getPendingMail()
 	 * Check if we have pending messages with time <= (time=now, caus=oo);
 	 * If so, add them to the mailbag
 	 */
-        this->lockMessages();
+        
         if(m_received_messages->empty()){
-                this->unlockMessages();
                 return;
         }
-        this->unlockMessages();
 	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
 	m_token.getMessage()->setTimeStamp(nowtime);
 
-	this->lockMessages();
 	this->m_received_messages->unschedule_until(messages, m_token);
 	this->unlockMessages();
-	for (const auto& entry : messages) 
-                queueLocalMessage(entry.getMessage());
+	for (const auto& entry : messages){
+	        auto msg = entry.getMessage();
+	        if(msg->flagIsSet(Status::ERASE)){
+	                msg->setFlag(Status::KILL);
+	        }
+                msg->setFlag(Status::HEAPED, false);
+                queueLocalMessage(msg);
+        }
 
 }
 
@@ -651,26 +645,23 @@ t_timestamp n_model::Core::getFirstMessageTime()
          * current messages are (should be processed), so irrelevant.
          */
         t_timestamp mintime = t_timestamp::infinity();
-        this->lockMessages();
-        if (not this->m_received_messages->empty()) {
+        while (not this->m_received_messages->empty()) {
+                const MessageEntry& msg = m_received_messages->top();
+                if(msg.getMessage()->flagIsSet(Status::ERASE)){
+                        t_msgptr msgptr = msg.getMessage();
+                        m_received_messages->pop();
+                        msgptr->setFlag(Status::KILL);
+                        continue;
+                }
                 mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
+                break;
         }
-        this->unlockMessages();
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
         return mintime;
 }
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
 {
-	if (isInfinity(newgvt)) {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to infinity, ignoring.");
-		return;
-	}
-	if (newgvt.getTime() < this->getGVT().getTime()) {
-		LOG_WARNING("\tCORE :: ", this->getCoreID(), " received request to set gvt to ", newgvt, " < ",
-		        this->getGVT(), " ignoring ");
-		return;
-	}
 	LOG_INFO("\tCORE :: ", this->getCoreID(), " Setting gvt from ::", this->getGVT(), " to ", newgvt.getTime());
 	this->m_gvt = t_timestamp(newgvt.getTime(), 0);
 }

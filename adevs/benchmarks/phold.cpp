@@ -176,9 +176,10 @@ public:
 class PHOLD: public adevs::Digraph<t_payload, int>
 {
 public:
+    std::vector<HeavyPHOLDProcessor*> processors;
+
 	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes)
 	{
-		std::vector<HeavyPHOLDProcessor*> processors;
 		std::vector<std::vector<size_t>> procs;
 
 		for (size_t i = 0; i < nodes; ++i) {
@@ -391,6 +392,17 @@ int main(int argc, char** argv)
 		sim.execUntil(eTime);
 	} else {
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
+		std::size_t i = 0;
+		std::size_t nodes_per_core = std::ceil(((PHOLD*)model)->processors.size() / (double)coreAmt);
+		for(HeavyPHOLDProcessor* ptr: ((PHOLD*)model)->processors){
+                        size_t coreid = i / nodes_per_core;
+                        if (coreid >= coreAmt) {     // overflow into the last core.
+                                coreid = coreAmt - 1;
+                        }
+//                        std::cout << "assigned " << ptr->m_name << " to core " << coreid << '\n';
+                        ptr->setProc(coreid);
+	                    ++i;
+		}
 		adevs::ParSimulator<t_event> sim(model);
 #ifndef BENCHMARK
 		sim.addEventListener(listener);

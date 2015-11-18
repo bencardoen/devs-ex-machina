@@ -192,6 +192,8 @@ protected:
 	 */
 	std::size_t m_cores;
 	std::size_t m_msgStartCount;
+	std::size_t m_msgEndCount;
+	std::size_t m_msgCurrentCount;
         
 protected:
         /**
@@ -297,7 +299,7 @@ protected:
 	 * @lock Unlocked (ie locked by caller)
 	 */
         virtual
-	void queuePendingMessage(const t_msgptr& msg);
+	void queuePendingMessage(t_msgptr){assert(false);}
         
         /**
          * Store a generated message between models in this core for local
@@ -430,6 +432,13 @@ public:
 	 */
 	virtual
 	void init();
+
+	/**
+	 * Run at startup when the thread has already been started.
+	 * @attention : run this once and only once. Don't run this on the main thread if the core is multithreaded.
+	 */
+	virtual
+	void initThread();
         
         void
         getImminent(std::vector<t_raw_atomic>& imms);
@@ -562,7 +571,7 @@ public:
 	 * @lock: locks on messagelock.
 	 */
 	virtual void
-	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount);
+	sortMail(const std::vector<t_msgptr>& messages);
 
 	/**
 	 * Helper function, forward model to tracer.
@@ -656,7 +665,6 @@ public:
 
 	/**
 	 * Get the mail with timestamp < nowtime sorted by destination.
-	 * @locks on messagelock
 	 */
 	virtual
 	void getPendingMail();

@@ -117,7 +117,6 @@ TEST(Core, CoreFlow)
 	t_msgptr mymessage = createRawObject<Message>(modelfrom->getUUID(), modelto->getUUID(), (0), portname_stub, portname_stub);
 	EXPECT_EQ(mymessage->getDestinationCore(), 0u);
 	EXPECT_EQ(mymessage->getSourceCore(), 0u);
-	c.init();
 	//c.printSchedulerState();
 	c.syncTime();
 	EXPECT_EQ(c.getTime().getTime() , t_timestamp(60, 0).getTime());
@@ -243,6 +242,7 @@ TEST(Optimisticcore, revert){
 	t_timestamp endtime(2000,0);
 	coreone->setTerminationTime(endtime);
 	coreone->init();
+	coreone->initThread();
 	coreone->syncTime();
 	EXPECT_EQ(coreone->getTime().getTime(), 58u);
 	
@@ -306,6 +306,7 @@ TEST(Optimisticcore, revertidle){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -313,6 +314,7 @@ TEST(Optimisticcore, revertidle){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -394,6 +396,7 @@ TEST(Optimisticcore, revertedgecases){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -401,6 +404,7 @@ TEST(Optimisticcore, revertedgecases){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -484,6 +488,7 @@ TEST(Optimisticcore, revertoffbyone){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -491,6 +496,7 @@ TEST(Optimisticcore, revertoffbyone){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -575,6 +581,7 @@ TEST(Optimisticcore, revertstress){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -582,6 +589,7 @@ TEST(Optimisticcore, revertstress){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -657,12 +665,14 @@ TEST(Optimisticcore, revert_antimessaging){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -727,6 +737,7 @@ TEST(Optimisticcore, GVT){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -734,6 +745,7 @@ TEST(Optimisticcore, GVT){
 
 	c2->setTracers(tracers);
 	c2->init();
+    c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -795,6 +807,7 @@ TEST(Conservativecore, Abstract){
 	ctrl.addModel(m);
 	c0->setTracers(tracers);
 	c0->init();  // LA = oo
+    c0->initThread();
 	c0->setTerminationTime(endTime);
 	c0->setLive(true);
 	c0->logCoreState();
@@ -802,6 +815,7 @@ TEST(Conservativecore, Abstract){
 
 	c1->setTracers(tracers);
 	c1->init();  // LA = 30
+    c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -932,6 +946,8 @@ TEST(Conservativecore, Abstract){
         EXPECT_EQ(c1->getTime().getTime(), 70u);
         EXPECT_EQ(c1->getEit(), t_timestamp::MAXTIME);
         tracers->startTrace();
+        c0->shutDown();
+        c1->shutDown();
 	}
 }
 
@@ -968,19 +984,22 @@ TEST(Conservativecore, Deadlock){
                 ctrl.addModel(m);
                 
                 c0->setTracers(tracers);
-                c0->init();  
+                c0->init();
+                c0->initThread();
                 c0->setTerminationTime(endTime);
                 c0->setLive(true);
                 c0->logCoreState();
                 
                 c1->setTracers(tracers);
                 c1->init();  
+                c1->initThread();
                 c1->setTerminationTime(endTime);
                 c1->setLive(true);
                 c1->logCoreState();
                 
                 c2->setTracers(tracers);
-                c2->init();  
+                c2->init();
+                c2->initThread();
                 c2->setTerminationTime(endTime);
                 c2->setLive(true);
                 c2->logCoreState();
@@ -1062,7 +1081,9 @@ TEST(Conservativecore, Deadlock){
                 EXPECT_EQ(eotvector->get(1), 15u); 
                 EXPECT_EQ(timevector->get(2), 11u); 
                 EXPECT_EQ(eotvector->get(2), 15u); 
-                
+                c0->shutDown();
+                c1->shutDown();
+                c2->shutDown();
 	}
 }
 #include <performance/phold/phold.h>
@@ -1112,10 +1133,12 @@ TEST(Conservativecore, PHOLD){
         
 	Core* zero = ctrl->getCore(0);
         zero->init();
+        zero->initThread();
         zero->setTerminationTime(endTime);
         zero->setLive(true);
         Core* one = ctrl->getCore(1);
         one->init();
+        one->initThread();
         one->setTerminationTime(endTime);
         one->setLive(true);
         
@@ -1134,4 +1157,6 @@ TEST(Conservativecore, PHOLD){
 	n_tools::CoutRedirect myRedirect(filestream);
 	ctrl->printStats(std::cout);
 	d->printStats(std::cout);
+        zero->shutDown();
+        one->shutDown();
 }

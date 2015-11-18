@@ -301,7 +301,8 @@ char getOpt(char* argv){
 
 void allocate(std::size_t numCores, std::size_t pCount, Processor* p){
 	if(p != nullptr){
-		std::size_t core = p->m_counter*numCores/pCount;
+        double blocksize = (double) (pCount + 1) / (double) numCores;
+        size_t core = (1+p->m_counter)/blocksize;
 		p->setProc(core);
 //		std::cout << "assigned processor_" << p->m_counter << " to core " << core << '\n';
 	}

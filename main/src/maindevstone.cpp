@@ -14,34 +14,6 @@
 
 LOG_INIT("devstone.log")
 
-class DevstoneAlloc: public n_control::Allocator
-{
-private:
-	std::size_t m_maxn;
-public:
-	DevstoneAlloc(): m_maxn(0){
-
-	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
-		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
-		if(p == nullptr)
-			return 0;
-		std::size_t res = p->m_num*coreAmount()/m_maxn;
-		if(res >= coreAmount())
-			res = coreAmount()-1;
-		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
-		return res;
-	}
-
-	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-		m_maxn = models.size();
-		assert(m_maxn && "Total amount of models can't be zero.");
-		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber(allocate(ptr));
-	}
-};
-
-
 template<typename T>
 T toData(std::string str)
 {
@@ -187,7 +159,7 @@ int main(int argc, char** argv)
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 250;     
 	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<DevstoneAlloc>();
+	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);

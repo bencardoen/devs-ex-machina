@@ -19,6 +19,7 @@
 #include "model/coupledmodel.h"
 #include "tools/objectfactory.h"
 #include "tools/stringtools.h"
+#include "control/allocator.h"
 
 namespace n_devstone {
 
@@ -114,6 +115,38 @@ public:
 	virtual ~DEVStone();
 };
 
-} /* namespace n_performance */
+class DevstoneAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+public:
+	DevstoneAlloc(): m_maxn(0){
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+                
+		auto p = std::dynamic_pointer_cast<n_devstone::Processor>(ptr);
+		if(p == nullptr)
+			return 0;
+                
+                double blocksize = (double)m_maxn/(double)coreAmount();
+		
+                size_t res = (1+p->m_num)/blocksize;
+                LOG_DEBUG("Res = ", res, " m_num ", p->m_num, " camt ", coreAmount(), " maxn ", m_maxn);
+		if(res >= coreAmount())
+			res = coreAmount()-1;
+		LOG_INFO("Putting model ", ptr->getName(), " in core ", res);
+		return res;
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber(allocate(ptr));
+	}
+};
+
+} 
 
 #endif /* SRC_DEVSTONE_DEVSTONE_DEVSTONE_H_ */

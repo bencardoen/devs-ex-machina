@@ -166,7 +166,7 @@ private:
         gcCollect();
         
 protected:
-        virtual void queuePendingMessage(const t_msgptr& msg)override;
+        virtual void queuePendingMessage(t_msgptr msg)override;
 
 
         std::vector<std::vector<t_msgptr>> m_externalMessages;
@@ -233,7 +233,7 @@ public:
 	 * Sort all mail.
 	 */
 	virtual void
-	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount) override;
+	sortMail(const std::vector<t_msgptr>& messages) override;
 
 	/**
 	 * Return current Earliest input time.

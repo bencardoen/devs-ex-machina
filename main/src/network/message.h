@@ -33,7 +33,8 @@ enum MessageColor : uint8_t{WHITE = 0, RED = 1};
 // 2^3: HEAPED? The message has been put in a message scheduler in the receiving core.
 // 2^4: ANTI? The message is an anti message
 // 2^5: KILL? The message can be safely killed by the sending core.
-enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32};
+// 2^6: ERASE? When found in the message scheduler, this message can be safely ignored.
+enum Status : uint8_t{COLOR=MessageColor::RED, DELETE=2, PROCESSED=4, HEAPED=8, ANTI=16, KILL=32, ERASE=64};
 
 std::ostream&
 operator<<(std::ostream& os, const MessageColor& c);
@@ -49,22 +50,24 @@ protected:
 	 */
 	t_timestamp m_timestamp;
         
-    /**
-     * Unique source identifier.
-     */ 
-    const mid             m_src_id;
-    
-    /**
-     * Unique destination identifier.
-     */
-    const mid             m_dst_id;
-    
-	std::atomic<uint8_t> m_atomic_flags;
+        /**
+         * Unique source identifier.
+         */ 
+        const mid             m_src_id;
+
+        /**
+         * Unique destination identifier.
+         */
+        const mid             m_dst_id;
         
-    Message(const Message&) = delete;
-    Message(const Message&&) = delete;
-    Message& operator=(const Message&)=delete;
-    Message& operator=(const Message&&)=delete;
+        typedef uint8_t         t_flag_word;
+    
+	std::atomic<t_flag_word> m_atomic_flags;
+        
+        Message(const Message&) = delete;
+        Message(const Message&&) = delete;
+        Message& operator=(const Message&)=delete;
+        Message& operator=(const Message&&)=delete;
 
 public:
 	/**
@@ -81,35 +84,35 @@ public:
 	const t_timestamp& time_made,
 	const std::size_t& destport, const std::size_t& sourceport);
 
-    std::size_t getDestinationPort() const
-	{ 
-        return m_dst_id.portid();
-    }
+        std::size_t getDestinationPort() const
+        { 
+                return m_dst_id.portid();
+        }
         
 	std::size_t getDestinationCore() const
 	{
 		return m_dst_id.coreid();
 	}
         
-    std::size_t getDestinationModel() const
-    {
-            return m_dst_id.modelid();
-    }
+        std::size_t getDestinationModel() const
+        {
+                return m_dst_id.modelid();
+        }
         
-    std::size_t getSourceCore() const
+        std::size_t getSourceCore() const
 	{
 		return m_src_id.coreid();
 	}
         
-    std::size_t getSourceModel()const
-    {
+        std::size_t getSourceModel()const
+        {
             return m_src_id.modelid();
-    }
+        }
         
-    std::size_t getSourcePort() const
+        std::size_t getSourcePort() const
 	{ 
-        return m_src_id.portid();
-    }
+                return m_src_id.portid();
+        }
 
 	void setAntiMessage(bool b)
 	{
@@ -137,27 +140,27 @@ public:
 	 */
 	void paint(MessageColor newcolor)
 	{
-        if(newcolor==MessageColor::RED)
-            m_atomic_flags |= newcolor;
-        else
-            m_atomic_flags &= ~MessageColor::RED;
+                if(newcolor==MessageColor::RED)
+                    m_atomic_flags |= newcolor;
+                else
+                    m_atomic_flags &= ~MessageColor::RED;
 	}
 
         
-    void setFlag(Status newst, bool value=true)
-    {
+        void setFlag(Status newst, bool value=true)
+        {
             LOG_DEBUG("setting ", newst, " flag of ", this, " ", toString(), " to ", value);
-        if(value)
-            m_atomic_flags |= newst;
-        else
-            m_atomic_flags &= ~newst;
-    }
-        
-    bool flagIsSet(Status st)const
-    {
-        return (m_atomic_flags & st);   
-        //In general should be (flag & mask) == mask, but conversion to bool serves fine.
-    }
+            if(value)
+                m_atomic_flags |= newst;
+            else
+                m_atomic_flags &= ~newst;
+        }
+
+        bool flagIsSet(Status st)const
+        {
+            return (m_atomic_flags & st);   
+            //In general should be (flag & mask) == mask, but conversion to bool serves fine.
+        }
 
 	//can't remove. Needed by tracer
 	/**
@@ -226,23 +229,29 @@ public:
 	{
 		m_timestamp = t_timestamp(m_timestamp.getTime(), causal);
 	}
+        
+        /**
+         * Get a copy of all flags. Use for unsynced access only (copy is synced).
+         */
+        t_flag_word
+        getFlags(){return m_atomic_flags.load();}
 
 	virtual ~Message()
 	{
         ;
 	}
         
-    friend
-    bool operator<(const Message& left, const Message& right);
-    
-    friend
-    bool operator<=(const Message& left, const Message& right);
-    
-    friend
-    bool operator>=(const Message& left, const Message& right);
-    
-    friend
-    bool operator>(const Message& left, const Message& right);
+        friend
+        bool operator<(const Message& left, const Message& right);
+
+        friend
+        bool operator<=(const Message& left, const Message& right);
+
+        friend
+        bool operator>=(const Message& left, const Message& right);
+
+        friend
+        bool operator>(const Message& left, const Message& right);
 
 	friend
 	bool operator==(const Message& left, const Message& right);
@@ -267,7 +276,7 @@ typedef Message* t_msgptr;
  * @see n_model::Port::createMessages for creating the correct message type.
  */
 template<typename DataType>
-class /*__attribute__((aligned(64)))*/SpecializedMessage: public Message
+class /*__attribute__((aligned(64)))*/ SpecializedMessage: public Message
 {
 private:
 	const DataType m_data;
@@ -290,7 +299,7 @@ public:
 	{
 	}
                 
-    ~SpecializedMessage(){;}        
+        ~SpecializedMessage(){;}        
 
 	/**
 	 * @brief Retrieves the (non-string) payload of the message
@@ -337,6 +346,16 @@ template<typename T>
 const T& getMsgPayload(const t_msgptr& msg){
         return n_tools::staticRawCast<const n_network::SpecializedMessage<T>>(msg)->getData();
 }
+
+
+// Timestamp is invariant of a message, but the object itself may be destroyed already.
+struct hazard_pointer{
+        t_timestamp::t_time     m_msgtime;
+        t_msgptr                m_ptr;
+        // todo Ben : figure out why this is not an error in clang.
+        explicit /*constexpr*/hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
+};
+
 
 } // end namespace n_network
 

@@ -23,7 +23,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
-	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(10), m_rungvt(false), m_turns(turns)
+	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
 	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
@@ -84,7 +84,7 @@ void Controller::addModel(const t_atomicmodelptr& atomic)
 	const std::vector<t_atomicmodelptr> models = {atomic};		// anyway, let's not leave landmines
 	m_allocator->allocateAll(models);
 	addModel(atomic, atomic->getCorenumber());
-
+//	atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);
 	if (m_simType == SimType::DYNAMIC)
 		atomic->setController(this);
 	if(!m_hasMainModel) {
@@ -116,7 +116,7 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 	for (const t_atomicmodelptr& atomic : atomics) {
 		//size_t coreID = m_allocator->allocate(model);
 		addModel(atomic, atomic->getCorenumber());
-		atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
+//		atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
 		LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
 	}
 	if (m_simType == SimType::DYNAMIC)
@@ -307,9 +307,12 @@ void Controller::simCPDEVS()
 	}
 
 
+    std::atomic_uint atint(0);
+    atint.store(m_cores.size());
+
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker_con, i, m_turns, std::ref(*this))
+		        std::thread(cvworker_con, i, m_turns, std::ref(*this), std::ref(atint))
                         );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
@@ -359,22 +362,9 @@ void Controller::simDSDEVS()
 
 void Controller::startGVTThread()
 {
-	constexpr std::size_t infguard = 100;
-	std::size_t i = 0;
-
-	while(m_rungvt.load()==true){
-		if(infguard < ++i){
-			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking of.");
-			m_rungvt.store(false);
-			break;	// No join, have not started thread.
-		}
-		std::chrono::milliseconds ms { this->getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
-		std::this_thread::sleep_for(ms);
-		LOG_INFO("Controller:: starting GVT thread");
-		std::thread runnxt(&runGVT, std::ref(*this), std::ref(m_rungvt));
-		runnxt.join();
-	}
-	LOG_INFO("Controller:: GVT thread joined.");
+	std::thread charlie(&beginGVT, std::ref(*this), std::ref(m_rungvt));
+	charlie.join();
+	LOG_INFO("Controller:: GVT thread joined");
 }
 
 bool Controller::check()
@@ -496,10 +486,14 @@ void Controller::setZombieIdleThreshold(size_t threshold)
 
 void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 {
-        /** Refactoring notes: vector threadsignals is threadsafe, but doing isLive() , set flag is leaving an opening for a race.
-         *  The signal vector has to be incorporated into the core for that to work, and without save/load/pause that complexity is not needed.
-         */
         const auto& core = ctrl.m_cores[myid];
+        auto at_exit = [&]()->void{
+                ctrl.m_rungvt.store(false);
+                core->setLive(false);
+                LOG_DEBUG("Core ", core->getCoreID(), "exiting.");
+                core->shutDown();
+        };
+        core->initThread();
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
                 if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold.load()) {
@@ -507,7 +501,9 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                                 " Core is zombie, yielding thread. [round ", core->getZombieRounds(), "]");
                         core->setLive(false);
                 }
-                if (!core->isLive()) {                   // Is iedereen idle, indien ja, quit.
+                        
+                
+                if (!core->isLive()) {
                         bool quit = true;
                         for (const auto& coreentry : ctrl.m_cores) {
                                 if (coreentry->isLive()) {
@@ -515,42 +511,43 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                                         break;
                                 }
                         }
-                        if (quit) {               /// Iedereen idle
+                        if (quit) {              
                                 if (!core->existTransientMessage()) {// If we've sent a message or there is one waiting, we can't quit (revert)
                                         LOG_INFO("CVWORKER: Thread ", std::this_thread::get_id(), " ", myid, " for core ", core->getCoreID(),
                                                 " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
-                                        ctrl.m_rungvt.store(false);             // If gvt is not informed, we deadlock
-                                        core->shutDown();
+                                        at_exit();
                                         return;
-                                } else {
-                                        LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
-                                                " all other threads are stopped or idle, network still reports transients, idling.");
-                                }
+                                } 
+                                LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+                                " all other threads are stopped or idle, network still reports transients, idling.");
                         }
                 }
                 LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i,
                         " [zrounds:", core->getZombieRounds(), "]");
                 core->runSmallStep();
         }
-        core->shutDown();
+        
         LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(),
                 " exiting working function,  setting gvt intercept flag to false.");
-        ctrl.m_rungvt.store(false);
+        at_exit();
 }
 
-void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
+void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl, std::atomic_uint& atint)
 {
         /**
          * Conservative can per definition never go back in time, so once it reaches termination time, stop simulating.
          * However, we still have to wait on all others th
          */
+        static std::condition_variable cv;
+        static std::mutex mu;
+
 	const auto& core = ctrl.m_cores[myid];
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         size_t i = 0;
+        core->initThread();
 	for (; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
 
 		if (!core->isLive()) {          
-			core->getMessages(); // Make sure we pull all messages, though not strictly required to terminate.
                         LOG_DEBUG(" Core no longer live :: ", core->getCoreID(), " exiting working function."); // don't log time (^sync)
                         break;
 		}
@@ -562,23 +559,52 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl)
         if(i==turns){
                 LOG_WARNING("CVWORKER: ", core->getCoreID(), " overran nr of simulation steps allowed !!");
                 core->setLive(false);
-                // Edge case : if we hit this, we can't guarantee deallocating since sender can't verify we have reached termination.
+                // Edge case : if we hit this, we can't guarantee deallocation since sender can't verify we have reached termination.
         }
-        while(true){
-                size_t i = 0;
-                for(const auto& core : ctrl.m_cores){
-                        if(!core->isLive())
-                                ++i;
-                }
-                if(i == ctrl.m_cores.size())
-                        break;
-                else{
-                        std::this_thread::yield();
-                        i = 0;
-                }
+        LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " decreasing atint.");
+        --atint;
+        if(atint.load()){
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " going to acquire lock.");
+                std::unique_lock<std::mutex> lk(mu);
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " acquired the lock.");
+                cv.wait(lk,  [&atint]{return !atint.load();});
+        } else {
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " notifying all.");
+                cv.notify_all();
         }
+//        while(true){
+//                size_t i = 0;
+//                for(const auto& core : ctrl.m_cores){
+//                        if(!core->isLive())
+//                                ++i;
+//                }
+//                if(i == ctrl.m_cores.size())
+//                        break;
+//                else{
+//                        std::this_thread::yield();
+//                        i = 0;
+//                }
+//        }
         LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
         core->shutDown();
+}
+
+void beginGVT(Controller& ctrl, std::atomic<bool>& m_rungvt)
+{
+	constexpr std::size_t infguard = 100;
+	std::size_t i = 0;
+
+	while(m_rungvt.load()==true){
+		if(infguard < ++i){
+			LOG_WARNING("Controller :: GVT overran max ", infguard, " nr of invocations, breaking off.");
+			m_rungvt.store(false);
+			break;
+		}
+		std::chrono::milliseconds ms { ctrl.getGVTInterval() };// Wait before running gvt, this prevents an obvious gvt of zero.
+		std::this_thread::sleep_for(ms);
+		LOG_INFO("Controller:: starting GVT");
+		runGVT(ctrl, m_rungvt);
+	}
 }
 
 void runGVT(Controller& cont, std::atomic<bool>& gvtsafe)

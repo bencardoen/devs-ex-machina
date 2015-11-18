@@ -20,9 +20,10 @@ Optimisticcore::~Optimisticcore()
         for (auto& ptr : m_sent_messages) {
                 LOG_ERROR("MCORE:: ", this->getCoreID(), " HAVE ", ptr,
                         " in  m_sent_messages @ destruction. This will result in an std::bad_alloc exception.");
-                // We're back on main's thread, cannot call our pool.
-                ptr->releaseMe();
-                m_stats.logStat(DELMSG);
+                // We're back on main's thread, cannot call our pool, and an exception in destructor makes 
+                // backtracing impossible.
+                //ptr->releaseMe();
+                //m_stats.logStat(DELMSG);
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
@@ -34,6 +35,17 @@ Optimisticcore::~Optimisticcore()
                 std::vector<t_msgptr> msgs = m_network->getMessages(this->getCoreID());
         }
 }
+
+void Optimisticcore::initThread()
+{
+        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                model->setKeepOldStates(true);
+                model->prepareSimulation();
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " preparing model ", model->getName(), " for simulation.");
+        }
+}
+
 void Optimisticcore::shutDown()
 {
         assert(!isLive() && "The core shouldn't be live when it is shut down!");
@@ -53,6 +65,10 @@ void Optimisticcore::shutDown()
         }
         for (const auto& ptr : m_indexed_models) {
                 ptr->clearSentMessages();
+        }
+        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
+                const t_atomicmodelptr& model = m_indexed_models[index];
+                model->exitSimulation();
         }
         m_sent_messages.clear();
         m_sent_antimessages.clear();
@@ -79,14 +95,20 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                                 ptr->toString());
                         ptr->releaseMe();
                 }
+                else{
+                        // TODO mark change
+                        m_processed_messages.push_back(n_network::hazard_pointer(ptr));
+                }
         }
         msgs.clear();
 }
 
-void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount)
+void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages)
 {
         for (const auto& message : messages) {
-                message->setCausality(++msgCount);
+                message->setCausality(m_msgCurrentCount);
+                m_msgCurrentCount = m_msgCurrentCount==m_msgEndCount? m_msgStartCount: (m_msgCurrentCount+1);
+
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " sorting message ", message->toString());
                 if (not this->isMessageLocal(message)) {
                         this->sendMessage(message);	// A noop for single core, multi core handles this.
@@ -108,73 +130,44 @@ void Optimisticcore::sendMessage(t_msgptr msg)
 
 void Optimisticcore::sendAntiMessage(const t_msgptr& msg)
 {
-        // We're locked on msglock
-        // size_t branch :: skip alloc of amsg entirely.
+        // An antimessage is still the same object, if you change the colour the 
+        // counting (gvt) will be corrupted.
         m_stats.logStat(AMSGSENT);
-
-        // Don't touch the color of the message.
         msg->setAntiMessage(true);
-
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " sending antimessage : ", msg->toString());
-        // Skip this, by definition any antimessage is beyond the cut-line of gvt.
-        // If you enable this, do so as well @receive side.
-        //this->countMessage(amsg);
-        this->m_network->acceptMessage(msg);
         m_sent_antimessages.push_back(msg);
+        this->m_network->acceptMessage(msg);
 }
 
 void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
 {
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " entering handleAntiMessage with message ", msg);
         LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " handling antimessage ", msg->toString());
-
+        // Storing the flag can speed up this process, but has to be done atomically because
+        // we set KILL (which the sending thread reads).
         if (msg->flagIsSet(Status::PROCESSED)) {
-                // processed before, must do revert (handled elsewhere)
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, marking as KILL ", msg);
-                msg->setFlag(Status::KILL);
+                // Processed, so it is in m_processed, we can't touch it. Revert will clean it.
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " message already processed, should be in processed queue ", msg);
         } else if (msg->flagIsSet(Status::HEAPED)) {
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
                 m_received_messages->printScheduler();
-                this->m_received_messages->erase(MessageEntry(msg));
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-                msg->setFlag(Status::KILL);
+//                bool erased = this->m_received_messages->erase(MessageEntry(msg));
+//                if(!erased)
+//                        throw std::logic_error("Pending messages integrity failure!");
+//                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
+//                // TODO change with msg scheduler.
+//                msg->setFlag(Status::KILL);
+                msg->setFlag(Status::ERASE);
         } else if (msg->flagIsSet(Status::DELETE)) {
                 // we encountered this one before, just kill it.
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, marking as KILL ", msg);
                 msg->setFlag(Status::KILL);
         } else {
-                // we haven't seen this message yet, mark it as delete
+                // Not scheduled, not processed, so the first of a second pointer chasing.
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " first time we see this message, marking as DELETE ", msg);
                 msg->setFlag(Status::DELETE);
         }
-//        if (this->m_received_messages->contains(MessageEntry(msg))) {                   /// QUEUED
-//                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " we apparently found msg ", msg,
-//                        " in the following scheduler:");
-//                m_received_messages->printScheduler();
-//                this->m_received_messages->erase(MessageEntry(msg));
-//                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-//                msg->releaseMe();
-//
-//                m_stats.logStat(DELMSG);
-//        } else {                                          /// Not queued, so either never seen it, or allready processed
-//
-//                if (msg->flagIsSet(Status::PROCESSED)) {           // Processed before, only antimessage ptr in transit.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Message is processed :: deleting ", msg);
-//                        msg->releaseMe();
-//                        m_stats.logStat(DELMSG);
-//                        return;
-//                }
-//                if (!msg->flagIsSet(Status::DELETE)) {    // Possibly never seen, delete both.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Special case : first pass:: ", msg);
-//                        msg->setFlag(Status::DELETE);
-//                } else {                           // Second time, delete.
-//                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " Special case : second pass, deleting.");
-//                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", msg);
-//                        msg->releaseMe();
-//                        m_stats.logStat(DELMSG);
-//                }
-//        }
 }
 
 void Optimisticcore::markMessageStored(const t_msgptr& msg)
@@ -252,6 +245,20 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
         }
 }
 
+void Optimisticcore::queuePendingMessage(t_msgptr msg)
+{
+        const MessageEntry entry(msg);
+        if (!msg->flagIsSet(Status::HEAPED)) {
+                this->m_received_messages->push_back(entry);
+                msg->setFlag(Status::HEAPED);
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " pushed message onto pending msgs: ", msg);
+        } else {
+                LOG_ERROR("\tCORE :: ", this->getCoreID(), " QPending messages already contains msg, overwriting ",
+                        msg->toString());
+                throw std::logic_error("Pending msgs integrity failure.");
+        }
+}
+
 void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
 {
         // ALGORITHM 1.5 (or Fujimoto page 121 receive algorithm)
@@ -264,63 +271,89 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
         }
 }
 
+void Optimisticcore::gcCollect()
+{
+        auto senditer = m_sent_messages.begin();
+        for (; senditer != m_sent_messages.end(); ++senditer) {
+                if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " found msg >= gvt, stopping collect ", (*senditer)->toString());
+                        break;
+                }
+                
+                t_msgptr& ptr = *senditer;
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " gcollecting ", ptr);
+                LOG_FLUSH;
+                // If gvt is correct, messages has to be processed, and heap is not set.
+#ifdef SAFETY_CHECKS
+                if(!ptr->flagIsSet(Status::PROCESSED) || ptr->flagIsSet(Status::HEAPED)){
+                        LOG_ERROR("GVT integrity failure :: id= ", this->getCoreID(), " for msg ", ptr, " not processed but gvt is past tstamp?");
+                        break;
+                }
+#endif        
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
+                //if(ptr->flagIsSet(Status::KILL))        // A final guard.
+                ptr->releaseMe();
+                m_stats.logStat(DELMSG);
+#ifdef SAFETY_CHECKS
+                ptr = nullptr;
+#endif
+        }
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " gccollecting antimessages ");
+        for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
+                t_msgptr ptr = *aiter;
+                if (ptr->flagIsSet(Status::KILL)) {
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting antimessage ", ptr, " = ", ptr->toString());
+                        ptr->releaseMe();
+                        m_stats.logStat(DELMSG);
+                        aiter = m_sent_antimessages.erase(aiter);
+                } else {
+                        ++aiter;
+                }
+        }
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
+                distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
+
+        m_sent_messages.erase(m_sent_messages.begin(), senditer);
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
+                m_sent_messages.size());
+        
+        // Processed contains messages that are being deleted as we speak in other cores.
+        // Make sure we don't access the pointers by accident.
+        auto piter = m_processed_messages.begin();
+        for(;piter != m_processed_messages.end();++piter){
+                hazard_pointer hp = *piter;
+                if(hp.m_msgtime >= this->getGVT().getTime()){
+                        break;
+                }
+        }
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " erasing ",
+                std::distance(m_processed_messages.begin(), piter), " processed messages. ");
+        m_processed_messages.erase(m_processed_messages.begin(), piter);
+        
+        m_removeGVTMessages = false;
+
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " calling setGVT on all models.");
+
+        n_network::t_timestamp newgvt = getGVT();
+        for (const auto& model : this->m_indexed_models)
+                model->setGVT(newgvt);
+}
+
 void Optimisticcore::runSmallStep()
 {
-        // Find out how many sent messages we have with time <= gvt
         this->lockSimulatorStep();
 
         if (m_removeGVTMessages) {
-                auto senditer = m_sent_messages.begin();
-                for (; senditer != m_sent_messages.end(); ++senditer) {
-                        if ((*senditer)->getTimeStamp().getTime() >= this->getGVT().getTime()) {    // time value only ?
-                                break;
-                        }
-                        t_msgptr& ptr = *senditer;
-                        LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                        ptr->releaseMe();
-                        m_stats.logStat(DELMSG);
-#ifdef SAFETY_CHECKS
-                        ptr = nullptr;
-#endif
-                }
-//                for (auto iter2 = senditer; iter2 != m_sent_messages.end();) {
-//                        t_msgptr ptr = *iter2;
-//                        if (ptr->flagIsSet(Status::KILL)) {
-//                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-//                                ptr->releaseMe();
-//                                m_stats.logStat(DELMSG);
-//                                iter2 = m_sent_messages.erase(iter2);
-//                        } else {
-//                                ++iter2;
-//                        }
-//                }
-                for (auto aiter = m_sent_antimessages.begin(); aiter != m_sent_antimessages.end();) {
-                        t_msgptr ptr = *aiter;
-                        if (ptr->flagIsSet(Status::KILL)) {
-                                LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                                ptr->releaseMe();
-                                m_stats.logStat(DELMSG);
-                                aiter = m_sent_antimessages.erase(aiter);
-                        } else {
-                                ++aiter;
-                        }
-                }
-
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " found ",
-                        distance(m_sent_messages.begin(), senditer), " sent messages to erase.");
-
-                m_sent_messages.erase(m_sent_messages.begin(), senditer);
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
-                        m_sent_messages.size());
-                m_removeGVTMessages = false;
+                gcCollect();
         }
 
         m_stats.logStat(TURNS);
 
-        // Noop in single core. Pull messages from network, sort them.
         // This step can trigger a revert, which is why its before getImminent
             // getMessages will also turn a core back to live in optimistc (in revert).
-        this->getMessages();    // locked on msgs
+        this->getMessages();
 
         if (!this->isLive()) {
             LOG_DEBUG("\tCORE :: ", this->getCoreID(),
@@ -331,10 +364,10 @@ void Optimisticcore::runSmallStep()
 
         // Query imminent models (who are about to fire transition)
 
-            this->getImminent(m_imminents);
+        this->getImminent(m_imminents);
 
-            // Dynamic structured needs the list, but best before we add externals to it.
-            this->signalImminent(m_imminents);
+        // Dynamic structured needs the list, but best before we add externals to it.
+        this->signalImminent(m_imminents);
 
         // Get all produced messages, and route them.
         this->collectOutput(m_imminents);
@@ -349,9 +382,9 @@ void Optimisticcore::runSmallStep()
         this->rescheduleImminent();
 
         // Forward time to next message/firing.
-        this->syncTime();               // locked on msgs
-            m_imminents.clear();
-            m_externs.clear();
+        this->syncTime();               
+        m_imminents.clear();
+        m_externs.clear();
 
 
         this->checkTerminationFunction();
@@ -535,23 +568,21 @@ void Optimisticcore::startGVTProcess(const t_controlmsg& msg, int /*round*/, std
 
 void Optimisticcore::setGVT(const t_timestamp& candidate)
 {
-
+        this->lockSimulatorStep();              
         t_timestamp newgvt = t_timestamp(candidate.getTime(), 0);
 #ifdef SAFETY_CHECKS
         if (newgvt.getTime() < this->getGVT().getTime() || isInfinity(newgvt) ) {
                 LOG_WARNING("Core:: ", this->getCoreID(), " cowardly refusing to set gvt to ", newgvt, " vs current : ",
                         this->getGVT());
                 LOG_FLUSH;
+                this->unlockSimulatorStep();
                 throw std::logic_error("Invalid GVT found");
         }
 #endif
 
-        this->lockSimulatorStep();              // implies msglock
         Core::setGVT(newgvt);
         m_removeGVTMessages = true;
 
-        for (const auto& model : this->m_indexed_models)
-                model->setGVT(newgvt);
         // Reset state (note V-vector is reset by Mattern code.
 
         this->setColor(MessageColor::WHITE);
@@ -563,29 +594,26 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 
 void n_model::Optimisticcore::lockSimulatorStep()
 {
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
-#endif
+        
         this->m_locallock.lock();
-#ifdef LOG_LOCK
+        
         LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
-#endif
+
 }
 
 void n_model::Optimisticcore::unlockSimulatorStep()
 {
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " trying to unlock simulator core.");
-#endif
         this->m_locallock.unlock();
-#ifdef LOG_LOCK
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " simulator core unlocked.");
-#endif
 }
 
-void n_model::Optimisticcore::revert(const t_timestamp& totime)
+void n_model::Optimisticcore::revert(const t_timestamp& rtime)
 {
-        assert(totime.getTime() >= this->getGVT().getTime());
+        const t_timestamp::t_time totime = rtime.getTime();
+        const t_timestamp::t_time gtime = this->getGVT().getTime();
+        assert(totime >= gtime);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting from ", this->getTime(), " to ", totime);
         if (!this->isLive()) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " Core going from idle to active ");
@@ -596,8 +624,8 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting on a total of ", m_sent_messages.size(), " sent messages");
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
                 t_msgptr msg = m_sent_messages.back();
-                LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg);
-                if (msg->getTimeStamp().getTime() >= totime.getTime()) {
+                LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg, " ", msg->toString());
+                if (msg->getTimeStamp().getTime() >= totime) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                                 " revert : sent message > time , antimessagging. \n ", msg->toString());
@@ -607,11 +635,35 @@ void n_model::Optimisticcore::revert(const t_timestamp& totime)
                         break;
                 }
         }
+        
+        while(m_processed_messages.size()){
+                // DO NOT access the pointer itself
+                hazard_pointer msg = m_processed_messages.back();
+                LOG_DEBUG("Revert :: handling processed msg :: ", msg.m_ptr, " ~ ");
+                t_timestamp::t_time msgtime = msg.m_msgtime;
+                if(msgtime < totime)
+                        break;
+                // From here the pointer is safe (if GVT is not failing.)
+#ifdef SAFETY_CHECKS
+                if(!msg.m_ptr->flagIsSet(Status::PROCESSED)){
+                        LOG_DEBUG("P not set on msg :: ", msg.m_ptr, " ");
+                        throw std::logic_error("P not set on a PROCESSED msg.");
+                }
+#endif
+                if(!msg.m_ptr->flagIsSet(Status::ANTI)){
+                        msg.m_ptr->setFlag(Status::HEAPED);
+                        msg.m_ptr->setFlag(Status::PROCESSED, false);
+                        if(!m_received_messages->contains(msg.m_ptr))
+                                m_received_messages->push_back(msg.m_ptr);
+                }
+                m_processed_messages.pop_back();
+        }
+        
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
 
-        this->setTime(totime);
-        this->rescheduleAllRevert(totime);		// Make sure the scheduler is reloaded with fresh/stale models
-        this->revertTracerUntil(totime); 	// Finally, revert trace output
+        this->setTime(rtime);
+        this->rescheduleAllRevert(rtime);		// Make sure the scheduler is reloaded with fresh/stale models
+        this->revertTracerUntil(rtime); 	// Finally, revert trace output
 }
 
 bool n_model::Optimisticcore::existTransientMessage()

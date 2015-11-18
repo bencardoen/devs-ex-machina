@@ -1,8 +1,8 @@
 /*
- * Multicore.h
+ * optimisticcore.h.h
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen -- Tim Tuijn
+ *      Author: Ben Cardoen -- Tim Tuijn -- Stijn Manhaeve
  */
 
 #ifndef SRC_MODEL_OPTIMISTICCORE_H_
@@ -10,15 +10,13 @@
 
 #include "model/core.h"
 #include "model/v.h"
+#include "network/message.h"
 using n_network::MessageColor;
-
-
-
 
 namespace n_model {
 
 /**
- * Multicore implementation of Core class.
+ * Optimistic synchronizing simulation core.
  */
 class Optimisticcore: public Core
 {
@@ -74,13 +72,15 @@ private:
 	/**
 	 * Sent messages, stored in Front[earliest .... latest..now] Back order.
 	 */
-        std::deque<t_msgptr>        m_sent_messages;
+        std::deque<t_msgptr>                    m_sent_messages;
         /**
          * Sent anti messages, must be kept separate from the regular messages
          */
-        std::deque<t_msgptr>        m_sent_antimessages;
+        std::deque<t_msgptr>                    m_sent_antimessages;
 
 	bool m_removeGVTMessages;
+        
+        std::deque<n_network::hazard_pointer>                    m_processed_messages;
 
 	/**
 	 * Mattern 1.4, marks vcount for outgoing message
@@ -135,6 +135,12 @@ private:
          * @post msg.size() == 0
          */
         virtual void clearProcessedMessages(std::vector<t_msgptr>& msgs)override;
+        
+        /**
+         * Garbage collect @ chosen time.
+         * @pre is called by thread that simulates. 
+         */
+        void gcCollect();
 
         
 protected:
@@ -159,6 +165,10 @@ protected:
         void
         registerReceivedMessage(const t_msgptr& msg);
         
+        
+        void queuePendingMessage(t_msgptr msg)override;
+        
+
 public:
 	Optimisticcore()=delete;
 	/**
@@ -178,9 +188,11 @@ public:
 	 */
 	virtual ~Optimisticcore();
 
-    void runSmallStep() override;
+        void initThread() override;
 
-    void shutDown() override;
+        void runSmallStep() override;
+
+        void shutDown() override;
 
 	/**
 	 * Pulls messages from network into mailbag (sorted by destination name
@@ -192,7 +204,7 @@ public:
 	 * Sort all mail.
 	 */
 	virtual void
-	sortMail(const std::vector<t_msgptr>& messages, std::size_t& msgCount) override;
+	sortMail(const std::vector<t_msgptr>& messages) override;
 
 	/**
 	 * Lookup message destination core, fix address field and send to network.

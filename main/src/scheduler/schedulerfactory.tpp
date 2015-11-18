@@ -9,6 +9,7 @@
 #include <scheduler/synchronizedscheduler.h>
 #include <scheduler/unsynchronizedscheduler.h>
 #include "scheduler/msgscheduler.h"
+#include "scheduler/simplemsgscheduler.h"
 
 #include "scheduler/msgscheduler.h"
 #include "scheduler/listscheduler.h"
@@ -23,7 +24,8 @@ typename SchedulerFactory<X>::t_Scheduler SchedulerFactory<X>::makeScheduler(Sto
         
         if(ktype==KeyStorage::MAP && !synchronized)
                 return t_Scheduler(new MessageScheduler<boost::heap::fibonacci_heap<X>, X>);        
-        
+        else if(ktype==KeyStorage::NONE && !synchronized)
+                return t_Scheduler(new SimpleMessageScheduler<boost::heap::fibonacci_heap<X>, X>);
         if(ktype!=KeyStorage::HASHMAP)
                 throw std::logic_error("Unsupported keytype.");
 	switch (stype) {

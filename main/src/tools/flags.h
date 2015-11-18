@@ -11,6 +11,15 @@
 
 namespace n_tools{
 
+// From http://www.graphics.stanford.edu/~seander/bithacks.html
+// If param is unsigned power of 2, param-1 will have no bits in common
+// so param & param-1 == 0. Finally guard against param==0.
+inline
+constexpr
+bool is_power_2(size_t n)
+{
+        return  (n && !(n & (n-1)));
+}
 
 template<size_t>
 size_t firstbitset(size_t);

@@ -167,10 +167,17 @@ public:
 	 */
 	virtual t_stateptr copyState() const
 	{
-		LOG_ERROR("STATE: Not implemented: 'std::string n_model::State::copyState()'");
+		LOG_ERROR("STATE: Not implemented: 't_stateptr n_model::State::copyState()'");
 		assert(false && "State::copyState not reimplemented in derived class.");
 		return nullptr;
 	}
+	virtual t_stateptr copyPooledState() const
+	{
+	        LOG_ERROR("STATE: Not implemented: 't_stateptr n_model::State::copyPooledState()'");
+	        assert(false && "State::copyPooledState not reimplemented in derived class.");
+	        return nullptr;
+	}
+
 	const t_timestamp& getTimeLast() const
 	{
 		return m_timeLast;
@@ -191,6 +198,14 @@ public:
 		m_timeNext = timeNext;
 	}
 
+	/**
+     * Destroys this object by running the destructor and removing it from the heap.
+	 */
+    virtual void releaseMe()
+    {
+            n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+    }
+
 	};
 
 
@@ -207,8 +222,13 @@ public:
 
 	t_stateptr copyState() const override
 	{
-		return new State__impl<T>(*this);
+	        return n_tools::createRawObject<State__impl<T>>(*this);
 	}
+
+    t_stateptr copyPooledState() const override
+    {
+            return n_tools::createPooledObject<State__impl<T>>(*this);
+    }
 
 
 	/**
@@ -246,6 +266,15 @@ public:
 	{
 		return ToCell<t_type>::exec(m_value);
 	}
+
+	/**
+	 * Destroys this object by running the destructor and removing it from the heap.
+	 * Note: only call this method if the object was created with an object pool.
+	 */
+    virtual void releaseMe()override
+    {
+            n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+    }
 };
 
 template<>
@@ -261,6 +290,11 @@ public:
 	{
 		return n_tools::createRawObject<State__impl<void>>(*this);
 	}
+
+    t_stateptr copyPooledState() const override
+    {
+        return n_tools::createPooledObject<State__impl<void>>(*this);
+    }
 
 
 	/**
@@ -298,6 +332,14 @@ public:
 	{
 		return "";
 	}
+
+	/**
+     * Destroys this object by running the destructor and removing it from the heap.
+	 */
+    virtual void releaseMe()override
+    {
+            n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
+    }
 };
 }
 

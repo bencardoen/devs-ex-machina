@@ -11,6 +11,7 @@
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include "tools/objectfactory.h"
+#include "control/allocator.h"
 #include <random>
 
 namespace n_interconnect {
@@ -93,6 +94,27 @@ public:
 		}
 	}
 	virtual ~HighInterconnect(){};
+};
+
+class InterconnectAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_maxn;
+public:
+	InterconnectAlloc(): m_maxn(0){
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr&){
+		return 0;
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		m_maxn = models.size();
+		assert(m_maxn && "Total amount of models can't be zero.");
+		std::size_t i = 0;
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber((i++)%coreAmount());
+	}
 };
 
 } /* namespace n_interconnect */
