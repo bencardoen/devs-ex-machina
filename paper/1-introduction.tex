@@ -1,5 +1,16 @@
 %TODO SIZE: approx. 1-2 column, every TODO is approx. one paragraph
 %TODO give introduction to the field: DEVS is used for discrete event simulation and is a common basis for most other formalisms
+\subsection{}
 %TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
+% Very rough draft here. distributed + smem or smem only ?
+Leveraging the shared memory parallelism offered by most modern hardware, the runtime of non-trivial model can be significantly reduced.
+\subsection{}
 %TODO give motivation (adevs is good, but only conservative; exploit new parallelism features of C++11 too)
+% todo ref openmp
+Adevs offers conservative synchronized parallel simulation based on OpenMP, but does not by design support optimistic synchronization which can, depending on the simulation model, be significantly faster. Adevs relies heavily on templates (as do we), but does not hide the types itself. %For example, the message communication between models is explicitly typed on payload, this type fixes all usage of a message inside and outside the simulation kernel. The same argument can be made for the states. %mention differing payload types?
+% in this section or is this to implementation bound ?
+\subsection*{}
 %TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
+The usage of the DirectConnect algorithm makes reusing the adevs kernel impossible. The dxexmachina kernel follows the design of the PythonPDEVS kernel where appropriate, but by the very nature of the implementation languages has to differ in key aspects (among others memory allocation strategy). 
+Adevs's explicit usage of (payload)typed messages allows for a fast stack-allocated exchange, whereas dxexmachina uses pointers to heap allocated object (with a runtime disadvantage in some simulations). It does give the user the freedom to wrap any type in a message without the type being fixed for all messages. 
+% incomplete
