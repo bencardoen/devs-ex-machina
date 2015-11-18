@@ -2,7 +2,24 @@ In this section, we provide a brief introduction to two different synchronizatio
 
 \subsection{Conservative Synchronization}
 %TODO explain conservative synchronization, and how it uses locking to wait for continuing the simulation
+Conservative synchronization is defined by the invariant that no model will advance in time before it has received all input from any influencing model. \\
+This requires the concepts of eot (earliest output time) and eit (earliest input time) which define the timespan within which a model can safely advance. \\
+No model can advance beyond its own eit, which is defined as the min of all eot values of influencing models. An important disadvantage here is that the influenced-by relation is always defined at model(link) creation, not at runtime. A model that can influence another, but never does, can severely slow down the protocol.\\
+Deadlock between models that influence each other can be broken by a variety of
+% link to Chandy/Misrah 79 ? for null messages
+means, in this simulator the null-message protocol derived from (Chandy/Misrah 79) is used to avoid and break deadlock.
 \subsection{Optimistic Synchronization}
 %TODO explain optimistic synchronization, and how it uses rollbacks to undo causality errors
+Optimistic synchronization allows simulation to advance in time until it receives a message with timestamp in its past. At receipt of such a message, the simulation is
+% needs rewording
+rolled back to the time of the received message to undo the causality errors. Optimistic therefore only uses the runtime 'influenced by' relationship, it will only react to actual sent messages between models. The cost for this speedup is memory, saving all states until a kernel can verify that all other kernels have advanced equally far. 
+\subsection{Global Virtual Time}
+To avoid exhausting memory in state saving, optimistic synchronization relies on the concept of global virtual time, a timepoint that all kernels have simulated past without having to revert before it. While this is critical in optimistic to garbage collect old states (and/or messages), usually a conservative kernel will employ GVT as well for the same purpose (but with less memory pressure). In conservative synchronization, the null messages can be used to determine GVT while in optimistic this is far more complex.
+% More or less about GVT here ? or move to implementation ?
+
 \subsection{C++11 Parallelism Features}
 %TODO explain what is new in C++11 for parallelism and how it contributes to our cause
+C++11 offers a wide range of portable synchronization primitives in the Standard Library, whereas in earlier versions one had to resort to non-portable (C) implementations. More importantly, C++11 is the first version of the standard that actually defines a multi-threaded abstract machine memory model, in earlier versions there was by default no standard way to write a multi-threaded application.
+% Drop the last subsentence ? I suppose we're not selling C++...
+ Our kernels use a wide range of threading primitives and atomic operations tailored for each use case. As an example, eot/eit/nulltime are exchanged not as messages but as writes to atomic fields shared by all kernels. Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. %minus all the dependencies :)
+% Reference C++11 standard (paying version or draft?)
