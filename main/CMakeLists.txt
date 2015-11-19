@@ -248,6 +248,14 @@ add_executable(${PROJECT_NAME}_network
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_network PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
+add_executable(${PROJECT_NAME}_priority
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/prioritymessage/prioritymessage.cpp
+    src/mainprioritymessage.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_priority PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
 add_executable(${PROJECT_NAME}_virus
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/examples/virus/virus.cpp
@@ -371,6 +379,7 @@ target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_priority ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
