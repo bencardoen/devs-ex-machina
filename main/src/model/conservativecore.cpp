@@ -352,10 +352,9 @@ void Conservativecore::runSmallStepStalled()
 
                 collectOutput(imms);            // after all output is sent, mark null msg time in m_distributed.
 
-                collectOutput(m_imminents);            // after all output is sent, mark null msg time in m_distributed.
-                for(t_raw_atomic m: m_imminents)
-                	m->nextType() = AtomicModel_impl::NONE;
-                m_imminents.clear();
+                // Don't use same logic as in rstep. This function can be called several
+                // times in succession, if you clear a flag here you irretrievably lose information.
+                // Optionally, use run_once.
         }
 }
 
