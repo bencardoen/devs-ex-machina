@@ -103,6 +103,7 @@ class CFPool: public PoolInterface<T>
         public:                
                 void log_pool()
                 {
+#if (LOG_LEVEL != 0)
                         LOG_DEBUG("CFPool :: size=", this->size(), " alloc = ", this->allocated());
                         LOG_DEBUG("Lane index = ", m_lane_index);
                         for(const auto& lane : m_lanes){
@@ -112,6 +113,7 @@ class CFPool: public PoolInterface<T>
                                         LOG_DEBUG(std::bitset<range_word>(word));
                                 }
                         }
+#endif
                 }
                 
                 /**

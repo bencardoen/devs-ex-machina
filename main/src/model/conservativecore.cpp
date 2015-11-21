@@ -241,10 +241,11 @@ void Conservativecore::buildInfluenceeMap(){
                 if(temp[i])                
                         this->m_influencees.push_back(i);
 	}
-	
+#if (LOG_LEVEL != 0)	
 	for(const auto& coreid : m_influencees){
 		LOG_INFO("CCORE :: ", this->getCoreID() , " influenced by " ,  coreid);
 	}
+#endif
 }
 
 bool Conservativecore::timeStalled(){
@@ -312,7 +313,7 @@ void Conservativecore::sortMail(const std::vector<t_msgptr>& messages)
 
 void Conservativecore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 {
-        #ifdef SAFETY_CHECKS
+#ifdef SAFETY_CHECKS
         if(msgs.size()==0)
                 throw std::logic_error("Msgs empty after processing ?");
 #endif
@@ -494,8 +495,6 @@ Conservativecore::shutDown()
                 if(recv_time <= ptr->getTimeStamp().getTime() && recv_time!=this->getTerminationTime().getTime()){
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
-                        // Enable if edge case in cv_worker is resolved.
-                        //throw std::logic_error("Pointer to message still in use !");
                 }else{
                         ptr->releaseMe();
                 }
