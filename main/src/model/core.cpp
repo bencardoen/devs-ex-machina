@@ -228,7 +228,7 @@ void n_model::Core::transition()
                         imminent->markNone();
                         imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         std::vector<t_msgptr>& mail = getMail(modelid);
-			imminent->doConfTransition(mail);		// Confluent
+			imminent->doConfTransition(mail);
 			imminent->setTime(noncausaltime);
 			this->traceConf(getModel(modelid));
 			clearProcessedMessages(mail);
@@ -267,6 +267,9 @@ void n_model::Core::transition()
                 printSchedulerState();
 		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
 	}
+        
+        if(k)
+                signalTransition();
 }
 
 void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)

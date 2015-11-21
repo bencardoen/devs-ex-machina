@@ -265,8 +265,6 @@ protected:
         virtual
         void
         clearProcessedMessages(std::vector<t_msgptr>& msgs);
-
-protected:
         
         /**
          * Sort the vector of models by priority, sets indices in models.
@@ -291,6 +289,10 @@ protected:
         {
             return (msg->getDestinationCore()==m_coreid);
         }
+        
+        virtual
+        void
+        signalTransition(){;}
         
 	/**
 	* Store received messages.

@@ -118,7 +118,7 @@ void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here
 t_timestamp Conservativecore::getFirstMessageTime()
 {
         constexpr t_timestamp mintime = t_timestamp::infinity();
-        if(m_received_messages->size()){
+        if(!m_received_messages->empty()){
                 const MessageEntry& first = m_received_messages->top();
                 return first.getMessage()->getTimeStamp();
         }
@@ -139,7 +139,7 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-        this->calculateMinLookahead();
+        //this->calculateMinLookahead();
 	this->updateEOT();                     
 	this->updateEIT();
         
@@ -252,6 +252,11 @@ bool Conservativecore::timeStalled(){
         return (this->getTime().getTime()==this->getEit());
 }
 
+void Conservativecore::signalTransition()
+{
+        calculateMinLookahead();
+}
+
 void Conservativecore::runSmallStep(){
         // Note : spinning on null release is ~20-30% more expensive than infrequently checking. @see git reverts in branch conservative
         if(timeStalled() ){             // EIT==TIME
@@ -262,7 +267,8 @@ void Conservativecore::runSmallStep(){
                         Core::runSmallStep();   
                 }else{                                  // At least one influencing core < our nulltime, wait, but update EOT/EIT to signal others.
                         updateEOT();            
-                        updateEIT();            
+                        updateEIT();
+                        // Don't yield, this is nearly always slower.
                 }
         }                               // EIT > TIME
         else{ 

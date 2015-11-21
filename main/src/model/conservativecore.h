@@ -7,11 +7,20 @@
 #include <unordered_map>
 #include "model/core.h"
 #include "tools/sharedvector.h"
+#include "scheduler/heapscheduler.h"
 
 #ifndef SRC_MODEL_CONSERVATIVECORE_H_
 #define SRC_MODEL_CONSERVATIVECORE_H_
 
 namespace n_model {
+
+struct la_comp{
+        bool
+        operator()(n_model::t_raw_atomic l, n_model::t_raw_atomic r)const
+        {
+                return l->lookAhead().getTime() > r->lookAhead().getTime();
+        }
+};
 
 /**
  * If a simulator collects more than <value> sent messages, try to garbage collect them.
@@ -92,7 +101,12 @@ private:
          */
         t_timestamp             m_last_sent_msgtime;
         
+        /**
+         * GCCollected store. Messages are destroyed at gvt.
+         */
         std::deque<t_msgptr>   m_sent_messages;
+        
+        
         
         /**
          * Check for each influencing core (wrt this core), if all have timestamps on null messages with values 
@@ -174,6 +188,13 @@ protected:
 
 
         std::vector<std::vector<t_msgptr>> m_externalMessages;
+        
+        /**
+         * Only update LA if we know any state has changed.
+         * This still leaves the issue documented in calcMinLA, but is slightly less expensive.
+         */
+        virtual void signalTransition();
+
 public:
 	Conservativecore() = delete;
 
