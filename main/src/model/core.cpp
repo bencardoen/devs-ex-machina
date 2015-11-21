@@ -234,11 +234,14 @@ void n_model::Core::transition()
 			clearProcessedMessages(mail);
                         assert(!hasMail(modelid) && "After confluent transition, model may no longer have pending mail.");
 		}
+                imminent->clearSentMessages();
+
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-                imminent->clearSentMessages();
+
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
+                
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
                 printSchedulerState();
 	}
@@ -253,9 +256,8 @@ void n_model::Core::transition()
                 assert(external->nextType() == AtomicModel_impl::EXT);
                 external->markNone();
 		external->setTime(noncausaltime);
-//		m_scheduler->erase(ModelEntry(id, t_timestamp(0u,0u)));		// If ta() changed , we need to erase the invalidated entry.
 		this->traceExt(getModel(id));
-		//rescheduling.
+
                 clearProcessedMessages(mail);
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
@@ -279,7 +281,7 @@ void n_model::Core::sortMail(const std::vector<t_msgptr>& messages)
 
 void n_model::Core::printSchedulerState()
 {
-#ifdef LOGGING
+#if (LOG_LEVEL != 0)
 	LOG_DEBUG("Core :: ", getCoreID(), " Scheduler state at time ", getTime());
 	LOG_DEBUG("Core :: ", getCoreID(), " indexed models size: ", m_indexed_models.size());
 	LOG_DEBUG("Core :: ", getCoreID(), "    heap models size: ", m_heap.size());
@@ -341,9 +343,8 @@ void n_model::Core::syncTime()
 		throw std::runtime_error("Core time going backwards. ");
 	}
 #endif
-	// Here we a valid new time.
-	this->setTime(newtime);						// It's possible this stalls time if eit == old time
-									// but that is a deadlock, not a zombie state.
+	
+	this->setTime(newtime);															
 	this->resetZombieRounds();
 
 	if (this->getTime() >= this->getTerminationTime()) {

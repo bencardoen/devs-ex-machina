@@ -178,8 +178,11 @@ protected:
          * Stores modelptrs sorted on ascending priority.
          */
         std::vector<t_atomicmodelptr> m_indexed_models;
+        
+        /**
+         * On ordered set of models sorted at imminent time.
+         */
         t_scheduler m_heap;
-//        n_tools::t_Vector_PairingHeap_scheduler m_heap;
 
         /**
          * Stores models that will transition in this simulation round.
@@ -212,8 +215,16 @@ protected:
          */
         MessageEntry        m_token;
 
+        /**
+         * Temporary buffer used in doOutput().
+         */
         std::vector<n_network::t_msgptr> m_mailfrom;
 
+        /**
+         * Consecutive simulation rounds where the core had no next event
+         * In optimistic used as a tiebreaker to avoid excessive reverts, large values trigger
+         * the core registering for exit from the simulation.
+         */
         std::size_t m_zombie_rounds;
 
         /**
@@ -282,14 +293,10 @@ protected:
         }
         
 	/**
-	* Store received messages (local and networked)
+	* Store received messages.
 	*/
 	t_msgscheduler	m_received_messages;
 
-	/**
-	 * Push msg onto pending stack of msgs. Called by revert, receive.
-	 * @lock Unlocked (ie locked by caller)
-	 */
         virtual
 	void queuePendingMessage(t_msgptr){assert(false);}
         
@@ -300,12 +307,13 @@ protected:
         void queueLocalMessage(const t_msgptr& msg);
 
 	/**
-	 * Constructor intended for subclass usage only. Same initialization semantics as default constructor.
+	 * Constructor intended for subclass usage only. Same initialisation semantics as default constructor.
 	 */
 	Core(std::size_t id, std::size_t totalCores);
 
 	/**
 	 * Subclass hook. Is called after imminents are collected.
+         * Used in DS.
 	 */
 	virtual
 	void
@@ -344,7 +352,8 @@ public:
 
 
 	/**
-	 * The destructor explicitly resets all shared_ptrs kept in this core (to models, msgs)
+	 * @attention : with pool usage Core destructors are no longer able to deallocate.
+         * @see shutDown();
 	 */
 	virtual ~Core();
 	
@@ -362,14 +371,11 @@ public:
         virtual
 	void addModel(const t_atomicmodelptr& model);
         
-        // Move this and use dyn_ptr in DS. works for now.
+        /**
+         * Add a model at runtime. Implemented only in DS.
+         */
         virtual
 	void addModelDS(const t_atomicmodelptr& /*model*/){assert(false);}
-
-	/**
-	 * Add model to this core during dynamic structured simulation.
-	 * @pre !containsModel(model->getName());
-	 */
 
 	/**
 	 * Retrieve model with name from core
@@ -382,9 +388,7 @@ public:
         const t_atomicmodelptr&
         getModel(size_t index)const;
 
-	/**
-	 * Check if model is present in core.
-	 */
+	//deprecated, O(N)
 	bool
 	containsModel(const std::string& name)const;
         
@@ -399,7 +403,7 @@ public:
 	 * Live indicates, with the execption of dynstructured, the core is considered
          * in or beyond simulation. 
          * In Single core simulation, live indicates simulation can proceed.
-         * In parallel, live indicates wether or not the core has work to do (which in case of revert
+         * In parallel, live indicates whether or not the core has work to do (which in case of revert
          * can go back from dead to live).
 	 * @synchronized
 	 */
@@ -464,13 +468,14 @@ public:
 
 	/**
 	 * Run a single DEVS simulation step:
-	 * 	- getMessages (from network, since this can invoke revert it needs to be done before the other steps)
+         *      - getMessages() (from remote models, noop in single core)
 	 * 	- collect output from imminent models
-	 * 	- route messages (networked or not)
+	 * 	- route messages
 	 * 	- transition
 	 * 	- trace
 	 * 	- reschedule models if needed.
 	 * 	- update core time to furthest point possible
+         *      - evaluate termination condition. (time or function)
 	 * @pre init() has run once, there exists at least 1 model that is scheduled.
 	 */
 	virtual
@@ -534,11 +539,6 @@ public:
 
 	/**
 	 * Depending on whether a model may transition (imminent), and/or has received messages, transition.
-	 * @param imminent models
-	 * @param mail collected from local/network by collectOutput/getMessages
-         * @attention : imminent can grow (a model 'awakening' after external transition)
-         * @post imminent.size()_after >= imminent.size()_before
-         * @post mail.size()=0;
 	 */
 	void
 	transition();
@@ -559,7 +559,6 @@ public:
 	/**
 	 * Given a set of messages, sort them by model destination.
 	 * @attention : for single core no more than a simple sort, for multicore accesses network to push messages not local.
-	 * @lock: locks on messagelock.
 	 */
 	virtual void
 	sortMail(const std::vector<t_msgptr>& messages);
