@@ -6,24 +6,25 @@ The simulator is based on PythonPDEVS, and provides the following features:
 \begin{enumerate}
 	\item Direct Connect
 	\item Dynamic Structured DEVS
-	\item Termination function. (Only) In single-threaded simulation a termination function, if specified, is applied every simulation round to each model. If this is not present, there is no overhead.
-	\item State/Message can have any payload type.
-	\item Tracing An asynchronous Tracing mechanism allows exact verification of the simulation.
+	\item Termination function. If specified, a termination function is applied every simulation round to each model to test whether the simulation can terminate. Only available in single-threaded simulation.
+	\item State/Message can have any payload type. Different message types can be used together within the same simulation.
+	\item Tracing An asynchronous, thread safe and versatile tracing mechanism allows exact verification of the simulation.
 \end{enumerate}
-The implementation tries to adhere to the C++ principle that you don't pay for what you don't use. The termination function is non-trivial to implement in a multi-threaded kernel and had a non-negligible impact on the runtime even if not in use, for this reason it was abandoned.\\
+The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use.\\
 The tracing is not comparable with adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be threadsafe and deterministic so that a simulation will always produce the exact same output.
-The following features from PythonPDEVS are not present
-\begin{enumerate}
-	\item Activity tracking and relocation
-	\item Serialization
-	\item Interaction 
-	\item Distributed simulation
-	\item Interactive control
-\end{enumerate}
-Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
-Model allocation is done by a derivable allocator object which the user can  implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the cores.\\
-Debugging tools are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.\\
-PythonPDEVS can be controlled from within a Python script, this is not implemented in dxexmachina. 
+%TODO Decide whether we should list the functionality that is _not_ implemented
+%The following features from PythonPDEVS are not present
+%\begin{enumerate}
+%	\item Activity tracking and relocation
+%	\item Serialization
+%	\item Interaction 
+%	\item Distributed simulation
+%	\item Interactive control
+%\end{enumerate}
+%Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
+Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
+Debugging tools such as a logger and a graph vizualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.\\
+While PythonPDEVS can be controlled from within a Python script and adevs has a Java interface, our implementation does not have any bindings to other languages.
 
 %TODO ... and thus has most features from PythonPDEVS, like Dynamic Structure, termination condition, direct connection, ...
 %TODO (size: take as much size as you want, depending on how much is shared with PythonPDEVS)
@@ -33,15 +34,15 @@ PythonPDEVS can be controlled from within a Python script, this is not implement
 % weak scenarios for C, O and both ?
 \subsubsection{Conservative}
 % This needs better explaining, perhaps a central graph to reference to ?
-A conservative kernel will determine which kernels it is influenced by, this information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
-A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. Internal transitions are safe. This information is collected for all models a kernel drives, and the minimum is set as the lookahead of the kernel itself. \\
+A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
+A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. Internal transitions are safe. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the eot of all influencing kernels. \\
-For garbage collection (of sent messages) the GVT is calculated as $min$(nulltime[i] $\forall i$) $ - \epsilon $. This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?.
+For garbage collection (of sent messages) the GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i]\ )  - \epsilon $. %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?.
 
 \subsubsection{Optimistic}
-The optimistic kernel requires from a hosted model only that copying the state is well-defined, which is provided in the base State class for the user.%Mention typed state here ?
-The kernels use Mattern's %ref here
-GVT algorithm with a max 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states/(anti)messages. 
+The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user.%Mention typed state here ?
+The kernels use Mattern's %\cite{} %TODO find out in which paper this algorithm was described
+GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states/(anti)messages. 
 
 %TODO explain core infrastructure a bit, maybe with a diagram or so, which clearly shows that everything is shared, except the "synchronization" part
 %TODO claim that this allows you to easily switch between both methods, to always chose the best one
@@ -67,7 +68,7 @@ Continuous profiling of the kernels in several benchmarks highlighted the follow
 % Pick what we want from this text and rewrite it
 \subsubsection{Heap}
 A kernel never sends a complete object to another kernel, only a pointer to the object.\\
-The cost of heap allocations was minimized using thread\_local memory pools, combined with the (optional) usage of tcmalloc. % reference here
+The cost of heap allocations was minimized using thread\_local memory pools, combined with the (optional) usage of tcmalloc\cite{tcmalloc}.
 This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (iff it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free itself. \\
 Replacing strings (in c++ : heap allocated variable sized arrays) with integer identifiers substantially decreased the runtime. This is a tradeoff, the user has more affinity with names than numbers as identifiers, so this translation is done mostly internal. A Model can be named using a std::string, but once the model is handed off to the kernel only integer identifiers remain (the same goes for ports, kernels, ...).
 \\
@@ -77,5 +78,4 @@ While an important feature in C++11 in general, our initial usage of smart point
 Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
 On a higher level, we avoid the sending of synchronization messages entirely by writing the content (timestamp) directly into shared memory. This alleviates in part the potential delay/latency caused by null/eot messages being mixed with simulation messages in conservative implementations. 
 \subsubsection{Schedulers}
-PythonPDEVS has a wide range of scheduler for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified, but never items removed. % Rephrase this.
-
+PythonPDEVS has a wide range of scheduler for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified. Items are only updated, never removed.
