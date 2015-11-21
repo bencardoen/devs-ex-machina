@@ -77,18 +77,6 @@ struct ControllerConfig
 	 * @see Tracers
 	 */
 	n_tracers::t_tracersetptr m_tracerset;
-
-	/**
-	 * Forces cores to go into IDLE mode after a certain amount of cycles should they enter a "zombie" state after
-	 * 	reverting (no next scheduled time for models).
-	 * By default: @c -1 (do not force)
-	 * @attention : This parameter is specific only to Parallel DEVS modes, in other cases it will be disregarded
-	 * @attention : USE AT YOUR OWN RISK. This can dramatically increase the speed of some simulations, but break others!
-	 * In general, the higher the value, the more likely a simulation will run correctly, at the cost of some speed.
-	 * 	By our tests, the chance of failure given a threshold of 0 (immediately idle) is 1-2%, a threshold of
-	 * 	100 less than 0.1%
-	 */
-	int m_zombieIdleThreshold;
         
         /**
          * The nr of turns a core can simulate (including any idle rounds).

@@ -1120,7 +1120,6 @@ TEST(Conservativecore, PHOLD){
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 2;
 	conf.m_saveInterval = 0;
-	conf.m_zombieIdleThreshold = 100000;
 	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
 
 	auto ctrl = conf.createController();

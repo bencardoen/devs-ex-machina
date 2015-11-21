@@ -392,14 +392,10 @@ void n_model::Core::validateUUID(const n_model::uuid& id)
 
 void n_model::Core::runSmallStep()
 {
-	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
         
         m_stats.logStat(TURNS);
 
-	// Noop in single core. Pull messages from network, sort them.
-	// This step can trigger a revert, which is why its before getImminent
-        // getMessages will also turn a core back to live in optimistc (in revert).
 	this->getMessages();	// locked on msgs 
 
 	if (!this->isLive()) {
@@ -409,35 +405,25 @@ void n_model::Core::runSmallStep()
 		return;
 	}
 
-	// Query imminent models (who are about to fire transition)
-
         this->getImminent(m_imminents);
         
-        // Dynamic structured needs the list, but best before we add externals to it.
+        // Dynamic structured needs this list, but best before we add externals to it.
         this->signalImminent(m_imminents);  
         
-	// Get all produced messages, and route them.
 	this->collectOutput(m_imminents);	
 
-	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();	//		
+	this->getPendingMail();
 
-	// Transition depending on state.
-	this->transition();		// NOTE: the scheduler can go empty() here.
+	this->transition();		
 
-	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent();
 	
-	// Forward time to next message/firing.
 	this->syncTime();				
         m_imminents.clear();
         m_externs.clear();
 
-
 	this->checkTerminationFunction();
 
-
-	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
 }
 
@@ -514,7 +500,6 @@ void n_model::Core::removeModel(std::size_t id)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", id);
         
-        //t_raw_atomic model = m_indexed_models[id].get();
         std::swap(m_indexed_models[id], m_indexed_models.back());
         m_indexed_models.pop_back();
         m_heap.remove(id);
@@ -547,14 +532,11 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
         if(msgs.size()==0)
                 throw std::logic_error("Msgs empty after processing ?");
 #endif
-        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(t_msgptr ptr : msgs){
-                // TODO POOL
                 ptr->releaseMe();
                 LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
         }
-        
         msgs.clear();
 }
 

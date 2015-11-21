@@ -490,12 +490,12 @@ public:
 	 */
 	virtual void sendMessage(t_msgptr)
 	{
-		assert(false && "A message for a remote core in a single core implemenation.");
+		assert(false && "A message for a remote core in a single core implementation.");
 	}
 
 	/**
 	 * Pull messages from network.
-	 * @see Multicore#getMessages()
+         * This is a hook parallel cores override.
 	 */
 	virtual void getMessages()
 	{
@@ -552,7 +552,6 @@ public:
 	/**
 	 * Print all queued messages.
 	 * @attention : invokes a full copy of all stored msg ptrs, only for debugging!
-	 * @lock : locks on messages
 	 */
 	void
 	printPendingMessages();

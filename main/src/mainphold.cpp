@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 #else
 	n_network::t_timestamp::t_time eTime = 50;
 #endif
-	std::size_t nodes = 1;
+	std::size_t nodes = 4;  // Can't pick a default of c=4 with n=1.
 	std::size_t apn = 10;
 	std::size_t percentageRemotes = 10;
 	std::size_t iter = 0;
@@ -157,18 +157,20 @@ int main(int argc, char** argv)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "PHOLD";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
-        if(nodes != coreAmt)
-                std::cerr << "Warning : amount of cores should match amount of nodes, else R% makes no sense whatsoever!" << std::endl;
+        if(nodes != coreAmt && coreAmt!=1){
+                std::cerr << nodes << std::endl;
+                std::cerr << coreAmt << std::endl;
+                throw std::logic_error("N should match C");
+        }
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
 	        percentageRemotes);
 	ctrl->addModel(d);

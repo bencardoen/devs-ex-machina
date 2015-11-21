@@ -193,15 +193,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 void Conservativecore::receiveMessage(t_msgptr msg){
         m_stats.logStat(MSGRCVD);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
-        
-#ifdef SAFETY_CHECKS
-        if (msg->isAntiMessage()){ 
-                LOG_FLUSH;
-                throw std::logic_error("Antimessage in conservativecore !!");
-        }
-#endif
-        
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());        
         this->queuePendingMessage(msg);
 	
 #ifdef SAFETY_CHECKS

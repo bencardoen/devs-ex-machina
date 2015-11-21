@@ -148,11 +148,10 @@ int main(int argc, char** argv)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Priority";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 250;     
-	conf.m_zombieIdleThreshold = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);

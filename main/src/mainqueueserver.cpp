@@ -196,7 +196,6 @@ int main(int argc, char** argv)
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 250;     
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<QueueAlloc>();
 
 	auto ctrl = conf.createController();

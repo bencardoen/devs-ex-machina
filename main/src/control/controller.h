@@ -190,11 +190,6 @@ public:
 	 */
 	bool isInDSPhase() const;
 
-	/**
-	 * @brief forces "zombie" cores to go IDLE
-	 */
-	void setZombieIdleThreshold(size_t threshold = 10);
-
 private:
 	/**
 	 * @brief Check if simulation needs to continue
