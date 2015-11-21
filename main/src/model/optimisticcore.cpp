@@ -616,8 +616,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
                 if(!msg.m_ptr->flagIsSet(Status::ANTI)){
                         msg.m_ptr->setFlag(Status::HEAPED);
                         msg.m_ptr->setFlag(Status::PROCESSED, false);
-                        if(!m_received_messages->contains(msg.m_ptr))
-                                m_received_messages->push_back(msg.m_ptr);
+                        m_received_messages->push_back(msg.m_ptr);
                 }
                 m_processed_messages.pop_back();
         }

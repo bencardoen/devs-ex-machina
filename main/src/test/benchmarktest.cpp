@@ -308,7 +308,7 @@ TEST(Benchmark, connect_single)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -336,7 +336,7 @@ TEST(Benchmark, DISABLED_connect_opt)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -355,7 +355,7 @@ TEST(Benchmark, DISABLED_connect_opt)
     LOG_MOVE("out.txt", true);
 }
 
-TEST(Benchmark, DISABLED_connect_cons)
+TEST(Benchmark, connect_cons)
 {
     LOG_MOVE("logs/bmarkConnectCons.log", false);
 	n_control::ControllerConfig conf;
@@ -364,7 +364,7 @@ TEST(Benchmark, DISABLED_connect_cons)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -392,7 +392,7 @@ TEST(Benchmark, connect_single_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = true;
 
 	auto ctrl = conf.createController();
