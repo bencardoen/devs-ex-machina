@@ -218,6 +218,7 @@ void n_model::Core::transition()
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			assert(imminent->nextType()==AtomicModel_impl::INT);
                         imminent->markNone();
+                        imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
@@ -225,7 +226,7 @@ void n_model::Core::transition()
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
                         assert(imminent->nextType() == AtomicModel_impl::CONF);
                         imminent->markNone();
-			imminent->setTimeElapsed(0);
+                        imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         std::vector<t_msgptr>& mail = getMail(modelid);
 			imminent->doConfTransition(mail);		// Confluent
 			imminent->setTime(noncausaltime);
@@ -235,7 +236,7 @@ void n_model::Core::transition()
 		}
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-        imminent->clearSentMessages();
+                imminent->clearSentMessages();
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");

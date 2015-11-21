@@ -488,6 +488,8 @@ public:
 	{
 		initState(n_tools::createRawObject<State__impl<void>>());
 	}
+
+	virtual ~AtomicModel(){}
 };
 }	// end namespace
 

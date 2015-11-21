@@ -47,6 +47,7 @@ public:
 						//  e.g. if the user lowered the amount of cores on a loaded simulation
 		}
 		m->setCorenumber(corenum);
+		LOG_DEBUG("Allocating ", m->getName(), " to core ", corenum);
 		return corenum;
 	}
 
@@ -54,7 +55,7 @@ public:
 		LOG_INFO("Allocator processing ", atomics.size(), " atomics over ", coreAmount(), " cores");
 		for(const auto& atomicp : atomics){
 			const int stalenr = atomicp->getCorenumber();
-			int corenr = 0;
+			int corenr = stalenr;
 			if(!m_allowUserOverride || stalenr == -1) {	// If user override is not allowed, or if it is but the
 				corenr = m_i;				//  user didn't specify a particular core, we pick a
 				m_i = (m_i + 1) % coreAmount();		//  destination ourselves
@@ -63,7 +64,7 @@ public:
 							//  e.g. if the user lowered the amount of cores on a loaded simulation
 			}
 			atomicp->setCorenumber(corenr);
-			LOG_INFO("Allocator assigned ", atomicp->getName(), " from ", stalenr, " to ", corenr);
+			LOG_INFO("Allocator assigned ", atomicp->getName(), " from ", stalenr, " to ", corenr, "(total core amount: ", coreAmount(), ')');
 		}
 	}
 };
