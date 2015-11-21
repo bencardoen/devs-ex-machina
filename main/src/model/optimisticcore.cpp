@@ -2,11 +2,10 @@
  * Optimisticcore.cpp
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen -- Tim Tuijn
+ *      Author: Ben Cardoen -- Tim Tuijn -- Stijn Manhaeve
  */
 
 #include <thread>
-
 #include "model/optimisticcore.h"
 #include "tools/objectfactory.h"
 
@@ -16,14 +15,10 @@ using namespace n_network;
 Optimisticcore::~Optimisticcore()
 {
         // Destructors are run on main(), our pool is live but we can't access it anymore.
-        // Do not delete ptrs here.
+        // Do not delete ptrs here, but we do want a trace should this happen.
         for (auto& ptr : m_sent_messages) {
                 LOG_ERROR("MCORE:: ", this->getCoreID(), " HAVE ", ptr,
                         " in  m_sent_messages @ destruction. This will result in an std::bad_alloc exception.");
-                // We're back on main's thread, cannot call our pool, and an exception in destructor makes 
-                // backtracing impossible.
-                //ptr->releaseMe();
-                //m_stats.logStat(DELMSG);
         }
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
@@ -51,24 +46,20 @@ void Optimisticcore::shutDown()
         assert(!isLive() && "The core shouldn't be live when it is shut down!");
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " core shutting down, still need to remove ", m_sent_messages.size(),
                 " messages");
+        // @pre : not on main(), but on sim thread.
         for (auto& ptr : m_sent_messages) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " in core shutdown.");
-                // We're not yet back on main's thread, can safely call our pool.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
         }
         for (auto& ptr : m_sent_antimessages) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " in core shutdown.");
-                // We're not yet back on main's thread, can safely call our pool.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
         }
         for (const auto& ptr : m_indexed_models) {
                 ptr->clearSentMessages();
-        }
-        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
-                const t_atomicmodelptr& model = m_indexed_models[index];
-                model->exitSimulation();
+                ptr->exitSimulation();
         }
         m_sent_messages.clear();
         m_sent_antimessages.clear();
