@@ -350,7 +350,7 @@ public:
 	}
 
 	/**
-	 * Tests whether te heap condition is met.
+	 * Tests whether the heap condition is met.
 	 * Note that this is never the case if the heap is dirty.
 	 * @see update
 	 * @see updateAll

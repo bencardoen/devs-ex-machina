@@ -306,7 +306,6 @@ public:
 		LOG_ERROR(
 		        "ATOMICMODEL: Not implemented: 'std::vector<n_network::t_msgptr> n_model::AtomicModel_impl::output()'");
 		assert(false);
-//		return std::vector<n_network::t_msgptr>();
 	}
 
 	/**

@@ -88,6 +88,13 @@ public:
 	{
 		return (lhs.m_localid == rhs.m_localid /*&& lhs.m_scheduled_at == rhs.m_scheduled_at*/); // uncomment to allow multiple entries per model
 	}
+        
+        friend
+        constexpr
+        bool operator!=(const ModelEntry& lhs, const ModelEntry& rhs)
+        {
+                return !(lhs == rhs);
+        }
 
 	friend
 	std::ostream& operator<<(std::ostream& os, const ModelEntry& rhs){

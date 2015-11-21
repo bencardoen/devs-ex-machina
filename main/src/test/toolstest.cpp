@@ -29,6 +29,7 @@
 #include "network/message.h"
 #include "pools/pools.h"
 #include "pools/cfpool.h"
+#include "model/laentry.h"
 
 using std::cout;
 using std::endl;
@@ -1093,4 +1094,24 @@ TEST(Tools, alignptr)
         EXPECT_EQ(high-low, 64u);       // ++ should have move 64.
         EXPECT_EQ(low%64, 0u);          // original address should be 0 mod alignment.
         std::free(ts);
+}
+
+TEST(LA, Vsched)
+{
+        constexpr size_t tsize = 10;
+        using n_model::LaEntry;
+        using n_network::t_timestamp;
+        typedef boost::heap::fibonacci_heap<LaEntry> heapchoice;
+        VectorScheduler<heapchoice, LaEntry> vscheduler;
+        for(size_t i = 0; i<tsize; ++i){
+                LaEntry la(i, t_timestamp(i,i));
+                vscheduler.push_back(la);
+                EXPECT_TRUE(vscheduler.contains(la));
+        }
+        LaEntry first = vscheduler.top();
+        EXPECT_EQ(first.getTime(), t_timestamp(0,0));
+        LaEntry mod_first(first.getID(), t_timestamp(42,42));
+        EXPECT_TRUE(vscheduler.contains(mod_first));
+        vscheduler.update(mod_first);
+        EXPECT_EQ(vscheduler.top().getTime(), t_timestamp(1,1));
 }

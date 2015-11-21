@@ -19,8 +19,6 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 	: Core(coreid, totalCores),
 	m_network(n),m_eit(0u), m_distributed_eot(vc),m_distributed_time(tc),m_min_lookahead(0u,0u),m_last_sent_msgtime(t_timestamp::infinity())
 {
-        m_received_messages.reset();
-        m_received_messages=n_tools::createObject<n_scheduler::STLScheduler<n_network::MessageEntry>>();
         if(totalCores==m_distributed_time->size())
                 throw std::logic_error("NLTIME not aligned properly. !!");
         m_externalMessages.resize(totalCores);
@@ -139,7 +137,7 @@ void Conservativecore::updateEIT()
 }
 
 void Conservativecore::syncTime(){
-        //this->calculateMinLookahead();
+        // Lookahead is recalculated iff # transitions > 0
 	this->updateEOT();                     
 	this->updateEIT();
         

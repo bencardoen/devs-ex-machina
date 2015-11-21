@@ -7,20 +7,13 @@
 #include <unordered_map>
 #include "model/core.h"
 #include "tools/sharedvector.h"
-#include "scheduler/heapscheduler.h"
+#include "model/laentry.h"
 
 #ifndef SRC_MODEL_CONSERVATIVECORE_H_
 #define SRC_MODEL_CONSERVATIVECORE_H_
 
 namespace n_model {
 
-struct la_comp{
-        bool
-        operator()(n_model::t_raw_atomic l, n_model::t_raw_atomic r)const
-        {
-                return l->lookAhead().getTime() > r->lookAhead().getTime();
-        }
-};
 
 /**
  * If a simulator collects more than <value> sent messages, try to garbage collect them.

@@ -76,7 +76,7 @@ template<typename X, typename R>
 void VectorScheduler<X, R>::unschedule_until(std::vector<R>& container,const R& elem) 
 {
         while(! empty()){
-		const R element = top(); // Note: using const & here gives false threading errors, a copy is required anyway.
+		const R element = top();
 		if (element < elem)
                         return;
 		pop();
@@ -136,7 +136,9 @@ void VectorScheduler<X, R>::update(const R& item){
         }else{
                 const size_t index(item);
                 auto& handle = m_keys[index].first;
-                m_storage.update(handle, item);
+                if(*handle != item){
+                        m_storage.update(handle, item);
+                }
         }
 }
 
