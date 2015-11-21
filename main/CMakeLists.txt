@@ -85,7 +85,7 @@ elseif(COMPILER_SUPPORTS_CXX0X)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++0x")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 message("Setting options for build types.")
@@ -116,7 +116,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
 else()
         MESSAGE( STATUS"Using G++ : using flto")
-        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto -ggdb")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
 endif()
 ###############################################################################
 
@@ -360,7 +360,7 @@ include_directories(
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
     MESSAGE( STATUS "Have tcmalloc, ignoring for the moment. --remove me if done with valgrind.")
-    #set(LIBS ${LIBS} -ltcmalloc) 
+    set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 

@@ -28,23 +28,7 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
-        // Conservative cannot wake up. If we reach term time, we die.
-        /**
-	bool wasLive = isLive();
-        this->setLive(true);
-        if(!wasLive){
-        	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
-        }
-        if(this->m_network->havePendingMessages(this->getCoreID())){
-                std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-                LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-                this->sortIncoming(messages);
-        }else{
-                if(! wasLive){
-                        setLive(false);
-                        LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
-                }
-	}*/
+        
         // Regardless of what happens, pull messages to avoid others stalling on network empty.
         if(this->m_network->havePendingMessages(this->getCoreID())){
                 std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
@@ -129,6 +113,19 @@ void Conservativecore::updateEOT()
 void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here matters not for inlining, TU where this is called is always this class only.
                 m_distributed_eot->set(this->getCoreID(), ntime.getTime());
 }
+
+
+t_timestamp Conservativecore::getFirstMessageTime()
+{
+        constexpr t_timestamp mintime = t_timestamp::infinity();
+        if(m_received_messages->size()){
+                const MessageEntry& first = m_received_messages->top();
+                return first.getMessage()->getTimeStamp();
+        }
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
+        return mintime;
+}
+
 
 void Conservativecore::updateEIT()
 {
@@ -409,6 +406,24 @@ Conservativecore::calculateMinLookahead(){
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead updated to ", m_min_lookahead);
         }else{
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " Lookahead < time , skipping calculation. : ", m_min_lookahead);
+        }
+}
+
+void
+Conservativecore::getPendingMail()
+{
+         if(m_received_messages->empty()){
+                return;
+        }
+	const t_timestamp nowtime = makeLatest(m_time);
+	std::vector<MessageEntry> messages;
+	m_token.getMessage()->setTimeStamp(nowtime);
+
+	this->m_received_messages->unschedule_until(messages, m_token);
+	
+	for (const auto& entry : messages){
+	        auto msg = entry.getMessage();
+                queueLocalMessage(msg);
         }
 }
 

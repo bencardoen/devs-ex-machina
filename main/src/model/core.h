@@ -233,14 +233,6 @@ protected:
 	 */
 	void
 	checkTerminationFunction();
-
-	virtual
-	void
-	lockMessages(){;}
-
-	virtual
-	void
-	unlockMessages(){;}
         
         /**
          * Check that the internal state of the core is still sane.
@@ -676,12 +668,11 @@ public:
 	void markMessageStored(const t_msgptr&){;}
 
 	/**
-	 * For all pending messages, retrieve the smallest (earliest) timestamp.
-	 * @return earliest timestamp of pending messages, or infinity() if no usch time is found.
-	 * @locks on messagelock
+	 * Return min of {external received messages} || \infty.
 	 */
+        virtual
 	t_timestamp
-	getFirstMessageTime();
+	getFirstMessageTime(){return t_timestamp::infinity();}
         
         /**
          * @return Time of first imminent model, or inf.

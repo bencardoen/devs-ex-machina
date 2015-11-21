@@ -52,8 +52,8 @@ n_network::Message::toString() const
 	result << " @" << m_timestamp;
 	result << " from model " << getSourceModel() ;
 	result << " to model " << getDestinationModel() ;
-    result << " from core " << getSourceCore() ;
-    result << " to core " << getDestinationCore() ;
+        result << " from core " << getSourceCore() ;
+        result << " to core " << getDestinationCore() ;
 	result << " payload " << this->getPayload();
 	result << " color : " << this->getColor();
 	result << " flags: " << std::bitset<8>(m_atomic_flags.load());
@@ -71,13 +71,15 @@ n_network::operator!=(const n_network::Message& left, const n_network::Message& 
 
 bool
 n_network::operator<(const n_network::Message& left, const n_network::Message& right){
-    if(left == right)
-        return false;
-    if(left.m_timestamp < right.m_timestamp)
-        return true;
-    else{ 
-        return false;
-    }
+        return left.m_timestamp < right.m_timestamp;
+        // This v should no longer be necessary.
+//        if(left == right)
+//            return false;
+//        if(left.m_timestamp < right.m_timestamp)
+//            return true;
+//        else{ 
+//            return false;
+//        }
 }
 
 bool

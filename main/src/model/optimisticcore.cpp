@@ -712,3 +712,28 @@ void n_model::Optimisticcore::setTred(t_timestamp val)
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting tRed from ", m_tred, " to ", val);
         this->m_tred = val;
 }
+
+
+t_timestamp 
+n_model::Optimisticcore::getFirstMessageTime()
+{
+        /**
+         * Only look at remote messages (opt& cons) for this value, 
+         * current messages are (should be processed), so irrelevant.
+         */
+        t_timestamp mintime = t_timestamp::infinity();
+        while (not this->m_received_messages->empty()) {
+                const MessageEntry& msg = m_received_messages->top();
+                if(msg.getMessage()->flagIsSet(Status::ERASE)){
+                        t_msgptr msgptr = msg.getMessage();
+                        m_received_messages->pop();
+                        msgptr->setFlag(Status::KILL);
+                        continue;
+                }
+                mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
+                break;
+        }
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
+        return mintime;
+}
+

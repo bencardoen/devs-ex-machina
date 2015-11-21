@@ -135,6 +135,10 @@ private:
          */
         t_timestamp getLastMsgSentTime()const{return m_last_sent_msgtime;}
         
+        
+        virtual t_timestamp getFirstMessageTime()override;
+
+        
         /**
          * Get last null message time. Since this is a read of our own write, we
          * can use relaxed ordering here.
@@ -282,6 +286,10 @@ public:
         // sets the distributed gvt value. Only called by controlling core.
         void
         setDGVT(const t_timestamp::t_time& ng)const{m_distributed_time->set(m_distributed_time->size()-1, ng);}
+        
+
+        virtual void getPendingMail()override;
+
         
         /**
          * @pre : simulation is done, calling thread id == current thread id
