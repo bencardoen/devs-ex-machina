@@ -7,25 +7,11 @@
 #include <performance/phold/phold.h>
 #include "control/controllerconfig.h"
 #include "tools/coutredirect.h"
+#include "tools/stringtools.h"
 
-LOG_INIT("phold.log")
+using namespace n_tools;
 
-
-
-template<typename T>
-T toData(std::string str)
-{
-	T num;
-	std::istringstream ss(str);
-	ss >> num;
-	return num;
-}
-
-char getOpt(char* argv){
-	if(strlen(argv) == 2 && argv[0] == '-')
-		return argv[1];
-	return 0;
-}
+LOG_INIT("phold.log");
 
 const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"

@@ -117,6 +117,7 @@ public:
 	}
 };
 
+
 } /* namespace n_interconnect */
 
 #endif /* SRC_PERFORMANCE_HIGHINTERCONNECT_HINTERCONNECT_H_ */

@@ -13,20 +13,7 @@
 
 LOG_INIT("prioritymsg.log")
 
-template<typename T>
-T toData(std::string str)
-{
-	T num;
-	std::istringstream ss(str);
-	ss >> num;
-	return num;
-}
-
-char getOpt(char* argv){
-	if(strlen(argv) == 2 && argv[0] == '-')
-		return argv[1];
-	return 0;
-}
+using namespace n_tools;
 
 /**
  * cmd args:

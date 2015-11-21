@@ -58,12 +58,12 @@ void n_priorityMsg::Generator::intTransition()
         }
 }
 
-void n_priorityMsg::Generator::extTransition(const std::vector<n_network::t_msgptr>& message)
+void n_priorityMsg::Generator::extTransition(const std::vector<n_network::t_msgptr>& /*message*/)
 {
         // nothing to do here
 }
 
-void n_priorityMsg::Generator::confTransition(const std::vector<n_network::t_msgptr>& message)
+void n_priorityMsg::Generator::confTransition(const std::vector<n_network::t_msgptr>& /*message*/)
 {
         // nothing to do here
 }

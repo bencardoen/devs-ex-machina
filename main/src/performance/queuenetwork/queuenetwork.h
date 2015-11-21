@@ -190,6 +190,35 @@ public:
 	virtual ~FeedbackServerNetwork(){}
 };
 
+class QueueAlloc: public n_control::Allocator
+{
+private:
+	std::size_t m_counter;
+public:
+	QueueAlloc(): m_counter(0){
+
+	}
+	virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+		auto p = std::dynamic_pointer_cast<n_queuenetwork::MsgGenerator>(ptr);
+		if(p == nullptr)
+			return 0;
+		if(coreAmount() < 2)
+			return 0;
+		if(coreAmount() == 2)
+			return 1;
+		std::size_t res = 1 + (m_counter++)%(coreAmount()-1);
+		if(res >= coreAmount())
+			res = coreAmount()-1;
+		LOG_INFO("Putting model ", ptr->getName(), " in core ", res, " out of ", coreAmount());
+		return res;
+	}
+
+	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
+		for(const n_model::t_atomicmodelptr& ptr: models)
+			ptr->setCorenumber(allocate(ptr));
+	}
+};
+
 } /* namespace n_queuenetwork */
 
 

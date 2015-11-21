@@ -2,11 +2,12 @@
  * stringtools.h
  *
  *  Created on: 28 Mar 2015
- *      Author: Ben Cardoen
+ *      Author: Ben Cardoen -- Stijn Manhaeve
  */
 #ifndef STRINGTOOLS_H_
 #define STRINGTOOLS_H_
 #include <string>
+#include <cstring>
 #include <sstream>
 #include "tools/macros.h"
 
@@ -108,6 +109,22 @@ inline int toInt(std::string str)
 	std::istringstream ss(str);
 	ss >> num;
 	return num;
+}
+
+template<typename T>
+T toData(std::string str)
+{
+	T num;
+	std::istringstream ss(str);
+	ss >> num;
+	return num;
+}
+
+inline
+char getOpt(char* argv){
+	if(strlen(argv) == 2 && argv[0] == '-')
+		return argv[1];
+	return 0;
 }
 }
 
