@@ -2,11 +2,10 @@
  * Optimisticcore.cpp
  *
  *  Created on: 21 Mar 2015
- *      Author: Ben Cardoen -- Tim Tuijn
+ *      Author: Ben Cardoen -- Tim Tuijn -- Stijn Manhaeve
  */
 
 #include <thread>
-
 #include "model/optimisticcore.h"
 #include "tools/objectfactory.h"
 
@@ -16,15 +15,13 @@ using namespace n_network;
 Optimisticcore::~Optimisticcore()
 {
         // Destructors are run on main(), our pool is live but we can't access it anymore.
-        // Do not delete ptrs here.
-        for (auto& ptr : m_sent_messages) {
+        // Do not delete ptrs here, but we do want a trace should this happen.
+#if (LOG_LEVEL!=0)
+        for (t_msgptr ptr : m_sent_messages) {
                 LOG_ERROR("MCORE:: ", this->getCoreID(), " HAVE ", ptr,
                         " in  m_sent_messages @ destruction. This will result in an std::bad_alloc exception.");
-                // We're back on main's thread, cannot call our pool, and an exception in destructor makes 
-                // backtracing impossible.
-                //ptr->releaseMe();
-                //m_stats.logStat(DELMSG);
         }
+#endif
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
         // any of these is an antimessage.
@@ -51,24 +48,20 @@ void Optimisticcore::shutDown()
         assert(!isLive() && "The core shouldn't be live when it is shut down!");
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " core shutting down, still need to remove ", m_sent_messages.size(),
                 " messages");
+        // @pre : not on main(), but on sim thread.
         for (auto& ptr : m_sent_messages) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " in core shutdown.");
-                // We're not yet back on main's thread, can safely call our pool.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
         }
         for (auto& ptr : m_sent_antimessages) {
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " in core shutdown.");
-                // We're not yet back on main's thread, can safely call our pool.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
         }
         for (const auto& ptr : m_indexed_models) {
                 ptr->clearSentMessages();
-        }
-        for (size_t index = 0; index < m_indexed_models.size(); ++index) {
-                const t_atomicmodelptr& model = m_indexed_models[index];
-                model->exitSimulation();
+                ptr->exitSimulation();
         }
         m_sent_messages.clear();
         m_sent_antimessages.clear();
@@ -96,7 +89,6 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                         ptr->releaseMe();
                 }
                 else{
-                        // TODO mark change
                         m_processed_messages.push_back(n_network::hazard_pointer(ptr));
                 }
         }
@@ -152,12 +144,6 @@ void Optimisticcore::handleAntiMessage(const t_msgptr& msg)
                 // is currently in the scheduler, mark as to erase
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " message only in heap, marking as TOERASE ", msg);
                 m_received_messages->printScheduler();
-//                bool erased = this->m_received_messages->erase(MessageEntry(msg));
-//                if(!erased)
-//                        throw std::logic_error("Pending messages integrity failure!");
-//                LOG_DEBUG("MCORE:: ", this->getCoreID(), " original msg found, deleting ", msg);
-//                // TODO change with msg scheduler.
-//                msg->setFlag(Status::KILL);
                 msg->setFlag(Status::ERASE);
         } else if (msg->flagIsSet(Status::DELETE)) {
                 // we encountered this one before, just kill it.
@@ -199,21 +185,16 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
                 throw std::logic_error("Msg color not equal to core color, race detected.");
         }
 #endif
-        if (m_color == MessageColor::WHITE) {           // getter is locked
+        if (m_color == MessageColor::WHITE) {           
                 const size_t j = msg->getDestinationCore();
-                {
-                        std::lock_guard<std::mutex> lock(this->m_vlock);
-                        const int val = ++(this->m_mcount_vector.getVector()[j]);
-                        LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector to : ", val);
-                }
+                std::lock_guard<std::mutex> lock(this->m_vlock);
+                ++(this->m_mcount_vector.getVector()[j]);
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: incrementing count vector to : ", m_mcount_vector.getVector()[j]);
         } else {
-                // Locks this Tred because we might want to use it during the receiving
-                // of a control message
                 std::lock_guard<std::mutex> lock(this->m_tredlock);
-                t_timestamp oldtred = m_tred;
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred pre ", m_tred);
                 m_tred = std::min(m_tred, msg->getTimeStamp());
-                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred changed from : ", oldtred, " to ", m_tred,
-                        " after sending msg.");
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: tred post : ", m_tred);
         }
 }
 
@@ -265,9 +246,9 @@ void Optimisticcore::registerReceivedMessage(const t_msgptr& msg)
         // msg is not an antimessage here.
         if (msg->getColor() == MessageColor::WHITE) {
                 std::lock_guard<std::mutex> lock(this->m_vlock);
-                const int value_cnt_vector = --this->m_mcount_vector.getVector()[this->getCoreID()];
+                --this->m_mcount_vector.getVector()[this->getCoreID()];
                 LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " GVT :: decrementing count vector to : ",
-                        value_cnt_vector);
+                        m_mcount_vector.getVector()[this->getCoreID()]);
         }
 }
 
@@ -287,11 +268,11 @@ void Optimisticcore::gcCollect()
 #ifdef SAFETY_CHECKS
                 if(!ptr->flagIsSet(Status::PROCESSED) || ptr->flagIsSet(Status::HEAPED)){
                         LOG_ERROR("GVT integrity failure :: id= ", this->getCoreID(), " for msg ", ptr, " not processed but gvt is past tstamp?");
+                        // todo exception ?
                         break;
                 }
 #endif        
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " deleting ", ptr, " = ", ptr->toString());
-                //if(ptr->flagIsSet(Status::KILL))        // A final guard.
                 ptr->releaseMe();
                 m_stats.logStat(DELMSG);
 #ifdef SAFETY_CHECKS
@@ -319,11 +300,9 @@ void Optimisticcore::gcCollect()
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(), " sent messages now contains :: ",
                 m_sent_messages.size());
         
-        // Processed contains messages that are being deleted as we speak in other cores.
-        // Make sure we don't access the pointers by accident.
         auto piter = m_processed_messages.begin();
         for(;piter != m_processed_messages.end();++piter){
-                hazard_pointer hp = *piter;
+                hazard_pointer hp = *piter;             // Don't access the pointer until we know it is safe.
                 if(hp.m_msgtime >= this->getGVT().getTime()){
                         break;
                 }
@@ -351,8 +330,7 @@ void Optimisticcore::runSmallStep()
 
         m_stats.logStat(TURNS);
 
-        // This step can trigger a revert, which is why its before getImminent
-            // getMessages will also turn a core back to live in optimistc (in revert).
+  
         this->getMessages();
 
         if (!this->isLive()) {
@@ -362,35 +340,22 @@ void Optimisticcore::runSmallStep()
             return;
         }
 
-        // Query imminent models (who are about to fire transition)
-
         this->getImminent(m_imminents);
 
-        // Dynamic structured needs the list, but best before we add externals to it.
-        this->signalImminent(m_imminents);
-
-        // Get all produced messages, and route them.
         this->collectOutput(m_imminents);
 
-        // Get msg < timenow, sort them for ext/conf.
-        this->getPendingMail(); //
+        this->getPendingMail();
 
-        // Transition depending on state.
-        this->transition();     // NOTE: the scheduler can go empty() here.
+        this->transition();
 
-        // Finally find out what next firing times are and place models accordingly.
         this->rescheduleImminent();
 
-        // Forward time to next message/firing.
         this->syncTime();               
         m_imminents.clear();
         m_externs.clear();
 
-
         this->checkTerminationFunction();
 
-
-        // Finally, unlock simulator.
         this->unlockSimulatorStep();
 }
 
@@ -595,9 +560,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 void n_model::Optimisticcore::lockSimulatorStep()
 {
         LOG_DEBUG("MCORE :: ", this->getCoreID(), " trying to lock simulator core");
-        
-        this->m_locallock.lock();
-        
+        this->m_locallock.lock();       
         LOG_DEBUG("MCORE :: ", this->getCoreID(), "simulator core locked");
 
 }
@@ -653,8 +616,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
                 if(!msg.m_ptr->flagIsSet(Status::ANTI)){
                         msg.m_ptr->setFlag(Status::HEAPED);
                         msg.m_ptr->setFlag(Status::PROCESSED, false);
-                        if(!m_received_messages->contains(msg.m_ptr))
-                                m_received_messages->push_back(msg.m_ptr);
+                        m_received_messages->push_back(msg.m_ptr);
                 }
                 m_processed_messages.pop_back();
         }
@@ -712,3 +674,26 @@ void n_model::Optimisticcore::setTred(t_timestamp val)
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting tRed from ", m_tred, " to ", val);
         this->m_tred = val;
 }
+
+
+t_timestamp 
+n_model::Optimisticcore::getFirstMessageTime()
+{
+        // Todo could test HEAPED.
+        t_timestamp mintime = t_timestamp::infinity();
+        while (not this->m_received_messages->empty()) {
+                const MessageEntry& msg = m_received_messages->top();
+                if(msg.getMessage()->flagIsSet(Status::ERASE)){
+                        t_msgptr msgptr = msg.getMessage();
+                        m_received_messages->pop();
+                        msgptr->setFlag(Status::HEAPED, false);
+                        msgptr->setFlag(Status::KILL);
+                        continue;
+                }
+                mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
+                break;
+        }
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
+        return mintime;
+}
+

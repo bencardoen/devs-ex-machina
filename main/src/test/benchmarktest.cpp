@@ -36,7 +36,6 @@ TEST(Benchmark, devstone_single)
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -66,7 +65,6 @@ TEST(Benchmark, devstone_opt)
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -96,7 +94,6 @@ TEST(Benchmark, devstone_cons)
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -126,7 +123,6 @@ TEST(Benchmark, devstone_single_r)
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -156,7 +152,6 @@ TEST(Benchmark, devstone_opt_r)
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -186,7 +181,6 @@ TEST(Benchmark, devstone_cons_r)
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 	std::size_t width = 5;
 	std::size_t depth = 5;
@@ -218,7 +212,6 @@ TEST(Benchmark, phold_single)
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
 	std::size_t nodes = 4;
 	std::size_t apn = 2;
@@ -250,7 +243,6 @@ TEST(Benchmark, phold_opt)
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
 	std::size_t nodes = 4;
 	std::size_t apn = 2;
@@ -282,7 +274,6 @@ TEST(Benchmark, phold_cons)
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
 	std::size_t nodes = 4;
 	std::size_t apn = 2;
@@ -316,9 +307,8 @@ TEST(Benchmark, connect_single)
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -345,9 +335,8 @@ TEST(Benchmark, DISABLED_connect_opt)
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -366,7 +355,7 @@ TEST(Benchmark, DISABLED_connect_opt)
     LOG_MOVE("out.txt", true);
 }
 
-TEST(Benchmark, DISABLED_connect_cons)
+TEST(Benchmark, connect_cons)
 {
     LOG_MOVE("logs/bmarkConnectCons.log", false);
 	n_control::ControllerConfig conf;
@@ -374,9 +363,8 @@ TEST(Benchmark, DISABLED_connect_cons)
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = false;
 
 	auto ctrl = conf.createController();
@@ -403,9 +391,8 @@ TEST(Benchmark, connect_single_r)
 	conf.m_simType = n_control::SimType::CLASSIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
+	std::size_t width = 4;
 	bool randTa = true;
 
 	auto ctrl = conf.createController();
@@ -432,7 +419,6 @@ TEST(Benchmark, DISABLED_connect_opt_r)
 	conf.m_simType = n_control::SimType::OPTIMISTIC;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;
@@ -461,7 +447,6 @@ TEST(Benchmark, DISABLED_connect_cons_r)
 	conf.m_simType = n_control::SimType::CONSERVATIVE;
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
-	conf.m_zombieIdleThreshold = 10;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 5;
 	bool randTa = false;

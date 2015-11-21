@@ -293,6 +293,9 @@ public:
 	 */
 	void
 	setTime(const t_timestamp&)override;
+        
+        virtual t_timestamp getFirstMessageTime()override;
+
 
         
 

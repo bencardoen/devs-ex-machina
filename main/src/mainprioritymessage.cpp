@@ -6,37 +6,35 @@
 
 #include "control/controllerconfig.h"
 #include "tools/coutredirect.h"
-#include "performance/devstone/devstone.h"
+#include "performance/prioritymessage/prioritymessage.h"
 #include "tools/stringtools.h"
-#include "control/allocator.h"
 
 #include "tools/statistic.h"
 
-LOG_INIT("devstone.log")
+LOG_INIT("prioritymsg.log")
 
 using namespace n_tools;
 
 /**
  * cmd args:
- * [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]
+ * [-h] [-t ENDTIME] [-n NODES] [-m MESSAGES] [-r] [-p PRIORITY] [classic|cpdevs|opdevs|pdevs]
  * 	-h: show help and exit
  * 	-t ENDTIME set the endtime of the simulation
- * 	-w WIDTH the with of the devstone model
- * 	-d DEPTH the depth of the devstone model
- * 	-c COREAMT amount of simulation cores, ignored in classic mode
+ * 	-n NODES the number of receiving nodes
+ * 	-m MESSAGES the number of generated messages each time
+ * 	-p PRIORITY chance for generating a priority message
  * 	classic run single core simulation
  * 	cpdevs run conservative parallel simulation
  * 	opdevs|pdevs run optimistic parallel simulation
  * The last value entered for an option will overwrite any previous values for that option.
  */
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-m MESSAGES] [-r] [-p PRIORITY] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
-	"  -w WIDTH     the with of the devstone model\n"
-	"  -d DEPTH     the depth of the devstone model\n"
-	"  -r           use randomized processing time\n"
-	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
+	"  -n NODES     the number of receiving nodes\n"
+	"  -m MESSAGES  the number of generated messages each time\n"
+	"  -p PRIORITY  chance for generating a priority message\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"
 	"  opdevs|pdevs Run optimistic parallel simulation.\n"
@@ -48,11 +46,10 @@ int main(int argc, char** argv)
 	LOG_ARGV(argc, argv);
 	// default values:
 	const char optETime = 't';
-	const char optWidth = 'w';
-	const char optDepth = 'd';
+	const char optNodes = 'n';
+	const char optMessages = 'm';
 	const char optHelp = 'h';
-	const char optRand = 'r';
-	const char optCores = 'c';
+	const char optChance = 'p';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -60,13 +57,13 @@ int main(int argc, char** argv)
 #else
 	n_network::t_timestamp::t_time eTime = 50;
 #endif
-	std::size_t width = 2;
-	std::size_t depth = 3;
-	bool randTa = false;
+	std::size_t numRec = 2;
+	std::size_t numMsg = 3;
+	std::size_t chance = 10;
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
-	std::size_t coreAmt = 4;
+	std::size_t coreAmt = 2;
 
 	for(int i = 1; i < argc; ++argvc, ++i){
 		char c = getOpt(*argvc);
@@ -87,18 +84,6 @@ int main(int argc, char** argv)
 			}
 		}
 		switch(c){
-		case optCores:
-			++i;
-			if(i < argc){
-				coreAmt = toData<std::size_t>(std::string(*(++argvc)));
-				if(coreAmt == 0){
-					std::cout << "Invalid argument for option -" << optCores << '\n';
-					hasError = true;
-				}
-			} else {
-				std::cout << "Missing argument for option -" << optCores << '\n';
-			}
-			break;
 		case optETime:
 			++i;
 			if(i < argc){
@@ -107,25 +92,34 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optETime << '\n';
 			}
 			break;
-		case optWidth:
+		case optMessages:
 			++i;
 			if(i < argc){
-				width = toData<std::size_t>(std::string(*(++argvc)));
+				numMsg = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optWidth << '\n';
+				std::cout << "Missing argument for option -" << optMessages << '\n';
 			}
 			break;
-		case optDepth:
+		case optNodes:
 			++i;
 			if(i < argc){
-				depth = toData<std::size_t>(std::string(*(++argvc)));
+				numRec = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
-				std::cout << "Missing argument for option -" << optDepth << '\n';
+				std::cout << "Missing argument for option -" << optNodes << '\n';
 			}
 			break;
-		case optRand:
-			randTa = true;
-			break;
+        case optChance:
+            ++i;
+            if(i < argc){
+                chance = toData<std::size_t>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optChance << '\n';
+            }
+            if(chance > 100) {
+                    std::cout << "Illegal chance of creating prioritized messages: " << chance << '\n';
+                    hasError = true;
+            }
+            break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
@@ -141,21 +135,20 @@ int main(int argc, char** argv)
 	}
 
 	n_control::ControllerConfig conf;
-	conf.m_name = "DEVStone";
+	conf.m_name = "Priority";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 250;     
-	conf.m_allocator = n_tools::createObject<n_devstone::DevstoneAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_priorityMsg::PriorityMessage>(numMsg, numRec, chance);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK
-		std::ofstream filestream("./devstone.txt");
+		std::ofstream filestream("./prioritymsg.txt");
 		n_tools::CoutRedirect myRedirect(filestream);
 #endif /* BENCHMARK */
 		ctrl->simulate();

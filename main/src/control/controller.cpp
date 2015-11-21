@@ -22,7 +22,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
         std::shared_ptr<Allocator>& alloc, n_tracers::t_tracersetptr& tracers,
         size_t saveInterval, size_t turns)
 	: m_simType(SimType::CLASSIC), m_hasMainModel(false), m_isSimulating(false), m_name(name), m_checkTermTime(
-	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_cores(cores), m_allocator(
+	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_zombieIdleThreshold(10),m_cores(cores), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
 	, m_gvtStarted("_controller/gvt started", ""),
@@ -31,9 +31,7 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	m_gvtFound("_controller/gvt found", "")
 #endif
 {
-        //n_pools::getMainThreadID();     // Register main's thread id.
         n_pools::setMain();
-	m_zombieIdleThreshold.store(10);
 }
 
 Controller::~Controller()
@@ -155,7 +153,7 @@ void Controller::setTerminationCondition(t_terminationfunctor termination_condit
 
 void Controller::emptyAllCores()
 {
-	for (auto core : m_cores) {
+	for (const auto& core : m_cores) {
 		core->clearModels();
 	}
 	m_root.reset(); // reset root
@@ -181,20 +179,27 @@ void Controller::distributeTerminationTime(t_timestamp ntime)
 void Controller::simulate()
 {
 	assert(m_isSimulating == false && "Can't start a simulation while already simulating.");
-
 	if (!m_hasMainModel) {
 		// nothing to do, so don't even start
 		LOG_WARNING("CONTROLLER: Trying to run simulation without any models!");
 		return;
 	}
-
 	LOG_DEBUG("simulating to ending time: ", m_checkTermTime? m_terminationTime:t_timestamp::infinity());
-
 	m_tracers->startTrace();
-
 	m_isSimulating = true;
+        
+        for (const auto& core : m_cores) {
+		core->setTracers(m_tracers);
+		core->init();
+		if (m_checkTermTime)
+			core->setTerminationTime(m_terminationTime);
+		if (m_checkTermCond)
+			core->setTerminationFunction(m_terminationCondition);
 
-	// run simulation
+		core->setLive(true);
+	}
+
+
 	switch (m_simType) {
 	case SimType::CLASSIC:
 		simDEVS();
@@ -222,22 +227,9 @@ void Controller::simulate()
 }
 
 void Controller::simDEVS()
-{
-	// configure core
-	auto& core = m_cores.front(); // there is only one core in Classic DEVS
-	core->setTracers(m_tracers);
-
-	core->init();
-
-
-	if (m_checkTermTime)
-		core->setTerminationTime(m_terminationTime);
-	if (m_checkTermCond)
-		core->setTerminationFunction(m_terminationCondition);
-
-	core->setLive(true);
-
-	uint i = 0;
+{        
+	size_t i = 0;
+        const auto& core = m_cores.front();
 	while (core->isLive()) { // As long any cores are active
 		++i;
 		LOG_INFO("CONTROLLER: Commencing simulation loop #", i, "...");
@@ -260,21 +252,6 @@ void Controller::simDEVS()
 
 void Controller::simOPDEVS()
 {
-
-	// configure all cores
-	for (const auto& core : m_cores) {
-		core->setTracers(m_tracers);
-		core->init();
-
-		if (m_checkTermTime)
-			core->setTerminationTime(m_terminationTime);
-		if (m_checkTermCond)
-			core->setTerminationFunction(m_terminationCondition);
-
-		core->setLive(true);
-
-	}
-
 	this->m_rungvt.store(true);
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
@@ -283,7 +260,7 @@ void Controller::simOPDEVS()
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
-	this->startGVTThread();	// Starts and joins GVT threads.
+	this->startGVTThread();
         
 	for (auto& t : m_threads) {
 		t.join();
@@ -292,23 +269,8 @@ void Controller::simOPDEVS()
 
 void Controller::simCPDEVS()
 {	
-
-	// configure all cores
-	for (const auto& core : m_cores) {
-		core->setTracers(m_tracers);
-		core->init();
-
-		if (m_checkTermTime)
-			core->setTerminationTime(m_terminationTime);
-		if (m_checkTermCond)
-			core->setTerminationFunction(m_terminationCondition);
-
-		core->setLive(true);
-	}
-
-
-    std::atomic_uint atint(0);
-    atint.store(m_cores.size());
+        std::atomic_uint atint(0);
+        atint.store(m_cores.size());
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
@@ -324,21 +286,9 @@ void Controller::simCPDEVS()
 
 void Controller::simDSDEVS()
 {
-	const auto& core = m_cores.front(); // there is only one core in DS DEVS
-	core->setTracers(m_tracers);
-
-	core->init();
-
-
-	if (m_checkTermTime)
-		core->setTerminationTime(m_terminationTime);
-	if (m_checkTermCond)
-		core->setTerminationFunction(m_terminationCondition);
-
-	core->setLive(true);
-
 	std::vector<n_model::t_raw_atomic> imminent;
 	std::size_t i = 0;
+        const auto& core = m_cores.front();
 	while (core->isLive()) {
 		++i;
 		imminent.clear();
@@ -440,22 +390,15 @@ void Controller::dsScheduleModel(const n_model::t_modelptr& model)
 		return;
 	}
 	t_atomicmodelptr atomic = std::static_pointer_cast<AtomicModel_impl>(model);
-//	if (atomic) {
-		LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
-		//it is an atomic model. Just remove this one from the core and the root devs
-                if(!m_cores[0]->containsModel(model->getName())){
-                        m_cores.front()->addModelDS(atomic);
-                }
-                else{
-                        LOG_ERROR("Trying to add model that already exists in core ????", model->getName());
-                }
-                        
-		atomic->setKeepOldStates(false);
-		//no need to remove the model from the root devs. We have to redo direct connect anyway
-//		return;
-//	}
-//	model->setController(this);
-//	assert(false && "Tried to add a model that is neither an atomic nor a coupled model.");
+        LOG_DEBUG("Adding new atomic model during DS phase: ", model->getName());
+        //it is an atomic model. Just remove this one from the core and the root devs
+        if(!m_cores[0]->containsModel(model->getName())){
+                m_cores.front()->addModelDS(atomic);
+        }
+        else{
+                LOG_ERROR("Trying to add model that already exists in core ????", model->getName());
+        }
+        atomic->setKeepOldStates(false);
 }
 
 void Controller::dsUnscheduleModel(const n_model::t_atomicmodelptr& model)
@@ -479,11 +422,6 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
-void Controller::setZombieIdleThreshold(size_t threshold)
-{
-	m_zombieIdleThreshold.store(threshold);
-}
-
 void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
 {
         const auto& core = ctrl.m_cores[myid];
@@ -496,7 +434,7 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
         core->initThread();
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
-                if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold.load()) {
+                if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold) {
                         LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(),
                                 " Core is zombie, yielding thread. [round ", core->getZombieRounds(), "]");
                         core->setLive(false);

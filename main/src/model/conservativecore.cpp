@@ -28,23 +28,7 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
-        // Conservative cannot wake up. If we reach term time, we die.
-        /**
-	bool wasLive = isLive();
-        this->setLive(true);
-        if(!wasLive){
-        	LOG_INFO("MCORE :: ", this->getCoreID(), " switching to live before we check for messages");
-        }
-        if(this->m_network->havePendingMessages(this->getCoreID())){
-                std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
-                LOG_INFO("CCORE :: ", this->getCoreID(), " received ", messages.size(), " messages. ");
-                this->sortIncoming(messages);
-        }else{
-                if(! wasLive){
-                        setLive(false);
-                        LOG_INFO("MCORE :: ", this->getCoreID(), " switching back to not live. No messages from network and we weren't live to begin with.");
-                }
-	}*/
+        
         // Regardless of what happens, pull messages to avoid others stalling on network empty.
         if(this->m_network->havePendingMessages(this->getCoreID())){
                 std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
@@ -130,6 +114,19 @@ void Conservativecore::setEot(t_timestamp ntime){       // Fact that def is here
                 m_distributed_eot->set(this->getCoreID(), ntime.getTime());
 }
 
+
+t_timestamp Conservativecore::getFirstMessageTime()
+{
+        constexpr t_timestamp mintime = t_timestamp::infinity();
+        if(m_received_messages->size()){
+                const MessageEntry& first = m_received_messages->top();
+                return first.getMessage()->getTimeStamp();
+        }
+        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
+        return mintime;
+}
+
+
 void Conservativecore::updateEIT()
 {
 	LOG_INFO("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating EIT:: eit_now = ", this->getEit());
@@ -196,15 +193,7 @@ void Conservativecore::setTime(const t_timestamp& newtime){
 
 void Conservativecore::receiveMessage(t_msgptr msg){
         m_stats.logStat(MSGRCVD);
-	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());
-        
-#ifdef SAFETY_CHECKS
-        if (msg->isAntiMessage()){ 
-                LOG_FLUSH;
-                throw std::logic_error("Antimessage in conservativecore !!");
-        }
-#endif
-        
+	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message \n", msg->toString());        
         this->queuePendingMessage(msg);
 	
 #ifdef SAFETY_CHECKS
@@ -252,10 +241,11 @@ void Conservativecore::buildInfluenceeMap(){
                 if(temp[i])                
                         this->m_influencees.push_back(i);
 	}
-	
+#if (LOG_LEVEL != 0)	
 	for(const auto& coreid : m_influencees){
 		LOG_INFO("CCORE :: ", this->getCoreID() , " influenced by " ,  coreid);
 	}
+#endif
 }
 
 bool Conservativecore::timeStalled(){
@@ -323,7 +313,7 @@ void Conservativecore::sortMail(const std::vector<t_msgptr>& messages)
 
 void Conservativecore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
 {
-        #ifdef SAFETY_CHECKS
+#ifdef SAFETY_CHECKS
         if(msgs.size()==0)
                 throw std::logic_error("Msgs empty after processing ?");
 #endif
@@ -413,6 +403,24 @@ Conservativecore::calculateMinLookahead(){
 }
 
 void
+Conservativecore::getPendingMail()
+{
+         if(m_received_messages->empty()){
+                return;
+        }
+	const t_timestamp nowtime = makeLatest(m_time);
+	std::vector<MessageEntry> messages;
+	m_token.getMessage()->setTimeStamp(nowtime);
+
+	this->m_received_messages->unschedule_until(messages, m_token);
+	
+	for (const auto& entry : messages){
+	        auto msg = entry.getMessage();
+                queueLocalMessage(msg);
+        }
+}
+
+void
 Conservativecore::updateDGVT()
 {       
         // Nullmessage time = time of output generation, not (yet) transition.
@@ -487,8 +495,6 @@ Conservativecore::shutDown()
                 if(recv_time <= ptr->getTimeStamp().getTime() && recv_time!=this->getTerminationTime().getTime()){
                         LOG_ERROR("Pointer : " , ptr, " with receiver id ", destid, " nulltime = ", recv_time, " msgtime = ", ptr->getTimeStamp());
                         LOG_FLUSH;
-                        // Enable if edge case in cv_worker is resolved.
-                        //throw std::logic_error("Pointer to message still in use !");
                 }else{
                         ptr->releaseMe();
                 }

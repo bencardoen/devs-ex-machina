@@ -42,9 +42,6 @@ void FireGenerator::output(std::vector<n_network::t_msgptr>& msgs) const
 		port->createMessages(val, msgs);
 		i *= 2.0;
 	}
-	for(n_network::t_msgptr& ptr: msgs){
-		LOG_DEBUG("created message: ", ptr->toString());
-	}
 }
 
 std::vector<n_model::t_portptr>& FireGenerator::getOutputs()

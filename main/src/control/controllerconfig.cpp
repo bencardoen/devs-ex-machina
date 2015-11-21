@@ -14,7 +14,7 @@ using n_tools::SharedAtomic;
 namespace n_control {
 
 ControllerConfig::ControllerConfig()
-	: m_name("MySimulation"), m_simType(SimType::CLASSIC), m_coreAmount(1), m_saveInterval(5), m_tracerset(nullptr), m_zombieIdleThreshold(-1),m_turns(10000000)
+	: m_name("MySimulation"), m_simType(SimType::CLASSIC), m_coreAmount(1), m_saveInterval(5), m_tracerset(nullptr),m_turns(10000000)
 {
 }
 
@@ -28,7 +28,6 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 
 	LOG_DEBUG("# of cores: ", m_coreAmount);
 	LOG_DEBUG("save interval: ", m_saveInterval);
-	LOG_DEBUG("zombie thresshold: ", m_zombieIdleThreshold);
 	// parallel simulation with only one simulation core should turn into a classic simulation
 	if(isParallel(m_simType) && m_coreAmount == 1)
 		m_simType = SimType::CLASSIC;
@@ -76,7 +75,6 @@ std::shared_ptr<Controller> ControllerConfig::createController()
 	auto ctrl = createObject<Controller>(m_name, coreMap, m_allocator, tracers, m_saveInterval, m_turns);
 
 	ctrl->setSimType(m_simType);
-	ctrl->setZombieIdleThreshold(m_zombieIdleThreshold);
 
 	return ctrl;
 }

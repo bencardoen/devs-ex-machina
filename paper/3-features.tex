@@ -13,15 +13,15 @@ The simulator is based on PythonPDEVS, and provides the following features:
 The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use.\\
 The tracing is not comparable with adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be threadsafe and deterministic so that a simulation will always produce the exact same output.
 %TODO Decide whether we should list the functionality that is _not_ implemented
-%The following features from PythonPDEVS are not present
-%\begin{enumerate}
-%	\item Activity tracking and relocation
-%	\item Serialization
-%	\item Interaction 
-%	\item Distributed simulation
-%	\item Interactive control
-%\end{enumerate}
-%Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
+The following features from PythonPDEVS are not present
+\begin{enumerate}
+	\item Activity tracking and relocation
+	\item Serialization
+	\item Interaction 
+	\item Distributed simulation
+	\item Interactive control
+\end{enumerate}
+Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
 Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
 Debugging tools such as a logger and a graph vizualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.\\
 While PythonPDEVS can be controlled from within a Python script and adevs has a Java interface, our implementation does not have any bindings to other languages.

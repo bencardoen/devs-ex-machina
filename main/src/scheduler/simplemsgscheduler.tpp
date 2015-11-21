@@ -76,11 +76,13 @@ void SimpleMessageScheduler<X, R>::unschedule_until(std::vector<R>& container,
 template<typename X, typename R>
 bool SimpleMessageScheduler<X, R>::contains(const R&) const {
 	assert(false && "can't call contains on the SimpleMessageScheduler.");
+        return false;
 }
 
 template<typename X, typename R>
 bool SimpleMessageScheduler<X, R>::erase(const R&) {
     assert(false && "can't call erase on the SimpleMessageScheduler.");
+    return false;
 }
 
 template<typename X, typename R>
@@ -96,15 +98,8 @@ void SimpleMessageScheduler<X, R>::printScheduler() const {
 
 template<typename X, typename R>
 void SimpleMessageScheduler<X, R>::testInvariant() const {
-//	if(m_storage.size() != m_hashtable.size()){
-//		std::stringstream ss;
-//		ss << "Invariant Scheduler failed :: \n";
-//		ss << "Current size of hashmap == ";
-//		ss << m_hashtable.size();
-//		ss << " != current size of heap :: ";
-//		ss << m_storage.size();
-//		throw std::logic_error(ss.str());
-//	}
+        LOG_DEBUG("void invariant : forwarding class.");
+        ;
 }
 
 } // ENamespace

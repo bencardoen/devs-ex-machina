@@ -2,7 +2,7 @@
  * coupledmodel.cpp
  *
  *  Created on: Mar 29, 2015
- *      Author: tim
+ *      Author: Tim Tuijn, Stijn Manhaeve
  */
 
 #include "model/coupledmodel.h"
@@ -36,13 +36,14 @@ void CoupledModel::removeSubModel(t_modelptr& model)
 	//remove the model itself
 	std::vector<t_modelptr>::iterator it = std::find(m_components.begin(), m_components.end(), model);
 	if(it == m_components.end()) {
-
+#if (LOG_LEVEL!=0)
 		LOG_ERROR("removing model with name ", model->getName(), " (", model.get(), ')');
 		LOG_ERROR(" > current models:");
 		for(const auto& i:m_components) {
 			LOG_ERROR("    > ", i->getName(), " (", i.get(), ')');
 		}
 		LOG_FLUSH;
+#endif
 		throw std::logic_error("CoupledModel::removeSubModel Tried to remove a model that is not mine.");
 	}
 

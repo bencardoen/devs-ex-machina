@@ -206,9 +206,12 @@ std::size_t AtomicModel_impl::getPriority() const
 void AtomicModel_impl::setTime(t_timestamp time)
 {
 	this->m_timeLast = t_timestamp(time.getTime(), m_priority);
-	this->m_timeNext = this->m_timeLast + this->timeAdvance();
+	t_timestamp ta = timeAdvance();
+	this->m_timeNext = this->m_timeLast + ta;
 	m_state->m_timeLast = this->m_timeLast;
 	m_state->m_timeNext = this->m_timeNext;
+
+	LOG_DEBUG("setting time of ", getName(), " from ", m_timeLast, " to ", m_timeNext, " with ta = ", ta);
 
 	// The following is not necessary because they point to the same state
 //	t_stateptr laststate = this->m_oldStates.at(this->m_oldStates.size()-1);

@@ -14,42 +14,7 @@
 
 LOG_INIT("interconnect.log")
 
-class InterconnectAlloc: public n_control::Allocator
-{
-private:
-	std::size_t m_maxn;
-public:
-	InterconnectAlloc(): m_maxn(0){
-
-	}
-	virtual size_t allocate(const n_model::t_atomicmodelptr&){
-		return 0;
-	}
-
-	virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-		m_maxn = models.size();
-		assert(m_maxn && "Total amount of models can't be zero.");
-		std::size_t i = 0;
-		for(const n_model::t_atomicmodelptr& ptr: models)
-			ptr->setCorenumber((i++)%coreAmount());
-	}
-};
-
-
-template<typename T>
-T toData(std::string str)
-{
-	T num;
-	std::istringstream ss(str);
-	ss >> num;
-	return num;
-}
-
-char getOpt(char* argv){
-	if(strlen(argv) == 2 && argv[0] == '-')
-		return argv[1];
-	return 0;
-}
+using namespace n_tools;
 
 /**
  * cmd args:
@@ -168,8 +133,7 @@ int main(int argc, char** argv)
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
 	conf.m_saveInterval = 5;     
-	conf.m_zombieIdleThreshold = 10;
-	conf.m_allocator = n_tools::createObject<InterconnectAlloc>();
+	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);

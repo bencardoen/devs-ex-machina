@@ -168,7 +168,7 @@ public:
 	 *
 	 * This string representation is, among others, used by the tracers to print out
 	 * trace output for the sent/received messages.
-	 * @see n_netwrok::getMsgPayload To extract the actual payload, instead of just a string representation.
+	 * @see n_network::getMsgPayload To extract the actual payload, instead of just a string representation.
 	 */
 	virtual std::string getPayload() const
 	{
@@ -215,7 +215,6 @@ public:
         virtual void releaseMe()
         {
                 n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
-                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
         }
 
 	/**
@@ -229,12 +228,6 @@ public:
 	{
 		m_timestamp = t_timestamp(m_timestamp.getTime(), causal);
 	}
-        
-        /**
-         * Get a copy of all flags. Use for unsynced access only (copy is synced).
-         */
-        t_flag_word
-        getFlags(){return m_atomic_flags.load();}
 
 	virtual ~Message()
 	{

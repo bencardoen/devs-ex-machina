@@ -85,7 +85,7 @@ elseif(COMPILER_SUPPORTS_CXX0X)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++0x")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 message("Setting options for build types.")
@@ -116,7 +116,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
 else()
         MESSAGE( STATUS"Using G++ : using flto")
-        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto -ggdb")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
 endif()
 ###############################################################################
 
@@ -239,6 +239,23 @@ add_executable(${PROJECT_NAME}_phold
 SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
+
+add_executable(${PROJECT_NAME}_network
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/queuenetwork/queuenetwork.cpp
+    src/mainqueueserver.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+add_executable(${PROJECT_NAME}_priority
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/prioritymessage/prioritymessage.cpp
+    src/mainprioritymessage.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_priority PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
 add_executable(${PROJECT_NAME}_virus
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/examples/virus/virus.cpp
@@ -315,6 +332,14 @@ SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
                     LINK_FLAGS "-fopenmp"
                     )
 
+add_executable(adevs_network
+    ${ADEVS_ROOT}/benchmarks/network.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
 ### INCLUDE PATHS ############################################################
 # These are found by the section above.
 include_directories(${Boost_INCLUDE_DIRS})             
@@ -335,7 +360,7 @@ include_directories(
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
 if(TCMALLOC_LIBRARY)
     MESSAGE( STATUS "Have tcmalloc, ignoring for the moment. --remove me if done with valgrind.")
-    #set(LIBS ${LIBS} -ltcmalloc) 
+    set(LIBS ${LIBS} -ltcmalloc) 
 endif()
 set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
@@ -352,10 +377,13 @@ target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_T
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_priority ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
 target_link_libraries( adevs_devstone ${LIBS} adevs)
 target_link_libraries( adevs_phold ${LIBS} adevs)
 target_link_libraries( adevs_interconnect ${LIBS} adevs)
+target_link_libraries( adevs_network ${LIBS} adevs)
 ###############################################################################

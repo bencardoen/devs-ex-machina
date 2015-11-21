@@ -16,8 +16,7 @@ void MessageScheduler<X, R>::push_back(const R& item) {
 		throw std::logic_error("Error, scheduler already contains item");
 	}
 	t_handle handle = m_storage.push(item);
-	const bool insert_success = m_hashtable.insert(std::make_pair(item, handle)).second;
-	assert(insert_success == true && "Hashvalue failed");
+	m_hashtable.insert(std::make_pair(item, handle)).second;
 	testInvariant();
 	assert(m_storage.size() == m_hashtable.size() && "Inserting discrepancy.");
 }

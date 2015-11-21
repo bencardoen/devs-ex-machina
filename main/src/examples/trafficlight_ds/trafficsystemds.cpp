@@ -31,9 +31,6 @@ bool TrafficSystem::modelTransition(n_model::DSSharedState* shared)
 		val = it->second;
 
 	LOG_DEBUG("TrafficSystem::modelTransition with destination = ", val);
-	for(auto& val:shared->values){
-		LOG_DEBUG("TrafficSystem::modelTransition with data item ", val.first, " = ", val.second);
-	}
 	if (val == "1"){
 		disconnectPorts(m_policeman->getPort("OUT"), m_trafficlight2->getPort("INTERRUPT"));
 		connectPorts(m_policeman->getPort("OUT"), m_trafficlight1->getPort("INTERRUPT"));

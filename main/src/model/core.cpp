@@ -218,6 +218,7 @@ void n_model::Core::transition()
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing internal transition for model ", imminent->getName());
 			assert(imminent->nextType()==AtomicModel_impl::INT);
                         imminent->markNone();
+                        imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
 			imminent->doIntTransition();
 			imminent->setTime(noncausaltime);
 			this->traceInt(getModel(modelid));
@@ -225,7 +226,7 @@ void n_model::Core::transition()
                         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing confluent transition for model ", imminent->getName());
                         assert(imminent->nextType() == AtomicModel_impl::CONF);
                         imminent->markNone();
-			imminent->setTimeElapsed(0);
+                        imminent->setTimeElapsed(imminent->getTimeNext() - imminent->getTimeLast());
                         std::vector<t_msgptr>& mail = getMail(modelid);
 			imminent->doConfTransition(mail);		// Confluent
 			imminent->setTime(noncausaltime);
@@ -235,7 +236,7 @@ void n_model::Core::transition()
 		}
                 printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-        imminent->clearSentMessages();
+                imminent->clearSentMessages();
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
@@ -391,14 +392,10 @@ void n_model::Core::validateUUID(const n_model::uuid& id)
 
 void n_model::Core::runSmallStep()
 {
-	// Lock simulator to allow setGVT/Revert to clear things up.
 	this->lockSimulatorStep();
         
         m_stats.logStat(TURNS);
 
-	// Noop in single core. Pull messages from network, sort them.
-	// This step can trigger a revert, which is why its before getImminent
-        // getMessages will also turn a core back to live in optimistc (in revert).
 	this->getMessages();	// locked on msgs 
 
 	if (!this->isLive()) {
@@ -408,35 +405,25 @@ void n_model::Core::runSmallStep()
 		return;
 	}
 
-	// Query imminent models (who are about to fire transition)
-
         this->getImminent(m_imminents);
         
-        // Dynamic structured needs the list, but best before we add externals to it.
+        // Dynamic structured needs this list, but best before we add externals to it.
         this->signalImminent(m_imminents);  
         
-	// Get all produced messages, and route them.
 	this->collectOutput(m_imminents);	
 
-	// Get msg < timenow, sort them for ext/conf.
-	this->getPendingMail();	//		
+	this->getPendingMail();
 
-	// Transition depending on state.
-	this->transition();		// NOTE: the scheduler can go empty() here.
+	this->transition();		
 
-	// Finally find out what next firing times are and place models accordingly.
 	this->rescheduleImminent();
 	
-	// Forward time to next message/firing.
 	this->syncTime();				
         m_imminents.clear();
         m_externs.clear();
 
-
 	this->checkTerminationFunction();
 
-
-	// Finally, unlock simulator.
 	this->unlockSimulatorStep();
 }
 
@@ -513,7 +500,6 @@ void n_model::Core::removeModel(std::size_t id)
 {
         LOG_INFO("\tCORE :: ", this->getCoreID(), " got request to remove model : ", id);
         
-        //t_raw_atomic model = m_indexed_models[id].get();
         std::swap(m_indexed_models[id], m_indexed_models.back());
         m_indexed_models.pop_back();
         m_heap.remove(id);
@@ -546,14 +532,11 @@ void n_model::Core::clearProcessedMessages(std::vector<t_msgptr>& msgs)
         if(msgs.size()==0)
                 throw std::logic_error("Msgs empty after processing ?");
 #endif
-        /// Msgs is a vector of processed msgs, stored in m_local_indexed_mail.
         for(t_msgptr ptr : msgs){
-                // TODO POOL
                 ptr->releaseMe();
                 LOG_DEBUG("CORE:: ", this->getCoreID(), " deleting ", ptr);
                 m_stats.logStat(DELMSG);
         }
-        
         msgs.clear();
 }
 
@@ -625,7 +608,7 @@ void n_model::Core::getPendingMail()
 	m_token.getMessage()->setTimeStamp(nowtime);
 
 	this->m_received_messages->unschedule_until(messages, m_token);
-	this->unlockMessages();
+	
 	for (const auto& entry : messages){
 	        auto msg = entry.getMessage();
 	        if(msg->flagIsSet(Status::ERASE)){
@@ -637,27 +620,6 @@ void n_model::Core::getPendingMail()
 
 }
 
-t_timestamp n_model::Core::getFirstMessageTime()
-{
-        /**
-         * Only look at remote messages (opt& cons) for this value, 
-         * current messages are (should be processed), so irrelevant.
-         */
-        t_timestamp mintime = t_timestamp::infinity();
-        while (not this->m_received_messages->empty()) {
-                const MessageEntry& msg = m_received_messages->top();
-                if(msg.getMessage()->flagIsSet(Status::ERASE)){
-                        t_msgptr msgptr = msg.getMessage();
-                        m_received_messages->pop();
-                        msgptr->setFlag(Status::KILL);
-                        continue;
-                }
-                mintime = this->m_received_messages->top().getMessage()->getTimeStamp();
-                break;
-        }
-        LOG_DEBUG("\tCORE :: ", this->getCoreID(), " first message time == ", mintime);
-        return mintime;
-}
 
 void n_model::Core::setGVT(const t_timestamp& newgvt)
 {
