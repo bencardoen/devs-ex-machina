@@ -269,12 +269,13 @@ void Controller::simOPDEVS()
 
 void Controller::simCPDEVS()
 {	
-        std::atomic_uint atint(0);
-        atint.store(m_cores.size());
+        std::atomic<int> atint(m_cores.size());
+        std::condition_variable cv;
+        std::mutex mu;
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker_con, i, m_turns, std::ref(*this), std::ref(atint))
+		        std::thread(cvworker_con, i, m_turns, std::ref(*this), std::ref(atint), std::ref(mu),std::ref(cv))
                         );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
@@ -470,15 +471,8 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
         at_exit();
 }
 
-void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl, std::atomic_uint& atint)
+void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl, std::atomic<int>& atint, std::mutex& mu, std::condition_variable& cv)
 {
-        /**
-         * Conservative can per definition never go back in time, so once it reaches termination time, stop simulating.
-         * However, we still have to wait on all others th
-         */
-        static std::condition_variable cv;
-        static std::mutex mu;
-
 	const auto& core = ctrl.m_cores[myid];
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
         size_t i = 0;
@@ -499,31 +493,45 @@ void cvworker_con(std::size_t myid, std::size_t turns, Controller& ctrl, std::at
                 core->setLive(false);
                 // Edge case : if we hit this, we can't guarantee deallocation since sender can't verify we have reached termination.
         }
+        
         LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " decreasing atint.");
-        --atint;
-        if(atint.load()){
+        
+        // Atomic does not protect from any code coming between the update and the conditional check
+        // Meaning that with i = 2 and 2 threads, i=1,i=0 and 2 threads evaluating @0 can occur.
+        // Then add O3 and see what happens.
+        // In short, any shared variable read/write needs the same lock if conditionals are involved.
+        mu.lock(); // csect_begin
+        atint -=1;
+        if(atint>0){
                 LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " going to acquire lock.");
+                mu.unlock();//csect_end
                 std::unique_lock<std::mutex> lk(mu);
                 LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " acquired the lock.");
-                cv.wait(lk,  [&atint]{return !atint.load();});
+                cv.wait(lk,  [&atint]{
+                                return (atint.load()<=0); // false if need to wait, meaning !i>0
+                                }
+                        );
         } else {
+                mu.unlock(); //csect_end
                 LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " notifying all.");
                 cv.notify_all();
         }
-//        while(true){
-//                size_t i = 0;
-//                for(const auto& core : ctrl.m_cores){
-//                        if(!core->isLive())
-//                                ++i;
-//                }
-//                if(i == ctrl.m_cores.size())
-//                        break;
-//                else{
-//                        std::this_thread::yield();
-//                        i = 0;
-//                }
-//        }
-        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function,  setting gvt intercept flag to false.");
+        /**
+        while(true){
+                size_t i = 0;
+                for(const auto& core : ctrl.m_cores){
+                        if(!core->isLive())
+                                ++i;
+                }
+                if(i == ctrl.m_cores.size())
+                        break;
+                else{
+                        std::this_thread::yield();
+                        i = 0;
+                }
+        }
+        */
+        LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " exiting working function");
         core->shutDown();
 }
 

@@ -141,7 +141,11 @@ int main(int argc, char** argv)
 		std::cout << "usage: \n\t" << argv[0] << helpstr;
 		return -1;
 	}
-
+        if(nodes != coreAmt && simType!=n_control::SimType::CLASSIC){
+                std::cerr << nodes << std::endl;
+                std::cerr << coreAmt << std::endl;
+                throw std::logic_error("N should match C");
+        }
 	n_control::ControllerConfig conf;
 	conf.m_name = "PHOLD";
 	conf.m_simType = simType;
@@ -152,11 +156,6 @@ int main(int argc, char** argv)
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
-        if(nodes != coreAmt && coreAmt!=1){
-                std::cerr << nodes << std::endl;
-                std::cerr << coreAmt << std::endl;
-                throw std::logic_error("N should match C");
-        }
 	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
 	        percentageRemotes);
 	ctrl->addModel(d);

@@ -435,7 +435,7 @@ Conservativecore::updateDGVT()
                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " DGVT calc: old = ", last);
                 t_timestamp::t_time current_min = std::numeric_limits<t_timestamp::t_time>::max();              
                 for(size_t i = 0;i<m_distributed_time->size()-1; ++i){
-                        t_timestamp::t_time inulltime = m_distributed_time->get(i, std::memory_order_relaxed);
+                        t_timestamp::t_time inulltime = m_distributed_time->get(i);
                         if(inulltime<= t_timestamp::epsilon() || (std::numeric_limits<t_timestamp::t_time>::max()==inulltime) ){
                                 LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " GVT calc: nulltime <= eps or oo for  ", i , " not going any further.");
                                 return;

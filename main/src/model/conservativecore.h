@@ -150,7 +150,7 @@ private:
          * Get last null message time. Since this is a read of our own write, we
          * can use relaxed ordering here.
          */
-        t_timestamp::t_time getNullTime()const{return m_distributed_time->get(this->getCoreID(), std::memory_order_relaxed);}
+        t_timestamp::t_time getNullTime()const{return m_distributed_time->get(this->getCoreID());}
         
         void setNullTime(t_timestamp::t_time nlt){m_distributed_time->set(this->getCoreID(), nlt);}
         
@@ -162,7 +162,7 @@ private:
         /**
          * @see getNullTime()
          */
-        t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID(), std::memory_order_relaxed);} // read/read
+        t_timestamp getEot()const{return m_distributed_eot->get(this->getCoreID());} // read/read
         
         /**
          * Only clear locally generated messages. Remotely received we ignore. (sender destroys).

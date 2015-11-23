@@ -241,7 +241,7 @@ private:
 	void cvworker( std::size_t myid, std::size_t turns,Controller&);
         
         friend
-	void cvworker_con( std::size_t myid, std::size_t turns,Controller&, std::atomic_uint&);
+	void cvworker_con( std::size_t myid, std::size_t turns,Controller&, std::atomic<int>&, std::mutex& mu, std::condition_variable& cv);
 
 #ifdef USE_VIZ
 public:
@@ -296,8 +296,10 @@ void cvworker(std::size_t myid,std::size_t turns,Controller&);
  * Worker function. Runs a Core and communicates with other threads and GVT thread.
  * @param myid unique identifier, for logging it is best this is equal to coreid
  * @param turns : infinite loop cutoff value.
+ * @param at : threadcount value, initialized to nr of thread running this function.
+ * @param mu/cv : cvar/mu pair.
  */
-void cvworker_con(std::size_t myid,std::size_t turns,Controller&, std::atomic_uint&);
+void cvworker_con(std::size_t myid,std::size_t turns,Controller&, std::atomic<int>& at, std::mutex& mu, std::condition_variable& cv);
 
 } /* namespace n_control */
 

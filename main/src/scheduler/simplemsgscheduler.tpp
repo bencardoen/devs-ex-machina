@@ -12,7 +12,7 @@ namespace n_scheduler {
 
 template<typename X, typename R>
 void SimpleMessageScheduler<X, R>::push_back(const R& item) {
-	t_handle handle = m_storage.push(item);
+	m_storage.push(item);
 	testInvariant();
 }
 
