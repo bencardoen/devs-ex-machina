@@ -7,7 +7,7 @@ The family of DEVS \cite{DEVSbase} formalisms serve as a common basis for most o
 \subsection{Parallel computing}
 %TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
 Parallel execution of a DEVS simulation can lower runtime and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
-While the shared memory parallelism offered by most modern hardware does not lower the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation. \\
+While the shared memory parallelism offered by most modern hardware does not increase the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation. \\
 
 \subsection{Motivation}
 %TODO give motivation (adevs is good, but only conservative; exploit new parallelism features of C++11 too)
@@ -18,11 +18,10 @@ The matured parallelism features of C++11 were used to in this project with the 
 \subsection{Solution} %for lack of a better word
 %TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
 The usage of the DirectConnect\cite{SymbolicFlattening} algorithm makes reusing the adevs kernel hard.
-The dxexmachina kernel follows the design of the PythonPDEVS kernel where appropriate, but by the very nature of the implementation languages has to differ in key aspects (e.g. memory allocation strategy). 
-The core aims of the project are to offer a deterministic simulation kernel where the simulation author is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model need be written only once for use in the different simulation kernels (with the exception of a non-trivial lookahead()).\\
+The dxexmachina kernel follows the design of the PythonPDEVS \cite{PythonPDEVS} kernel where appropriate, but by the very nature of the implementation languages has to differ in key aspects (e.g. memory allocation strategy). 
+The core aims of the project are to offer a deterministic simulation kernel where the simulation author is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model need be written only once for use in the different simulation kernels (with the exception of a non-trivial lookahead).\\
 The tracing framework from PyPDEVS was ported to allow optional verification of simulations. 
 \subsection{Time}
-The DEVS formalism has $\mathbb{R}$ as time base, but any implementation has to decide on a (finite) representation of time. Dxexmachina kernels can operate on IEEE754 floating point time units, or integral time. The latter significantly reduces the possible range of the simulation, but avoids possible approximation errors in floating point. Furthermore, the notion of $\epsilon$ as the absolute minimum between time points needs to be established, this is non-trivial for floating point. \\
-The select() function, which arbitrates between concurrent events, is implicit in this project by providing any time representation with a secondary causality field. 
-
-% incomplete
+The DEVS formalism has $\mathbb{R}$ as time base, but any implementation has to decide on a (finite) representation of time. Dxexmachina kernels can operate on IEEE754 floating point time units or integral time. In principle any type with well defined operators can be used as template parameter, but from a performance point of view a type fitting in a machine word offers obvious advantages.%ref to time paper.
+An integral representation significantly reduces the possible range of the virtual time, but avoids approximation errors. Furthermore, the notion of $\epsilon$ as the absolute minimum between time points needs to be established, this is non-trivial for floating point.\\
+The select() function, which imposes a sequential ordering between concurrent events, is implicit in this project by extending time representation with a secondary causality field. If A and B are imminent at time t then $t[1]_a < t[1]_b \oplus t[1]_b < t[1]_a$, while $t[0]_a == t[0]_b == t[0]$. This avoids evaluating the select() function on all imminent models, while still maintaining the deterministic order of concurrent transitions.

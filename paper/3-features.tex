@@ -1,10 +1,9 @@
 %TODO explain that we are briefly going over the main features
 \subsection{Based on PythonPDEVS}
 %TODO say that it is based on PythonPDEVS
-% link reference
-The simulator is based on PythonPDEVS, and provides the following features: 
+The simulator is based on PythonPDEVS \cite{PythonPDEVS}  , and provides the following features: 
 \begin{enumerate}
-	\item Direct Connect
+	\item Direct Connect \cite{SymbolicFlattening}
 	\item Dynamic Structured DEVS
 	\item Termination function. If specified, a termination function is applied every simulation round to each model to test whether the simulation can terminate. Only available in single-threaded simulation.
 	\item State/Message can have any payload type. Different message types can be used together within the same simulation.
@@ -55,27 +54,17 @@ From the user's perspective, the multi-threaded aspect of the kernel is not expo
 %TODO briefly discuss some of the additional changes you implemented
 %TODO such as memory pools, memory allocators, profiling-guided-optimizations, ...
 Continuous profiling of the kernels in several benchmarks highlighted the following key bottlenecks. 
-% Maybe put more centrally that we trade memory for speed
-\begin{enumerate}
-	\item Heap allocation
-	\item Strings 
-	\item Scheduling
-	\item Locking
-	\item Smart pointers
-\end{enumerate}
-%integrate this in the list?
-% In any case, this text is what we did, not what we should write so has to be condensed to the interesting parts (who except us likes bit shifting?)
-% Pick what we want from this text and rewrite it
 \subsubsection{Heap}
-A kernel never sends a complete object to another kernel, only a pointer to the object.\\
-The cost of heap allocations was minimized using thread\_local memory pools, combined with the (optional) usage of tcmalloc\cite{tcmalloc}.
-This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (iff it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free itself. \\
-Replacing strings (in c++ : heap allocated variable sized arrays) with integer identifiers substantially decreased the runtime. This is a tradeoff, the user has more affinity with names than numbers as identifiers, so this translation is done mostly internal. A Model can be named using a std::string, but once the model is handed off to the kernel only integer identifiers remain (the same goes for ports, kernels, ...).
+A kernel never sends a complete object to another kernel, only a pointer to the object. This avoids a possibly expensive copy of the payload, but at the cost of allocation overhead.\\
+This cost becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and messages, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other, and in a single threaded kernel we can leverage arena-style pools if desired.\\
+This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (iff it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free. \\
+Initially the kernels used strings as identifiers, as is done in PyPDEVS, profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with a reference count. Access of that reference count across threads is expensive. The string implementation also calls malloc/free which are quite expensive. \\
+String are more intuitive to work with from a user's standpoint, so as a compromise the user can reference models/ports by string name (usually when constructing the model). Once simulation starts all objects use integral identifiers for performance.
 \\
-\subsubsection{Avoiding Smart pointers}
-While an important feature in C++11 in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads the reference counting becomes prohibitively expensive. Models will still be held by a smart pointer, as will a kernel, but a message is a raw pointer to compacted memory. Ideally a message object can (depending on payload) fit on a single cacheline.\\
+\subsubsection{Smart pointers}
+While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads the reference counting becomes prohibitively expensive, and the (de)allocating caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
 \subsubsection{Locking}
 Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
-On a higher level, we avoid the sending of synchronization messages entirely by writing the content (timestamp) directly into shared memory. This alleviates in part the potential delay/latency caused by null/eot messages being mixed with simulation messages in conservative implementations. 
+On a higher level, we avoid the sending of synchronization messages entirely by writing the content (timestamp) directly into shared memory. This alleviates in part the potential delay/latency caused by interleaving simulation with null/eot messages in conservative implementations. Optimistic still sends anti-messages as pointers, since the complete header of the message is required at the receiver side to annihilate the original. 
 \subsubsection{Schedulers}
-PythonPDEVS has a wide range of scheduler for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified. Items are only updated, never removed.
+PythonPDEVS has a wide range of scheduler for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depening on the nr of items to update. Items are only updated, never removed.
