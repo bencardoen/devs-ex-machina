@@ -3,15 +3,61 @@
 %TODO briefly give some hardware info on the machine (CPU, OS, RAM), used software (version of adevs, GCC, ...), and about number of samples/variance
 \subsection{Sequential Simulation}
 %TODO we start with sequential simulation results, because this is still base case
-\subsubsection{CPU Usage}
 %TODO compare CPU time with adevs for some benchmarks
 %TODO and explain why there is such a difference
 %TODO (spend some time here, as this is also important)
+\subsubsection{CPU Usage}
+%devstone, faster due to interconnect, Messaging O(n), transitions O(n)(if long enough), mention warm up time for chain.
+% dw10->dw40 ?
+
+% phold
+% Not memory intensive whatsoever, only RNG. speed is same (roughly)
+% vary only endtime (n/s/r useless here), benchmarking only rng
+
+% interconnect
+% explain why graph is N^2 by nature. Show that message overhead / extra memory allocation (vgrind) is key here, with overhead in createMessages severe.
 \subsubsection{Memory Usage}
 %TODO compare memory usage with adevs for some benchmarks
+We measure memory usage as allocated pages at a given time t. Note that our usage of pools will always overestimate actual memory in use, but from the OS' point of view (and that of the user), any allocated page is in use.\\
+Our usage of tcmalloc should be taken into account here as well, tcmalloc will only gradually release memory back to the OS. \\
+To have an fair comparison (our copy of) adevs also uses tcmalloc.\\
+Actual profiling of memory usage is done with Valgrind's \cite{Nethercote:2007:VFH:1273442.1250746} massif tool. Our preference of allocating more on the heap w.r.t adevs stack usage is equalized %bad word
+in tracking only the total amount of pages, with stack, text and heap memory all  in one measure. 
+
 %TODO remark our use of memory pools and such, but don't spend too much space on this
 \subsection{Parallel Simulation}
 %TODO explain that we will now compare different synchronization protocols
 %TODO compare different synchronization protocols with adevs' conservative, showing that we are faster (or at least, not that much slower) than adevs
+% split: dstone/pqueue are dag's
+\subsubsection{Devstone}
+% Initial.
+The devstone \cite{DEVStone} benchmark is highly hierarchical, as a result adevs suffers a performance hit linear in the depth of the (top) model. The atomic models in dxexmachina's version of devstone are allocated in a single chain cut in equisized subchains. This significantly reduces the nr of messages to pass between kernels which reduces in part memory pressure (local messages can be destroyed immidately whereas remote messages need to wait for GVT). If the nr of models increases, optimistic on fixed timeadvance becomes slower due to drifting.
+% whereas iconnect/phold are complete graphs
+\subsubsection{PHold}
+%Phold
+In Phold \cite{PHOLD} Allocation is specified in the benchmark itself, each kernel manages a single node with varying subnodes.\\
+The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing conservative. Lookahead is $\epsilon$, so conservative spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation.\\
+Optimistic suffers little from the above problems, however due to the high interconnectivity a cascading revert is still possible.
+
+\subsubsection{Interconnect}
+In Interconnect % no paper ? from PyPDevs originally ? 
+a set of atomic models form a complete graph (w.r.t. connections), each model broadcasts messages to the entire set. \\
+Allocation is irrelevant, the resulting dependency graph between kernels still is a complete graph. The only difference now is that the dynamic graph will converge very fast to the static graph. % for lack of better description.
+Conservative still faces the same issues as in PHold, with the key difference that for a fixed time advance lookahead is well defined and is equal to the timespan between transitions. Since all kernels have to wait on each other here, this simulation scales very poorly in nr of kernels.
+Our optimistic implementation does not complete an instance of this benchmark. The kernels get stuck in an infinite cascade of reverts. If kernel A reverts, it will send antimessages to all others who in turn revert and send antimessages to all others. Support for lazy cancellation could undo this anti-pattern.
+\subsubsection{Strengths-Weaknesses} % rename me
+% Conservative : dag-cyclic, cyclic combined with la=eps are worst cases. Contention explodes.
+% Optimistic : Same as conservative, but for dynamic graph. Fixed and/or colliding transition times are key reason for cascading reverts. Memory can explode.
+% Optimistc : sensitive to kernels drifting in time. Dependent kernels should move at same time, each revert increases drift (which is not a problem for sink/leaf kernels, else it massively increases nr of reverts.
+% reverts also prohibit GVT from advancing (not in general, in path cases), triggering exploding memory pfaults etc.
+\subsubsection{Priority network model}
 %TODO show a single plot which varies a parameter that changes the ideal synchronization protocol
+The priority benchmark is composed of a single server generating a stream of messages at fixed time intervals, interleaved with a probability p for a priority messages. \\ The priority messages defaults lookahead to $\epsilon$ but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server, and have a internal transition so will not wait for the incoming messages. The number of addressed receivers m is variable, with addressed receivers randomly selected.
+\includegraphics[scale=0.4]{pqueue.png}
+% Priority queue: 
+% Conservative : min_lookahead is O(n), still quite good performance (no memory explosion).
+% Optimistic : m is key, each message is a revert.
+% 
+
+
 %TODO (keep explaining as much as space permits, as this is the evaluation of the core contribution)

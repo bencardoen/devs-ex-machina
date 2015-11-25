@@ -97,10 +97,10 @@ def devstonegen(simtype, executable, doRandom=False):
 
 randdevstonegen = partial(devstonegen, doRandom=True)
 
-
+# Cores must match nodes.
 def pholdgen(simtype, executable):
-    for apn in [10]:
-        for nodes in [10, 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
+    for nodes in [args.cores]:
+        for apn in [10, 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
             for iterations in [0]:
                 for remotes in [10]:
                     for endTime in [args.endtime]:
