@@ -78,6 +78,7 @@ devstoneEx = "./build/Benchmark/dxexmachina_devstone"
 pholdEx = "./build/Benchmark/dxexmachina_phold"
 connectEx = "./build/Benchmark/dxexmachina_interconnect"
 networkEx = "./build/Benchmark/dxexmachina_network"
+priorityEx = "./build/Benchmark/dxexmachina_priority"
 adevstoneEx = "./build/Benchmark/adevs_devstone"
 adevpholdEx = "./build/Benchmark/adevs_phold"
 adevconnectEx = "./build/Benchmark/adevs_interconnect"
@@ -121,13 +122,24 @@ def networkgen(simtype, executable, feedback=False):
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-f' if feedback else '', '-w', width, '-t', endTime]))
 
+
 feedbacknetworkgen = partial(networkgen, feedback=True)
+
+
+def prioritygen(simtype, executable):
+    for endTime in [args.endtime]:
+        for n in [32]:
+            for p in [50]:
+                for m in [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
+                    yield list(chain([executable], simtype, ['-n', n, '-p', p, '-m', m, '-t', endTime]))
+
 
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
 networktArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
+priorityArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-7], x[-5], x[-3], x[-1])]
 
 
 # compilation functions
@@ -157,6 +169,7 @@ if __name__ == '__main__':
     dxpholdc = partial(unifiedCompiler, 'dxexmachina_phold', args.force)
     dxconnectc = partial(unifiedCompiler, 'dxexmachina_interconnect', args.force)
     dxnetworkc = partial(unifiedCompiler, 'dxexmachina_network', args.force)
+    dxpriorityc = partial(unifiedCompiler, 'dxexmachina_priority', args.force)
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
     aconnectc = partial(unifiedCompiler, 'adevs_interconnect', args.force)
@@ -195,6 +208,11 @@ if __name__ == '__main__':
         defaults.Benchmark('feednetwork/classic', dxnetworkc, partial(feedbacknetworkgen, simtypes.classic, networkEx), "dxexmachina queue network with feedback loop, classic"),
         defaults.Benchmark('feednetwork/optimistic', dxnetworkc, partial(feedbacknetworkgen, simtypes.optimistic, networkEx), "dxexmachina queue network with feedback loop, optimistic"),
         defaults.Benchmark('feednetwork/conservative', dxnetworkc, partial(feedbacknetworkgen, simtypes.conservative, networkEx), "dxexmachina queue network with feedback loop, conservative"),
+        )
+    dxpriority = SimType(
+        None,
+        defaults.Benchmark('priority/optimistic', dxpriorityc, partial(prioritygen, simtypes.optimistic, priorityEx), "dxexmachina priority model, optimistic"),
+        defaults.Benchmark('priority/conservative', dxpriorityc, partial(prioritygen, simtypes.conservative, priorityEx), "dxexmachina priority model, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -235,6 +253,7 @@ if __name__ == '__main__':
                     dxphold,
                     dxconnect, dxrandconnect,
                     dxnetwork, dxfeednetwork,
+                    dxpriority,
                     adevstone, aranddevstone,
                     aphold,
                     aconnect, arandconnect,
@@ -243,6 +262,7 @@ if __name__ == '__main__':
                       pholdArg,
                       connectArg, connectArg,
                       networktArg, networktArg,
+                      priorityArg,
                       devsArg, devsArg,
                       pholdArg,
                       connectArg, connectArg,
