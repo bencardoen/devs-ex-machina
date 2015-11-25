@@ -35,15 +35,15 @@ The devstone \cite{DEVStone} benchmark is highly hierarchical, as a result adevs
 % whereas iconnect/phold are complete graphs
 \subsubsection{PHold}
 %Phold
-In Phold \cite{PHOLD} Allocation is specified in the benchmark itself, each kernel manages a single node with varying subnodes.\\
-The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing conservative. Lookahead is $\epsilon$, so conservative spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation.\\
-Optimistic suffers little from the above problems, however due to the high interconnectivity a cascading revert is still possible.
+In Phold \cite{PHOLD} Allocation is specified in the benchmark itself, each kernel manages a single node with varying subnodes. The parameter R determines the percentage of remote destination models.\\
+The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing conservative. Lookahead is $\epsilon$, so conservative spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation. For N kernels, each kernel has to query the nulltime of N-1 kernels, resulting in O($N^2$) polling behaviour. This benchmark highlights therefore the price that we pay for sharing those values instead of sending an actual null message. In a non-cyclic simulation with a non-trivial lookahead, that choice however does pay off.\\
+Optimistic suffers little from the above problems, however due to the high interconnectivity a cascading revert is still possible. More seriously, a revert is very expensive in PHold due to our usages of C++11 's random nr generators. The cost of a revert is dominated by the recalculation of destination models, not in allocating/deallocating states/messages. Again, this could be significantly reduced using lazy-cancellation. Once a revert happens the drift between the kernels increases fast, increasing the likelyhood of more reverts. 
 
 \subsubsection{Interconnect}
 In Interconnect % no paper ? from PyPDevs originally ? 
 a set of atomic models form a complete graph (w.r.t. connections), each model broadcasts messages to the entire set. \\
-Allocation is irrelevant, the resulting dependency graph between kernels still is a complete graph. The only difference now is that the dynamic graph will converge very fast to the static graph. % for lack of better description.
-Conservative still faces the same issues as in PHold, with the key difference that for a fixed time advance lookahead is well defined and is equal to the timespan between transitions. Since all kernels have to wait on each other here, this simulation scales very poorly in nr of kernels.
+Allocation is irrelevant, the resulting dependency graph between kernels remains  a complete graph. The only difference now is that the dynamic graph will converge very fast to the static graph. % for lack of better description.
+Conservative still faces the same issues as in PHold, with the key difference that for a fixed time advance lookahead is well defined and is equal to the timespan between transitions. The scaling issue is identical as in PHold.\\
 Our optimistic implementation does not complete an instance of this benchmark. The kernels get stuck in an infinite cascade of reverts. If kernel A reverts, it will send antimessages to all others who in turn revert and send antimessages to all others. Support for lazy cancellation could undo this anti-pattern.
 \subsubsection{Strengths-Weaknesses} % rename me
 % Conservative : dag-cyclic, cyclic combined with la=eps are worst cases. Contention explodes.
@@ -53,11 +53,12 @@ Our optimistic implementation does not complete an instance of this benchmark. T
 \subsubsection{Priority network model}
 %TODO show a single plot which varies a parameter that changes the ideal synchronization protocol
 The priority benchmark is composed of a single server generating a stream of messages at fixed time intervals, interleaved with a probability p for a priority messages. \\ The priority messages defaults lookahead to $\epsilon$ but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server, and have a internal transition so will not wait for the incoming messages. The number of addressed receivers m is variable, with addressed receivers randomly selected.
-\includegraphics[scale=0.4]{pqueue.png}
+%\includegraphics[scale=0.4]{pqueue.png}
+\input pqueue.tex
 % Priority queue: 
 % Conservative : min_lookahead is O(n), still quite good performance (no memory explosion).
 % Optimistic : m is key, each message is a revert.
 % 
-
+A key difference here is that a state (in the Receiver instances) is very cheap to copy/create, the random nr generation is done a kernel which will never revert since it is a source in the dependency graph. Optimistic will therefore not suffer the same issue as it does in PHold. Furthermore, there is no cycle in the graph so a revert cannot cascade in optimistic, and contention is minimal in conservative.
 
 %TODO (keep explaining as much as space permits, as this is the evaluation of the core contribution)
