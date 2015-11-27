@@ -54,8 +54,8 @@ parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=mul
 parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
     help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
-parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=50,
-    help="[default: 50] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
+parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=90,
+    help="[default: 90] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
     )
 parser.add_argument("-b", "--backup", action="store_true",
     help="Back up existing data files and then run the benchmarks as usual."
@@ -91,6 +91,7 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 
 # generators for the benchmark parameters
 def devstonegen(simtype, executable, doRandom=False):
+    # time 500 000
     for depth in [10, 20, 30, 40]:  # , 4, 8, 16]:
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
@@ -100,19 +101,35 @@ randdevstonegen = partial(devstonegen, doRandom=True)
 
 # Cores must match nodes.
 def pholdgen(simtype, executable):
+    # time single 5 000 000
+    # for single & conservative
     for nodes in [args.cores]:
-        for apn in [10, 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
+        for apn in [4]:  # , 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
             for iterations in [0]:
-                for remotes in [10]:
+                for remotes in range(0, 100, 5):
                     for endTime in [args.endtime]:
                         yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
                         # return
 
 
 def interconnectgen(simtype, executable, doRandom=False):
-    for width in [10, 20, 30, 40, 50, 60, 70]:
-        for endTime in [args.endtime]:
-            yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+    if simtype == SimType.optimistic:
+        print("Refusing to run interconnect with optimistic!")
+        return
+    if simtype == SimType.classic:
+        # time 5 000 000
+        for width in [10, 20, 30, 40, 50, 60, 70]:
+            for endTime in [args.endtime]:
+                yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+    else:
+        # time 5 000 000
+        oldNumCores = simtype[-1]
+        for width in [40]:
+            for endTime in [args.endtime]:
+                for cores in [2, 4]:
+                    simtype[-1] = cores
+                    yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+        simtype[-1] = oldNumCores
 
 randconnectgen = partial(interconnectgen, doRandom=True)
 
@@ -127,10 +144,11 @@ feedbacknetworkgen = partial(networkgen, feedback=True)
 
 
 def prioritygen(simtype, executable):
+    # time 50 000 000
     for endTime in [args.endtime]:
-        for n in [32]:
-            for p in [50]:
-                for m in [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
+        for n in [128]:
+            for p in range(0, 100, 5):
+                for m in [1]:  # [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
                     yield list(chain([executable], simtype, ['-n', n, '-p', p, '-m', m, '-t', endTime]))
 
 
