@@ -54,8 +54,8 @@ parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=mul
 parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
     help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
-parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=50,
-    help="[default: 50] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
+parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=90,
+    help="[default: 90] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
     )
 parser.add_argument("-b", "--backup", action="store_true",
     help="Back up existing data files and then run the benchmarks as usual."
@@ -78,6 +78,7 @@ devstoneEx = "./build/Benchmark/dxexmachina_devstone"
 pholdEx = "./build/Benchmark/dxexmachina_phold"
 connectEx = "./build/Benchmark/dxexmachina_interconnect"
 networkEx = "./build/Benchmark/dxexmachina_network"
+priorityEx = "./build/Benchmark/dxexmachina_priority"
 adevstoneEx = "./build/Benchmark/adevs_devstone"
 adevpholdEx = "./build/Benchmark/adevs_phold"
 adevconnectEx = "./build/Benchmark/adevs_interconnect"
@@ -90,6 +91,7 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 
 # generators for the benchmark parameters
 def devstonegen(simtype, executable, doRandom=False):
+    # time 500 000
     for depth in [10, 20, 30, 40]:  # , 4, 8, 16]:
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
@@ -99,19 +101,35 @@ randdevstonegen = partial(devstonegen, doRandom=True)
 
 # Cores must match nodes.
 def pholdgen(simtype, executable):
+    # time single 5 000 000
+    # for single & conservative
     for nodes in [args.cores]:
-        for apn in [10, 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
+        for apn in [4]:  # , 20, 30, 40, 50, 60, 70]:  # , 8, 16, 32]:
             for iterations in [0]:
-                for remotes in [10]:
+                for remotes in range(0, 100, 5):
                     for endTime in [args.endtime]:
                         yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
                         # return
 
 
 def interconnectgen(simtype, executable, doRandom=False):
-    for width in [10, 20, 30, 40, 50, 60, 70]:
-        for endTime in [args.endtime]:
-            yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+    if simtype == SimType.optimistic:
+        print("Refusing to run interconnect with optimistic!")
+        return
+    if simtype == SimType.classic:
+        # time 5 000 000
+        for width in [10, 20, 30, 40, 50, 60, 70]:
+            for endTime in [args.endtime]:
+                yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+    else:
+        # time 5 000 000
+        oldNumCores = simtype[-1]
+        for width in [40]:
+            for endTime in [args.endtime]:
+                for cores in [2, 4]:
+                    simtype[-1] = cores
+                    yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+        simtype[-1] = oldNumCores
 
 randconnectgen = partial(interconnectgen, doRandom=True)
 
@@ -121,13 +139,25 @@ def networkgen(simtype, executable, feedback=False):
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-f' if feedback else '', '-w', width, '-t', endTime]))
 
+
 feedbacknetworkgen = partial(networkgen, feedback=True)
+
+
+def prioritygen(simtype, executable):
+    # time 50 000 000
+    for endTime in [args.endtime]:
+        for n in [128]:
+            for p in range(0, 100, 5):
+                for m in [1]:  # [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
+                    yield list(chain([executable], simtype, ['-n', n, '-p', p, '-m', m, '-t', endTime]))
+
 
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
 networktArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
+priorityArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-7], x[-5], x[-3], x[-1])]
 
 
 # compilation functions
@@ -157,6 +187,7 @@ if __name__ == '__main__':
     dxpholdc = partial(unifiedCompiler, 'dxexmachina_phold', args.force)
     dxconnectc = partial(unifiedCompiler, 'dxexmachina_interconnect', args.force)
     dxnetworkc = partial(unifiedCompiler, 'dxexmachina_network', args.force)
+    dxpriorityc = partial(unifiedCompiler, 'dxexmachina_priority', args.force)
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
     aconnectc = partial(unifiedCompiler, 'adevs_interconnect', args.force)
@@ -195,6 +226,11 @@ if __name__ == '__main__':
         defaults.Benchmark('feednetwork/classic', dxnetworkc, partial(feedbacknetworkgen, simtypes.classic, networkEx), "dxexmachina queue network with feedback loop, classic"),
         defaults.Benchmark('feednetwork/optimistic', dxnetworkc, partial(feedbacknetworkgen, simtypes.optimistic, networkEx), "dxexmachina queue network with feedback loop, optimistic"),
         defaults.Benchmark('feednetwork/conservative', dxnetworkc, partial(feedbacknetworkgen, simtypes.conservative, networkEx), "dxexmachina queue network with feedback loop, conservative"),
+        )
+    dxpriority = SimType(
+        None,
+        defaults.Benchmark('priority/optimistic', dxpriorityc, partial(prioritygen, simtypes.optimistic, priorityEx), "dxexmachina priority model, optimistic"),
+        defaults.Benchmark('priority/conservative', dxpriorityc, partial(prioritygen, simtypes.conservative, priorityEx), "dxexmachina priority model, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -235,6 +271,7 @@ if __name__ == '__main__':
                     dxphold,
                     dxconnect, dxrandconnect,
                     dxnetwork, dxfeednetwork,
+                    dxpriority,
                     adevstone, aranddevstone,
                     aphold,
                     aconnect, arandconnect,
@@ -243,6 +280,7 @@ if __name__ == '__main__':
                       pholdArg,
                       connectArg, connectArg,
                       networktArg, networktArg,
+                      priorityArg,
                       devsArg, devsArg,
                       pholdArg,
                       connectArg, connectArg,
