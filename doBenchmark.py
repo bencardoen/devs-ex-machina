@@ -92,7 +92,7 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 # generators for the benchmark parameters
 def devstonegen(simtype, executable, doRandom=False):
     # time 500 000
-    for depth in [10, 20, 30, 40]:  # , 4, 8, 16]:
+    for depth in [10, 15, 20, 25, 30]:  # , 4, 8, 16]:
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
             # return
