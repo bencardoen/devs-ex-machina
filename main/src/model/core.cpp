@@ -617,6 +617,7 @@ void n_model::Core::getPendingMail()
 	        auto msg = entry.getMessage();
 	        if(msg->flagIsSet(Status::ERASE)){
 	                msg->setFlag(Status::KILL);
+                        continue;
 	        }
                 msg->setFlag(Status::HEAPED, false);
                 queueLocalMessage(msg);

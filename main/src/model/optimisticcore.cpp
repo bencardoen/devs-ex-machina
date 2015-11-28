@@ -89,6 +89,7 @@ void Optimisticcore::clearProcessedMessages(std::vector<t_msgptr>& msgs)
                         ptr->releaseMe();
                 }
                 else{
+                        LOG_DEBUG("MCORE:: ", this->getCoreID(), "@", this->getTime(), " Putting " , ptr->toString(), " in processed. &", ptr );
                         m_processed_messages.push_back(n_network::hazard_pointer(ptr));
                 }
         }

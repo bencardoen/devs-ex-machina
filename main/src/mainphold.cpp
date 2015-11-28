@@ -11,7 +11,7 @@
 
 using namespace n_tools;
 
-LOG_INIT("phold.log");
+LOG_INIT("phold.log")
 
 const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"

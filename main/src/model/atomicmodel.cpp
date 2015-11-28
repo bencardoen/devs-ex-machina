@@ -28,6 +28,7 @@ AtomicModel_impl::AtomicModel_impl(std::string name, int corenumber, std::size_t
 
 AtomicModel_impl::~AtomicModel_impl()
 {
+        
         delete m_state;
 }
 
