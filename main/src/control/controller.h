@@ -238,7 +238,7 @@ private:
 	void runGVT(Controller&, std::atomic<bool>& rungvt);
 
 	friend
-	void cvworker( std::size_t myid, std::size_t turns,Controller&);
+	void cvworker( std::size_t myid, std::size_t turns,Controller&, std::atomic<int>& atint, std::mutex& mu, std::condition_variable& cv);
         
         friend
 	void cvworker_con( std::size_t myid, std::size_t turns,Controller&, std::atomic<int>&, std::mutex& mu, std::condition_variable& cv);
@@ -290,7 +290,7 @@ void runGVT(Controller&, std::atomic<bool>& rungvt);
  * @param myid unique identifier, for logging it is best this is equal to coreid
  * @param turns : infinite loop cutoff value.
  */
-void cvworker(std::size_t myid,std::size_t turns,Controller&);
+void cvworker(std::size_t myid,std::size_t turns,Controller&, std::atomic<int>& atint, std::mutex& mu, std::condition_variable& cv);
 
 /**
  * Worker function. Runs a Core and communicates with other threads and GVT thread.

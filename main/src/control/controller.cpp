@@ -2,7 +2,7 @@
  * Controller.cpp
  *
  *  Created on: 11 Mar 2015
- *      Author: matthijs
+ *      Author: Matthijs Van Os, Stijn Manhaeve, Ben Cardoen
  */
 
 #include "control/controller.h"
@@ -253,10 +253,15 @@ void Controller::simDEVS()
 void Controller::simOPDEVS()
 {
 	this->m_rungvt.store(true);
+        std::atomic<int> atint(m_cores.size());
+        std::condition_variable cv;
+        std::mutex mu;
 
 	for (size_t i = 0; i < m_cores.size(); ++i) {
 		m_threads.push_back(
-		        std::thread(cvworker, i, m_turns, std::ref(*this)));
+                                std::thread(cvworker, 
+                                        i, m_turns, std::ref(*this), std::ref(atint), std::ref(mu), std::ref(cv))
+                        );
 		LOG_INFO("CONTROLLER: Started thread # ", i);
 	}
         
@@ -423,18 +428,18 @@ bool Controller::isInDSPhase() const
 	return m_dsPhase;
 }
 
-void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
+void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl, std::atomic<int>& atint, std::mutex& mu, std::condition_variable& cv)
 {
         const auto& core = ctrl.m_cores[myid];
         auto at_exit = [&]()->void{
-                ctrl.m_rungvt.store(false);
                 core->setLive(false);
                 LOG_DEBUG("Core ", core->getCoreID(), "exiting.");
                 core->shutDown();
         };
         core->initThread();
         LOG_DEBUG("CVWORKER : TURNS == ctrl", ctrl.m_turns, " turns = ", turns);
-        for (size_t i = 0; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
+        size_t i = 0;
+        for (; i < turns; ++i) {		// Turns are only here to avoid possible infinite loop
                 if (core->getZombieRounds() > ctrl.m_zombieIdleThreshold) {
                         LOG_INFO("CVWORKER: Thread for core ", core->getCoreID(),
                                 " Core is zombie, yielding thread. [round ", core->getZombieRounds(), "]");
@@ -454,18 +459,48 @@ void cvworker(std::size_t myid, std::size_t turns, Controller& ctrl)
                                 if (!core->existTransientMessage()) {// If we've sent a message or there is one waiting, we can't quit (revert)
                                         LOG_INFO("CVWORKER: Thread ", std::this_thread::get_id(), " ", myid, " for core ", core->getCoreID(),
                                                 " all other threads are stopped or idle, network is idle, quitting, gvt_run = false now.");
-                                        at_exit();
-                                        return;
-                                } 
-                                LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
+                                        ctrl.m_rungvt.store(false);
+                                        break;
+                                }else{
+                                        LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(),
                                 " all other threads are stopped or idle, network still reports transients, idling.");
+                                        if(!ctrl.m_rungvt){// If 1 or more cores have stopped, network can remain transient, we can't guarantee it emptying.
+                                                LOG_INFO("CVWORKER: Thread ", myid, " for core ", core->getCoreID(), " at least one core has quit, have to exit as well.");
+                                                break;
+                                        }
+                                }
                         }
                 }
                 LOG_DEBUG("CVWORKER: Thread for core ", core->getCoreID(), " running simstep in round ", i,
                         " [zrounds:", core->getZombieRounds(), "]");
                 core->runSmallStep();
         }
+        ctrl.m_rungvt.store(false);             // Required to halt gvt.
+         // Wait for all other cores to go idle.
+        // Should a core have reached the nr of turns (a safety catch), make sure we set Live ourselves.
+        if(i==turns){
+                LOG_WARNING("CVWORKER: ", core->getCoreID(), " overran nr of simulation steps allowed !!");
+                core->setLive(false);
+        }
         
+        LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " decreasing atint.");
+        
+        mu.lock(); 
+        atint -=1;
+        if(atint>0){
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " going to acquire lock.");
+                mu.unlock();
+                std::unique_lock<std::mutex> lk(mu);
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " acquired the lock.");
+                cv.wait(lk,  [&atint]{
+                                return (atint.load()<=0); // false if need to wait, meaning !i>0
+                                }
+                        );
+        } else {
+                mu.unlock(); 
+                LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(), " notifying all.");
+                cv.notify_all();
+        }
         LOG_DEBUG("CVWORKER: Thread ", std::this_thread::get_id(), " for core ", core->getCoreID(),
                 " exiting working function,  setting gvt intercept flag to false.");
         at_exit();
