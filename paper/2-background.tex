@@ -3,30 +3,27 @@ In this section, we provide a brief introduction to two different synchronizatio
 \subsection{Conservative Synchronization}
 %TODO explain conservative synchronization, and how it uses locking to wait for continuing the simulation
 Conservative synchronization is defined by the invariant that no model will advance in time before it has received all input from any influencing model. \\
-This requires the concepts of eot (earliest output time) and eit (earliest input time) which define the timespan within which a model can safely advance. \\ The eit of any model is the minimum of all eot values of influencing models. A model can simulate up to (but not including) eit, and then has to wait until that value is increased. An important disadvantage here is that the influenced-by relation is always defined at model(link) creation, not at runtime. A model that can influence another, but never does, can severely slow down the protocol.\\ 
-Deadlock between models that influence each other can be broken/avoided by a variety of
+This requires the concepts of eot (earliest output time) and eit (earliest input time) which define the timespan within which a model can safely advance. \\ The eit of any model is the minimum of all eot values of (directly) influencing models. A model can simulate up to (but not including) eit, then waits until that value is increased. An important disadvantage here is that the influenced-by relation is always defined at model(link) creation, not at runtime. A model that can influence another, but never does, can severely slow down the protocol.\\ 
+Deadlock between models that influence each other and end up waiting on each other can be broken/avoided by a variety of
 means, in this simulator the CMB \cite{Chandy:1981:ADS:358598.358613} null-message protocol is used. \\
-Null message time is the timestamp a model is guaranteed to have past in simulation. More precisely, a null message of time t is a guarantee that any ouput with timestamp t-$\epsilon$ is already sent.\\
+In our implementaton null-time is the timestamp a model is guaranteed to have passed in simulation. More precisely, a null message of time t is a guarantee that any ouput with timestamp t-$\epsilon$ is already sent.\\
 In general, the eot/eit/nulltime of a kernel is the mimimum of each of those values for all models in the kernel.\\
-Conservative explicitly relies on information provided by the model creator in the form of lookahead, a relative timespan during which the model is insensitive to outside events. This can be non-trivial to calculate, a simulation writer will in general not be able to predict the exact lookahead of models involved in an experiment without having run the experiment.\\
-The performance is more sensitive to lookahead than it is to cycles in the (static) dependency graph.
+Conservative synchronization explicitly relies on information provided by the model creator in the form of lookahead, a relative timespan during which the model is insensitive to outside events. This can be non-trivial to calculate, a simulation writer will in general not be able to predict the exact lookahead of models involved in an experiment without having run the experiment.\\ Conservative kernels can operate if there exists a cyclic dependency between them, but at a quite severe performance penalty, as seen in section 4.
 \subsection{Optimistic Synchronization}
 %TODO explain optimistic synchronization, and how it uses rollbacks to undo causality errors
-Optimistic synchronization allows causality errors to occur but employs a roll-back mechanism to recover from those errors.
-The most common mechanism is the Timewarp \cite{Jefferson:1985:VT:3916.3988} mechanism,
- whenever a kernel receives an event with timestamp in the kernel's past, the state of the kernel is reverted to that time. The gain in runtime this provides is offset by the increase in memory required to keep saved states and (sent) messages.
+Optimistic synchronization allows causality errors to occur but recovers from those errors using a roll-back mechanism, the most common of which is Timewarp \cite{Jefferson:1985:VT:3916.3988}.
+Whenever a kernel receives an event with a timestamp in the kernel's past, the state of the kernel (and all models) is reverted to that time. The gain in runtime this provides is offset by the increase in memory required to keep saved states and (sent) messages.
 Optimistic does not rely on any domain specific information, in contrast to conservative. It is only sensitive to runtime use of connections, not the probability that they might occur. %reword connections ?
 \\
-If the (runtime) dependency graph contains a cycle, optimistic can suffer a series of cascading reverts worsened if the timestamps of the events match exactly. \\
+If the (runtime) dependency graph contains a cycle, optimistic can suffer a series of cascading reverts. Without domain specific information the kernel assumes that any event will influence at least one model, but this can lead to an infinite loop of reverts in the worst case.\\
 This effect can be lessened by lazy cancellation and/or lazy re-evaluation \cite{FujimotoBook}.
 \subsection{Global Virtual Time}
-To avoid exhausting memory in state/event saving, optimistic synchronization relies on the concept of global virtual time\cite{Jefferson:1985:VT:3916.3988}. In optimistic simulations, GVT is defined as the lowest timestamp of any unprocessed event. \\ Intuitively this is the timepoint in the simulation that is certain to be preserved, corresponding exactly with the simulation up to that time in a non-parallel implementation.\\
+To avoid exhausting memory in state/event saving, optimistic synchronization relies on the concept of global virtual time\cite{Jefferson:1985:VT:3916.3988}. In optimistic simulations, GVT is defined as the lowest timestamp of any unprocessed event. \\ Intuitively this is the simulation timepoint that is certain to be preserved, corresponding exactly with the simulation up to that time in a non-parallel implementation.\\
 In conservative the minimum simulation time of all kernels is the GVT, or in terms of null messages: the least timestamp of any null message in transit.
-In any parallel implementation the GVT calculation is vital to safely commit unrecoverable transactions such as IO (e.g. tracing), releasing memory, ... .
+The GVT calculation is vital to safely commit unrecoverable transactions such as IO (e.g. tracing), releasing memory, ... .
 
 \subsection{C++11 Parallelism Features}
 %TODO explain what is new in C++11 for parallelism and how it contributes to our cause
 C++11 offers a wide range of portable synchronization primitives in the Standard Library, whereas in earlier versions one had to resort to non-portable (C) implementations. More importantly, C++11 is the first version of the standard that actually defines a multi-threaded abstract machine memory model in the language.
-Our kernels use a wide range of threading primitives and atomic operations. As an example, eot/eit/nulltime are exchanged not as messages but reads/writes to atomic fields shared by all kernels. This avoids the otherwise unavoidable latency penalty by mixing simulation messages with synchronization messages. % Antimessages ? More / Less here ?
-Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. %minus all the dependencies :)
-% Reference C++11 standard (paying version or draft?)
+Our kernels use a wide range of threading primitives and atomic operations. As an example, eot/eit/nulltime are exchanged not as messages but reads/writes to atomic fields shared by all kernels. This avoids the otherwise unavoidable latency penalty by mixing simulation messages with synchronization messages, for an in-depth study see \cite{CPE:CPE3007}.
+Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. 
