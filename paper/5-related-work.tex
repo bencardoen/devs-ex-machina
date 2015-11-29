@@ -1,8 +1,8 @@
 %TODO explain about other DEVS simulation kernels, and how they differ
 %TODO explain about PythonPDEVS, the most related in terms of feature and "legacy" --> now in C++11 and way better performance
 \subsection{PythonPDEVS}
-Dxexmachina is closely related to PythonPDEVS in design and philosophy. PythonPDEVS allows anyone who grasps the DEVS formalisms to immediately simulate his/her model without having to consider the kernel implementation. C++ implementations cannot hope to match the fast prototype/edit/run cycles provided by PythonPDEVS, although this can be minimized by building the kernels as libraries. %maybe warn that if a header is touched, you still have to compile from scratch ? (eg. TIME_FP)
-Advanced features such as activity based relocation and the performance gains this results in, are still unique to PythonPDEVS. \\
+Dxex is closely related to PyPDEVS in design and philosophy. PyPDEVS allows anyone who grasps the DEVS formalisms to immediately simulate his/her model without having to consider the kernel implementation. C++ implementations cannot hope to match the fast prototype/edit/run cycles provided by PyPDEVS, although this can be minimized by building the kernels as libraries. %maybe warn that if a header is touched, you still have to compile from scratch ? (eg. TIME_FP)
+Advanced features such as activity based relocation and the performance gains this results in, are still unique to PyPDEVS. \\
 \subsection{Adevs}
 %TODO explain about adevs, the most related in terms of performance --> we implement more synchronization options and offer better performance because ...
 Adevs's source code is still under active development, allowing for an exact comparison in performance and features. It remains in most aspects the fastest simulation engine for the DEVS formalism, but it lacks an optimistic synchronization implementation. %Tracing ?

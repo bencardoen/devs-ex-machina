@@ -1,9 +1,9 @@
 %TODO explain that we are briefly going over the main features
 \subsection{Based on PythonPDEVS}
 %TODO say that it is based on PythonPDEVS
-The simulator is based on PythonPDEVS \cite{PythonPDEVS}  , and provides the following features: 
+The simulator is based on PythonPDEVS, and provides the following features: 
 \begin{enumerate}
-	\item Direct Connect \cite{SymbolicFlattening}
+	\item Direct Connection
 	\item Dynamic Structured DEVS
 	\item Termination function. If specified, a termination function is applied every simulation round to each model to test whether the simulation can terminate. Only available in single-threaded simulation.
 	\item State/Message can have any payload type. Different message types can be used together within the same simulation.
@@ -11,9 +11,9 @@ The simulator is based on PythonPDEVS \cite{PythonPDEVS}  , and provides the fol
 	\item Optimistic and Conservative synchronization of PDEVS.
 \end{enumerate}
 The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use.\\
-The tracing is not comparable with adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be threadsafe and deterministic so that a simulation will always produce the exact same output.
+The tracing is not comparable with adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be thread safe and deterministic so that a simulation will always produce the exact same output.
 %TODO Decide whether we should list the functionality that is _not_ implemented
-The following features from PythonPDEVS are not present
+The following features from PyPDEVS are not present
 \begin{enumerate}
 	\item Activity tracking and relocation
 	\item Serialization
@@ -23,7 +23,7 @@ The following features from PythonPDEVS are not present
 Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
 Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
 Debugging tools such as a logger and a graph visualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.\\
-While PythonPDEVS can be controlled from within a Python script and adevs has a Java interface, our implementation does not have any bindings to other languages.
+While PyPDEVS can be controlled from within a Python script and adevs has a Java interface, our implementation does not have any bindings to other languages.
 
 %TODO ... and thus has most features from PythonPDEVS, like Dynamic Structure, termination condition, direct connection, ...
 %TODO (size: take as much size as you want, depending on how much is shared with PythonPDEVS)
@@ -67,4 +67,4 @@ While an important C++11 feature in general, our initial usage of smart pointers
 Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
 On a higher level, we avoid the sending of synchronization messages entirely by writing the timestamp directly into shared memory.\\ Sending of antimessages is fairly cheap in our implementation, since only the modified pointer to the original message is sent to the receiving kernel.
 \subsubsection{Schedulers}
-PythonPDEVS has a wide range of schedulers for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depending on the nr of items to update. Items are only updated, never removed.
+PyPDEVS has a wide range of schedulers for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depending on the amount of items to update. Items are only updated, never removed.
