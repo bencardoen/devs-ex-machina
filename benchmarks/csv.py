@@ -62,10 +62,13 @@ def toCSV(data, path, delim=';', argColumns="\"command\"", argParse=lambda x: "\
     """
     Saves the data to path in csv format.
     """
+    args = data["args"]
+    results = data["results"]
+    if len(results) == 0:
+        print("! no results for benchmark !")
+        return
     assertPath(path.parent)
     with path.open('w') as f:
-        args = data["args"]
-        results = data["results"]
         _addHeaderLine(results[0], f, delim, argColumns)
         for arg, res in zip(args, results):
             # now we have all the data per set of arguments

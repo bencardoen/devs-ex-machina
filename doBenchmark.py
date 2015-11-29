@@ -98,6 +98,8 @@ def devstonegen(simtype, executable, doRandom=False):
             # return
 
 randdevstonegen = partial(devstonegen, doRandom=True)
+lenParallelDevstone = len(list(chain(["devExec"], simtypes.optimistic, ['-r', '-w', 0, '-d', 0, '-t', 0])))
+
 
 # Cores must match nodes.
 def pholdgen(simtype, executable):
@@ -110,6 +112,7 @@ def pholdgen(simtype, executable):
                     for endTime in [args.endtime]:
                         yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-t', endTime]))
                         # return
+lenParallelPhold = len(list(chain(["pholdExec"], simtypes.optimistic, ['-n', 0, '-s', 0, '-i', 0, '-r', 0, '-t', 0])))
 
 
 def interconnectgen(simtype, executable, doRandom=False):
@@ -121,6 +124,7 @@ def interconnectgen(simtype, executable, doRandom=False):
         for width in [10, 20, 30, 40, 50, 60, 70]:
             for endTime in [args.endtime]:
                 yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+                # return
     else:
         # time 5 000 000
         oldNumCores = simtype[-1]
@@ -129,18 +133,23 @@ def interconnectgen(simtype, executable, doRandom=False):
                 for cores in [2, 4]:
                     simtype[-1] = cores
                     yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+                # simtype[-1] = oldNumCores; return
         simtype[-1] = oldNumCores
 
 randconnectgen = partial(interconnectgen, doRandom=True)
+lenParallelConnect = len(list(chain(["connectExec"], simtypes.optimistic, ['-r', '-w', 0, '-t', 0])))
 
 
 def networkgen(simtype, executable, feedback=False):
     for width in [10, 50, 100]:
         for endTime in [args.endtime]:
             yield list(chain([executable], simtype, ['-f' if feedback else '', '-w', width, '-t', endTime]))
+            # return
 
 
 feedbacknetworkgen = partial(networkgen, feedback=True)
+
+lenParallelNetwork = len(list(chain(["networkExec"], simtypes.optimistic, ['-f', '-w', 0, '-t', 0])))
 
 
 def prioritygen(simtype, executable):
@@ -149,15 +158,16 @@ def prioritygen(simtype, executable):
         for n in [128]:
             for p in range(0, 100, 5):
                 for m in [1]:  # [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
-                    yield list(chain([executable], simtype, ['-n', n, '-p', p, '-m', m, '-t', endTime]))
+                    yield list(chain([executable, simtype[0]], ['-n', n, '-p', p, '-m', m, '-t', endTime]))
+                    # return
 
 
 csvDelim = ';'
-devsArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-5], x[-3], x[-1])]
-pholdArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-9], x[-7], x[-5], x[-3], x[-1])]
-connectArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
-networktArg = [csvDelim, """ "command"{0}"executable"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-3], x[-1])]
-priorityArg = [csvDelim, """ "command"{0}"executable"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), x[-7], x[-5], x[-3], x[-1])]
+devsArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelDevstone else 1, x[-5], x[-3], x[-1])]
+pholdArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPhold else 1, x[-9], x[-7], x[-5], x[-3], x[-1])]
+connectArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelConnect else 1, x[-3], x[-1])]
+networktArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelNetwork else 1, x[-3], x[-1])]
+priorityArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), 2 if [1] != "classic" else 1, x[-7], x[-5], x[-3], x[-1])]
 
 
 # compilation functions
