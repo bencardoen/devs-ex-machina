@@ -18,7 +18,7 @@ If the (runtime) dependency graph contains a cycle, optimistic can suffer a seri
 This effect can be lessened by lazy cancellation and/or lazy re-evaluation \cite{FujimotoBook}.
 \subsection{Global Virtual Time}
 To avoid exhausting memory in state/event saving, optimistic synchronization relies on the concept of global virtual time\cite{Jefferson:1985:VT:3916.3988}. In optimistic simulations, GVT is defined as the lowest timestamp of any unprocessed event. \\ Intuitively this is the simulation timepoint that is certain to be preserved, corresponding exactly with the simulation up to that time in a non-parallel implementation.\\
-In conservative the minimum simulation time of all kernels is the GVT, or in terms of null messages: the least timestamp of any null message in transit.
+In conservative, the minimum simulation time of all kernels is the GVT, or in terms of null messages: the least timestamp of any null message in transit.
 The GVT calculation is vital to safely commit unrecoverable transactions such as IO (e.g. tracing), releasing memory, ... .
 
 \subsection{C++11 Parallelism Features}

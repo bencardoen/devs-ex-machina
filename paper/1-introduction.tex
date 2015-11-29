@@ -6,14 +6,14 @@ The family of DEVS \cite{DEVSbase} formalisms serve as a common basis for most o
 
 \subsection{Parallel computing}
 %TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
-Parallel execution of a PDEVS simulation can lower runtime and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
+Parallel execution of a PDEVS simulation can lower overall runtime and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
 While the shared memory parallelism offered by most modern hardware does not increase the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation. \\
 
 \subsection{Motivation}
 %TODO give motivation (adevs is good, but only conservative; exploit new parallelism features of C++11 too)
 Adevs \cite{adevs} offers a very fast conservative synchronized shared memory DEVS simulator, but no optimistic synchronized variant. 
 The latter can be significantly faster, especially in simulations where the runtime behaviour of the simulation is hard to predict. \\
-The matured parallelism features of C++11 were used in this project with the dual aim of writing standard-compliant (and thus portable) code without losing access to powerful low-level threading primitives. % may need another pass on this one :(
+The matured parallelism features of C++11 were used in this project with the dual aim of writing standard-compliant (and thus portable) code and without losing access to powerful low-level threading primitives. % may need another pass on this one :(
 
 \subsection{Solution} %for lack of a better word
 %TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
