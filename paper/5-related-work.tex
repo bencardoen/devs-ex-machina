@@ -11,7 +11,4 @@ By virtue of not flattening Coupled Models, performance suffers in increasingly 
 \subsection{CD++}
 %TODO explain about CD++, the most related in terms of synchronization --> we implement everything in a single program, with a non-fragmented code-base
 %TODO make mention of Warped, which is the kernel used in CD++, and why we don't use it
-% Still todo : a feature comparison.
-\subsection{Warped}
-The Warped kernel was not used since we operate explicitly for a shared memory system and wanted to design our kernels using the least amount of overhead possible.
-% Not saying MPI is slow (it isn't), but if we can pass a pointer, we don't need MPI.
+Different projects on CD++ offer conservative (CCD++) as well as optimistic (PCD++) parallel simulation. In contrast to our single program, with a non-fragmented code-base, neither projects offer both synchronization protocols. CD++ relies on the WARPED kernel. It is a middleware that provides memory, event, file, time and communication scheduling. WARPED is not used here since we operate explicitly on a shared memory system and since we wanted to design our kernels using the least amount of overhead possible.
