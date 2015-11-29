@@ -113,10 +113,10 @@ def pholdgen(simtype, executable):
 
 
 def interconnectgen(simtype, executable, doRandom=False):
-    if simtype == SimType.optimistic:
+    if simtype == simtypes.optimistic:
         print("Refusing to run interconnect with optimistic!")
         return
-    if simtype == SimType.classic:
+    if simtype == simtypes.classic:
         # time 5 000 000
         for width in [10, 20, 30, 40, 50, 60, 70]:
             for endTime in [args.endtime]:
