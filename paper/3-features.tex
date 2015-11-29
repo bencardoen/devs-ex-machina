@@ -11,7 +11,7 @@ The simulator is based on PythonPDEVS \cite{PythonPDEVS}  , and provides the fol
 	\item Optimistic and Conservative synchronization of PDEVS.
 \end{enumerate}
 The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use.\\
-The tracing is not comparable with adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be threadsafe and deterministic so that a simulation will always produce the exact same output.
+The tracing is not comparable to adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be threadsafe and deterministic so that a simulation will always produce the exact same output.
 %TODO Decide whether we should list the functionality that is _not_ implemented
 The following features from PythonPDEVS are not present
 \begin{enumerate}
@@ -36,7 +36,7 @@ While PythonPDEVS can be controlled from within a Python script and adevs has a 
 A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
 A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
-For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i]\ )  - \epsilon $. %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?.
+For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $. %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?.
 
 \subsubsection{Optimistic}
 The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user. 
@@ -57,14 +57,14 @@ Continuous profiling of the kernels in several benchmarks highlighted the follow
 \subsubsection{Heap}
 A kernel never sends a complete object to another kernel, only a pointer to the object. This avoids a possibly expensive copy of the payload, but at the cost of allocation overhead.\\
 This cost becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and messages, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other, and in a single threaded kernel we can leverage arena-style pools if desired.\\
-This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (iff it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free. \\
+This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (if it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free. \\
 Initially the kernels used strings as identifiers, as is done in PyPDEVS, profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new object, or copy existing.\\
-Strings are more intuitive to work with from a user's standpoint, so as a compromise the user can reference models/ports by string name (usually when constructing the model). Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
+Strings are more intuitive to work with from a user's standpoint. So as a compromise the user can reference models/ports by string name (usually when constructing the model). Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
 \\
-\subsubsection{Smart pointers}
+\subsubsection{Raw pointers}
 While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads the reference counting becomes prohibitively expensive, and the (de)allocating caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
 \subsubsection{Locking}
 Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
 On a higher level, we avoid the sending of synchronization messages entirely by writing the timestamp directly into shared memory.\\ Sending of antimessages is fairly cheap in our implementation, since only the modified pointer to the original message is sent to the receiving kernel.
 \subsubsection{Schedulers}
-PythonPDEVS has a wide range of schedulers for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depending on the nr of items to update. Items are only updated, never removed.
+PythonPDEVS has a wide range of schedulers for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a C++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depending on the nr of items to update. Items are only updated, never removed.
