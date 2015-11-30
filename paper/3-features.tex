@@ -10,7 +10,7 @@ The simulator is based on PythonPDEVS, and provides the following features:
 	\item Tracing An asynchronous, thread safe and versatile tracing mechanism allows exact verification of the simulation.
 	\item Optimistic and Conservative synchronization of PDEVS.
 \end{enumerate}
-The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use.\\
+The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use. Another example is the state saving mechanism, which is only used for optimistic parallel simulation and has no performance impact in conservative parallel simulation.\\
 The tracing is not comparable to adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be thread safe and deterministic so that a simulation will always produce the exact same output.
 %TODO Decide whether we should list the functionality that is _not_ implemented
 The following features from PyPDEVS are not present
@@ -20,10 +20,10 @@ The following features from PyPDEVS are not present
 	\item Interactive control. 
 	\item Distributed simulation
 \end{enumerate}
-Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp.\\ State saving has no impact in a single threaded or conservative kernel.\\
+Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. %This state saving has no impact in a single threaded or conservative kernel.
+\\
 Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
-Debugging tools such as a logger and a graph visualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.\\
-While PyPDEVS can be controlled from within a Python script and adevs has a Java interface, our implementation does not have any bindings to other languages.
+Debugging tools such as a logger and a graph visualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.
 
 %TODO ... and thus has most features from PythonPDEVS, like Dynamic Structure, termination condition, direct connection, ...
 %TODO (size: take as much size as you want, depending on how much is shared with PythonPDEVS)

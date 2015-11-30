@@ -2,7 +2,7 @@
 %TODO SIZE: approx. 1-2 column, every TODO is approx. one paragraph
 \subsection{DEVS}
 %TODO give introduction to the field: DEVS is used for discrete event simulation and is a common basis for most other formalisms
-The family of DEVS \cite{DEVSbase} formalisms serve as a common basis for most other discrete event formalisms. Of interest in this paper are the 3 key formalisms: Classic \cite{ClassicDEVS}, Dynamic Structured \cite{DSDEVS} and Parallel \cite{ParallelDEVS} and their implementation. This project uses the Direct Connection \cite{SymbolicFlattening} algorithm, so from a kernel's perspective only Atomic Models exist in the simulation linked to each other by connected ports.
+The family of DEVS \cite{DEVSbase} formalisms serve as a common basis for most other discrete event formalisms. Of interest in this paper are the 2 key formalisms: Dynamic Structured \cite{DSDEVS} and Parallel \cite{ParallelDEVS} and their implementation. This project uses the Direct Connection \cite{SymbolicFlattening} algorithm, so from a simulation kernel's perspective only Atomic Models exist linked to each other by connected ports.
 
 \subsection{Parallel computing}
 %TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
@@ -19,7 +19,7 @@ The matured parallelism features of C++11 were used in this project with the dua
 %TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
 The usage of the Direct connection algorithm makes reusing the adevs kernel hard.
 The devs-ex-machina (dxex) kernel follows the design of the PythonPDEVS \cite{PythonPDEVS}(PyPDEVS) kernel where appropriate, but by the very nature of the implementation languages has to differ in key aspects (e.g. memory allocation strategy). 
-The core aims of the project are to offer a deterministic simulation kernel where the simulation author is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model need be written only once for use in the different simulation kernels (with the exception of a non-trivial lookahead).\\
+The core aim of the project is to offer a deterministic simulation kernel where the simulation modeller is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model need be written only once for use in the different simulation kernels (with the exception of a non-trivial lookahead).\\
 The tracing framework from PyPDEVS was ported to allow optional verification of simulations. 
 \subsection{Time}
 The DEVS formalisms has $\mathbb{R}$ as time base, but any implementation has to decide on an enumerable representation of time. Dxex kernels can operate on IEEE754 floating point time units or integer time. In principle any type with well defined operators can be used as template parameter, but from a performance point of view a type fitting in a machine word offers obvious advantages.%ref to time paper.

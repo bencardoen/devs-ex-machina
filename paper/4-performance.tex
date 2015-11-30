@@ -7,6 +7,7 @@
 %TODO and explain why there is such a difference
 %TODO (spend some time here, as this is also important)
 \subsubsection{CPU Usage}
+%TODO !!! benchmarks are in integers
 \paragraph*{Devstone}
 The Devstone \cite{DEVStone} benchmark is highly hierarchical, using Direct connection the dxex kernels can exploit this, whereas adevs needs to walk the structure of the model to pass events.
 % TODO plot here
@@ -25,6 +26,7 @@ Platform used has a i5-3317U Intel cpu and 8GB RAM with a page size of 4,096KiB,
 Adevs passes messages by value (in container by reference), we pass by pointer. The runtime effects of this choice are already demonstrated in the interconnect benchmark, so in this section, we measure memory usage in number of allocated pages. This combines text, stack and heap memory for the program profiled, from the point of view of the OS or user, this is the actual memory in use. It is important to note that, especially in the case of optimistic, not all this memory is in use by the kernel, since the pools will in general not return memory once it is allocated but keep it for later reuse.
 \paragraph*{Results}
 \paragraph*{Devstone}
+%TODO Tables with lines?
 \begin{table}[lhtb]
 	\centering
 	\caption{Devstone 40x40 t5e5, unit MiB, 4 kernels (if parallel)}
@@ -35,6 +37,7 @@ Adevs passes messages by value (in container by reference), we pass by pointer. 
 	\end{tabular}
 \end{table}
 Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection, this inevitable delay explains the higher memory usage w.r.t adevs.\\
+%TODO next sentence needs rewriting
 Optimistic needs a more complex GVT/garbage collection algorithm plus the differences in LP virtual times are far larger, which explains the heavier memory usage. Devstone (flattened) is allocated in a chain, this means that the leafs in the dependency graph will do a lot of unnecessary simulation before having a revert, leading to quite severe memory pressure. Unlike conservative and sequential execution, memory usage in optimistic varies greatly depending on scheduling of kernel threads and drifting between kernels. 
 \paragraph*{Interconnect}
 In section 4.2 the parallel performance of this benchmark is further explained. It is of interest for sequential to contrast with the runtime penalty that dxex suffers w.r.t. adevs. Optimistic fails this benchmark, see section 4.2.3 for a detailed analysis.
@@ -83,7 +86,7 @@ Our optimistic implementation does not complete an instance of this benchmark. T
 \subsubsection{Priority network model}
 %TODO show a single plot which varies a parameter that changes the ideal synchronization protocol
 The priority benchmark is composed of a single server generating a stream of $0<=m<=n$ messages at fixed time intervals, interleaved with a probability p for a priority message, to n receivers. \\ This defaults lookahead for the receivers to $\epsilon$ but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server, and have a internal transition so will not wait for the incoming messages. 
-\input pqueue.tex
+\input pqueue.tex \\
 A key difference here with the other benchmarks is that a state (in the Receiver instances) is very cheap to copy/create. The kernel holding the server will never revert since it is a source in the dependency graph. Optimistic will therefore not suffer the same performance hit in recreating states as it does in PHold. 
 
 %TODO (keep explaining as much as space permits, as this is the evaluation of the core contribution)
