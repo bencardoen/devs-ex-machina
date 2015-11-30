@@ -1,26 +1,38 @@
-# Change this path to the folder all .csv files are stored per benchmark
-# This will become dynamic in the future, still being tested on different platforms
-setwd("d:/tim/ua/statistiek/tim-eindwerk/v6/data")
+# global variables
+generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
+epscount <<- 1
+rootpath <<- 'C:/Users/amask/Dropbox/UA/Devs Ex Machina/v9/'
+datapath <<- paste(rootpath, 'data/', sep = '')
+figspath <<- paste(rootpath, 'figs/', sep = '')
+setwd(datapath)
 
 # 1-dimensional performance tests
 
-process1ddata <- function(datatable, devstone) {
+process1ddata <- function(datatable, collabel) {
 	resultdata <- data.frame(x = numeric(), cpu = numeric(), conflow = numeric(), confhigh = numeric())
-	indextable <- unique(datatable[, 3])
+		
+	timelabel = 'time.elapsed..seconds.'
+
+	colindex = which(colnames(datatable) == collabel)
+	timeindex = which(colnames(datatable) == timelabel)
+	print(sprintf("Column Index: %s %d", collabel, colindex))
+	print(sprintf("Time Index: %d", timeindex))
+	
+	indextable <- unique(datatable[, colindex])
 	cnt <- 1
 	for (n in seq(length(indextable))) {
 			i <- indextable[[n]]
-
-			if (devstone)
-				fdata <- subset(datatable, width == i, select = c(width, time.elapsed..seconds. ))
-			else
-				fdata <- subset(datatable, nodes == i, select = c(nodes, time.elapsed..seconds. ))
+				
+			fdata <- subset(datatable, datatable[[ collabel ]] == i, select = c(colindex, timeindex))
+			
 			print(sprintf("Processing width = %d", i))
 			print(sprintf("Number of measurements: %d", nrow(fdata)))
+			
 			# print(fdata$time.elapsed..seconds.)
-			avg <- mean(fdata$time.elapsed..seconds.)
+			
+			avg <- mean(fdata[[ timelabel ]])
 			print(avg)
-			tdata <- t.test(fdata$time.elapsed..seconds., mu = 0, alternative="two.sided", conf.level = 0.95)
+			tdata <- t.test(fdata[[ timelabel ]], mu = 0, alternative="two.sided", conf.level = 0.95)
 			avg <- tdata$estimate[[1]]
 			confl <- tdata$conf.int[[1]]
 			confh <- tdata$conf.int[[2]]
@@ -194,29 +206,18 @@ calccorrelation <- function(data1, label1, data2, label2, isdevstone) {
 	abline(fit, col="red", lwd=2)
 }
 
-group2 <- function() {
-	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
-	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
-	adevstoneconsdata = read.table(file="adevstone/conservative.csv",header=TRUE,sep=";")
-	dxdevstoneconsdata = read.table(file="devstone/conservative.csv",header=TRUE,sep=";")
-
-	pdf("d:/tmp/mygraphs.pdf")
-	displaydata(dxdevstonedata, TRUE, "DX DevStone Classic")
-	displaydata(adevstonedata, TRUE, "A DevStone Classic")
-	displaydata(dxdevstoneconsdata, TRUE, "DX DevStone Conservative")
-	displaydata(adevstoneconsdata, TRUE, "A DevStone Conservative")
-	displaydata2(dxdevstonedata, "DX DevStone Classic", adevstonedata, "A DevStone Classic", TRUE, "DX DevStone Classic vs. A DevStone Classic")
-	displaydata2(dxdevstoneconsdata, "DX DevStone Conservative", adevstoneconsdata, "A DevStone Classic", TRUE, "DX DevStone Conservative vs. A DevStone Conservative")
-	calccorrelation(dxdevstonedata, "DX DevStone Classic", adevstonedata, "A DevStone Classic", TRUE)
-	calccorrelation(dxdevstoneconsdata, "DX DevStone Conservative", adevstoneconsdata, "A DevStone Classic", TRUE)
-	dev.off()
-}
-
 newrange <- function(range1, range2) {
 	return(c(min(range1[1], range2[1]), max(range1[2], range2[2])))
 }
 
-comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel) {
+myrainbow <- function(n) {
+	if (n <= 5)
+		return(c("red", "green", "blue", "dodgerblue", "purple" ))
+	else
+		return(rainbow(n))
+}
+
+comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendpos) {
 	nrcharts <- length(datalist)
 	
 	xrange <- range(datalist[[1]]$x)
@@ -226,11 +227,16 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel) {
 		yrange <- newrange(yrange, range(datalist[[i]]$cpu))
 	}
 	
+	if (!generatePDF) {
+		postscript(sprintf("%sfig%d.eps", figspath, epscount), width=5, height=5, paper="special")
+		epscount <<- epscount + 1
+	}
+		
 	plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel)
 	
-	colors <- rainbow(nrcharts)
+	colors <- myrainbow(nrcharts)
 	linetype <- c(1:nrcharts)
-	plotchar <- seq(18, 18+nrcharts, 1)
+	plotchar <- seq(15, 15+nrcharts, 1)
 	
 	for (i in 1:nrcharts) {
 		lines(datalist[[i]]$x, datalist[[i]]$cpu,
@@ -243,87 +249,64 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel) {
 	
 	title(chartlabel)
 	
-	legend(xrange[1], yrange[2],
+	if (legendpos == "topright") {
+		legendxpos = xrange[2]
+		legendypos = yrange[2]
+		legendxjust = 1.0
+		legendyjust = 1.0
+	} else if (legendpos == "midleft") {
+		legendxpos = xrange[1]
+		legendypos = (yrange[1] + yrange[2])/2
+		legendxjust = 0.0
+		legendyjust = 0.5
+	} else {	# "topleft"
+		legendxpos = xrange[1]
+		legendypos = yrange[2]
+		legendxjust = 0.0
+		legendyjust = 1.0
+	}
+	
+	legend(legendxpos, legendypos,
+		xjust = legendxjust, yjust = legendyjust,
 		labellist,
 		cex=0.8,
 		col=colors,
 		pch=plotchar,
 		lty=linetype,
 		title="Legend")
-		
+	
+	if (!generatePDF)
+		dev.off()	
+	
 	lateXTable(datalist, labellist, xlabel, ylabel, chartlabel)
 }
 
-compare2sets <- function(data1, label1, data2, label2, xlabel, ylabel, chartlabel, devstone) {
+compare2sets <- function(data1, label1, data2, label2, xlabel, ylabel, chartlabel, devstone, legendpos) {
 	perfdata1 <- process1ddata(data1, devstone)
 	perfdata2 <- process1ddata(data2, devstone)
 	datalist <- list(perfdata1, perfdata2)
 	labellist <- list(label1, label2)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel)
+	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
 }
 
-compare3sets <- function(data1, label1, data2, label2, data3, label3, xlabel, ylabel, chartlabel, devstone) {
+compare3sets <- function(data1, label1, data2, label2, data3, label3, xlabel, ylabel, chartlabel, devstone, legendpos) {
 	perfdata1 <- process1ddata(data1, devstone)
 	perfdata2 <- process1ddata(data2, devstone)
 	perfdata3 <- process1ddata(data3, devstone)
 	datalist <- list(perfdata1, perfdata2, perfdata3)
 	labellist <- list(label1, label2, label3)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel)
+	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
 }
 
-group3 <- function() {
-	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
-	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
-	adevstoneconsdata = read.table(file="adevstone/conservative.csv",header=TRUE,sep=";")
-	dxdevstoneconsdata = read.table(file="devstone/conservative.csv",header=TRUE,sep=";")
-	dxdevstoneoptdata = read.table(file="devstone/optimistic.csv",header=TRUE,sep=";")
-	
-	randdxdevstonedata = read.table(file="randdevstone/classic.csv",header=TRUE,sep=";")
-	randadevstonedata = read.table(file="aranddevstone/classic.csv",header=TRUE,sep=";")
-	randadevstoneconsdata = read.table(file="aranddevstone/conservative.csv",header=TRUE,sep=";")
-	# randdxdevstoneconsdata = read.table(file="randdevstone/conservative.csv",header=TRUE,sep=";")
-	randdxdevstoneoptdata = read.table(file="randdevstone/optimistic.csv",header=TRUE,sep=";")
-	
-	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
-	aconnectdata = read.table(file="aconnect/classic.csv",header=TRUE,sep=";")
-	randdxconnectdata = read.table(file="randconnect/classic.csv",header=TRUE,sep=";")
-	randaconnectdata = read.table(file="arandconnect/classic.csv",header=TRUE,sep=";")
-	
-	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
-	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
-
-	lateXInit("d:/tmp/DXvsADEVS.tex")
-	pdf("d:/tmp/DXvsADEVS.pdf")
-	
-	compare2sets(dxdevstonedata, "DX", adevstonedata, "ADEVS", "Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS DevStone Single Core", TRUE)
-	compare2sets(dxdevstoneconsdata, "DX", adevstoneconsdata, "ADEVS", "Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS DevStone Conservative", TRUE)
-	compare3sets(dxdevstonedata, "Single Core",
-		dxdevstoneconsdata, "Conservative",
-		dxdevstoneoptdata, "Optimistic",
-		"Width/Height", "Elapsed Time (sec.)", "DX DevStone", TRUE)
-	
-	compare2sets(randdxdevstonedata, "DX", randadevstonedata, "ADEVS", "Width/Height", "Elapsed Time (sec.)", "Random DX vs. ADEVS DevStone Single Core", TRUE)
-	# compare2sets(randdxdevstoneconsdata, "DX", randadevstoneconsdata, "ADEVS", "Width", "Elapsed Time (sec.)", "Random DX vs. ADEVS DevStone Conservative", TRUE)
-	compare2sets(randdxdevstonedata, "Single Core",
-		randdxdevstoneoptdata, "Optimistic",
-		"Width/Height", "Elapsed Time (sec.)", "Random DX DevStone", TRUE)
-	
-	compare2sets(dxconnectdata, "DX",
-		aconnectdata, "ADEVS",
-		"Width", "Elapsed Time (sec.)", "DX vs. ADEVS Connect Single Core", TRUE)
-	compare2sets(randdxconnectdata, "DX",
-		randaconnectdata, "ADEVS",
-		"Width", "Elapsed Time (sec.)", "DX vs. ADEVS Random Connect Single Core", TRUE)
-		
-	compare2sets(dxpholddata, "DX",
-		apholddata, "ADEVS",
-		"Nodes", "Elapsed Time (sec.)", "DX vs. ADEVS PHold Classic", FALSE)
-	
-	dev.off()
-	lateXExit()
+compare4sets <- function(data1, label1, data2, label2, data3, label3, data4, label4, xlabel, ylabel, chartlabel, devstone, legendpos) {
+	perfdata1 <- process1ddata(data1, devstone)
+	perfdata2 <- process1ddata(data2, devstone)
+	perfdata3 <- process1ddata(data3, devstone)
+	perfdata4 <- process1ddata(data4, devstone)
+	datalist <- list(perfdata1, perfdata2, perfdata3, perfdata4)
+	labellist <- list(label1, label2, label3, label4)
+	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
 }
-
-lateXFilename <<- "d:/tmp/default.tex"
 
 lateXInit <- function(filename) {
 	lateXFilename <<- filename
@@ -363,6 +346,77 @@ lateXTable <- function(datalist, labellist, xlabel, ylabel, chartlabel) {
 	s <- "\\hline\n\\end{tabular}\n\\end{center}\n"
 	s <- paste(s, sprintf("\\caption{%s}\n\\end{figure}\n", chartlabel), sep="")
 	write(s, file=lateXFilename, append=TRUE, sep="")
+}
+
+gengraphs <- function() {
+	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
+	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
+	adevstoneconsdata = read.table(file="adevstone/conservative.csv",header=TRUE,sep=";")
+	dxdevstoneconsdata = read.table(file="devstone/conservative.csv",header=TRUE,sep=";")
+	dxdevstoneoptdata = read.table(file="devstone/optimistic.csv",header=TRUE,sep=";")
+	
+	# randdxdevstonedata = read.table(file="randdevstone/classic.csv",header=TRUE,sep=";")
+	# randadevstonedata = read.table(file="aranddevstone/classic.csv",header=TRUE,sep=";")
+	# randadevstoneconsdata = read.table(file="aranddevstone/conservative.csv",header=TRUE,sep=";")
+	# randdxdevstoneoptdata = read.table(file="randdevstone/optimistic.csv",header=TRUE,sep=";")
+	
+	dxconnectconsdata = read.table(file="connect/conservative.csv",header=TRUE,sep=";")
+	adevsconnectconsdata = read.table(file="aconnect/conservative.csv",header=TRUE,sep=";")
+	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
+	adevsconnectdata = read.table(file="aconnect/classic.csv",header=TRUE,sep=";")
+	
+	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
+	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
+	dxpholdconsdata = read.table(file="phold/conservative.csv",header=TRUE,sep=";")
+	apholdconsdata = read.table(file="aphold/conservative.csv",header=TRUE,sep=";")
+	
+	dxpriorityconsdata = read.table(file="priority/conservative.csv",header=TRUE,sep=";")
+	dxpriorityoptdata = read.table(file="priority/optimistic.csv",header=TRUE,sep=";")
+	
+	lateXInit(paste(figspath, 'DXvsADEVS.tex', sep=''))
+	
+	if (generatePDF)
+		pdf(paste(figspath, 'DXvsADEVS.pdf', sep=''))
+	# jpeg("d:/tmp/DXvsADEVS.jpg", width=5, height=5, units="in", res=300)
+	
+	if (!generatePDF)
+		setEPS()
+	
+	compare2sets(dxdevstonedata, "DX",
+		adevstonedata, "ADEVS",
+		"Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS DevStone Single Core", 'width', "topleft")
+	
+	compare3sets(dxdevstoneoptdata, "DX Optimistic",
+		dxdevstoneconsdata, "DX Conservative",
+		adevstoneconsdata, "ADEVS Conservative",
+		"Width/Height", "Elapsed Time (sec.)", "DevStone", 'width', "topleft")
+	
+	compare2sets(dxconnectdata, "DX",
+		adevsconnectdata, "ADEVS",
+		"Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS Classic Connect Single Core", 'width', "topleft")
+		
+	compare2sets(dxconnectconsdata, "DX", adevsconnectconsdata, "ADEVS", "Nr. of Cores", "Elapsed Time (sec.)", "DX vs. ADEVS Conservative Connect", 'ncores', "topleft")
+	
+	compare4sets(dxpholddata, "DX Classic",
+		apholddata, "ADEVS Classic",
+		dxpholdconsdata, "DX Conservative",
+		apholdconsdata, "ADEVS Conservative",
+		"Percentage of Remotes", "Elapsed Time (sec.)", "PHold", 'X..remotes', "midleft")
+	
+	compare2sets(dxpriorityconsdata, "Conservative", dxpriorityoptdata, "Optimistic", "Priority", "Elapsed Time (sec.)", "DX Priority Conservative vs. Optimistic", 'priority', "topright")
+	
+	if (generatePDF)
+		dev.off()
+		
+	lateXExit()
+}
+
+group4 <- function() {
+	datapath
+	generatePDF <<- TRUE # generate PDF
+	gengraphs()
+	generatePDF <<- FALSE # generate EPS files
+	gengraphs()
 }
 
 
