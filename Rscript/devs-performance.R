@@ -1,7 +1,7 @@
 # global variables
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
-rootpath <<- 'C:/Users/amask/Dropbox/UA/Devs Ex Machina/v9/'
+rootpath <<- 'd:/tim/ua/statistiek/tim-eindwerk/v6/data'
 datapath <<- paste(rootpath, 'data/', sep = '')
 figspath <<- paste(rootpath, 'figs/', sep = '')
 setwd(datapath)
