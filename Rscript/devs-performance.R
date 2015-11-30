@@ -1,7 +1,7 @@
 # global variables
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
-rootpath <<- 'd:/tim/ua/statistiek/tim-eindwerk/v6/data'
+rootpath <<- 'd:/tim/ua/statistiek/tim-eindwerk/v9/data'
 datapath <<- paste(rootpath, 'data/', sep = '')
 figspath <<- paste(rootpath, 'figs/', sep = '')
 setwd(datapath)
@@ -231,8 +231,14 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 		postscript(sprintf("%sfig%d.eps", figspath, epscount), width=5, height=5, paper="special")
 		epscount <<- epscount + 1
 	}
-		
-	plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel)
+	
+	if (xrange[[2]] - xrange[[1]] < 10) {
+		# special case for CPU's
+		# we only want to use 2 and 4 as labels...
+		plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel, xaxt='n')
+		axis(side = 1, at = seq(-10,10,2) , labels = T)
+	} else
+		plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel)
 	
 	colors <- myrainbow(nrcharts)
 	linetype <- c(1:nrcharts)
