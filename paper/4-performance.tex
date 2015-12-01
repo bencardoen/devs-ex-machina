@@ -31,9 +31,10 @@ Adevs passes messages by value (in container by reference), we pass by pointer. 
 	\centering
 	\caption{Devstone 40x40 t5e5, unit MiB, 4 kernels (if parallel)}
 	\label{dtone_mem}
-	\begin{tabular}{lllll}
-		Adevs & AdevsCon &DX &DXCon &DXOpt\\
-		44 & 70 & 42 & 75 & 363  \\
+	\begin{tabular}{| l | l | l | l | l |}
+		\hline
+		Adevs & AdevsCon &DX &DXCon &DXOpt\\ \hline
+		44 & 70 & 42 & 75 & 363  \\ \hline
 	\end{tabular}
 \end{table}
 Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection, this inevitable delay explains the higher memory usage w.r.t adevs.\\
@@ -45,9 +46,10 @@ In section 4.2 the parallel performance of this benchmark is further explained. 
 	\centering
 	\caption{Interconnect w 40 t5e5, unit MiB, 2 kernels (if parallel)}
 	\label{iconn_mem}
-	\begin{tabular}{lllll}
-		Adevs & AdevsCon &DX &DXCon\\
-		39 & 39 & 35 & 52  \\
+	\begin{tabular}{| l | l | l | l |}
+		\hline
+		Adevs & AdevsCon &DX &DXCon\\ \hline
+		39 & 39 & 35 & 52  \\ \hline
 	\end{tabular}
 \end{table}
 The discrepancy between both conservative implementations is detailed in 4.1.4.
@@ -58,9 +60,10 @@ The priority network model is detailed in section 4.4.
 	\centering
 	\caption{Priority model n 16, m 9, p 10,  t5e5, unit MiB, 2 kernels}
 	\label{pmod_mem}
-	\begin{tabular}{lll}
-		DX &DXCon &DXOpt\\
-		35 & 58 &69\\
+	\begin{tabular}{| l | l | l |}
+		\hline
+		DX &DXCon &DXOpt\\ \hline
+		35 & 58 &69\\ \hline
 	\end{tabular}
 \end{table}
 
@@ -76,7 +79,6 @@ The flattened models are allocated to kernels by giving each kernel a distinct s
 In Phold \cite{PHOLD} allocation is specified in the benchmark itself, each kernel manages a single node with a constant set of sub-nodes. The parameter R determines the percentage of remote destination models.\\
 The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing conservative. Lookahead is $\epsilon$, so conservative spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation. For N kernels, each kernel has to query the null-time of N-1 kernels, resulting in O($N^2$) polling behaviour. This benchmark therefore highlights the price that we pay for sharing those values instead of sending an actual null message. In a non-cyclic simulation with a non-trivial lookahead (e.g. devstone), that choice however does pay off.\\
 Optimistic suffers little from the above problems, however due to the high interconnectivity a cascading revert is still possible. More seriously, a revert is very expensive in PHold due to our usage of C++11's random nr generators. The cost of a revert is dominated by the recalculation of destination models, not in allocating/deallocating states/messages. Again, this could be significantly reduced using lazy-cancellation. Once a revert happens the drift between the kernels increases fast, increasing the likelihood of more reverts. 
-
 \subsubsection{Interconnect}
 In Interconnect
 the set of atomic models form a complete graph (w.r.t. connections), each model broadcasts messages to the entire set. \\

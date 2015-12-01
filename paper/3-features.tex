@@ -31,8 +31,8 @@ Debugging tools such as a logger and a graph visualizer are included which can t
 \subsection{Different Synchronization protocols}
 %TODO explain rationale: why different synchronization protocols
 % weak scenarios for C, O and both ?
+%TODO !!!!!!! This needs better explaining, perhaps a central graph to reference to ?
 \subsubsection{Conservative}
-% This needs better explaining, perhaps a central graph to reference to ?
 A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
 A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
