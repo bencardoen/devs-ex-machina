@@ -1,6 +1,6 @@
 %TODO explain that we are briefly going over the main features
 \subsection{Based on PythonPDEVS}
-%TODO say that it is based on PythonPDEVS
+%TODO say that it is based on PythonPDEVS --done
 The simulator is based on PythonPDEVS, and provides the following features: 
 \begin{enumerate}
 	\item Direct Connection
@@ -20,7 +20,7 @@ The following features from PyPDEVS are not present
 	\item Interactive control. 
 	\item Distributed simulation
 \end{enumerate}
-Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. %This state saving has no impact in a single threaded or conservative kernel.
+Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. %This state saving has no impact in a single threaded or conservative kernel. -> already mentioned above
 \\
 Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
 Debugging tools such as a logger and a graph visualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.
@@ -30,13 +30,16 @@ Debugging tools such as a logger and a graph visualizer are included which can t
 %TODO (maybe: note that models are not compatible)
 \subsection{Different Synchronization protocols}
 %TODO explain rationale: why different synchronization protocols
+% Multiple synchronization protocols exist, with each their own strengths and weaknesses.
 % weak scenarios for C, O and both ?
 %TODO !!!!!!! This needs better explaining, perhaps a central graph to reference to ?
 \subsubsection{Conservative}
 A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
 A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
-For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $. %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?.
+For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
+%This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?. %writing this here seems inappropriate
+%TODO indicate in which cases conservative is good: perfect/good lookahead calculation (might be very hard) and what may be a problem: runtime behavior compared to static analysis makes the simulator too conservative. (e.g. a model might send a message, but never does will slow down the simulation)
 
 \subsubsection{Optimistic}
 The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user. 
@@ -49,6 +52,7 @@ The user need only provide one implementation of a model for use with both synch
 \\
 The implementation details such as defining the copy semantics of a State are provided (but can be overridden). \\
 From the user's perspective, the multi-threaded aspect of the kernel is not exposed. % payload protected ?
+%TODO indicate in which optimistic is good (when runtime behavior is very hard to predict). Describe some drawbacks (many reverts when everybody influences everybody all the time)
 
 \subsection{Performance Improvements}
 %TODO briefly discuss some of the additional changes you implemented
@@ -58,11 +62,11 @@ Continuous profiling of the kernels in several benchmarks highlighted the follow
 A kernel never sends a complete object to another kernel, only a pointer to the object. This avoids a possibly expensive copy of the payload, but at the cost of allocation overhead.\\
 This cost becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and messages, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other, and in a single threaded kernel we can leverage arena-style pools if desired.\\
 This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (if it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free. \\
-Initially the kernels used strings as identifiers, as is done in PyPDEVS, profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new object, or copy existing.\\
+The kernels initially used strings as identifiers, as is done in PyPDEVS. Profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new object, or copy existing.\\
 Strings are more intuitive to work with from a user's standpoint. So as a compromise the user can reference models/ports by string name (usually when constructing the model). Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
 \\
 \subsubsection{Raw pointers}
-While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads the reference counting becomes prohibitively expensive, and the (de)allocating caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
+While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads, the reference counting becomes very expensive, and the (de)allocating of memory caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
 \subsubsection{Locking}
 Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
 On a higher level, we avoid the sending of synchronization messages entirely by writing the timestamp directly into shared memory.\\ Sending of antimessages is fairly cheap in our implementation, since only the modified pointer to the original message is sent to the receiving kernel.

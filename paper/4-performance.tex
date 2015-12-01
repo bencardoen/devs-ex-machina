@@ -78,7 +78,7 @@ Adevs passes messages by value (in container by reference), we pass by pointer. 
 	\end{tabular}
 \end{table}
 Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection. This inevitable delay explains the higher memory usage compared to adevs.\\
-%TODO next sentence needs rewriting
+%TODO next sentence needs rewriting --done?
 Optimistic needs a more complex GVT/garbage collection algorithm due to the Timewarp algorithm, which requires that the state of models is saved. Additionally, the differences in LP virtual times are far larger compared to conservative time synchronization. All these factors explain the heavier memory usage. Devstone (flattened) is allocated in a chain. The leafs in the dependency graph will therefore do a lot of unnecessary simulation before having a revert, leading to quite severe memory pressure. Unlike conservative and sequential execution, memory usage in optimistic varies greatly depending on scheduling of kernel threads and drifting between kernels. 
 \paragraph*{Interconnect}
 In section 4.2 the parallel performance of this benchmark is further explained. It is of interest for sequential to contrast with the runtime penalty that dxex suffers w.r.t. adevs. Optimistic fails this benchmark, see section 4.2.3 for a detailed analysis.\\
