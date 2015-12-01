@@ -1,13 +1,11 @@
 %TODO conclude the paper, saying that our new simulation tool offers conservative and optimistic synchronization, resulting in good performance, which is even better than adevs
-% needs some extending. Maybe clarify that we actually do single core PDEVS and not
-% pure classic DEVS.
-Both synchronization algorithms offer good performance in differing simulations, in some simulation our kernels outperform adevs whereas in others we can still improve. 
-The optimistic implementation needs to be extended with lazy evaluation/cancellation to function in cyclic simulations.
+Both synchronization implementations offer good performance in differing simulations, in some simulations dxex outperforms adevs whereas in others we can still improve. 
+The optimistic implementation uses an aggressive TimeWarp variant, this needs to be extended with lazy evaluation/cancellation to function in cyclic simulations. 
 \subsection{Future work}
 %TODO future work: more things that we might want to implement, and probably something about automatically switching between synchronization protocols at runtime (and reference my activity papers ;))
 \subsubsection{Activity}
-As shown in \cite{PythonPDEVS_ACTIMS} activity and allocation of models across kernels is a key aspect in achieving high performance in any parallel implementation. Allocating models so that there are no dependency cycles between their containing kernels is a first step, but not always possible. For optimistic one can use re-allocation to break (runtime dependency) cycles or perform load balancing. If kernels are unevenly balanced they will begin to drift fast, causing increasingly more reverts. 
+As shown in \cite{PythonPDEVS_ACTIMS} activity and allocation of models across kernels is a key aspect in achieving high performance in any parallel implementation. Allocating models so that there are no dependency cycles between their containing kernels is a first step, but not always possible. For optimistic one can use re-allocation to break (runtime dependency) cycles and/or perform load-balancing. If kernels are unevenly balanced they will begin to drift fast, causing increasingly more reverts. There is a limited framework implemented to track model activity for debugging purposes, this could be extended to enable the above strategies.
 \subsubsection{Hybrid}
 The optimistic implementation could use (null/eot/eit) from conservative to detect and/or reduce the cost of reverts without completely stalling on influencing kernels.
-Conservative kernels could be extended with runtime information about influencing models, if one can guarantee a static dependency is not used for a fixed time-span, this dependency can be removed for that period of (virtual) time. \\
-Ultimately the simulation could switch at runtime between protocols based on the information provided by activity tracking.
+Conservative kernels could be extended with runtime information about influencing models, for example if one can guarantee a static dependency is not used for a fixed time-span, this can be removed for that period of (virtual) time. 
+Ultimately the simulation could switch at runtime between protocols based on the information provided by activity tracking. This requires the above mentioned activity tracking framework, and could only be done if a GVT/LBTS time is agreed upon between the kernels. From the model point of view no changes are needed, although a non-trivial lookahead is obviously desired. 
