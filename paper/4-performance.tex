@@ -46,7 +46,7 @@ In Interconnect
 the set of atomic models form a complete graph (w.r.t. connections), each model broadcasts messages to the entire set. \\
 Allocation is irrelevant, the resulting dependency graph between kernels remains  a complete graph. The runtime dependency graph is almost immediately equal to the static dependency graph.
 Conservative still faces the same issues as in PHold, with the key difference that for a fixed time advance lookahead is equal to the timespan between transitions. The scaling issue is identical as in PHold.\\
-Our optimistic implementation does not complete an instance of this benchmark. The kernels get stuck in an infinite cascade of reverts. If kernel A reverts, it will send anti-messages to all others who in turn revert and send anti-messages to all others (and A itself again). Support for lazy cancellation could potentially undo this anti-pattern.
+Our optimistic implementation does not complete an instance of this benchmark. The kernels get stuck in an infinite cascade of reverts. If kernel A reverts, it will send anti-messages to all others who in turn revert and send anti-messages to all others (and A itself again). Support for lazy cancellation could potentially undo this anti-pattern.\\
 \begin{figure}[h]
 	\includegraphics[width=.5\textwidth]{fig/fig4.eps}
 	\label{fig4.eps}
@@ -60,14 +60,13 @@ A key difference here with the other benchmarks is that a state (in the Receiver
 %TODO (keep explaining as much as space permits, as this is the evaluation of the core contribution)
 \subsection{Memory Usage}
 %TODO compare memory usage with adevs for some benchmarks
-\paragraph*{Platform and tools}
+\subsubsection{Platform and tools}
 Both dxex and adevs use tcmalloc as memory allocator. Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (malloc/free/sbrk/mmap/...). Tcmalloc will only gradually release memory back to the OS, whereas our pools will not do so at all. If memory has been allocated once, it is from a performance point of view better to keep that memory in the pool. For this reason, the memory utilization is best measured by peak allocation. Profiling is done using Valgrind's massif tool \cite{Nethercote:2007:VFH:1273442.1250746}
 Platform used has an i5-3317U Intel cpu and 8GB RAM with a page size of 4,096KiB, running Fedora 22 (kernel 4.2.6).\\
-\paragraph*{Measure}
+\subsubsection{Measure}
 Adevs passes messages by value (in container by reference), we pass by pointer. The runtime effects of this choice are already demonstrated in the interconnect benchmark, so in this section, we measure memory usage in number of allocated pages. This combines text, stack and heap memory for the program profiled. From the point of view of the OS or user, this is the actual memory in use. It is important to note that, especially in the case of optimistic, not all this memory is always in use by the kernel. During the simulation, the pools will generally not return memory once allocated, but keep it for later reuse.
-\paragraph*{Results}
+\subsubsection{Results}
 \paragraph*{Devstone}
-%TODO Tables with lines?
 \begin{table}[lhtb]
 	\centering
 	\caption{Devstone 40x40 t5e5, unit MiB, 4 kernels (if parallel)}
@@ -78,11 +77,11 @@ Adevs passes messages by value (in container by reference), we pass by pointer. 
 		44 & 70 & 42 & 75 & 363  \\ \hline
 	\end{tabular}
 \end{table}
-Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection, this inevitable delay explains the higher memory usage w.r.t adevs.\\
+Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection. This inevitable delay explains the higher memory usage compared to adevs.\\
 %TODO next sentence needs rewriting
-Optimistic needs a more complex GVT/garbage collection algorithm plus the differences in LP virtual times are far larger, which explains the heavier memory usage. Devstone (flattened) is allocated in a chain, this means that the leafs in the dependency graph will do a lot of unnecessary simulation before having a revert, leading to quite severe memory pressure. Unlike conservative and sequential execution, memory usage in optimistic varies greatly depending on scheduling of kernel threads and drifting between kernels. 
+Optimistic needs a more complex GVT/garbage collection algorithm due to the Timewarp algorithm, which requires that the state of models is saved. Additionally, the differences in LP virtual times are far larger compared to conservative time synchronization. All these factors explain the heavier memory usage. Devstone (flattened) is allocated in a chain. The leafs in the dependency graph will therefore do a lot of unnecessary simulation before having a revert, leading to quite severe memory pressure. Unlike conservative and sequential execution, memory usage in optimistic varies greatly depending on scheduling of kernel threads and drifting between kernels. 
 \paragraph*{Interconnect}
-In section 4.2 the parallel performance of this benchmark is further explained. It is of interest for sequential to contrast with the runtime penalty that dxex suffers w.r.t. adevs. Optimistic fails this benchmark, see section 4.2.3 for a detailed analysis.
+In section 4.2 the parallel performance of this benchmark is further explained. It is of interest for sequential to contrast with the runtime penalty that dxex suffers w.r.t. adevs. Optimistic fails this benchmark, see section 4.2.3 for a detailed analysis.\\
 \begin{table}[lhtb]
 	\centering
 	\caption{Interconnect w 40 t5e5, unit MiB, 2 kernels (if parallel)}
@@ -96,7 +95,7 @@ In section 4.2 the parallel performance of this benchmark is further explained. 
 The discrepancy between both conservative implementations is detailed in 4.1.4.
 		
 \paragraph*{Priority Network}
-The priority network model is detailed in section 4.1.
+The priority network model is detailed in section 4.1.\\
 \begin{table}[lhtb]
 	\centering
 	\caption{Priority model n 16, m 9, p 10,  t5e5, unit MiB, 2 kernels}
