@@ -343,6 +343,7 @@ TEST(Optimisticcore, revertidle){
 	c2->logCoreState();		// Trafficlight is at 118::8, queued message from cop @200, @300
 
 	// Test that a Core can go from idle to live again without corrupting.
+        n_tlocal::setRevert(false);
 	c1->revert(t_timestamp(201,42));
         n_tlocal::setRevert(false);
 	// Expecting time = 201,42, revert of model 1x antimessage @300.
@@ -431,7 +432,9 @@ TEST(Optimisticcore, revertedgecases){
 	c1->logCoreState();
 	c1->runSmallStep();	// C1 : sends message to C2, triggering revert.
 	c1->logCoreState();
+        n_tlocal::setRevert(false);
 	/// Revert is triggered, light is rescheduled @228, but then wiped (correctly).
+        n_tlocal::setRevert(false);
 	c2->runSmallStep();	// C2 : time is 200:1 (reverted), no scheduled models @200
 	c2->logCoreState();
 	/// c2 remains in zombiestate
@@ -519,7 +522,9 @@ TEST(Optimisticcore, revertoffbyone){
 	c2->logCoreState();
 	c2->runSmallStep();
 	c2->logCoreState();
+        n_tlocal::setRevert(false);
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
+        n_tlocal::setRevert(false);
 	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
 	EXPECT_EQ(c2->getTime().getTime(), 58u);
@@ -607,7 +612,9 @@ TEST(Optimisticcore, revertstress){
 	c2->logCoreState();
 	c2->runSmallStep();
 	c2->logCoreState();
+        n_tlocal::setRevert(false);
 	c2->revert(t_timestamp(57,0));	// Go back to first state, try to crash.
+        n_tlocal::setRevert(false);
 	EXPECT_EQ(c2->getTime().getTime(), 57u);
 	c2->runSmallStep();		// first scheduled is 58:2, time == 57:0, does nothing but increase time.
 	EXPECT_EQ(c2->getTime().getTime(), 58u);
@@ -689,7 +696,9 @@ TEST(Optimisticcore, revert_antimessaging){
 	c1->runSmallStep();
 	c1->printSchedulerState();
 	EXPECT_TRUE(c1->getTime().getTime()==300);	// Core 1 has sent 1 message, trafficlight is still at 0.
+        n_tlocal::setRevert(false);
 	c1->revert(t_timestamp(32,0));
+        n_tlocal::setRevert(false);
 	c1->runSmallStep();	// Time goes from 32 -> 200 (first scheduled).
 	EXPECT_TRUE(c1->getTime().getTime()==200);
 	EXPECT_TRUE(c2->existTransientMessage());
@@ -704,10 +713,10 @@ TEST(Optimisticcore, revert_antimessaging){
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
 
-    c1->setLive(false);
-    c1->shutDown();
-    c2->setLive(false);
-    c2->shutDown();
+        c1->setLive(false);
+        c1->shutDown();
+        c2->setLive(false);
+        c2->shutDown();
 
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
