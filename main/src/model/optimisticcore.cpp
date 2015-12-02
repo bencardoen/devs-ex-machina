@@ -201,12 +201,13 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 
 void Optimisticcore::receiveMessage(t_msgptr msg)
 {
+        /**
         const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
         bool msgtime_in_past = false;
         if (msgtime < this->getTime().getTime()) {
                 msgtime_in_past = true;
         }
-
+        */ 
         m_stats.logStat(MSGRCVD);
 
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message @", msg);
@@ -219,12 +220,12 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
                 this->queuePendingMessage(msg);
                 this->registerReceivedMessage(msg);
         }
-
+        /**
         if (msgtime_in_past) {
                 LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime());
                 m_stats.logStat(REVERTS);
                 this->revert(msgtime);
-        }
+        }*/
 }
 
 void Optimisticcore::queuePendingMessage(t_msgptr msg)
@@ -382,12 +383,17 @@ void Optimisticcore::getMessages()
 
 void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
-        for (auto i = messages.begin(); i != messages.end(); i++) {
-                const auto & message = *i;
+        t_timestamp::t_time minmsgtime = t_timestamp::MAXTIME;
+        for (auto i = messages.begin(); i != messages.end(); ++i) {
+                t_msgptr message = *i;
+                minmsgtime = std::min(minmsgtime, message->getTimeStamp().getTime());
 #ifdef SAFETY_CHECKS
                 validateUUID(uuid(message->getDestinationCore(), message->getDestinationModel()));
 #endif
                 this->receiveMessage(message);
+        }
+        if(minmsgtime < this->getTime().getTime()){
+                this->revert(minmsgtime);
         }
 }
 

@@ -267,11 +267,13 @@ TEST(Optimisticcore, revert){
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	
 	msgaftergvt->setAntiMessage(true);
-	coreone->receiveMessage(msgaftergvt);		// this triggers a new revert, we were @67, now @63
+	coreone->receiveMessage(msgaftergvt);		// this (no longers ) triggers a new revert
+        coreone->revert(msgaftergvt->getTimeStamp());
+        
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
 
-    coreone->setLive(false);
+        coreone->setLive(false);
 	coreone->shutDown();
 	EXPECT_EQ(coreone->getTime().getTime(), 108u);
         // Message is not sent by any core, it's not processed, it's not queued so delete here (since it won't be otherwise)
