@@ -44,7 +44,7 @@ For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\
 \subsubsection{Optimistic}
 The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user. 
 The kernels use Mattern's \cite{mattern}
-GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states/(anti)messages. 
+GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states and (anti)messages. 
 
 %TODO explain core infrastructure a bit, maybe with a diagram or so, which clearly shows that everything is shared, except the "synchronization" part
 %TODO claim that this allows you to easily switch between both methods, to always chose the best one
@@ -59,12 +59,10 @@ From the user's perspective, the multi-threaded aspect of the kernel is not expo
 %TODO such as memory pools, memory allocators, profiling-guided-optimizations, ...
 Continuous profiling of the kernels in several benchmarks highlighted the following key bottlenecks: 
 \subsubsection{Heap}
-A kernel never sends a complete object to another kernel, only a pointer to the object. This avoids a possibly expensive copy of the payload, but at the cost of allocation overhead.\\
-This cost becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and messages, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other, and in a single threaded kernel we can leverage arena-style pools if desired.\\
-This changed the ownership semantics of several objects in a non-trivial way, since the thread that creates an object has to destroy it (if it can prove it is no longer used). Experiments with synchronized pools proved slower than malloc/free. \\
-The kernels initially used strings as identifiers, as is done in PyPDEVS. Profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new object, or copy existing.\\
-Strings are more intuitive to work with from a user's standpoint. So as a compromise the user can reference models/ports by string name (usually when constructing the model). Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
-\\
+Events are passed by pointer, avoiding a possibly expensive copy of the payload at the cost of allocation overhead.\\
+Allocation becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and events, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other. If desired, arena-pools are available for single-threaded simulation. A disadvantage is increased complexity in ownership semantics. The creating kernel is responsible for destruction, but this can only be guaranteed up to GVT. Experiments with synchronized pools proved slower than malloc/free. \\
+The kernels initially used strings as identifiers, as is done in PyPDEVS. Profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count, not immutable objects as in Python. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new objects, or copy existing.\\
+Strings are more intuitive to work with from a user's standpoint, so as a compromise the user can reference models/ports by string name. Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
 \subsubsection{Raw pointers}
 While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads, the reference counting becomes very expensive, and the (de)allocating of memory caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
 \subsubsection{Locking}
