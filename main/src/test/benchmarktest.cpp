@@ -327,7 +327,7 @@ TEST(Benchmark, connect_single)
     LOG_MOVE("out.txt", true);
 }
 
-TEST(Benchmark, DISABLED_connect_opt)
+TEST(Benchmark, connect_opt)
 {
     LOG_MOVE("logs/bmarkConnectOpt.log", false);
 	n_control::ControllerConfig conf;
@@ -411,7 +411,7 @@ TEST(Benchmark, connect_single_r)
     LOG_MOVE("out.txt", true);
 }
 
-TEST(Benchmark, DISABLED_connect_opt_r)
+TEST(Benchmark, connect_opt_r)
 {
     LOG_MOVE("logs/bmarkConnectOptR.log", false);
 	n_control::ControllerConfig conf;
@@ -420,8 +420,8 @@ TEST(Benchmark, DISABLED_connect_opt_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
-	bool randTa = false;
+	std::size_t width = 4;
+	bool randTa = true;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
@@ -439,7 +439,7 @@ TEST(Benchmark, DISABLED_connect_opt_r)
     LOG_MOVE("out.txt", true);
 }
 
-TEST(Benchmark, DISABLED_connect_cons_r)
+TEST(Benchmark, connect_cons_r)
 {
     LOG_MOVE("logs/bmarkConnectConsR.log", false);
 	n_control::ControllerConfig conf;
@@ -448,8 +448,8 @@ TEST(Benchmark, DISABLED_connect_cons_r)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
-	std::size_t width = 5;
-	bool randTa = false;
+	std::size_t width = 4;
+	bool randTa = true;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);

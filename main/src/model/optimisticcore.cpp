@@ -42,6 +42,7 @@ void Optimisticcore::initThread()
                 model->prepareSimulation();
                 LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " preparing model ", model->getName(), " for simulation.");
         }
+        n_tlocal::setRevert(false);
 }
 
 void Optimisticcore::shutDown()
@@ -117,6 +118,11 @@ void Optimisticcore::sortMail(const std::vector<t_msgptr>& messages)
 void Optimisticcore::sendMessage(t_msgptr msg)
 {
         // We're locked on msglock. Don't change the ordering here.
+        if(n_tlocal::isRevertSet()){
+                LOG_DEBUG("\tMCORE :: ", this->getCoreID(), " not sending message, allready sent in previous round @", msg, " tostring: ", msg->toString());
+                msg->releaseMe();
+                return;
+        }
         m_stats.logStat(MSGSENT);
         this->countMessage(msg);
         this->m_network->acceptMessage(msg);
@@ -359,7 +365,10 @@ void Optimisticcore::runSmallStep()
         m_externs.clear();
 
         this->checkTerminationFunction();
-
+        
+        
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting revert flag from ", n_tlocal::isRevertSet(), " to ", false);
+        n_tlocal::setRevert(false);
         this->unlockSimulatorStep();
 }
 
@@ -385,9 +394,6 @@ void Optimisticcore::getMessages()
 
 void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
-        // Only the call to revert can set this flag to true, by setting it here to false we limit the range within which we need to trace the variable.
-        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting revert flag from ", n_tlocal::isRevertSet(), " to ", false);
-        n_tlocal::setRevert(false);
         t_timestamp::t_time minmsgtime = t_timestamp::MAXTIME;
         for (auto i = messages.begin(); i != messages.end(); ++i) {
                 t_msgptr message = *i;
@@ -606,7 +612,7 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
         while (!m_sent_messages.empty()) {		// For each message > totime, send antimessage
                 t_msgptr msg = m_sent_messages.back();
                 LOG_DEBUG("MCORE:: ", this->getCoreID(), " reverting message ", msg, " ", msg->toString());
-                if (msg->getTimeStamp().getTime() >= totime) {
+                if (msg->getTimeStamp().getTime() > totime) {
                         m_sent_messages.pop_back();
                         LOG_DEBUG("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                                 " revert : sent message > time , antimessagging. \n ", msg->toString());
