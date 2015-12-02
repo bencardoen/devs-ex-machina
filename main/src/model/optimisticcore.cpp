@@ -8,6 +8,7 @@
 #include <thread>
 #include "model/optimisticcore.h"
 #include "tools/objectfactory.h"
+#include "model/port.h"
 
 using namespace n_model;
 using namespace n_network;
@@ -46,6 +47,8 @@ void Optimisticcore::initThread()
 void Optimisticcore::shutDown()
 {
         assert(!isLive() && "The core shouldn't be live when it is shut down!");
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting revert flag from  " , n_tlocal::isRevertSet(), " to " , false);
+        n_tlocal::setRevert(false);
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " core shutting down, still need to remove ", m_sent_messages.size(),
                 " messages");
         // @pre : not on main(), but on sim thread.
@@ -332,7 +335,6 @@ void Optimisticcore::runSmallStep()
 
         m_stats.logStat(TURNS);
 
-  
         this->getMessages();
 
         if (!this->isLive()) {
@@ -383,6 +385,9 @@ void Optimisticcore::getMessages()
 
 void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 {
+        // Only the call to revert can set this flag to true, by setting it here to false we limit the range within which we need to trace the variable.
+        LOG_DEBUG("MCORE:: ", this->getCoreID(), " setting revert flag from ", n_tlocal::isRevertSet(), " to ", false);
+        n_tlocal::setRevert(false);
         t_timestamp::t_time minmsgtime = t_timestamp::MAXTIME;
         for (auto i = messages.begin(); i != messages.end(); ++i) {
                 t_msgptr message = *i;
@@ -392,6 +397,7 @@ void Optimisticcore::sortIncoming(const std::vector<t_msgptr>& messages)
 #endif
                 this->receiveMessage(message);
         }
+        
         if(minmsgtime < this->getTime().getTime()){
                 this->revert(minmsgtime);
         }
@@ -581,6 +587,11 @@ void n_model::Optimisticcore::unlockSimulatorStep()
 
 void n_model::Optimisticcore::revert(const t_timestamp& rtime)
 {
+#ifdef SAFETY_CHECKS
+        if (n_tlocal::isRevertSet())
+                throw std::logic_error("Revert flag set when entering revert !");
+#endif
+        n_tlocal::setRevert(true);
         const t_timestamp::t_time totime = rtime.getTime();
         const t_timestamp::t_time gtime = this->getGVT().getTime();
         assert(totime >= gtime);

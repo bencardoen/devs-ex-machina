@@ -24,6 +24,24 @@
 
 // Don't include atomicmodel here
 
+/**
+ * Registers flag set on revert if at all.
+ */
+namespace n_tlocal{
+        // The underscore postfix is a subtle hint this function is not part of any API we offer.
+        inline
+        bool & revert_flag__()
+        {
+                thread_local bool revert_set = false;
+                return revert_set;
+        }
+        
+        inline
+        void setRevert(bool b){revert_flag__()=b;}
+        
+        inline
+        bool isRevertSet(){return revert_flag__();}
+}
 
 namespace n_model {
 

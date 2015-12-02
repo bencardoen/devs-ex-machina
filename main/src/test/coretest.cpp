@@ -259,16 +259,19 @@ TEST(Optimisticcore, revert){
 	t_msgptr msgaftergvt = createRawObject<SpecializedMessage<std::string>>(n_model::uuid(0, 42), n_model::uuid(1, 38), aftergvt, 3u, 2u,"a_test");
         LOG_DEBUG("Creating ", msgaftergvt);
 
+        n_tlocal::setRevert(false);
 	coreone->setGVT(gvt);
 	coreone->revert(gvt);		// We were @110, went back to 62
+        n_tlocal::setRevert(false);
 
 	EXPECT_EQ(coreone->getTime(), 62u);
 	EXPECT_EQ(coreone->getTime(), coreone->getGVT());
 	coreone->setTime(t_timestamp(67,0));	// need to cheat here, else we won't get the result we're aiming for.
 	
 	msgaftergvt->setAntiMessage(true);
-	coreone->receiveMessage(msgaftergvt);		// this (no longers ) triggers a new revert
+	coreone->receiveMessage(msgaftergvt);		// this (no longer ) triggers a new revert
         coreone->revert(msgaftergvt->getTimeStamp());
+        n_tlocal::setRevert(false);
         
 	EXPECT_EQ(coreone->getTime().getTime(), 63u);
 	coreone->runSmallStep();			// does nothing, check that empty transitioning works. (next = 108, time = 62)
@@ -308,7 +311,7 @@ TEST(Optimisticcore, revertidle){
 	ctrl.addModel(m);
 	c1->setTracers(tracers);
 	c1->init();
-    c1->initThread();
+        c1->initThread();
 	c1->setTerminationTime(endTime);
 	c1->setLive(true);
 	c1->logCoreState();
@@ -316,7 +319,7 @@ TEST(Optimisticcore, revertidle){
 
 	c2->setTracers(tracers);
 	c2->init();
-    c2->initThread();
+        c2->initThread();
 	c2->setTerminationTime(endTime);
 	c2->setLive(true);
 	c2->logCoreState();
@@ -341,6 +344,7 @@ TEST(Optimisticcore, revertidle){
 
 	// Test that a Core can go from idle to live again without corrupting.
 	c1->revert(t_timestamp(201,42));
+        n_tlocal::setRevert(false);
 	// Expecting time = 201,42, revert of model 1x antimessage @300.
 	EXPECT_EQ(c1->getTime().getTime(), 201u);
 	c1->logCoreState();
@@ -359,10 +363,10 @@ TEST(Optimisticcore, revertidle){
 	n_tracers::waitForTracer();
 	tracers->finishTrace();
 
-    c1->setLive(false);
-    c1->shutDown();
-    c2->setLive(false);
-    c2->shutDown();
+        c1->setLive(false);
+        c1->shutDown();
+        c2->setLive(false);
+        c2->shutDown();
 
 	EXPECT_TRUE(std::static_pointer_cast<AtomicModel_impl>(m->getComponents()[0])->getCorenumber()
 			!=
