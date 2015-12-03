@@ -389,7 +389,7 @@ Conservativecore::calculateMinLookahead(){
                 m_min_lookahead = t_timestamp::infinity();
                 for(const auto& model : m_indexed_models){
                         const t_timestamp la = model->lookAhead();
-                        LOG_DEBUG("Core :: ", this->getCoreID()," Model :: ", model->getName(), " gave LA = ", la);
+                        //LOG_DEBUG("Core :: ", this->getCoreID()," Model :: ", model->getName(), " gave LA = ", la);
 #ifdef SAFETY_CHECKS
                         if(isZero(la))
                                 throw std::logic_error("Lookahead can't be zero");

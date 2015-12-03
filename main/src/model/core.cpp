@@ -33,14 +33,13 @@ void
 n_model::Core::checkInvariants(){
 #ifdef SAFETY_CHECKS
         if(this->m_heap.indexSize() != this->m_indexed_models.size()){
+                printSchedulerState();
                 const std::string msg = "Scheduler contains less models than present in core !!";
                 LOG_ERROR(msg);
                 LOG_FLUSH;
                 throw std::logic_error(msg);
         }
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " testing invariants.");
-        printSchedulerState();
-
         m_heap.testInvariant();
 #endif
 }
@@ -236,14 +235,14 @@ void n_model::Core::transition()
 		}
                 imminent->clearSentMessages();
 
-                printSchedulerState();
+                //printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
 
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
                 
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
-                printSchedulerState();
+                //printSchedulerState();
 	}
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs");
         for(auto external : m_externs){
@@ -259,12 +258,12 @@ void n_model::Core::transition()
 		this->traceExt(getModel(id));
 
                 clearProcessedMessages(mail);
-                printSchedulerState();
+                //printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
 		if(m_heap.doSingleUpdate())
 			m_heap.update(id);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
-                printSchedulerState();
+                //printSchedulerState();
 		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
 	}
         

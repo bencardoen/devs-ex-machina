@@ -383,6 +383,9 @@ TEST(Benchmark, connect_cons)
     LOG_MOVE("out.txt", true);
 }
 
+// Reduce runtime, both sync protocols log a lot, 5000 easily takes 30s.
+constexpr t_timestamp::t_time eTimeConnectR = 2000;
+
 TEST(Benchmark, connect_single_r)
 {
     LOG_MOVE("logs/bmarkConnectSingleR.log", false);
@@ -396,7 +399,7 @@ TEST(Benchmark, connect_single_r)
 	bool randTa = true;
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(eTimeConnect, 0);
+	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
@@ -424,7 +427,7 @@ TEST(Benchmark, connect_opt_r)
 	bool randTa = true;
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(eTimeConnect, 0);
+	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
@@ -452,7 +455,7 @@ TEST(Benchmark, connect_cons_r)
 	bool randTa = true;
 
 	auto ctrl = conf.createController();
-	t_timestamp endTime(eTimeConnect, 0);
+	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
 	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
