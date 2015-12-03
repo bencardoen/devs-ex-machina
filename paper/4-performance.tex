@@ -8,6 +8,7 @@
 %TODO (spend some time here, as this is also important)
 %\subsubsection{CPU Usage}
 %TODO !!! benchmarks are in integers
+The benchmark models are identical in functionality (between adevs/dxex versions). Dxex uses integer timestamps, adevs can only use floating point (of the same values).
 \subsubsection{Devstone}
 The Devstone \cite{DEVStone} benchmark is highly hierarchical, using Direct connection the dxex kernels can exploit this, whereas adevs needs to walk the structure of the model to pass events.\\
 \begin{figure}[h]
@@ -19,7 +20,7 @@ The Devstone \cite{DEVStone} benchmark is highly hierarchical, using Direct conn
 PHold \cite{PHOLD} is a parallel oriented benchmark, sequential runtime is measured only as a baseline. The usage of random nr generators takes up a significant amount of runtime in this model.
 
 \subsubsection{Interconnect}
-Interconnect \cite{van2013research} is a benchmark where all models broadcast, creating a complete graph in terms of dependencies between models. It highlights in sequential simulation the cost of heap allocation (messages) in dxex. As the model count increases, we see the expected quadratic increase in runtime in both kernels, but an increasing penalty for dxex w.r.t. adevs. This effect is due to the heap allocation of the messages by dxex, even though this is minimized using memory pools it remains significant.\\
+Interconnect \cite{van2013research} is a benchmark where all models broadcast, creating a complete graph in terms of dependencies between models. As the model count increases, we see the expected quadratic increase in runtime in both kernels, but an increasing penalty for dxex w.r.t. adevs. Profiling shows this is entirely to the heap allocation of the messages by dxex, even though minimized by using memory pools, it remains significant.\\
 \begin{figure}[h]
 	\includegraphics[width=.5\textwidth]{fig/fig3.eps}
 	\label{fig3.eps}
