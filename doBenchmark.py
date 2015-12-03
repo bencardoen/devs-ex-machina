@@ -163,7 +163,7 @@ def prioritygen(simtype, executable):
         # for endTime in [args.endtime]:
         for p in [90]:  # range(0, 100, 20):
             for n in [128]:
-                for m in range(0, 16, 2):  # [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
+                for m in range(0, 17, 2):  # [0, 1, int(1/(p/100.0)) if p > 0 else 1]:
                     yield list(chain([executable, simtype[0]], ['-n', n, '-p', p, '-m', m, '-t', endTime]))
                     # return
 
