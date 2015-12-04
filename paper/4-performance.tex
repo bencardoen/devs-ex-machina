@@ -48,10 +48,7 @@ the set of atomic models form a complete graph (w.r.t. connections), each model 
 Allocation is irrelevant, the resulting dependency graph between kernels remains  a complete graph. The runtime dependency graph is almost immediately equal to the static dependency graph.
 Conservative still faces the same issues as in PHold, with the key difference that for a fixed time advance lookahead is equal to the timespan between transitions. The scaling issue is identical as in PHold.\\
 Our optimistic implementation does not complete an instance of this benchmark. The kernels get stuck in an infinite cascade of reverts. If kernel A reverts, it will send anti-messages to all others who in turn revert and send anti-messages to all others (and A itself again). Support for lazy cancellation could potentially undo this anti-pattern.\\
-\begin{figure}[h]
-	\includegraphics[width=.5\textwidth]{fig/fig4.eps}
-	\label{fig4.eps}
-\end{figure}
+
 \subsubsection{Priority network model}
 %TODO show a single plot which varies a parameter that changes the ideal synchronization protocol
 The priority benchmark is composed of a single server generating a stream of $0<=m<=n$ messages at fixed time intervals, interleaved with a probability p for a priority message, to n receivers. \\ This defaults lookahead for the receivers to $\epsilon$ but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server, and have a internal transition so that they will not wait for the incoming messages. 

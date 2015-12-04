@@ -1,14 +1,17 @@
 # global variables
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
-rootpath <<- 'd:/tim/ua/statistiek/tim-eindwerk/v9/data'
+rootpath <<- paste(getwd(), '/', sep = '')
+# rootpath <<- 'putyourcustomrootpathinhere'
 datapath <<- paste(rootpath, 'data/', sep = '')
 figspath <<- paste(rootpath, 'figs/', sep = '')
+dir.create(figspath, showWarnings = FALSE)
 setwd(datapath)
 
 # 1-dimensional performance tests
 
 process1ddata <- function(datatable, collabel) {
+	print(sprintf("process1ddata: %s", collabel))
 	resultdata <- data.frame(x = numeric(), cpu = numeric(), conflow = numeric(), confhigh = numeric())
 		
 	timelabel = 'time.elapsed..seconds.'
@@ -211,13 +214,14 @@ newrange <- function(range1, range2) {
 }
 
 myrainbow <- function(n) {
-	if (n <= 5)
-		return(c("red", "green", "blue", "dodgerblue", "purple" ))
+	if (n <= 6)
+		return(c("red", "green", "blue", "magenta", "dodgerblue", "black" ))
 	else
 		return(rainbow(n))
 }
 
 comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendpos) {
+	print(sprintf("comparesets %s\n",chartlabel))
 	nrcharts <- length(datalist)
 	
 	xrange <- range(datalist[[1]]$x)
@@ -228,13 +232,12 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 	}
 	
 	if (!generatePDF) {
-		postscript(sprintf("%sfig%d.eps", figspath, epscount), width=5, height=5, paper="special")
+		postscript(sprintf("%sfig%d.eps", figspath, epscount), width=5, height=5, paper="special", family="Times")
 		epscount <<- epscount + 1
 	}
 	
 	if (xrange[[2]] - xrange[[1]] < 10) {
 		# special case for CPU's
-		# we only want to use 2 and 4 as labels...
 		plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel, xaxt='n')
 		axis(side = 1, at = seq(-10,10,2) , labels = T)
 	} else
@@ -304,6 +307,18 @@ compare3sets <- function(data1, label1, data2, label2, data3, label3, xlabel, yl
 	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
 }
 
+compare6sets <- function(data1, label1, data2, label2, data3, label3, data4, label4, data5, label5, data6, label6, xlabel, ylabel, chartlabel, devstone, legendpos) {
+	perfdata1 <- process1ddata(data1, devstone)
+	perfdata2 <- process1ddata(data2, devstone)
+	perfdata3 <- process1ddata(data3, devstone)
+	perfdata4 <- process1ddata(data4, devstone)
+	perfdata5 <- process1ddata(data5, devstone)
+	perfdata6 <- process1ddata(data6, devstone)
+	datalist <- list(perfdata1, perfdata2, perfdata3, perfdata4, perfdata5, perfdata6)
+	labellist <- list(label1, label2, label3, label4, label5, label6)
+	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
+}
+
 compare4sets <- function(data1, label1, data2, label2, data3, label3, data4, label4, xlabel, ylabel, chartlabel, devstone, legendpos) {
 	perfdata1 <- process1ddata(data1, devstone)
 	perfdata2 <- process1ddata(data2, devstone)
@@ -361,15 +376,14 @@ gengraphs <- function() {
 	dxdevstoneconsdata = read.table(file="devstone/conservative.csv",header=TRUE,sep=";")
 	dxdevstoneoptdata = read.table(file="devstone/optimistic.csv",header=TRUE,sep=";")
 	
-	# randdxdevstonedata = read.table(file="randdevstone/classic.csv",header=TRUE,sep=";")
-	# randadevstonedata = read.table(file="aranddevstone/classic.csv",header=TRUE,sep=";")
-	# randadevstoneconsdata = read.table(file="aranddevstone/conservative.csv",header=TRUE,sep=";")
-	# randdxdevstoneoptdata = read.table(file="randdevstone/optimistic.csv",header=TRUE,sep=";")
-	
 	dxconnectconsdata = read.table(file="connect/conservative.csv",header=TRUE,sep=";")
 	adevsconnectconsdata = read.table(file="aconnect/conservative.csv",header=TRUE,sep=";")
 	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
 	adevsconnectdata = read.table(file="aconnect/classic.csv",header=TRUE,sep=";")
+	dxconnectdata2cores <- subset(dxconnectconsdata, ncores == 2)
+	dxconnectdata4cores <- subset(dxconnectconsdata, ncores == 4) 
+	adevsconnectdata2cores <- subset(adevsconnectconsdata, ncores == 2) 
+	adevsconnectdata4cores <- subset(adevsconnectconsdata, ncores == 4) 
 	
 	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
 	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
@@ -382,34 +396,38 @@ gengraphs <- function() {
 	lateXInit(paste(figspath, 'DXvsADEVS.tex', sep=''))
 	
 	if (generatePDF)
-		pdf(paste(figspath, 'DXvsADEVS.pdf', sep=''))
+		pdf(paste(figspath, 'DXvsADEVS.pdf', sep=''), family="Times")
 	# jpeg("d:/tmp/DXvsADEVS.jpg", width=5, height=5, units="in", res=300)
 	
 	if (!generatePDF)
 		setEPS()
 	
-	compare2sets(dxdevstonedata, "DX",
-		adevstonedata, "ADEVS",
-		"Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS DevStone Single Core", 'width', "topleft")
+	compare2sets(dxdevstonedata, "dxex",
+		adevstonedata, "adevs",
+		"Width/Depth", "Elapsed Time (sec.)", "Devstone single core", "width", "topleft")
 	
-	compare3sets(dxdevstoneoptdata, "DX Optimistic",
-		dxdevstoneconsdata, "DX Conservative",
-		adevstoneconsdata, "ADEVS Conservative",
-		"Width/Height", "Elapsed Time (sec.)", "DevStone", 'width', "topleft")
+	compare3sets(dxdevstoneoptdata, "dxex optimistic",
+		dxdevstoneconsdata, "dxex conservative",
+		adevstoneconsdata, "adevs conservative",
+		"Width/Depth", "Elapsed Time (sec.)", "DevStone parallel", "width", "topleft")
 	
-	compare2sets(dxconnectdata, "DX",
-		adevsconnectdata, "ADEVS",
-		"Width/Height", "Elapsed Time (sec.)", "DX vs. ADEVS Classic Connect Single Core", 'width', "topleft")
-		
-	compare2sets(dxconnectconsdata, "DX", adevsconnectconsdata, "ADEVS", "Nr. of Cores", "Elapsed Time (sec.)", "DX vs. ADEVS Conservative Connect", 'ncores', "topleft")
+	compare6sets(dxconnectdata, "dxex single core",
+		adevsconnectdata, "adevs single core",
+		dxconnectdata2cores, "dxex conservative (2 cores)",
+		dxconnectdata4cores, "dxex conservative (4 cores)",
+		adevsconnectdata2cores, "adevs conservative (2 cores)",
+		adevsconnectdata4cores, "adevs conservative (4 cores)",
+		"Width", "Elapsed Time (sec.)", "Interconnect", 'width', "topleft")
 	
-	compare4sets(dxpholddata, "DX Classic",
-		apholddata, "ADEVS Classic",
-		dxpholdconsdata, "DX Conservative",
-		apholdconsdata, "ADEVS Conservative",
-		"Percentage of Remotes", "Elapsed Time (sec.)", "PHold", 'X..remotes', "midleft")
+	compare4sets(dxpholddata, "dxex single core",
+		apholddata, "adevs single core",
+		dxpholdconsdata, "dxex conservative",
+		apholdconsdata, "adevs conservative",
+		"Atomics/Node", "Elapsed Time (sec.)", "Phold", "atomics.node", "topleft")
 	
-	compare2sets(dxpriorityconsdata, "Conservative", dxpriorityoptdata, "Optimistic", "Priority", "Elapsed Time (sec.)", "DX Priority Conservative vs. Optimistic", 'priority', "topright")
+	compare2sets(dxpriorityconsdata, "dxex conservative",
+		dxpriorityoptdata, "dxex optimistic",
+		"Messages", "Elapsed Time (sec.)", "Priority", "messages", "topleft")
 	
 	if (generatePDF)
 		dev.off()
@@ -418,12 +436,12 @@ gengraphs <- function() {
 }
 
 group4 <- function() {
-	datapath
+	print(sprintf("Group4: datapath=%s", datapath))
 	generatePDF <<- TRUE # generate PDF
 	gengraphs()
 	generatePDF <<- FALSE # generate EPS files
 	gengraphs()
 }
 
-
+group4()
 
