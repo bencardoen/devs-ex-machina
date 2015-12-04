@@ -5,8 +5,8 @@ Dxex is closely related to PyPDEVS in design and philosophy. PyPDEVS allows anyo
 Advanced features such as activity based relocation and the performance gains this results in, are still unique to PyPDEVS.
 \subsection{Adevs}
 %TODO explain about adevs, the most related in terms of performance --> we implement more synchronization options and offer better performance because ...
-Adevs's is still under active development, allowing for an exact comparison in performance and features. It remains one of the fastest simulation engines for the PDEVS formalism, but it lacks an optimistic synchronization implementation. %Tracing ?
-By virtue of not flattening Coupled Models, adevs's performance degrades in increasingly hierarchical models. On the other hand, dxex manages lookahead with more overhead than adevs, leading to a performance difference as the model count increases. Finally, adevs employs the full dependency graph, contrasted to dxex kernels which only observe 1-edge removed nodes. 
+Adevs is still under active development, allowing for an exact comparison in performance and features. It remains a very fast simulation engine for the PDEVS formalism, but it lacks an optimistic synchronization implementation. %Tracing ?
+By virtue of not flattening Coupled Models, adevs's performance degrades in increasingly hierarchical models. Dxex manages lookahead with more overhead than adevs, leading to a performance difference as the model count increases. Finally, adevs employs the full dependency graph, contrasted to dxex kernels which only observe 1-edge removed nodes. 
 %checkme
 \subsection{CD++}
 %TODO explain about CD++, the most related in terms of synchronization --> we implement everything in a single program, with a non-fragmented code-base
