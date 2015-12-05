@@ -86,10 +86,26 @@ Adevs passes messages by value (in container by reference), we pass by pointer. 
 \end{table}
 Since conservative passes messages by pointer, it needs a GVT/LBTS implementation to organise garbage collection. This inevitable delay explains the higher memory usage compared to adevs.\\
 %TODO next sentence needs rewriting --done?
-Optimistic's TimeWarp requires state/event saving, and its GVT algorithm is more complex (with a resultant higher latency) than the LBTS calculation in conservative. 
+Optimistic's TimeWarp requires state/event saving, and its GVT algorithm is more complex (with a resulting higher latency) than the LBTS calculation in conservative. 
 Additionally, the differences in LP virtual times are far larger compared to conservative time synchronization. All these factors explain the heavier memory usage. Devstone (flattened) is allocated in a chain. Leafs in the dependency graph will therefore do a lot of unnecessary simulation before having a revert, leading to severe memory pressure. Unlike conservative and sequential execution, memory usage in optimistic varies greatly depending on scheduling of kernel threads and drifting between kernels. 
+\paragraph*{PHold}
+\begin{table}[htb]
+	\centering
+	\caption{Phold n 4 s 16 t1e6 r 10, unit MiB, 4 kernels (if parallel)}
+	\label{dtone_mem}
+	\begin{tabular}{| l | l | l | l | l |}
+		\hline
+		Adevs & AdevsCon &DX &DXCon &DXOpt\\ \hline
+		40 & x & 37 & 61 & 682  \\ \hline
+	\end{tabular}
+\end{table}
+With only 10\% of all messages being inter-kernel, we expect conservative to have memory consumption near that of the single threaded implementation, since intra-kernel messages are reclaimable after each round. The counterintuitive high memory usage can be explained by conservative's stalled round behaviour which occurs whenever a kernel cannot advance (eit $==$ time). In such a round messages are sent out but the kernel does not execute any transitions until it has received all input from all influencing kernels. \\
+With lookahead = $\epsilon$ this then leads to a high frequency of polling on shared null-times, which are used to determine lbts and thus garbage collection.
+The lbts calculation will not wait until a new value is found, since this can create unwanted contention with the simulation. The resulting longer time intervals within which no new lbts is found delay memory deallocation.
+Adevs' conservative fails to complete the benchmark under valgrind even with a significantly reduced load.\\
+Optimistic exhibits the expected high memory usage.
 \paragraph*{Interconnect}
-In section 4.2 the parallel performance of this benchmark is further explained. Interconnect highlights dxex's lower performance due to message allocation overhead.
+In section 4.2 the parallel performance of this benchmark is further explained. Interconnect highlights dxex's lower performance due to message allocation overhead. 
 \begin{table}[lhtb]
 	\centering
 	\caption{Interconnect w 10 t5e5, unit MiB, 2 kernels (if parallel)}

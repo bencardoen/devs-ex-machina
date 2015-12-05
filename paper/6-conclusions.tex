@@ -5,7 +5,7 @@ Finally, the current optimistic implementation is ill-suited for memory constrai
 \subsection{Future work}
 %TODO future work: more things that we might want to implement, and probably something about automatically switching between synchronization protocols at runtime (and reference my activity papers ;))
 \subsubsection{Memory}
-Our optimistic implementation can benefit from a faster GVT algorithm such as FujiMoto's \cite{Fujimoto:1997:CGV:268403.268404} or more recently \cite{Bauer:2005:SND:1069810.1070159}. 
+Our optimistic implementation can benefit from a faster GVT algorithm such as FujiMoto's \cite{Fujimoto:1997:CGV:268403.268404}  or more recently \cite{Bauer:2005:SND:1069810.1070159}. 
 With access to the memory subsystem in place (pools), optimistic could be constrained using per kernel quota preventing the simulation from exhausting memory. While less sensitive to memory pressure, the same approach could benefit conservative.
 \subsubsection{Activity}
 As shown in \cite{PythonPDEVS_ACTIMS} activity and allocation of models across kernels is a key aspect in achieving high performance in any parallel implementation. Allocating models so that there are no dependency cycles between their containing kernels is a first step, but not always possible. For optimistic one can use re-allocation to break (runtime dependency) cycles and/or perform load-balancing. If kernels are unevenly balanced they will begin to drift fast, causing increasingly more reverts. There is a limited framework implemented to track model activity for debugging purposes, this could be extended to enable the above strategies.
