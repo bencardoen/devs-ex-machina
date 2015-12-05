@@ -107,9 +107,6 @@ def pholdgen(simtype, executable):
     # single core s=[2, 4, 8, 16], r=[10]
     # for single & conservative
     # Todo re-enable
-    if simtype == simtypes.optimistic:
-         print("Refusing to run phold with optimistic!")
-         return
     if args.cores != 4:
         print("Refusing to run benchmark with != 4 cores.")
         return
