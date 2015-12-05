@@ -46,43 +46,6 @@ process1ddata <- function(datatable, collabel) {
 	print(resultdata)
 }
 
-display1ddata <- function(perfdata, label) {
-	plot(perfdata$x, perfdata$cpu, pch=19, xlab="Width", ylab="Elapsed CPU Time (seconds)", main=label, col="blue")
-	abline(lm(perfdata$x ~ perfdata$cpu), col="red", lwd=2, lty=1)
-}
-
-display1ddata2 <- function(singledata, label) {
-	boxplot(time.elapsed..seconds. ~ width, data=singledata, xlab="Width", ylab="Elapsed CPU Time (seconds)", main=label)
-}
-
-display1ddata3 <- function(singledata, perfdata, label) {
-	indextable <- unique(singledata[, 3])
-	for (n in seq(length(indextable))) {
-			i <- indextable[[n]]
-			tmpdata <- singledata$time.elapsed..seconds.[singledata$width == i]
-			boxplot(tmpdata, xlab=sprintf("Width = %d", i), ylab="Elapsed CPU Time (seconds)", main=label)
-	}
-}
-
-group1 <- function() {
-	aconnectdata = read.table(file="aconnect_classic.csv",header=TRUE,sep=";")
-	dxconnectdata = read.table(file="dxconnect_classic.csv",header=TRUE,sep=";")
-
-	pdf("d:/tmp/myconnectgraphs.pdf")
-	
-	perfdata1 <- process1ddata(aconnectdata, TRUE)
-	display1ddata(perfdata1, "A Connect")
-	display1ddata2(aconnectdata, "A Connect")
-	display1ddata3(aconnectdata, perfdata1, "A Connect")
-	
-	perfdata2 <- process1ddata(dxconnectdata, TRUE)
-	display1ddata(perfdata2, "DX Connect")
-	display1ddata2(dxconnectdata, "DX Connect")
-	display1ddata3(dxconnectdata, perfdata2, "DX Connect")
-	
-	dev.off()
-}
-
 # 2-dimensional performance tests
 
 library(scatterplot3d)
@@ -152,61 +115,6 @@ displaydata <- function(perfdata, isdevstone, label) {
 		legend("bottomright", cex=0.7, c("Actual Value", "95 % Confid. Interval"), pch=c(19, 3), col=c("blue", "red"))
 	})
 	return(s3d)
-}
-
-displaydata2 <- function(perfdata1, label1, perfdata2, label2, isdevstone, label) {
-	perfdata1 <- processdata(perfdata1, isdevstone)
-	perfdata1$color = "blue"
-	perfdata2 <- processdata(perfdata2, isdevstone)
-	perfdata2$color = "green"
-	perfdata <- rbind(perfdata1, perfdata2)
-	if (isdevstone) {
-		par1label <- "Width"
-		par2label <- "Height"
-	} else {
-		par1label <- "Nodes"
-		par2label <- "Atomics/Node"
-	}
-	
-	minx <- min(perfdata$x)
-	maxx <- max(perfdata$x)
-	miny <- min(perfdata$y)
-	maxy <- max(perfdata$y)
-	
-	with(perfdata, {
-	   s3d <<- scatterplot3d(x, y, cpu,  # x y and z axis
-					 pch=19, 			# filled circles
-					 type="h",          # lines to the horizontal plane
-					 main=label,
-					 color=perfdata$color,
-					 xlim = c(minx, maxx),
-					 ylim = c(miny, maxy),
-					 xlab=par1label,
-					 ylab=par2label,
-					 zlab="Elapsed CPU Time (seconds)")
-					 # zlim = c(1, 1.10),
-					 # scale.x = 0.5, scale.y = 0.5,
-		legend("topleft", cex=0.7, c(label1, label2), pch=c(19, 19), col=c("blue", "green"))
-	})
-	return(s3d)
-}
-
-calccorrelation <- function(data1, label1, data2, label2, isdevstone) {
-	if (isdevstone)
-		tmpdata <- cbind(data1[,c(3,4,26)],data2[,c(26)])
-	else
-		tmpdata <- cbind(data1[,c(3,4,28)],data2[,c(28)])
-	names(tmpdata)[3] <- "cpu"
-	names(tmpdata)[4] <- "cpu2"
-	print(tmpdata)
-	#cor.test(tmpdata[,3], tmpdata[,4])
-	fit <- lm(cpu2 ~ cpu, data = tmpdata)
-	summary(fit)
-	plot(tmpdata$cpu, tmpdata$cpu2, main=sprintf("Elapsed CPU Time (seconds) %s vs. %s", label1, label2), xlab="", ylab="", xaxt="n", yaxt="n")
-	axis(side=1)
-	axis(side=2)
-	title(xlab=label1, ylab=label2)
-	abline(fit, col="red", lwd=2)
 }
 
 newrange <- function(range1, range2) {
@@ -290,43 +198,16 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 	lateXTable(datalist, labellist, xlabel, ylabel, chartlabel)
 }
 
-compare2sets <- function(data1, label1, data2, label2, xlabel, ylabel, chartlabel, devstone, legendpos) {
-	perfdata1 <- process1ddata(data1, devstone)
-	perfdata2 <- process1ddata(data2, devstone)
-	datalist <- list(perfdata1, perfdata2)
-	labellist <- list(label1, label2)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
-}
-
-compare3sets <- function(data1, label1, data2, label2, data3, label3, xlabel, ylabel, chartlabel, devstone, legendpos) {
-	perfdata1 <- process1ddata(data1, devstone)
-	perfdata2 <- process1ddata(data2, devstone)
-	perfdata3 <- process1ddata(data3, devstone)
-	datalist <- list(perfdata1, perfdata2, perfdata3)
-	labellist <- list(label1, label2, label3)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
-}
-
-compare6sets <- function(data1, label1, data2, label2, data3, label3, data4, label4, data5, label5, data6, label6, xlabel, ylabel, chartlabel, devstone, legendpos) {
-	perfdata1 <- process1ddata(data1, devstone)
-	perfdata2 <- process1ddata(data2, devstone)
-	perfdata3 <- process1ddata(data3, devstone)
-	perfdata4 <- process1ddata(data4, devstone)
-	perfdata5 <- process1ddata(data5, devstone)
-	perfdata6 <- process1ddata(data6, devstone)
-	datalist <- list(perfdata1, perfdata2, perfdata3, perfdata4, perfdata5, perfdata6)
-	labellist <- list(label1, label2, label3, label4, label5, label6)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
-}
-
-compare4sets <- function(data1, label1, data2, label2, data3, label3, data4, label4, xlabel, ylabel, chartlabel, devstone, legendpos) {
-	perfdata1 <- process1ddata(data1, devstone)
-	perfdata2 <- process1ddata(data2, devstone)
-	perfdata3 <- process1ddata(data3, devstone)
-	perfdata4 <- process1ddata(data4, devstone)
-	datalist <- list(perfdata1, perfdata2, perfdata3, perfdata4)
-	labellist <- list(label1, label2, label3, label4)
-	comparesets(datalist, labellist, xlabel, ylabel, chartlabel, legendpos)
+compareNsets <- function(datalist, labellist, xlabel, ylabel, chartlabel, devstone, legendpos) {
+	print("=================== compareNsets ===================")
+	N <- length(datalist)
+	perflist <- list(N)
+	for (i in 1:N) {
+		perfdata <- process1ddata(datalist[[i]], devstone)
+		perflist[[i]] <- perfdata
+	}
+	print(perflist[[1]]$x)
+	comparesets(perflist, labellist, xlabel, ylabel, chartlabel, legendpos)
 }
 
 lateXInit <- function(filename) {
@@ -389,6 +270,7 @@ gengraphs <- function() {
 	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
 	dxpholdconsdata = read.table(file="phold/conservative.csv",header=TRUE,sep=";")
 	apholdconsdata = read.table(file="aphold/conservative.csv",header=TRUE,sep=";")
+	dxpholdoptdata = read.table(file="phold/optimistic.csv",header=TRUE,sep=";")
 	
 	dxpriorityconsdata = read.table(file="priority/conservative.csv",header=TRUE,sep=";")
 	dxpriorityoptdata = read.table(file="priority/optimistic.csv",header=TRUE,sep=";")
@@ -401,32 +283,52 @@ gengraphs <- function() {
 	
 	if (!generatePDF)
 		setEPS()
-	
-	compare2sets(dxdevstonedata, "dxex",
-		adevstonedata, "adevs",
+		
+	compareNsets(
+		list(dxdevstonedata, adevstonedata),
+		list("dxex", "adevs"),
 		"Width/Depth", "Elapsed Time (sec.)", "Devstone single core", "width", "topleft")
 	
-	compare3sets(dxdevstoneoptdata, "dxex optimistic",
-		dxdevstoneconsdata, "dxex conservative",
-		adevstoneconsdata, "adevs conservative",
+	compareNsets(
+		list(dxdevstoneoptdata,
+			dxdevstoneconsdata,
+			adevstoneconsdata),
+		list("dxex optimistic",
+			"dxex conservative",
+			"adevs conservative"),
 		"Width/Depth", "Elapsed Time (sec.)", "DevStone parallel", "width", "topleft")
 	
-	compare6sets(dxconnectdata, "dxex single core",
-		adevsconnectdata, "adevs single core",
-		dxconnectdata2cores, "dxex conservative (2 cores)",
-		dxconnectdata4cores, "dxex conservative (4 cores)",
-		adevsconnectdata2cores, "adevs conservative (2 cores)",
-		adevsconnectdata4cores, "adevs conservative (4 cores)",
+	compareNsets(
+		list(dxconnectdata,
+			adevsconnectdata,
+			dxconnectdata2cores,
+			dxconnectdata4cores,
+			adevsconnectdata2cores,
+			adevsconnectdata4cores),
+		list("dxex single core",
+			"adevs single core",
+			"dxex conservative (2 cores)",
+			"dxex conservative (4 cores)",
+			"adevs conservative (2 cores)",
+			"adevs conservative (4 cores)"),
 		"Width", "Elapsed Time (sec.)", "Interconnect", 'width', "topleft")
 	
-	compare4sets(dxpholddata, "dxex single core",
-		apholddata, "adevs single core",
-		dxpholdconsdata, "dxex conservative",
-		apholdconsdata, "adevs conservative",
+	compareNsets(
+		list(dxpholddata,
+			apholddata,
+			dxpholdconsdata,
+			apholdconsdata,
+			dxpholdoptdata),
+		list("dxex single core",
+			"adevs single core",
+			"dxex conservative",
+			"adevs conservative",
+			"dxex optimistic"),
 		"Atomics/Node", "Elapsed Time (sec.)", "Phold", "atomics.node", "topleft")
 	
-	compare2sets(dxpriorityconsdata, "dxex conservative",
-		dxpriorityoptdata, "dxex optimistic",
+	compareNsets(
+		list(dxpriorityconsdata, dxpriorityoptdata),
+		list("dxex conservative", "dxex optimistic"),
 		"Messages", "Elapsed Time (sec.)", "Priority", "messages", "topleft")
 	
 	if (generatePDF)
@@ -444,4 +346,6 @@ group4 <- function() {
 }
 
 group4()
+
+
 
