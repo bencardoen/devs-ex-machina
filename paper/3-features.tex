@@ -30,16 +30,14 @@ Debugging tools such as a logger and a graph visualizer are included which can t
 %TODO (maybe: note that models are not compatible)
 \subsection{Different Synchronization protocols}
 %TODO explain rationale: why different synchronization protocols
-% Multiple synchronization protocols exist, with each their own strengths and weaknesses.
-% weak scenarios for C, O and both ?
-%TODO !!!!!!! This needs better explaining, perhaps a central graph to reference to ?
+Synchronization is required for PDEVS to prevent or recover from causality violations if the simulation is executed in parallel. Preventing causality violations (conservative) typically requires domain-specific information to compensate for performance loss, while recovering from causality errors (optimistic) requires a state to recover to.
+
 \subsubsection{Conservative}
 A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
 A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
 For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
 %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?. %writing this here seems inappropriate
-%TODO indicate in which cases conservative is good: perfect/good lookahead calculation (might be very hard) and what may be a problem: runtime behavior compared to static analysis makes the simulator too conservative. (e.g. a model might send a message, but never does will slow down the simulation)
 
 \subsubsection{Optimistic}
 The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user. 
