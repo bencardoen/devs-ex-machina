@@ -271,13 +271,14 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
 	"  -n NODES       number of phold nodes\n"
 	"  -s SUBNODES    number of subnodes per phold node\n"
 	"  -r REMOTES     percentage of remote connections\n"
+    "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
 	"  -i ITER        amount of useless work to simulate complex calculations\n"
 	"  -c COREAMT     amount of simulation cores, ignored in classic mode\n"
 	"  classic        Run single core simulation.\n"
@@ -291,7 +292,8 @@ int main(int argc, char** argv)
 	const char optDepth = 's';
 	const char optHelp = 'h';
 	const char optIter = 'i';
-	const char optRemote = 'r';
+    const char optRemote = 'r';
+    const char optPriority = 'p';
 	const char optCores = 'c';
 	char** argvc = argv+1;
 
@@ -299,6 +301,7 @@ int main(int argc, char** argv)
 	std::size_t nodes = 1;
 	std::size_t subnodes = 10;
 	std::size_t remotes = 10;
+	double priority = 0.1;
 	std::size_t iter = 0;
 
 	bool hasError = false;
@@ -358,14 +361,22 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
-		case optRemote:
-			++i;
-			if(i < argc){
-				remotes = toData<std::size_t>(std::string(*(++argvc)));
-			} else {
-				std::cout << "Missing argument for option -" << optRemote << '\n';
-			}
-			break;
+        case optRemote:
+            ++i;
+            if(i < argc){
+                remotes = toData<std::size_t>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optRemote << '\n';
+            }
+            break;
+        case optPriority:
+            ++i;
+            if(i < argc){
+                priority = toData<double>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optPriority << '\n';
+            }
+            break;
 		case optIter:
 			++i;
 			if(i < argc){
@@ -388,7 +399,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes);
+	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes, priority);
 #ifndef BENCHMARK
 	adevs::EventListener<t_event>* listener = new Listener();
 #endif
