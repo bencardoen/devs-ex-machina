@@ -12,10 +12,12 @@
 #define T_0 0.01	//timeadvance may NEVER be 0!
 #define T_STEP 0.01
 #define T_100 1.0
+#define T_125 1.25
 #else
 #define T_0 1
 #define T_STEP 1
 #define T_100 100
+#define T_125 125
 #endif
 
 namespace n_benchmarks_phold {
@@ -34,8 +36,8 @@ std::size_t getRand(std::size_t event, t_randgen& randgen)
  */
 
 HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
-        std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes)
-	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
+        std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority)
+	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_percentagePriority(percentagePriority), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
@@ -56,15 +58,20 @@ constexpr T roundTo(T val, T gran)
 
 EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
 {
+    std::uniform_real_distribution<double> dist0(0.0, 1.0);
 #ifdef FPTIME
-	std::uniform_real_distribution<EventTime> dist(T_0, T_100);
+	std::uniform_real_distribution<EventTime> dist(T_100, T_125);
 	m_rand.seed(event);
-	return roundTo(dist(m_rand), T_STEP);
+	EventTime ta = roundTo(dist(m_rand), T_STEP);
 #else
-	std::uniform_int_distribution<EventTime> dist(T_0, T_100);
+	std::uniform_int_distribution<EventTime> dist(T_100, T_125);
 	m_rand.seed(event);
-	return dist(m_rand);
+	EventTime ta = dist(m_rand);
 #endif
+	if(dist0(m_rand) < m_percentagePriority)
+	        return T_0;
+	else
+	        return ta;
 }
 
 size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
@@ -172,7 +179,7 @@ n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
  * PHOLD
  */
 
-PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes)
+PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority)
 	: n_model::CoupledModel("PHOLD")
 {
 	std::vector<n_model::t_atomicmodelptr> processors;
@@ -198,7 +205,7 @@ PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t perce
 			std::vector<size_t> inoj = procs[i];
 			inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
 			auto p = n_tools::createObject<HeavyPHOLDProcessor>("Processor_" + n_tools::toString(cntr),
-			        iter, totalAtomics, cntr, inoj, allnoi, percentageRemotes);
+			        iter, totalAtomics, cntr, inoj, allnoi, percentageRemotes, percentagePriority);
 			processors.push_back(p);
 			addSubModel(p);
 			++cntr;
