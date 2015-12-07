@@ -1,70 +1,63 @@
 %TODO explain that we are briefly going over the main features
-\subsection{Based on PythonPDEVS}
+\subsection{Based on PyPDEVS}
 %TODO say that it is based on PythonPDEVS --done
-The simulator is based on PythonPDEVS, and provides the following features: 
+Dxex is based on PyPDEVS, and provides the following features: 
 \begin{enumerate}
 	\item Direct Connection
 	\item Dynamic Structured DEVS
-	\item Termination function. If specified, a termination function is applied every simulation round to each model to test whether the simulation can terminate. Only available in single-threaded simulation.
-	\item State/Message can have any payload type. Different message types can be used together within the same simulation.
-	\item Tracing An asynchronous, thread safe and versatile tracing mechanism allows exact verification of the simulation.
-	\item Optimistic and Conservative synchronization of PDEVS.
+	\item Termination function: if specified, a termination function is applied to each model every simulation round to test whether the simulation can terminate. This feature is only available in single-threaded simulations.
+	\item The State/Message objects can have any payload type. Different allows different message types to be used within the same simulation.
+	\item Tracing: An asynchronous, thread safe and versatile tracing mechanism allows exact verification of the simulation.
+	\item Optimistic and Conservative synchronization
 \end{enumerate}
-The implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had a non-negligible impact on the runtime, even when not in use. Another example is the state saving mechanism, which is only used for optimistic parallel simulation and has no performance impact in conservative parallel simulation.\\
-The tracing is not comparable to adevs's listener interface. To be usable in optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be thread safe and deterministic so that a simulation will always produce the exact same output.
-%TODO Decide whether we should list the functionality that is _not_ implemented
+Furthermore, the implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had an adverse impact on the runtime, even when not in use. Another example is the state saving mechanism, which is only used for optimistic parallel simulation and has no performance impact in a conservative parallel simulation.\\
+Our tracing implementation is not comparable to adevs's listener interface. To be usable in an optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be thread safe and deterministic so that a simulation will always produce the exact same output.\\
 The following features from PyPDEVS are not present
 \begin{enumerate}
 	\item Activity tracking and relocation
-	\item Serialization
-	\item Interactive control. 
+	\item Serialization: in this context this is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. 
+	\item Interactive control
 	\item Distributed simulation
 \end{enumerate}
-Serialization in this context is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. %This state saving has no impact in a single threaded or conservative kernel. -> already mentioned above
-\\
-Model allocation is done by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
-Debugging tools such as a logger and a graph visualizer are included which can track activity with respect to allocation for later study, but not online/dynamic as is possible in PyPDEVS.
-
+In dxex, the model allocation is realized by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
+In addition, debugging tools such as a logger and a graph visualizer are included that can track activity with respect to the allocation for later inspection (but not are not online and as dynamic as is in PyPDEVS).\\
 %TODO ... and thus has most features from PythonPDEVS, like Dynamic Structure, termination condition, direct connection, ...
 %TODO (size: take as much size as you want, depending on how much is shared with PythonPDEVS)
 %TODO (maybe: note that models are not compatible)
 \subsection{Different Synchronization protocols}
 %TODO explain rationale: why different synchronization protocols
-Synchronization is required for PDEVS to prevent or recover from causality violations if the simulation is executed in parallel. Preventing causality violations (conservative) typically requires domain-specific information to compensate for performance loss, while recovering from causality errors (optimistic) requires a state to recover to.
+For parallel executions, synchronization is required for PDEVS to prevent causality violations from happening or to recover from causality violations. Preventing causality violations (conservative) typically requires domain-specific information to compensate for the performance loss, while recovering from causality errors (optimistic) requires the calculation of a state to revert to.
 
 \subsubsection{Conservative}
-A conservative kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
-A model should provide a lookahead function which returns, relative from the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel, and the minimum is set as the lookahead of that kernel. \\
+In case of conservative synchronization, any kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
+A model should provide a lookahead function which returns, relative to the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel and the minimum time is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
-For garbage collection (of sent messages) the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
+For the garbage collection (of sent messages), the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
 %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?. %writing this here seems inappropriate
 
 \subsubsection{Optimistic}
-The optimistic kernel requires from the hosted model only that copying the state is well-defined, which is provided in the base State class for the user. 
+The optimistic kernel requires from the hosted model that copying the state is done carefully (avoid unnecessary copies and make a copies whenever necessary).\\
 The kernels use Mattern's \cite{mattern}
-GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states and (anti)messages. 
-
+GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states and (anti)messages.\\
 %TODO explain core infrastructure a bit, maybe with a diagram or so, which clearly shows that everything is shared, except the "synchronization" part
 %TODO claim that this allows you to easily switch between both methods, to always chose the best one
-The user need only provide one implementation of a model for use with both synchronization protocols. A lookahead function is desired to accelerate conservative, but is not required. In the absence of a user supplied lookahead, the kernel assumes it cannot predict beyond its current time + $\epsilon$, creating a lockstep simulation. % implementation detail ?
-\\
-The implementation details such as defining the copy semantics of a State are provided (but can be overridden). \\
+The user must only provide one implementation of a model that can be used for both synchronization protocols. A lookahead function is desired to accelerate the conservative protocol, but is not required. In the absence of a user supplied lookahead, the kernel assumes it cannot predict beyond its current time $t+\epsilon$, creating a lockstep simulation. % implementation detail ?\\
+The user is shielded from the multi-threaded aspect of the kernel.\\
 From the user's perspective, the multi-threaded aspect of the kernel is not exposed. % payload protected ?
 %TODO indicate in which optimistic is good (when runtime behavior is very hard to predict). Describe some drawbacks (many reverts when everybody influences everybody all the time)
 
 \subsection{Performance Improvements}
 %TODO briefly discuss some of the additional changes you implemented
 %TODO such as memory pools, memory allocators, profiling-guided-optimizations, ...
-Continuous profiling of the kernels in several benchmarks highlighted the following key bottlenecks: 
+We now discuss a number of bottlenecks that were discovered during the profiling of several benchmarks.
 \subsubsection{Heap}
-Events are passed by pointer, avoiding a possibly expensive copy of the payload at the cost of allocation overhead.\\
-Allocation becomes prohibitively expensive in highly connected models, so to reduce that overhead we use thread\_local memory pools for states and events, and optionally replace the system malloc with calls to tcmalloc\cite{tcmalloc}. In this way allocating threads do not block each other. If desired, arena-pools are available for single-threaded simulation. A disadvantage is increased complexity in ownership semantics. The creating kernel is responsible for destruction, but this can only be guaranteed up to GVT. Experiments with synchronized pools proved slower than malloc/free. \\
-The kernels initially used strings as identifiers, as is done in PyPDEVS. Profiling quickly indicated this to be a performance bottleneck. C++ strings are heap allocated variable sized objects with an atomic reference count, not immutable objects as in Python. Access of that reference count across threads is expensive, as are the calls to malloc/free the string implementation makes to create/destroy new objects, or copy existing.\\
-Strings are more intuitive to work with from a user's standpoint, so as a compromise the user can reference models/ports by string name. Once simulation starts all objects use integral identifiers for performance. This also increased usage of the constexpr feature of C++11 in, amongst others, timestamps and message headers.
+In dxex, events are always passed with pointers and thus involve a possibly expensive copy of the payload caused by allocation and copying overhead. In highly connected models, this allocation cost can become prohibitively expensive, so to reduce that overhead we use thread\_local memory pools for states and events, and, optionally, replace the system malloc with calls to tcmalloc~\cite{tcmalloc}. In this way, allocating threads do not block each other. If desired, arena-pools are available for single-threaded simulation. A disadvantage is increased complexity in ownership semantics. The creating kernel is responsible for destruction, but this can only be guaranteed up to the GVT. Experiments with synchronized pools proved to be slower than implementations with the standard malloc/free.\\
+Initially, dxes was using strings as identifiers as was also done in PyPDEVS. Profiling quickly indicated that this caused a real performance bottleneck. In C++, strings are heap allocated variable sized objects with an atomic reference count and not not immutable objects as in Python. Access of that reference count across threads turned out to be quite expensive, as are the calls to malloc/free the string implementation makes to create/destroy new objects or copy existing objects.\\
+Strings, however, are more intuitive to work with from a user's perspective, so, as a compromise, we allowed the user to reference models/ports by string name. Once the simulation starts however, all objects use integral identifiers. This also increased the usage of the constexpr feature of C++11 in, amongst others, time stamps and message headers.
 \subsubsection{Raw pointers}
-While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads, the reference counting becomes very expensive, and the (de)allocating of memory caused significant contention between threads. Models are still held by a smart pointer, as is a kernel, but a message is a raw pointer to compacted memory. 
+While an important C++11 feature in general, our initial usage of smart pointers for some types of objects was misplaced. Used across threads, the reference counting became very expensive, and the (de)allocation of memory caused significant contention between threads. So for the models and the kernels, dxex is still using smart pointers whereas for the messeages, a raw pointer to compacted memory is being used. 
 \subsubsection{Locking}
-Locking between kernels uses mostly atomic operations, where we can occasionally leverage memory orderings to only pay for synchronization when we need it. Messages are exchanged via a shared set of queues each with a dedicated lock.\\
-On a higher level, we avoid the sending of synchronization messages entirely by writing the timestamp directly into shared memory.\\ Sending of antimessages is fairly cheap in our implementation, since only the modified pointer to the original message is sent to the receiving kernel.
+Locking between kernels uses mostly atomic operations and, occasionally, we can leverage memory orderings to only pay for synchronization when we need it. Messages, on the other hand, are exchanged via a shared set of queues each with a dedicated lock.\\
+On a higher level, we avoid the sending of synchronization messages entirely by writing the time stamp directly into shared memory.\\ Sending of antimessages is fairly cheap in our implementation, since only the modified pointer to the original message is sent to the receiving kernel.
 \subsubsection{Schedulers}
-PyPDEVS has a wide range of schedulers for the user to choose from, with performance of each depending on the simulation type. Profiling showed in our case that, for a c++ implementation, the heap implementation used in adevs was faster than any of the schedulers we had tested before. Unlike most node based heaps, this scheduler uses a fixed size array where a heap is rebuilt or modified in place depending on the amount of items to update. Items are only updated, never removed.
+PyPDEVS has a wide range of schedulers to choose from with varying performance depending on the simulation type. Profiling showed that, the heap implementation used in adevs was faster than any of the schedulers we had tested before (in a C++ environment). Unlike most node based heaps, this scheduler uses a fixed size array where its heap is rebuilt or modified in place depending on the amount of items to update. Items are only updated, never removed.

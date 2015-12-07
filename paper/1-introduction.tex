@@ -2,25 +2,29 @@
 %TODO SIZE: approx. 1-2 column, every TODO is approx. one paragraph
 \subsection{DEVS}
 %TODO give introduction to the field: DEVS is used for discrete event simulation and is a common basis for most other formalisms
-The family of DEVS \cite{DEVSbase} formalisms serve as a common basis for most other discrete event formalisms. Of interest in this paper are the 2 key formalisms: Dynamic Structured \cite{DSDEVS} and Parallel \cite{ParallelDEVS} and their implementation. This project uses the Direct Connection \cite{SymbolicFlattening} algorithm, so from a simulation kernel's perspective only Atomic Models exist linked to each other by ports.
+The family of DEVS~\cite{DEVSbase} formalisms serve as a common basis for most other discrete event formalisms. In this paper, we are in particular interested in Dynamic Structured DEVS~\cite{DSDEVS} and Parallel DEVS~\cite{ParallelDEVS}.
+We propose a DEVS implementation (called DEVS-Ex-Machina and referred to as "dxdev" throughout this paper) that is based on the
+the Direct Connection~\cite{SymbolicFlattening} algorithm. This algorithm flattens all hierarchically nested models which leads to, from a simulation kernel's perspective, a collection of Atomic Models linked to each other by ports.
 
 \subsection{Parallel computing}
 %TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
-Parallel execution of a PDEVS simulation can lower overall runtime and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
-While the shared memory parallelism offered by most modern hardware does not raise the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation. \\
+One way to speed up the PDEVS simulation is by using parallel execution. By its very nature, this can lower the runtime considerably and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
+While the shared memory parallelism offered by most modern hardware does not raise the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation.
 
 \subsection{Motivation}
 %TODO give motivation (adevs is good, but only conservative; exploit new parallelism features of C++11 too)
-Adevs \cite{adevs} offers a very fast conservative synchronized shared memory PDEVS simulator, but no optimistic synchronized variant. 
-The latter can be significantly faster, especially in simulations where the runtime behaviour of the simulation is hard to predict. \\
-The matured parallelism features of C++11 were used in this project with the dual aim of writing standard-compliant (and thus portable) code and without losing access to powerful low-level threading primitives. % may need another pass on this one :(
+One of the drawbacks of adevs \cite{adevs}, a well-known PDEVS simulator which is performing well with conservative shared memory synchronization,
+is that it lacks support for optimistic synchronization.
+Using optimistic synchronization can be significantly faster, especially in simulations where the runtime behaviour of the simulation is hard to predict.
+The matured parallelism features of C++11, on the other hand, created new opportunities as well. They allowed to write very efficient code giving access to powerful low-level threading primitives and yet guarantee standard-compliance and portability.
+% may need another pass on this one :(
 
 \subsection{Solution} 
 %TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
-The usage of the Direct connection algorithm makes reusing adevs kernel hard. Devs-ex-machina (dxex) is based on PythonPDEVS \cite{PythonPDEVS}(PyPDEVS) but differs in design and implementation.
-The core aim of the project is to offer a deterministic simulation kernel where the simulation modeller is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model need be written only once for use in the different simulation kernels (with the exception of a non-trivial lookahead).\\
-The tracing framework from PyPDEVS was ported to allow optional verification of simulations. 
+The usage of the Direct connection algorithm makes reusing existing kernels (such as adevs or PythonPDEVS~\cite{PythonPDEVS}, also known as PyPDEVS, hard. Dxex is based on PythonPDEVS \cite{PythonPDEVS}(PyPDEVS) but differs in design and implementation.
+The core aim of the project is to offer a deterministic simulation kernel where the simulation modeller is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model has to be written only once for use in the different simulation kernels.\\
+In order to monitor and investigate simulations, dxex uses a tracing framework which is derived from the one used in PyPDEVS.
 \subsection{Time}
-The DEVS formalisms have $\mathbb{R}$ as time base, but any implementation has to decide on an enumerable representation of time. In principle any type with well defined operators can be used as template parameter, but from a performance point of view a type fitting in a machine word offers obvious advantages. In practice, dxex defaults to word sized unsigned integer.
-Although this significantly reduces the possible range of virtual time, it avoids approximation errors. The notion of $\epsilon$ is trivial for integer, unlike floating point.\\
-Our time representation is extended with a causality field with a range equal or greater than the maximum nr of models in a single kernel ($2^{48}$ by default). If A and B are imminent at time t then $t[1]_a < t[1]_b \oplus t[1]_b < t[1]_a$, while $t[0]_a == t[0]_b == t[0]$. This allows a deterministic ordering of concurrent events. % execution not so much as tracing
+The theoretical DEVS formalisms all have $\mathbb{R}$ as time base, but any implementation has to decide on an enumerable representation of time. In principle, any type with well-defined operators could be used, but, from a performance point of view, a type fitting in a machine word offers obvious advantages. In practice, dxex defaults to word sized unsigned integer.
+Although this significantly reduces the possible range of virtual time, it avoids approximation errors. The notion of $\epsilon$, moreover, is trivial for an integer representation, unlike floating point.\\
+In addition, our time representation is enriched with a causality field the range of which is equal or greater than the maximum number of models in a single kernel ($2^{48}$ by default). If $A$ and $B$ are imminent at time $t$, then $t[1]_a < t[1]_b \oplus t[1]_b < t[1]_a$, while $t[0]_a == t[0]_b == t[0]$. This allows a deterministic ordering of concurrent events. % execution not so much as tracing
