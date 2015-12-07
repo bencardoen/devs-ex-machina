@@ -43,7 +43,7 @@ Interconnect~\cite{van2013research} is a benchmark where all models broadcast, c
 By default, the benchmarks use 4 kernels for parallel simulation.
 \subsubsection{Devstone}
 The flattened models are allocated to kernels by giving each kernel a distinct section of the chain, resulting in a low ratio of inter-kernel to intra-kernel messages. For the optimistic case, this can cause more reverts since the kernels will start to drift faster as the model-count increases. Furthermore, optimistic synchronization is quite sensitive to an increase in kernels, since the delay before a revert propagates, increases. This benchmark requires a specific warm-up time; for $n=d\times w$ models, it takes $\textup{timeadvance}()*(n-1)$ transitions to activate the last model in the chain. When using parallel processing, this can be reduced to $\textup{timeadvance}()*(n\frac{kernels-1}{kernels} -1)$ before the last kernel becomes active.\\
-Figure~\cite{fig:DevstonParallel} shows that dxex outperformance adevs (in both optimistic and conservative case).
+Figure~\ref{fig:DevstoneParallel} shows that dxex outperformance adevs (in both optimistic and conservative case).
 \begin{figure}[ltbh]
 	\includegraphics[width=.5\textwidth]{fig/fig2.eps}
 	\label{fig:DevstoneParallel}
