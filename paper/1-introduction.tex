@@ -1,10 +1,10 @@
 %TODO restructure and let it "flow" better
-\textsf{DEVS}~\cite{CDEVS} is a popular formalism for modelling complex dynamic systems using a discrete-event abstraction.
+\textsf{DEVS}~\cite{ClassicDEVS} is a popular formalism for modelling complex dynamic systems using a discrete-event abstraction.
 In fact, it can serve as a simulation ``assembly language'' to which models in other formalisms can be mapped~\cite{DEVSbase}.
 A number of tools have been constructed by academia and industry that allow the modelling and simulation of \textsf{DEVS} models.
 
 With the ever increasing complexity of simulation models, parallel simulation becomes necessary to perform the simulation within reasonable time bounds.
-And while \textsf{Parallel DEVS}~\cite{PDEVS} was introduced to increase parallelism, this is often still insufficient.
+And while \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, this is often still insufficient.
 Several synchronization algorithms from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation in particular.
 While several parallel \textsf{DEVS} simulation kernels exist, they often restrict themselves to a single synchronization protocol.
 This is a logical choice, as these synchronization protocols have nearly no commonalities.
@@ -22,7 +22,7 @@ Our tool is implemented in C++11, to increase both performance and portability a
 
 A simple model is used to prove that the ideal synchronization algorithm is indeed dependent on model details.
 In our case, a single parameter of the model can have a significant impact on simulation performance, and especially on which is the ideal synchronization protocol.
-In order to show that this flexibility does not counter our performance, we compare our tool to Adevs, currently one of the fastest \textsf{DEVS} simulation tools available~\cite{PythonPDEVS1}.
+In order to show that this flexibility does not counter our performance, we compare our tool to Adevs, currently one of the fastest \textsf{DEVS} simulation tools available~\cite{PythonPDEVS,DEVSSurvey}.
 
 We introduce the necessary background for this paper in Section~\ref{sec:2-background}.
 Section~\ref{sec:3-features} elaborates on our features and design.
