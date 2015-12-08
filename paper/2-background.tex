@@ -10,10 +10,9 @@ Several algorithms are defined in the literature to implement this behaviour.
 An overview is given in~\cite{FujimotoBook}.
 
 Deadlock can occur when a dependency cycle occurs and the amount of exchanged messages is low.
-Again, multiple algorithms are defined to handle this situation.
-Algorithms range from deadlock avoidance to deadlock recovery.
+Multiple algorithms are defined to handle this situation, such as deadlock avoidance and deadlock recovery.
 
-The main advantage of this approach is that it has a very low overhead in cases of high parallelism between different nodes.
+The main advantage of conservative synchronization is that it has a low overhead if high parallelism exists between nodes.
 Each node can simulate in parallel, while sporadically notifying other nodes that they can progress even further.
 The disadvantage, however, is that the amount of parallelism is explicitly limited by the size of the lookahead.
 If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced.
@@ -33,11 +32,10 @@ Incoming events need to be passed to the models again, when the correct simulati
 Cancelling events, however, can cause further rollbacks, as the receiving node might also have to roll back its state.
 In practice, a single causality error could have significant repercussions on the complete simulation.
 
-Further changes are required when the model performs unrecoverable transactions, such as I/O (\textit{e.g.}, tracing, writing to file, printing output), allocating and deallocating memory, and so on.
-For this, lightweight synchronization algorithms are still required to determine the lower bound of all simulation times, through the computation of a \textit{Global Virtual Time} (GVT).
+Further changes are required for unrecoverable operations, such as I/O (\textit{e.g.}, tracing, writing to file, printing output) and memory management.
+Lightweight algorithms are still required to determine the lower bound of all simulation times, through the computation of a \textit{Global Virtual Time} (GVT).
 
-Optimistic synchronization never blocks: a node always progresses as fast as possible, at the cost of potentially discarding simulation results.
-More importantly, performance is not limited by a small lookahead, caused by a very infrequent event.
+The main advantage is that performance is not limited by a small lookahead, caused by a very infrequent event.
 If an (almost) instantaneous event occurs rarely, performance will only be impacted if it occurs, and not at every simulation step.
 The main disadvantage is unpredictable performance and arbitrary cost of rollbacks due to the propagation of causality errors.
 If rollbacks occur frequently, simulation quickly becomes slow, as the overhead of the recovery mechanisms becomes significant.
