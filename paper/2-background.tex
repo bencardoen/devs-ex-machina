@@ -36,13 +36,12 @@ In practice, a single causality error could have significant repercussions on th
 Further changes are required when the model performs unrecoverable transactions, such as I/O (\textit{e.g.}, tracing, writing to file, printing output), allocating and deallocating memory, and so on.
 For this, lightweight synchronization algorithms are still required to determine the lower bound of all simulation times, through the computation of a \textit{Global Virtual Time} (GVT).
 
-%TODO reword advantages
-The advantage of optimistic synchronization is that there is no blocking at all: a node can always progress as fast as possible in simulated time.
-Additionally, you do not suffer from a small lookahead if the small lookahead situation rarely occurs.
-If an (almost) instantaneous event occurs rarely, performance will only be impacted if it occurs.
-The main disadvantage is the unpredictable performance and arbitrary cost of rollbacks.
-If rollbacks occur rather frequently, simulation quickly becomes slower than sequential, as the overhead of state saving becomes significant.
-Apart from the overhead in CPU time, there is also an overhead in terms of memory, as all intermediate states will also have to be stored up to a point where it can be considered \textit{irreversible}.
+Optimistic synchronization never blocks: a node always progresses as fast as possible, at the cost of potentially discarding simulation results.
+More importantly, performance is not limited by a small lookahead, caused by a very infrequent event.
+If an (almost) instantaneous event occurs rarely, performance will only be impacted if it occurs, and not at every simulation step.
+The main disadvantage is unpredictable performance and arbitrary cost of rollbacks due to the propagation of causality errors.
+If rollbacks occur frequently, simulation quickly becomes slow, as the overhead of the recovery mechanisms becomes significant.
+Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states qre stored up to a point where it can be considered \textit{irreversible}.
 
 While optimistic synchronization does not explicitly depends on the lookahead, simulation performance is still bound by the lookahead implicitly.
 
