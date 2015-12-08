@@ -47,7 +47,11 @@ Apart from the overhead in CPU time, there is also an overhead in terms of memor
 While optimistic synchronization does not explicitly depends on the lookahead, simulation performance is still bound by the lookahead implicitly.
 
 \subsection{C++11 Parallelism Features}
-%TODO explain what is new in C++11 for parallelism and how it contributes to our cause
-C++11 offers a wide range of portable synchronization primitives in the Standard Library, whereas in earlier versions one had to resort to non-portable (C) implementations. More importantly, C++11 is the first version of the standard that actually defines a multi-threaded abstract machine memory model in the language.
-Our kernels use a wide range of threading primitives and atomic operations. As an example, eot/eit/nulltime are not exchanged as messages, but as reads/writes to atomic fields shared by all kernels. This avoids the otherwise unavoidable latency penalty by mixing simulation messages with synchronization messages. For an in-depth study, we refer to~\cite{CPE:CPE3007}.
+Apart from various other additions, C++11 adds a wide range of portable synchronization primitives to the Standard Library.
+In earlier versions of the language standard, one had to resort to non-portable C implementations.
+Furthermore, C++11 is the first version of the standard that explicitly defines a multi-threaded abstract machine memory model.
 Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. 
+
+Simulation values that need to be shared between nodes, can now be coded portable and efficiently through the use of atomic fields.
+This avoids latencies caused by the exchange of synchronization messages.
+For an in-depth study, we refer to~\cite{CPE:CPE3007}.
