@@ -1,29 +1,21 @@
-%TODO explain that we are briefly going over the main features
-\subsection{Based on PyPDEVS}
-%TODO say that it is based on PythonPDEVS --done
-Dxex is based on PyPDEVS, and provides the following features: 
-\begin{enumerate}
-	\item Direct Connection
-	\item Dynamic Structured DEVS
-	\item Termination function: if specified, a termination function is applied to each model every simulation round to test whether the simulation can terminate. This feature is only available in single-threaded simulations.
-	\item The State/Message objects can have any payload type. Different allows different message types to be used within the same simulation.
-	\item Tracing: An asynchronous, thread safe and versatile tracing mechanism allows exact verification of the simulation.
-	\item Optimistic and Conservative synchronization
-\end{enumerate}
-Furthermore, the implementation tries to adhere to the C++ principle that you don't pay performance-wise for what you don't use. For this reason, the support for a termination function for the multi-threaded kernel was abandoned, as it is non-trivial to implement and had an adverse impact on the runtime, even when not in use. Another example is the state saving mechanism, which is only used for optimistic parallel simulation and has no performance impact in a conservative parallel simulation.\\
-Our tracing implementation is not comparable to adevs's listener interface. To be usable in an optimistic simulation, the tracing of the simulation has to be reversible and only be committed at GVT points. Furthermore, the framework itself has to be thread safe and deterministic so that a simulation will always produce the exact same output.\\
-The following features from PyPDEVS are not present
-\begin{enumerate}
-	\item Activity tracking and relocation
-	\item Serialization: in this context this is the ability to save/load a complete simulation to disk, not the state saving mechanisms required for TimeWarp. 
-	\item Interactive control
-	\item Distributed simulation
-\end{enumerate}
-In dxex, the model allocation is realized by a derivable allocator object which the user can implement to arrange a more ideal (domain-specific) allocation. If this is omitted, a default (non-activity-aware) allocation stripes the models over the simulation kernels.\\
-In addition, debugging tools such as a logger and a graph visualizer are included that can track activity with respect to the allocation for later inspection (but not are not online and as dynamic as is in PyPDEVS).\\
-%TODO ... and thus has most features from PythonPDEVS, like Dynamic Structure, termination condition, direct connection, ...
-%TODO (size: take as much size as you want, depending on how much is shared with PythonPDEVS)
-%TODO (maybe: note that models are not compatible)
+Historically, dxex is based on PythonPDEVS~\cite{PythonPDEVS}.
+While Python is a good language to create software prototypes, its performance has proven to be insufficient to compete with other simulation kernels~\cite{MasterThesis}.
+Dxex implements only a subset of PythonPDEVS, but makes some of its own additions.
+The core simulation algorithm and optimizations, however, are highly similar.
+
+While we will not make a detailed comparison with PythonPDEVS here, dxex also supports direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing framework~\cite{PythonPDEVS}.
+But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols.
+Furthermore, the implementation in C++11 allows many more (static) optimizations, which were plainly impossible when using an interpreted language.
+
+Note that, since there is no universal \textsf{DEVS} model standard, dxex models are incompatible with PythonPDEVS and vice versa.
+This is due to dxex models being grafted on C++11, whereas PythonPDEVS models are grafted on Python.
+
+In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool.
+
+\subsection{Rationale}
+
+
+
 \subsection{Different Synchronization protocols}
 %TODO explain rationale: why different synchronization protocols
 For parallel executions, synchronization is required for PDEVS to prevent causality violations from happening or to recover from causality violations. Preventing causality violations (conservative) typically requires domain-specific information to compensate for the performance loss, while recovering from causality errors (optimistic) requires the calculation of a state to revert to.
