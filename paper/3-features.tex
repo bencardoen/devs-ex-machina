@@ -21,11 +21,11 @@ We therefore argue that a real general purpose simulation tool should support se
 
 Each of them is applicable in specific model configurations.
 Conservative synchronization is ideal when high lookahead exists between different nodes, and barely any blocking is necessary.
-Optimistic synchronization is ideal when lookahead is generally high, but rare (almost) instantaneous events cause a significantly lower lookahead.
+Optimistic synchronization is ideal when lookahead is unpredictable, or there are rare (almost) instantaneous events.
 Finally, sequential simulation is still required for models where parallelism is bad, causing significant overhead.
 
 \subsubsection{Sequential}
-%TODO how simulation works, and how other protocols plug into this
+%TODO write
 
 \subsubsection{Conservative}
 For conservative synchronization, each node determines the nodes it is influenced by.
@@ -33,7 +33,6 @@ Each model provides a lookahead function, which determines the lookahead dependi
 Within this time interval, it is an error if a model raises an event, thus violating its previous promise.
 
 The node uses this information to compute its earliest output time (EOT), and writes out the value in shared memory through the use of C++11 synchronization primitives.
-%TODO extend maybe
 
 \subsubsection{Optimistic}
 For optimistic synchronization, each node needs to keep track of all intermediate simulation states.
@@ -44,12 +43,16 @@ This process runs asynchronously from the simulation itself.
 Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed.
 
 \subsection{Transparancy}
-%TODO
+A user must only provide one model, implemented in C++11, which can be simulated by each synchronization kernel.
+The exception is conservative synchronization: a lookahead function is required, whereas this is not possible in other synchronization kernels.
+Two options are possible: either a lookahead function is always provided, even when it is not required and possibly not used, or using a default lookahead function if none is defined.
 
-The user must only provide one implementation of a model that can be used for both synchronization protocols. A lookahead function is desired to accelerate the conservative protocol, but is not required. In the absence of a user supplied lookahead, the kernel assumes it cannot predict beyond its current time $t+\epsilon$, creating a lockstep simulation. % implementation detail ?\\
-The user is shielded from the multi-threaded aspect of the kernel.\\
-From the user's perspective, the multi-threaded aspect of the kernel is not exposed. % payload protected ?
-%TODO indicate in which optimistic is good (when runtime behavior is very hard to predict). Describe some drawbacks (many reverts when everybody influences everybody all the time)
+Always defining a lookahead function might seem redundant, especially if users will never use conservative synchronization.
+The more attractive option is for the simulation tool to provide a default lookahead function, defined by the minimum detected time advance.
+This lookahead value is most likely too small, but will prevent causality errors at the cost of performance.
+Depending on the model, simulation performance might still be faster than sequential simulation.
+
+Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity.
 
 \subsection{Performance Improvements}
 %TODO briefly discuss some of the additional changes you implemented
