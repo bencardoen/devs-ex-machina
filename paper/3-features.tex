@@ -13,21 +13,25 @@ This is due to dxex models being grafted on C++11, whereas PythonPDEVS models ar
 In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool.
 
 \subsection{Rationale}
+We have previously shown that different synchronization protocols exist, with each of them being optimized for a specific kind of model.
+As no single synchronization protocol is ideal, a general purpose simulation tool should support multiple situations.
+Currently, however, most parallel simulation tools chose only a single synchronization protocol due to the inherent differences between these approaches.
+An uninformed choice on which to implement is insufficient, as performance is likely to be bad.
+We therefore argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization.
 
+Each of them is applicable in specific model configurations.
+Conservative synchronization is ideal when high lookahead exists between different nodes, and barely any blocking is necessary.
+Optimistic synchronization is ideal when lookahead is generally high, but rare (almost) instantaneous events cause a significantly lower lookahead.
+Finally, sequential simulation is still required for models where parallelism is bad, causing significant overhead.
 
-
-\subsection{Different Synchronization protocols}
-%TODO explain rationale: why different synchronization protocols
-For parallel executions, synchronization is required for PDEVS to prevent causality violations from happening or to recover from causality violations. Preventing causality violations (conservative) typically requires domain-specific information to compensate for the performance loss, while recovering from causality errors (optimistic) requires the calculation of a state to revert to.
-
-\subsubsection{Conservative}
+\subsection{Conservative}
 In case of conservative synchronization, any kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
 A model should provide a lookahead function which returns, relative to the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel and the minimum time is set as the lookahead of that kernel. \\
 The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
 For the garbage collection (of sent messages), the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
 %This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?. %writing this here seems inappropriate
 
-\subsubsection{Optimistic}
+\subsection{Optimistic}
 The optimistic kernel requires from the hosted model that copying the state is done carefully (avoid unnecessary copies and make a copies whenever necessary).\\
 The kernels use Mattern's \cite{mattern}
 GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states and (anti)messages.\\
