@@ -29,7 +29,7 @@ PHold \cite{PHOLD} is a benchmark that focuses in particular on parallel executi
 \end{figure}
 
 \subsubsection{Interconnect}
-Interconnect~\cite{van2013research} is a benchmark where all models broadcast, creating a complete graph in dependencies between models. As the model count increases, we see (see Figure~\ref{fig:Interconnect} the expected quadratic increase in runtime for both adevs and dxex, but an increasing penalty for dxex. Profiling shows this is entirely due to the heap allocation of messages, which even though minimized by using memory pools remains significant.
+Interconnect~\cite{MasterThesis} is a benchmark where all models broadcast, creating a complete graph in dependencies between models. As the model count increases, we see (see Figure~\ref{fig:Interconnect} the expected quadratic increase in runtime for both adevs and dxex, but an increasing penalty for dxex. Profiling shows this is entirely due to the heap allocation of messages, which even though minimized by using memory pools remains significant.
 \begin{figure}[h]
 	\includegraphics[width=.5\textwidth]{fig/fig3.eps}
 	\label{fig3.eps}
@@ -44,7 +44,7 @@ By default, the benchmarks use 4 kernels for parallel simulation.
 \subsubsection{Devstone}
 The flattened models are allocated to kernels by giving each kernel a distinct section of the chain, resulting in a low ratio of inter-kernel to intra-kernel messages. For the optimistic case, this can cause more reverts since the kernels will start to drift faster as the model-count increases. Furthermore, optimistic synchronization is quite sensitive to an increase in kernels, since the delay before a revert propagates, increases. This benchmark requires a specific warm-up time; for $n=d\times w$ models, it takes $\textup{timeadvance}()*(n-1)$ transitions to activate the last model in the chain. When using parallel processing, this can be reduced to $\textup{timeadvance}()*(n\frac{kernels-1}{kernels} -1)$ before the last kernel becomes active.\\
 Figure~\ref{fig:DevstoneParallel} shows that dxex outperformance adevs (in both optimistic and conservative case).
-\begin{figure}[ltbh]
+\begin{figure}
 	\includegraphics[width=.5\textwidth]{fig/fig2.eps}
 	\label{fig:DevstoneParallel}
 	\caption{DevStone parallel}
@@ -72,7 +72,7 @@ The priority benchmark is composed of a single server generating a stream of $0\
 \end{figure}
 \end{center}
 A key difference here with the other benchmarks is that a state (in the Receiver instances) is very cheap to copy/create. The kernel holding the server will never revert since it is a source in the dependency graph. The optimistic case will therefore not suffer the same performance hit in recreating the states as it does in PHold. The overhead in the optimistic case is entirely due to the factor $m$, which will quickly dominate in increasing buffers of received messages.
-\begin{figure}[ltbh]
+\begin{figure}
 	\includegraphics[width=.5\textwidth]{fig/fig5.eps}
 	\label{fig:Priority}
 	\caption{Priority}
@@ -121,7 +121,7 @@ Adevs' conservative fails to complete the benchmark under valgrind even with a s
 Optimistic exhibits the expected high memory usage.
 \paragraph*{Interconnect}
 In section 4.2 the parallel performance of this benchmark is further explained. Interconnect highlights dxex's lower performance due to message allocation overhead. 
-\begin{table}[lhtb]
+\begin{table}
 	\centering
 	\label{iconn_mem}
 	\begin{tabular}{| l | l | l | l | l |}
@@ -135,7 +135,7 @@ In section 4.2 the parallel performance of this benchmark is further explained. 
 \paragraph*{Priority Network}
 The priority network model is detailed in section 4.1.\\
 The high memory usage of the conservative case is largely due to the garbage collection implementation. Kernel 0 is the initiator of the LBTS calculation but since it holds only models independent of any other (server), it will finish simulation very fast leaving the other kernel bereft of an updated LBTS. The kernel holding the server will after simulation wait on the receiving kernel until it can prove all sent messages can be deallocated.
-\begin{table}[lhtb]
+\begin{table}
 	\centering
 	\label{pmod_mem}
 	\begin{tabular}{| l | l | l |}
