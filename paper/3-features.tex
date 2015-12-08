@@ -12,7 +12,7 @@ This is due to dxex models being grafted on C++11, whereas PythonPDEVS models ar
 
 In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool.
 
-\subsection{Rationale}
+\subsection{Synchronization protocols}
 We have previously shown that different synchronization protocols exist, with each of them being optimized for a specific kind of model.
 As no single synchronization protocol is ideal, a general purpose simulation tool should support multiple situations.
 Currently, however, most parallel simulation tools chose only a single synchronization protocol due to the inherent differences between these approaches.
@@ -24,19 +24,28 @@ Conservative synchronization is ideal when high lookahead exists between differe
 Optimistic synchronization is ideal when lookahead is generally high, but rare (almost) instantaneous events cause a significantly lower lookahead.
 Finally, sequential simulation is still required for models where parallelism is bad, causing significant overhead.
 
-\subsection{Conservative}
-In case of conservative synchronization, any kernel will determine which kernels it is influenced by. This information is constructed from the incoming connections on all hosted models. The process is only 1 link deep, since an influenced kernel will in turn be blocked by others deeper in the graph.\\
-A model should provide a lookahead function which returns, relative to the current time, the timespan during which the model cannot change state due to an external event. This information is collected for all models hosted on the kernel and the minimum time is set as the lookahead of that kernel. \\
-The kernel will calculate its earliest output time and write this value in shared memory. The eit of the kernel is then set as the minimal eot of all influencing kernels. \\
-For the garbage collection (of sent messages), the LBTS/GVT is calculated as $\min_{\forall i \in \textup{influencors}}( \textup{nulltime}[i])  - \epsilon $.\\
-%This is one of the operations that can benefit from using a relaxed memory ordering. % Using it for read atm, check before finalizing and do we need to mention this ?. %writing this here seems inappropriate
+\subsubsection{Sequential}
+%TODO how simulation works, and how other protocols plug into this
 
-\subsection{Optimistic}
-The optimistic kernel requires from the hosted model that copying the state is done carefully (avoid unnecessary copies and make a copies whenever necessary).\\
-The kernels use Mattern's \cite{mattern}
-GVT algorithm with a maximum of 2 rounds per iteration to determine a GVT. This process runs asynchronously from the simulation itself. Once found, the controlling thread informs all kernels of the new value, which they can use to execute garbage collection of old states and (anti)messages.\\
-%TODO explain core infrastructure a bit, maybe with a diagram or so, which clearly shows that everything is shared, except the "synchronization" part
-%TODO claim that this allows you to easily switch between both methods, to always chose the best one
+\subsubsection{Conservative}
+For conservative synchronization, each node determines the nodes it is influenced by.
+Each model provides a lookahead function, which determines the lookahead depending on the current simulation state.
+Within this time interval, it is an error if a model raises an event, thus violating its previous promise.
+
+The node uses this information to compute its earliest output time (EOT), and writes out the value in shared memory through the use of C++11 synchronization primitives.
+%TODO extend maybe
+
+\subsubsection{Optimistic}
+For optimistic synchronization, each node needs to keep track of all intermediate simulation states.
+This needs to be done carefully, in order to avoid unnecessary copies, and minimize the overhead induced for each transition function.
+
+To determine the Global Virtual Time (GVT), we use Mattern's GVT algorithm~\cite{mattern}, which finds the GVT with at most $2n$ exchanged synchronization messages.
+This process runs asynchronously from the simulation itself.
+Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed.
+
+\subsection{Transparancy}
+%TODO
+
 The user must only provide one implementation of a model that can be used for both synchronization protocols. A lookahead function is desired to accelerate the conservative protocol, but is not required. In the absence of a user supplied lookahead, the kernel assumes it cannot predict beyond its current time $t+\epsilon$, creating a lockstep simulation. % implementation detail ?\\
 The user is shielded from the multi-threaded aspect of the kernel.\\
 From the user's perspective, the multi-threaded aspect of the kernel is not exposed. % payload protected ?
