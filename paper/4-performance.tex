@@ -1,6 +1,18 @@
-%TODO say that you will now prove your claims about the aproach having nearly no impact
-%TODO and potentially even claim that you are faster than adevs for some situations, due to the algorithms from PythonPDEVS and further features
-%TODO briefly give some hardware info on the machine (CPU, OS, RAM), used software (version of adevs, GCC, ...), and about number of samples/variance
+In this section, we evaluate the performance of our simulation tool.
+We show that the inclusion of multiple synchronization protocols does not decrease our performance to the point where it is unusable.
+To this end, we compare to adevs, one of the most efficient simulation kernels at this time~\cite{DEVSSurvey}.
+A comparison is made for both the CPU and memory usage of both sequential simulation and parallel simulation.
+
+We start of with a comparison of sequential simulation, to show how adevs and dxex relate in this simple case.
+We not only show that our approach does not influence performance negatively, but also that our main simulation algorithm, similar to the one of PythonPDEVS, is significantly faster than the one found in adevs.
+Similar differences, compared to adevs, can also be seen in the parallel simulation benchmarks.
+In the parallel simulation benchmarks, the benefit of our different synchronization protocols is also indicated.
+
+For all benchmarks, results were all well within 1\% deviation of the average, such that only the average is used in the remainder of this section.
+The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3}'').
+To guarantee comparable results, no IO was performed during the benchmarking phase.
+Simulation traces were used to verify that both adevs and dxex models have exactly the same behaviour.
+
 \subsection{Sequential Simulation}
 %TODO we start with sequential simulation results, because this is still base case
 %TODO compare CPU time with adevs for some benchmarks
