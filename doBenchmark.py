@@ -111,12 +111,12 @@ def pholdgen(simtype, executable):
         print("Refusing to run benchmark with != 4 cores.")
         return
     for nodes in [args.cores]:
-        for apn in [2, 4, 8, 16]:  # , 8, 16, 32]:
+        for apn in [4]:  # , 8, 16, 32]:
             for iterations in [0]:
-                for remotes in [10]:
-                    for priority in [0.10]:
-                        for endTime in [1000000]:
-                            yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', priority, '-t', endTime]))
+                for remotes in [90]:
+                    for priority in range(10, 100, 10):
+                        for endTime in [2000000]:                            
+                            yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
                             # return
 lenParallelPhold = len(list(chain(["pholdExec"], simtypes.optimistic, ['-n', 0, '-s', 0, '-i', 0, '-r', 0, '-p', 0, '-t', 0])))
 
