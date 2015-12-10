@@ -103,10 +103,6 @@ lenParallelDevstone = len(list(chain(["devExec"], simtypes.optimistic, ['-r', '-
 
 # Cores must match nodes.
 def pholdgen(simtype, executable):
-    # time single 5 000 000
-    # single core s=[2, 4, 8, 16], r=[10]
-    # for single & conservative
-    # Todo re-enable
     if args.cores != 4:
         print("Refusing to run benchmark with != 4 cores.")
         return
@@ -119,6 +115,16 @@ def pholdgen(simtype, executable):
                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
                             # return
 lenParallelPhold = len(list(chain(["pholdExec"], simtypes.optimistic, ['-n', 0, '-s', 0, '-i', 0, '-r', 0, '-p', 0, '-t', 0])))
+
+def pholdgen_remotes(simtype, executable):
+    for nodes in [args.cores]:
+        for apn in [4]:  # , 8, 16, 32]:
+            for iterations in [0]:
+                for priority in [0]:
+                    for remotes in range(10, 100, 10):
+                        for endTime in [1000000]:                            
+                            yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
+                            # return
 
 
 def interconnectgen(simtype, executable, doRandom=False):
@@ -145,6 +151,25 @@ def interconnectgen(simtype, executable, doRandom=False):
 
 randconnectgen = partial(interconnectgen, doRandom=True)
 lenParallelConnect = len(list(chain(["connectExec"], simtypes.optimistic, ['-r', '-w', 0, '-t', 0])))
+
+def interconnectgen_speedup(simtype, executable, doRandom=False):
+
+    if simtype == simtypes.classic:
+        # time 5 000 000
+        for width in [8]:
+            for endTime in [2000000]:
+                yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+                # return
+    else:
+        # time 5 000 000
+        oldNumCores = simtype[-1]
+        for width in [8]:
+            for endTime in [2000000]:
+                for cores in range(2, oldNumCores+1, 1):
+                    simtype[-1] = cores
+                    yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
+                # simtype[-1] = oldNumCores; return
+        simtype[-1] = oldNumCores
 
 
 def networkgen(simtype, executable, feedback=False):
@@ -226,10 +251,20 @@ if __name__ == '__main__':
         defaults.Benchmark('phold/optimistic', dxpholdc, partial(pholdgen, simtypes.optimistic, pholdEx), "dxexmachina phold, optimistic"),
         defaults.Benchmark('phold/conservative', dxpholdc, partial(pholdgen, simtypes.conservative, pholdEx), "dxexmachina phold, conservative"),
         )
+    dxphold_remotes = SimType(
+        defaults.Benchmark('phold_remotes/classic', dxpholdc, partial(pholdgen_remotes, simtypes.classic, pholdEx), "dxexmachina phold, classic"),
+        defaults.Benchmark('phold_remotes/optimistic', dxpholdc, partial(pholdgen_remotes, simtypes.optimistic, pholdEx), "dxexmachina phold, optimistic"),
+        defaults.Benchmark('phold_remotes/conservative', dxpholdc, partial(pholdgen_remotes, simtypes.conservative, pholdEx), "dxexmachina phold, conservative"),
+        )
     dxconnect = SimType(
         defaults.Benchmark('connect/classic', dxconnectc, partial(interconnectgen, simtypes.classic, connectEx), "dxexmachina high interconnect, classic"),
         defaults.Benchmark('connect/optimistic', dxconnectc, partial(interconnectgen, simtypes.optimistic, connectEx), "dxexmachina high interconnect, optimistic"),
         defaults.Benchmark('connect/conservative', dxconnectc, partial(interconnectgen, simtypes.conservative, connectEx), "dxexmachina high interconnect, conservative"),
+        )
+    dxconnect_speedup = SimType(
+        defaults.Benchmark('connect_speedup/classic', dxconnectc, partial(interconnectgen_speedup, simtypes.classic, connectEx), "dxexmachina high interconnect, classic"),
+        defaults.Benchmark('connect_speedup/optimistic', dxconnectc, partial(interconnectgen_speedup, simtypes.optimistic, connectEx), "dxexmachina high interconnect, optimistic"),
+        defaults.Benchmark('connect_speedup/conservative', dxconnectc, partial(interconnectgen_speedup, simtypes.conservative, connectEx), "dxexmachina high interconnect, conservative"),
         )
     dxrandconnect = SimType(
         defaults.Benchmark('randconnect/classic', dxconnectc, partial(randconnectgen, simtypes.classic, connectEx), "dxexmachina randomized high interconnect, classic"),
@@ -266,6 +301,11 @@ if __name__ == '__main__':
         None,
         defaults.Benchmark('aphold/conservative', apholdc, partial(pholdgen, simtypes.conservative, adevpholdEx), "adevs phold, conservative"),
         )
+    aphold_remotes = SimType(
+        defaults.Benchmark('aphold_remotes/classic', apholdc, partial(pholdgen_remotes, simtypes.classic, adevpholdEx), "adevs phold, classic"),
+        None,
+        defaults.Benchmark('aphold_remotes/conservative', apholdc, partial(pholdgen_remotes, simtypes.conservative, adevpholdEx), "adevs phold, conservative"),
+        )
     aconnect = SimType(
         defaults.Benchmark('aconnect/classic', aconnectc, partial(interconnectgen, simtypes.classic, adevconnectEx), "adevs high interconnect, classic"),
         None,
@@ -275,6 +315,11 @@ if __name__ == '__main__':
         defaults.Benchmark('arandconnect/classic', aconnectc, partial(randconnectgen, simtypes.classic, adevconnectEx), "adevs randomized high interconnect, classic"),
         None,
         defaults.Benchmark('arandconnect/conservative', aconnectc, partial(randconnectgen, simtypes.conservative, adevconnectEx), "adevs randomized high interconnect, conservative"),
+        )
+    aconnect_speedup = SimType(
+        defaults.Benchmark('aconnect_speedup/classic', aconnectc, partial(interconnectgen_speedup, simtypes.classic, adevconnectEx), "adevs high interconnect, classic"),
+        None,
+        defaults.Benchmark('aconnect_speedup/conservative', aconnectc, partial(interconnectgen_speedup, simtypes.conservative, adevconnectEx), "adevs high interconnect, conservative"),
         )
     anetwork = SimType(
         defaults.Benchmark('network/classic', anetworkc, partial(networkgen, simtypes.classic, adevnetworkEx), "adevs queue network, classic"),
@@ -287,23 +332,29 @@ if __name__ == '__main__':
         defaults.Benchmark('feednetwork/conservative', anetworkc, partial(feedbacknetworkgen, simtypes.conservative, adevnetworkEx), "adevs queue network with feedback loop, conservative"),
         )
     allBenchmark = [dxdevstone, dxranddevstone,
-                    dxphold,
+                    dxphold,dxphold_remotes,
                     dxconnect, dxrandconnect,
+                    dxconnect_speedup,
                     dxnetwork, dxfeednetwork,
                     dxpriority,
                     adevstone, aranddevstone,
-                    aphold,
+                    aphold,aphold_remotes,
                     aconnect, arandconnect,
+                    aconnect_speedup,
                     anetwork, afeednetwork]
     bmarkArgParses = [devsArg, devsArg,
-                      pholdArg,
+                      pholdArg,pholdArg,
                       connectArg, connectArg,
+                      connectArg,
                       networktArg, networktArg,
                       priorityArg,
                       devsArg, devsArg,
-                      pholdArg,
+                      pholdArg, pholdArg,
                       connectArg, connectArg,
+                      connectArg,
                       networktArg, networktArg]
+    if len(allBenchmark) != len(bmarkArgParses):
+        raise 42
     # do all the preparation stuff
     driver = defaults.defaultDriver
     analyzer = defaults.perfAnalyzer

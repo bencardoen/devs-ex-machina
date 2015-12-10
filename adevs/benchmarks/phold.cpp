@@ -77,8 +77,8 @@ constexpr T roundTo(T val, T gran)
 class HeavyPHOLDProcessor: public adevs::Atomic<t_event>
 {
 private:
-    const std::size_t m_percentageRemotes;
-    const double m_percentagePriority;
+        const std::size_t m_percentageRemotes;
+        const double m_percentagePriority;
 	const size_t m_iter;
 	const std::vector<std::size_t> m_local;
 	const std::vector<std::size_t> m_remote;
@@ -100,14 +100,17 @@ private:
 	}
 	t_eventTime getProcTime(t_payload event) const
 	{
-        std::uniform_real_distribution<double> dist0(0.0, 1.0);
+                std::uniform_real_distribution<double> dist0(0.0, 1.0);
 		std::uniform_real_distribution<t_eventTime> dist(T_100, T_125);
 		m_rand.seed(event);
 		double ta = roundTo(dist(m_rand), T_STEP);
-		if(dist0(m_rand) < m_percentagePriority)
+                const double v = dist0(m_rand);
+		if(v < m_percentagePriority){
 	            return T_0;
-	    else
+                }
+                else{
 	            return ta;
+                }
 	}
 public:
 	const std::string m_name;
@@ -116,6 +119,8 @@ public:
 		 m_percentageRemotes(percentageRemotes), m_percentagePriority(percentagePriority), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0),
 		 m_name(name)
 	{
+                if(m_percentagePriority > 1.0 )
+                        throw std::logic_error("Invalid value for priority");
 		m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
 	}
 
@@ -184,10 +189,11 @@ public:
 class PHOLD: public adevs::Digraph<t_payload, int>
 {
 public:
-    std::vector<HeavyPHOLDProcessor*> processors;
+        std::vector<HeavyPHOLDProcessor*> processors;
 
 	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority = 0.1)
 	{
+                assert(percentagePriority <= 1.0);
 		std::vector<std::vector<size_t>> procs;
 
 		for (size_t i = 0; i < nodes; ++i) {
@@ -208,7 +214,7 @@ public:
 				std::vector<size_t> inoj = procs[i];
 				inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
 				HeavyPHOLDProcessor* p = new HeavyPHOLDProcessor("Processor_" + n_tools::toString(cntr),
-					iter, cntr, inoj, allnoi, percentageRemotes, percentageRemotes);
+					iter, cntr, inoj, allnoi, percentageRemotes, percentagePriority);
 				processors.push_back(p);
 				add((Component*)p);
 				++cntr;
@@ -292,8 +298,8 @@ int main(int argc, char** argv)
 	const char optDepth = 's';
 	const char optHelp = 'h';
 	const char optIter = 'i';
-    const char optRemote = 'r';
-    const char optPriority = 'p';
+        const char optRemote = 'r';
+        const char optPriority = 'p';
 	const char optCores = 'c';
 	char** argvc = argv+1;
 
