@@ -19,11 +19,13 @@
 #define T_0 0.01	//timeadvance may NEVER be 0!
 #define T_100 1.0
 #define T_STEP 0.01
+#define T_125 1.25
 #define T_INF 2.0
 #else
 #define T_0 1.0	//timeadvance may NEVER be 0!
 #define T_100 100.0
 #define T_STEP 1.0
+#define T_125 125.0
 #define T_INF 200.0
 #endif
 
@@ -75,7 +77,8 @@ constexpr T roundTo(T val, T gran)
 class HeavyPHOLDProcessor: public adevs::Atomic<t_event>
 {
 private:
-	const std::size_t m_percentageRemotes;
+    const std::size_t m_percentageRemotes;
+    const double m_percentagePriority;
 	const size_t m_iter;
 	const std::vector<std::size_t> m_local;
 	const std::vector<std::size_t> m_remote;
@@ -97,15 +100,20 @@ private:
 	}
 	t_eventTime getProcTime(t_payload event) const
 	{
-		std::uniform_real_distribution<t_eventTime> dist(T_0, T_100);
+        std::uniform_real_distribution<double> dist0(0.0, 1.0);
+		std::uniform_real_distribution<t_eventTime> dist(T_100, T_125);
 		m_rand.seed(event);
-		return roundTo(dist(m_rand), T_STEP);
+		double ta = roundTo(dist(m_rand), T_STEP);
+		if(dist0(m_rand) < m_percentagePriority)
+	            return T_0;
+	    else
+	            return ta;
 	}
 public:
 	const std::string m_name;
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t modelNumber, std::vector<size_t> local,
-	        std::vector<size_t> remote, size_t percentageRemotes):
-		 m_percentageRemotes(percentageRemotes), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0),
+	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority):
+		 m_percentageRemotes(percentageRemotes), m_percentagePriority(percentagePriority), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0),
 		 m_name(name)
 	{
 		m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
@@ -178,7 +186,7 @@ class PHOLD: public adevs::Digraph<t_payload, int>
 public:
     std::vector<HeavyPHOLDProcessor*> processors;
 
-	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes)
+	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority = 0.1)
 	{
 		std::vector<std::vector<size_t>> procs;
 
@@ -200,7 +208,7 @@ public:
 				std::vector<size_t> inoj = procs[i];
 				inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
 				HeavyPHOLDProcessor* p = new HeavyPHOLDProcessor("Processor_" + n_tools::toString(cntr),
-					iter, cntr, inoj, allnoi, percentageRemotes);
+					iter, cntr, inoj, allnoi, percentageRemotes, percentageRemotes);
 				processors.push_back(p);
 				add((Component*)p);
 				++cntr;
@@ -263,13 +271,14 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
 	"  -n NODES       number of phold nodes\n"
 	"  -s SUBNODES    number of subnodes per phold node\n"
 	"  -r REMOTES     percentage of remote connections\n"
+    "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
 	"  -i ITER        amount of useless work to simulate complex calculations\n"
 	"  -c COREAMT     amount of simulation cores, ignored in classic mode\n"
 	"  classic        Run single core simulation.\n"
@@ -283,7 +292,8 @@ int main(int argc, char** argv)
 	const char optDepth = 's';
 	const char optHelp = 'h';
 	const char optIter = 'i';
-	const char optRemote = 'r';
+    const char optRemote = 'r';
+    const char optPriority = 'p';
 	const char optCores = 'c';
 	char** argvc = argv+1;
 
@@ -291,6 +301,7 @@ int main(int argc, char** argv)
 	std::size_t nodes = 1;
 	std::size_t subnodes = 10;
 	std::size_t remotes = 10;
+	double priority = 0.1;
 	std::size_t iter = 0;
 
 	bool hasError = false;
@@ -350,14 +361,22 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
-		case optRemote:
-			++i;
-			if(i < argc){
-				remotes = toData<std::size_t>(std::string(*(++argvc)));
-			} else {
-				std::cout << "Missing argument for option -" << optRemote << '\n';
-			}
-			break;
+        case optRemote:
+            ++i;
+            if(i < argc){
+                remotes = toData<std::size_t>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optRemote << '\n';
+            }
+            break;
+        case optPriority:
+            ++i;
+            if(i < argc){
+                priority = toData<double>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optPriority << '\n';
+            }
+            break;
 		case optIter:
 			++i;
 			if(i < argc){
@@ -380,7 +399,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes);
+	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes, priority);
 #ifndef BENCHMARK
 	adevs::EventListener<t_event>* listener = new Listener();
 #endif

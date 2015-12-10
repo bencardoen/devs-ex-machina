@@ -58,6 +58,7 @@ class HeavyPHOLDProcessor: public n_model::AtomicModel<PHOLDModelState>
 {
 private:
 	const size_t m_percentageRemotes;
+	const double m_percentagePriority;
 	const size_t m_iter;
 	std::vector<size_t> m_local;
 	std::vector<size_t> m_remote;
@@ -66,7 +67,7 @@ private:
 	mutable t_randgen m_rand;	//This object could be a global object, but then we'd need to lock it during parallel simulation.
 public:
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber, std::vector<size_t> local,
-	        std::vector<size_t> remote, size_t percentageRemotes);
+	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority);
 	virtual ~HeavyPHOLDProcessor();
 
 	virtual n_network::t_timestamp timeAdvance() const override;
@@ -83,7 +84,7 @@ public:
 class PHOLD: public n_model::CoupledModel
 {
 public:
-	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes);
+	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority = 0.1);
 	virtual ~PHOLD();
 };
 
