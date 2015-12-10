@@ -141,6 +141,9 @@ This situation closely mimics the case made in the comparison between both synch
 Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of high-priority events.
 If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
 Should many high-priority events occur, however, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needed to be reverted.
+These results show that there is no single perfect synchronization algorithm for this model.
+Depending on model configuration, either synchronization protocol might be better.
+We therefore claim that our contribution is invaluable for high performance simulation: depending on the observed communication behaviour, modellers can use the most appropriate synchronization protocol.
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/phold_voorlopig.eps}
