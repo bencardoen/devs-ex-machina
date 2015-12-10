@@ -214,16 +214,3 @@ In section 4.2 the parallel performance of this benchmark is further explained. 
 	\end{tabular}
 	\caption{Interconnect w 20 t5e5, unit MiB, 2 kernels (if parallel)}
 \end{table}
-		
-\paragraph*{Priority Network}
-The priority network model is detailed in section 4.1.\\
-The high memory usage of the conservative case is largely due to the garbage collection implementation. Kernel 0 is the initiator of the LBTS calculation but since it holds only models independent of any other (server), it will finish simulation very fast leaving the other kernel bereft of an updated LBTS. The kernel holding the server will after simulation wait on the receiving kernel until it can prove all sent messages can be deallocated.
-\begin{table}
-	\centering
-	\begin{tabular}{| l | l | l |}
-		\hline
-		dxex &dxex con &dxex opt\\ \hline
-		35 & 450 & 651\\ \hline
-	\end{tabular}
-	\caption{Priority model n 128, m 16, p 10,  t2e8, unit MiB, 2 kernels}
-\end{table}
