@@ -167,11 +167,29 @@ Several fixes to this problem have been proposed in the literature~\cite{Fujimot
 \end{figure}
 
 \subsection{Memory Usage}
-TODO compare memory usage with adevs for some benchmarks
-\subsubsection{Platform and tools}
-Both dxex and adevs use tcmalloc as memory allocator. Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (malloc/free/sbrk/mmap/...). Tcmalloc will only gradually release memory back to the OS, whereas our pools will not do so at all. If memory has been allocated once, it is from a performance point of view better to keep that memory in the pool. This is one reason why memory utilization is best measured by peak allocation. Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
-The platform used for memory profiling has an i5-3317U Intel CPU and 8GiB RAM with a page size of 4,096KiB, running Fedora 22 (kernel 4.2.6).
-\subsubsection{Measure}
+Apart from simulation execution time, memory usage during simulation is also of great importance.
+While execution time only becomes a problem if it takes way too long, coming short only a bit of memory can make simulation infeasible.
+We therefore also investigate memory usage of different synchronization protocols.
+
+We do not tackle the problem of states that become too large for a single machine to hold.
+This problem can be mitigated by distribution over multiple machines, which neither dxex or adevs support.
+Comparison of memory usage should thus only be seen in the context of which models are feasible to be simulated by the tool.
+
+\subsubsection{Remarks}
+Both dxex and adevs use tcmalloc as memory allocator.
+Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (\textit{e.g.}, malloc and free).
+Tcmalloc only gradually releases memory back to the OS, whereas our pools will not do so at all.
+If memory has been allocated once, it is, at least from a performance point of view, better to keep that memory in the pool indefinitely.
+Due to our motivation for memory usage analysis, we will only measure peak allocation.
+Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
+
+\subsubsection{Results}
+\begin{figure}
+    \includegraphics[width=\columnwidth]{fig/memory_voorlopig.eps}
+    \caption{Memory usage results.}
+    \label{fig:memory}
+\end{figure}
+
 Adevs passes messages by value, dxex passes a pointer. The runtime effects of this choice have already been demonstrated in the Interconnect benchmark, so, in this section, we measure memory usage in number of allocated pages combining text, stack and heap memory for the program profiled. For the OS and/or user, this is the actual memory footprint of the application. It is important to note that, especially in the optimistic case, not all this memory is always in use by the kernels. During simulation, the pools will generally not return deallocated memory to the OS, but keep it for later reuse.
 \subsubsection{Results}
 \paragraph*{Devstone}
