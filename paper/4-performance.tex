@@ -152,32 +152,39 @@ We therefore claim that our contribution is invaluable for high performance simu
 \end{figure}
 
 \subsubsection{Interconnect}
-In Interconnect, the set of atomic models form a complete graph (w.r.t. connections); each model broadcasts messages to the entire set.\\
-Allocation cannot avoid cycles and the resulting dependency graph between kernels remains a complete graph. The runtime dependency graph is almost immediately identical to the static graph.\\
-The conservative case still shows the same issues as in PHold, with the key difference , for a fixed time advance, the lookahead is equal to the timespan between transitions. The scaling issue is identical as with PHold.\\
-In this benchmark, the optimistic case runs very quickly out of memory. With $c$ kernels and $N$ atomic models, a single revert undoing $k$ transitions will lead to $(N-1)\times k$ messages that need to be recreated, plus $(N-1) \frac{c-1}{c} \times k$ anti-messages that need to be sent.
+In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
+Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}
+While conservative simulation delivers the expected speedups, dxex is still significantly slower than adevs.
+Interestingly, adevs does not achieve any noticable speedup from the use of multiple cores in this situation.
+Optimistic synchronization is not shown in this case: due to the high amount of exchanged events, all of which need to be stored in the sending \textit{and} receiving node, it quickly runs out of memory.
+Several fixes to this problem have been proposed in the literature~\cite{FujimotoBook}, but none of these is implemented by dxex.
 
-\subsubsection{Priority network model}
-%TODO show a single plot which varies a parameter that changes the ideal synchronization protocol
-The priority benchmark is composed of a single server generating a stream of $0\leq m \leq n$ messages at fixed time intervals, interleaved with a probability $p$ for a priority message to $n$ receivers (see Figure~\ref{fig:NetworkModel}).\\ This defaults the lookahead for the receivers to $\epsilon$, but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server and have an internal transition so that they will not wait for the incoming messages.
-\begin{center}
 \begin{figure}
-\input pqueue.tex
-\caption{The priority network model}
-\label{fig:NetworkModel}
+    %TODO
+    %\includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
+    \caption{Interconnect benchmark results for parallel simulation.}
+    \label{fig:interconnect_benchmark_parallel}
 \end{figure}
-\end{center}
-A key difference here with the other benchmarks is that a state (in the Receiver instances) is very cheap to copy/create. The kernel holding the server will never revert since it is a source in the dependency graph. The optimistic case will therefore not suffer the same performance hit in recreating the states as it does in PHold. The overhead in the optimistic case is entirely due to the factor $m$, which will quickly dominate in increasing buffers of received messages.
-\begin{figure}
-	\includegraphics[width=.5\textwidth]{fig/fig5.eps}
-	\label{fig:Priority}
-	\caption{Priority}
-\end{figure}
-Interestingly, the parameter $p$ does not clearly favour either synchronization protocol (see Figure~\ref{fig:Priority}). While this removes any possibility for a lookahead, the conservative case can quickly bridge the timespan between fixed messages since there is no cyclic dependency. Lightweight states prevent performance loss due to reverts in the optimistic case; only the overhead in event handling in the optimistic case eventually becomes the deciding factor.
 
-%TODO (keep explaining as much as space permits, as this is the evaluation of the core contribution)
+%\subsubsection{Priority network model}
+%The priority benchmark is composed of a single server generating a stream of $0\leq m \leq n$ messages at fixed time intervals, interleaved with a probability $p$ for a priority message to $n$ receivers (see Figure~\ref{fig:NetworkModel}).\\ This defaults the lookahead for the receivers to $\epsilon$, but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server and have an internal transition so that they will not wait for the incoming messages.
+%\begin{center}
+%\begin{figure}
+%\input pqueue.tex
+%\caption{The priority network model}
+%\label{fig:NetworkModel}
+%\end{figure}
+%\end{center}
+%A key difference here with the other benchmarks is that a state (in the Receiver instances) is very cheap to copy/create. The kernel holding the server will never revert since it is a source in the dependency graph. The optimistic case will therefore not suffer the same performance hit in recreating the states as it does in PHold. The overhead in the optimistic case is entirely due to the factor $m$, which will quickly dominate in increasing buffers of received messages.
+%\begin{figure}
+	%\includegraphics[width=.5\textwidth]{fig/fig5.eps}
+	%\label{fig:Priority}
+	%\caption{Priority}
+%\end{figure}
+%Interestingly, the parameter $p$ does not clearly favour either synchronization protocol (see Figure~\ref{fig:Priority}). While this removes any possibility for a lookahead, the conservative case can quickly bridge the timespan between fixed messages since there is no cyclic dependency. Lightweight states prevent performance loss due to reverts in the optimistic case; only the overhead in event handling in the optimistic case eventually becomes the deciding factor.
+
 \subsection{Memory Usage}
-%TODO compare memory usage with adevs for some benchmarks
+TODO compare memory usage with adevs for some benchmarks
 \subsubsection{Platform and tools}
 Both dxex and adevs use tcmalloc as memory allocator. Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (malloc/free/sbrk/mmap/...). Tcmalloc will only gradually release memory back to the OS, whereas our pools will not do so at all. If memory has been allocated once, it is from a performance point of view better to keep that memory in the pool. This is one reason why memory utilization is best measured by peak allocation. Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
 The platform used for memory profiling has an i5-3317U Intel CPU and 8GiB RAM with a page size of 4,096KiB, running Fedora 22 (kernel 4.2.6).
