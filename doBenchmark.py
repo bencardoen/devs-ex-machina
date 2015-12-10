@@ -92,10 +92,20 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 # generators for the benchmark parameters
 def devstonegen(simtype, executable, doRandom=False):
     # time 500 000
-    for depth in [10, 15, 20, 25, 30]:  # , 4, 8, 16]:
-        for endTime in [500000]:
-            yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
-            # return
+    if simtype == simtypes.classic :
+        for depth in [10, 15, 20, 25, 30]:  # , 4, 8, 16]:
+            for endTime in [500000]:
+                yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
+                # return
+    else:
+        oldNumCores = simtype[-1]
+        for core in range(2, args.cores+1, 1):
+            simtype[-1] = core
+            for depth in [10, 15, 20, 25, 30]:  # , 4, 8, 16]:
+                for endTime in [500000]:
+                    yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', depth, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
+                    # return
+        simtype[-1]=oldNumCores
 
 randdevstonegen = partial(devstonegen, doRandom=True)
 lenParallelDevstone = len(list(chain(["devExec"], simtypes.optimistic, ['-r', '-w', 0, '-d', 0, '-t', 0])))
@@ -103,15 +113,12 @@ lenParallelDevstone = len(list(chain(["devExec"], simtypes.optimistic, ['-r', '-
 
 # Cores must match nodes.
 def pholdgen(simtype, executable):
-    if args.cores != 4:
-        print("Refusing to run benchmark with != 4 cores.")
-        return
     for nodes in [args.cores]:
         for apn in [4]:  # , 8, 16, 32]:
             for iterations in [0]:
                 for remotes in [90]:
                     for priority in range(10, 100, 10):
-                        for endTime in [2000000]:                            
+                        for endTime in [1000000]:                            
                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
                             # return
 lenParallelPhold = len(list(chain(["pholdExec"], simtypes.optimistic, ['-n', 0, '-s', 0, '-i', 0, '-r', 0, '-p', 0, '-t', 0])))
@@ -128,8 +135,8 @@ def pholdgen_remotes(simtype, executable):
 
 
 def interconnectgen(simtype, executable, doRandom=False):
-    if simtype == simtypes.optimistic:
-        print("Refusing to run interconnect with optimistic!")
+    if simtype == simtypes.optimistic or simtype == simtypes.conservative:
+        print("Refusing to run interconnect parallel with this modelload!")
         return
 
     if simtype == simtypes.classic:
@@ -157,14 +164,14 @@ def interconnectgen_speedup(simtype, executable, doRandom=False):
     if simtype == simtypes.classic:
         # time 5 000 000
         for width in [8]:
-            for endTime in [2000000]:
+            for endTime in [4000000]:
                 yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
                 # return
     else:
         # time 5 000 000
         oldNumCores = simtype[-1]
         for width in [8]:
-            for endTime in [2000000]:
+            for endTime in [4000000]:
                 for cores in range(2, oldNumCores+1, 1):
                     simtype[-1] = cores
                     yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
