@@ -14,7 +14,26 @@ To guarantee comparable results, no IO was performed during the benchmarking pha
 Simulation traces were used to verify that both adevs and dxex models have exactly the same behaviour.
 
 \subsection{Benchmarks}
-%TODO
+We use a selection of benchmarks, based on those found in the literature.
+Three different types of benchmark are defined:
+\begin{enumerate}
+    \item \textit{Queue} model, based on the HI model of DEVStone~\cite{DEVStone}, creates a chain of atomic models, which are hierarchically nested in each other.
+          It contains two parameters: width and depth.
+          Width determines the number of atomic models in a single level, and depth determines the number of levels.
+          An example for width 3 and depth 2 is shown in Figure~\ref{fig:queue}.
+    \item \textit{HighInterconnect} model, an exaggeration of the HI model of DEVStone~\cite{DEVStone}, creates a set of atomic models, which are all directly connected to each other.
+          Each model has a single input and output port, but each output port is connected to each input port\footnote{Except, of course, that the output and input port of a single model are not connected to each other.}.
+    \item \textit{PHOLD} model, presented by~\cite{PHOLD}.
+          It creates a set of $n$ atomic models, similar to HighInterconnect, but each model has exactly $n-1$ output ports.
+          Couplings are made such that each atomic model is directly connected to each other atomic model, but it can \textit{narrowcast} instead of \textit{broadcast}ing.
+          These $n$ models are further equally distributed over $k$ coupled models.
+\end{enumerate}
+
+We opted to deviate from the DEVStone benchmark, as DEVStone tended towards unrealistic models because all internal and external transitions occur simultaneously.
+In our benchmark models, there is always the option for simultaneous transition functions (\textit{fixed time advance}), or scattered transition functions (\textit{random time advance}).
+Furthermore, they defined the use of an artificial load function, which easily skews the result, making the actual simulation algorithm barely comparable.
+
+%TODO figures! I have them lying around somewhere I guess... still need to search for them
 
 \subsection{Sequential Simulation}
 Despite our core contribution being mainly in the parallel simulation, we still value a comprehensive comparison of sequential simulation results.
