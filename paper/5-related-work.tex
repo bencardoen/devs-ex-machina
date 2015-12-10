@@ -1,14 +1,30 @@
-%TODO explain about other DEVS simulation kernels, and how they differ
-%TODO explain about PythonPDEVS, the most related in terms of feature and "legacy" --> now in C++11 and way better performance
-\subsection{PythonPDEVS}
-Dxex is closely related to PyPDEVS in design and philosophy. PyPDEVS allows anyone who grasps the PDEVS formalisms to immediately simulate his/her model without having to consider the kernel implementation. A Python based implementation offers the advantage of very fast prototype/run/evaluate cycles, this can't be matched by a C++ simulator. It should be noted that, once the kernels have been compiled (in shared libraries), the actual compilation time of the model is small enough to make prototyping possible.
-Advanced features such as activity based relocation and the performance gains this results in, are still unique to PyPDEVS.
-\subsection{Adevs}
-%TODO explain about adevs, the most related in terms of performance --> we implement more synchronization options and offer better performance because ...
-Adevs is still under active development, allowing for an exact comparison in performance and features. It remains a very fast simulation engine for the PDEVS formalism, but it lacks an optimistic synchronization implementation. %Tracing ?
-Due to the fact that adev does not flatten the Coupled Models, it's performance degrades significantly if the hierarchy becomes deeper. Dxex, on the other hand, manages lookahead with more overhead than adevs, leading to a performance difference as the model count increases. Finally, adevs employs the full dependency graph this in contrast with dxex kernels, which only observe 1-edge removed nodes. 
-%checkme
-\subsection{CD++}
-%TODO explain about CD++, the most related in terms of synchronization --> we implement everything in a single program, with a non-fragmented code-base
-%TODO make mention of Warped, which is the kernel used in CD++, and why we don't use it
-Different projects on CD++ offer conservative (CCD++) as well as optimistic (PCD++) parallel simulation. In contrast to dxex,  neither projects offer both synchronization protocols. CD++ relies on the WARPED kernel. It is a middleware that provides memory, event, file, time and communication scheduling. We did not use the WARPED kernel (nor the underlying MPI) because dxex is designed specifically for a shared memory architecture and, as such, any middleware, however feature-rich, would have lead to an unacceptable overhead.
+Several \textsf{DEVS} simulation tools have already been implemented, which bear some similarity to our simulation tool.
+We discuss several dimensions of related work, as we try to compromise between different tools.
+
+In terms of code design and philosophy, dxex is most related to PythonPDEVS~\cite{PythonPDEVS}.
+Performance of PythonPDEVS was still decent, through the use of simulation and activity hints from the modeller.
+This allowed the kernel to optimize its internal data structures and algorithms for the specific model being executed.
+All changes were completely transparant to the model itself, and were completely optional.
+In this spirit, we now offer users the possibility to chose between different synchronization protocols.
+This allows them to chose for the most appropriate synchronization, depending on the actual model being simulated.
+Contrary to PythonPDEVS, however, dxex doesn't support activity hints.
+
+While PythonPDEVS offers very fast turnaround cycles, due to the use of an interpreted language, simulation performance was easily outdone by compiled simulation kernels.
+In terms of performance, adevs~\cite{adevs} offers faster simulation, at the cost of a significant compilation time.
+The turnaround cycle in adevs is much slower though, specifically because the complete simulation kernel is implemented using templates, and thus in header files.
+This prevents use of the simulation kernel as a shared library.
+A similar compilation cycle is seen in PowerDEVS~\cite{PowerDEVS}.
+As a result, the complete simulation kernel has to be compiled again everytime.
+Dxex compromises, as was the case in other compiled simulation kernels, such as vle~\cite{vle}, by seperating the simulation kernel into a shared library.
+After the initial compilation of the simulation tool, only the model has to be compiled and linked to the library.
+This significantly shortens the turnaround cycle, while still offering good performance
+In terms of performance, it therefore comes close to, and sometimes beats, adevs.
+While a more extensive set of benchmarks is required to make accurate comparisons, initial results are promising.
+Despite its high performance, adevs does not support optimistic synchronization, which we have shown to be highly relevant.
+
+Previous \textsf{DEVS} simulation tools have already implemented multiple synchronization protocols, though mostly in an ad-hoc way.
+For example CD++~\cite{CD++} has both a conservative (CCD++~\cite{CCD++}) and optimistic (PCD++)~\cite{PCD++}) variant.
+Despite the implementation of both, they are different projects entirely, and while they might support a similar set of features, they remain different from each other.
+Dxex, on the other hand, is a single project, where switching between different synchronization protocols is as simple as switching any other configuration parameter.
+
+In summary, dxex tries to find the middle ground between the concepts of PythonPDEVS, the performance of adevs, and the multiple synchronization protocols of CD++.
