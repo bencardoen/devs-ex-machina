@@ -166,23 +166,6 @@ Several fixes to this problem have been proposed in the literature~\cite{Fujimot
     \label{fig:interconnect_benchmark_parallel}
 \end{figure}
 
-%\subsubsection{Priority network model}
-%The priority benchmark is composed of a single server generating a stream of $0\leq m \leq n$ messages at fixed time intervals, interleaved with a probability $p$ for a priority message to $n$ receivers (see Figure~\ref{fig:NetworkModel}).\\ This defaults the lookahead for the receivers to $\epsilon$, but this time there is no scaling effect, nor are there cycles in the dependency graph. This model therefore highlights the basic strengths/weaknesses of both synchronization protocols. Receiving models are allocated on another kernel than the server and have an internal transition so that they will not wait for the incoming messages.
-%\begin{center}
-%\begin{figure}
-%\input pqueue.tex
-%\caption{The priority network model}
-%\label{fig:NetworkModel}
-%\end{figure}
-%\end{center}
-%A key difference here with the other benchmarks is that a state (in the Receiver instances) is very cheap to copy/create. The kernel holding the server will never revert since it is a source in the dependency graph. The optimistic case will therefore not suffer the same performance hit in recreating the states as it does in PHold. The overhead in the optimistic case is entirely due to the factor $m$, which will quickly dominate in increasing buffers of received messages.
-%\begin{figure}
-	%\includegraphics[width=.5\textwidth]{fig/fig5.eps}
-	%\label{fig:Priority}
-	%\caption{Priority}
-%\end{figure}
-%Interestingly, the parameter $p$ does not clearly favour either synchronization protocol (see Figure~\ref{fig:Priority}). While this removes any possibility for a lookahead, the conservative case can quickly bridge the timespan between fixed messages since there is no cyclic dependency. Lightweight states prevent performance loss due to reverts in the optimistic case; only the overhead in event handling in the optimistic case eventually becomes the deciding factor.
-
 \subsection{Memory Usage}
 TODO compare memory usage with adevs for some benchmarks
 \subsubsection{Platform and tools}
