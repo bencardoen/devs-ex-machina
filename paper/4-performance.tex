@@ -48,14 +48,17 @@ Furthermore, they defined the use of an artificial load function, which easily s
 
 \begin{figure}
     \center
+    %TODO
     %\includegraphics[width=\columnwidth]{fig/queue_model.eps}
     \caption{Queue model for depth 3 and width 2.}
     \label{fig:queue_model}
 
+    %TODO
     %\includegraphics[width=\columnwidth]{fig/interconnect_model.eps}
     \caption{HighInterconnect model for four models.}
     \label{fig:interconnect_model}
 
+    %TODO
     %\includegraphics[width=\columnwidth]{fig/PHOLD_model.eps}
     \caption{PHOLD model for four models, split over two nodes. In parallel simulation, each coupled model is simulated at a different node.}
     \label{fig:PHOLD_model}
@@ -67,9 +70,8 @@ First, and foremost, as parallel simulation results are tightly linked to the se
 Second, since parallel simulation results are validated through the use of adevs.
 To provide a more comprehensive comparison to adevs in the parallel simulation benchmarks, sequential simulation results need to be compared.
 
-Benchmarks have been run on an \textit{Intel i7-2670QM} with \textit{16GB of main memory} on Linux.
+Benchmarks were run on an \textit{Intel i7-2670QM 2.2GHz} quad-core with \textit{16GB of main memory} on Linux.
 Results were obtained through the use of \textit{perf}.
-A selection of call-graphs and more detailed results can be found online.
 
 %Note that a fixed timeadvance (e.g. devstone) is set at 100.
 \subsubsection{Devstone}
