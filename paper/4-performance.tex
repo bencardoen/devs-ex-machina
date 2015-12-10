@@ -82,7 +82,7 @@ Through careful analysis of profiling results, we determined that adevs spends m
 Both simulation tools have quadratically increasing execution times, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
-	\includegraphics[width=\columnwidth]{fig/fig1.eps}
+	\includegraphics[width=\columnwidth]{fig/queue_sequential.eps}
 	\caption{Queue benchmark results for sequential simulation.}
 	\label{fig:Queue_benchmark}
 \end{figure}
@@ -93,9 +93,8 @@ As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs now outperforms
 Analysis showed that this slowdown is caused by the high amount of exchanged events.
 Event creation is found to be much slower in dxex than it is in adevs, even despite the use of memory pools in dxex.
 
-%TODO only include sequential results?
 \begin{figure}
-	\includegraphics[width=\columnwidth]{fig/fig3.eps}
+	\includegraphics[width=\columnwidth]{fig/interconnect_sequential.eps}
 	\caption{Interconnect benchmark results for sequential simulation.}
 	\label{fig:Interconnect_benchmark}
 \end{figure}
@@ -122,7 +121,7 @@ Behaviour is exactly the same as in sequential simulation, but some speedup is a
 In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
 
 \begin{figure}
-	\includegraphics[width=\columnwidth]{fig/fig2.eps}
+	\includegraphics[width=\columnwidth]{fig/queue_parallel.eps}
 	\caption{Queue benchmark results for parallel simulation using 4 cores.}
 	\label{fig:queue_benchmark_parallel}
 \end{figure}
@@ -165,8 +164,7 @@ Optimistic synchronization is not shown in this case: due to the high amount of 
 Several fixes to this problem have been proposed in the literature~\cite{FujimotoBook}, but none of these is implemented by dxex.
 
 \begin{figure}
-    %TODO
-    %\includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
+    \includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
     \caption{Interconnect benchmark results for parallel simulation.}
     \label{fig:interconnect_benchmark_parallel}
 \end{figure}
