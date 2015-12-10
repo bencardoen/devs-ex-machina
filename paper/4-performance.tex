@@ -78,7 +78,7 @@ As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperform
 Through careful analysis of profiling results, we determined that adevs spends much time in handling simulation messages, whereas this is mostly avoided due to the differently designed simulation algorithm of dxex.
 Both simulation tools have quadratically increasing execution times, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
-\begin{figure}[h]
+\begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig1.eps}
 	\caption{Queue benchmark results}
 	\label{fig:Queue_benchmark}
@@ -91,25 +91,40 @@ Analysis showed that this slowdown is caused by the high amount of exchanged eve
 Event creation is found to be much slower in dxex than it is in adevs, even despite the use of memory pools in dxex.
 
 %TODO only include sequential results?
-\begin{figure}[h]
-	\includegraphics[width=.5\textwidth]{fig/fig3.eps}
+\begin{figure}
+	\includegraphics[width=\columnwidth]{fig/fig3.eps}
 	\label{fig3.eps}
 	\caption{Interconnect}
 	\label{fig:Interconnect}
 \end{figure}
 
 \subsection{Parallel Simulation Execution Time}
-%TODO explain that we will now compare different synchronization protocols
-%TODO compare different synchronization protocols with adevs' conservative, showing that we are faster (or at least, not that much slower) than adevs
-By default, the benchmarks use 4 kernels for parallel simulation.
-\subsubsection{Devstone}
-The flattened models are allocated to kernels by giving each kernel a distinct section of the chain, resulting in a low ratio of inter-kernel to intra-kernel messages. For the optimistic case, this can cause more reverts since the kernels will start to drift faster as the model-count increases. Furthermore, optimistic synchronization is quite sensitive to an increase in kernels, since the delay before a revert propagates, increases. This benchmark requires a specific warm-up time; for $n=d\times w$ models, it takes $\textup{timeadvance}()*(n-1)$ transitions to activate the last model in the chain. When using parallel processing, this can be reduced to $\textup{timeadvance}()*(n\frac{kernels-1}{kernels} -1)$ before the last kernel becomes active.\\
-Figure~\ref{fig:DevstoneParallel} shows that dxex outperformance adevs (in both optimistic and conservative case).
+We now perform an analysis of parallel simulation execution times of our previously defined benchmarks.
+For dxex, we mention results for both conservative and optimistic synchronization.
+Since adevs supports only conservative synchronization, we don't mention optimistic synchronization results there.
+All experiments were performed using four simulation nodes, and executed on a quad-core machine.
+
+We highlight two main results:
+(1) dxex conservative synchronization is competitive with adevs;
+(2) dxex optimistic synchronization is sometimes more efficient than conservative synchronization.
+This shows that our contribution, offering both conservative and optimistic synchronization, is indeed beneficial for a general-purpose simulation tools.
+
+\subsubsection{Queue}
+In the Queue model, we allocate the chain of models such that each node is responsible for a series of connected models.
+This minimizes the number of inter-node messages.
+As the model is a queue, however, the last models will only activate much later on in the simulation.
+Since these are allocated to seperate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
+
+Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, using both optimistic and conservative synchronization.
+%TODO wait for raw results
+Behaviour is exactly the same as in sequential simulation, but some speedup is achieved.
+
 \begin{figure}
-	\includegraphics[width=.5\textwidth]{fig/fig2.eps}
-	\label{fig:DevstoneParallel}
-	\caption{DevStone parallel}
+	\includegraphics[width=\columnwidth]{fig/fig2.eps}
+	\label{fig:queue_benchmark_parallel}
+	\caption{Queue parallel simulation results using 4 nodes.}
 \end{figure}
+
 \subsubsection{PHold}
 %Phold
 In Phold, the allocation is specified in the benchmark itself. Each kernel manages a single node with a constant set of sub-nodes. The parameter $R$ (which is here set to $10$) determines the percentage of remote destination models.\\
