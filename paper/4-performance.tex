@@ -80,13 +80,13 @@ Both simulation tools have quadratically increasing execution times, though dxex
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig1.eps}
-	\caption{Queue benchmark results}
+	\caption{Queue benchmark results for sequential simulation.}
 	\label{fig:Queue_benchmark}
 \end{figure}
 
 \subsubsection{HighInterconnect}
 In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings.
-As can be seen in Figure~\ref{fig:HighInterconnect_benchmark}, adevs now outperforms dxex by a fair margin.
+As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs now outperforms dxex by a fair margin.
 Analysis showed that this slowdown is caused by the high amount of exchanged events.
 Event creation is found to be much slower in dxex than it is in adevs, even despite the use of memory pools in dxex.
 
@@ -94,8 +94,8 @@ Event creation is found to be much slower in dxex than it is in adevs, even desp
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig3.eps}
 	\label{fig3.eps}
-	\caption{Interconnect}
-	\label{fig:Interconnect}
+	\caption{Interconnect benchmark results for sequential simulation.}
+	\label{fig:Interconnect_benchmark}
 \end{figure}
 
 \subsection{Parallel Simulation Execution Time}
@@ -116,13 +116,14 @@ As the model is a queue, however, the last models will only activate much later 
 Since these are allocated to seperate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
 
 Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, using both optimistic and conservative synchronization.
-%TODO wait for raw results
+%TODO wait for raw results to make conclusions
 Behaviour is exactly the same as in sequential simulation, but some speedup is achieved.
+In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig2.eps}
 	\label{fig:queue_benchmark_parallel}
-	\caption{Queue parallel simulation results using 4 nodes.}
+	\caption{Queue benchmark results for parallel simulation using 4 cores.}
 \end{figure}
 
 \subsubsection{PHold}
