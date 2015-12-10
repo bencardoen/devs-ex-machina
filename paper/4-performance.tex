@@ -184,51 +184,22 @@ Due to our motivation for memory usage analysis, we will only measure peak alloc
 Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
 
 \subsubsection{Results}
+Figure~\ref{fig:memory} shows the memory used by each different benchmark.
+Results are in megabytes, and show the total memory footprint of the running application (\textit{i.e.}, text, stack, and heap).
+
+Unsurprisingly, optimistic synchronization results show very high memory use due to the saved states.
+Note the logarithmic scale that was used for this reason.
+Also, results for optimistic synchronization vary heavily depending on thread scheduling by the operating system, as this influences the drift between different nodes.
+Comparing similar approaches though, we notice that dxed and adevs have very similar memory use.
+
+Conservative simulation always uses more memory than sequential simulation, as is to be expected.
+Additional memory is required for the multiple threads, but also to store all events that are processed simultaneously.
+
+For the Phold benchmark, adevs using conservative synchronization took too long using our profiling tool, and was therefore aborted.
+Therefore, no results are shown for adevs.
+
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/memory_voorlopig.eps}
     \caption{Memory usage results.}
     \label{fig:memory}
 \end{figure}
-
-Adevs passes messages by value, dxex passes a pointer. The runtime effects of this choice have already been demonstrated in the Interconnect benchmark, so, in this section, we measure memory usage in number of allocated pages combining text, stack and heap memory for the program profiled. For the OS and/or user, this is the actual memory footprint of the application. It is important to note that, especially in the optimistic case, not all this memory is always in use by the kernels. During simulation, the pools will generally not return deallocated memory to the OS, but keep it for later reuse.
-\subsubsection{Results}
-\paragraph*{Devstone}
-\begin{table}[htb]
-	\centering
-	\begin{tabular}{| l | l | l | l | l |}
-		\hline
-		adevs & adevs con &dxex &dxex con&dxex opt\\ \hline
-		44 & 70 & 42 & 75 & 363  \\ \hline
-	\end{tabular}
-	\caption{Devstone 40x40 t5e5, unit MiB, 4 kernels (if parallel)}
-\end{table}
-Since, in the conservative case, messages are passed by pa ointer, a GVT/LBTS implementation is required to organise the garbage collection. This inevitable delay explains the higher memory usage compared to adevs.\\
-%TODO next sentence needs rewriting --done?
-Optimistic's TimeWarp requires state/event saving, and its GVT algorithm is more complex (with a resulting higher latency) than the LBTS calculation in the conservative case. 
-Moreover, the differences in LP virtual times are far larger compared to conservative time synchronization. All these factors explain the heavier memory usage. Devstone (flattened) is allocated in a chain. Leafs in the dependency graph will therefore do a lot of unnecessary simulation before having a revert, leading to an increased memory pressure. Unlike conservative and sequential execution, memory usage in the optimistic case varies greatly depending on scheduling of kernel threads and drifting between kernels. 
-\paragraph*{PHold}
-\begin{table}[htb]
-	\centering
-	\begin{tabular}{| l | l | l | l | l |}
-		\hline
-		adevs & adevs con &dxex &dxex con &dxex opt\\ \hline
-		40 & x & 37 & 61 & 682  \\ \hline
-	\end{tabular}
-	\caption{Phold n 4 s 16 t1e6 r 10, unit MiB, 4 kernels (if parallel)}
-\end{table}
-With only 10\% of all messages being inter-kernel, we expect conservative to have memory consumption near that of the single threaded implementation, since intra-kernel messages are reclaimable after each round. The counterintuitive high memory usage can be explained by conservative's stalled round behaviour which occurs whenever a kernel cannot advance (eit $==$ time). In such a round messages are sent out but the kernel does not execute any transitions until it has received all input from all influencing kernels. \\
-With lookahead $\epsilon$ this then leads to a high frequency of polling on shared null-times, which are used to determine lbts and thus garbage collection.
-The lbts calculation will not wait until a new value is found, since this can create unwanted contention with the simulation. The resulting longer time intervals within which no new lbts is found delay memory deallocation.
-Adevs' conservative fails to complete the benchmark under valgrind even with a significantly reduced load.
-Optimistic exhibits the expected high memory usage.
-\paragraph*{Interconnect}
-In section 4.2 the parallel performance of this benchmark is further explained. Interconnect highlights dxex's lower performance due to message allocation overhead. 
-\begin{table}
-	\centering
-	\begin{tabular}{| l | l | l | l | l |}
-		\hline
-		adevs & adevs con &dxex &dxex con & dxex opt\\ \hline
-		39 & 39 & 35 & 43 & 259 \\ \hline
-	\end{tabular}
-	\caption{Interconnect w 20 t5e5, unit MiB, 2 kernels (if parallel)}
-\end{table}
