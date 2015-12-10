@@ -7,7 +7,7 @@ This allowed the kernel to optimize its internal data structures and algorithms 
 All changes were completely transparant to the model itself, and were completely optional.
 In this spirit, we now offer users the possibility to chose between different synchronization protocols.
 This allows them to chose for the most appropriate synchronization, depending on the actual model being simulated.
-Contrary to PythonPDEVS, however, dxex doesn't support activity hints.
+Contrary to PythonPDEVS, however, dxex doesn't support model migrations~\cite{PythonPDEVS2} or activity hints~\cite{PythonPDEVS_ACTIMS}.
 
 While PythonPDEVS offers very fast turnaround cycles, due to the use of an interpreted language, simulation performance was easily outdone by compiled simulation kernels.
 In terms of performance, adevs~\cite{adevs} offers faster simulation, at the cost of a significant compilation time.
@@ -26,5 +26,7 @@ Previous \textsf{DEVS} simulation tools have already implemented multiple synchr
 For example CD++~\cite{CD++} has both a conservative (CCD++~\cite{CCD++}) and optimistic (PCD++)~\cite{PCD++}) variant.
 Despite the implementation of both, they are different projects entirely, and while they might support a similar set of features, they remain different from each other.
 Dxex, on the other hand, is a single project, where switching between different synchronization protocols is as simple as switching any other configuration parameter.
+CD++, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourself to parallel simulation.
+By limiting our approach to parallel simulation, we are able to achieve higher speedups through the use of shared memory communication.
 
 In summary, dxex tries to find the middle ground between the concepts of PythonPDEVS, the performance of adevs, and the multiple synchronization protocols of CD++.
