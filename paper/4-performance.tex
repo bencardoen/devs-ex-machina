@@ -12,6 +12,7 @@ For all benchmarks, results were all well within 1\% deviation of the average, s
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3}'').
 To guarantee comparable results, no IO was performed during the benchmarking phase.
 Simulation traces were used to verify that both adevs and dxex models have exactly the same behaviour.
+All benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
 
 \subsection{Benchmarks}
 We use a selection of benchmarks, based on those found in the literature.
@@ -64,35 +65,32 @@ Furthermore, they defined the use of an artificial load function, which easily s
     \label{fig:PHOLD_model}
 \end{figure}
 
-\subsection{Sequential Simulation}
+\subsection{Sequential Simulation Execution Time}
 Despite our core contribution being mainly in the parallel simulation, we still value a comprehensive comparison of sequential simulation results.
 First, and foremost, as parallel simulation results are tightly linked to the sequential simulation results: parallel simulation merely adds a synchronization layer over different, essentially sequential, simulation kernels.
 Second, since parallel simulation results are validated through the use of adevs.
 To provide a more comprehensive comparison to adevs in the parallel simulation benchmarks, sequential simulation results need to be compared.
+Only the Queue and HighInterconnect models are relevant for sequential simulation.
 
-Benchmarks were run on an \textit{Intel i7-2670QM 2.2GHz} quad-core with \textit{16GB of main memory} on Linux.
-Results were obtained through the use of \textit{perf}.
+\subsubsection{Queue}
+In the Queue model, we increase both the width and depth simultaneously, causing a quadratic growth in the number of atomic models.
+As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
+Through careful analysis of profiling results, we determined that adevs spends much time in handling simulation messages, whereas this is mostly avoided due to the differently designed simulation algorithm of dxex.
+Both simulation tools have quadratically increasing execution times, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
-%Note that a fixed timeadvance (e.g. devstone) is set at 100.
-\subsubsection{Devstone}
-The Devstone \cite{DEVStone} benchmark is highly hierarchical. As can be seen in Figure~\ref{fig:Devstone}, dxex is outperforming adevs considerably. This can be explained by the fact that, using Direct connection, the hierharchical structure is being flattened whereas, in the adevs case, considerable overhead is caused by traversing the coupled model's structure to pass events.
 \begin{figure}[h]
-	\includegraphics[width=.5\textwidth]{fig/fig1.eps}
-	\caption{Devstone}
-	\label{fig:Devstone}
+	\includegraphics[width=\columnwidth]{fig/fig1.eps}
+	\caption{Queue benchmark results}
+	\label{fig:Queue_benchmark}
 \end{figure}
 
-\subsubsection{PHold}
-PHold \cite{PHOLD} is a benchmark that focuses in particular on parallel execution; the sequential runtime is therefore only added as a baseline. A model selects the destination of a message at runtime using a state-saved RNG, which takes up a non-trivial amount of runtime. The results of the benchmark are visualized in Figure~\ref{fig:PHold}.
-%% needs further clarification...
-\begin{figure}[h]
-	\includegraphics[width=.5\textwidth]{fig/fig4.eps}
-	\caption{PHold}
-	\label{fig:PHold}
-\end{figure}
+\subsubsection{HighInterconnect}
+In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings.
+As can be seen in Figure~\ref{fig:HighInterconnect_benchmark}, adevs now outperforms dxex by a fair margin.
+Analysis showed that this slowdown is caused by the high amount of exchanged events.
+Event creation is found to be much slower in dxex than it is in adevs, even despite the use of memory pools in dxex.
 
-\subsubsection{Interconnect}
-Interconnect~\cite{MasterThesis} is a benchmark where all models broadcast, creating a complete graph in dependencies between models. As the model count increases, we see (see Figure~\ref{fig:Interconnect} the expected quadratic increase in runtime for both adevs and dxex, but an increasing penalty for dxex. Profiling shows this is entirely due to the heap allocation of messages, which even though minimized by using memory pools remains significant.
+%TODO only include sequential results?
 \begin{figure}[h]
 	\includegraphics[width=.5\textwidth]{fig/fig3.eps}
 	\label{fig3.eps}
@@ -100,7 +98,7 @@ Interconnect~\cite{MasterThesis} is a benchmark where all models broadcast, crea
 	\label{fig:Interconnect}
 \end{figure}
 
-\subsection{Parallel Simulation}
+\subsection{Parallel Simulation Execution Time}
 %TODO explain that we will now compare different synchronization protocols
 %TODO compare different synchronization protocols with adevs' conservative, showing that we are faster (or at least, not that much slower) than adevs
 By default, the benchmarks use 4 kernels for parallel simulation.
