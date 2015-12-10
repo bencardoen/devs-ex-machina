@@ -93,7 +93,6 @@ Event creation is found to be much slower in dxex than it is in adevs, even desp
 %TODO only include sequential results?
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig3.eps}
-	\label{fig3.eps}
 	\caption{Interconnect benchmark results for sequential simulation.}
 	\label{fig:Interconnect_benchmark}
 \end{figure}
@@ -122,15 +121,32 @@ In this case, conservative synchronization seems to be better than optimistic sy
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/fig2.eps}
-	\label{fig:queue_benchmark_parallel}
 	\caption{Queue benchmark results for parallel simulation using 4 cores.}
+	\label{fig:queue_benchmark_parallel}
 \end{figure}
 
 \subsubsection{PHold}
-%Phold
-In Phold, the allocation is specified in the benchmark itself. Each kernel manages a single node with a constant set of sub-nodes. The parameter $R$ (which is here set to $10$) determines the percentage of remote destination models.\\
-The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing the conservative case. The lookahead is $\epsilon$, so the conservative case spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation. For $N$ kernels, each kernel has to query the null-time of $N-1$ kernels, resulting in O($N^2$) polling behaviour. In a non-cyclic simulation with a non-trivial lookahead (like in, e.g., Devstone), that choice does pay off (see Figure~\ref{fig:DevstoneParallel}). Adevs's lesser performance is due in part to their lookahead management, which after profiling shows to spend a non-trivial amount of time in exception handling code.\\
-The optimistic case suffers little from the above problems; due to the high interconnectivity, however, a cascading revert is still possible. With the percentage of remotes equal to $100$, Phold reflects interconnect in behaviour, which is why the $R$ value is not dimensioned here. A revert is very expensive in PHold due to our usage of C++11's random nr generators. The cost of a revert is dominated by the recalculation of destination models, not in allocating/deallocating states/messages. Once a revert happens the drift between kernels increases fast, increasing the likelihood of more reverts. Despite all this, optimistic can for low $R$ values quickly exploit the uncertainty that slows down conservative in this benchmark.
+In the Phold model, we first investigate the influence of the fraction of remote events.
+%TODO wait for results
+%The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing the conservative case. The lookahead is $\epsilon$, so the conservative case spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation. For $N$ kernels, each kernel has to query the null-time of $N-1$ kernels, resulting in O($N^2$) polling behaviour. In a non-cyclic simulation with a non-trivial lookahead (like in, e.g., Devstone), that choice does pay off (see Figure~\ref{fig:DevstoneParallel}). Adevs's lesser performance is due in part to their lookahead management, which after profiling shows to spend a non-trivial amount of time in exception handling code.\\
+%The optimistic case suffers little from the above problems; due to the high interconnectivity, however, a cascading revert is still possible. With the percentage of remotes equal to $100$, Phold reflects interconnect in behaviour, which is why the $R$ value is not dimensioned here. A revert is very expensive in PHold due to our usage of C++11's random nr generators. The cost of a revert is dominated by the recalculation of destination models, not in allocating/deallocating states/messages. Once a revert happens the drift between kernels increases fast, increasing the likelihood of more reverts. Despite all this, optimistic can for low $R$ values quickly exploit the uncertainty that slows down conservative in this benchmark.
+
+Secondly, we verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
+We slightly modified the Phold benchmark, to include high-priority events.
+Contrary to normal events, which offer a sufficiently large lookahead, high-priority events happen almost instantaneous, thus restricting lookahead to a very small value.
+Even though the normal events will occur most oftenly, a conservative implementation should always block since these high-priority events can always occur.
+An optimistic implementation, however, will simply go forward in simulation time and roll back the few times that these high-priority events happen.
+This situation closely mimics the case made in the comparison between both synchronization algorithms by~\cite{FujimotoBook}.
+
+Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of high-priority events.
+If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
+Should many high-priority events occur, however, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needed to be reverted.
+
+\begin{figure}
+    \includegraphics[width=\columnwidth]{fig/phold_voorlopig.eps}
+    \caption{Phold benchmark results with high-priority events.}
+    \label{fig:phold_priority}
+\end{figure}
 
 \subsubsection{Interconnect}
 In Interconnect, the set of atomic models form a complete graph (w.r.t. connections); each model broadcasts messages to the entire set.\\
@@ -174,7 +190,6 @@ Adevs passes messages by value, dxex passes a pointer. The runtime effects of th
 		44 & 70 & 42 & 75 & 363  \\ \hline
 	\end{tabular}
 	\caption{Devstone 40x40 t5e5, unit MiB, 4 kernels (if parallel)}
-	\label{dtone_mem}
 \end{table}
 Since, in the conservative case, messages are passed by pa ointer, a GVT/LBTS implementation is required to organise the garbage collection. This inevitable delay explains the higher memory usage compared to adevs.\\
 %TODO next sentence needs rewriting --done?
@@ -183,7 +198,6 @@ Moreover, the differences in LP virtual times are far larger compared to conserv
 \paragraph*{PHold}
 \begin{table}[htb]
 	\centering
-	\label{dtone_mem}
 	\begin{tabular}{| l | l | l | l | l |}
 		\hline
 		adevs & adevs con &dxex &dxex con &dxex opt\\ \hline
@@ -200,7 +214,6 @@ Optimistic exhibits the expected high memory usage.
 In section 4.2 the parallel performance of this benchmark is further explained. Interconnect highlights dxex's lower performance due to message allocation overhead. 
 \begin{table}
 	\centering
-	\label{iconn_mem}
 	\begin{tabular}{| l | l | l | l | l |}
 		\hline
 		adevs & adevs con &dxex &dxex con & dxex opt\\ \hline
@@ -214,7 +227,6 @@ The priority network model is detailed in section 4.1.\\
 The high memory usage of the conservative case is largely due to the garbage collection implementation. Kernel 0 is the initiator of the LBTS calculation but since it holds only models independent of any other (server), it will finish simulation very fast leaving the other kernel bereft of an updated LBTS. The kernel holding the server will after simulation wait on the receiving kernel until it can prove all sent messages can be deallocated.
 \begin{table}
 	\centering
-	\label{pmod_mem}
 	\begin{tabular}{| l | l | l |}
 		\hline
 		dxex &dxex con &dxex opt\\ \hline
