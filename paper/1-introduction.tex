@@ -1,30 +1,33 @@
-%? use paragraphs for layout instead of (dense) flowing text ?
-%TODO SIZE: approx. 1-2 column, every TODO is approx. one paragraph
-\subsection{DEVS}
-%TODO give introduction to the field: DEVS is used for discrete event simulation and is a common basis for most other formalisms
-The family of DEVS~\cite{DEVSbase} formalisms serve as a common basis for most other discrete event formalisms. In this paper, we are in particular interested in Dynamic Structured DEVS~\cite{DSDEVS} and Parallel DEVS~\cite{ParallelDEVS}.
-We propose a DEVS implementation (called DEVS-Ex-Machina and referred to as "dxdev" throughout this paper) that is based on the
-the Direct Connection~\cite{SymbolicFlattening} algorithm. This algorithm flattens all hierarchically nested models which leads to, from a simulation kernel's perspective, a collection of Atomic Models linked to each other by ports.
+%TODO restructure and let it "flow" better
+\textsf{DEVS}~\cite{ClassicDEVS} is a popular formalism for modelling complex dynamic systems using a discrete-event abstraction.
+In fact, it can serve as a simulation ``assembly language'' to which models in other formalisms can be mapped~\cite{DEVSbase}.
+A number of tools have been constructed by academia and industry that allow the modelling and simulation of \textsf{DEVS} models.
 
-\subsection{Parallel computing}
-%TODO parallel computing is necessary with more and more complex systems, blablabla (usual explanation)
-One way to speed up the PDEVS simulation is by using parallel execution. By its very nature, this can lower the runtime considerably and increase the bound on the state space, thereby enabling simulation of more complex systems in the same time-frame.
-While the shared memory parallelism offered by most modern hardware does not raise the state space bounds, it can reduce the runtime and offers more direct communication and control between entities involved in synchronization compared to distributed simulation.
+With the ever increasing complexity of simulation models, parallel simulation becomes necessary to perform the simulation within reasonable time bounds.
+And while \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, this is often still insufficient.
+Several synchronization algorithms from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation in particular.
+While several parallel \textsf{DEVS} simulation kernels exist, they often restrict themselves to a single synchronization protocol.
+This is a logical choice, as these synchronization protocols have nearly no commonalities.
+But the exact reason for different synchronization protocols, is that their distinct nature makes them very applicable to specific situations.
+As such, current \textsf{DEVS} simulation kernels always allow parallel simulation, but good performance can only be expected from some models.
 
-\subsection{Motivation}
-%TODO give motivation (adevs is good, but only conservative; exploit new parallelism features of C++11 too)
-One of the drawbacks of adevs \cite{adevs}, a well-known PDEVS simulator which is performing well with conservative shared memory synchronization,
-is that it lacks support for optimistic synchronization.
-Using optimistic synchronization can be significantly faster, especially in simulations where the runtime behaviour of the simulation is hard to predict.
-The matured parallelism features of C++11, on the other hand, created new opportunities as well. They allowed to write very efficient code giving access to powerful low-level threading primitives and yet guarantee standard-compliance and portability.
-% may need another pass on this one :(
+Users that wish to simulate a set of distinct models, with different synchronization protocols, are therefore out of luck:
+Either they accept the lower performance for some of the models, or they use two distinct simulation kernels.
+Neither of these options is acceptable for the simulation of complex models, as the performance can become arbitrary worse, and the simulation kernels can diverge significantly.
 
-\subsection{Solution} 
-%TODO give our solution, motivating the need for a different kernel, instead of modifying another kernel (like adevs or PythonPDEVS)
-The usage of the Direct connection algorithm makes reusing existing kernels (such as adevs or PythonPDEVS~\cite{PythonPDEVS}, also known as PyPDEVS, hard. Dxex is based on PythonPDEVS \cite{PythonPDEVS}(PyPDEVS) but differs in design and implementation.
-The core aim of the project is to offer a deterministic simulation kernel where the simulation modeller is shielded as much as possible from the kernel implementation, without sacrificing performance. As in PyPDEVS, a model has to be written only once for use in the different simulation kernels.\\
-In order to monitor and investigate simulations, dxex uses a tracing framework which is derived from the one used in PyPDEVS.
-\subsection{Time}
-The theoretical DEVS formalisms all have $\mathbb{R}$ as time base, but any implementation has to decide on an enumerable representation of time. In principle, any type with well-defined operators could be used, but, from a performance point of view, a type fitting in a machine word offers obvious advantages. In practice, dxex defaults to word sized unsigned integer.
-Although this significantly reduces the possible range of virtual time, it avoids approximation errors. The notion of $\epsilon$, moreover, is trivial for an integer representation, unlike floating point.\\
-In addition, our time representation is enriched with a causality field the range of which is equal or greater than the maximum number of models in a single kernel ($2^{48}$ by default). If $A$ and $B$ are imminent at time $t$, then $t[1]_a < t[1]_b \oplus t[1]_b < t[1]_a$, while $t[0]_a == t[0]_b == t[0]$. This allows a deterministic ordering of concurrent events. % execution not so much as tracing
+In this paper, we introduce DEVS-Ex-Machina (``dxex''), our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
+The selected synchronization protocol is transparant to the simulated model.
+Users should merely determine, at the start of simulation, which protocol they wish to use.
+Our tool is implemented in C++11, to increase both performance and portability across different platforms.
+
+A simple model is used to prove that the ideal synchronization algorithm is indeed dependent on model details.
+In our case, a single parameter of the model can have a significant impact on simulation performance, and especially on which is the ideal synchronization protocol.
+In order to show that this flexibility does not counter our performance, we compare our tool to Adevs, currently one of the fastest \textsf{DEVS} simulation tools available~\cite{PythonPDEVS,DEVSSurvey}.
+
+Dxex, as well as all of our benchmark models, results, and profiling results, can be found online at \url{https://bitbucket.org/bcardoen/devs-ex-machina}.
+
+We introduce the necessary background for this paper in Section~\ref{sec:2-background}.
+Section~\ref{sec:3-features} elaborates on our features and design.
+In Section~\ref{sec:4-performance}, we evaluate performance of our tool by comparing its different synchronization protocols.
+Related work is discussed in Section~\ref{sec:5-related-work}.
+Section~\ref{sec:6-conclusion} concludes the paper and gives future work.

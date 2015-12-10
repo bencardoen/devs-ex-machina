@@ -1,33 +1,54 @@
-In this section, we provide a brief introduction to two different synchronization protocols for parallel simulation, and the features offered by C++11 that aid in our implementation.
+This section briefly introduces two distinct synchronization protocols, as used by dxex.
+Furthermore, we make note of several new features of C++11.
 
 \subsection{Conservative Synchronization}
-%TODO explain conservative synchronization, and how it uses locking to wait for continuing the simulation
-Conservative synchronization is defined by the invariant that no model will advance in time before it has received all input from any influencing model. \\
-This requires the concepts of earliest output time (eot) and earliest input time (eit), which define the timespan within which a model can safely advance.\\
-The eit of any model is the minimum of all eot values of (directly) influencing models. A model can simulate up to (but not including) eit and then waits until that value is increased. \\
-An important disadvantage here is that the relation that calculates the dependencies, is always defined at model (link) creation time, and not at runtime. A model that can influence another model theoretically, but never does in real life, can severely slow down the protocol. \\
-Deadlocks between models that influence each other and end up waiting on each other, can be broken/avoided by a variety of means. In dxex, the CMB~\cite{Chandy:1981:ADS:358598.358613} null-message protocol is used. \\
-In our implementation, null-time is the time stamp a model is guaranteed to have passed in simulation. More precisely, a null message of time $t$ guarantees that any output with time stamp $t-\epsilon$ has already been sent.\\
-Conservative synchronization relies explicitly on information provided by the model creator in the form of a lookahead, a relative timespan during which the model is insensitive to outside events. This lookahead can be non-trivial to calculate; therefore, a simulation writer will in general not be able to determine the exact lookahead of the models involved in an experiment without having run the experiment.\\
-Conservative kernels can even operate if there are cyclic dependencies involved, but this can come at a severe performance penalty, as seen in section 4.
+The first synchronization protocol that we will introduce, is \textit{conservative synchronization}~\cite{FujimotoBook}.
+In conservative synchronization, a node is allowed to progress in simulated time, independent of all other nodes, up to the point where it can guarantee that no causality errors can happen.
+When this point in time is reached, the node has to block until it is allowed to progress any further.
+In practice, this means that all nodes need to be aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
+Several algorithms are defined in the literature to implement this behaviour.
+An overview is given in~\cite{FujimotoBook}.
+
+Deadlock can occur when a dependency cycle occurs and the amount of exchanged messages is low.
+Multiple algorithms are defined to handle this situation, such as deadlock avoidance and deadlock recovery.
+
+The main advantage of conservative synchronization is that it has a low overhead if high parallelism exists between nodes.
+Each node can simulate in parallel, while sporadically notifying other nodes that they can progress even further.
+The disadvantage, however, is that the amount of parallelism is explicitly limited by the size of the lookahead.
+If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced.
+It is also up to the user to define the size of the lookahead, depending on how the model is known to behave.
+Slight changes in model behaviour can cause significant changes to the lookahead, and can therefore also have a significant influence on simulation performance.
 
 \subsection{Optimistic Synchronization}
-%TODO explain optimistic synchronization, and how it uses rollbacks to undo causality errors
-In the case of optimistic synchronization, causality errors can occur but these will be reverted via a roll-back mechanism, the most common of which is Timewarp \cite{Jefferson:1985:VT:3916.3988}.\\
-Whenever a kernel receives an event with a time stamp in the kernel's past, the state of the kernel (and all models) is reverted to that time.\\
-Because an optimistic kernel does not wait for other kernels, it can run much faster than a conservative kernel.
-The cost of this approach, however, is higher complexity of the code and a larger memory usage for the state and message saving.
-In contrast to conservative synchronization, optimistic synchronization does not rely on any domain specific information. Therefore, it is only sensitive to the runtime use of connections, not the probability that they might occur. %reword connections ?\\
-If the (runtime) dependency graph contains a cycle, optimistic synchronization might lead to a series of cascading reverts. The cost of reverts can be reduced by lazy cancellation and/or lazy re-evaluation~\cite{FujimotoBook}.
+A completely different synchronization protocol is \textit{optimistic synchronization}~\cite{TimeWarp}.
+Whereas conservative synchronization would prevent causality errors at all costs, optimistic synchronization will allow them to happen, but correct them afterwards.
+Each node is allowed to progress in simulated time as much as possible, without taking note of the state of any other node.
+When an event arrives at a node, which is already further in simulated time, the node will have to roll back its state to right before the event would normally have to be processed.
+As the simulation time is now rolled back to before the event is processed, the event can simply be processed as if no causality error ever occured.
 
-\subsection{Global Virtual Time}
-To avoid exhausting memory in state/event saving, optimistic synchronization relies on the concept of global virtual time\cite{Jefferson:1985:VT:3916.3988} or GVT. In optimistic simulations, GVT is defined as the lowest time stamp of any unprocessed event.\\
-Intuitively, this is the simulation time point that is certain to be preserved, corresponding exactly with a sequential simulation.
-In conservative, the minimum simulation time of all kernels is the lower bound of time stamp or LBTS. In terms of null messages this corresponds to the least time stamp of any null message in transit.
-The GVT calculation is vital to safely commit unrecoverable transactions such as IO (e.g. tracing), releasing memory, etc.
+Rolling back the simulation time requires the node to store past model states, such that they can be restored later on.
+Furthermore, all incoming and outgoing events need to be stored as well.
+Incoming events need to be passed to the models again, when the correct simulation time has again been reached, and outgoing events need to be cancelled, as potentially a different series of output events would normally have been generated.
+Cancelling events, however, can cause further rollbacks, as the receiving node might also have to roll back its state.
+In practice, a single causality error could have significant repercussions on the complete simulation.
+
+Further changes are required for unrecoverable operations, such as I/O (\textit{e.g.}, tracing, writing to file, printing output) and memory management.
+Lightweight algorithms are still required to determine the lower bound of all simulation times, through the computation of a \textit{Global Virtual Time} (GVT).
+
+The main advantage is that performance is not limited by a small lookahead, caused by a very infrequent event.
+If an (almost) instantaneous event occurs rarely, performance will only be impacted if it occurs, and not at every simulation step.
+The main disadvantage is unpredictable performance and arbitrary cost of rollbacks due to the propagation of causality errors.
+If rollbacks occur frequently, simulation quickly becomes slow, as the overhead of the recovery mechanisms becomes significant.
+Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states qre stored up to a point where it can be considered \textit{irreversible}.
+
+While optimistic synchronization does not explicitly depends on the lookahead, simulation performance is still bound by the lookahead implicitly.
 
 \subsection{C++11 Parallelism Features}
-%TODO explain what is new in C++11 for parallelism and how it contributes to our cause
-C++11 offers a wide range of portable synchronization primitives in the Standard Library, whereas in earlier versions one had to resort to non-portable (C) implementations. More importantly, C++11 is the first version of the standard that actually defines a multi-threaded abstract machine memory model in the language.
-Our kernels use a wide range of threading primitives and atomic operations. As an example, eot/eit/nulltime are not exchanged as messages, but as reads/writes to atomic fields shared by all kernels. This avoids the otherwise unavoidable latency penalty by mixing simulation messages with synchronization messages. For an in-depth study, we refer to~\cite{CPE:CPE3007}.
+Apart from various other additions, C++11 adds a wide range of portable synchronization primitives to the Standard Library.
+In earlier versions of the language standard, one had to resort to non-portable C implementations.
+Furthermore, C++11 is the first version of the standard that explicitly defines a multi-threaded abstract machine memory model.
 Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. 
+
+Simulation values that need to be shared between nodes, can now be coded portable and efficiently through the use of atomic fields.
+This avoids latencies caused by the exchange of synchronization messages.
+For an in-depth study, we refer to~\cite{CPE:CPE3007}.
