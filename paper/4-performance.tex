@@ -135,6 +135,11 @@ Even though a single synchronization protocol suffices in this case, it shows ho
 Adevs, on the other hand, is significantly slower during conservative synchronization.
 Analysis of profiling results shows that this was caused by exception handling within the adevs simulation kernel.
 
+\begin{figure}
+    \includegraphics[width=\columnwidth]{fig/phold_remotes.eps}
+    \caption{Phold benchmark results for parallel simulation using 4 cores, with varying fraction of remote events.}
+\end{figure}
+
 Secondly, we verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
 We slightly modified the Phold benchmark, to include high-priority events.
 Contrary to normal events, which offer a sufficiently large lookahead, high-priority events happen almost instantaneous, thus restricting lookahead to a very small value.
@@ -151,7 +156,7 @@ We therefore claim that our contribution is invaluable for high performance simu
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/phold_voorlopig.eps}
-    \caption{Phold benchmark results with high-priority events.}
+    \caption{Phold benchmark results for parallel simulation using 4 cores, with varying amount of high-priority events.}
     \label{fig:phold_priority}
 \end{figure}
 
