@@ -49,17 +49,20 @@ Furthermore, they defined the use of an artificial load function, which easily s
 
 \begin{figure}
     \center
-    %TODO
-    %\includegraphics[width=\columnwidth]{fig/queue_model.eps}
+    \includegraphics[width=\columnwidth]{fig/queue_model.pdf}
     \caption{Queue model for depth 3 and width 2.}
     \label{fig:queue_model}
+\end{figure}
 
-    %TODO
-    %\includegraphics[width=\columnwidth]{fig/interconnect_model.eps}
+\begin{figure}
+    \center
+    \includegraphics[width=\columnwidth]{fig/interconnect_model.pdf}
     \caption{HighInterconnect model for four models.}
     \label{fig:interconnect_model}
+\end{figure}
 
-    %TODO
+\begin{figure}
+    \center
     %\includegraphics[width=\columnwidth]{fig/PHOLD_model.eps}
     \caption{PHOLD model for four models, split over two nodes. In parallel simulation, each coupled model is simulated at a different node.}
     \label{fig:PHOLD_model}
@@ -115,7 +118,6 @@ As the model is a queue, however, the last models will only activate much later 
 Since these are allocated to seperate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
 
 Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, using both optimistic and conservative synchronization.
-%TODO wait for raw results to make conclusions
 Behaviour is exactly the same as in sequential simulation, but some speedup is achieved.
 In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
 
