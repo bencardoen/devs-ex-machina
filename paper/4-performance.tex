@@ -126,10 +126,13 @@ In this case, conservative synchronization seems to be better than optimistic sy
 \end{figure}
 
 \subsubsection{PHold}
-In the Phold model, we first investigate the influence of the fraction of remote events.
-%TODO wait for results
-%The dynamic dependency graph is a very sparse version of the static dependency graph, penalizing the conservative case. The lookahead is $\epsilon$, so the conservative case spends most of its time crawling in steps of $\epsilon$. Since the dependency graph between kernels is a complete graph, this is not a simulation that scales in our implementation. For $N$ kernels, each kernel has to query the null-time of $N-1$ kernels, resulting in O($N^2$) polling behaviour. In a non-cyclic simulation with a non-trivial lookahead (like in, e.g., Devstone), that choice does pay off (see Figure~\ref{fig:DevstoneParallel}). Adevs's lesser performance is due in part to their lookahead management, which after profiling shows to spend a non-trivial amount of time in exception handling code.\\
-%The optimistic case suffers little from the above problems; due to the high interconnectivity, however, a cascading revert is still possible. With the percentage of remotes equal to $100$, Phold reflects interconnect in behaviour, which is why the $R$ value is not dimensioned here. A revert is very expensive in PHold due to our usage of C++11's random nr generators. The cost of a revert is dominated by the recalculation of destination models, not in allocating/deallocating states/messages. Once a revert happens the drift between kernels increases fast, increasing the likelihood of more reverts. Despite all this, optimistic can for low $R$ values quickly exploit the uncertainty that slows down conservative in this benchmark.
+In the Phold model, we first investigate the influence of the fraction of remote events on the speedup.
+When remote events are rare, optimistic synchronization will also have rare rollbacks, thus increasing performance.
+With more common remote events, however, optimistic synchronization quickly loses its advantage due to the more frequent rollbacks.
+Conservative synchronization, on the other hand, is largely unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block.
+Even though a single synchronization protocol suffices in this case, it shows how different synchronization protocols respond differently to a changing model.
+Adevs, on the other hand, is significantly slower during conservative synchronization.
+Analysis of profiling results shows that this was caused by exception handling within the adevs simulation kernel.
 
 Secondly, we verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
 We slightly modified the Phold benchmark, to include high-priority events.
