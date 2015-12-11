@@ -30,7 +30,7 @@ Finally, sequential simulation is still required for models where parallelism is
 \subsubsection{Sequential}
 Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including many optimizations.
 Minor modifications were made, though, such that it can be overloaded by different synchronization protocol implementations.
-This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overwritten as needed.
+This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overridden as needed.
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
 An overview of dxex's design is given in Figure~\ref{fig:class_diagram}.
@@ -63,12 +63,12 @@ We use the default: explicitly save each and every intermediate state.
 Mattern's algorithm~\cite{mattern} is used to determine the GVT, as it runs asynchronously and uses only $2n$ synchronization messages.
 Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed, and irreversible actions are committed.
 
-The main problem we encountered in our implementation is the agressive use of memory.
+The main problem we encountered in our implementation is the aggressive use of memory.
 Frequent memory allocation and deallocation caused significant overheads, certainly when multiple threads do so concurrently.
 This made us switch to the use of thread-local (using \texttt{tcmalloc}) memory pools.
 Again, we made use of specific new features of C++11, that were not available in Python, or even previous versions of the C++ language standard.
 
-\subsection{Transparancy}
+\subsection{Transparency}
 We define simulation kernel transparancy as having a single model, which always can be executed on each supported synchronization kernel, without any modifications.
 User should thus only provide one model, implemented in C++11, which can be either using sequential execution, using conservative synchronization, or using optimistic synchronization.
 Switching between simulation kernels is as simple as altering the simulation termination time.

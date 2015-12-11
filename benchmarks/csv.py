@@ -164,7 +164,7 @@ def transformPHold(pathIn, pathOut):
 
     dataiter = iter(data)
     next(dataiter)
-    reduced = reduceN(dataiter, 5, meanReduce)
+    reduced = reduceN(dataiter, 15, meanReduce)
     # print("--")
     # print(list(groupN(dataiter, 5)))
     # print("--")
@@ -176,11 +176,110 @@ def transformPHold(pathIn, pathOut):
     writeCSV(pathOut, [header] + reduced)
 
 
+def transformConnect(pathIn, pathOut):
+    data = readCSV(pathIn, keepheader=True)
+    removeColums(data, 0, 2)
+    removeColums(data, 1, 2)
+    removeColums(data, 2, -1)
+    header = data[0]
+
+    dataiter = iter(data)
+    next(dataiter)
+    reduced = reduceN(dataiter, 15, meanReduce)
+    # print("--")
+    # print(list(groupN(dataiter, 5)))
+    # print("--")
+    reduced = list(reduced)
+    # print(reduced)
+    # print("--")
+    # print([header] + reduced)
+
+    writeCSV(pathOut, [header] + reduced)
+
+
+def transformConnectSpeed(pathIn, pathOut):
+    data = readCSV(pathIn, keepheader=True)
+    removeColums(data, 0, 2)
+    removeColums(data, 2, -1)
+    header = data[0]
+
+    dataiter = iter(data)
+    next(dataiter)
+    reduced = reduceN(dataiter, 15, meanReduce)
+    # print("--")
+    # print(list(groupN(dataiter, 5)))
+    # print("--")
+    reduced = list(reduced)
+    # print(reduced)
+    # print("--")
+    # print([header] + reduced)
+
+    writeCSV(pathOut, [header] + reduced)
+
+
+def transformDevstone(pathIn, pathOut):
+    data = readCSV(pathIn, keepheader=True)
+    removeColums(data, 0, 2)
+    removeColums(data, 4, -1)
+    header = data[0]
+
+    dataiter = iter(data)
+    next(dataiter)
+    reduced = reduceN(dataiter, 15, meanReduce)
+    # print("--")
+    # print(list(groupN(dataiter, 5)))
+    # print("--")
+    reduced = list(reduced)
+    # print(reduced)
+    # print("--")
+    # print([header] + reduced)
+
+    writeCSV(pathOut, [header] + reduced)
+
 if __name__ == "__main__":
     from pathlib import Path
-    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/classic.csv"),
-                   Path("./bmarkdata/M35Y2O/backup/phold/classic.csv"))
-    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/conservative.csv"),
-                   Path("./bmarkdata/M35Y2O/backup/phold/conservative.csv"))
-    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/optimistic.csv"),
-                   Path("./bmarkdata/M35Y2O/backup/phold/optimistic.csv"))
+    pathroot = Path("./bmarkdata/47IPRO/")
+    plotsroot = pathroot/"plots"
+    backuproot = pathroot/"backup"
+    namesdxex = ["classic.csv", "conservative.csv", "optimistic.csv"]
+    namesadevs = ["classic.csv", "conservative.csv"]
+    pholdFolders = ["phold", "phold_remotes"], ["aphold", "aphold_remotes"]
+    pholdTransforms = [[transformPHold, transformPHold]]*2
+    connectFolders = ["connect", "connect_speedup"], ["aconnect", "aconnect_speedup"]
+    connectTransform = [[transformConnect, transformConnectSpeed]]*2
+    devstoneFolders = ["devstone"], ["adevstone"]
+    devstoneTransform = [[transformDevstone]]*2
+
+    for folders, transform in [(pholdFolders, pholdTransforms),
+                               (connectFolders, connectTransform),
+                               (devstoneFolders, devstoneTransform)]:
+        dxex, adevs = folders
+        dxext, adevst = transform
+        for f, t in zip(dxex, dxext):
+            for name in namesdxex:
+                try:
+                    t((plotsroot/f)/name, (backuproot/f)/name)
+                    print("{} -> {}".format((plotsroot/f)/name, (backuproot/f)/name))
+                except FileNotFoundError:
+                    pass
+
+        for f, t in zip(adevs, adevst):
+            for name in namesadevs:
+                try:
+                    t((plotsroot/f)/name, (backuproot/f)/name)
+                    print("{} -> {}".format((plotsroot/f)/name, (backuproot/f)/name))
+                except FileNotFoundError:
+                    pass
+
+    # transformPHold(Path("./bmarkdata/M35Y2O/plots/aphold/classic.csv"),
+    #                Path("./bmarkdata/M35Y2O/backup/aphold/classic.csv"))
+    # transformPHold(Path("./bmarkdata/M35Y2O/plots/aphold/conservative.csv"),
+    #                Path("./bmarkdata/M35Y2O/backup/aphold/conservative.csv"))
+    # # transformPHold(Path("./bmarkdata/M35Y2O/plots/aphold/optimistic.csv"),
+    # #                Path("./bmarkdata/M35Y2O/backup/aphold/optimistic.csv"))
+    # transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/classic.csv"),
+    #                Path("./bmarkdata/M35Y2O/backup/phold/classic.csv"))
+    # transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/conservative.csv"),
+    #                Path("./bmarkdata/M35Y2O/backup/phold/conservative.csv"))
+    # transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/optimistic.csv"),
+    #                Path("./bmarkdata/M35Y2O/backup/phold/optimistic.csv"))

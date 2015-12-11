@@ -11,327 +11,327 @@
 <polygon fill="white" stroke="none" points="-4,4 -4,-704 1029,-704 1029,4 -4,4"/>
 <!-- GOMP_parallel:/usr/lib64/libgomp.so.1.0.0 -->
 <g id="node1" class="node"><title>GOMP_parallel:/usr/lib64/libgomp.so.1.0.0</title>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" points="346,-457 257,-457 257,-405 346,-405 346,-457"/>
-<text text-anchor="middle" x="301.5" y="-445" font-family="Arial" font-size="10.00" fill="#ffffff">libgomp.so.1.0.0</text>
-<text text-anchor="middle" x="301.5" y="-434" font-family="Arial" font-size="10.00" fill="#ffffff">GOMP_parallel</text>
-<text text-anchor="middle" x="301.5" y="-423" font-family="Arial" font-size="10.00" fill="#ffffff">6.64%</text>
-<text text-anchor="middle" x="301.5" y="-412" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#0c9590" stroke="#0c9590" points="347,-457 258,-457 258,-405 347,-405 347,-457"/>
+<text text-anchor="middle" x="302.5" y="-445" font-family="Arial" font-size="10.00" fill="#ffffff">libgomp.so.1.0.0</text>
+<text text-anchor="middle" x="302.5" y="-434" font-family="Arial" font-size="10.00" fill="#ffffff">GOMP_parallel</text>
+<text text-anchor="middle" x="302.5" y="-423" font-family="Arial" font-size="10.00" fill="#ffffff">25.91%</text>
+<text text-anchor="middle" x="302.5" y="-412" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node2" class="node"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#ff0300" stroke="#ff0300" points="432.5,-376 282.5,-376 282.5,-324 432.5,-324 432.5,-376"/>
+<polygon fill="#ff0200" stroke="#ff0200" points="432.5,-376 282.5,-376 282.5,-324 432.5,-324 432.5,-376"/>
 <text text-anchor="middle" x="357.5" y="-364" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="357.5" y="-353" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::ParSimulator::execUntil</text>
-<text text-anchor="middle" x="357.5" y="-342" font-family="Arial" font-size="10.00" fill="#ffffff">99.70%</text>
-<text text-anchor="middle" x="357.5" y="-331" font-family="Arial" font-size="10.00" fill="#ffffff">(25.56%)</text>
+<text text-anchor="middle" x="357.5" y="-342" font-family="Arial" font-size="10.00" fill="#ffffff">99.85%</text>
+<text text-anchor="middle" x="357.5" y="-331" font-family="Arial" font-size="10.00" fill="#ffffff">(13.41%)</text>
 </g>
 <!-- GOMP_parallel:/usr/lib64/libgomp.so.1.0.0&#45;&gt;adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge1" class="edge"><title>GOMP_parallel:/usr/lib64/libgomp.so.1.0.0&#45;&gt;adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d2a7b" stroke-width="0.5" d="M319.527,-404.569C325.279,-396.454 331.678,-387.428 337.558,-379.133"/>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" stroke-width="0.5" points="338.674,-379.677 339.698,-376.113 336.675,-378.26 338.674,-379.677"/>
-<text text-anchor="middle" x="347.5" y="-388" font-family="Arial" font-size="10.00" fill="#0d2a7b">6.64%</text>
+<path fill="none" stroke="#0c9590" stroke-width="1.04" d="M320.205,-404.569C325.557,-396.881 331.479,-388.376 336.998,-380.449"/>
+<polygon fill="#0c9590" stroke="#0c9590" stroke-width="1.04" points="338.567,-381.319 340.016,-376.113 335.637,-379.279 338.567,-381.319"/>
+<text text-anchor="middle" x="350.5" y="-388" font-family="Arial" font-size="10.00" fill="#0c9590">25.90%</text>
 </g>
 <!-- adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node14" class="node"><title>adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d4382" stroke="#0d4382" points="339.5,-295 189.5,-295 189.5,-243 339.5,-243 339.5,-295"/>
+<polygon fill="#0c658a" stroke="#0c658a" points="339.5,-295 189.5,-295 189.5,-243 339.5,-243 339.5,-295"/>
 <text text-anchor="middle" x="264.5" y="-283" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="264.5" y="-272" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Schedule::visitImminent</text>
-<text text-anchor="middle" x="264.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">11.65%</text>
-<text text-anchor="middle" x="264.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(5.64%)</text>
+<text text-anchor="middle" x="264.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">17.62%</text>
+<text text-anchor="middle" x="264.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(9.47%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge7" class="edge"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d4382" stroke-width="0.5" d="M326.991,-323.82C323.445,-320.858 319.887,-317.869 316.5,-315 309.884,-309.395 302.837,-303.349 296.136,-297.563"/>
-<polygon fill="#0d4382" stroke="#0d4382" stroke-width="0.5" points="296.737,-296.463 293.287,-295.101 295.135,-298.316 296.737,-296.463"/>
-<text text-anchor="middle" x="333.5" y="-307" font-family="Arial" font-size="10.00" fill="#0d4382">11.65%</text>
+<path fill="none" stroke="#0c658a" stroke-width="0.7" d="M326.991,-323.82C323.445,-320.858 319.887,-317.869 316.5,-315 310.002,-309.495 303.089,-303.565 296.495,-297.873"/>
+<polygon fill="#0c658a" stroke="#0c658a" stroke-width="0.7" points="297.426,-296.735 293.287,-295.101 295.504,-298.959 297.426,-296.735"/>
+<text text-anchor="middle" x="333.5" y="-307" font-family="Arial" font-size="10.00" fill="#0c658a">17.62%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node15" class="node"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0cb60a" stroke="#0cb60a" points="628.5,-295 452.5,-295 452.5,-243 628.5,-243 628.5,-295"/>
+<polygon fill="#5ac508" stroke="#5ac508" points="628.5,-295 452.5,-295 452.5,-243 628.5,-243 628.5,-295"/>
 <text text-anchor="middle" x="540.5" y="-283" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="540.5" y="-272" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Simulator::computeNextState</text>
-<text text-anchor="middle" x="540.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">50.29%</text>
-<text text-anchor="middle" x="540.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(7.27%)</text>
+<text text-anchor="middle" x="540.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">60.78%</text>
+<text text-anchor="middle" x="540.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(8.98%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge8" class="edge"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0cb60a" stroke-width="2.01" d="M415.654,-323.895C434.836,-315.615 456.283,-306.356 475.915,-297.881"/>
-<polygon fill="#0cb60a" stroke="#0cb60a" stroke-width="2.01" points="476.964,-300.135 482.498,-295.039 474.994,-295.572 476.964,-300.135"/>
-<text text-anchor="middle" x="477.5" y="-307" font-family="Arial" font-size="10.00" fill="#0cb60a">50.29%</text>
+<path fill="none" stroke="#5ac508" stroke-width="2.43" d="M415.654,-323.895C434.585,-315.723 455.724,-306.597 475.146,-298.213"/>
+<polygon fill="#5ac508" stroke="#5ac508" stroke-width="2.43" points="476.418,-300.637 482.498,-295.039 474.254,-295.624 476.418,-300.637"/>
+<text text-anchor="middle" x="477.5" y="-307" font-family="Arial" font-size="10.00" fill="#5ac508">60.78%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node16" class="node"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d367e" stroke="#0d367e" points="177,-214 66,-214 66,-162 177,-162 177,-214"/>
+<polygon fill="#0d3e80" stroke="#0d3e80" points="177,-214 66,-214 66,-162 177,-162 177,-214"/>
 <text text-anchor="middle" x="121.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="121.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Simulator::visit</text>
-<text text-anchor="middle" x="121.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">9.12%</text>
-<text text-anchor="middle" x="121.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(3.39%)</text>
+<text text-anchor="middle" x="121.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">10.65%</text>
+<text text-anchor="middle" x="121.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(4.40%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge9" class="edge"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1c77" stroke-width="0.5" d="M282.211,-345.826C240.364,-340.268 190.114,-326.768 156.5,-295 135.242,-274.91 126.884,-241.665 123.605,-217.76"/>
-<polygon fill="#0d1c77" stroke="#0d1c77" stroke-width="0.5" points="124.784,-217.321 123.121,-214.006 122.354,-217.634 124.784,-217.321"/>
-<text text-anchor="middle" x="170.5" y="-266.5" font-family="Arial" font-size="10.00" fill="#0d1c77">3.62%</text>
+<path fill="none" stroke="#0d1a77" stroke-width="0.5" d="M282.211,-345.826C240.364,-340.268 190.114,-326.768 156.5,-295 135.242,-274.91 126.884,-241.665 123.605,-217.76"/>
+<polygon fill="#0d1a77" stroke="#0d1a77" stroke-width="0.5" points="124.784,-217.321 123.121,-214.006 122.354,-217.634 124.784,-217.321"/>
+<text text-anchor="middle" x="170.5" y="-266.5" font-family="Arial" font-size="10.00" fill="#0d1a77">3.14%</text>
 </g>
 <!-- non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node17" class="node"><title>non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
 <polygon fill="#0d1074" stroke="#0d1074" points="382.5,-214 186.5,-214 186.5,-162 382.5,-162 382.5,-214"/>
 <text text-anchor="middle" x="284.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="284.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">non&#45;virtual thunk to adevs::Simulator::visit</text>
-<text text-anchor="middle" x="284.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">0.70%</text>
-<text text-anchor="middle" x="284.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(0.70%)</text>
+<text text-anchor="middle" x="284.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">0.86%</text>
+<text text-anchor="middle" x="284.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(0.86%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge10" class="edge"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
 <path fill="none" stroke="#0d0e73" stroke-width="0.5" d="M358.896,-323.999C359.095,-301.56 356.712,-268.35 343.5,-243 338.47,-233.349 330.99,-224.546 323.031,-216.977"/>
 <polygon fill="#0d0e73" stroke="#0d0e73" stroke-width="0.5" points="323.481,-215.724 320.081,-214.244 321.817,-217.521 323.481,-215.724"/>
-<text text-anchor="middle" x="371.5" y="-266.5" font-family="Arial" font-size="10.00" fill="#0d0e73">0.22%</text>
+<text text-anchor="middle" x="371.5" y="-266.5" font-family="Arial" font-size="10.00" fill="#0d0e73">0.25%</text>
 </g>
 <!-- std::_Rb_tree_increment:/usr/lib64/libstdc++.so.6.0.21 -->
 <g id="node18" class="node"><title>std::_Rb_tree_increment:/usr/lib64/libstdc++.so.6.0.21</title>
-<polygon fill="#0d327d" stroke="#0d327d" points="761,-295 638,-295 638,-243 761,-243 761,-295"/>
+<polygon fill="#0d1f78" stroke="#0d1f78" points="761,-295 638,-295 638,-243 761,-243 761,-295"/>
 <text text-anchor="middle" x="699.5" y="-283" font-family="Arial" font-size="10.00" fill="#ffffff">libstdc++.so.6.0.21</text>
 <text text-anchor="middle" x="699.5" y="-272" font-family="Arial" font-size="10.00" fill="#ffffff">std::_Rb_tree_increment</text>
-<text text-anchor="middle" x="699.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">8.21%</text>
-<text text-anchor="middle" x="699.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(8.20%)</text>
+<text text-anchor="middle" x="699.5" y="-261" font-family="Arial" font-size="10.00" fill="#ffffff">4.32%</text>
+<text text-anchor="middle" x="699.5" y="-250" font-family="Arial" font-size="10.00" fill="#ffffff">(4.32%)</text>
 </g>
 <!-- adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;std::_Rb_tree_increment:/usr/lib64/libstdc++.so.6.0.21 -->
 <g id="edge11" class="edge"><title>adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;std::_Rb_tree_increment:/usr/lib64/libstdc++.so.6.0.21</title>
-<path fill="none" stroke="#0d327d" stroke-width="0.5" d="M432.693,-337.814C488.65,-328.642 566.589,-314.07 633.5,-295 633.765,-294.924 634.031,-294.848 634.297,-294.772"/>
-<polygon fill="#0d327d" stroke="#0d327d" stroke-width="0.5" points="634.767,-295.91 637.775,-293.742 634.071,-293.561 634.767,-295.91"/>
-<text text-anchor="middle" x="610.5" y="-307" font-family="Arial" font-size="10.00" fill="#0d327d">8.21%</text>
+<path fill="none" stroke="#0d1f78" stroke-width="0.5" d="M432.693,-337.814C488.65,-328.642 566.589,-314.07 633.5,-295 633.765,-294.924 634.031,-294.848 634.297,-294.772"/>
+<polygon fill="#0d1f78" stroke="#0d1f78" stroke-width="0.5" points="634.767,-295.91 637.775,-293.742 634.071,-293.561 634.767,-295.91"/>
+<text text-anchor="middle" x="610.5" y="-307" font-family="Arial" font-size="10.00" fill="#0d1f78">4.32%</text>
 </g>
 <!-- Processor::delta_int:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node3" class="node"><title>Processor::delta_int:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1375" stroke="#0d1375" points="495.5,-214 391.5,-214 391.5,-162 495.5,-162 495.5,-214"/>
+<polygon fill="#0d1676" stroke="#0d1676" points="495.5,-214 391.5,-214 391.5,-162 495.5,-162 495.5,-214"/>
 <text text-anchor="middle" x="443.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="443.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">Processor::delta_int</text>
-<text text-anchor="middle" x="443.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">1.62%</text>
-<text text-anchor="middle" x="443.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(1.61%)</text>
+<text text-anchor="middle" x="443.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">2.17%</text>
+<text text-anchor="middle" x="443.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(2.17%)</text>
 </g>
 <!-- Processor::output_func:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node4" class="node"><title>Processor::output_func:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1676" stroke="#0d1676" points="117,-133 -7.10543e-15,-133 -7.10543e-15,-81 117,-81 117,-133"/>
+<polygon fill="#0d1475" stroke="#0d1475" points="117,-133 -7.10543e-15,-133 -7.10543e-15,-81 117,-81 117,-133"/>
 <text text-anchor="middle" x="58.5" y="-121" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="58.5" y="-110" font-family="Arial" font-size="10.00" fill="#ffffff">Processor::output_func</text>
-<text text-anchor="middle" x="58.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">2.26%</text>
-<text text-anchor="middle" x="58.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(2.26%)</text>
+<text text-anchor="middle" x="58.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">1.68%</text>
+<text text-anchor="middle" x="58.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(1.68%)</text>
 </g>
 <!-- Processor::ta:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node5" class="node"><title>Processor::ta:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d0f74" stroke="#0d0f74" points="883,-133 798,-133 798,-81 883,-81 883,-133"/>
+<polygon fill="#0d1074" stroke="#0d1074" points="883,-133 798,-133 798,-81 883,-81 883,-133"/>
 <text text-anchor="middle" x="840.5" y="-121" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="840.5" y="-110" font-family="Arial" font-size="10.00" fill="#ffffff">Processor::ta</text>
-<text text-anchor="middle" x="840.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">0.66%</text>
-<text text-anchor="middle" x="840.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(0.66%)</text>
+<text text-anchor="middle" x="840.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">0.91%</text>
+<text text-anchor="middle" x="840.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(0.90%)</text>
 </g>
 <!-- [unknown]:/usr/lib64/libgomp.so.1.0.0 -->
 <g id="node6" class="node"><title>[unknown]:/usr/lib64/libgomp.so.1.0.0</title>
-<polygon fill="#f54402" stroke="#f54402" points="444,-457 355,-457 355,-405 444,-405 444,-457"/>
-<text text-anchor="middle" x="399.5" y="-445" font-family="Arial" font-size="10.00" fill="#ffffff">libgomp.so.1.0.0</text>
-<text text-anchor="middle" x="399.5" y="-434" font-family="Arial" font-size="10.00" fill="#ffffff">[unknown]</text>
-<text text-anchor="middle" x="399.5" y="-423" font-family="Arial" font-size="10.00" fill="#ffffff">93.13%</text>
-<text text-anchor="middle" x="399.5" y="-412" font-family="Arial" font-size="10.00" fill="#ffffff">(0.05%)</text>
+<polygon fill="#cfd806" stroke="#cfd806" points="445,-457 356,-457 356,-405 445,-405 445,-457"/>
+<text text-anchor="middle" x="400.5" y="-445" font-family="Arial" font-size="10.00" fill="#ffffff">libgomp.so.1.0.0</text>
+<text text-anchor="middle" x="400.5" y="-434" font-family="Arial" font-size="10.00" fill="#ffffff">[unknown]</text>
+<text text-anchor="middle" x="400.5" y="-423" font-family="Arial" font-size="10.00" fill="#ffffff">73.98%</text>
+<text text-anchor="middle" x="400.5" y="-412" font-family="Arial" font-size="10.00" fill="#ffffff">(0.03%)</text>
 </g>
 <!-- [unknown]:/usr/lib64/libgomp.so.1.0.0&#45;&gt;adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge3" class="edge"><title>[unknown]:/usr/lib64/libgomp.so.1.0.0&#45;&gt;adevs::ParSimulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::execUntil:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#f44502" stroke-width="3.72" d="M385.98,-404.569C382.649,-398.305 379.031,-391.498 375.525,-384.903"/>
-<polygon fill="#f44502" stroke="#f44502" stroke-width="3.72" points="378.325,-383.012 370.851,-376.113 372.391,-386.167 378.325,-383.012"/>
-<text text-anchor="middle" x="398.5" y="-388" font-family="Arial" font-size="10.00" fill="#f44502">93.06%</text>
+<path fill="none" stroke="#cfd806" stroke-width="2.96" d="M386.658,-404.569C383.093,-398.02 379.206,-390.878 375.465,-384.005"/>
+<polygon fill="#cfd806" stroke="#cfd806" stroke-width="2.96" points="377.924,-382.228 371.169,-376.113 372.637,-385.106 377.924,-382.228"/>
+<text text-anchor="middle" x="399.5" y="-388" font-family="Arial" font-size="10.00" fill="#cfd806">73.94%</text>
 </g>
 <!-- [unknown]:/usr/lib64/libgomp.so.1.0.0&#45;&gt;[unknown]:/usr/lib64/libgomp.so.1.0.0 -->
 <g id="edge2" class="edge"><title>[unknown]:/usr/lib64/libgomp.so.1.0.0&#45;&gt;[unknown]:/usr/lib64/libgomp.so.1.0.0</title>
-<path fill="none" stroke="#f54402" stroke-width="3.73" d="M444.183,-437.445C449.517,-436.273 453,-434.125 453,-431 453,-430.414 452.878,-429.862 452.643,-429.345"/>
-<polygon fill="#f54402" stroke="#f54402" stroke-width="3.73" points="454.297,-426.38 444.183,-424.555 450.951,-432.289 454.297,-426.38"/>
+<path fill="none" stroke="#cfd806" stroke-width="2.96" d="M445.183,-437.445C450.517,-436.273 454,-434.125 454,-431 454,-430.023 453.66,-429.142 453.029,-428.356"/>
+<polygon fill="#cfd806" stroke="#cfd806" stroke-width="2.96" points="454.235,-425.596 445.183,-424.555 451.61,-431.014 454.235,-425.596"/>
 </g>
 <!-- __clone:/usr/lib64/libc&#45;2.21.so -->
 <g id="node7" class="node"><title>__clone:/usr/lib64/libc&#45;2.21.so</title>
-<polygon fill="#f54402" stroke="#f54402" points="434,-619 367,-619 367,-567 434,-567 434,-619"/>
-<text text-anchor="middle" x="400.5" y="-607" font-family="Arial" font-size="10.00" fill="#ffffff">libc&#45;2.21.so</text>
-<text text-anchor="middle" x="400.5" y="-596" font-family="Arial" font-size="10.00" fill="#ffffff">__clone</text>
-<text text-anchor="middle" x="400.5" y="-585" font-family="Arial" font-size="10.00" fill="#ffffff">93.18%</text>
-<text text-anchor="middle" x="400.5" y="-574" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#d0d806" stroke="#d0d806" points="435,-619 368,-619 368,-567 435,-567 435,-619"/>
+<text text-anchor="middle" x="401.5" y="-607" font-family="Arial" font-size="10.00" fill="#ffffff">libc&#45;2.21.so</text>
+<text text-anchor="middle" x="401.5" y="-596" font-family="Arial" font-size="10.00" fill="#ffffff">__clone</text>
+<text text-anchor="middle" x="401.5" y="-585" font-family="Arial" font-size="10.00" fill="#ffffff">74.00%</text>
+<text text-anchor="middle" x="401.5" y="-574" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- start_thread:/usr/lib64/libpthread&#45;2.21.so -->
 <g id="node8" class="node"><title>start_thread:/usr/lib64/libpthread&#45;2.21.so</title>
-<polygon fill="#f54502" stroke="#f54502" points="447.5,-538 353.5,-538 353.5,-486 447.5,-486 447.5,-538"/>
-<text text-anchor="middle" x="400.5" y="-526" font-family="Arial" font-size="10.00" fill="#ffffff">libpthread&#45;2.21.so</text>
-<text text-anchor="middle" x="400.5" y="-515" font-family="Arial" font-size="10.00" fill="#ffffff">start_thread</text>
-<text text-anchor="middle" x="400.5" y="-504" font-family="Arial" font-size="10.00" fill="#ffffff">93.10%</text>
-<text text-anchor="middle" x="400.5" y="-493" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#cfd806" stroke="#cfd806" points="448.5,-538 354.5,-538 354.5,-486 448.5,-486 448.5,-538"/>
+<text text-anchor="middle" x="401.5" y="-526" font-family="Arial" font-size="10.00" fill="#ffffff">libpthread&#45;2.21.so</text>
+<text text-anchor="middle" x="401.5" y="-515" font-family="Arial" font-size="10.00" fill="#ffffff">start_thread</text>
+<text text-anchor="middle" x="401.5" y="-504" font-family="Arial" font-size="10.00" fill="#ffffff">73.96%</text>
+<text text-anchor="middle" x="401.5" y="-493" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- __clone:/usr/lib64/libc&#45;2.21.so&#45;&gt;start_thread:/usr/lib64/libpthread&#45;2.21.so -->
 <g id="edge4" class="edge"><title>__clone:/usr/lib64/libc&#45;2.21.so&#45;&gt;start_thread:/usr/lib64/libpthread&#45;2.21.so</title>
-<path fill="none" stroke="#f54502" stroke-width="3.72" d="M400.5,-566.569C400.5,-560.59 400.5,-554.116 400.5,-547.804"/>
-<polygon fill="#f54502" stroke="#f54502" stroke-width="3.72" points="403.86,-547.713 400.5,-538.113 397.14,-547.713 403.86,-547.713"/>
-<text text-anchor="middle" x="417.5" y="-550" font-family="Arial" font-size="10.00" fill="#f54502">93.10%</text>
+<path fill="none" stroke="#cfd806" stroke-width="2.96" d="M401.5,-566.569C401.5,-560.305 401.5,-553.498 401.5,-546.903"/>
+<polygon fill="#cfd806" stroke="#cfd806" stroke-width="2.96" points="404.51,-546.713 401.5,-538.113 398.49,-546.713 404.51,-546.713"/>
+<text text-anchor="middle" x="418.5" y="-550" font-family="Arial" font-size="10.00" fill="#cfd806">73.96%</text>
 </g>
 <!-- start_thread:/usr/lib64/libpthread&#45;2.21.so&#45;&gt;[unknown]:/usr/lib64/libgomp.so.1.0.0 -->
 <g id="edge25" class="edge"><title>start_thread:/usr/lib64/libpthread&#45;2.21.so&#45;&gt;[unknown]:/usr/lib64/libgomp.so.1.0.0</title>
-<path fill="none" stroke="#f54502" stroke-width="3.72" d="M400.178,-485.569C400.102,-479.59 400.02,-473.116 399.941,-466.804"/>
-<polygon fill="#f54502" stroke="#f54502" stroke-width="3.72" points="403.299,-466.67 399.818,-457.113 396.58,-466.755 403.299,-466.67"/>
-<text text-anchor="middle" x="417.5" y="-469" font-family="Arial" font-size="10.00" fill="#f54502">93.10%</text>
+<path fill="none" stroke="#cfd806" stroke-width="2.96" d="M401.178,-485.569C401.099,-479.305 401.013,-472.498 400.929,-465.903"/>
+<polygon fill="#cfd806" stroke="#cfd806" stroke-width="2.96" points="403.937,-465.674 400.818,-457.113 397.917,-465.751 403.937,-465.674"/>
+<text text-anchor="middle" x="418.5" y="-469" font-family="Arial" font-size="10.00" fill="#cfd806">73.96%</text>
 </g>
 <!-- __libc_start_main:/usr/lib64/libc&#45;2.21.so -->
 <g id="node9" class="node"><title>__libc_start_main:/usr/lib64/libc&#45;2.21.so</title>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" points="348,-619 255,-619 255,-567 348,-567 348,-619"/>
-<text text-anchor="middle" x="301.5" y="-607" font-family="Arial" font-size="10.00" fill="#ffffff">libc&#45;2.21.so</text>
-<text text-anchor="middle" x="301.5" y="-596" font-family="Arial" font-size="10.00" fill="#ffffff">__libc_start_main</text>
-<text text-anchor="middle" x="301.5" y="-585" font-family="Arial" font-size="10.00" fill="#ffffff">6.71%</text>
-<text text-anchor="middle" x="301.5" y="-574" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#0c958f" stroke="#0c958f" points="349,-619 256,-619 256,-567 349,-567 349,-619"/>
+<text text-anchor="middle" x="302.5" y="-607" font-family="Arial" font-size="10.00" fill="#ffffff">libc&#45;2.21.so</text>
+<text text-anchor="middle" x="302.5" y="-596" font-family="Arial" font-size="10.00" fill="#ffffff">__libc_start_main</text>
+<text text-anchor="middle" x="302.5" y="-585" font-family="Arial" font-size="10.00" fill="#ffffff">25.95%</text>
+<text text-anchor="middle" x="302.5" y="-574" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node10" class="node"><title>main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" points="344,-538 259,-538 259,-486 344,-486 344,-538"/>
-<text text-anchor="middle" x="301.5" y="-526" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
-<text text-anchor="middle" x="301.5" y="-515" font-family="Arial" font-size="10.00" fill="#ffffff">main</text>
-<text text-anchor="middle" x="301.5" y="-504" font-family="Arial" font-size="10.00" fill="#ffffff">6.71%</text>
-<text text-anchor="middle" x="301.5" y="-493" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#0c958f" stroke="#0c958f" points="345,-538 260,-538 260,-486 345,-486 345,-538"/>
+<text text-anchor="middle" x="302.5" y="-526" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
+<text text-anchor="middle" x="302.5" y="-515" font-family="Arial" font-size="10.00" fill="#ffffff">main</text>
+<text text-anchor="middle" x="302.5" y="-504" font-family="Arial" font-size="10.00" fill="#ffffff">25.95%</text>
+<text text-anchor="middle" x="302.5" y="-493" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- __libc_start_main:/usr/lib64/libc&#45;2.21.so&#45;&gt;main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge5" class="edge"><title>__libc_start_main:/usr/lib64/libc&#45;2.21.so&#45;&gt;main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d2a7b" stroke-width="0.5" d="M301.5,-566.569C301.5,-558.739 301.5,-550.06 301.5,-542.009"/>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" stroke-width="0.5" points="302.725,-541.613 301.5,-538.113 300.275,-541.613 302.725,-541.613"/>
-<text text-anchor="middle" x="315.5" y="-550" font-family="Arial" font-size="10.00" fill="#0d2a7b">6.71%</text>
+<path fill="none" stroke="#0c958f" stroke-width="1.04" d="M302.5,-566.569C302.5,-559.166 302.5,-551.005 302.5,-543.332"/>
+<polygon fill="#0c958f" stroke="#0c958f" stroke-width="1.04" points="304.285,-543.213 302.5,-538.113 300.715,-543.213 304.285,-543.213"/>
+<text text-anchor="middle" x="319.5" y="-550" font-family="Arial" font-size="10.00" fill="#0c958f">25.95%</text>
 </g>
 <!-- main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;GOMP_parallel:/usr/lib64/libgomp.so.1.0.0 -->
 <g id="edge24" class="edge"><title>main:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;GOMP_parallel:/usr/lib64/libgomp.so.1.0.0</title>
-<path fill="none" stroke="#0d2a7b" stroke-width="0.5" d="M301.5,-485.569C301.5,-477.739 301.5,-469.06 301.5,-461.009"/>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" stroke-width="0.5" points="302.725,-460.613 301.5,-457.113 300.275,-460.613 302.725,-460.613"/>
-<text text-anchor="middle" x="315.5" y="-469" font-family="Arial" font-size="10.00" fill="#0d2a7b">6.64%</text>
+<path fill="none" stroke="#0c9590" stroke-width="1.04" d="M302.5,-485.569C302.5,-478.166 302.5,-470.005 302.5,-462.332"/>
+<polygon fill="#0c9590" stroke="#0c9590" stroke-width="1.04" points="304.285,-462.213 302.5,-457.113 300.715,-462.213 304.285,-462.213"/>
+<text text-anchor="middle" x="319.5" y="-469" font-family="Arial" font-size="10.00" fill="#0c9590">25.91%</text>
 </g>
 <!-- _start:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node11" class="node"><title>_start:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" points="344,-700 259,-700 259,-648 344,-648 344,-700"/>
-<text text-anchor="middle" x="301.5" y="-688" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
-<text text-anchor="middle" x="301.5" y="-677" font-family="Arial" font-size="10.00" fill="#ffffff">_start</text>
-<text text-anchor="middle" x="301.5" y="-666" font-family="Arial" font-size="10.00" fill="#ffffff">6.71%</text>
-<text text-anchor="middle" x="301.5" y="-655" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
+<polygon fill="#0c958f" stroke="#0c958f" points="345,-700 260,-700 260,-648 345,-648 345,-700"/>
+<text text-anchor="middle" x="302.5" y="-688" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
+<text text-anchor="middle" x="302.5" y="-677" font-family="Arial" font-size="10.00" fill="#ffffff">_start</text>
+<text text-anchor="middle" x="302.5" y="-666" font-family="Arial" font-size="10.00" fill="#ffffff">25.95%</text>
+<text text-anchor="middle" x="302.5" y="-655" font-family="Arial" font-size="10.00" fill="#ffffff">(0.00%)</text>
 </g>
 <!-- _start:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;__libc_start_main:/usr/lib64/libc&#45;2.21.so -->
 <g id="edge6" class="edge"><title>_start:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;__libc_start_main:/usr/lib64/libc&#45;2.21.so</title>
-<path fill="none" stroke="#0d2a7b" stroke-width="0.5" d="M301.5,-647.569C301.5,-639.739 301.5,-631.06 301.5,-623.009"/>
-<polygon fill="#0d2a7b" stroke="#0d2a7b" stroke-width="0.5" points="302.725,-622.613 301.5,-619.113 300.275,-622.613 302.725,-622.613"/>
-<text text-anchor="middle" x="315.5" y="-631" font-family="Arial" font-size="10.00" fill="#0d2a7b">6.71%</text>
+<path fill="none" stroke="#0c958f" stroke-width="1.04" d="M302.5,-647.569C302.5,-640.166 302.5,-632.005 302.5,-624.332"/>
+<polygon fill="#0c958f" stroke="#0c958f" stroke-width="1.04" points="304.285,-624.213 302.5,-619.113 300.715,-624.213 304.285,-624.213"/>
+<text text-anchor="middle" x="319.5" y="-631" font-family="Arial" font-size="10.00" fill="#0c958f">25.95%</text>
 </g>
 <!-- adevs::Digraph&lt;unsigned long, int, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node12" class="node"><title>adevs::Digraph&lt;unsigned long, int, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1475" stroke="#0d1475" points="238.5,-52 130.5,-52 130.5,-0 238.5,-0 238.5,-52"/>
+<polygon fill="#0d1776" stroke="#0d1776" points="238.5,-52 130.5,-52 130.5,-0 238.5,-0 238.5,-52"/>
 <text text-anchor="middle" x="184.5" y="-40" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="184.5" y="-29" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Digraph::route</text>
-<text text-anchor="middle" x="184.5" y="-18" font-family="Arial" font-size="10.00" fill="#ffffff">1.73%</text>
-<text text-anchor="middle" x="184.5" y="-7" font-family="Arial" font-size="10.00" fill="#ffffff">(1.72%)</text>
+<text text-anchor="middle" x="184.5" y="-18" font-family="Arial" font-size="10.00" fill="#ffffff">2.34%</text>
+<text text-anchor="middle" x="184.5" y="-7" font-family="Arial" font-size="10.00" fill="#ffffff">(2.34%)</text>
 </g>
 <!-- adevs::LogicalProcess&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::stateChange:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node13" class="node"><title>adevs::LogicalProcess&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::stateChange:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1c77" stroke="#0d1c77" points="680,-214 505,-214 505,-162 680,-162 680,-214"/>
+<polygon fill="#0d1f78" stroke="#0d1f78" points="680,-214 505,-214 505,-162 680,-162 680,-214"/>
 <text text-anchor="middle" x="592.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="592.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::LogicalProcess::stateChange</text>
-<text text-anchor="middle" x="592.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">3.65%</text>
-<text text-anchor="middle" x="592.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(3.64%)</text>
+<text text-anchor="middle" x="592.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">4.28%</text>
+<text text-anchor="middle" x="592.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(4.26%)</text>
 </g>
 <!-- adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge12" class="edge"><title>adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d257a" stroke-width="0.5" d="M218.861,-242.787C203.382,-234.235 186.034,-224.651 170.317,-215.969"/>
-<polygon fill="#0d257a" stroke="#0d257a" stroke-width="0.5" points="170.852,-214.865 167.196,-214.245 169.667,-217.01 170.852,-214.865"/>
-<text text-anchor="middle" x="216.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d257a">5.51%</text>
+<path fill="none" stroke="#0d2e7c" stroke-width="0.5" d="M218.861,-242.787C203.382,-234.235 186.034,-224.651 170.317,-215.969"/>
+<polygon fill="#0d2e7c" stroke="#0d2e7c" stroke-width="0.5" points="170.852,-214.865 167.196,-214.245 169.667,-217.01 170.852,-214.865"/>
+<text text-anchor="middle" x="216.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d2e7c">7.52%</text>
 </g>
 <!-- adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge13" class="edge"><title>adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visitImminent:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;non&#45;virtual thunk to adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit(adevs::Atomic&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;*):/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d0f73" stroke-width="0.5" d="M270.938,-242.569C272.957,-234.597 275.198,-225.745 277.267,-217.57"/>
-<polygon fill="#0d0f73" stroke="#0d0f73" stroke-width="0.5" points="278.471,-217.807 278.142,-214.113 276.096,-217.205 278.471,-217.807"/>
-<text text-anchor="middle" x="290.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d0f73">0.48%</text>
+<path fill="none" stroke="#0d0f74" stroke-width="0.5" d="M270.938,-242.569C272.957,-234.597 275.198,-225.745 277.267,-217.57"/>
+<polygon fill="#0d0f74" stroke="#0d0f74" stroke-width="0.5" points="278.471,-217.807 278.142,-214.113 276.096,-217.205 278.471,-217.807"/>
+<text text-anchor="middle" x="290.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d0f74">0.61%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::delta_int:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge14" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::delta_int:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1375" stroke-width="0.5" d="M509.542,-242.787C499.305,-234.449 487.862,-225.13 477.415,-216.622"/>
-<polygon fill="#0d1375" stroke="#0d1375" stroke-width="0.5" points="477.984,-215.505 474.497,-214.245 476.437,-217.405 477.984,-215.505"/>
-<text text-anchor="middle" x="512.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d1375">1.62%</text>
+<path fill="none" stroke="#0d1676" stroke-width="0.5" d="M509.542,-242.787C499.305,-234.449 487.862,-225.13 477.415,-216.622"/>
+<polygon fill="#0d1676" stroke="#0d1676" stroke-width="0.5" points="477.984,-215.505 474.497,-214.245 476.437,-217.405 477.984,-215.505"/>
+<text text-anchor="middle" x="512.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d1676">2.17%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::LogicalProcess&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::stateChange:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge15" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::LogicalProcess&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::stateChange:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1c77" stroke-width="0.5" d="M557.239,-242.569C562.581,-234.454 568.522,-225.428 573.982,-217.133"/>
-<polygon fill="#0d1c77" stroke="#0d1c77" stroke-width="0.5" points="575.069,-217.71 575.97,-214.113 573.022,-216.363 575.069,-217.71"/>
-<text text-anchor="middle" x="583.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d1c77">3.65%</text>
+<path fill="none" stroke="#0d1f78" stroke-width="0.5" d="M557.239,-242.569C562.581,-234.454 568.522,-225.428 573.982,-217.133"/>
+<polygon fill="#0d1f78" stroke="#0d1f78" stroke-width="0.5" points="575.069,-217.71 575.97,-214.113 573.022,-216.363 575.069,-217.71"/>
+<text text-anchor="middle" x="583.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d1f78">4.28%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::clean_up:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node20" class="node"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::clean_up:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1e78" stroke="#0d1e78" points="823.5,-214 689.5,-214 689.5,-162 823.5,-162 823.5,-214"/>
+<polygon fill="#0d2479" stroke="#0d2479" points="823.5,-214 689.5,-214 689.5,-162 823.5,-162 823.5,-214"/>
 <text text-anchor="middle" x="756.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="756.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Simulator::clean_up</text>
-<text text-anchor="middle" x="756.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">4.05%</text>
-<text text-anchor="middle" x="756.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(3.89%)</text>
+<text text-anchor="middle" x="756.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">5.24%</text>
+<text text-anchor="middle" x="756.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(5.01%)</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::clean_up:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge16" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::clean_up:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1e78" stroke-width="0.5" d="M609.141,-242.895C633.613,-233.945 661.208,-223.852 685.847,-214.841"/>
-<polygon fill="#0d1e78" stroke="#0d1e78" stroke-width="0.5" points="686.281,-215.986 689.147,-213.634 685.439,-213.686 686.281,-215.986"/>
-<text text-anchor="middle" x="674.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d1e78">4.05%</text>
+<path fill="none" stroke="#0d2479" stroke-width="0.5" d="M609.141,-242.895C633.613,-233.945 661.208,-223.852 685.847,-214.841"/>
+<polygon fill="#0d2479" stroke="#0d2479" stroke-width="0.5" points="686.281,-215.986 689.147,-213.634 685.439,-213.686 686.281,-215.986"/>
+<text text-anchor="middle" x="674.5" y="-226" font-family="Arial" font-size="10.00" fill="#0d2479">5.24%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node21" class="node"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0b9e70" stroke="#0b9e70" points="966.5,-214 832.5,-214 832.5,-162 966.5,-162 966.5,-214"/>
+<polygon fill="#0ba74d" stroke="#0ba74d" points="966.5,-214 832.5,-214 832.5,-162 966.5,-162 966.5,-214"/>
 <text text-anchor="middle" x="899.5" y="-202" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="899.5" y="-191" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Simulator::schedule</text>
-<text text-anchor="middle" x="899.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">32.82%</text>
-<text text-anchor="middle" x="899.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(2.84%)</text>
+<text text-anchor="middle" x="899.5" y="-180" font-family="Arial" font-size="10.00" fill="#ffffff">39.41%</text>
+<text text-anchor="middle" x="899.5" y="-169" font-family="Arial" font-size="10.00" fill="#ffffff">(3.54%)</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge17" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::computeNextState:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0b9e70" stroke-width="1.31" d="M628.551,-244.055C630.212,-243.693 631.863,-243.341 633.5,-243 674.716,-234.425 777.519,-225.289 826.617,-214.359"/>
-<polygon fill="#0b9e70" stroke="#0b9e70" stroke-width="1.31" points="827.237,-216.263 832.33,-213.017 826.325,-212.378 827.237,-216.263"/>
-<text text-anchor="middle" x="792.5" y="-226" font-family="Arial" font-size="10.00" fill="#0b9e70">32.82%</text>
+<path fill="none" stroke="#0ba74d" stroke-width="1.58" d="M628.551,-244.055C630.212,-243.693 631.863,-243.341 633.5,-243 674.548,-234.46 776.684,-225.363 826.015,-214.492"/>
+<polygon fill="#0ba74d" stroke="#0ba74d" stroke-width="1.58" points="826.697,-216.597 832.33,-213.017 825.694,-212.303 826.697,-216.597"/>
+<text text-anchor="middle" x="792.5" y="-226" font-family="Arial" font-size="10.00" fill="#0ba74d">39.41%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::output_func:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge22" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::output_func:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1676" stroke-width="0.5" d="M101.22,-161.569C94.7483,-153.454 87.5503,-144.428 80.9352,-136.133"/>
-<polygon fill="#0d1676" stroke="#0d1676" stroke-width="0.5" points="81.6669,-135.086 78.5269,-133.113 79.7514,-136.613 81.6669,-135.086"/>
-<text text-anchor="middle" x="108.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d1676">2.26%</text>
+<path fill="none" stroke="#0d1475" stroke-width="0.5" d="M101.22,-161.569C94.7483,-153.454 87.5503,-144.428 80.9352,-136.133"/>
+<polygon fill="#0d1475" stroke="#0d1475" stroke-width="0.5" points="81.6669,-135.086 78.5269,-133.113 79.7514,-136.613 81.6669,-135.086"/>
+<text text-anchor="middle" x="108.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d1475">1.68%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node22" class="node"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0d1b77" stroke="#0d1b77" points="242.5,-133 126.5,-133 126.5,-81 242.5,-81 242.5,-133"/>
+<polygon fill="#0d2079" stroke="#0d2079" points="242.5,-133 126.5,-133 126.5,-81 242.5,-81 242.5,-133"/>
 <text text-anchor="middle" x="184.5" y="-121" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="184.5" y="-110" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Simulator::route</text>
-<text text-anchor="middle" x="184.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">3.43%</text>
-<text text-anchor="middle" x="184.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(1.34%)</text>
+<text text-anchor="middle" x="184.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">4.52%</text>
+<text text-anchor="middle" x="184.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(1.72%)</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge23" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::visit:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1b77" stroke-width="0.5" d="M141.78,-161.569C148.252,-153.454 155.45,-144.428 162.065,-136.133"/>
-<polygon fill="#0d1b77" stroke="#0d1b77" stroke-width="0.5" points="163.249,-136.613 164.473,-133.113 161.333,-135.086 163.249,-136.613"/>
-<text text-anchor="middle" x="171.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d1b77">3.43%</text>
+<path fill="none" stroke="#0d2079" stroke-width="0.5" d="M141.78,-161.569C148.252,-153.454 155.45,-144.428 162.065,-136.133"/>
+<polygon fill="#0d2079" stroke="#0d2079" stroke-width="0.5" points="163.249,-136.613 164.473,-133.113 161.333,-135.086 163.249,-136.613"/>
+<text text-anchor="middle" x="171.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d2079">4.52%</text>
 </g>
 <!-- adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="node19" class="node"><title>adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<polygon fill="#0c9981" stroke="#0c9981" points="1025,-133 892,-133 892,-81 1025,-81 1025,-133"/>
+<polygon fill="#0ba165" stroke="#0ba165" points="1025,-133 892,-133 892,-81 1025,-81 1025,-133"/>
 <text text-anchor="middle" x="958.5" y="-121" font-family="Arial" font-size="10.00" fill="#ffffff">adevs_devstone</text>
 <text text-anchor="middle" x="958.5" y="-110" font-family="Arial" font-size="10.00" fill="#ffffff">adevs::Schedule::schedule</text>
-<text text-anchor="middle" x="958.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">29.31%</text>
-<text text-anchor="middle" x="958.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(29.23%)</text>
+<text text-anchor="middle" x="958.5" y="-99" font-family="Arial" font-size="10.00" fill="#ffffff">34.95%</text>
+<text text-anchor="middle" x="958.5" y="-88" font-family="Arial" font-size="10.00" fill="#ffffff">(34.83%)</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::ta:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge20" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;Processor::ta:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d0f74" stroke-width="0.5" d="M880.507,-161.569C874.447,-153.454 867.706,-144.428 861.511,-136.133"/>
-<polygon fill="#0d0f74" stroke="#0d0f74" stroke-width="0.5" points="862.331,-135.184 859.255,-133.113 860.368,-136.65 862.331,-135.184"/>
-<text text-anchor="middle" x="887.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d0f74">0.66%</text>
+<path fill="none" stroke="#0d1074" stroke-width="0.5" d="M880.507,-161.569C874.447,-153.454 867.706,-144.428 861.511,-136.133"/>
+<polygon fill="#0d1074" stroke="#0d1074" stroke-width="0.5" points="862.331,-135.184 859.255,-133.113 860.368,-136.65 862.331,-135.184"/>
+<text text-anchor="middle" x="887.5" y="-145" font-family="Arial" font-size="10.00" fill="#0d1074">0.91%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge21" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Schedule&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::schedule:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0c9981" stroke-width="1.17" d="M918.493,-161.569C924.234,-153.881 930.586,-145.376 936.507,-137.449"/>
-<polygon fill="#0c9981" stroke="#0c9981" stroke-width="1.17" points="938.028,-138.571 939.745,-133.113 934.999,-136.309 938.028,-138.571"/>
-<text text-anchor="middle" x="949.5" y="-145" font-family="Arial" font-size="10.00" fill="#0c9981">29.31%</text>
+<path fill="none" stroke="#0ba165" stroke-width="1.4" d="M918.493,-161.569C924.128,-154.024 930.351,-145.69 936.177,-137.89"/>
+<polygon fill="#0ba165" stroke="#0ba165" stroke-width="1.4" points="937.869,-139.076 939.745,-133.113 934.56,-136.605 937.869,-139.076"/>
+<text text-anchor="middle" x="949.5" y="-145" font-family="Arial" font-size="10.00" fill="#0ba165">34.95%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Digraph&lt;unsigned long, int, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge18" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Digraph&lt;unsigned long, int, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1475" stroke-width="0.5" d="M184.5,-80.5691C184.5,-72.739 184.5,-64.0604 184.5,-56.0089"/>
-<polygon fill="#0d1475" stroke="#0d1475" stroke-width="0.5" points="185.725,-55.6131 184.5,-52.1131 183.275,-55.6132 185.725,-55.6131"/>
-<text text-anchor="middle" x="198.5" y="-64" font-family="Arial" font-size="10.00" fill="#0d1475">1.73%</text>
+<path fill="none" stroke="#0d1776" stroke-width="0.5" d="M184.5,-80.5691C184.5,-72.739 184.5,-64.0604 184.5,-56.0089"/>
+<polygon fill="#0d1776" stroke="#0d1776" stroke-width="0.5" points="185.725,-55.6131 184.5,-52.1131 183.275,-55.6132 185.725,-55.6131"/>
+<text text-anchor="middle" x="198.5" y="-64" font-family="Arial" font-size="10.00" fill="#0d1776">2.34%</text>
 </g>
 <!-- adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone -->
 <g id="edge19" class="edge"><title>adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone&#45;&gt;adevs::Simulator&lt;adevs::PortValue&lt;unsigned long, int&gt;, double&gt;::route:/home/bcardoen/workspace/devs&#45;ex&#45;machina/build/Benchmark/adevs_devstone</title>
-<path fill="none" stroke="#0d1b77" stroke-width="0.5" d="M242.851,-112.96C248.16,-111.721 251.5,-109.734 251.5,-107 251.5,-104.949 249.621,-103.319 246.442,-102.109"/>
-<polygon fill="#0d1b77" stroke="#0d1b77" stroke-width="0.5" points="246.555,-100.865 242.851,-101.04 245.856,-103.213 246.555,-100.865"/>
+<path fill="none" stroke="#0d2079" stroke-width="0.5" d="M242.851,-112.96C248.16,-111.721 251.5,-109.734 251.5,-107 251.5,-104.949 249.621,-103.319 246.442,-102.109"/>
+<polygon fill="#0d2079" stroke="#0d2079" stroke-width="0.5" points="246.555,-100.865 242.851,-101.04 245.856,-103.213 246.555,-100.865"/>
 </g>
 </g>
 </svg>
