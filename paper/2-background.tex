@@ -1,5 +1,4 @@
-This section briefly introduces two distinct synchronization protocols, as used by dxex.
-Furthermore, we make note of several new features of C++11.
+This section briefly introduces the two synchronization protocols used by dxex: conservative and optimistic synchronization.
 
 \subsection{Conservative Synchronization}
 The first synchronization protocol that we will introduce, is \textit{conservative synchronization}~\cite{FujimotoBook}.
@@ -42,13 +41,3 @@ If rollbacks occur frequently, simulation quickly becomes slow, as the overhead 
 Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states qre stored up to a point where it can be considered \textit{irreversible}.
 
 While optimistic synchronization does not explicitly depends on the lookahead, simulation performance is still bound by the lookahead implicitly.
-
-\subsection{C++11 Parallelism Features}
-Apart from various other additions, C++11 adds a wide range of portable synchronization primitives to the Standard Library.
-In earlier versions of the language standard, one had to resort to non-portable C implementations.
-Furthermore, C++11 is the first version of the standard that explicitly defines a multi-threaded abstract machine memory model.
-Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. 
-
-Simulation values that need to be shared between nodes, can now be coded portable and efficiently through the use of atomic fields.
-This avoids latencies caused by the exchange of synchronization messages.
-For an in-depth study, we refer to~\cite{CPE:CPE3007}.
