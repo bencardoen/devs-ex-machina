@@ -3,7 +3,8 @@ While Python is a good language to create software prototypes, its performance h
 Dxex implements only a subset of PythonPDEVS, but makes some of its own additions.
 The core simulation algorithm and optimizations, however, are highly similar.
 
-While we will not make a detailed comparison with PythonPDEVS here, dxex also supports direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing framework~\cite{PythonPDEVS}.
+While we will not make a detailed comparison with PythonPDEVS here, but will attempt to provide a brief overview of some supported features.
+Similarly to PythonPDEVS, dxex supports direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
 But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols.
 This is in line with the design principles of PythonPDEVS: offer users the option to pass information on how to efficiently simulate the model.
 In our case, it now becomes possible to pass the simulation kernel the ``hint'' as to which synchronization protocol would be ideal for this model.
@@ -49,12 +50,21 @@ Each model provides a lookahead function, which determines the lookahead dependi
 Within this time interval, it is an error if a model raises an event, thus violating its previous promise.
 The node uses this information to compute its earliest output time (EOT), and writes out the value in shared memory through the use of C++11 synchronization primitives.
 
+In our implementation, we thus make explicit use of these new C++11 synchronization primitives.
+Whereas this was also possible in previous versions of the C++ standard, it was not a part of the standard itself.
+C++11 allows us to make our implementation portable, as well as more efficient: compilers might know of optimizations specific to atomic variables.
+
 \subsubsection{Optimistic}
 For optimistic synchronization, each node needs to keep track of all intermediate simulation states.
 This needs to be done carefully, in order to avoid unnecessary copies, and minimize the overhead induced for each transition function.
 We use Mattern's GVT algorithm~\cite{mattern} to determine the Global Virtual Time (GVT) using at most $2n$ synchronization messages.
-This process runs asynchronously from the simulation itself.
-Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed.
+This process runs asynchronously from the simulation itself, thus there is no blocking whatsoever.
+Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed, as well as committing irreversible actions.
+
+The main problem we encountered in our implementation is the agressive use of memory.
+Frequent memory allocation and deallocation caused significant overheads.
+This made us switch to the use of thread-local memory pools.
+Again, we made use of the specific features offered by C++11 that were not available in Python, or even previous versions of the C++ language standard.
 
 \subsection{Transparancy}
 A user must only provide one model, implemented in C++11, which can be simulated by each synchronization kernel.
