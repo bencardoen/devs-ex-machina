@@ -1,6 +1,8 @@
+# @author Tim Tuijn
 # global variables
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
+generateTitles <<- FALSE
 rootpath <<- paste(getwd(), '/', sep = '')
 # rootpath <<- 'putyourcustomrootpathinhere'
 datapath <<- paste(rootpath, 'data/', sep = '')
@@ -128,7 +130,29 @@ myrainbow <- function(n) {
 		return(rainbow(n))
 }
 
-comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendpos) {
+formatlabels <- function(xvalues, formattype) {
+	if (formattype == "cartesian") {
+		formattedvalues <- array()
+		for (i in 1:length(xvalues)) {
+			formattedvalues[[i]] <- sprintf("%0d",round(as.numeric(xvalues[[i]])*as.numeric(xvalues[[i]])))
+		}
+		return(formattedvalues)
+	}
+	else
+		return(xvalues);
+}
+
+newxlabels <- function(minmax) {
+	delta <- minmax[2] - minmax[1] + 1
+	deltas <- c(1,2,5,10,25,50,100,250,500,1000,10000)
+	for (i in 1:length(deltas)) {
+		if (delta/deltas[i] < 10)
+			return(seq(minmax[1], minmax[2], deltas[i]))
+	}
+	return(seq(minmax[1],minmax[2],100000))
+}
+
+comparesets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabel, formatlabel, legendpos) {
 	print(sprintf("comparesets %s\n",chartlabel))
 	nrcharts <- length(datalist)
 	
@@ -140,21 +164,24 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 	}
 	
 	if (!generatePDF) {
-		postscript(sprintf("%sfig%d.eps", figspath, epscount), width=5, height=5, paper="special", family="Times")
+		postscript(sprintf("%s%s.eps", figspath, filename), width=5, height=5, paper="special", family="Times")
 		epscount <<- epscount + 1
 	}
+
+	if (!generateTitles) {
+		margins <- par("mai")
+		margins <- margins - c(0, 0, margins[3] - 0.1, 0)
+		par(mai = margins)
+	}
 	
-	if (xrange[[2]] - xrange[[1]] < 10) {
-		# special case for CPU's
-		plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel, xaxt='n')
-		axis(side = 1, at = seq(-10,10,2) , labels = T)
-	} else
-		plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel)
+	newlabels <- newxlabels(xrange)
+	plot(xrange, yrange, type = "n", xlab=xlabel, ylab=ylabel, xaxt='n')
+	axis(side = 1, at = newlabels , labels = formatlabels(newlabels, formatlabel))
 	
 	colors <- myrainbow(nrcharts)
 	linetype <- c(1:nrcharts)
 	plotchar <- seq(15, 15+nrcharts, 1)
-	
+	plotchar <- c(15, 17, 19, 18, 22, 24, 21, 5)
 	for (i in 1:nrcharts) {
 		lines(datalist[[i]]$x, datalist[[i]]$cpu,
 			type="b",
@@ -164,7 +191,8 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 			pch=plotchar[i])
 	}
 	
-	title(chartlabel)
+	if (generateTitles)
+		title(chartlabel)
 	
 	if (legendpos == "topright") {
 		legendxpos = xrange[2]
@@ -198,16 +226,16 @@ comparesets <- function(datalist, labellist, xlabel, ylabel, chartlabel, legendp
 	lateXTable(datalist, labellist, xlabel, ylabel, chartlabel)
 }
 
-compareNsets <- function(datalist, labellist, xlabel, ylabel, chartlabel, devstone, legendpos) {
+compareNsets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabel, fieldname, formatlabel, legendpos) {
 	print("=================== compareNsets ===================")
 	N <- length(datalist)
 	perflist <- list(N)
 	for (i in 1:N) {
-		perfdata <- process1ddata(datalist[[i]], devstone)
+		perfdata <- process1ddata(datalist[[i]], fieldname)
 		perflist[[i]] <- perfdata
 	}
 	print(perflist[[1]]$x)
-	comparesets(perflist, labellist, xlabel, ylabel, chartlabel, legendpos)
+	comparesets(filename, perflist, labellist, xlabel, ylabel, chartlabel, formatlabel, legendpos)
 }
 
 lateXInit <- function(filename) {
@@ -250,31 +278,26 @@ lateXTable <- function(datalist, labellist, xlabel, ylabel, chartlabel) {
 	write(s, file=lateXFilename, append=TRUE, sep="")
 }
 
+speedup <- function(multicoredata, singlecoredata) {
+	average <- mean(singlecoredata$time.elapsed..seconds.)
+	multicoredata$time.elapsed..seconds. <- average / multicoredata$time.elapsed..seconds.
+	return(multicoredata)
+}
+
+speedup2 <- function(multicoredata, singlecoredata, field) {
+	print("speedup2")
+	nrrows <- dim(multicoredata)[1]
+	for (i in 1:nrrows) {
+		value <- multicoredata[[field]][i]
+		sprintf("%d %d", i, value)
+		datasubset <- subset(singlecoredata, singlecoredata[[field]] == value)
+		average = mean(datasubset$time.elapsed..seconds.)
+		multicoredata$time.elapsed..seconds.[i] <- average / multicoredata$time.elapsed..seconds.[i]
+	}
+	return(multicoredata)
+}
+
 gengraphs <- function() {
-	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
-	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
-	adevstoneconsdata = read.table(file="adevstone/conservative.csv",header=TRUE,sep=";")
-	dxdevstoneconsdata = read.table(file="devstone/conservative.csv",header=TRUE,sep=";")
-	dxdevstoneoptdata = read.table(file="devstone/optimistic.csv",header=TRUE,sep=";")
-	
-	dxconnectconsdata = read.table(file="connect/conservative.csv",header=TRUE,sep=";")
-	adevsconnectconsdata = read.table(file="aconnect/conservative.csv",header=TRUE,sep=";")
-	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
-	adevsconnectdata = read.table(file="aconnect/classic.csv",header=TRUE,sep=";")
-	dxconnectdata2cores <- subset(dxconnectconsdata, ncores == 2)
-	dxconnectdata4cores <- subset(dxconnectconsdata, ncores == 4) 
-	adevsconnectdata2cores <- subset(adevsconnectconsdata, ncores == 2) 
-	adevsconnectdata4cores <- subset(adevsconnectconsdata, ncores == 4) 
-	
-	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
-	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
-	dxpholdconsdata = read.table(file="phold/conservative.csv",header=TRUE,sep=";")
-	apholdconsdata = read.table(file="aphold/conservative.csv",header=TRUE,sep=";")
-	dxpholdoptdata = read.table(file="phold/optimistic.csv",header=TRUE,sep=";")
-	
-	dxpriorityconsdata = read.table(file="priority/conservative.csv",header=TRUE,sep=";")
-	dxpriorityoptdata = read.table(file="priority/optimistic.csv",header=TRUE,sep=";")
-	
 	lateXInit(paste(figspath, 'DXvsADEVS.tex', sep=''))
 	
 	if (generatePDF)
@@ -283,53 +306,96 @@ gengraphs <- function() {
 	
 	if (!generatePDF)
 		setEPS()
-		
-	compareNsets(
-		list(dxdevstonedata, adevstonedata),
-		list("dxex", "adevs"),
-		"Width/Depth", "Elapsed Time (sec.)", "Devstone single core", "width", "topleft")
+	
+	# Figure 1: single core dxex/adevs in function of varying width/depth
+	
+	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
+	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
 	
 	compareNsets(
-		list(dxdevstoneoptdata,
-			dxdevstoneconsdata,
-			adevstoneconsdata),
+		"queue_sequential",
+		list(dxdevstonedata, adevstonedata),
+		list("dxex single core", "adevs single core"),
+		"Models", "Elapsed Time (sec.)", "Devstone single core", "width", "cartesian", "topleft")
+
+	# Figure 2: speed-up multi-core for width/depth = 30
+	adevstoneconsdata <- subset(read.table(file="adevstone/conservative.csv",header=TRUE,sep=";"), width == 30)
+	dxdevstoneconsdata <- subset(read.table(file="devstone/conservative.csv",header=TRUE,sep=";"), width == 30)
+	dxdevstoneoptdata <- subset(read.table(file="devstone/optimistic.csv",header=TRUE,sep=";"), width == 30)
+	adevstoneconsdata_speedup <- speedup(adevstoneconsdata, subset(adevstonedata, width == 30))
+	dxdevstoneconsdata_speedup <- speedup(dxdevstoneconsdata, subset(dxdevstonedata, width == 30))
+	dxdevstoneoptdata_speedup <- speedup(dxdevstoneoptdata, subset(dxdevstonedata, width == 30))
+	
+	compareNsets(
+		"queue_parallel",
+		list(dxdevstoneoptdata_speedup,
+			dxdevstoneconsdata_speedup,
+			adevstoneconsdata_speedup),
 		list("dxex optimistic",
 			"dxex conservative",
 			"adevs conservative"),
-		"Width/Depth", "Elapsed Time (sec.)", "DevStone parallel", "width", "topleft")
+		"Cores", "Speedup vs. Single Core", "DevStone parallel", "ncores", "normal", "topleft")
+
+	# Figure 3: single core Interconnect
+	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
+	adevsconnectdata = read.table(file="aconnect/classic.csv",header=TRUE,sep=";")
 	
 	compareNsets(
+		"interconnect_sequential",
 		list(dxconnectdata,
-			adevsconnectdata,
-			dxconnectdata2cores,
-			dxconnectdata4cores,
-			adevsconnectdata2cores,
-			adevsconnectdata4cores),
+			adevsconnectdata),
 		list("dxex single core",
-			"adevs single core",
-			"dxex conservative (2 cores)",
-			"dxex conservative (4 cores)",
-			"adevs conservative (2 cores)",
-			"adevs conservative (4 cores)"),
-		"Width", "Elapsed Time (sec.)", "Interconnect", 'width', "topleft")
+			"adevs single core"),
+		"Models", "Elapsed Time (sec.)", "Interconnect single core", 'width', "normal", "topleft")
+	
+	# Figure 4: speed-up multi-core for width = 8
+	dxconnectsinglecoredata = read.table(file="connect_speedup/classic.csv",header=TRUE,sep=";")
+	adevsconnectsinglecoredata = read.table(file="aconnect_speedup/classic.csv",header=TRUE,sep=";")
+	dxconnectconsdata = speedup(read.table(file="connect_speedup/conservative.csv",header=TRUE,sep=";"), dxconnectsinglecoredata)
+	dxconnectoptdata = speedup(read.table(file="connect_speedup/optimistic.csv",header=TRUE,sep=";"), dxconnectsinglecoredata)
+	adevsconnectconsdata = speedup(read.table(file="aconnect_speedup/conservative.csv",header=TRUE,sep=";"), adevsconnectsinglecoredata)
 	
 	compareNsets(
-		list(dxpholddata,
-			apholddata,
-			dxpholdconsdata,
-			apholdconsdata,
-			dxpholdoptdata),
-		list("dxex single core",
-			"adevs single core",
+		"interconnect_parallel",
+		list(dxconnectoptdata,
+			dxconnectconsdata,
+			adevsconnectconsdata),
+		list("dxex optimistic",
 			"dxex conservative",
-			"adevs conservative",
-			"dxex optimistic"),
-		"Atomics/Node", "Elapsed Time (sec.)", "Phold", "atomics.node", "topleft")
-	
+			"adevs conservative"),
+		"Cores", "Speedup vs. Single Core", "Interconnect parallel", "ncores", "normal", "topright")
+		
+	# Figure 5: speed-up multi-core priority with varying priority
+	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
+	apholddata = read.table(file="aphold/classic.csv",header=TRUE,sep=";")
+	dxpholdconsdata = speedup2(read.table(file="phold/conservative.csv",header=TRUE,sep=";"), dxpholddata, 'X..priority')
+	apholdconsdata = speedup2(read.table(file="aphold/conservative.csv",header=TRUE,sep=";"), apholddata, 'X..priority')
+	dxpholdoptdata = speedup2(read.table(file="phold/optimistic.csv",header=TRUE,sep=";"), dxpholddata, 'X..priority')
 	compareNsets(
-		list(dxpriorityconsdata, dxpriorityoptdata),
-		list("dxex conservative", "dxex optimistic"),
-		"Messages", "Elapsed Time (sec.)", "Priority", "messages", "topleft")
+		"phold_speedup_priority",
+		list(dxpholdoptdata,
+			dxpholdconsdata,
+			apholdconsdata),
+		list("dxex optimistic",
+			"dxex conservative",
+			"adevs conservative"),
+		"Priority", "Speedup vs. Single Core", "Phold parallel", "X..priority", "normal", "topright")
+		
+	# Figure 6: speed-up multi-core priority with varying remotes
+	dxpholddata = read.table(file="phold_remotes/classic.csv",header=TRUE,sep=";")
+	apholddata = read.table(file="aphold_remotes/classic.csv",header=TRUE,sep=";")
+	dxpholdconsdata = speedup2(read.table(file="phold_remotes/conservative.csv",header=TRUE,sep=";"), dxpholddata, 'X..remotes')
+	apholdconsdata = speedup2(read.table(file="aphold_remotes/conservative.csv",header=TRUE,sep=";"), apholddata, 'X..remotes')
+	dxpholdoptdata = speedup2(read.table(file="phold_remotes/optimistic.csv",header=TRUE,sep=";"), dxpholddata, 'X..remotes')
+	compareNsets(
+		"phold_speedup_remotes",
+		list(dxpholdoptdata,
+			dxpholdconsdata,
+			apholdconsdata),
+		list("dxex optimistic",
+			"dxex conservative",
+			"adevs conservative"),
+		"Remotes", "Speedup vs. Single Core", "Phold parallel", "X..remotes", "normal", "topright")
 	
 	if (generatePDF)
 		dev.off()
@@ -337,7 +403,7 @@ gengraphs <- function() {
 	lateXExit()
 }
 
-group4 <- function() {
+group5 <- function() {
 	print(sprintf("Group4: datapath=%s", datapath))
 	generatePDF <<- TRUE # generate PDF
 	gengraphs()
@@ -345,7 +411,7 @@ group4 <- function() {
 	gengraphs()
 }
 
-group4()
+group5()
 
 
 
