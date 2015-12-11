@@ -32,6 +32,17 @@ However, the simulation algorithm is designed to be overloaded by different sync
 This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overwritten as needed.
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
+An overview of this design is given in Figure~\ref{fig:class_diagram}.
+It shows that there is a simulation \texttt{Core}, which has several \texttt{AtomicModels} connected to it.
+The default \texttt{Core} is merely the sequential simulation core.
+Its subclasses define specific variants of the simulation algorithm, like \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
+
+\begin{figure}
+    \includegraphics[width=\columnwidth]{fig/cores_class_diagram.eps}
+	\caption{Dxex kernel design.}
+	\label{fig:class_diagram}
+\end{figure}
+
 \subsubsection{Conservative}
 For conservative synchronization, each node determines the nodes it is influenced by.
 Each model provides a lookahead function, which determines the lookahead depending on the current simulation state.
@@ -56,8 +67,3 @@ This lookahead value is most likely too small, but will prevent causality errors
 Depending on the model, simulation performance might still be faster than sequential simulation.
 
 Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity.
-\begin{figure}
-\includegraphics[width=\columnwidth]{fig/cores_class_diagram.eps}
-	\caption{dxex kernel design.}
-	\label{fig:class_diagram}
-\end{figure}
