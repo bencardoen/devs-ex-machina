@@ -1,22 +1,20 @@
 This section briefly introduces the two synchronization protocols used by dxex: conservative and optimistic synchronization.
 
 \subsection{Conservative Synchronization}
-The first synchronization protocol that we will introduce, is \textit{conservative synchronization}~\cite{FujimotoBook}.
-In conservative synchronization, a node is allowed to progress in simulated time, independent of all other nodes, up to the point where it can guarantee that no causality errors can happen.
-When this point in time is reached, the node has to block until it is allowed to progress any further.
-In practice, this means that all nodes need to be aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
-Several algorithms are defined in the literature to implement this behaviour.
-An overview is given in~\cite{FujimotoBook}.
+The first synchronization protocol we introduce is \textit{conservative synchronization}~\cite{FujimotoBook}.
+In conservative synchronization, a node progresses independent of all other nodes, up to the point in time where it can guarantee that no causality errors happen.
+When simulation reaches this point, the node blocks until it can guarantee a new time until which no causality errors happen.
+In practice, this means that all nodes are aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
+Deadlocks can occur due to a dependency cycle of models.
+Multiple algorithms are defined in the literature to handle both the core protocol, as well as resolution schemes to handle or avoid the deadlocks~\cite{FujimotoBook}.
 
-Deadlock can occur when a dependency cycle occurs and the amount of exchanged messages is low.
-Multiple algorithms are defined to handle this situation, such as deadlock avoidance and deadlock recovery.
-
-The main advantage of conservative synchronization is that it has a low overhead if high parallelism exists between nodes.
-Each node can simulate in parallel, while sporadically notifying other nodes that they can progress even further.
-The disadvantage, however, is that the amount of parallelism is explicitly limited by the size of the lookahead.
+The main advantage of conservative synchronization is its low overhead if the lookahead is high.
+Each node then simulates in parallel, and sporadically notifies other nodes about its local simulation time.
+The disadvantage, however, is that the amount of parallelism is explicitly limited by the lookahead.
 If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced.
-It is also up to the user to define the size of the lookahead, depending on how the model is known to behave.
-Slight changes in model behaviour can cause significant changes to the lookahead, and can therefore also have a significant influence on simulation performance.
+The user is required to define the lookahead, using knowledge about the model's behaviour.
+Defining lookahead is not always a trivial task if there is no detailed knowledge of the model.
+Even slight changes in the model can change to the lookahead, and can therefore have a significant influence on simulation performance.
 
 \subsection{Optimistic Synchronization}
 A completely different synchronization protocol is \textit{optimistic synchronization}~\cite{TimeWarp}.
