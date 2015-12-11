@@ -4,6 +4,7 @@
 #
 # collection of functions for saving the data to Tim-readable csv
 from .misc import assertPath
+import traceback
 
 
 def _addDataLine(arg, res, f, delim=';', argparse=lambda x: "\"{}\"".format(" ".join(map(str, x)))):
@@ -73,3 +74,113 @@ def toCSV(data, path, delim=';', argColumns="\"command\"", argParse=lambda x: "\
         for arg, res in zip(args, results):
             # now we have all the data per set of arguments
             _addDataLine(arg, res, f, delim, argParse)
+
+
+def readCSV(path, delim=';', stringquote='"', keepheader=True):
+    """
+    Reads a csv file into a list of lists of data.
+    """
+    def extractData(item):
+        item = item.strip()
+        if len(item) == 0:
+            return None
+        if len(item) >= 2 and item[0] == stringquote and item[-1] == stringquote:
+            return item[1:-1]
+        try:
+            f = float(item)
+            return int(f) if '.' not in item else f
+        except:
+            # no idea which data type, panic!
+            raise Exception("Panic! received {}".format(item))
+
+    assertPath(path.parent)
+    theData = []
+    with path.open('r') as f:
+        if not keepheader:
+            next(f)
+        for line in f:
+            try:
+                theData.append(list(map(extractData, line.split(delim))))
+            except:
+                pass  # traceback.print_exc()
+    return theData
+
+
+def writeCSV(path, data, delim=';', stringquote='"'):
+    """
+    writes a list of lists of data into a csv file.
+    """
+    def formatData(item):
+        if item is None:
+            return ""
+        elif type(item) in [int, float]:
+            return str(item)
+        elif type(item) in [str]:
+            return "{0}{1}{0}".format(stringquote, item)
+        else:
+            # no idea which data type, panic!
+            raise Exception("Panic! received {}".format(item))
+    assertPath(path.parent)
+    with path.open('w') as f:
+        for i in data:
+            f.write(delim.join(map(formatData, i)))
+            f.write('\n')
+
+
+def removeColums(data, begin, end, step=1):
+    """
+    Removes the columns defined by the slice begin, end, step
+    """
+    for i in data:
+        del i[begin:end:step]
+
+
+def groupN(data, n):
+    """
+    groups every n rows together
+    """
+    return map(list, zip(*[iter(data)]*n))
+
+
+def reduceN(data, n, reduceFunc):
+    return map(reduceFunc, list(groupN(data, n)))
+
+
+def mean(items):
+    items = list(items)
+    return sum(items)/len(items)
+
+
+def meanReduce(items, i=-1):
+    return items[0][0:i] + [mean(list(zip(*items))[i])] + (items[0][i+1:] if i != -1 else [])
+
+
+def transformPHold(pathIn, pathOut):
+    data = readCSV(pathIn, keepheader=True)
+    removeColums(data, 0, 2)
+    removeColums(data, 1, 5)
+    removeColums(data, 3, -1)
+    header = data[0]
+
+    dataiter = iter(data)
+    next(dataiter)
+    reduced = reduceN(dataiter, 5, meanReduce)
+    # print("--")
+    # print(list(groupN(dataiter, 5)))
+    # print("--")
+    reduced = list(reduced)
+    # print(reduced)
+    # print("--")
+    # print([header] + reduced)
+
+    writeCSV(pathOut, [header] + reduced)
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/classic.csv"),
+                   Path("./bmarkdata/M35Y2O/backup/phold/classic.csv"))
+    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/conservative.csv"),
+                   Path("./bmarkdata/M35Y2O/backup/phold/conservative.csv"))
+    transformPHold(Path("./bmarkdata/M35Y2O/plots/phold/optimistic.csv"),
+                   Path("./bmarkdata/M35Y2O/backup/phold/optimistic.csv"))
