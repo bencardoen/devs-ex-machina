@@ -1,54 +1,43 @@
-This section briefly introduces two distinct synchronization protocols, as used by dxex.
-Furthermore, we make note of several new features of C++11.
+This section briefly introduces the two synchronization protocols used by dxex: conservative and optimistic synchronization.
 
 \subsection{Conservative Synchronization}
-The first synchronization protocol that we will introduce, is \textit{conservative synchronization}~\cite{FujimotoBook}.
-In conservative synchronization, a node is allowed to progress in simulated time, independent of all other nodes, up to the point where it can guarantee that no causality errors can happen.
-When this point in time is reached, the node has to block until it is allowed to progress any further.
-In practice, this means that all nodes need to be aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
-Several algorithms are defined in the literature to implement this behaviour.
-An overview is given in~\cite{FujimotoBook}.
+The first synchronization protocol we introduce is \textit{conservative synchronization}~\cite{FujimotoBook}.
+In conservative synchronization, a node progresses independent of all other nodes, up to the point in time where it can guarantee that no causality errors happen.
+When simulation reaches this point, the node blocks until it can guarantee a new time until which no causality errors happen.
+In practice, this means that all nodes are aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
+Deadlocks can occur due to a dependency cycle of models.
+Multiple algorithms are defined in the literature to handle both the core protocol, as well as resolution schemes to handle or avoid the deadlocks~\cite{FujimotoBook}.
 
-Deadlock can occur when a dependency cycle occurs and the amount of exchanged messages is low.
-Multiple algorithms are defined to handle this situation, such as deadlock avoidance and deadlock recovery.
-
-The main advantage of conservative synchronization is that it has a low overhead if high parallelism exists between nodes.
-Each node can simulate in parallel, while sporadically notifying other nodes that they can progress even further.
-The disadvantage, however, is that the amount of parallelism is explicitly limited by the size of the lookahead.
+The main advantage of conservative synchronization is its low overhead if the lookahead is high.
+Each node then simulates in parallel, and sporadically notifies other nodes about its local simulation time.
+The disadvantage, however, is that the amount of parallelism is explicitly limited by the lookahead.
 If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced.
-It is also up to the user to define the size of the lookahead, depending on how the model is known to behave.
-Slight changes in model behaviour can cause significant changes to the lookahead, and can therefore also have a significant influence on simulation performance.
+The user is required to define the lookahead, using knowledge about the model's behaviour.
+Defining lookahead is not always a trivial task if there is no detailed knowledge of the model.
+Even slight changes in the model can change to the lookahead, and can therefore have a significant influence on simulation performance.
 
 \subsection{Optimistic Synchronization}
 A completely different synchronization protocol is \textit{optimistic synchronization}~\cite{TimeWarp}.
-Whereas conservative synchronization would prevent causality errors at all costs, optimistic synchronization will allow them to happen, but correct them afterwards.
-Each node is allowed to progress in simulated time as much as possible, without taking note of the state of any other node.
-When an event arrives at a node, which is already further in simulated time, the node will have to roll back its state to right before the event would normally have to be processed.
-As the simulation time is now rolled back to before the event is processed, the event can simply be processed as if no causality error ever occured.
+Whereas conservative synchronization prevents causality errors at all costs, optimistic synchronization allows them to happen, but corrects them.
+Each node simulates as fast as possible, without taking note of any other node.
+It assumes that no events occur from other nodes, unless it has explicitly received one at that time.
+When this assumption is violated, the node rolls back its simulation time and state to right before the moment when the event has to be processed.
+As simulation time is rolled back to before where the event must be processed, the event can just be processed as if no causality error ever occured.
 
-Rolling back the simulation time requires the node to store past model states, such that they can be restored later on.
-Furthermore, all incoming and outgoing events need to be stored as well.
-Incoming events need to be passed to the models again, when the correct simulation time has again been reached, and outgoing events need to be cancelled, as potentially a different series of output events would normally have been generated.
+Rolling back simulation time requires the node to store past model states, such that they can be restored later.
+All incoming and outgoing events need to be stored as well.
+Incoming events are injected again after a rollback, when their time has been reached again.
+Outgoing events are cancelled after a rollback, through the use of anti-messages, as potentially different output events have to be generated.
 Cancelling events, however, can cause further rollbacks, as the receiving node might also have to roll back its state.
-In practice, a single causality error could have significant repercussions on the complete simulation.
+In practice, a single causality error can have significant repercussions.
 
-Further changes are required for unrecoverable operations, such as I/O (\textit{e.g.}, tracing, writing to file, printing output) and memory management.
-Lightweight algorithms are still required to determine the lower bound of all simulation times, through the computation of a \textit{Global Virtual Time} (GVT).
+Further changes are required for unrecoverable operations, such as I/O and memory management.
+These are only executed after the lower bound of all simulation times, called \textit{Global Virtual Time} (GVT), has progressed beyond their execution time.
 
 The main advantage is that performance is not limited by a small lookahead, caused by a very infrequent event.
-If an (almost) instantaneous event occurs rarely, performance will only be impacted if it occurs, and not at every simulation step.
-The main disadvantage is unpredictable performance and arbitrary cost of rollbacks due to the propagation of causality errors.
-If rollbacks occur frequently, simulation quickly becomes slow, as the overhead of the recovery mechanisms becomes significant.
-Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states qre stored up to a point where it can be considered \textit{irreversible}.
+If an (almost) instantaneous event rarely occurs, performance is only impacted when it occurs, and not at every simulation step.
+The disadvantage is unpredictable performance due to the arbitrary cost of rollbacks and their propagation.
+If rollbacks occur frequently, state saving and rollback overhead can cause simulation to grind to a halt.
+Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states are stored up to a point where it can be considered \textit{irreversible}.
 
-While optimistic synchronization does not explicitly depends on the lookahead, simulation performance is still bound by the lookahead implicitly.
-
-\subsection{C++11 Parallelism Features}
-Apart from various other additions, C++11 adds a wide range of portable synchronization primitives to the Standard Library.
-In earlier versions of the language standard, one had to resort to non-portable C implementations.
-Furthermore, C++11 is the first version of the standard that explicitly defines a multi-threaded abstract machine memory model.
-Most modern compilers support the full standard, allowing the kernels to be portable by default on any standard compliant platform. 
-
-Simulation values that need to be shared between nodes, can now be coded portable and efficiently through the use of atomic fields.
-This avoids latencies caused by the exchange of synchronization messages.
-For an in-depth study, we refer to~\cite{CPE:CPE3007}.
+Note that, while optimistic synchronization does not explicitly depends on lookahead, performance still implicitly depends on lookahead.
