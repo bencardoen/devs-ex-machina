@@ -16,16 +16,16 @@ This is due to dxex models being grafted on C++11, whereas PythonPDEVS models ar
 In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool, which are offered transparantly to the model.
 
 \subsection{Synchronization protocols}
-We have previously shown that different synchronization protocols exist, with each of them being optimized for a specific kind of model.
-As no single synchronization protocol is ideal, a general purpose simulation tool should support multiple situations.
-Currently, however, most parallel simulation tools chose only a single synchronization protocol due to the inherent differences between these approaches.
-An uninformed choice on which to implement is insufficient, as performance is likely to be bad.
-We therefore argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization.
+We previously explained the existence of different synchronization protocols exist, each optimized for a specific kind of model.
+As no single synchronization protocol is ideal for all models, a general purpose simulation tool should support multiple protocols.
+Currently, most parallel simulation tools chose only a single synchronization protocol due to the inherent differences between protocols.
+An uninformed choice on which one to implement is insufficient, as performance will likely be bad.
+We argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization, as is the case for dxex.
 
-Each of them is applicable in specific model configurations.
-Conservative synchronization is ideal when high lookahead exists between different nodes, and barely any blocking is necessary.
-Optimistic synchronization is ideal when lookahead is unpredictable, or there are rare (almost) instantaneous events.
-Finally, sequential simulation is still required for models where parallelism is bad, causing significant overhead.
+These different protocols relate to three different model characteristics.
+Conservative synchronization for when high lookahead exists between different nodes, and barely any blocking is necessary.
+Optimistic synchronization for when lookahead is unpredictable, or there are rare (almost) instantaneous events.
+Finally, sequential simulation is still required for models where parallelism is bad, where all protocols actually slow down simulation.
 
 \subsubsection{Sequential}
 Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including most of its optimizations.
