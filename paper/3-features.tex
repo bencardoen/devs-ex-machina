@@ -28,15 +28,15 @@ Optimistic synchronization for when lookahead is unpredictable, or there are rar
 Finally, sequential simulation is still required for models where parallelism is bad, where all protocols actually slow down simulation.
 
 \subsubsection{Sequential}
-Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including most of its optimizations.
-However, the simulation algorithm is designed to be overloaded by different synchronization protocol implementations.
+Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including many optimizations.
+Minor modifications were made, though, such that it can be overloaded by different synchronization protocol implementations.
 This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overwritten as needed.
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
-An overview of this design is given in Figure~\ref{fig:class_diagram}.
-It shows that there is a simulation \texttt{Core}, which has several \texttt{AtomicModels} connected to it.
-The default \texttt{Core} is merely the sequential simulation core.
-Its subclasses define specific variants of the simulation algorithm, like \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
+An overview of dxex's design is given in Figure~\ref{fig:class_diagram}.
+It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
+The superclass \texttt{Core} is merely the sequential simulation core, but can be used as-is.
+Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/cores_class_diagram.eps}
