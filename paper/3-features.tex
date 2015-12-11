@@ -56,16 +56,17 @@ Whereas this was also possible in previous versions of the C++ standard, by fall
 C++11 further allows us to make the implementation portable, as well as more efficient: the compiler might know of optimizations specific to atomic variables.
 
 \subsubsection{Optimistic}
-For optimistic synchronization, each node needs to keep track of all intermediate simulation states.
-This needs to be done carefully, in order to avoid unnecessary copies, and minimize the overhead induced for each transition function.
-We use Mattern's GVT algorithm~\cite{mattern} to determine the Global Virtual Time (GVT) using at most $2n$ synchronization messages.
-This process runs asynchronously from the simulation itself, thus there is no blocking whatsoever.
-Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed, as well as committing irreversible actions.
+For optimistic synchronization, each node must be able to roll back to a previous point in time.
+This is often implemented through the use of state saving.
+This needs to be done carefully in order to avoid unnecessary copies, and minimize the overhead.
+We use the default: explicitly save each and every intermediate state.
+Mattern's algorithm~\cite{mattern} is used to determine the GVT, as it runs asynchronously and uses only $2n$ synchronization messages.
+Once the GVT is found, all nodes are informed of the new value, after which fossil collection is performed, and irreversible actions are committed.
 
 The main problem we encountered in our implementation is the agressive use of memory.
-Frequent memory allocation and deallocation caused significant overheads.
-This made us switch to the use of thread-local memory pools.
-Again, we made use of the specific features offered by C++11 that were not available in Python, or even previous versions of the C++ language standard.
+Frequent memory allocation and deallocation caused significant overheads, certainly when multiple threads do so concurrently.
+This made us switch to the use of thread-local (using \texttt{tcmalloc}) memory pools.
+Again, we made use of specific new features of C++11, that were not available in Python, or even previous versions of the C++ language standard.
 
 \subsection{Transparancy}
 A user must only provide one model, implemented in C++11, which can be simulated by each synchronization kernel.
