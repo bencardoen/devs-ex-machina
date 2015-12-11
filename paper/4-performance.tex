@@ -14,36 +14,33 @@ Benchmarks were performed using Linux, but our simulation tool works equally wel
 
 \subsection{Benchmarks}
 We use a selection of benchmarks, based on those found in the literature.
-Three different types of benchmark are defined, each for a different purpose:
+Three different types of benchmark are defined:
 \begin{enumerate}
-    \item \textit{Queue} model, based on the HI model of DEVStone~\cite{DEVStone}, creates a chain of atomic models, which are hierarchically nested in each other.
+    \item The \textit{Queue} model, based on the HI model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
           A single generator will push events into the queue, which get processed by the processors after a fixed or random delay.
-          It takes two parameters: width and depth, which determine the widht and depth of the hierarchy.
-          This benchmark shows how the complexity of the simulation kernel behaves with an increasing amount of atomic models, and an increasingly deep hierarchy.
-          If the processing delay is fixed for all processors, further insight is provided in the collision handling performance of the simulation kernel.
+          It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
+          This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
           An example for width 2 and depth 3 is shown in Figure~\ref{fig:queue_model}.
 
-    \item \textit{PHOLD} model, presented by~\cite{PHOLD}.
-          It creates a set of $n$ atomic models, and each model has exactly $n-1$ output ports: one for every other atomic model.
-          Couplings are made such that each atomic model is directly connected to each other atomic model, such that every atomic model can directly send an event to every other atomic model.
+    \item The \textit{PHOLD} model, presented by~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
+          Couplings are made to directly connect each atomic model to every other atomic model.
           After a random delay, atomic models will send out an event to a randomly selected output port.
           Output port selection happens in two phases: first it is decided whether the event should be sent to an atomic model inside or outside of this coupled model.
-          Afterwards, a uniform selection is made between the possible ports.
-          It takes one parameter: the percentage of remote events, which influences the fraction of messages routed to other coupled models.
+          Afterwards, a uniform selection is made between the remaining ports.
+          The model takes one parameter: the percentage of remote events, which determines the fraction of messages routed to other coupled models.
           This benchmark shows how the simulation kernel behaves in the presence of many local or remote events.
           An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
 
-    \item \textit{HighInterconnect} model, a merge of the HI model of DEVStone~\cite{DEVStone} and PHOLD~\cite{PHOLD}.
-          It creates a structure similar to the one from PHOLD, but instead of $n-1$ output ports, every atomic model has only a single output port.
-          All models are still connected to each other, but through the use of broadcasting: every model will receive a generated event.
-          It takes one parameter: the number of models.
-          This benchmark investigates the complexity of the routing algorithm.
+    \item The \textit{HighInterconnect} model, a merge of the HI model of DEVStone~\cite{DEVStone} and PHOLD~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly one output port.
+          All models are still connected to one another, but all over the same port: every model will receive a generated event.
+          The model takes one parameter: the number of models.
+          This benchmark investigates the complexity of the event routing algorithm, and how the simulation kernel handles many simultaneous events.
           An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 \end{enumerate}
 
-We opted to deviate from the DEVStone benchmark, as DEVStone tends towards unrealistic models since all internal and external transitions occur simultaneously.
-In our benchmark models, there is always the option for simultaneous transition functions (\textit{fixed time advance}), or scattered transition functions (\textit{random time advance}).
-Furthermore, they defined the use of an artificial load function, which easily skews the result, making the actual simulation algorithm barely comparable.
+We opted to deviate from the DEVStone benchmark, as DEVStone tends towards unrealistic models since most transitions occur simultaneously.
+In all of our benchmark models, simultaneous internal transitions are avoided as much as possible through the use of a random time advance.
+DEVStone also uses an artificial load function, which easily skews the result: the simulation kernel overhead is dominated by the artificial load.
 
 \begin{figure}
     \center
