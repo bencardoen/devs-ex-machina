@@ -137,9 +137,9 @@ public:
 class HighInterconnect: public adevs::Digraph<t_payload, int>
 {
 public:
+        std::vector<Generator*> ptrs;
 	HighInterconnect(std::size_t width, bool randomta)
 	{
-		std::vector<Generator*> ptrs;
 		for(std::size_t i = 0; i < width; ++i){
 			Generator* pt = new Generator(std::string("Generator") + n_tools::toString(i), 1000*i, randomta);
                         ptrs.push_back(pt);
@@ -201,7 +201,7 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic|cpdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
@@ -210,7 +210,6 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"
-	"  opdevs|pdevs Run optimistic parallel simulation.\n"
 	"note:\n"
 	"  If the same option is set multiple times, only the last value is taken.\n";
 
@@ -305,6 +304,11 @@ int main(int argc, char** argv)
 		sim.execUntil(eTime);
 	} else {
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
+		size_t i = 0;
+		for(Generator* ptr: ((HighInterconnect*)model)->ptrs){
+		                        i = (i+1)%coreAmt;
+		                        ptr->setProc(i);
+		        }
 		adevs::ParSimulator<t_event> sim(model);
 #ifndef BENCHMARK
 		sim.addEventListener(listener);
