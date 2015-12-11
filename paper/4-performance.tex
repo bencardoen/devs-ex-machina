@@ -6,7 +6,7 @@ CPU time and memory usage is compared for both sequential and parallel simulatio
 We start off with a comparison of sequential simulation, to show how adevs and dxex relate in this simple case.
 For the parallel simulation benchmarks, results are presented for both conservative and optimistic synchronization.
 
-For all benchmarks, results are well within a 1\% deviation of the average, such that only the average is used in the remainder of this section.
+For all benchmarks, results are well within a 5\% deviation of the average, such that only the average is used in the remainder of this section.
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
 To guarantee comparable results, no I/O was performed during the benchmarking phase such that computation was CPU-bound.
 Simulation traces are used to verify that both adevs and dxex models have exactly the same behaviour.
@@ -108,10 +108,11 @@ This shows that our contribution, offering both conservative and optimistic sync
 In the Queue model, we allocate the chain of models such that each node is responsible for a series of connected models.
 This minimizes the number of inter-node messages.
 As the model is a queue, however, the last models will only activate later in the simulation.
-Since these are allocated to seperate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
+Since these are allocated to separate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
 
 Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, but now also in terms of speedup.
 Results indicate that our implementation of conservative synchronization achieves much higher speedups than adevs.
+This simulation is the ideal case for our conservative implementation, approaching near linear speedup.
 In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
 
 \begin{figure}
@@ -157,8 +158,7 @@ We have shown that our contribution is invaluable for high performance simulatio
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}
-While conservative simulation delivers the expected speedups, dxex is still significantly slower than adevs.
-Interestingly, adevs does not achieve any noticable speedup from the use of multiple cores in this situation.
+When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing amount of reverts in optimistic. In this benchmark, all models depend on each other, negating any possible performance gain by executing the simulation in parallel.
 
 \begin{figure}
     \includegraphics[width=\columnwidth,height=6cm]{fig/interconnect_parallel.eps}
