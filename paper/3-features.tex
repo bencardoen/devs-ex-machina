@@ -69,13 +69,15 @@ This made us switch to the use of thread-local (using \texttt{tcmalloc}) memory 
 Again, we made use of specific new features of C++11, that were not available in Python, or even previous versions of the C++ language standard.
 
 \subsection{Transparancy}
-A user must only provide one model, implemented in C++11, which can be simulated by each synchronization kernel.
-The exception is conservative synchronization: a lookahead function is required, whereas this is not possible in other synchronization kernels.
-Two options are possible: either a lookahead function is always provided, even when it is not required and possibly not used, or using a default lookahead function if none is defined.
+We define simulation kernel transparancy as having a single model, which always can be executed on each supported synchronization kernel, without any modifications.
+User should thus only provide one model, implemented in C++11, which can be either using sequential execution, using conservative synchronization, or using optimistic synchronization.
+Switching between simulation kernels is as simple as altering the simulation termination time.
+The exception is conservative synchronization, where a lookahead function is required, which is not used in other synchronization kernels.
+Two options are possible: either a lookahead function must always be provided, even when it is not required and possibly not used, or we use a default lookahead function if none is defined.
 
 Always defining a lookahead function might seem redundant, especially if users will never use conservative synchronization.
-The more attractive option is for the simulation tool to provide a default lookahead function, defined by the minimum detected time advance.
-This lookahead value is most likely too small, but will prevent causality errors at the cost of performance.
+Especially since defining the lookahead is often non-trivial and dependent on intricate model details.
+The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but maybe not at peak performance.
 Depending on the model, simulation performance might still be faster than sequential simulation.
 
-Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity.
+Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default can be used otherwise.
