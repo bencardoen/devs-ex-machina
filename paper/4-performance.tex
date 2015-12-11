@@ -122,7 +122,7 @@ In this case, conservative synchronization seems to be better than optimistic sy
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/queue_parallel.eps}
-	\caption{Queue benchmark results for parallel simulation using 4 cores.}
+	\caption{Queue benchmark results for parallel simulation using variable amount of cores.}
 	\label{fig:queue_benchmark_parallel}
 \end{figure}
 
@@ -137,7 +137,7 @@ Analysis of profiling results shows that this was caused by exception handling w
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/phold_remotes.eps}
-    \caption{Phold benchmark results for parallel simulation using 4 cores, with varying fraction of remote events.}
+    \caption{Phold benchmark results for parallel simulation using 6 cores, with varying fraction of remote events.}
 \end{figure}
 
 Secondly, we verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
@@ -156,7 +156,7 @@ We therefore claim that our contribution is invaluable for high performance simu
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/phold_voorlopig.eps}
-    \caption{Phold benchmark results for parallel simulation using 4 cores, with varying amount of high-priority events.}
+    \caption{Phold benchmark results for parallel simulation using 6 cores, with varying amount of high-priority events.}
     \label{fig:phold_priority}
 \end{figure}
 
