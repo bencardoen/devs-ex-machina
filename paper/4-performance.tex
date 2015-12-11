@@ -65,16 +65,16 @@ DEVStone also uses an artificial load function, which easily skews the result: t
 
 \subsection{Sequential Simulation Execution Time}
 Despite our core contribution being mainly in the parallel simulation, we still value a comprehensive comparison of sequential simulation results.
-First, and foremost, as parallel simulation results are tightly linked to the sequential simulation results: parallel simulation merely adds a synchronization layer over different, essentially sequential, simulation kernels.
-Second, since parallel simulation results are validated through the use of adevs.
+First, and foremost, as parallel simulation results are tightly linked to the sequential simulation results: parallel simulation merely adds a synchronization layer over multiple, essentially sequential, simulation kernels.
+Second, parallel simulation results are validated through the use of adevs.
 To provide a more comprehensive comparison to adevs in the parallel simulation benchmarks, sequential simulation results need to be compared.
-Only the Queue and HighInterconnect models are relevant for sequential simulation.
+Only the Queue and HighInterconnect models are relevant for sequential simulation, so we will not touch upon the PHold model yet.
 
 \subsubsection{Queue}
 In the Queue model, we increase both the width and depth simultaneously, causing a quadratic growth in the number of atomic models.
 As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
-Through careful analysis of profiling results, we determined that adevs spends much time in handling simulation messages, whereas this is mostly avoided due to the differently designed simulation algorithm of dxex.
-Both simulation tools have quadratically increasing execution times, though dxex is much faster thanks to its more efficient simulation control algorithms.
+Through careful analysis of profiling results, we determined that adevs spends much time while handling simulation messages, while this is mostly avoided in dxex's differently designed simulation algorithm.
+Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/queue_sequential.eps}
@@ -85,8 +85,7 @@ Both simulation tools have quadratically increasing execution times, though dxex
 \subsubsection{HighInterconnect}
 In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings.
 As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs now outperforms dxex by a fair margin.
-Analysis showed that this slowdown is caused by the high amount of exchanged events.
-Event creation is found to be much slower in dxex than it is in adevs, even despite the use of memory pools in dxex.
+Analysis showed that this slowdown is caused by the high amount of exchanged events: event creation is found to be much slower in dxex than it is in adevs, despite the use of memory pools in dxex.
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/interconnect_sequential.eps}
