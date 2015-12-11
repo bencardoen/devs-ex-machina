@@ -107,26 +107,26 @@ This shows that our contribution, offering both conservative and optimistic sync
 \subsubsection{Queue}
 In the Queue model, we allocate the chain of models such that each node is responsible for a series of connected models.
 This minimizes the number of inter-node messages.
-As the model is a queue, however, the last models will only activate much later on in the simulation.
+As the model is a queue, however, the last models will only activate later in the simulation.
 Since these are allocated to seperate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
 
-Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, using both optimistic and conservative synchronization.
-Behaviour is exactly the same as in sequential simulation, but some speedup is achieved.
+Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, but now also in terms of speedup.
+Results indicate that our implementation of conservative synchronization achieves much higher speedups than adevs.
 In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
 
 \begin{figure}
 	\includegraphics[width=\columnwidth]{fig/queue_parallel.eps}
-	\caption{Queue benchmark results for parallel simulation using 4 cores.}
+	\caption{Queue benchmark results for parallel simulation of a model of fixed size.}
 	\label{fig:queue_benchmark_parallel}
 \end{figure}
 
 \subsubsection{PHold}
 In the Phold model, we first investigate the influence of the fraction of remote events on the speedup.
-When remote events are rare, optimistic synchronization will also have rare rollbacks, thus increasing performance.
-With more common remote events, however, optimistic synchronization quickly loses its advantage due to the more frequent rollbacks.
-Conservative synchronization, on the other hand, is largely unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block.
-Even though a single synchronization protocol suffices in this case, it shows how different synchronization protocols respond differently to a changing model.
-Adevs, on the other hand, is significantly slower during conservative synchronization.
+When remote events are rare, optimistic synchronization will rarely have to perform rollbacks, thus increasing performance.
+With more common remote events, however, optimistic synchronization quickly slows down due to the frequent rollbacks.
+Conservative synchronization, on the other hand, is mostly unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block.
+Even though a single synchronization protocol is always ideal in this case, it shows how different synchronization protocols respond differently to a changing model.
+Adevs is significantly slower during conservative synchronization.
 Analysis of profiling results shows that this was caused by exception handling within the adevs simulation kernel.
 
 \begin{figure}
@@ -134,19 +134,19 @@ Analysis of profiling results shows that this was caused by exception handling w
     \caption{Phold benchmark results for parallel simulation using 4 cores, with varying fraction of remote events.}
 \end{figure}
 
-Secondly, we verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
+We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
 We slightly modified the Phold benchmark, to include high-priority events.
-Contrary to normal events, which offer a sufficiently large lookahead, high-priority events happen almost instantaneous, thus restricting lookahead to a very small value.
-Even though the normal events will occur most oftenly, a conservative implementation should always block since these high-priority events can always occur.
+Contrary to normal events, which offer a sufficiently large lookahead, high-priority events happen almost instantaneously, restricting lookahead to a very small value.
+Even though normal events  occur most often, a conservative implementation always blocks until it can make guarantees.
 An optimistic implementation, however, will simply go forward in simulation time and roll back the few times that these high-priority events happen.
 This situation closely mimics the case made in the comparison between both synchronization algorithms by~\cite{FujimotoBook}.
 
 Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of high-priority events.
 If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
-Should many high-priority events occur, however, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needed to be reverted.
-These results show that there is no single perfect synchronization algorithm for this model.
+When many high-priority events occur, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needed to be reverted.
+Results show that there is no single perfect synchronization algorithm for this model.
 Depending on model configuration, either synchronization protocol might be better.
-We therefore claim that our contribution is invaluable for high performance simulation: depending on the observed communication behaviour, modellers can use the most appropriate synchronization protocol.
+We have shown that our contribution is invaluable for high performance simulation: depending on the observed communication behaviour, modellers can use the most appropriate synchronization protocol.
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/phold_voorlopig.eps}
@@ -159,8 +159,6 @@ In the Interconnect model, we determine how broadcast communication is supported
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}
 While conservative simulation delivers the expected speedups, dxex is still significantly slower than adevs.
 Interestingly, adevs does not achieve any noticable speedup from the use of multiple cores in this situation.
-Optimistic synchronization is not shown in this case: due to the high amount of exchanged events, all of which need to be stored in the sending \textit{and} receiving node, it quickly runs out of memory.
-Several fixes to this problem have been proposed in the literature~\cite{FujimotoBook}, but none of these is implemented by dxex.
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
@@ -178,9 +176,9 @@ This problem can be mitigated by distribution over multiple machines, which neit
 Comparison of memory usage should thus only be seen in the context of which models are feasible to be simulated by the tool.
 
 \subsubsection{Remarks}
-Both dxex and adevs use tcmalloc as memory allocator.
+Both dxex and adevs use \texttt{tcmalloc} as memory allocator.
 Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (\textit{e.g.}, malloc and free).
-Tcmalloc only gradually releases memory back to the OS, whereas our pools will not do so at all.
+\texttt{tcmalloc} only gradually releases memory back to the OS, whereas our pools will not do so at all.
 If memory has been allocated once, it is, at least from a performance point of view, better to keep that memory in the pool indefinitely.
 Due to our motivation for memory usage analysis, we will only measure peak allocation.
 Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
@@ -189,7 +187,7 @@ Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442
 Figure~\ref{fig:memory} shows the memory used by each different benchmark.
 Results are in megabytes, and show the total memory footprint of the running application (\textit{i.e.}, text, stack, and heap).
 
-Unsurprisingly, optimistic synchronization results show very high memory use due to the saved states.
+Unsurprisingly, optimistic synchronization results show very high memory usage due to the saved states.
 Note the logarithmic scale that was used for this reason.
 Also, results for optimistic synchronization vary heavily depending on thread scheduling by the operating system, as this influences the drift between different nodes.
 Comparing similar approaches though, we notice that dxex and adevs have very similar memory use.
