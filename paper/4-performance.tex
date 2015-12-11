@@ -1,18 +1,16 @@
-In this section, we evaluate the performance of our simulation tool.
-We show that the inclusion of multiple synchronization protocols does not decrease our performance to the point where it is unusable.
-To this end, we compare to adevs, one of the most efficient simulation kernels at this time~\cite{DEVSSurvey}.
-A comparison is made for both the CPU and memory usage of both sequential simulation and parallel simulation.
+In this section, we evaluate performance of dxex using its different synchronization protocols.
+We show that the inclusion of multiple synchronization protocols does not decrease performance significantly.
+To this end, we compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}.
+CPU time and memory usage is compared for both sequential and parallel simulation.
 
 We start off with a comparison of sequential simulation, to show how adevs and dxex relate in this simple case.
-We not only show that our approach does not influence performance negatively, but also that our main simulation algorithm, similar to the one of PythonPDEVS, is significantly faster than the one found in adevs.
-Similar differences, compared to adevs, can also be seen in the parallel simulation benchmarks.
-In the parallel simulation benchmarks, the benefit of our different synchronization protocols is also indicated.
+For the parallel simulation benchmarks, results are presented for both conservative and optimistic synchronization.
 
-For all benchmarks, results were all well within 1\% deviation of the average, such that only the average is used in the remainder of this section.
+For all benchmarks, results are well within a 1\% deviation of the average, such that only the average is used in the remainder of this section.
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
-To guarantee comparable results, no IO was performed during the benchmarking phase.
-Simulation traces were used to verify that both adevs and dxex models have exactly the same behaviour.
-All benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
+To guarantee comparable results, no I/O was performed during the benchmarking phase such that computation was CPU-bound.
+Simulation traces are used to verify that both adevs and dxex models have exactly the same behaviour.
+Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
 
 \subsection{Benchmarks}
 We use a selection of benchmarks, based on those found in the literature.
