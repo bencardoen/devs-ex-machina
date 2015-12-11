@@ -103,7 +103,7 @@ Event creation is found to be much slower in dxex than it is in adevs, even desp
 We now perform an analysis of parallel simulation execution times of our previously defined benchmarks.
 For dxex, we mention results for both conservative and optimistic synchronization.
 Since adevs supports only conservative synchronization, we don't mention optimistic synchronization results there.
-All experiments were performed using four simulation nodes, and executed on a quad-core machine.
+All experiments were performed using up to six simulation nodes, and executed on a hexa-core machine.
 
 We highlight two main results:
 (1) dxex conservative synchronization is competitive with adevs;
@@ -198,7 +198,7 @@ Results are in megabytes, and show the total memory footprint of the running app
 Unsurprisingly, optimistic synchronization results show very high memory use due to the saved states.
 Note the logarithmic scale that was used for this reason.
 Also, results for optimistic synchronization vary heavily depending on thread scheduling by the operating system, as this influences the drift between different nodes.
-Comparing similar approaches though, we notice that dxed and adevs have very similar memory use.
+Comparing similar approaches though, we notice that dxex and adevs have very similar memory use.
 
 Conservative simulation always uses more memory than sequential simulation, as is to be expected.
 Additional memory is required for the multiple threads, but also to store all events that are processed simultaneously.
