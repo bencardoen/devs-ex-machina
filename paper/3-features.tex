@@ -5,7 +5,7 @@ So while the feature set is not too comparable, the architectural design, core s
 
 We will not make a detailed comparison with PythonPDEVS here, but only mention some supported features.
 Dxex supports, similarly to PythonPDEVS, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
-But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols.
+But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols (though only in parallel).
 This is in line with the design principle of PythonPDEVS: allow users to pass performance hints to the simulation kernel.
 In our case, a user can pass the simulation kernel the ``hint'' as to which synchronization protocol must be used for this model.
 Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language.
@@ -45,14 +45,15 @@ Subclasses define specific variants, such as \texttt{ConservativeCore} (conserva
 \end{figure}
 
 \subsubsection{Conservative}
-For conservative synchronization, each node determines the nodes it is influenced by.
-Each model provides a lookahead function, which determines the lookahead depending on the current simulation state.
-Within this time interval, it is an error if a model raises an event, thus violating its previous promise.
-The node uses this information to compute its earliest output time (EOT), and writes out the value in shared memory through the use of C++11 synchronization primitives.
+For conservative synchronization, each node must determine the nodes it is influenced by.
+Each model needs to provide a lookahead function, which determines the lookahead depending on the current simulation state.
+Within the returned time interval, the model promises not to raise an event.
+A node aggregates this information to computes its earliest output time (EOT).
+This value is written out in shared memory, where it can be read out by all other nodes.
 
-In our implementation, we thus make explicit use of these new C++11 synchronization primitives.
-Whereas this was also possible in previous versions of the C++ standard, it was not a part of the standard itself.
-C++11 allows us to make our implementation portable, as well as more efficient: compilers might know of optimizations specific to atomic variables.
+Reading and writing to shared memory is done through the use of the new C++11 synchronization primitives.
+Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
+C++11 further allows us to make the implementation portable, as well as more efficient: the compiler might know of optimizations specific to atomic variables.
 
 \subsubsection{Optimistic}
 For optimistic synchronization, each node needs to keep track of all intermediate simulation states.
