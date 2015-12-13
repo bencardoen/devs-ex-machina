@@ -35,7 +35,7 @@ n_network::Message::Message(const n_model::uuid& srcUUID, const n_model::uuid& d
 	{
 #ifdef  SAFETY_CHECKS
                 if(std::max(destport, sourceport) > n_const::port_max)
-                        throw std::out_of_range("Port id out of range." + std::to_string(std::max(destport,sourceport)) );
+                        throw std::out_of_range("Port id out of range." );
                 if(std::max(srcUUID.m_core_id, dstUUID.m_core_id) > n_const::core_max)
                         throw std::out_of_range("Core id out of range.");
                 if(std::max(srcUUID.m_local_id, dstUUID.m_local_id) > n_const::model_max)
