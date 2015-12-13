@@ -80,7 +80,12 @@ CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++11")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	if(CYGWIN)
+		MESSAGE(STATUS "Found cygwin, changing to gnu++11.")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+	else ()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	endif()
 elseif(COMPILER_SUPPORTS_CXX0X)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++0x")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
@@ -175,11 +180,11 @@ add_executable(${PROJECT_NAME}
     src/examples/trafficlight_ds/trafficlightds.cpp
     src/examples/trafficlight_ds/policemands.cpp
     src/examples/trafficlight_ds/trafficsystemds.cpp
-    src/examples/forestfire/constants.cpp
-    src/examples/forestfire/firecell.cpp
-    src/examples/forestfire/firecellstate.cpp
-    src/examples/forestfire/firegenerator.cpp
-    src/examples/forestfire/firespread.cpp
+    #src/examples/forestfire/constants.cpp
+    #src/examples/forestfire/firecell.cpp
+    #src/examples/forestfire/firecellstate.cpp
+    #src/examples/forestfire/firegenerator.cpp
+    #src/examples/forestfire/firespread.cpp
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
     src/performance/highInterconnect/hinterconnect.cpp

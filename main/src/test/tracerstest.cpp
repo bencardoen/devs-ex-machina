@@ -18,7 +18,7 @@
 #include "test/compare.h"
 #include "tools/macros.h"
 #include "tools/coutredirect.h"
-#include "examples/forestfire/firecell.h"
+//#include "examples/forestfire/firecell.h"
 
 
 using namespace n_tracers;
@@ -601,7 +601,7 @@ SINGLETRACERTEST(TESTFOLDERTRACE, XmlTracer)
 
 SINGLETRACERTEST(TESTFOLDERTRACE, JsonTracer)
 
-TEST(tracing, tracerCellTracer){
+/* TEST(tracing, tracerCellTracer){
 	{
 		CellTracer<n_tracers::FileWriter, 5u, 5u> tracer1;
 		CellTracer<n_tracers::MultiFileWriter, 5u, 5u> tracer2;
@@ -654,7 +654,7 @@ TEST(tracing, tracerCellTracer){
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out2_1.txt", TESTFOLDERTRACE "CellTracer_out2_1.corr"), 0);
 	EXPECT_EQ(n_misc::filecmp(TESTFOLDERTRACE "CellTracer_out2_2.txt", TESTFOLDERTRACE "CellTracer_out2_2.corr"), 0);
 
-}
+} */
 
 TEST(tracing, messageManagement){
 	{

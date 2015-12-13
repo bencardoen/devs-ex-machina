@@ -12,6 +12,7 @@
 #include "tools/globallog.h"
 #include "tools/objectfactory.h"
 #include "tools/macros.h"
+#include "tools/stringtools.h"
 #include <assert.h>
 #include <typeinfo>
 
@@ -39,6 +40,14 @@ template<> struct __name<__type> { \
 		return std::to_string(val); \
 	} \
 }
+#else //ifndef __CYGWIN__
+#define STATE_REPR_ARITHMETIC(__type, __name) \
+template<> struct __name<__type> { \
+    static std::string exec(const __type& val) { \
+        return n_tools::toString<__type>(val); \
+    } \
+}
+#endif //ifndef __CYGWIN__
 #define STATE_REPR_ARITHMETIC_GROUP(__name) \
 STATE_REPR_ARITHMETIC(int, __name); \
 STATE_REPR_ARITHMETIC(unsigned, __name); \
@@ -99,7 +108,6 @@ template<> struct ToCell<std::string> {
 #undef STATE_REPR_STRUCT
 #undef STATE_REPR_ARITHMETIC
 #undef STATE_REPR_ARITHMETIC_GROUP
-#endif //ifndef __CYGWIN__
 
 namespace n_model {
 

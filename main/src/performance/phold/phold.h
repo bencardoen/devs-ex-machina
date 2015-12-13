@@ -119,8 +119,8 @@ public:
                 m_nodes_per_core = std::ceil(m_maxn / (double)coreAmount());
 		assert(m_maxn && "Total amount of models can't be zero.");
 		for(size_t i = 0; i< models.size(); ++i){
-                        std::lldiv_t qr = lldiv(i, m_nodes_per_core);
-			size_t coreid = qr.quot;
+                        auto qr = lldiv(i, m_nodes_per_core);
+						size_t coreid = qr.quot;
                         if(coreid >= coreAmount()){     // overflow into the last core.
                                 coreid = coreAmount()-1;
                         }

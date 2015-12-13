@@ -53,7 +53,11 @@ HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
 template<typename T>
 constexpr T roundTo(T val, T gran)
 {
+#ifdef __CYGWIN__
+	return round(val/gran)*gran;
+#else
 	return std::round(val/gran)*gran;
+#endif
 }
 
 EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const

@@ -7,8 +7,10 @@
 
 #include "tools/globallog.h"
 #ifdef __GNUC__
+#ifndef __CYGWIN__
 #include <execinfo.h>
 #include <unistd.h>
+#endif
 #endif /* __GNUC__ */
 
 #if LOGGING==true
@@ -47,6 +49,7 @@ void signalHandler(int sig){
 		std::terminate();
 	//if gcc, print stacktrace
 #ifdef __GNUC__
+#ifndef __CYGWIN__
 	/* many thanks to tgamblin and Violet Giraffe for this code
 	 * @see http://stackoverflow.com/a/77336
 	 */
@@ -58,6 +61,7 @@ void signalHandler(int sig){
 	// print out all the frames to stderr
 	fprintf(stderr, "Error: signal %d:\n", sig);
 	backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
 #endif /* __GNUC__ */
 	restoreHandler();
 }

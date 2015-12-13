@@ -45,7 +45,11 @@ Generator::Generator(const std::string& name, std::size_t seed, bool randta):
 template<typename T>
 constexpr T roundTo(T val, T gran)
 {
+#ifdef __CYGWIN__
+	return round(val/gran)*gran;
+#else
 	return std::round(val/gran)*gran;
+#endif
 }
 
 void Generator::adjustCounter(std::size_t seed)

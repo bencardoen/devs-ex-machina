@@ -31,7 +31,11 @@ constexpr int sgn(T val) {
 template<typename T>
 constexpr int intlog2(T val) {
 	static_assert(std::is_integral<T>::value, "The type must be an integral type.");
+#ifndef __CYGWIN__
 	return int(std::log2(double(val)));
+#else
+	return int(log2(double(val)));
+#endif
 }
 
 #ifdef __GNUC__

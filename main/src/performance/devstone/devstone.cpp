@@ -138,7 +138,11 @@ n_network::t_timestamp Processor::lookAhead() const
 template<typename T>
 constexpr T roundTo(T val, T gran)
 {
+#ifdef __CYGWIN__
+	return round(val/gran)*gran;
+#else
 	return std::round(val/gran)*gran;
+#endif
 }
 
 t_counter Processor::getProcTime(size_t event) const
