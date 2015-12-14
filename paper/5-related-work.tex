@@ -2,7 +2,7 @@ Several similar \textsf{DEVS} simulation tools have already been implemented, th
 We discuss several dimensions of related work, as we try to compromise between different tools.
 
 In terms of code design and philosophy, dxex is most related to PythonPDEVS~\cite{PythonPDEVS}.
-Performance of PythonPDEVS was still decent, through the use of simulation and activity hints from the modeller.
+Performance of PythonPDEVS was still decent, through the use of simulation and activity hints from the modeler.
 This allowed the kernel to optimize its internal data structures and algorithms for the specific model being executed.
 All changes were completely transparent to the model, and were completely optional.
 In this spirit, we offer users the possibility to choose between different synchronization protocols.
@@ -24,7 +24,7 @@ Previous \textsf{DEVS} simulation tools have already implemented multiple synchr
 For example CD++~\cite{CD++} has both a conservative (CCD++~\cite{CCD++}) and optimistic (PCD++)~\cite{PCD++}) variant.
 Despite the implementation of both protocols, they are different projects entirely, and are incompatible with modern compilers.
 Dxex, on the other hand, is a single project, where switching between different synchronization protocols is as simple as switching any other configuration parameter.
-CD++, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourself to parallel simulation.
+CD++, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourselves to parallel simulation.
 By limiting our approach to parallel simulation, we are able to achieve higher speedups through the use of shared memory communication.
 
 In summary, dxex tries to find the middle ground between the concepts of PythonPDEVS, the performance of adevs, and the multiple synchronization protocols of CD++.

@@ -3,7 +3,7 @@ This section briefly introduces the two synchronization protocols used by dxex: 
 \subsection{Conservative Synchronization}
 The first synchronization protocol we introduce is \textit{conservative synchronization}~\cite{FujimotoBook}.
 In conservative synchronization, a node progresses independent of all other nodes, up to the point in time where it can guarantee that no causality errors happen.
-When simulation reaches this point, the node blocks until it can guarantee a new time until which no causality errors happen.
+When simulation reaches this point, the node blocks until it can guarantee a new time until which no causality errors occur.
 In practice, this means that all nodes are aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
 Deadlocks can occur due to a dependency cycle of models.
 Multiple algorithms are defined in the literature to handle both the core protocol, as well as resolution schemes to handle or avoid the deadlocks~\cite{FujimotoBook}.
@@ -22,7 +22,7 @@ Whereas conservative synchronization prevents causality errors at all costs, opt
 Each node simulates as fast as possible, without taking note of any other node.
 It assumes that no events occur from other nodes, unless it has explicitly received one at that time.
 When this assumption is violated, the node rolls back its simulation time and state to right before the moment when the event has to be processed.
-As simulation time is rolled back to before where the event must be processed, the event can just be processed as if no causality error ever occured.
+As simulation is rolled back to a time prior to the event must be processed, the event can then be processed as if no causality error ever occured.
 
 Rolling back simulation time requires the node to store past model states, such that they can be restored later.
 All incoming and outgoing events need to be stored as well.

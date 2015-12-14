@@ -165,7 +165,7 @@ We have shown that our contribution is invaluable for high performance simulatio
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
-When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing amount of roll bakcs in optimistic.
+When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing number of of rollbacks in optimistic simulation.
 All models depend on each other and have no computational load whatsoever, negating any possible performance gain by executing the simulation in parallel.
 
 \begin{figure}
@@ -177,7 +177,7 @@ All models depend on each other and have no computational load whatsoever, negat
 
 \subsection{Memory Usage}
 Apart from simulation execution time, memory usage during simulation is also of great importance.
-While execution time only becomes a problem if it takes way too long, coming short only a bit of memory can make simulation infeasible.
+While execution time only becomes a problem if it takes way too long, coming short only a bit of memory can make simulation unfeasible.
 We therefore also investigate memory usage of different synchronization protocols, and again compare to adevs.
 
 We do not tackle the problem of states that become too large for a single machine to hold.
