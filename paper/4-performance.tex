@@ -19,7 +19,7 @@ We use three different benchmarks, which cover different aspects of the simulati
           A single generator pushes events into the queue, which are processed by the processors after a random delay.
           It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
           This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
-          An example for width 2 and depth 3 is shown in Figure~\ref{fig:queue_model}.
+          An example for width and depth 2 is shown in Figure~\ref{fig:queue_model}.
 
     \item The \textit{PHOLD} model, presented by~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
           Each atomic model is directly connected to every other atomic model.
@@ -40,13 +40,13 @@ We use three different benchmarks, which cover different aspects of the simulati
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/queue_model.pdf}
-    \caption{Queue model for depth 3 and width 2.}
+    \caption{Queue model for depth and width 2.}
     \label{fig:queue_model}
 \end{figure}
 
 \begin{figure}
     \center
-    \includegraphics[width=\columnwidth]{fig/interconnect_model.pdf}
+    \includegraphics[width=0.65\columnwidth]{fig/interconnect_model.pdf}
     \caption{HighInterconnect model for four models.}
     \label{fig:interconnect_model}
 \end{figure}
