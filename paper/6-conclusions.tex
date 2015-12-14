@@ -1,15 +1,14 @@
-In this paper, we introduced dxex, a new C++11-based \textsf{Parallel DEVS} simulation tool.
-Our main contribution is the implementation of different pluggable synchronization kernels for parallel simulation.
+In this paper, we introduced DEVS-Ex-Machina (``dxex''), a new C++11-based \textsf{Parallel DEVS} simulation tool.
+Our main contribution is the implementation of multiple synchronization protocols for parallel simulation.
 We have shown that there are indeed models which can be simulated significantly faster using either synchronization protocol.
-Dxex allows the user to chose between both conservative and optimistic synchronization, as simply as any other configuration option.
-Notwithstanding this modularity, we have shown that dxex achieves performance similar to adevs, another very efficient \textsf{DEVS} simultion tool.
-Performance is measured both in CPU time, and memory usage.
+Dxex allows the user to choose between either conservative or optimistic synchronization as simple as any other configuration option.
+Notwithstanding this modularity, dxex achieves performance competitive to adevs, another very efficient \textsf{DEVS} simultion tool.
+Performance is measured both in elapsed time, and memory usage.
 
-Future work exists in several directions.
-First, we wish to make optimistic synchronization more tolerant to low-memory situations.
+Future work is possible in several directions.
+First, our implementation of optimistic synchronization should be more tolerant to low-memory situations.
 In its current state, simulation will simply halt with an out-of-memory error.
 Having simulation control, which can throttle the speed of nodes that use up too much memory, has been shown to work in these situations~\cite{FujimotoBook}.
-In our implementation specifically, the out-of-memory problem is aggravated by a slow GVT implementation.
-Algorithms as those presented by~\cite{Fujimoto:1997:CGV:268403.268404} or~\cite{Bauer:2005:SND:1069810.1070159} might help to alleviate this problem.
-Second, the idea of activity can be implemented for our simulation kernels, making it possible to dynamically switch between conservative and optimistic synchronization when changes in the model behaviour are detected.
-Third, activity algorithms, as already implemented by PythonPDEVS, could also be implemented in dxex, to determine how they influence simulation performance.
+Faster GVT implementations, such as those presented by~\cite{Fujimoto:1997:CGV:268403.268404} and~\cite{Bauer:2005:SND:1069810.1070159}, might further help to minimize this problem.
+Second, the idea of activity can be implemented for our simulation kernels, making it possible to dynamically switch between conservative and optimistic synchronization when behavioural changes are detected.
+Third, activity algorithms, as already implemented by PythonPDEVS, can also be implemented in dxex, to determine how they influence simulation performance.
