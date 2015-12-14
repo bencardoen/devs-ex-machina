@@ -2,7 +2,7 @@
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
 rootpath <<- paste(getwd(), '/', sep = '')
-# rootpath <<- 'putyourcustomrootpathinhere'
+# rootpath <<- 'putinwhateveryoulike';
 datapath <<- paste(rootpath, 'data/', sep = '')
 figspath <<- paste(rootpath, 'figs/', sep = '')
 dir.create(figspath, showWarnings = FALSE)
@@ -11,15 +11,12 @@ setwd(datapath)
 # 1-dimensional performance tests
 
 process1ddata <- function(datatable, collabel) {
-	print(sprintf("process1ddata: %s", collabel))
 	resultdata <- data.frame(x = numeric(), cpu = numeric(), conflow = numeric(), confhigh = numeric())
 		
 	timelabel = 'time.elapsed..seconds.'
 
 	colindex = which(colnames(datatable) == collabel)
 	timeindex = which(colnames(datatable) == timelabel)
-	print(sprintf("Column Index: %s %d", collabel, colindex))
-	print(sprintf("Time Index: %d", timeindex))
 	
 	indextable <- unique(datatable[, colindex])
 	cnt <- 1
@@ -28,27 +25,16 @@ process1ddata <- function(datatable, collabel) {
 				
 			fdata <- subset(datatable, datatable[[ collabel ]] == i, select = c(colindex, timeindex))
 			
-			print(sprintf("Processing width = %d", i))
-			print(sprintf("Number of measurements: %d", nrow(fdata)))
-			
-			# print(fdata$time.elapsed..seconds.)
-			
 			avg <- mean(fdata[[ timelabel ]])
-			print(avg)
 			tdata <- t.test(fdata[[ timelabel ]], mu = 0, alternative="two.sided", conf.level = 0.95)
 			avg <- tdata$estimate[[1]]
 			confl <- tdata$conf.int[[1]]
 			confh <- tdata$conf.int[[2]]
 			resultdata[cnt,] <- list(i, avg, confl, confh)
 			cnt <- cnt + 1
-			print(tdata)
 	}
-	print(resultdata)
+	return(resultdata)
 }
-
-# 2-dimensional performance tests
-
-library(scatterplot3d)
 
 filterdata <- function(par1, par2, datatable, devstone) {
 	if (devstone)
@@ -56,8 +42,6 @@ filterdata <- function(par1, par2, datatable, devstone) {
 	else
 		return(subset(datatable, (nodes == par1) & (atomics.node == par2), select = c(nodes, atomics.node, time.elapsed..seconds. )))
 }
-
-#filterdata(2, 3, devstonedata)
 
 dwtuples <- function(datatable) {
 	dwtuples <- unique(datatable[, 3:4])
@@ -71,20 +55,15 @@ processdata <- function(datatable, isdevstone) {
 			i <- indextable[[n,1]]
 			j <- indextable[[n,2]]
 			fdata <- filterdata(i, j, datatable, isdevstone)
-			print(sprintf("Processing width = %d and height = %d", i, j))
-			print(sprintf("Number of measurements: %d", nrow(fdata)))
-			# print(fdata$time.elapsed..seconds.)
 			avg <- mean(fdata$time.elapsed..seconds.)
-			print(avg)
 			tdata <- t.test(fdata$time.elapsed..seconds., mu = 0, alternative="two.sided", conf.level = 0.99)
 			avg <- tdata$estimate[[1]]
 			confl <- tdata$conf.int[[1]]
 			confh <- tdata$conf.int[[2]]
 			resultdata[cnt,] <- list(i, j, avg, confl, confh)
 			cnt <- cnt + 1
-			print(tdata)
 	}
-	resultdata
+	return(resultdata)
 }
 
 displaydata <- function(perfdata, isdevstone, label) {
@@ -172,7 +151,6 @@ newxlabels <- function(minmax) {
 }
 
 comparesets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabel, formatlabel, legendpos) {
-	print(sprintf("comparesets %s\n",chartlabel))
 	nrcharts <- length(datalist)
 	
 	xrange <- range(datalist[[1]]$x)
@@ -246,14 +224,13 @@ comparesets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabe
 }
 
 compareNsets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabel, fieldname, formatlabel, legendpos) {
-	print("=================== compareNsets ===================")
+	print(sprintf("... Generating %s", chartlabel))
 	N <- length(datalist)
 	perflist <- list(N)
 	for (i in 1:N) {
 		perfdata <- process1ddata(datalist[[i]], fieldname)
 		perflist[[i]] <- perfdata
 	}
-	print(perflist[[1]]$x)
 	comparesets(filename, perflist, labellist, xlabel, ylabel, chartlabel, formatlabel, legendpos)
 }
 
@@ -304,7 +281,6 @@ speedup <- function(multicoredata, singlecoredata) {
 }
 
 speedup2 <- function(multicoredata, singlecoredata, field) {
-	print("speedup2")
 	nrrows <- dim(multicoredata)[1]
 	for (i in 1:nrrows) {
 		value <- multicoredata[[field]][i]
@@ -434,14 +410,20 @@ gengraphs <- function() {
 }
 
 group5 <- function() {
-	print(sprintf("Group4: datapath=%s", datapath))
+	print(sprintf("rootpath=%s", rootpath))
+	print(sprintf("datapath=%s", datapath))
+	
+	print("Generating PDF")
 	generatePDF <<- TRUE # generate PDF
 	generateTitles <<- TRUE
 	gengraphs()
 	
+	print("Generating EPS files")
 	generatePDF <<- FALSE # generate EPS files
 	generateTitles <<- FALSE
 	gengraphs()
+	
+	print("Done")
 }
 
 group5()
