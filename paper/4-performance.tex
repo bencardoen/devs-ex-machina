@@ -92,10 +92,10 @@ Analysis showed that this is caused by the high amount of exchanged events: even
 \end{figure}
 
 \subsection{Parallel Simulation Execution Time}
-We now perform an analysis of parallel simulation execution times of our previously defined benchmarks.
-For dxex, we mention results for both conservative and optimistic synchronization.
+Next we analyse parallel simulation of our previously defined benchmarks.
+For dxex, we mention results of both conservative and optimistic synchronization.
 Since adevs supports only conservative synchronization, we don't mention optimistic synchronization results there.
-All experiments were performed using up to six simulation nodes, and executed on a hexa-core machine.
+All experiments were performed using up to six simulation nodes, executed on a hexa-core machine.
 
 We highlight two main results:
 (1) dxex conservative synchronization is competitive with adevs;
@@ -105,13 +105,14 @@ This shows that our contribution, offering both conservative and optimistic sync
 \subsubsection{Queue}
 In the Queue model, we allocate the chain of models such that each node is responsible for a series of connected models.
 This minimizes the number of inter-node messages.
-As the model is a queue, however, the last models will only activate later in the simulation.
-Since these are allocated to separate nodes, some nodes will remain idle until simulation has progressed sufficiently far.
+As the model is a queue, however, models further in the chain only activate later in the simulation.
+Since these are allocated to separate nodes, some nodes remain idle until simulation has progressed sufficiently far.
 
-Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex again outperforms adevs, but now also in terms of speedup.
+Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex outperforms adevs, but now in terms of speedup.
 Results indicate that our implementation of conservative synchronization achieves much higher speedups than adevs.
 This simulation is the ideal case for our conservative implementation, approaching near linear speedup.
-In this case, conservative synchronization seems to be better than optimistic synchronization, at the cost of providing the lookahead.
+%TODO: Why is this the ideal case?
+Conservative synchronization also seems to be better than optimistic synchronization in this case, at the cost of providing the lookahead.
 
 \begin{figure}
 	\includegraphics[width=\columnwidth,height=6.5cm]{fig/queue_parallel.eps}
@@ -121,12 +122,12 @@ In this case, conservative synchronization seems to be better than optimistic sy
 
 \subsubsection{PHold}
 In the Phold model, we first investigate the influence of the fraction of remote events on the speedup.
-When remote events are rare, optimistic synchronization will rarely have to perform rollbacks, thus increasing performance.
-With more common remote events, however, optimistic synchronization quickly slows down due to the frequent rollbacks.
+When remote events are rare, optimistic synchronization rarely has to roll back, thus increasing performance.
+With more common remote events, however, optimistic synchronization quickly slows down due to frequent rollbacks.
 Conservative synchronization, on the other hand, is mostly unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block.
-Even though a single synchronization protocol is always ideal in this case, it shows how different synchronization protocols respond differently to a changing model.
-Adevs is significantly slower during conservative synchronization.
-Analysis of profiling results shows that this was caused by exception handling within the adevs simulation kernel.
+Even though a single synchronization protocol is always ideal in this case, it already shows that different synchronization protocols respond differently to a changing model.
+Adevs is again significantly slower during conservative synchronization.
+Analysis of profiling results shows that exception handling in adevs is the main cause.
 
 \begin{figure}
     \includegraphics[width=\columnwidth,height=6.5cm]{fig/phold_remotes.eps}
@@ -135,17 +136,16 @@ Analysis of profiling results shows that this was caused by exception handling w
 
 We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
 We slightly modified the Phold benchmark, to include high-priority events.
-Contrary to normal events, which offer a sufficiently large lookahead, high-priority events happen almost instantaneously, restricting lookahead to a very small value.
-Even though normal events  occur most often, a conservative implementation always blocks until it can make guarantees.
-An optimistic implementation, however, will simply go forward in simulation time and roll back the few times that these high-priority events happen.
+Contrary to normal events, high-priority events happen almost instantaneously, restricting lookahead to a very small value.
+Even when normal events occur most often, conservative synchronization always blocks until it can make guarantees.
+Optimistic synchronization, however, simply goes forward in simulation time and rolls back when these high-priority events happen.
 This situation closely mimics the case made in the comparison between both synchronization algorithms by~\cite{FujimotoBook}.
 
-Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of high-priority events.
+Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of these high-priority events.
 If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
-When many high-priority events occur, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needed to be reverted.
-Results show that there is no single perfect synchronization algorithm for this model.
-Depending on model configuration, either synchronization protocol might be better.
-We have shown that our contribution is invaluable for high performance simulation: depending on the observed communication behaviour, modellers can use the most appropriate synchronization protocol.
+When many high-priority events occur, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needs to be rolled back.
+Results show that there is no single perfect synchronization algorithm for this model: depending on configuration, either synchronization protocol might be better.
+We have shown that our contribution is invaluable for high performance simulation: depending on the expected behaviour, modellers can choose the most appropriate synchronization protocol.
 
 \begin{figure}
     \includegraphics[width=\columnwidth,height=6.5cm]{fig/phold_priority.eps}
@@ -155,8 +155,9 @@ We have shown that our contribution is invaluable for high performance simulatio
 
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
-Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}
-When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing amount of reverts in optimistic. In this benchmark, all models depend on each other, negating any possible performance gain by executing the simulation in parallel.
+Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
+When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing amount of roll bakcs in optimistic.
+All models depend on each other and have no computational load whatsoever, negating any possible performance gain by executing the simulation in parallel.
 
 \begin{figure}
     \includegraphics[width=\columnwidth,height=6.5cm]{fig/interconnect_parallel.eps}
