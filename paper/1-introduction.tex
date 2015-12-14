@@ -18,9 +18,8 @@ The selected synchronization protocol is transparant to the simulated model.
 Users should merely determine, at the start of simulation, which protocol they wish to use.
 Our tool is based on PythonPDEVS, but implemented in C++11, to increase both performance and portability across different platforms.
 
-We implemented a model that, depending on a single parameter, changes its ideal synchronization protocols.
-Dxex, then, is used to compare simulation using exactly the same tool, but with a different synchronization protocol.
-As dxes is able to simulate it both ways, users can always opt to use the fastest protocol available.
+We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
+Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol. With dxex users can always opt to use the fastest protocol available.
 To verify that our flexibility does not counter performance, we compare to adevs, currently one of the fastest \textsf{DEVS} simulation tools available~\cite{PythonPDEVS,DEVSSurvey}.
 
 Dxex can be found online at \url{https://bitbucket.org/bcardoen/devs-ex-machina}.
