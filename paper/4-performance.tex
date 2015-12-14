@@ -75,7 +75,8 @@ Through profiling, we determined that adevs spends much time on the handling of 
 Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
-	\includegraphics[width=\columnwidth,height=6.5cm]{fig/queue_sequential.eps}
+    \center
+	\includegraphics[width=0.8\columnwidth]{fig/queue_sequential.eps}
 	\caption{Queue benchmark results for sequential simulation.}
 	\label{fig:Queue_benchmark}
 \end{figure}
@@ -86,7 +87,8 @@ As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs outperforms dxe
 Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools.
 
 \begin{figure}
-	\includegraphics[width=\columnwidth,height=6.5cm]{fig/interconnect_sequential.eps}
+    \center
+	\includegraphics[width=0.8\columnwidth]{fig/interconnect_sequential.eps}
 	\caption{Interconnect benchmark results for sequential simulation.}
 	\label{fig:Interconnect_benchmark}
 \end{figure}
@@ -115,7 +117,8 @@ This simulation is the ideal case for our conservative implementation, approachi
 Conservative synchronization also seems to be better than optimistic synchronization in this case, at the cost of providing the lookahead.
 
 \begin{figure}
-	\includegraphics[width=\columnwidth,height=6.5cm]{fig/queue_parallel.eps}
+    \center
+	\includegraphics[width=0.8\columnwidth]{fig/queue_parallel.eps}
 	\caption{Queue benchmark results for parallel simulation of a model of fixed size.}
 	\label{fig:queue_benchmark_parallel}
 \end{figure}
@@ -130,7 +133,8 @@ Adevs is again significantly slower during conservative synchronization.
 Analysis of profiling results shows that exception handling in adevs is the main cause.
 
 \begin{figure}
-    \includegraphics[width=\columnwidth,height=6.5cm]{fig/phold_remotes.eps}
+    \center
+    \includegraphics[width=0.8\columnwidth]{fig/phold_remotes.eps}
     \caption{Phold benchmark results for parallel simulation using six cores, with varying fraction of remote events.}
 \end{figure}
 
@@ -148,7 +152,8 @@ Results show that there is no single perfect synchronization algorithm for this 
 We have shown that our contribution is invaluable for high performance simulation: depending on the expected behaviour, modellers can choose the most appropriate synchronization protocol.
 
 \begin{figure}
-    \includegraphics[width=\columnwidth,height=6.5cm]{fig/phold_priority.eps}
+    \center
+    \includegraphics[width=0.8\columnwidth]{fig/phold_priority.eps}
     \caption{Phold benchmark results for parallel simulation using six cores, with varying amount of high-priority events.}
     \label{fig:phold_priority}
 \end{figure}
@@ -160,7 +165,8 @@ When the number of nodes increases, performance decreases due to increasing cont
 All models depend on each other and have no computational load whatsoever, negating any possible performance gain by executing the simulation in parallel.
 
 \begin{figure}
-    \includegraphics[width=\columnwidth,height=6.5cm]{fig/interconnect_parallel.eps}
+    \center
+    \includegraphics[width=0.8\columnwidth]{fig/interconnect_parallel.eps}
     \caption{Interconnect benchmark results for parallel simulation.}
     \label{fig:interconnect_benchmark_parallel}
 \end{figure}
