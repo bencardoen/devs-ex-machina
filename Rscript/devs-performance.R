@@ -1,8 +1,6 @@
-# @author Tim Tuijn
 # global variables
 generatePDF <<- FALSE	# if TRUE, generate PDF else: generated EPS files...
 epscount <<- 1
-generateTitles <<- FALSE
 rootpath <<- paste(getwd(), '/', sep = '')
 # rootpath <<- 'putyourcustomrootpathinhere'
 datapath <<- paste(rootpath, 'data/', sep = '')
@@ -124,10 +122,31 @@ newrange <- function(range1, range2) {
 }
 
 myrainbow <- function(n) {
-	if (n <= 6)
+	if (n == 2)
+		return(c("magenta", "dodgerblue"))
+	else if (n <= 6)
 		return(c("red", "green", "blue", "magenta", "dodgerblue", "black" ))
 	else
 		return(rainbow(n))
+}
+
+myplotchars <- function(n) {
+	if (n == 2)
+		return(c(18, 22))
+	else if (n <= 8)
+		return(c(15, 17, 19, 18, 22, 24, 21, 5))
+	else
+		return(seq(15, 15+n, 1))
+}
+
+mylinetype <- function(n) {
+	return(rep(1,n)) 
+	if (FALSE) {
+		if (n == 2)
+			return(c(4,5))
+		else
+			return(c(1:n))
+	}
 }
 
 formatlabels <- function(xvalues, formattype) {
@@ -179,9 +198,9 @@ comparesets <- function(filename, datalist, labellist, xlabel, ylabel, chartlabe
 	axis(side = 1, at = newlabels , labels = formatlabels(newlabels, formatlabel))
 	
 	colors <- myrainbow(nrcharts)
-	linetype <- c(1:nrcharts)
-	plotchar <- seq(15, 15+nrcharts, 1)
-	plotchar <- c(15, 17, 19, 18, 22, 24, 21, 5)
+	linetype <- mylinetype(nrcharts)
+	plotchar <- myplotchars(nrcharts)
+	
 	for (i in 1:nrcharts) {
 		lines(datalist[[i]]$x, datalist[[i]]$cpu,
 			type="b",
@@ -297,6 +316,15 @@ speedup2 <- function(multicoredata, singlecoredata, field) {
 	return(multicoredata)
 }
 
+addModels <- function(data) {
+	nrrows <- dim(data)[1]
+	data$models <- 0
+	for (i in 1:nrrows) {
+		data$models[i] <- data$width[i] * data$depth[i]
+	}
+	return(data)
+}
+
 gengraphs <- function() {
 	lateXInit(paste(figspath, 'DXvsADEVS.tex', sep=''))
 	
@@ -310,13 +338,15 @@ gengraphs <- function() {
 	# Figure 1: single core dxex/adevs in function of varying width/depth
 	
 	dxdevstonedata = read.table(file="devstone/classic.csv",header=TRUE,sep=";")
+	dxdevstonedata <- addModels(dxdevstonedata)
 	adevstonedata = read.table(file="adevstone/classic.csv",header=TRUE,sep=";")
+	adevstonedata <- addModels(adevstonedata)
 	
 	compareNsets(
 		"queue_sequential",
 		list(dxdevstonedata, adevstonedata),
 		list("dxex single core", "adevs single core"),
-		"Models", "Elapsed Time (sec.)", "Devstone single core", "width", "cartesian", "topleft")
+		"Models", "Elapsed Time (sec.)", "Devstone single core", "models", "normal", "topleft")
 
 	# Figure 2: speed-up multi-core for width/depth = 30
 	adevstoneconsdata <- subset(read.table(file="adevstone/conservative.csv",header=TRUE,sep=";"), width == 30)
@@ -334,7 +364,7 @@ gengraphs <- function() {
 		list("dxex optimistic",
 			"dxex conservative",
 			"adevs conservative"),
-		"Cores", "Speedup vs. Single Core", "DevStone parallel", "ncores", "normal", "topleft")
+		"Cores", "Speedup", "DevStone parallel", "ncores", "normal", "topleft")
 
 	# Figure 3: single core Interconnect
 	dxconnectdata = read.table(file="connect/classic.csv",header=TRUE,sep=";")
@@ -363,7 +393,7 @@ gengraphs <- function() {
 		list("dxex optimistic",
 			"dxex conservative",
 			"adevs conservative"),
-		"Cores", "Speedup vs. Single Core", "Interconnect parallel", "ncores", "normal", "topright")
+		"Cores", "Speedup", "Interconnect parallel", "ncores", "normal", "topright")
 		
 	# Figure 5: speed-up multi-core priority with varying priority
 	dxpholddata = read.table(file="phold/classic.csv",header=TRUE,sep=";")
@@ -379,7 +409,7 @@ gengraphs <- function() {
 		list("dxex optimistic",
 			"dxex conservative",
 			"adevs conservative"),
-		"Priority", "Speedup vs. Single Core", "Phold parallel", "X..priority", "normal", "topright")
+		"% Priority", "Speedup", "Phold parallel", "X..priority", "normal", "topright")
 		
 	# Figure 6: speed-up multi-core priority with varying remotes
 	dxpholddata = read.table(file="phold_remotes/classic.csv",header=TRUE,sep=";")
@@ -395,7 +425,7 @@ gengraphs <- function() {
 		list("dxex optimistic",
 			"dxex conservative",
 			"adevs conservative"),
-		"Remotes", "Speedup vs. Single Core", "Phold parallel", "X..remotes", "normal", "topright")
+		"% Remotes", "Speedup", "Phold parallel", "X..remotes", "normal", "topright")
 	
 	if (generatePDF)
 		dev.off()
@@ -406,8 +436,11 @@ gengraphs <- function() {
 group5 <- function() {
 	print(sprintf("Group4: datapath=%s", datapath))
 	generatePDF <<- TRUE # generate PDF
+	generateTitles <<- TRUE
 	gengraphs()
+	
 	generatePDF <<- FALSE # generate EPS files
+	generateTitles <<- FALSE
 	gengraphs()
 }
 

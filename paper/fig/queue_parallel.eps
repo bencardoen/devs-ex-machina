@@ -54,11 +54,48 @@
            >>
          ] setcolorspace } bind def
 /srgb { setcolor } bind def
+% begin encoding
+/WinAnsiEncoding [
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright
+ /parenleft /parenright /asterisk /plus /comma /minus /period /slash
+ /zero /one /two /three /four /five /six /seven
+ /eight /nine /colon /semicolon /less /equal /greater /question
+ /at /A /B /C /D /E /F /G
+ /H /I /J /K /L /M /N /O
+ /P /Q /R /S /T /U /V /W
+ /X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore
+ /grave /a /b /c /d /e /f /g
+ /h /i /j /k /l /m /n /o
+ /p /q /r /s /t /u /v /w
+ /x /y /z /braceleft /bar /braceright /asciitilde /.notdef
+ /Euro /.notdef /quotesinglbase /florin /quotedblbase /ellipsis /dagger /daggerdbl
+ /circumflex /perthousand /Scaron /guilsinglleft /OE /.notdef /Zcaron /.notdef
+ /.notdef /quoteleft /quoteright /quotedblleft /quotedblright /bullet /endash /emdash
+ /tilde /trademark /scaron /guilsinglright /oe /.notdef /zcaron /Ydieresis
+ /space /exclamdown /cent /sterling /currency /yen /brokenbar /section
+ /dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron
+ /degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /periodcentered
+ /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown
+ /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla
+ /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+ /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply
+ /Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+ /agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla
+ /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis
+ /eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide
+ /oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis
+]
+ def
+% end encoding
 %%IncludeResource: font Times-Roman
 /Times-Roman findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font1 exch definefont pop
@@ -66,7 +103,7 @@ dup length dict begin
 /Times-Bold findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font2 exch definefont pop
@@ -74,7 +111,7 @@ dup length dict begin
 /Times-Italic findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font3 exch definefont pop
@@ -82,7 +119,7 @@ dup length dict begin
 /Times-BoldItalic findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font4 exch definefont pop
@@ -104,35 +141,35 @@ bp
 1 setlinejoin
 10.00 setmiterlimit
 np
-59.04 86.73 m
-0 217.61 l
+59.04 86.75 m
+0 217.68 l
 o
 np
-59.04 86.73 m
+59.04 86.75 m
 -7.20 0 l
 o
 np
-59.04 141.13 m
+59.04 141.17 m
 -7.20 0 l
 o
 np
-59.04 195.54 m
+59.04 195.59 m
 -7.20 0 l
 o
 np
-59.04 249.94 m
+59.04 250.01 m
 -7.20 0 l
 o
 np
-59.04 304.34 m
+59.04 304.43 m
 -7.20 0 l
 o
 /Font1 findfont 12 s
-41.76 86.73 (1) .5 90 t
-41.76 141.13 (2) .5 90 t
-41.76 195.54 (3) .5 90 t
-41.76 249.94 (4) .5 90 t
-41.76 304.34 (5) .5 90 t
+41.76 86.75 (1) .5 90 t
+41.76 141.17 (2) .5 90 t
+41.76 195.59 (3) .5 90 t
+41.76 250.01 (4) .5 90 t
+41.76 304.43 (5) .5 90 t
 np
 59.04 73.44 m
 270.72 0 l
@@ -144,7 +181,7 @@ o
 /Font1 findfont 12 s
 0 0 0 srgb
 194.40 18.72 (Cores) .5 0 t
-12.96 213.12 (Speedup vs. Single Core) .5 90 t
+12.96 213.12 (Speedup) .5 90 t
 0.00 0.00 360.00 360.00 cl
 0 0 0 srgb
 0.75 setlinewidth
@@ -237,8 +274,6 @@ np
 -5.40 0 l
 cp p2
 0 1 0 srgb
-1.50 setlinewidth
-[ 4.50 7.50] 0 setdash
 np
 74.61 150.64 m
 51.58 42.65 l
@@ -282,32 +317,28 @@ np
 -7.27 0 l
 cp p2
 0 0 1 srgb
-1.50 setlinewidth
-[ 0.00 6.00] 0 setdash
 np
-76.15 99.57 m
-48.50 8.96 l
+76.15 99.60 m
+48.50 8.95 l
 o
 np
-138.88 110.69 m
-48.37 5.78 l
+138.88 110.71 m
+48.37 5.79 l
 o
 np
-201.54 118.28 m
+201.54 118.30 m
 48.39 6.43 l
 o
 np
-264.17 126.80 m
+264.17 126.83 m
 48.46 7.84 l
 o
 /bg { 0 0 1 srgb } def
-1.50 setlinewidth
-[] 0 setdash
-69.07 98.27 2.70 c p3
-131.73 109.83 2.70 c p3
-194.40 117.33 2.70 c p3
-257.07 125.65 2.70 c p3
-319.73 135.79 2.70 c p3
+69.07 98.29 2.70 c p3
+131.73 109.86 2.70 c p3
+194.40 117.35 2.70 c p3
+257.07 125.68 2.70 c p3
+319.73 135.82 2.70 c p3
 0 0 0 srgb
 0.75 setlinewidth
 [] 0 setdash
@@ -318,15 +349,11 @@ np
 17.28 0 l
 o
 0 1 0 srgb
-0.75 setlinewidth
-[ 2.25 3.75] 0 setdash
 np
 71.66 307.89 m
 17.28 0 l
 o
 0 0 1 srgb
-0.75 setlinewidth
-[ 0.00 3.00] 0 setdash
 np
 71.66 296.37 m
 17.28 0 l
@@ -345,8 +372,6 @@ np
 -5.82 0 l
 cp p2
 /bg { 0 0 1 srgb } def
-0.75 setlinewidth
-[] 0 setdash
 80.30 296.37 2.16 c p3
 /Font1 findfont 10 s
 0 0 0 srgb

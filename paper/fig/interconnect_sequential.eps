@@ -54,11 +54,48 @@
            >>
          ] setcolorspace } bind def
 /srgb { setcolor } bind def
+% begin encoding
+/WinAnsiEncoding [
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+ /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright
+ /parenleft /parenright /asterisk /plus /comma /minus /period /slash
+ /zero /one /two /three /four /five /six /seven
+ /eight /nine /colon /semicolon /less /equal /greater /question
+ /at /A /B /C /D /E /F /G
+ /H /I /J /K /L /M /N /O
+ /P /Q /R /S /T /U /V /W
+ /X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore
+ /grave /a /b /c /d /e /f /g
+ /h /i /j /k /l /m /n /o
+ /p /q /r /s /t /u /v /w
+ /x /y /z /braceleft /bar /braceright /asciitilde /.notdef
+ /Euro /.notdef /quotesinglbase /florin /quotedblbase /ellipsis /dagger /daggerdbl
+ /circumflex /perthousand /Scaron /guilsinglleft /OE /.notdef /Zcaron /.notdef
+ /.notdef /quoteleft /quoteright /quotedblleft /quotedblright /bullet /endash /emdash
+ /tilde /trademark /scaron /guilsinglright /oe /.notdef /zcaron /Ydieresis
+ /space /exclamdown /cent /sterling /currency /yen /brokenbar /section
+ /dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron
+ /degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /periodcentered
+ /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown
+ /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla
+ /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+ /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply
+ /Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+ /agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla
+ /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis
+ /eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide
+ /oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis
+]
+ def
+% end encoding
 %%IncludeResource: font Times-Roman
 /Times-Roman findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font1 exch definefont pop
@@ -66,7 +103,7 @@ dup length dict begin
 /Times-Bold findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font2 exch definefont pop
@@ -74,7 +111,7 @@ dup length dict begin
 /Times-Italic findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font3 exch definefont pop
@@ -82,7 +119,7 @@ dup length dict begin
 /Times-BoldItalic findfont
 dup length dict begin
   {1 index /FID ne {def} {pop pop} ifelse} forall
-  /Encoding ISOLatin1Encoding def
+  /Encoding WinAnsiEncoding def
   currentdict
   end
 /Font4 exch definefont pop
@@ -194,7 +231,7 @@ o
 277.96 47.52 (60) .5 0 t
 319.73 47.52 (70) .5 0 t
 59.04 73.44 329.76 352.80 cl
-1 0 0 srgb
+1 0 1 srgb
 1.50 setlinewidth
 [] 0 setdash
 1 setlinecap
@@ -224,52 +261,50 @@ np
 281.30 269.20 m
 35.09 66.88 l
 o
-/bg { 1 0 0 srgb } def
+/bg { 1 0 1 srgb } def
 np
- 66.37 82.27 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 66.37 84.97 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 108.14 94.07 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 108.14 96.77 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 149.92 116.44 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 149.92 119.14 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 191.70 151.42 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 191.70 154.12 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 233.48 199.83 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 233.48 202.53 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 275.26 260.12 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 275.26 262.82 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
 np
- 317.03 339.75 m
-5.40 0 l
-0 5.40 l
--5.40 0 l
+ 317.03 342.45 m
+2.70 2.70 l
+2.70 -2.70 l
+-2.70 -2.70 l
 cp p2
-0 1 0 srgb
-1.50 setlinewidth
-[ 4.50 7.50] 0 setdash
+0.1176 0.5647 1 srgb
 np
 76.21 84.71 m
 27.49 3.55 l
@@ -294,71 +329,34 @@ np
 284.06 165.67 m
 29.57 18.47 l
 o
-/bg { 0 1 0 srgb } def
-np
- 69.07 87.99 m
-3.63 -6.30 l
--7.27 0 l
-cp p2
-np
- 110.84 93.39 m
-3.64 -6.30 l
--7.27 0 l
-cp p2
-np
- 152.62 102.76 m
-3.64 -6.30 l
--7.27 0 l
-cp p2
-np
- 194.40 116.39 m
-3.64 -6.30 l
--7.28 0 l
-cp p2
-np
- 236.18 138.91 m
-3.63 -6.30 l
--7.27 0 l
-cp p2
-np
- 277.96 166.05 m
-3.63 -6.30 l
--7.27 0 l
-cp p2
-np
- 319.73 192.16 m
-3.64 -6.30 l
--7.27 0 l
-cp p2
+66.67 81.39 4.79 4.79 r p1
+108.45 86.79 4.79 4.79 r p1
+150.23 96.17 4.79 4.79 r p1
+192.01 109.79 4.79 4.79 r p1
+233.78 132.32 4.79 4.79 r p1
+275.56 159.46 4.79 4.79 r p1
+317.34 185.56 4.79 4.79 r p1
 0 0 0 srgb
 0.75 setlinewidth
 [] 0 setdash
 69.07 342.45 101.45 -46.08 r p1
-1 0 0 srgb
+1 0 1 srgb
 np
 71.66 319.41 m
 17.28 0 l
 o
-0 1 0 srgb
-0.75 setlinewidth
-[ 2.25 3.75] 0 setdash
+0.1176 0.5647 1 srgb
 np
 71.66 307.89 m
 17.28 0 l
 o
-/bg { 1 0 0 srgb } def
 np
- 78.14 317.25 m
-4.32 0 l
-0 4.32 l
--4.32 0 l
+ 78.14 319.41 m
+2.16 2.16 l
+2.16 -2.16 l
+-2.16 -2.16 l
 cp p2
-/bg { 0 1 0 srgb } def
-np
- 80.30 311.25 m
-2.91 -5.04 l
--5.82 0 l
-cp p2
+78.38 305.98 3.83 3.83 r p1
 /Font1 findfont 10 s
 0 0 0 srgb
 104.80 330.93 (Le) 0 ta
