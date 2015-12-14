@@ -1,3 +1,5 @@
+\newcommand{\plotfraction}{0.88}
+
 In this section, we evaluate performance of dxex using different synchronization protocols.
 We show that the inclusion of multiple synchronization protocols does not noticeably decrease performance.
 To this end, we compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}.
@@ -37,21 +39,24 @@ We use three different benchmarks, which cover different aspects of the simulati
           An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 \end{enumerate}
 
+\newcommand{\modelfraction}{0.65}
+\newcommand{\interfigurespace}{0.8cm}
+
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/queue_model.pdf}
     \caption{Queue model for depth and width 2.}
     \label{fig:queue_model}
 
-    \vspace{0.5cm}
+    \vspace{\interfigurespace}
 
-    \includegraphics[width=0.65\columnwidth]{fig/interconnect_model.pdf}
+    \includegraphics[width=\modelfraction\columnwidth]{fig/interconnect_model.pdf}
     \caption{HighInterconnect model for three models.}
     \label{fig:interconnect_model}
 
-    \vspace{0.5cm}
+    \vspace{\interfigurespace}
 
-    \includegraphics[width=0.65\columnwidth]{fig/phold_model.pdf}
+    \includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
     \caption{PHOLD model for three models.}
     \label{fig:PHOLD_model}
 \end{figure}
@@ -74,7 +79,7 @@ Both simulation tools have similar complexities, though dxex is much faster than
 
 \begin{figure}
     \center
-	\includegraphics[width=0.8\columnwidth]{fig/queue_sequential.eps}
+	\includegraphics[width=\plotfraction\columnwidth]{fig/queue_sequential.eps}
 	\caption{Queue benchmark results for sequential simulation.}
 	\label{fig:Queue_benchmark}
 \end{figure}
@@ -86,7 +91,7 @@ Analysis showed that this is caused by the high amount of exchanged events: even
 
 \begin{figure}
     \center
-	\includegraphics[width=0.8\columnwidth]{fig/interconnect_sequential.eps}
+	\includegraphics[width=\plotfraction\columnwidth]{fig/interconnect_sequential.eps}
 	\caption{Interconnect benchmark results for sequential simulation.}
 	\label{fig:Interconnect_benchmark}
 \end{figure}
@@ -116,7 +121,7 @@ Conservative synchronization also seems to be better than optimistic synchroniza
 
 \begin{figure}
     \center
-	\includegraphics[width=0.8\columnwidth]{fig/queue_parallel.eps}
+	\includegraphics[width=\plotfraction\columnwidth]{fig/queue_parallel.eps}
 	\caption{Queue benchmark results for parallel simulation of a model of fixed size.}
 	\label{fig:queue_benchmark_parallel}
 \end{figure}
@@ -132,7 +137,7 @@ Analysis of profiling results shows that exception handling in adevs is the main
 
 \begin{figure}
     \center
-    \includegraphics[width=0.8\columnwidth]{fig/phold_remotes.eps}
+    \includegraphics[width=\plotfraction\columnwidth]{fig/phold_remotes.eps}
     \caption{Phold benchmark results for parallel simulation using six cores, with varying fraction of remote events.}
 \end{figure}
 
@@ -151,11 +156,12 @@ We have shown that our contribution is invaluable for high performance simulatio
 
 \begin{figure}
     \center
-    \includegraphics[width=0.8\columnwidth]{fig/phold_priority.eps}
+    \includegraphics[width=\plotfraction\columnwidth]{fig/phold_priority.eps}
     \caption{Phold benchmark results for parallel simulation using six cores, with varying amount of high-priority events.}
     \label{fig:phold_priority}
 \end{figure}
 
+\vspace{1mm}
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
@@ -164,7 +170,7 @@ All models depend on each other and have no computational load whatsoever, negat
 
 \begin{figure}
     \center
-    \includegraphics[width=0.8\columnwidth]{fig/interconnect_parallel.eps}
+    \includegraphics[width=\plotfraction\columnwidth]{fig/interconnect_parallel.eps}
     \caption{Interconnect benchmark results for parallel simulation.}
     \label{fig:interconnect_benchmark_parallel}
 \end{figure}
