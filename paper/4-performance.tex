@@ -1,5 +1,5 @@
-In this section, we evaluate performance of dxex using its different synchronization protocols.
-We show that the inclusion of multiple synchronization protocols does not decrease performance significantly.
+In this section, we evaluate performance of dxex using different synchronization protocols.
+We show that the inclusion of multiple synchronization protocols does not noticeably decrease performance.
 To this end, we compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}.
 CPU time and memory usage is compared for both sequential and parallel simulation.
 
@@ -8,8 +8,8 @@ For the parallel simulation benchmarks, results are presented for both conservat
 
 For all benchmarks, results are well within a 5\% deviation of the average, such that only the average is used in the remainder of this section.
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
-To guarantee comparable results, no I/O was performed during the benchmarking phase such that computation was CPU-bound.
-Simulation traces are used to verify that both adevs and dxex models have exactly the same behaviour.
+To guarantee comparable results, no I/O was performed during benchmarks.
+Before benchmarking, simulation traces were used to verify that adevs and dxex return exactly the same simulation results.
 Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
 
 \subsection{Benchmarks}
