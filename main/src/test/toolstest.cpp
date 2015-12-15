@@ -1,16 +1,23 @@
+/*
+ * This file is part of the DEVS Ex Machina project.
+ * Copyright 2014 - 2015 University of Antwerp
+ * https://www.uantwerpen.be/en/
+ * Licensed under the EUPL V.1.1
+ * A full copy of the license is in COPYING.txt, or can be found at
+ * https://joinup.ec.europa.eu/community/eupl/og_page/eupl
+ *      Author: Ben Cardoen, Stijn Manhaeve, Tim Tuijn
+ */
+
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
 #include <list>
 #include <array>
-#include <vector>
 #include <queue>
 #include <algorithm>
-#include <random>
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include <algorithm>
 #include <random>
 #include "boost/pool/object_pool.hpp"
 #include "boost/pool/singleton_pool.hpp"

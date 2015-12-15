@@ -1,8 +1,11 @@
 /*
- * controllertest.cpp
- *
- *  Created on: 26 Mar 2015
- *      Author: Matthijs Van Os
+ * This file is part of the DEVS Ex Machina project.
+ * Copyright 2014 - 2015 University of Antwerp
+ * https://www.uantwerpen.be/en/
+ * Licensed under the EUPL V.1.1
+ * A full copy of the license is in COPYING.txt, or can be found at
+ * https://joinup.ec.europa.eu/community/eupl/og_page/eupl
+ *      Author: Ben Cardoen, Stijn Manhaeve, Tim Tuijn, Pieter Lauwers, Matthijs Van Os
  */
 
 #include <gtest/gtest.h>
