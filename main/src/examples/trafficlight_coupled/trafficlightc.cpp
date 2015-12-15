@@ -1,8 +1,11 @@
 /*
- * trafficlightc.cpp
- *
- *  Created on: Mar 19, 2015
- *      Author: tim
+ * This file is part of the DEVS Ex Machina project.
+ * Copyright 2014 - 2015 University of Antwerp 
+ * https://www.uantwerpen.be/en/
+ * Licensed under the EUPL V.1.1
+ * A full copy of the license is in COPYING.txt, or can be found at 
+ * https://joinup.ec.europa.eu/community/eupl/og_page/eupl 
+ *      Author: Stijn Manhaeve, Tim Tuijn
  */
 
 #include "examples/trafficlight_coupled/trafficlightc.h"
@@ -94,9 +97,7 @@ void TrafficLight::output(std::vector<n_network::t_msgptr>& msgs) const
 }
 
 t_timestamp TrafficLight::lookAhead() const
-{
-	// Lookahead of this model is 0, because the policeman can interrupt the traffic light at any
-	// given time
+{	
 	return t_timestamp::epsilon();
 }
 

@@ -142,7 +142,6 @@ add_library(
     src/model/coupledmodel.cpp
     src/model/rootmodel.cpp
     src/model/model.cpp
-    src/model/state.cpp
     src/model/port.cpp
     src/model/core.cpp
     src/model/dynamiccore.cpp
@@ -171,13 +170,12 @@ add_executable(${PROJECT_NAME}
     src/examples/abstract_conservative/modela.cpp
     src/examples/abstract_conservative/modelb.cpp
     src/examples/abstract_conservative/modelc.cpp
-	src/examples/deadlock/ping.cpp
+    src/examples/deadlock/ping.cpp
     src/examples/deadlock/pingset.cpp
     src/examples/trafficlight_classic/trafficlight.cpp
     src/examples/trafficlight_coupled/trafficlightc.cpp
     src/examples/trafficlight_coupled/policemanc.cpp
     src/examples/trafficlight_coupled/trafficsystemc.cpp
-    src/examples/trafficlight_ds/trafficlightds.cpp
     src/examples/trafficlight_ds/policemands.cpp
     src/examples/trafficlight_ds/trafficsystemds.cpp
     #src/examples/forestfire/constants.cpp
