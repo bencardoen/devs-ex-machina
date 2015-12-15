@@ -1,11 +1,11 @@
 /*
- * DEVStone.h
- *
- *  Created on: 13 Apr 2015
- *      Author: Devs Ex Machina
- *
- * This file contains the integer implementation of the devstone benchmark.
- * Note that all timestamps have been multiplied by a factor of 100 to allow for randomized time advance.
+ * This file is part of the DEVS Ex Machina project.
+ * Copyright 2014 - 2015 University of Antwerp
+ * https://www.uantwerpen.be/en/
+ * Licensed under the EUPL V.1.1
+ * A full copy of the license is in COPYING.txt, or can be found at
+ * https://joinup.ec.europa.eu/community/eupl/og_page/eupl
+ *      Author: Stijn Manhaeve, Ben Cardoen, Matthijs Van Os
  */
 
 #ifndef SRC_DEVSTONE_DEVSTONE_DEVSTONE_H_
