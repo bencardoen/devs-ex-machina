@@ -1,5 +1,8 @@
 # README #
 
+This project is licensed under the EUPL, see COPYING.txt
+Copyright 2014-2015 University of Antwerp
+
 ### Requirements ###
 
 * CMake >= 2.8.8
