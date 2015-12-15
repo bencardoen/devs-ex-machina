@@ -12,8 +12,8 @@ Contrary to PythonPDEVS, however, dxex doesn't support distribution, model migra
 While PythonPDEVS offers very fast turnaround cycles, due to the use of an interpreted language, simulation performance was easily outdone by compiled simulation kernels.
 In terms of performance, adevs~\cite{adevs} offered much faster simulation, at the cost of a significant compilation time.
 The turnaround cycle in adevs is much slower though, specifically because the complete simulation kernel is implemented using templates in header files.
-As a result, the complete simulation kernel has to be compiled again everytime.
-Dxex compromises, as vle~\cite{vle} or PowerDEVS~\cite{PowerDEVS}, by seperating the simulation kernel into a shared library.
+As a result, the complete simulation kernel has to be compiled again every time.
+Dxex compromises, as vle~\cite{vle} or PowerDEVS~\cite{PowerDEVS}, by separating the simulation kernel into a shared library.
 After the initial compilation of the simulation tool, only the model has to be compiled and linked to the library.
 This significantly shortens the turnaround cycle, while still offering good performance.
 In terms of performance, dxex is shown to be competitive with adevs.

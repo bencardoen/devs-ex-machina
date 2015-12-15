@@ -22,7 +22,7 @@ Whereas conservative synchronization prevents causality errors at all costs, opt
 Each node simulates as fast as possible, without taking note of any other node.
 It assumes that no events occur from other nodes, unless it has explicitly received one at that time.
 When this assumption is violated, the node rolls back its simulation time and state to right before the moment when the event has to be processed.
-As simulation is rolled back to a time prior to the event must be processed, the event can then be processed as if no causality error ever occured.
+As simulation is rolled back to a time prior to the event must be processed, the event can then be processed as if no causality error ever occurred.
 
 Rolling back simulation time requires the node to store past model states, such that they can be restored later.
 All incoming and outgoing events need to be stored as well.
