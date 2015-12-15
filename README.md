@@ -16,6 +16,7 @@ And for tests:
 * Perf (+kernel support) for the profiling/benchmark analysis.
 * libubsan (clang or g++ should provide this) for leak/race/undefined detection
 * tcmalloc for a significant speedup (CMake will try to find it, if not found not an error).
+* adevs for comparison
 
 ### Building & running ###
 
@@ -23,8 +24,9 @@ And for tests:
 * **$ cd devs-ex-machina**
 * **$ ./setup.sh OPTIONS**
 
-To find all options of the setup script: **$ ./setup.sh -h**
+To find all options of the setup script: 
 
+* **$ ./setup.sh -h**
 * **$ cd ./build/Release/**
 * **$ make TARGET OPTIONS**
 
@@ -47,6 +49,10 @@ Optionally, you can open the project in Eclipse (provided you have the CDT plugi
 * CMake has preconfigured all compile/link settings for you.
 
 ### Benchmarking ###
+First, to be able to build our adevs models the source of adevs is required.
+Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path : <br/>
+`set(ADEVS_ROOT mypath)`
+
 If you wish to run different benchmarks and save the performance results in .csv files: 
 
 **$ ./doBenchmark.py**
@@ -61,8 +67,8 @@ LLVM's sanitizer framework requires position indepent code.
 
 Some Linux distributions (Red Hat based) already ship libraries compiled with fpie, if not the case:
 
-* In the {gtest_root_folder}/cmake/internal_utils.cmake, line 75(v1.7) || line 65(v1.6): <br/>
-_set(cxx_base_flags "-Wall -Wshadow **-fpie**")_
+* In the {gtest_root_folder}/cmake/internal_utils.cmake, line 75(v1.7) || line 65(v1.6):
+`_set(cxx_base_flags "-Wall -Wshadow **-fpie**")_`
 
 ### Windows ###
 Building on Windows is possible using [Cygwin 64-bit](https://cygwin.com/install.html ).
@@ -72,7 +78,9 @@ The Cygwin installer will give you the opportunity to install, with the exceptio
 Note that the compiler will issue warnings about -fPic having no effect, this is a harmless side-effect.
 
 ### Troubleshooting ###
-* CMake fails to find dependencies : <br/> if Boost or GTest are not located where cmakes looks for them, make a local file in the root project directory named _localpreferences.txt_ where you set 
-{BOOST||GTEST}_ROOT={my_path}
+* CMake fails to find dependencies : 
+if Boost or GTest are not located where cmake looks for them, make a local file in the root project directory named _localpreferences.txt_ where you put
+`set({BOOST||GTEST}_ROOT{my_path})`
+
 * After any change to the CMakeLists.txt, remove your build directory to prevent stale CMake configuration files corrupting the build. The setup.sh script is capable of doing this for you.
 
