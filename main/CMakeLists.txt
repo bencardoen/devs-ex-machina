@@ -296,7 +296,15 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
 ### adevs targets ############################################################
 # adevs has its own makefile. Therefore, use that make system instead of writing our own.
 # as a plus: try not to put the adevs library in the same folder as the adevs sources.
+if(ADEVS_ROOT)
+    MESSAGE( STATUS "User provided adevs root :" )
+    MESSAGE( STATUS ADEVS_ROOT)
+else()
+    MESSAGE( WARNING " No adevs directory provided ! : assuming default adevs directory : ./adevs")
 set(ADEVS_ROOT ${PROJECT_ROOT}/adevs)
+endif()
+set(ADEVS_BENCHMARKS_ROOT ${PROJECT_ROOT}/main/src_adevs_benchmarks)
+set(ADEVS_INCLUDE_PATH ${ADEVS_ROOT}/include)
 set(ADEVS_LIBRARY ${ADEVS_ROOT}/lib/libadevs.a)
 MESSAGE( STATUS "ADEVS_ROOT:             " ${ADEVS_ROOT} )
 MESSAGE( STATUS "ADEVS_LIBRARY:             " ${ADEVS_LIBRARY} )
@@ -314,7 +322,7 @@ set_target_properties(adevs PROPERTIES
   IMPORTED_LOCATION_NOCONFIG "${ADEVS_LIBRARY}")
 # now, adevs can be linked to like any other library
 add_executable(adevs_devstone
-    ${ADEVS_ROOT}/benchmarks/devstone.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
     )
 SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-o3 -fopenmp"
@@ -322,7 +330,7 @@ SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
 add_executable(adevs_phold
-    ${ADEVS_ROOT}/benchmarks/phold.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
     )
 SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-o3 -fopenmp"
@@ -330,7 +338,7 @@ SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
 add_executable(adevs_interconnect
-    ${ADEVS_ROOT}/benchmarks/highinterconnect.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
     )
 SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-o3 -fopenmp"
@@ -338,7 +346,7 @@ SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
 add_executable(adevs_network
-    ${ADEVS_ROOT}/benchmarks/network.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
     )
 SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
                     COMPILE_FLAGS "-o3 -fopenmp"
