@@ -53,7 +53,7 @@ Optionally, you can open the project in Eclipse (provided you have the CDT plugi
 
 ### Benchmarking ###
 First, to be able to build our adevs models the source of adevs is required.
-Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path : <br/>
+Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path :   
 `set(ADEVS_ROOT mypath)`
 
 If you wish to run different benchmarks and save the performance results in .csv files: 
@@ -86,4 +86,3 @@ if Boost or GTest are not located where cmake looks for them, make a local file 
 `set({BOOST||GTEST}_ROOT{my_path})`
 
 * After any change to the CMakeLists.txt, remove your build directory to prevent stale CMake configuration files corrupting the build. The setup.sh script is capable of doing this for you.
-
