@@ -20,7 +20,7 @@ In terms of performance, dxex is shown to be competitive with adevs.
 While a more extensive set of benchmarks is required to make accurate comparisons, initial results are promising.
 Despite its high performance, adevs does not support optimistic synchronization, which we have shown to be highly relevant.
 
-Previous \textsf{DEVS} simulation tools have already implemented multiple synchronization protocols, though mostly in an ad-hoc way.
+Previous \textsf{DEVS} simulation tools have already implemented multiple synchronization protocols, though none have done it in a strictly modular way that allows straightforward protocol switching for a single given model.
 For example CD++~\cite{CD++} has both a conservative (CCD++~\cite{CCD++}) and optimistic (PCD++)~\cite{PCD++}) variant.
 Despite the implementation of both protocols, they are different projects entirely, and are incompatible with modern compilers.
 Dxex, on the other hand, is a single project, where switching between different synchronization protocols is as simple as switching any other configuration parameter.

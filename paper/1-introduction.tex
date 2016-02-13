@@ -8,15 +8,15 @@ Several synchronization protocols from the discrete event simulation community~\
 While several parallel \textsf{DEVS} simulation kernels exist, they are often limited to a single synchronization protocol.
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models.
 The applicability of parallel simulation capabilities of current tools is therefore limited.
-
-Users who simulate a wide variety of models, with different ideal synchronization protocols, are therefore out of luck:
-either they accept lower performance for some models, or they use different simulation kernels.
-Neither is acceptable for complex models: performance can decrease to unacceptable levels, and simulation kernel APIs can diverge significantly.
-
+% Paragraph moved to beneath intro dxex, else we can't refer to our tool
 This paper introduces DEVS-Ex-Machina (``dxex''), our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
-The selected synchronization protocol is transparant to the simulated model.
+The selected synchronization protocol is transparent to the simulated model.
 Users should merely determine, at the start of simulation, which protocol they wish to use.
-Our tool is based on PythonPDEVS, but implemented in C++11, to increase both performance and portability across different platforms.
+Our tool is based on PythonPDEVS, but implemented in C++11, to increase both performance and portability across different platforms. Unlike PythonPDEVS dxex only supports multicore parallelism.
+
+Users who simulate a wide variety of models, with different ideal synchronization protocols, are therefore in luck:
+with our tool the model implementation can be reused with a different protocol to test which offers better performance.
+
 
 We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
 Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol. With dxex users can always opt to use the fastest protocol available.

@@ -12,7 +12,7 @@ For all benchmarks, results are well within a 5\% deviation of the average, such
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
 To guarantee comparable results, no I/O was performed during benchmarks.
 Before benchmarking, simulation traces were used to verify that adevs and dxex return exactly the same simulation results.
-Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
+Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac. The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
 
 \subsection{Benchmarks}
 We use three different benchmarks, which cover different aspects of the simulation kernel:
@@ -74,7 +74,7 @@ Only the Queue and HighInterconnect models are relevant for sequential simulatio
 In the Queue model, we increase both width and depth simultaneously.
 For example, the $400$ models configuration is obtained with a width and depth of $20$.
 As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
-Through profiling, we determined that adevs spends much time on the handling of simulation messages, while this is avoided in dxex's simulation algorithm.
+Through profiling, we determined that adevs spends much time on the routing of simulation messages through the hierarchy, while dxex avoids this by flattening the model structure before the simulation starts.
 Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
@@ -87,7 +87,7 @@ Both simulation tools have similar complexities, though dxex is much faster than
 \subsubsection{HighInterconnect}
 In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings and the number of external transitions.
 As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs outperforms dxex by a fair margin.
-Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools.
+Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools. For the speedup plot the amount of models is kept constant at 8.
 
 \begin{figure}
     \center
@@ -115,8 +115,7 @@ Since these are allocated to separate nodes, some nodes remain idle until simula
 
 Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex outperforms adevs, but now in terms of speedup.
 Results indicate that our implementation of conservative synchronization achieves much higher speedups than adevs.
-This simulation is the ideal case for our conservative implementation, approaching near linear speedup.
-%TODO: Why is this the ideal case?
+This simulation is the ideal case for our conservative implementation, approaching near linear speedup, since there are no dependency cycles between models.
 Conservative synchronization also seems to be better than optimistic synchronization in this case, at the cost of providing the lookahead.
 
 \begin{figure}
@@ -133,12 +132,13 @@ With more common remote events, however, optimistic synchronization quickly slow
 Conservative synchronization, on the other hand, is mostly unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block.
 Even though a single synchronization protocol is always ideal in this case, it already shows that different synchronization protocols respond differently to a changing model.
 Adevs is again significantly slower during conservative synchronization.
-Analysis of profiling results shows that exception handling in adevs is the main cause.
+Analysis of profiling results shows that exception handling in adevs is the main cause. 
+% Addin ? To keep the models equivalent, the adevs version does not provide the \{begin,end\}Lookahead methods, which accounts for the exception handling.
 
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/phold_speedup_remotes.eps}
-    \caption{Phold benchmark results for parallel simulation using six cores, with varying fraction of remote events.}
+    \caption{Phold benchmark results for parallel simulation using six cores, 4 atomics per node, with varying fraction of remote events.}
 \end{figure}
 
 We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization.
