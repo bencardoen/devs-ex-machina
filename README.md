@@ -3,6 +3,9 @@
 This project is licensed under the EUPL, see COPYING.txt
 Copyright 2014-2015 University of Antwerp
 
+### Paper ###
+The data used in the paper is located in /RScript/data. To reproduce see section Benchmarks. The parameters used are defined in the doBenchmark.py script. 
+
 ### Requirements ###
 
 * CMake >= 2.8.8
@@ -13,7 +16,8 @@ And for tests:
 
 * [GTest](https://github.com/google/googletest/releases ) >= 1.7 (1.6 may work)
 
-### Optional ###
+Optional:
+
 * Python 3.4 for the benchmark script.
 * R for the statistical analysis of the benchmarks
 * Perf (+kernel support) for the profiling/benchmark analysis.
