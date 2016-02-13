@@ -1,10 +1,7 @@
 # README #
 
 This project is licensed under the EUPL, see COPYING.txt
-Copyright 2014-2015 University of Antwerp
-
-### Paper ###
-The data used in the paper is located in /RScript/data. To reproduce see section Benchmarks. The parameters used are defined in the doBenchmark.py script. 
+Copyright 2014-2016 University of Antwerp
 
 ### Requirements ###
 
@@ -22,6 +19,7 @@ Optional:
 * R for the statistical analysis of the benchmarks
 * Perf (+kernel support) for the profiling/benchmark analysis.
 * libubsan (clang or g++ should provide this) for leak/race/undefined detection
+* Valgrind for memory profiling
 * tcmalloc for a significant speedup (CMake will try to find it, if not found not an error).
 * adevs for comparison
 
@@ -56,6 +54,11 @@ Optionally, you can open the project in Eclipse (provided you have the CDT plugi
 * CMake has preconfigured all compile/link settings for you.
 
 ### Benchmarking ###
+All benchmark data used in the paper can be found in 
+
+* Rscript/data
+* paper/fig/final_libreoffice_plots.ods
+
 First, to be able to build our adevs models the source of adevs is required.
 Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path :   
 `set(ADEVS_ROOT mypath)`
@@ -67,6 +70,11 @@ If you wish to run different benchmarks and save the performance results in .csv
 To find all the options of the doBenchmark script: 
 
 **$ ./doBenchmark.py -h**
+
+The memory benchmarks (only if you have at least 8GB RAM) requires a POSIX shell, and valgrind. Each benchmark that is profiled for memory can take up to a factor 100 longer to execute under valgrind, please take this into account. The actual memory usage changes little over time (except with optimistic), so you can manually adjust the runtime in the script should this be required.
+
+**$ ./membench.sh**
+
 
 ### ThreadSanitizer ###
 LLVM's sanitizer framework requires position indepent code.
