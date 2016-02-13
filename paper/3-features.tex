@@ -78,6 +78,6 @@ Two options are possible: either a lookahead function must always be provided, e
 Always defining a lookahead function might seem redundant, especially if users will never use conservative synchronization.
 Especially since defining the lookahead is often non-trivial and dependent on intricate model details.
 The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but maybe not at peak performance.
-%Depending on the model, simulation performance might still be faster than sequential simulation. 
+Depending on the model, simulation performance might still be faster than sequential simulation. 
 
 Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default of $epsilon$ can be used otherwise.
