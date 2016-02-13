@@ -7,7 +7,7 @@ We will not make a detailed comparison with PythonPDEVS here, but only mention s
 Dxex supports, similarly to PythonPDEVS, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
 But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols (though only in parallel).
 This is in line with the design principle of PythonPDEVS: allow users to pass performance hints to the simulation kernel.
-In our case, a user can pass the simulation kernel sets the synchronization protocol to be used for this model.
+In our case, a user can pass the simulation kernel the synchronization protocol to be used for this model.
 Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language.
 
 Since there is no universal \textsf{DEVS} model standard, dxex models are incompatible with PythonPDEVS and vice versa.
