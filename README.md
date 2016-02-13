@@ -3,6 +3,9 @@
 This project is licensed under the EUPL, see COPYING.txt
 Copyright 2014-2015 University of Antwerp
 
+### Paper ###
+The data used in the paper is located in /RScript/data. To reproduce see section Benchmarks. The parameters used are defined in the doBenchmark.py script. 
+
 ### Requirements ###
 
 * CMake >= 2.8.8
@@ -13,7 +16,8 @@ And for tests:
 
 * [GTest](https://github.com/google/googletest/releases ) >= 1.7 (1.6 may work)
 
-### Optional ###
+Optional:
+
 * Python 3.4 for the benchmark script.
 * R for the statistical analysis of the benchmarks
 * Perf (+kernel support) for the profiling/benchmark analysis.
@@ -53,7 +57,7 @@ Optionally, you can open the project in Eclipse (provided you have the CDT plugi
 
 ### Benchmarking ###
 First, to be able to build our adevs models the source of adevs is required.
-Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path : <br/>
+Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path :   
 `set(ADEVS_ROOT mypath)`
 
 If you wish to run different benchmarks and save the performance results in .csv files: 
@@ -86,4 +90,3 @@ if Boost or GTest are not located where cmake looks for them, make a local file 
 `set({BOOST||GTEST}_ROOT{my_path})`
 
 * After any change to the CMakeLists.txt, remove your build directory to prevent stale CMake configuration files corrupting the build. The setup.sh script is capable of doing this for you.
-
