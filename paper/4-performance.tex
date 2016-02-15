@@ -69,7 +69,7 @@ Only the Queue and HighInterconnect models are relevant for sequential simulatio
 In the Queue model, we increase both width and depth simultaneously.
 For example, the $400$ models configuration is obtained with a width and depth of $20$.
 As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
-Through profiling, we found that adevs spends much time routing the simulation messages (\textit{e.g.}, \textit{*}, \textit{@}) through the hierarchy, whereas dxex avoids this throuhg its flattened model structure.
+Through profiling, we found that adevs spends much time routing the simulation messages (\textit{e.g.}, \textit{*}, \textit{@}) through the hierarchy, whereas dxex avoids this through its flattened model structure.
 Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
