@@ -1,8 +1,7 @@
 \newcommand{\plotfraction}{0.88}
 
-In this section, we evaluate performance of dxex using different synchronization protocols.
-We show that the inclusion of multiple synchronization protocols does not noticeably decrease performance.
-To this end, we compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}.
+In this section, we evaluate the performance of different synchronization protocols in dxex.
+We also compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}, to show that our modularity does not impede performance.
 CPU time and memory usage is compared for both sequential and parallel simulation.
 
 We start off with a comparison of sequential simulation, to show how adevs and dxex relate in this simple case.
@@ -12,7 +11,8 @@ For all benchmarks, results are well within a 5\% deviation of the average, such
 The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
 To guarantee comparable results, no I/O was performed during benchmarks.
 Before benchmarking, simulation traces were used to verify that adevs and dxex return exactly the same simulation results.
-Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac. The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
+Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
+The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
 
 \subsection{Benchmarks}
 We use three different benchmarks, which cover different aspects of the simulation kernel:
@@ -40,7 +40,6 @@ We use three different benchmarks, which cover different aspects of the simulati
 \end{enumerate}
 
 \newcommand{\modelfraction}{0.65}
-\newcommand{\interfigurespace}{0.8cm}
 
 \begin{figure}
     \center
@@ -48,13 +47,9 @@ We use three different benchmarks, which cover different aspects of the simulati
     \caption{Queue model for depth and width 2.}
     \label{fig:queue_model}
 
-    \vspace{\interfigurespace}
-
     \includegraphics[width=\modelfraction\columnwidth]{fig/interconnect_model.pdf}
     \caption{HighInterconnect model for three models.}
     \label{fig:interconnect_model}
-
-    \vspace{\interfigurespace}
 
     \includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
     \caption{PHOLD model for three models.}
@@ -74,7 +69,7 @@ Only the Queue and HighInterconnect models are relevant for sequential simulatio
 In the Queue model, we increase both width and depth simultaneously.
 For example, the $400$ models configuration is obtained with a width and depth of $20$.
 As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
-Through profiling, we determined that adevs spends much time on the routing of simulation messages through the hierarchy, while dxex avoids this by flattening the model structure before the simulation starts.
+Through profiling, we found that adevs spends much time routing the simulation messages (\textit{e.g.}, \textit{*}, \textit{@}) through the hierarchy, whereas dxex avoids this throuhg its flattened model structure.
 Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
@@ -87,7 +82,7 @@ Both simulation tools have similar complexities, though dxex is much faster than
 \subsubsection{HighInterconnect}
 In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings and the number of external transitions.
 As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs outperforms dxex by a fair margin.
-Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools. For the speedup plot the amount of models is kept constant at 8.
+Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools.
 
 \begin{figure}
     \center
@@ -115,7 +110,7 @@ Since these are allocated to separate nodes, some nodes remain idle until simula
 
 Similar to the sequential benchmarks, Figure~\ref{fig:queue_benchmark_parallel} shows that dxex outperforms adevs, but now in terms of speedup.
 Results indicate that our implementation of conservative synchronization achieves much higher speedups than adevs.
-This simulation is the ideal case for our conservative implementation, approaching near linear speedup, since there are no dependency cycles between models.
+Approaching near linear speedup, this simulation is the ideal case for our conservative implementation, as there are no dependency cycles between models.
 Conservative synchronization also seems to be better than optimistic synchronization in this case, at the cost of providing the lookahead.
 
 \begin{figure}
@@ -161,9 +156,9 @@ We have shown that our contribution is invaluable for high performance simulatio
     \label{fig:phold_priority}
 \end{figure}
 
-\vspace{1mm}
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
+The number of models is now kept constant at eight.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
 When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and an increasing number of of rollbacks in optimistic simulation.
 All models depend on each other and have no computational load whatsoever, negating any possible performance gain by executing the simulation in parallel.
@@ -189,6 +184,7 @@ Additionally, dxex uses memory pools to further reduce the frequency of expensiv
 \texttt{tcmalloc} only gradually releases memory back to the OS, whereas our pools will not do so at all.
 Due to our motivation for memory usage analysis, we will only measure peak allocation.
 Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
+\vspace{1cm}
 
 \subsubsection{Results}
 Figure~\ref{fig:memory} shows the memory used by the different benchmarks.
