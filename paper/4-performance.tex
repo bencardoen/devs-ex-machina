@@ -63,13 +63,13 @@ Parallel simulation is achieved through synchronization of multiple sequential s
 Second, parallel simulation results are validated through the use of adevs.
 To provide a well-founded comparison to adevs in the parallel simulation benchmarks, sequential simulation results also need to be compared.
 
-Only the Queue and HighInterconnect models are relevant for sequential simulation, so we will not touch upon the PHold model yet.
+Only the Queue and HighInterconnect models are relevant for sequential simulation, so we do not use the PHold model yet.
 
 \subsubsection{Queue}
 In the Queue model, we increase both width and depth simultaneously.
 For example, the $400$ models configuration is obtained with a width and depth of $20$.
 As can be seen in Figure~\ref{fig:Queue_benchmark}, dxex considerably outperforms adevs.
-Through profiling, we found that adevs spends much time routing the simulation messages (\textit{e.g.}, \textit{*}, \textit{@}) through the hierarchy, whereas dxex avoids this through its flattened model structure.
+Through profiling, we found that adevs spends much time routing the simulation messages (\textit{e.g.}, \textit{*} and \textit{@} messages, defined by the abstract simulator~\cite{AbstractSimulator}) through the hierarchy, whereas dxex avoids this through its flattened model structure.
 Both simulation tools have similar complexities, though dxex is much faster thanks to its more efficient simulation control algorithms.
 
 \begin{figure}
