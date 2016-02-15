@@ -1,4 +1,4 @@
-\newcommand{\plotfraction}{0.88}
+\newcommand{\plotfraction}{0.9}
 
 In this section, we evaluate the performance of different synchronization protocols in dxex.
 We also compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}, to show that our modularity does not impede performance.
@@ -184,7 +184,6 @@ Additionally, dxex uses memory pools to further reduce the frequency of expensiv
 \texttt{tcmalloc} only gradually releases memory back to the OS, whereas our pools will not do so at all.
 Due to our motivation for memory usage analysis, we will only measure peak allocation.
 Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
-\vspace{1cm}
 
 \subsubsection{Results}
 Figure~\ref{fig:memory} shows the memory used by the different benchmarks.
