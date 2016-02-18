@@ -1,4 +1,4 @@
-\newcommand{\plotfraction}{0.9}
+\newcommand{\plotfraction}{0.85}
 
 In this section, we evaluate the performance of different synchronization protocols in dxex.
 We also compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}, to show that our modularity does not impede performance.
@@ -32,7 +32,7 @@ We use three different benchmarks, which cover different aspects of the simulati
           This benchmark shows how the simulation kernel behaves in the presence of many local or remote events.
           An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
 
-    \item The \textit{HighInterconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
+    \item The \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
           Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event.
           The model takes one parameter: the number of models.
           This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
@@ -47,9 +47,13 @@ We use three different benchmarks, which cover different aspects of the simulati
     \caption{Queue model for depth and width 2.}
     \label{fig:queue_model}
 
+    \vspace{0.2cm}
+
     \includegraphics[width=\modelfraction\columnwidth]{fig/interconnect_model.pdf}
-    \caption{HighInterconnect model for three models.}
+    \caption{Interconnect model for three models.}
     \label{fig:interconnect_model}
+
+    \vspace{0.2cm}
 
     \includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
     \caption{PHOLD model for three models.}
@@ -63,7 +67,7 @@ Parallel simulation is achieved through synchronization of multiple sequential s
 Second, parallel simulation results are validated through the use of adevs.
 To provide a well-founded comparison to adevs in the parallel simulation benchmarks, sequential simulation results also need to be compared.
 
-Only the Queue and HighInterconnect models are relevant for sequential simulation, so we do not use the PHold model yet.
+Only the Queue and Interconnect models are relevant for sequential simulation, so we do not use the PHold model yet.
 
 \subsubsection{Queue}
 In the Queue model, we increase both width and depth simultaneously.
@@ -79,8 +83,8 @@ Both simulation tools have similar complexities, though dxex is much faster than
 	\label{fig:Queue_benchmark}
 \end{figure}
 
-\subsubsection{HighInterconnect}
-In the HighInterconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings and the number of external transitions.
+\subsubsection{Interconnect}
+In the Interconnect model, we increase the number of atomic models, thus quadratically increasing the number of couplings and the number of external transitions.
 As can be seen in Figure~\ref{fig:Interconnect_benchmark}, adevs outperforms dxex by a fair margin.
 Analysis showed that this is caused by the high amount of exchanged events: event creation is much slower in dxex than it is in adevs, despite dxex's use of memory pools.
 

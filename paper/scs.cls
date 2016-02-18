@@ -554,16 +554,25 @@
 % According to the SCS specifications, captions should be centered.
 % This looks kind of bad for multi-line captions, so I only center
 % 1-line captions.  
+%\long\def\@makecaption#1#2{
+%  \vskip 2pt % \baselineskip
+%  \setbox\@tempboxa\hbox{\small
+%{#1. #2}} % DLC
+%  \ifdim \wd\@tempboxa >\hsize % IF longer than one line:
+%     \small{#1. #2}\par     %   THEN set as ordinary paragraph.
+%    \else                      %   ELSE  center. 
+%     \hbox to\hsize{\hfil\box\@tempboxa\hfil}\par
+%  \fi}
+
 \long\def\@makecaption#1#2{
   \vskip 2pt % \baselineskip
-  \setbox\@tempboxa\hbox{\small
+  \setbox\@tempboxa\hbox{
 {#1. #2}} % DLC
   \ifdim \wd\@tempboxa >\hsize % IF longer than one line:
-     \small{#1. #2}\par     %   THEN set as ordinary paragraph.
+     {#1. #2}\par     %   THEN set as ordinary paragraph.
     \else                      %   ELSE  center. 
      \hbox to\hsize{\hfil\box\@tempboxa\hfil}\par
   \fi}
-
 \@ifundefined{figure}{\newcounter {figure}} % this is for LaTeX2e
 
 \def\fps@figure{tbp}
