@@ -39,5 +39,4 @@ If an (almost) instantaneous event rarely occurs, performance is only impacted w
 The disadvantage is unpredictable performance due to the arbitrary cost of rollbacks and their propagation.
 If rollbacks occur frequently, state saving and rollback overhead can cause simulation to grind to a halt.
 Apart from overhead in CPU time, a significant memory overhead is present: all intermediate states are stored up to a point where it can be considered \textit{irreversible}.
-
 Note that, while optimistic synchronization does not explicitly depends on lookahead, performance still implicitly depends on lookahead.

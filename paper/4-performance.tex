@@ -1,4 +1,4 @@
-\newcommand{\plotfraction}{0.85}
+\newcommand{\plotfraction}{0.89}
 
 In this section, we evaluate the performance of different synchronization protocols in dxex.
 We also compare to adevs, currently one of the most efficient simulation kernels~\cite{DEVSSurvey}, to show that our modularity does not impede performance.
@@ -40,6 +40,7 @@ We use three different benchmarks, which cover different aspects of the simulati
 \end{enumerate}
 
 \newcommand{\modelfraction}{0.65}
+\newcommand{\betweenmodels}{0.8cm}
 
 \begin{figure}
     \center
@@ -47,13 +48,13 @@ We use three different benchmarks, which cover different aspects of the simulati
     \caption{Queue model for depth and width 2.}
     \label{fig:queue_model}
 
-    \vspace{0.2cm}
+    \vspace{\betweenmodels}
 
     \includegraphics[width=\modelfraction\columnwidth]{fig/interconnect_model.pdf}
     \caption{Interconnect model for three models.}
     \label{fig:interconnect_model}
 
-    \vspace{0.2cm}
+    \vspace{\betweenmodels}
 
     \includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
     \caption{PHOLD model for three models.}
@@ -68,6 +69,8 @@ Second, parallel simulation results are validated through the use of adevs.
 To provide a well-founded comparison to adevs in the parallel simulation benchmarks, sequential simulation results also need to be compared.
 
 Only the Queue and Interconnect models are relevant for sequential simulation, so we do not use the PHold model yet.
+
+\vspace{0.1cm}
 
 \subsubsection{Queue}
 In the Queue model, we increase both width and depth simultaneously.
@@ -159,6 +162,8 @@ We have shown that our contribution is invaluable for high performance simulatio
     \caption{Phold benchmark results for parallel simulation using six cores, with varying amount of high-priority events.}
     \label{fig:phold_priority}
 \end{figure}
+
+\vspace{0.5cm}
 
 \subsubsection{Interconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
