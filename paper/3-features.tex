@@ -27,8 +27,6 @@ Conservative synchronization for when high lookahead exists between different no
 Optimistic synchronization for when lookahead is unpredictable, or there are rare (almost) instantaneous events.
 Finally, sequential simulation is still required for models where parallelism is bad, where all protocols actually slow down simulation.
 
-\vspace{0.3cm}
-
 \subsubsection{Sequential}
 Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including many optimizations.
 Minor modifications were made, though, such that it can be overloaded by different synchronization protocol implementations.
