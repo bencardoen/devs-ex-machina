@@ -37,6 +37,7 @@
 #include "pools/pools.h"
 #include "pools/cfpool.h"
 #include "model/laentry.h"
+#include "tools/frandom.h"
 
 using std::cout;
 using std::endl;
