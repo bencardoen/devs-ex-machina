@@ -87,6 +87,8 @@ if(COMPILER_SUPPORTS_CXX14)
     else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
     endif()
+    # Inform rng's that we can use the cexpr version.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPP14")
 elseif(COMPILER_SUPPORTS_CXX11)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++11")
 	if(CYGWIN)

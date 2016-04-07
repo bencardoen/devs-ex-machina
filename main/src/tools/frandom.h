@@ -30,6 +30,7 @@ namespace n_tools{
 /**
  * This header requires C++14 explicit support, so a todo here is to remove all constexprs if C++14 is not used, the relaxed 
  * constraints in 14 allow us to make the entire engine cexpr, in c++11 this is not possible. Need at least g++5.1 for working support.
+ * To get around this, constexpr is removed where C++11 is too strict switching on the CMake set macro "-DCPP14"
  */
 namespace n_frandom{
     
@@ -71,7 +72,11 @@ struct  xor128s
 {
     size_t x, y, z, w, t;
     constexpr xor128s(size_t sd = 123456789):x(sd),y(362436069), z(521288629),w(88675123),t(0){;}
+#ifdef CPP14
     constexpr size_t operator()(){
+#else
+    size_t operator()(){
+#endif
         t=(x^(x<<11));
         x=y;
         y=z;
@@ -128,12 +133,17 @@ struct marsaglia_xor_64_s{
     constexpr size_t min()const{return 0;}
     constexpr size_t max()const{return std::numeric_limits<size_t>::max();}
     size_t _seed;
-    
+
     constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ll):_seed(sd){;}
+
     
     void seed(const size_t& sd){_seed=sd;}
     
+#ifdef CPP14
     constexpr size_t operator()(){
+#else
+    size_t operator()(){
+#endif
         _seed ^= (_seed<<13);
         _seed ^= (_seed>>7);
         return (_seed^=(_seed<<17));
