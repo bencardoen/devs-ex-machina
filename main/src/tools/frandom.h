@@ -123,13 +123,13 @@ xorwow(){
 /**
  * George Marsaglia's 64 XOR shifter, in an STL interface compatible version. 
  */
-struct xor64s{
+struct marsaglia_xor_64_s{
     typedef size_t result_type;
     constexpr size_t min()const{return 0;}
     constexpr size_t max()const{return std::numeric_limits<size_t>::max();}
     size_t _seed;
     
-    constexpr xor64s(size_t sd = 88172645463325252ll):_seed(sd){;}
+    constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ll):_seed(sd){;}
     
     void seed(const size_t& sd){_seed=sd;}
     
@@ -166,7 +166,7 @@ int benchrngs() {
     boost::random::taus88 rngtauss; 
     boost::random::mt11213b rngmt12;
     xor128s str;
-    xor64s str2;
+    marsaglia_xor_64_s str2;
     //std::function<size_t(void)> x128 = [&](){return str.operator()();};
     //std::function<size_t(void)> x128 = xor128;
     std::function<size_t(void)> xwow = xorwow;
@@ -195,10 +195,13 @@ int benchrngs() {
 }
 
 
+/**
+ * Define which rng the project uses.
+ */
 #ifdef FRNG
-    typedef marsagliax64cexpr fastrng;
+    typedef marsaglia_xor_64_s t_fastrng;
 #else
-    typedef std::mt19937_64 fastrng;
+    typedef std::mt19937_64 t_fastrng;
 #endif
     
 }// nfrandom 

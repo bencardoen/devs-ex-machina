@@ -19,6 +19,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <vector>
 #include <deque>
 #include <set>
 #include "tools/globallog.h"
