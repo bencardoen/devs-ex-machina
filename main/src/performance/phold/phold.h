@@ -24,7 +24,7 @@
 
 namespace n_benchmarks_phold {
 
-// devstone uses event counters.
+// phold uses event counters.
 // The messages are "Events", which are just numbers.
 #ifdef FPTIME
 typedef double EventTime;

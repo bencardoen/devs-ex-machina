@@ -254,6 +254,15 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     )
 
 
+add_executable(${PROJECT_NAME}_pholdtree
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/pholdtree/pholdtree.cpp
+    src/mainpholdtree.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+
 add_executable(${PROJECT_NAME}_network
     $<TARGET_OBJECTS:DEVSEXMACHINACORE>
     src/performance/queuenetwork/queuenetwork.cpp
@@ -400,6 +409,7 @@ target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
+target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
 target_link_libraries( ${PROJECT_NAME}_priority ${LIBS})
 #target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
