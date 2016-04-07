@@ -98,6 +98,8 @@ struct PHOLDTreeConfig
 
 class PHOLDTree: public n_model::CoupledModel
 {
+private:
+    void finalizeSetup();
 public:
     PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum);
     PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth);

@@ -236,7 +236,17 @@ PHOLDTree::PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size
                 connectPorts(ptr1, ptr2);
             }
         }
+        //finalize subcomponents
+        for(std::size_t i = 0; i < config.numChildren; ++i) {
+            // + 1 as the first child is the main child, which is not a PHOLDTree!
+            std::static_pointer_cast<PHOLDTree>(m_components[i+1])->finalizeSetup();
+        }
     }
+
+}
+void PHOLDTree::finalizeSetup()
+{
+    std::shared_ptr<PHOLDTreeProcessor> mainChild = std::static_pointer_cast<PHOLDTreeProcessor>(m_components[0]);
     //connect main child to all my ports
     for(auto& port: m_oPorts) {
         auto ptr1 = mainChild->startConnection();
@@ -246,8 +256,8 @@ PHOLDTree::PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size
         auto ptr1 = mainChild->endConnection();
         connectPorts(port, ptr1);
     }
-
 }
+
 PHOLDTree::~PHOLDTree()
 { }
 
