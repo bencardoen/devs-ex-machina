@@ -1123,3 +1123,19 @@ TEST(LA, Vsched)
         vscheduler.update(mod_first);
         EXPECT_EQ(vscheduler.top().getTime(), t_timestamp(1,1));
 }
+
+TEST(RNG, Iface){
+    n_tools::n_frandom::xor64s str2;
+    std::uniform_int_distribution<> uid(1,10);
+    str2.seed(0);
+    auto answer = uid(str2);
+    str2.seed(0);
+    auto question = uid(str2);
+    EXPECT_EQ(answer, question);
+}
+
+TEST(RNG, Bench){
+    // This test can fail, we're looking at threadsafety more than anything else here, -fthreadsanitize should pick
+    // up a race on 2e10 calls. 
+    n_tools::n_frandom::benchrngs();
+}
