@@ -1134,6 +1134,21 @@ TEST(RNG, Iface){
     EXPECT_EQ(answer, question);
 }
 
+TEST(RNG, Rand){
+    n_tools::n_frandom::t_fastrng str2;
+    std::uniform_int_distribution<> uid(1,10);
+    str2.seed(0);
+    auto answer = uid(str2);
+    str2.seed(0);
+    auto question = uid(str2);
+    EXPECT_EQ(answer, question);
+    size_t r = 0;
+    for(int i = 0; i<1000; ++i){
+        r = str2.operator ()();
+        EXPECT_TRUE(r != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+    }
+}
+
 TEST(RNG, Bench){
     // This test can fail, we're looking at threadsafety more than anything else here, -fthreadsanitize should pick
     // up a race on 2e10 calls. 

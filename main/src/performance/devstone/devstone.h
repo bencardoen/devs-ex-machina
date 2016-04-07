@@ -20,6 +20,7 @@
 #include "tools/objectfactory.h"
 #include "tools/stringtools.h"
 #include "control/allocator.h"
+#include "tools/frandom.h"
 
 namespace n_devstone {
 
@@ -56,6 +57,7 @@ struct ToString<n_devstone::ProcessorState>
 namespace n_devstone {
 
 typedef std::mt19937_64 t_randgen;
+//typedef n_tools::n_frandom::t_fastrng t_randgen;
 
 class Processor : public n_model::AtomicModel<ProcessorState>
 {
