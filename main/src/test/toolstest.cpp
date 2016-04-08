@@ -1125,7 +1125,7 @@ TEST(LA, Vsched)
 }
 
 TEST(RNG, Iface){
-    n_tools::n_frandom::t_fastrng str2;
+    n_tools::n_frandom::marsaglia_xor_64_s str2;
     std::uniform_int_distribution<> uid(1,10);
     str2.seed(0);
     auto answer = uid(str2);
@@ -1134,8 +1134,60 @@ TEST(RNG, Iface){
     EXPECT_EQ(answer, question);
 }
 
+TEST(RNG, Rand){
+    n_tools::n_frandom::marsaglia_xor_64_s str2;
+    std::uniform_int_distribution<> uid(1,10);
+    str2.seed(0);
+    auto answer = uid(str2);
+    str2.seed(0);
+    auto question = uid(str2);
+    EXPECT_EQ(answer, question);
+    size_t r = 0;
+    for(int i = 0; i<1000; ++i){
+        r = str2.operator ()();
+        EXPECT_TRUE(r != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+    }
+}
+
 TEST(RNG, Bench){
     // This test can fail, we're looking at threadsafety more than anything else here, -fthreadsanitize should pick
     // up a race on 2e10 calls. 
     n_tools::n_frandom::benchrngs();
+}
+
+TEST(RNG, Rnd){
+    // Find out if the RNG is fair or not.
+    constexpr size_t testsize_rng = 1000000;
+    constexpr size_t testrange = 1000;
+    n_tools::n_frandom::marsaglia_xor_64_s RNGF;
+    std::mt19937_64 RNGSTL;
+    std::uniform_int_distribution<> uidR(1,testrange);
+    std::uniform_int_distribution<> uidS(1,testrange);
+    RNGF.seed(1);
+    RNGSTL.seed(1);
+    n_tools::n_frandom::IncrementalStatistic<double> statL;
+    n_tools::n_frandom::IncrementalStatistic<double> statR;
+    size_t r = 0;
+    for(size_t i = 0; i<testsize_rng; ++i){
+        r = uidR(RNGF);
+        statL.addVal(r);
+        EXPECT_TRUE(r != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+    }
+    size_t s = 0;
+    for(size_t i = 0; i<testsize_rng; ++i){
+        s = uidS(RNGSTL);
+        statR.addVal(s);
+        EXPECT_TRUE(s != 0);    
+    }
+    size_t rvg = statL.mean();
+    size_t svg = statR.mean();
+    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
+    size_t rvv = statL.variance();
+    size_t svv = statR.variance();
+    EXPECT_TRUE(std::abs(rvg - svg) <= 100);
+    
+    size_t rvs = statL.stddev();
+    size_t svs = statR.stddev();
+    
+    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
 }

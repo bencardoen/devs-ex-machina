@@ -28,7 +28,7 @@ project(${PROJECT_NAME})
 # DO NOT use comments in localpreferences.txt
 include ( localpreferences.txt OPTIONAL )
 # Used to check if a compile flag is accepted by the compiler
-# include (TestCXXAcceptsFlag)  # depricated according to the docs
+# include (TestCXXAcceptsFlag)  # deprecated according to the docs
 include(CheckCXXCompilerFlag)   # use this instead
 find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)
@@ -76,6 +76,7 @@ if (${APPLE})
     SET(OPTIMIZATION_FLAG "-O1")
 endif()
 
+# C++ Standards check. We really need C++14 for relaxed constexpr, but we can survive with decent C++11.
 CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -88,6 +89,7 @@ if(COMPILER_SUPPORTS_CXX14)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
     endif()
     # Inform rng's that we can use the cexpr version.
+    # If this is not the case, all the constexpr keywords are removed (at a performance hit)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPP14")
 elseif(COMPILER_SUPPORTS_CXX11)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++11")
@@ -106,18 +108,27 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ -DFRNG "
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0 -DFRNG"
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0 "
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG "
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
+SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
+    CACHE STRING "Flags used by the C++ compiler during benchmark builds."
+    FORCE )
+if(FASTRNG)
+    MESSAGE(STATUS "FASTRNG passed as argument to CMake, this will alter ADEVS' compilation and dxex Release builds.")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFRNG" )
+    # See adevs config lower down.
+endif()
+SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
 
 ### Threadsanitizer ###########################################################
 # If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
@@ -133,6 +144,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else()
         MESSAGE( STATUS"Using G++ : using flto")
         SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG "${CMAKE_CXX_FLAGS_BENCHMARKFRNG} -flto")
 endif()
 ###############################################################################
 
@@ -314,6 +326,15 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
 ### adevs targets ############################################################
 # adevs has its own makefile. Therefore, use that make system instead of writing our own.
 # as a plus: try not to put the adevs library in the same folder as the adevs sources.
+
+# If CMake has the cli param FASTRNG set, switch on fast rngs in adevs, to match our usages of the exact same functions.
+if(FASTRNG)
+    MESSAGE(STATUS "FAST RNG enabled for adevs ? : ${FASTRNG}")
+    SET(ENABLE_FRNG "-DFRNG")
+else()
+    SET(ENABLE_FRNG "")
+endif()
+
 if(ADEVS_ROOT)
     MESSAGE( STATUS "User provided adevs root :" )
     MESSAGE( STATUS ADEVS_ROOT)
@@ -343,7 +364,7 @@ add_executable(adevs_devstone
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
     )
 SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -351,7 +372,7 @@ add_executable(adevs_phold
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
     )
 SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -359,7 +380,7 @@ add_executable(adevs_interconnect
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
     )
 SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -367,7 +388,7 @@ add_executable(adevs_network
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
     )
 SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 

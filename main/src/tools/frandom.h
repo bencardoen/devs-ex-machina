@@ -58,6 +58,7 @@ void testRNG(size_t range, RNGTor rng)
 /**
  * TLocal version of the above.
  */
+inline
 void testRNGF(size_t range, std::function<size_t(void)> rng){
     thread_local std::function<size_t(void)> gen = rng;
     for(size_t i = 0; i<range; ++i){
@@ -89,6 +90,7 @@ struct  xor128s
  * From the paper : Xorshift RNGs George Marsaglia, the xor128 shifter, period 2^128-1
  * Free function variant.
  */
+inline
 size_t 
 xor128(){
     thread_local size_t x=123456789;
@@ -108,14 +110,15 @@ xor128(){
  * Adapted s.t. state is stored thread locally, which doesn't make it thread safe in all usages, but for most.
  * Free function variant.
  */
+inline
 size_t 
 xorwow(){
-    thread_local size_t x=123456789;
-    thread_local size_t y=362436069;
-    thread_local size_t z=521288629;
-    thread_local size_t w=88675123;
-    thread_local size_t v=5783321;
-    thread_local size_t d=6615241;
+    thread_local size_t x=123456789ull;
+    thread_local size_t y=362436069ull;
+    thread_local size_t z=521288629ull;
+    thread_local size_t w=88675123ull;
+    thread_local size_t v=5783321ull;
+    thread_local size_t d=6615241ull;
     thread_local size_t t=(x^(x>>2)); 
     x=y; 
     y=z; 
@@ -134,10 +137,12 @@ struct marsaglia_xor_64_s{
     constexpr size_t max()const{return std::numeric_limits<size_t>::max();}
     size_t _seed;
 
-    constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ll):_seed(sd){;}
+    constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ull):_seed(sd){;}
 
-    
-    void seed(const size_t& sd){_seed=sd;}
+    /**
+     * A seed of zero is nonsensical here, if this is passed in ignore it and use RM's default.
+     */
+    void seed(const size_t& sd){_seed= (sd==0) ? 88172645463325252ull : sd ;}
     
 #ifdef CPP14
     constexpr size_t operator()(){
@@ -151,9 +156,10 @@ struct marsaglia_xor_64_s{
 };
 
 /* Function variant, slower, and not easy to make it t/nt safe.*/
+inline
 unsigned long long int
 xor64(){
-    thread_local unsigned long long int seed = 88172645463325252ll;
+    thread_local unsigned long long int seed = 88172645463325252ull;
     seed ^= (seed<<13);
     seed ^= (seed>>7);
     return (seed^=(seed<<17));
@@ -165,6 +171,7 @@ xor64(){
  * Tests 2 things : speed (invariant) and t-safety, this is a threadsanitizer red flag test. It won't fail
  * gtest, but trigger any race detector if done at large enough scale if there are still issues.
  */
+inline
 int benchrngs() {
     const size_t threadcount = std::min(8u,std::thread::hardware_concurrency());
     constexpr size_t rnglimit = 200000000;
@@ -213,6 +220,64 @@ int benchrngs() {
 #else
     typedef std::mt19937_64 t_fastrng;
 #endif
+    
+/**
+ * Calculate mean/std/var online, based on Knuth's TOACP, originally by Welford.
+ * See the book (v2 3rd ed p 232) for details, also on wiki and a great intro in
+ * http://www.johndcook.com/blog/standard_deviation/
+ */    
+template<typename T>
+class IncrementalStatistic{
+    private:
+        size_t m_cnt;
+        T   m_mkmin;
+        T   m_mk;
+        T   m_smin;
+        T   m_s;
+        
+    public:
+        constexpr IncrementalStatistic():m_cnt(0),m_mkmin(0),m_mk(0),m_smin(0),m_s(0){;}
+        
+        /**
+         * Taocp Book 2, 4.2.2, p 232.
+         * Recurrence rel
+         * m1 = arg, s1=0
+         * mk = mk-1 + (arg - mk-1) / k
+         * sk = sk=1 + (arg - mk-1) * (arg - mk)
+         */
+        // Avoid compile failures on non c++14 std. Need at least G++ 5 for void returning constexpr, and we assign member vars here
+        // which is legal only in constexpr 14.
+#ifdef CPP14
+        constexpr void addVal(const T& v){
+#else
+        void addVal(const T& v){
+#endif
+            if(++m_cnt == 1){
+                m_mkmin = v;
+                m_mk = m_mkmin; // need this for 1 uninit mean
+                m_smin = 0;
+            }else{
+                m_mk = m_mkmin  + (v - m_mkmin)/T(m_cnt);
+                m_s = m_smin + (v - m_mkmin)*(v-m_mk);
+                m_mkmin=m_mk;
+                m_smin=m_s;
+            }
+        }
+        
+        constexpr T mean()const{
+            return (T(m_cnt) < 1) ? 0 : m_mk;   // leq 1, if T fp.
+        }
+        
+        constexpr T stddev()const {
+            return std::sqrt(variance());
+        }
+        
+        constexpr T variance()const{
+            return ( m_cnt <= 1 ) ? 0: (m_s / T(m_cnt-1)); // k>=2
+        }
+        
+        constexpr size_t count()const {return m_cnt;}
+};
     
 }// nfrandom 
 }// ntools (Dear Santa, find me a compiler that doesn't die on a missing brace 15 compilation TU's further.)

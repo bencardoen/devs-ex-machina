@@ -34,7 +34,7 @@
 
 namespace n_devstone {
 
-const t_counter inf = std::numeric_limits<t_counter>::max();
+constexpr t_counter inf = std::numeric_limits<t_counter>::max();
 
 /*
  * ProcessorState

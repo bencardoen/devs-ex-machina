@@ -14,6 +14,8 @@
 #include <limits>
 #include <deque>
 #include <random>
+#include "../../main/src/tools/frandom.h"
+
 
 #ifdef FPTIME
 #define T_0 0.01	//timeadvance may NEVER be 0!
@@ -39,7 +41,12 @@ struct EventPair
 	size_t m_modelNumber;
 	t_eventTime m_procTime;
 };
-typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
+
+#ifdef FRNG
+	typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+	typedef std::mt19937_64 t_randgen;
+#endif
 
 std::size_t getRand(std::size_t event, t_randgen& randgen)
 {
