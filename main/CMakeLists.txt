@@ -76,6 +76,7 @@ if (${APPLE})
     SET(OPTIMIZATION_FLAG "-O1")
 endif()
 
+# C++ Standards check. We really need C++14 for relaxed constexpr, but we can survive with decent C++11.
 CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
@@ -88,6 +89,7 @@ if(COMPILER_SUPPORTS_CXX14)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
     endif()
     # Inform rng's that we can use the cexpr version.
+    # If this is not the case, all the constexpr keywords are removed (at a performance hit)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPP14")
 elseif(COMPILER_SUPPORTS_CXX11)
     MESSAGE(STATUS "c++11 support detected, compiling with -std=c++11")
@@ -122,8 +124,9 @@ SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 if(FASTRNG)
-    MESSAGE(WARNING "FASTRNG passed as argument to CMake, this will alter ADEVS' compilation and dxex Release builds.!!")
+    MESSAGE(STATUS "FASTRNG passed as argument to CMake, this will alter ADEVS' compilation and dxex Release builds.")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFRNG" )
+    # See adevs config lower down.
 endif()
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
 
@@ -314,8 +317,13 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
 ### adevs targets ############################################################
 # adevs has its own makefile. Therefore, use that make system instead of writing our own.
 # as a plus: try not to put the adevs library in the same folder as the adevs sources.
+
+# If CMake has the cli param FASTRNG set, switch on fast rngs in adevs, to match our usages of the exact same functions.
 if(FASTRNG)
-    MESSAGE(STATUS "FAST RNG enabled for adevs ? : --------------> ${FASTRNG}")
+    MESSAGE(STATUS "FAST RNG enabled for adevs ? : ${FASTRNG}")
+    SET(ENABLE_FRNG "-DFRNG")
+else()
+    SET(ENABLE_FRNG "")
 endif()
 
 if(ADEVS_ROOT)
@@ -347,7 +355,7 @@ add_executable(adevs_devstone
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
     )
 SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -355,7 +363,7 @@ add_executable(adevs_phold
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
     )
 SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -363,7 +371,7 @@ add_executable(adevs_interconnect
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
     )
 SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 
@@ -371,7 +379,7 @@ add_executable(adevs_network
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
     )
 SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
                     LINK_FLAGS "-fopenmp"
                     )
 

@@ -1154,3 +1154,29 @@ TEST(RNG, Bench){
     // up a race on 2e10 calls. 
     n_tools::n_frandom::benchrngs();
 }
+
+TEST(RNG, Rnd){
+    // Find out if the RNG is fair or not.
+    constexpr size_t testsize_rng = 1000000;
+    constexpr size_t testrange = 1000;
+    n_tools::n_frandom::marsaglia_xor_64_s RNGF;
+    std::mt19937_64 RNGSTL;
+    std::uniform_int_distribution<> uidR(1,testrange);
+    std::uniform_int_distribution<> uidS(1,testrange);
+    RNGF.seed(1);
+    RNGSTL.seed(1);
+    size_t r = 0;
+    for(size_t i = 0; i<testsize_rng; ++i){
+        r += uidR(RNGF);
+        EXPECT_TRUE(r != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+    }
+    size_t s = 0;
+    for(size_t i = 0; i<testsize_rng; ++i){
+        s += uidS(RNGSTL);
+        EXPECT_TRUE(s != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+    }
+    size_t rvg = r/testsize_rng;
+    size_t svg = s/testsize_rng;
+    std::cout << rvg << std::endl;
+    std::cout << svg << std::endl;
+}
