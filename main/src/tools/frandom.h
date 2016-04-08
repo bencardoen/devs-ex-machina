@@ -221,6 +221,64 @@ int benchrngs() {
     typedef std::mt19937_64 t_fastrng;
 #endif
     
+/**
+ * Calculate mean/std/var online, based on Knuth's TOACP, originally by Welford.
+ * See the book (v2 3rd ed p 232) for details, also on wiki and a great intro in
+ * http://www.johndcook.com/blog/standard_deviation/
+ */    
+template<typename T>
+class IncrementalStatistic{
+    private:
+        size_t m_cnt;
+        T   m_mkmin;
+        T   m_mk;
+        T   m_smin;
+        T   m_s;
+        
+    public:
+        constexpr IncrementalStatistic():m_cnt(0),m_mkmin(0),m_mk(0),m_smin(0),m_s(0){;}
+        
+        /**
+         * Taocp Book 2, 4.2.2, p 232.
+         * Recurrence rel
+         * m1 = arg, s1=0
+         * mk = mk-1 + (arg - mk-1) / k
+         * sk = sk=1 + (arg - mk-1) * (arg - mk)
+         */
+        // Avoid compile failures on non c++14 std. Need at least G++ 5 for void returning constexpr, and we assign member vars here
+        // which is legal only in constexpr 14.
+#ifdef CPP14
+        constexpr void addVal(const T& v){
+#else
+        void addVal(const T& v){
+#endif
+            if(++m_cnt == 1){
+                m_mkmin = v;
+                m_mk = m_mkmin; // need this for 1 uninit mean
+                m_smin = 0;
+            }else{
+                m_mk = m_mkmin  + (v - m_mkmin)/T(m_cnt);
+                m_s = m_smin + (v - m_mkmin)*(v-m_mk);
+                m_mkmin=m_mk;
+                m_smin=m_s;
+            }
+        }
+        
+        constexpr T mean()const{
+            return (T(m_cnt) < 1) ? 0 : m_mk;   // leq 1, if T fp.
+        }
+        
+        constexpr T stddev()const {
+            return std::sqrt(variance());
+        }
+        
+        constexpr T variance()const{
+            return ( m_cnt <= 1 ) ? 0: (m_s / T(m_cnt-1)); // k>=2
+        }
+        
+        constexpr size_t count()const {return m_cnt;}
+};
+    
 }// nfrandom 
 }// ntools (Dear Santa, find me a compiler that doesn't die on a missing brace 15 compilation TU's further.)
 

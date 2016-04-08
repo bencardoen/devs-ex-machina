@@ -1165,18 +1165,29 @@ TEST(RNG, Rnd){
     std::uniform_int_distribution<> uidS(1,testrange);
     RNGF.seed(1);
     RNGSTL.seed(1);
+    n_tools::n_frandom::IncrementalStatistic<double> statL;
+    n_tools::n_frandom::IncrementalStatistic<double> statR;
     size_t r = 0;
     for(size_t i = 0; i<testsize_rng; ++i){
-        r += uidR(RNGF);
+        r = uidR(RNGF);
+        statL.addVal(r);
         EXPECT_TRUE(r != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
     }
     size_t s = 0;
     for(size_t i = 0; i<testsize_rng; ++i){
-        s += uidS(RNGSTL);
-        EXPECT_TRUE(s != 0);    // x64 shifter cannot ever produce a zero, if it does the sequence will converge to zero.
+        s = uidS(RNGSTL);
+        statR.addVal(s);
+        EXPECT_TRUE(s != 0);    
     }
-    size_t rvg = r/testsize_rng;
-    size_t svg = s/testsize_rng;
-    std::cout << rvg << std::endl;
-    std::cout << svg << std::endl;
+    size_t rvg = statL.mean();
+    size_t svg = statR.mean();
+    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
+    size_t rvv = statL.variance();
+    size_t svv = statR.variance();
+    EXPECT_TRUE(std::abs(rvg - svg) <= 100);
+    
+    size_t rvs = statL.stddev();
+    size_t svs = statR.stddev();
+    
+    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
 }
