@@ -214,7 +214,7 @@ fi
 if [ ${#BUILD_RELEASE[@]} -ne 0 ]
   then
   echo "$SCRIPT building debug targets ${BUILD_RELEASE[@]}"
-  make -j$NRCPU $FORCE_BUILD $i ${BUILD_RELEASE[@]}
+  make -j$NRCPU $FORCE_BUILD -DFASTRNG $i ${BUILD_RELEASE[@]}
 fi
 echo "$SCRIPT moving back to parent directory."
 cd ../

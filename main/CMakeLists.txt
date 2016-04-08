@@ -28,7 +28,7 @@ project(${PROJECT_NAME})
 # DO NOT use comments in localpreferences.txt
 include ( localpreferences.txt OPTIONAL )
 # Used to check if a compile flag is accepted by the compiler
-# include (TestCXXAcceptsFlag)  # depricated according to the docs
+# include (TestCXXAcceptsFlag)  # deprecated according to the docs
 include(CheckCXXCompilerFlag)   # use this instead
 find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)
@@ -121,7 +121,11 @@ SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
     "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;FRNG")
+if(FASTRNG)
+    MESSAGE(WARNING "FASTRNG passed as argument to CMake, this will alter ADEVS' compilation and dxex Release builds.!!")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFRNG" )
+endif()
+SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
 
 ### Threadsanitizer ###########################################################
 # If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
@@ -137,6 +141,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else()
         MESSAGE( STATUS"Using G++ : using flto")
         SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG "${CMAKE_CXX_FLAGS_BENCHMARKFRNG} -flto")
 endif()
 ###############################################################################
 
