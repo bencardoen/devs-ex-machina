@@ -18,6 +18,7 @@
 e_DEBUG=0
 e_RELEASE=1
 e_BENCHMARK=2
+e_BENCHMARK=3
 
 #some other values
 SCRIPT="__SCRIPT__:"
@@ -26,6 +27,7 @@ BUILD_DIR="build"
 DEBUG_DIR="Debug"
 RELEASE_DIR="Release"
 BMARK_DIR="Benchmark"
+BMARKFRNG_DIR="BenchmarkFrng"
 COMPILER="g++"
 DOECLIPSE=false
 FORCE_BUILD=""
@@ -35,6 +37,7 @@ BUILDCHOICE=e_DEBUG
 BUILD_DEBUG=()
 BUILD_RELEASE=()
 BUILD_BENCHMARK=()
+BUILD_BENCHMARKFRNG=()
 
 NRCPU=4
 if hash nproc 2>/dev/null;
@@ -72,6 +75,9 @@ case $key in
     -b|--benchmark)
     BUILDCHOICE=$e_BENCHMARK
     ;;
+    -q|--benchmarkfrng)
+    BUILDCHOICE=$e_BENCHMARKFRNG
+    ;;
     -h|--help)
     bold=$(tput bold)
     normal=$(tput sgr0)
@@ -80,6 +86,7 @@ case $key in
     echo "              [-d TARGET [TARGET [...]]]"
     echo "              [-r TARGET [TARGET [...]]]"
     echo "              [-b TARGET [TARGET [...]]]"
+    echo "              [-q TARGET [TARGET [...]]]"
     echo ""
     echo "${bold}parameters:${normal}"
     echo "  -c, --compiler COMPILER"
@@ -100,6 +107,8 @@ case $key in
     echo "           A list of build targets for the Release build type."
     echo "  -b, --benchmark"
     echo "           A list of build targets for the Benchmark build type."
+    echo "  -q, --benchmarkfrng"
+    echo "           A list of build targets for the Benchmark build type, extended with the fast rngs."
     echo ""
     echo "${bold}notes:${normal}"
     echo " - If the script finds a makefile in one of the subfolders,"
@@ -130,6 +139,11 @@ case $key in
         # echo "$SCRIPT benchmark build selected!"
         BUILD_BENCHMARK+=($key)
     fi
+    if [ $BUILDCHOICE = $e_BENCHMARKFRNG ]
+    then
+        # echo "$SCRIPT benchmarkfrng build selected!"
+        BUILD_BENCHMARKFRNG+=($key)
+    fi
     ;;
 esac
 shift # past argument or value
@@ -138,12 +152,14 @@ done
 echo "$SCRIPT debug builds planned: ${BUILD_DEBUG[@]}"
 echo "$SCRIPT release builds planned: ${BUILD_RELEASE[@]}"
 echo "$SCRIPT benchmark builds planned: ${BUILD_BENCHMARK[@]}"
+echo "$SCRIPT benchmarkfrng builds planned: ${BUILD_BENCHMARKFRNG[@]}"
 
 echo "$SCRIPT Setting up basic build environment."
 echo "$SCRIPT data:  main build directory: $BUILD_DIR"
 echo "$SCRIPT data: debug build directory: $BUILD_DIR/$DEBUG_DIR"
 echo "$SCRIPT data: release build directory: $BUILD_DIR/$RELEASE_DIR"
 echo "$SCRIPT data: benchmark build directory: $BUILD_DIR/$BMARK_DIR"
+echo "$SCRIPT data: benchmarkfrng build directory: $BUILD_DIR/$BMARKFRNG_DIR"
 echo "$SCRIPT data: compiler: $COMPILER"
 echo "$SCRIPT data: force delete build folder if it already exists: $FORCE_DELETE"
 echo "$SCRIPT data: number of simultaneous jobs: $NRCPU"
@@ -218,6 +234,21 @@ fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
 
+echo "$SCRIPT moving to ./$BMARKFRNG_DIR"
+mkdir -p $BMARKFRNG_DIR
+cd $BMARKFRNG_DIR
+if [ ! -f "Makefile" ]
+  then
+  cmake -DFASTRNG=ON -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=BenchmarkFrng -DTOTOP="../../" ../../main
+fi
+if [ ${#BUILD_BENCHMARKFRNG[@]} -ne 0 ]
+  then
+  echo "$SCRIPT building debug targets ${BUILD_BENCHMARKFRNG[@]}"
+  make -j$NRCPU $FORCE_BUILD $i ${BUILD_BENCHMARKFRNG[@]}
+fi
+echo "$SCRIPT moving back to parent directory."
+cd ../
+
 if [ "$DOECLIPSE" = true ]
   then
   echo "$SCRIPT generating Eclipse project files."
@@ -237,6 +268,10 @@ for i in "${BUILD_RELEASE[@]}" ; do
 done
 echo "$SCRIPT  -> benchmark"
 for i in "${BUILD_BENCHMARK[@]}" ; do
+  echo "$SCRIPT        $i"
+done
+echo "$SCRIPT  -> benchmarkfrng"
+for i in "${BUILD_BENCHMARKFRNG[@]}" ; do
   echo "$SCRIPT        $i"
 done
 if [ "$DOECLIPSE" = true ]

@@ -1125,7 +1125,7 @@ TEST(LA, Vsched)
 }
 
 TEST(RNG, Iface){
-    n_tools::n_frandom::t_fastrng str2;
+    n_tools::n_frandom::marsaglia_xor_64_s str2;
     std::uniform_int_distribution<> uid(1,10);
     str2.seed(0);
     auto answer = uid(str2);
@@ -1135,7 +1135,7 @@ TEST(RNG, Iface){
 }
 
 TEST(RNG, Rand){
-    n_tools::n_frandom::t_fastrng str2;
+    n_tools::n_frandom::marsaglia_xor_64_s str2;
     std::uniform_int_distribution<> uid(1,10);
     str2.seed(0);
     auto answer = uid(str2);

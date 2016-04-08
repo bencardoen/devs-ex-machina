@@ -56,8 +56,9 @@ struct ToString<n_devstone::ProcessorState>
 
 namespace n_devstone {
 
-typedef std::mt19937_64 t_randgen;
-//typedef n_tools::n_frandom::t_fastrng t_randgen;
+
+typedef n_tools::n_frandom::t_fastrng t_randgen;
+
 
 class Processor : public n_model::AtomicModel<ProcessorState>
 {

@@ -106,18 +106,22 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ -DFRNG "
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0 -DFRNG"
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0 "
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG "
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
-SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark")
+SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
+    CACHE STRING "Flags used by the C++ compiler during benchmark builds."
+    FORCE )
+SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;FRNG")
 
 ### Threadsanitizer ###########################################################
 # If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
@@ -305,6 +309,10 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
 ### adevs targets ############################################################
 # adevs has its own makefile. Therefore, use that make system instead of writing our own.
 # as a plus: try not to put the adevs library in the same folder as the adevs sources.
+if(FASTRNG)
+    MESSAGE(STATUS "FAST RNG enabled for adevs ? : --------------> ${FASTRNG}")
+endif()
+
 if(ADEVS_ROOT)
     MESSAGE( STATUS "User provided adevs root :" )
     MESSAGE( STATUS ADEVS_ROOT)

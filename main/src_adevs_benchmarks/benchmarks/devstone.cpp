@@ -13,6 +13,7 @@
 #include <string>
 #include <limits>
 #include <random>
+#include "../../main/src/tools/frandom.h"
 
 #ifdef FPTIME
 #define T_0 0.0
@@ -35,7 +36,12 @@
 
 typedef adevs::PortValue<std::size_t, int> t_event;
 typedef std::size_t t_counter;
-typedef std::mt19937_64 t_randgen;
+
+#ifdef FRNG
+	typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+	typedef std::mt19937_64 t_randgen;
+#endif
 
 const t_counter inf = std::numeric_limits<t_counter>::max();
 const t_event empty = t_event(0, -1);

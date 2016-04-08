@@ -14,6 +14,8 @@
 #include <limits>
 #include <deque>
 #include <random>
+#include "../../main/src/tools/frandom.h"
+
 
 #ifdef FPTIME
 #define T_0 0.0
@@ -37,7 +39,11 @@ typedef double t_eventTime;
 typedef std::size_t t_payload;
 typedef adevs::PortValue<t_payload, int> t_event;
 
-typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
+#ifdef FRNG
+	typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+	typedef std::mt19937_64 t_randgen;
+#endif
 
 constexpr int outPort = 0;
 constexpr int inPort = 1;
