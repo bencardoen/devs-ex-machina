@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 #endif
 	n_benchmarks_pholdtree::PHOLDTreeConfig config;
 	config.numChildren = 4;
-    config.percentagePriority = 0.1;
+        config.percentagePriority = 0.1;
 	std::size_t depth = 3;
 
 	bool hasError = false;
@@ -113,21 +113,21 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
-        case optPriority:
-            ++i;
-            if(i < argc){
-                config.percentagePriority = toData<double>(std::string(*(++argvc)));
-            } else {
-                std::cout << "Missing argument for option -" << optPriority << '\n';
-            }
-            break;
-		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << helpstr;
-			return 0;
-		default:
-			std::cout << "Unknown argument: " << *argvc << '\n';
-			hasError = true;
-			continue;
+                case optPriority:
+                    ++i;
+                    if(i < argc){
+                        config.percentagePriority = toData<double>(std::string(*(++argvc)));
+                    } else {
+                        std::cout << "Missing argument for option -" << optPriority << '\n';
+                    }
+                    break;
+                case optHelp:
+                        std::cout << "usage: \n\t" << argv[0] << helpstr;
+                        return 0;
+                default:
+                    std::cout << "Unknown argument: " << *argvc << '\n';
+                    hasError = true;
+                    continue;
 		}
 	}
 	if(hasError){

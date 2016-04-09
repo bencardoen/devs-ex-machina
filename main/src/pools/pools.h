@@ -123,14 +123,17 @@ class Pool:public PoolInterface<Object>{
  * @pre std::alignment_of<T>::value >=8 && power of 2.
  * @post ((uintptr_t)returnvalue  % std::alignment_of<T>::value) == 0
  */
+
 template<typename T>
+constexpr
 T* align_ptr(T* raw)
 {
         constexpr size_t algn = std::alignment_of<T>::value;
         static_assert(algn > 7 && n_tools::is_power_2(algn) , "Invalid alignment.");
         uintptr_t ir = (uintptr_t) raw;
         return ((!(ir%algn)) ? raw : (T*) ((ir+algn)&(~(algn-1ull))));
-/**     ^^ == vv
+        /* Constexpr pre c++14 does not allow if/else, but de ternary operator is allowed. */
+/**     ^^ == vv            
         if((ir%algn)==0)
                 return raw;
         else{
