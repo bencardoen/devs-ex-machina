@@ -21,6 +21,7 @@
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include "control/allocator.h"
+#include "tools/frandom.h"
 
 namespace n_benchmarks_pholdtree
 {
@@ -57,7 +58,8 @@ struct ToString<n_benchmarks_pholdtree::PHOLDTreeModelState>
 
 namespace n_benchmarks_pholdtree {
 
-typedef std::mt19937_64 t_randgen;  //don't use the default one. It's not random enough.
+
+typedef n_tools::n_frandom::t_fastrng t_randgen;
 
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {
