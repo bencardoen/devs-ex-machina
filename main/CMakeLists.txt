@@ -128,6 +128,24 @@ if(FASTRNG)
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFRNG" )
     # See adevs config lower down.
 endif()
+
+if(POOL_SINGLE_ARENA)
+    MESSAGE(STATUS "Pools --- type set to single arena.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_SINGLE_ARENA" )
+    # See adevs config lower down.
+endif(POOL_SINGLE_ARENA)
+
+if(POOL_SINGLE_STL)
+    MESSAGE(STATUS "Pools --- type set to single stl.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_SINGLE_STL" )
+    
+endif(POOL_SINGLE_STL)
+
+if(POOL_MULTI_STL)
+    MESSAGE(STATUS "Pools --- Pool type set to multi STL.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_MULTI_STL" )    
+endif(POOL_MULTI_STL)
+
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
 
 ### Threadsanitizer ###########################################################

@@ -25,6 +25,8 @@
 #include "tools/globallog.h"
 #include "tools/flags.h"
 
+// TODO: this code is a perfect example where C++17's transactional support would simplify most of this code to only increment/decrement operations,
+// and make it perfectly safe for any project to use. Shame it's not stable enough to use (yet).
 
 /**
  * A pool is thread local. 
@@ -591,6 +593,7 @@ template<typename Object>
 using spool =  boost::singleton_pool<DXPoolTag, sizeof(Object)>;
 /**
  * Singleton pool, use this if the pool has to be shared between threads.
+ * Too slow to use in our setting.
  */
 template<typename Object> 
 class Pool<Object, spool<Object>>:public PoolInterface<Object>{
@@ -630,25 +633,48 @@ class Pool<Object, spool<Object>>:public PoolInterface<Object>{
                 }
 };
 
+
 /**
- * Registers a pool per thread.
+ * Pool configuration code. 
+ * The problem solved here is 2-part: 
+ *  - Set an appropriate pool type depending on what simulation type a kernel is running.
+ *  - Allow each kernel its own dedicated pool, per object class. 
+ * Since performance is key, we want this resolved at compile time.
+ */
+
+// Allow compile time tuning of the pool types for benchmarking.
+// Single core. This usually means heavy cycles of allocating a lot, then deallocating it all with little
+// persisting beyond a single step. An Arena type pool is perfect for this, once the initial peak has been reached it's just pointer arithmetic.
+template<typename Object>
+#ifdef POOL_SINGLE_ARENA
+using SCObjectPool = DynamicSlabPool<Object>;
+#elif POOL_SINGLE_STL
+// can use STL as well, but it's too slow.
+using SCObjectPool = Pool<Object,std::false_type>;
+#else
+// Boost, same as multicore. Don't rely on the cyclic pattern, but at a cost.
+using SCObjectPool = Pool<Object, boost::pool<>>;
+#endif
+
+
+// Multi core. With conservative, at least some of the pattern will be cyclic, but not enough. For optimistic there is no
+// predicting what happens, so a general purpose pool is needed. 
+// This (excessive memory usage), and not reverts or synchronization, is really what holds optimistic back.
+template<typename Object>
+#ifdef POOL_MULTI_STL
+using MCObjectPool = Pool<Object,std::false_type>;
+#else
+using MCObjectPool = Pool<Object, boost::pool<>>;
+#endif
+
+
+/**
+ * Registers a pool per thread, forward decl.
  * @pre main has called getMainThreadID() at least once as first caller.
  */
 template<typename T>
 PoolInterface<T>* 
 initializePool(size_t psize);
-
-
-/// Register desired pooltypes here.
-// Single core usage
-template<typename Object>
-using SCObjectPool = Pool<Object, boost::pool<>>;
-//using SCObjectPool = DynamicSlabPool<Object>;
-//using SCObjectPool = Pool<Object,std::false_type>;
-// Multicore usage
-template<typename Object>
-using MCObjectPool = Pool<Object, boost::pool<>>;
-//using MCObjectPool = Pool<Object,std::false_type>;
 
 /**
  * Get the thread local pool for type T.
