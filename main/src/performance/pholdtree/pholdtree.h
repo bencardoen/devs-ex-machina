@@ -44,6 +44,9 @@ struct EventPair
 struct PHOLDTreeModelState
 {
     std::deque<EventPair> m_events;
+    std::size_t m_eventsProcessed;
+
+    PHOLDTreeModelState(): m_eventsProcessed(0) { }
 };
 
 } /* namespace n_benchmarks_pholdtree */
@@ -59,17 +62,19 @@ struct ToString<n_benchmarks_pholdtree::PHOLDTreeModelState>
 namespace n_benchmarks_pholdtree {
 
 
-typedef n_tools::n_frandom::t_fastrng t_randgen;
+//typedef n_tools::n_frandom::t_fastrng t_randgen;
+typedef std::mt19937_64 t_randgen;
 
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {
 private:
     mutable std::uniform_int_distribution<std::size_t> m_distDest;
     const double m_percentagePriority;
-    int m_messageCount;
     mutable t_randgen m_rand;   //This object could be a global object, but then we'd need to lock it during parallel simulation.
+    bool m_isRoot;
+    std::size_t m_modelNumber;
 public:
-    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority);
+    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, bool isRoot = false);
     virtual ~PHOLDTreeProcessor();
 
     virtual n_network::t_timestamp timeAdvance() const override;
@@ -91,10 +96,15 @@ public:
 
 struct PHOLDTreeConfig
 {
-    std::size_t numChildren;
-    double percentagePriority;
+    std::size_t numChildren;    //number of children per node
+    std::size_t depth;          //depth of the tree
+    double percentagePriority;  //priority message spawn chance
+    bool spawnAtRoot;           //only root node can spawn
+    bool doubleLinks;           //make links double
+    bool circularLinks;         //make children a circular linked list
     //other configuration?
-    PHOLDTreeConfig(): numChildren(0u), percentagePriority(0.1)
+    PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
+                        doubleLinks(false), circularLinks(false)
     {}
 };
 
@@ -104,7 +114,7 @@ private:
     void finalizeSetup();
 public:
     PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum);
-    PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth);
+    PHOLDTree(const PHOLDTreeConfig& config);
     virtual ~PHOLDTree();
 
     // Adds an output port for a new connection & returns it

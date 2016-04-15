@@ -17,13 +17,15 @@ using namespace n_tools;
 
 LOG_INIT("pholdtree.log")
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-i ITER] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-C] [-D] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
 	"  -n NODES       number of pholdtree nodes per tree node\n"
 	"  -d DEPTH       depth of the pholdtree\n"
     "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
+    "  -C             Enable circular links among the children of the same root.\n"
+    "  -D             Enable double links. This will allow nodes to communicate in counterclockwise order and to their parent.\n"
 	"  -c COREAMT     amount of simulation cores, ignored in classic mode. This should be exactly equal to the n argument!!!\n"
 	"  classic        Run single core simulation.\n"
 	"  cpdevs         Run conservative parallel simulation.\n"
@@ -39,6 +41,8 @@ int main(int argc, char** argv)
 	const char optHelp = 'h';
     const char optPriority = 'p';
 	const char optCores = 'c';
+    const char optDoubleLinks = 'D';
+    const char optCircularLinks = 'C';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -49,7 +53,9 @@ int main(int argc, char** argv)
 	n_benchmarks_pholdtree::PHOLDTreeConfig config;
 	config.numChildren = 4;
     config.percentagePriority = 0.1;
-	std::size_t depth = 3;
+    config.depth = 3;
+    config.circularLinks = false;
+    config.doubleLinks = false;
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
@@ -108,7 +114,7 @@ int main(int argc, char** argv)
 		case optDepth:
 			++i;
 			if(i < argc){
-				depth = toData<std::size_t>(std::string(*(++argvc)));
+			    config.depth = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
@@ -120,6 +126,12 @@ int main(int argc, char** argv)
             } else {
                 std::cout << "Missing argument for option -" << optPriority << '\n';
             }
+            break;
+        case optCircularLinks:
+            config.circularLinks = true;
+            break;
+        case optDoubleLinks:
+            config.doubleLinks = true;
             break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
@@ -145,7 +157,7 @@ int main(int argc, char** argv)
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config, depth);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK
