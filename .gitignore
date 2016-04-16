@@ -1,3 +1,10 @@
 build/*
 main/localpreferences.txt
 testfiles/
+adevs/*
+/sim.dot
+/sim.dot.svg
+/out.txt
+/phold.txt
+/pholdtree.log
+/pholdtree.txt
