@@ -143,12 +143,14 @@ struct marsaglia_xor_64_s{
     constexpr size_t max()const{return std::numeric_limits<size_t>::max();}
     size_t _seed;
 
-    constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ull):_seed(sd){;}
+    constexpr marsaglia_xor_64_s(size_t sd = 88172645463325252ull):_seed(sd){
+        _seed= (sd==0 || sd > (88172645463325252ull/2)) ? 88172645463325252ull : 88172645463325252ull-sd ;
+    }
 
     /**
      * A seed of zero is nonsensical here, if this is passed in ignore it and use RM's default.
      */
-    void seed(const size_t& sd){_seed= (sd==0) ? 88172645463325252ull : sd ;}
+    void seed(const size_t& sd){_seed= (sd==0 || sd > (88172645463325252ull/2)) ? 88172645463325252ull : 88172645463325252ull-sd ;}
     
 #ifdef CPP14
     constexpr size_t operator()(){
@@ -225,8 +227,10 @@ int benchrngs() {
  */
 #ifdef FRNG
     //typedef marsaglia_xor_64_s t_fastrng;
-    typedef boost::random::mt11213b t_fastrng;
+    typedef boost::random::taus88 t_fastrng;
+    //typedef boost::random::mt11213b t_fastrng;
 #else
+    //typedef marsaglia_xor_64_s t_fastrng;
     typedef std::mt19937_64 t_fastrng;
 #endif
     
