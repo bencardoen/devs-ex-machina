@@ -1181,13 +1181,16 @@ TEST(RNG, Rnd){
     }
     size_t rvg = statL.mean();
     size_t svg = statR.mean();
-    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
+    auto mm = std::minmax(rvg,svg);
+    EXPECT_TRUE(mm.second-mm.first <= EPSILON_FPTIME);
     size_t rvv = statL.variance();
     size_t svv = statR.variance();
-    EXPECT_TRUE(std::abs(rvg - svg) <= 100);
+   
+    auto mv = std::minmax(rvv,svv);
+    EXPECT_TRUE(mv.second-mv.first <= 50);
     
     size_t rvs = statL.stddev();
     size_t svs = statR.stddev();
-    
-    EXPECT_TRUE(std::abs(rvg - svg) <= EPSILON_FPTIME);
+    auto md = std::minmax(rvs,svs);
+    EXPECT_TRUE(md.second - md.first <= EPSILON_FPTIME);
 }

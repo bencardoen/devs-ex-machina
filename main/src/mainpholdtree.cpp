@@ -52,10 +52,12 @@ int main(int argc, char** argv)
 #endif
 	n_benchmarks_pholdtree::PHOLDTreeConfig config;
 	config.numChildren = 4;
-    config.percentagePriority = 0.1;
-    config.depth = 3;
-    config.circularLinks = false;
-    config.doubleLinks = false;
+
+        config.percentagePriority = 0.1;
+        config.depth = 3;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
@@ -119,33 +121,34 @@ int main(int argc, char** argv)
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
 			break;
-        case optPriority:
-            ++i;
-            if(i < argc){
-                config.percentagePriority = toData<double>(std::string(*(++argvc)));
-            } else {
-                std::cout << "Missing argument for option -" << optPriority << '\n';
+
+                case optPriority:
+                    ++i;
+                    if(i < argc){
+                        config.percentagePriority = toData<double>(std::string(*(++argvc)));
+                    } else {
+                        std::cout << "Missing argument for option -" << optPriority << '\n';
+                    }
+                    break;
+                case optCircularLinks:
+                    config.circularLinks = true;
+                    break;
+                case optDoubleLinks:
+                    config.doubleLinks = true;
+                    break;
+                case optHelp:
+                    std::cout << "usage: \n\t" << argv[0] << helpstr;
+                    return 0;
+                default:
+                    std::cout << "Unknown argument: " << *argvc << '\n';
+                    hasError = true;
+                    continue;
+                }
             }
-            break;
-        case optCircularLinks:
-            config.circularLinks = true;
-            break;
-        case optDoubleLinks:
-            config.doubleLinks = true;
-            break;
-		case optHelp:
-			std::cout << "usage: \n\t" << argv[0] << helpstr;
-			return 0;
-		default:
-			std::cout << "Unknown argument: " << *argvc << '\n';
-			hasError = true;
-			continue;
-		}
-	}
-	if(hasError){
-		std::cout << "usage: \n\t" << argv[0] << helpstr;
-		return -1;
-	}
+            if(hasError){
+                    std::cout << "usage: \n\t" << argv[0] << helpstr;
+                    return -1;
+            }
 
 	n_control::ControllerConfig conf;
 	conf.m_name = "PHOLDTree";

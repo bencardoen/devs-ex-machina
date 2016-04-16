@@ -18,7 +18,8 @@
 e_DEBUG=0
 e_RELEASE=1
 e_BENCHMARK=2
-e_BENCHMARK=3
+# This v type is used for any permutation of different compile time parameters, (FRNG, pools, ..)
+e_BENCHMARKFRNG=3
 
 #some other values
 SCRIPT="__SCRIPT__:"
@@ -32,6 +33,7 @@ COMPILER="g++"
 DOECLIPSE=false
 FORCE_BUILD=""
 FORCE_DELETE=false
+EXTRA_ARGS=""
 
 BUILDCHOICE=e_DEBUG
 BUILD_DEBUG=()
@@ -78,6 +80,11 @@ case $key in
     -q|--benchmarkfrng)
     BUILDCHOICE=$e_BENCHMARKFRNG
     ;;
+    -x|--extra)
+    EXTRA_ARGS="$EXTRA_ARGS $2"
+    shift
+    echo "Setting $EXTRA_ARGS as optional argument string for cmake."
+    ;;
     -h|--help)
     bold=$(tput bold)
     normal=$(tput sgr0)
@@ -109,6 +116,10 @@ case $key in
     echo "           A list of build targets for the Benchmark build type."
     echo "  -q, --benchmarkfrng"
     echo "           A list of build targets for the Benchmark build type, extended with the fast rngs."
+    echo "  -x, --extra ARGS"
+    echo "           pass ARGS to CMake, if you need to override any compile time setting. Example : \"-DFASTRNG=ON -DPOOL_SINGLE_ARENA_DYNAMIC\" "
+    echo "       legal:  -D{POOL_SINGLE_ARENA | POOL_SINGLE_STL | POOL_MULTI_STL | FASTRNG}=ON Note that benchmarkfrng implies FRNG"
+    echo "       obviously only 1 value applies to SINGLE, and these extra args are passed only to the benchmark target"
     echo ""
     echo "${bold}notes:${normal}"
     echo " - If the script finds a makefile in one of the subfolders,"
@@ -194,7 +205,7 @@ mkdir -p $DEBUG_DIR
 cd $DEBUG_DIR
 if [ ! -f "Makefile" ]
   then
-  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../../" ../../main
+  cmake "$CMAKE_ARG_STRING" -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../../" ../../main
 fi
 if [ ${#BUILD_DEBUG[@]} -ne 0 ]
   then
@@ -209,12 +220,12 @@ mkdir -p $RELEASE_DIR
 cd $RELEASE_DIR
 if [ ! -f "Makefile" ]
   then
-  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Release -DTOTOP="../../" ../../main
+  cmake $EXTRA_ARGS -DCMAKE_CXX_COMPILER=$COMPILER -DFASTRNG=ON -DCMAKE_BUILD_TYPE=Release -DTOTOP="../../" ../../main
 fi
 if [ ${#BUILD_RELEASE[@]} -ne 0 ]
   then
   echo "$SCRIPT building debug targets ${BUILD_RELEASE[@]}"
-  make -j$NRCPU $FORCE_BUILD -DFASTRNG $i ${BUILD_RELEASE[@]}
+  make -j$NRCPU $FORCE_BUILD $i ${BUILD_RELEASE[@]}
 fi
 echo "$SCRIPT moving back to parent directory."
 cd ../
@@ -224,7 +235,7 @@ mkdir -p $BMARK_DIR
 cd $BMARK_DIR
 if [ ! -f "Makefile" ]
   then
-  cmake -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=Benchmark -DTOTOP="../../" ../../main
+  cmake $EXTRA_ARGS -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_BUILD_TYPE=Benchmark -DTOTOP="../../" ../../main
 fi
 if [ ${#BUILD_BENCHMARK[@]} -ne 0 ]
   then
@@ -239,7 +250,7 @@ mkdir -p $BMARKFRNG_DIR
 cd $BMARKFRNG_DIR
 if [ ! -f "Makefile" ]
   then
-  cmake -DFASTRNG=ON -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=BenchmarkFrng -DTOTOP="../../" ../../main
+  cmake $EXTRA_ARGS -DFASTRNG=ON -DCMAKE_CXX_COMPILER="$COMPILER" -DCMAKE_BUILD_TYPE=BenchmarkFrng -DTOTOP="../../" ../../main
 fi
 if [ ${#BUILD_BENCHMARKFRNG[@]} -ne 0 ]
   then
