@@ -82,11 +82,11 @@ EventTime PHOLDTreeProcessor::getProcTime(EventTime event) const
 size_t PHOLDTreeProcessor::getNextDestination(size_t event) const
 {
     m_rand.seed(event);
-    std::cerr << "seed = " << event <<  "\n";
+    //std::cerr << "seed = " << event <<  "\n";
     if(m_oPorts.empty())
         return nullDestination;
     size_t chosen = m_distDest(m_rand);
-    std::cerr << m_modelNumber << " choosing from [" << m_distDest.min() << ", " << m_distDest.max() << "] = " << chosen << "\n";
+    //std::cerr << m_modelNumber << " choosing from [" << m_distDest.min() << ", " << m_distDest.max() << "] = " << chosen << "\n";
     LOG_INFO("[PHOLDTree] - Picked local: ", chosen);
     return chosen;
 }
@@ -210,7 +210,7 @@ PHOLDTree::PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size
     addSubModel(mainChild);
     ++itemNum;
     std::size_t counterMax = config.numChildren + (config.circularLinks? 0:-1);
-
+    
     if(depth == 0) {
         //create all simple children
         for(std::size_t i = 0; i < config.numChildren; ++i) {

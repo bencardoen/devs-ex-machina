@@ -177,7 +177,7 @@ inline
 int benchrngs() {
     
     const size_t threadcount = std::min(8u,std::thread::hardware_concurrency());
-    constexpr size_t rnglimit = 200000000;
+    constexpr size_t rnglimit = 2000000;
     //std::cout << "#Threadcount = " << threadcount << std::endl;
     //std::cout << "#Rng limit  = " << rnglimit << std::endl;
     std::vector<std::thread> threads;
