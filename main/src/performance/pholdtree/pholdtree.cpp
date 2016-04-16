@@ -161,10 +161,9 @@ void PHOLDTreeProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
         LOG_INFO("[PHOLDTree] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
         m_oPorts[dest]->createMessages(r, msgs);
         LOG_INFO("[PHOLDTree] - ",getName()," Ports created ", msgs.size(), " messages.");
-    }else
-        {
-                LOG_WARNING("[PHOLDTree] - ",getName()," no events on state ?!");
-        }
+    } else {
+        LOG_WARNING("[PHOLDTree] - ",getName()," no events on state ?!");
+    }
 }
 
 

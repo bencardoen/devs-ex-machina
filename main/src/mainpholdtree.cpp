@@ -26,7 +26,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [
     "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
     "  -C             Enable circular links among the children of the same root.\n"
     "  -D             Enable double links. This will allow nodes to communicate in counterclockwise order and to their parent.\n"
-	"  -c COREAMT     amount of simulation cores, ignored in classic mode. This should be exactly equal to the n argument!!!\n"
+	"  -c COREAMT     amount of simulation cores, ignored in classic mode.\n"
 	"  classic        Run single core simulation.\n"
 	"  cpdevs         Run conservative parallel simulation.\n"
 	"  opdevs|pdevs   Run optimistic parallel simulation.\n"

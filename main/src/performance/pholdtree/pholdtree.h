@@ -67,7 +67,12 @@ namespace n_benchmarks_pholdtree {
 //typedef boost::random::mt11213b t_randgen;
 //typedef n_tools::n_frandom::marsaglia_xor_64_s t_randgen;
 //typedef std::mt19937_64 t_randgen;
-typedef n_tools::n_frandom::t_fastrng t_randgen;
+//typedef n_tools::n_frandom::t_fastrng t_randgen;
+#ifdef FRNG
+    typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+    typedef std::mt19937_64 t_randgen;
+#endif
 
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {

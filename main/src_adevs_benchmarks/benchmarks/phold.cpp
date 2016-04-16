@@ -22,13 +22,13 @@
 #define T_100 1.0
 #define T_STEP 0.01
 #define T_125 1.25
-#define T_INF 2.0
+#define T_INF std::numeric_limits<double>::max()
 #else
 #define T_0 1.0	//timeadvance may NEVER be 0!
 #define T_100 100.0
 #define T_STEP 1.0
 #define T_125 125.0
-#define T_INF 200.0
+#define T_INF std::numeric_limits<double>::max()
 #endif
 
 typedef double t_eventTime;

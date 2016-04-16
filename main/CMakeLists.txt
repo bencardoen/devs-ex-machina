@@ -377,6 +377,14 @@ SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
                     LINK_FLAGS "-fopenmp"
                     )
 
+add_executable(adevs_pholdtree
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/pholdtree.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
 add_executable(adevs_interconnect
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
     )
