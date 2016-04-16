@@ -134,7 +134,7 @@ T* align_ptr(T* raw)
         static_assert(algn > 7 && n_tools::is_power_2(algn) , "Invalid alignment.");
         uintptr_t ir = (uintptr_t) raw;
         return ((!(ir%algn)) ? raw : (T*) ((ir+algn)&(~(algn-1ull))));
-        /* Constexpr pre c++14 does not allow if/else, but de ternary operator is allowed. */
+        /* Constexpr pre c++14 does not allow if/else, but the ternary operator is allowed. */
 /**     ^^ == vv            
         if((ir%algn)==0)
                 return raw;
@@ -647,7 +647,6 @@ class Pool<Object, spool<Object>>:public PoolInterface<Object>{
 // persisting beyond a single step. An Arena type pool is perfect for this, once the initial peak has been reached it's just pointer arithmetic.
 template<typename Object>
 #ifdef POOL_SINGLE_ARENA
-// Will crash hard if size is set incorrect.
 using SCObjectPool = SlabPool<Object>;
 #elif POOL_SINGLE_ARENA_DYNAMIC
 using SCObjectPool = DynamicSlabPool<Object>;
@@ -687,7 +686,7 @@ template<typename T>
 PoolInterface<T>*
 getPool()
 {
-        thread_local constexpr size_t initpoolsize = 128;     // Could be just static.
+        thread_local constexpr size_t initpoolsize = 5000;     // Could be just static.
         thread_local std::unique_ptr<PoolInterface<T>> pool(initializePool<T>(initpoolsize));
         return pool.get();
 }
