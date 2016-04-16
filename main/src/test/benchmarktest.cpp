@@ -19,6 +19,7 @@
 #include "tools/stringtools.h"
 #include "control/allocator.h"
 #include "test/compare.h"
+#include "performance/pholdtree/pholdtree.h"
 
 
 using namespace n_control;
@@ -473,3 +474,74 @@ TEST(Benchmark, connect_cons_r)
 
     LOG_MOVE("out.txt", true);
 }
+
+TEST(Benchmark, pholdtree_single)
+{
+        LOG_MOVE("logs/bmarkPholdtreeSingle.log", false);
+        n_benchmarks_pholdtree::PHOLDTreeConfig config;
+	config.numChildren = 4;
+        config.percentagePriority = 0.1;
+        config.depth = 3;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+
+	bool hasError = false;
+	n_control::SimType simType = n_control::SimType::CLASSIC;
+	std::size_t coreAmt = 4;
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLDTree";
+	conf.m_simType = simType;
+	conf.m_coreAmount = 4;
+	conf.m_saveInterval = 5;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
+
+	auto ctrl = conf.createController();
+	t_timestamp endTime(eTime, 0);
+	ctrl->setTerminationTime(endTime);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+	ctrl->addModel(d);
+        std::ofstream filestream(SUBTESTFOLDER "pholdtreeSingle.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		ctrl->simulate();
+	};
+
+	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtreeSingle.txt", SUBTESTFOLDER "pholdtreeSingle.corr"), 0);
+        LOG_MOVE("out.txt", true);
+}
+
+TEST(Benchmark, pholdtree_opt)
+{
+        LOG_MOVE("logs/bmarkPholdtreeOpt.log", false);
+        n_benchmarks_pholdtree::PHOLDTreeConfig config;
+	config.numChildren = 4;
+        config.percentagePriority = 0.1;
+        config.depth = 3;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+
+	bool hasError = false;
+	n_control::SimType simType = n_control::SimType::OPTIMISTIC;
+	std::size_t coreAmt = 4;
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLDTree";
+	conf.m_simType = simType;
+	conf.m_coreAmount = 4;
+	conf.m_saveInterval = 5;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
+
+	auto ctrl = conf.createController();
+	t_timestamp endTime(eTime, 0);
+	ctrl->setTerminationTime(endTime);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+	ctrl->addModel(d);
+        std::ofstream filestream(SUBTESTFOLDER "pholdtreeOptimistic.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		ctrl->simulate();
+	};
+
+	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtreeOptimistic.txt", SUBTESTFOLDER "pholdtreeOptimistic.corr"), 0);
+        LOG_MOVE("out.txt", true);
+}
+

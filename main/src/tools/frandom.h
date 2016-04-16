@@ -19,6 +19,7 @@
 #include <boost/progress.hpp>
 #include <thread>
 #include <fstream>
+#include <chrono>
 #include <typeinfo>
 #include <chrono>
 
@@ -151,7 +152,8 @@ struct marsaglia_xor_64_s{
 #endif
         _seed ^= (_seed<<13);
         _seed ^= (_seed>>7);
-        return (_seed^=(_seed<<17));
+        size_t tmp = _seed<<17;
+        return (_seed^=tmp);
     }
 };
 
@@ -173,8 +175,9 @@ xor64(){
  */
 inline
 int benchrngs() {
+    
     const size_t threadcount = std::min(8u,std::thread::hardware_concurrency());
-    constexpr size_t rnglimit = 200000000;
+    constexpr size_t rnglimit = 2000000;
     //std::cout << "#Threadcount = " << threadcount << std::endl;
     //std::cout << "#Rng limit  = " << rnglimit << std::endl;
     std::vector<std::thread> threads;
@@ -191,9 +194,9 @@ int benchrngs() {
     std::vector<std::string> dsc={{"Knuth","MT19937_64(STL)","TAUS88","MT11213b", "MarsagliaXOR128", "Marsagliaxwow", "Marsaglia64"}};
     std::vector<std::function<size_t(void)>> rngs = {{rngknuth, rngmatso, rngtauss, rngmt12, str,  xwow, str2}};
     for(size_t j = 1; j<rngs.size(); ++j){ // Skip Knuth, it simply explodes (exponential)
-        //std::cout << "# " << dsc[j] << std::endl;
+        std::cout << "# " << dsc[j] << std::endl;
         for(size_t q = 5; q!=0; --q ){
-            //chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
             //boost::progress_timer ptime;
             for(size_t i = 0; i< threadcount; ++i){
                 threads.emplace_back(std::thread( testRNGF, rnglimit>>q, rngs.at(j)));
@@ -203,9 +206,9 @@ int benchrngs() {
             }
             threads.clear();    // How about not invoking death by recalling dead threads.
             // ptime RAII's , prints collected time.
-            //chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
-            //auto duration = chrono::duration_cast<chrono::milliseconds>( t2 - t1 ).count();
-            //std::cout << (rnglimit>>q) << ",\t" <<  duration << std::endl;
+            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
+            std::cout << (rnglimit>>q) << ",\t" <<  duration << std::endl;
         }
     }    
     return 0;
@@ -216,7 +219,8 @@ int benchrngs() {
  * Define which rng the project uses.
  */
 #ifdef FRNG
-    typedef marsaglia_xor_64_s t_fastrng;
+    //typedef marsaglia_xor_64_s t_fastrng;
+    typedef boost::random::mt11213b t_fastrng;
 #else
     typedef std::mt19937_64 t_fastrng;
 #endif

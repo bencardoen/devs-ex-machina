@@ -208,6 +208,7 @@ add_executable(${PROJECT_NAME}
     #src/examples/forestfire/firespread.cpp
     src/performance/devstone/devstone.cpp
     src/performance/phold/phold.cpp
+    src/performance/pholdtree/pholdtree.cpp
     src/performance/highInterconnect/hinterconnect.cpp
     src/test/toolstest.cpp
     src/test/coretest.cpp
