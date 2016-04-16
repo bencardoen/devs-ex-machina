@@ -485,7 +485,6 @@ TEST(Benchmark, pholdtree_single)
         config.circularLinks = false;
         config.doubleLinks = false;
 
-	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
         n_control::ControllerConfig conf;
 	conf.m_name = "PHOLDTree";
@@ -519,7 +518,6 @@ TEST(Benchmark, pholdtree_opt)
         config.circularLinks = false;
         config.doubleLinks = false;
 
-	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::OPTIMISTIC;
         n_control::ControllerConfig conf;
 	conf.m_name = "PHOLDTree";
