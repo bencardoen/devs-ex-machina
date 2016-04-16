@@ -227,7 +227,7 @@ int benchrngs() {
  */
 #ifdef FRNG
     //typedef marsaglia_xor_64_s t_fastrng;
-    typedef boost::random::taus88 t_randgen;
+    typedef boost::random::taus88 t_fastrng;
     //typedef boost::random::mt11213b t_fastrng;
 #else
     //typedef marsaglia_xor_64_s t_fastrng;
