@@ -647,6 +647,9 @@ class Pool<Object, spool<Object>>:public PoolInterface<Object>{
 // persisting beyond a single step. An Arena type pool is perfect for this, once the initial peak has been reached it's just pointer arithmetic.
 template<typename Object>
 #ifdef POOL_SINGLE_ARENA
+// Will crash hard if size is set incorrect.
+using SCObjectPool = SlabPool<Object>;
+#elif POOL_SINGLE_ARENA_DYNAMIC
 using SCObjectPool = DynamicSlabPool<Object>;
 #elif POOL_SINGLE_STL
 // can use STL as well, but it's too slow.

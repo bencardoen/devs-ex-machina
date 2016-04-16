@@ -64,7 +64,7 @@ parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=mul
 parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
     help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
-parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=90,
+parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=190,
     help="[default: 90] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
     )
 parser.add_argument("-b", "--backup", action="store_true",
@@ -152,7 +152,7 @@ def interconnectgen(simtype, executable, doRandom=False):
     if simtype == simtypes.classic:
         # time 5 000 000
         for width in [10, 20, 30, 40, 50, 60, 70]:
-            for endTime in [1000000]:
+            for endTime in [10000000]:
                 yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-t', endTime]))
                 # return
     else:
