@@ -20,6 +20,7 @@
 #include <cinttypes>
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
+#include <boost/random.hpp>
 #include "control/allocator.h"
 #include "tools/frandom.h"
 
@@ -62,8 +63,11 @@ struct ToString<n_benchmarks_pholdtree::PHOLDTreeModelState>
 namespace n_benchmarks_pholdtree {
 
 
-//typedef n_tools::n_frandom::t_fastrng t_randgen;
-typedef std::mt19937_64 t_randgen;
+//typedef boost::random::taus88 t_randgen;
+//typedef boost::random::mt11213b t_randgen;
+//typedef n_tools::n_frandom::marsaglia_xor_64_s t_randgen;
+//typedef std::mt19937_64 t_randgen;
+typedef n_tools::n_frandom::t_fastrng t_randgen;
 
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {
