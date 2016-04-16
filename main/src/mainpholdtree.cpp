@@ -160,7 +160,8 @@ int main(int argc, char** argv)
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+	n_benchmarks_pholdtree::allocateTree(d, config, coreAmt);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK

@@ -10,6 +10,7 @@
 
 #include <performance/pholdtree/pholdtree.h>
 #include <limits>
+#include <cmath>
 
 #ifdef FPTIME
 #define T_0 0.01    //timeadvance may NEVER be 0!
@@ -293,6 +294,55 @@ void PHOLDTree::finalizeSetup()
 
 PHOLDTree::~PHOLDTree()
 { }
+
+void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& config, std::size_t numCores) {
+    //precompute number of items per core
+    if(numCores < 2) return; // no multithreading, all is automatically allocated on one core.
+    const std::size_t p = config.numChildren;
+    const std::size_t d = config.depth+2;   //+ 2 because the tree is actually 2 layers larger because we put a PHOLDTree at level 0
+    const std::size_t numItems = std::ceil(double(std::pow(p, d) - 1) / ((p - 1)*numCores));
+    std::size_t curNumChildren = 0;
+    int curCore = 0;
+    //need breadth-first search through the entire tree
+    std::deque<n_model::t_modelptr> todoList;
+    todoList.push_back(std::static_pointer_cast<n_model::t_modelptr::element_type>(root));
+    while(todoList.size()) {
+        //get the top item
+        n_model::t_modelptr top = todoList.front();
+        todoList.pop_front();
+        //test if it is a PHOLDTree item
+        auto treeTop = std::dynamic_pointer_cast<PHOLDTree>(top);
+        if(treeTop != nullptr) {
+            //add the main child of the item
+            const auto& components  = treeTop->getComponents();
+            auto mnChild = std::static_pointer_cast<PHOLDTreeProcessor>(components[0]);
+            mnChild->setCorenumber(curCore);
+            std::cerr << "allocating " << mnChild->getName() << " to " << curCore << "\n";
+            ++curNumChildren;
+            if(curNumChildren == numItems) {
+                ++curCore;
+                curNumChildren = 0;
+            }
+            //add the other children to the todoList
+            todoList.insert(todoList.end(), components.begin()+1, components.end());
+        } else {
+            //from here on, everything must be a normal PHOLDTreeProcessor
+            todoList.push_front(top);
+            while(todoList.size()) {
+                n_model::t_modelptr itop = todoList.front();
+                todoList.pop_front();
+                auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(itop);
+                procItem->setCorenumber(curCore);
+                std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
+                ++curNumChildren;
+                if(curNumChildren == numItems) {
+                    ++curCore;
+                    curNumChildren = 0;
+                }
+            }
+        }
+    }
+}
 
 } /* namespace n_benchmarks_pholdtree */
 

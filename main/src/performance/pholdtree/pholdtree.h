@@ -132,6 +132,10 @@ public:
     n_model::t_portptr endConnection();
 };
 
+//try to allocate the PHOLDTree layer by layer
+void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& config, std::size_t numCores);
+
+//this allocator will simply either keep the current allocation or just assign a core at random
 class PHoldTreeAlloc: public n_control::Allocator
 {
 private:
@@ -146,23 +150,18 @@ public:
         PHoldTreeAlloc(): m_maxn(0), m_n(0), m_nodes_per_core(0)
     {
     }
-    virtual size_t allocate(const n_model::t_atomicmodelptr&){
-
+    virtual size_t allocate(const n_model::t_atomicmodelptr& ptr){
+        if(ptr->getCorenumber() >= 0)
+            return ptr->getCorenumber();
         return (m_n++)%coreAmount();
     }
 
     virtual void allocateAll(const std::vector<n_model::t_atomicmodelptr>& models){
-        //temporary implementation
-        //better implementations are to come
-        /**
-         *  Given that we have N models, C simulation cores and Phold : #nodes = A, #apn=S.
-         *  We want to allocate each N's submodels to exactly 1 core.
-         *  Ideally this would correspond with a the N identifier for the subnodes, but we don't seem
-         *  to store this so distribute the list of generated models in stripes of length (size/cores).
-         *  If A does not match C, it is useless to run phold. (R is void of any meaning then).
-         */
-        for(auto& i: models)
+        //calculate the amount of items per core
+
+        for(auto& i: models) {
             i->setCorenumber(allocate(i));
+        }
     }
 };
 
