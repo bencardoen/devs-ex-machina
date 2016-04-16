@@ -89,10 +89,12 @@ pholdEx = "./build/Benchmark/dxexmachina_phold"
 connectEx = "./build/Benchmark/dxexmachina_interconnect"
 networkEx = "./build/Benchmark/dxexmachina_network"
 priorityEx = "./build/Benchmark/dxexmachina_priority"
+pholdtreeEx = "./build/Benchmark/dxexmachina_pholdtree"
 adevstoneEx = "./build/Benchmark/adevs_devstone"
 adevpholdEx = "./build/Benchmark/adevs_phold"
 adevconnectEx = "./build/Benchmark/adevs_interconnect"
 adevnetworkEx = "./build/Benchmark/adevs_network"
+adevpholdtreeEx = "./build/Benchmark/adevs_pholdtree"
 
 # different simulation types
 SimType = namedtuple('SimType', 'classic optimistic conservative')
@@ -212,10 +214,30 @@ def prioritygen(simtype, executable):
                     yield list(chain([executable, simtype[0]], ['-n', n, '-p', p, '-m', m, '-t', endTime]))
                     # return
 
+def pholdtreegen(simtype, executable):
+    if simtype == simtypes.classic :
+        for fanout in [3]:
+            for depth in [3]:  
+                for endTime in [500000]:
+                    yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-t', endTime]))
+    else:
+        oldNumCores = simtype[-1]
+        for core in range(2, args.cores+1, 1):
+            simtype[-1] = core
+            for fanout in [3]:
+                for depth in [3]:  # , 4, 8, 16]:
+                    for endTime in [500000]:
+                        yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-t', endTime]))
+                      
+        simtype[-1]=oldNumCores
+
+lenParallelPholdTree = len(list(chain(["devExec"], simtypes.optimistic, ['-w', 0, '-d', 0, '-t', 0])))
 
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelDevstone else 1, x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"% priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPhold else 1, x[-11], x[-9], x[-7], x[-5], x[-3]*100.0, x[-1])]
+# TODO Check this, placeholder copy
+pholdTreeArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"depth"{0}"children"{0}"iterations"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPholdTree else 1, x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelConnect else 1, x[-3], x[-1])]
 networktArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelNetwork else 1, x[-3], x[-1])]
 priorityArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), 2 if [1] != "classic" else 1, x[-7], x[-5], x[-3], x[-1])]
@@ -248,11 +270,13 @@ if __name__ == '__main__':
     dxpholdc = partial(unifiedCompiler, 'dxexmachina_phold', args.force)
     dxconnectc = partial(unifiedCompiler, 'dxexmachina_interconnect', args.force)
     dxnetworkc = partial(unifiedCompiler, 'dxexmachina_network', args.force)
+    dxpholdtreec = partial(unifiedCompiler, 'dxexmachina_pholdtree', args.force)
     dxpriorityc = partial(unifiedCompiler, 'dxexmachina_priority', args.force)
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
     aconnectc = partial(unifiedCompiler, 'adevs_interconnect', args.force)
     anetworkc = partial(unifiedCompiler, 'adevs_network', args.force)
+    apholdc = partial(unifiedCompiler, 'adevs_pholdtree', args.force)
     dxdevstone = SimType(
         defaults.Benchmark('devstone/classic', dxdevc, partial(devstonegen, simtypes.classic, devstoneEx), "dxexmachina devstone, classic"),
         defaults.Benchmark('devstone/optimistic', dxdevc, partial(devstonegen, simtypes.optimistic, devstoneEx), "dxexmachina devstone, optimistic"),
@@ -302,6 +326,11 @@ if __name__ == '__main__':
         None,
         defaults.Benchmark('priority/optimistic', dxpriorityc, partial(prioritygen, simtypes.optimistic, priorityEx), "dxexmachina priority model, optimistic"),
         defaults.Benchmark('priority/conservative', dxpriorityc, partial(prioritygen, simtypes.conservative, priorityEx), "dxexmachina priority model, conservative"),
+        )
+    dxpholdtree = SimType(
+        defaults.Benchmark('pholdtree/classic', dxpholdc, partial(pholdtreegen, simtypes.classic, pholdtreeEx), "dxexmachina pholdtree, classic"),
+        defaults.Benchmark('pholdtree/optimistic', dxpholdc, partial(pholdtreegen, simtypes.optimistic, pholdtreeEx), "dxexmachina pholdtree, optimistic"),
+        defaults.Benchmark('pholdtree/conservative', dxpholdc, partial(pholdtreegen, simtypes.conservative, pholdtreeEx), "dxexmachina pholdtree, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -353,7 +382,7 @@ if __name__ == '__main__':
                     dxconnect, dxrandconnect,
                     dxconnect_speedup,
                     dxnetwork, dxfeednetwork,
-                    dxpriority,
+                    dxpriority, dxpholdtree,
                     adevstone, aranddevstone,
                     aphold,aphold_remotes,
                     aconnect, arandconnect,
@@ -364,7 +393,7 @@ if __name__ == '__main__':
                       connectArg, connectArg,
                       connectArg,
                       networktArg, networktArg,
-                      priorityArg,
+                      priorityArg, pholdTreeArg,
                       devsArg, devsArg,
                       pholdArg, pholdArg,
                       connectArg, connectArg,
