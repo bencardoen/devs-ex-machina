@@ -51,8 +51,9 @@ namespace n_frandom{
 template<typename RNGTor>
 void testRNG(size_t range, RNGTor rng)
 {
+    thread_local volatile size_t r;
     for(size_t i = 0; i<range; ++i){
-        volatile auto r = rng();        
+        r = rng();        
     }
 }
 
@@ -63,8 +64,12 @@ inline
 void testRNGF(size_t range, std::function<size_t(void)> rng){
     thread_local std::function<size_t(void)> gen = rng;
     for(size_t i = 0; i<range; ++i){
-        volatile auto r = gen();        
+        gen();        
     }
+    // There is no point assigning the value of gen(), even with static storage and volatile, the compiler 
+    // sees what we try to avoid, and does it anyway. The whole loop is constexpr, it can calculate it at compile
+    // time if it chooses. with thread_local volatile size_t r = 0; // for.. // r=gen(); you still get warnings that
+    // r is not used.
 }
 
 /**

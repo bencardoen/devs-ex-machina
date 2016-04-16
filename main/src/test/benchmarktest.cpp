@@ -487,7 +487,6 @@ TEST(Benchmark, pholdtree_single)
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
-	std::size_t coreAmt = 4;
         n_control::ControllerConfig conf;
 	conf.m_name = "PHOLDTree";
 	conf.m_simType = simType;
@@ -522,7 +521,6 @@ TEST(Benchmark, pholdtree_opt)
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::OPTIMISTIC;
-	std::size_t coreAmt = 4;
         n_control::ControllerConfig conf;
 	conf.m_name = "PHOLDTree";
 	conf.m_simType = simType;
