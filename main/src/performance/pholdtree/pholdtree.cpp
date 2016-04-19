@@ -313,20 +313,25 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
         //test if it is a PHOLDTree item
         auto treeTop = std::dynamic_pointer_cast<PHOLDTree>(top);
         if(treeTop != nullptr) {
-            //add the main child of the item
             const auto& components  = treeTop->getComponents();
-            auto mnChild = std::static_pointer_cast<PHOLDTreeProcessor>(components[0]);
-            mnChild->setCorenumber(curCore);
-            std::cerr << "allocating " << mnChild->getName() << " to " << curCore << "\n";
-            ++curNumChildren;
-            if(curNumChildren == numItems) {
-                ++curCore;
-                curNumChildren = 0;
+            if(config.depthFirstAlloc) {
+                //just add everything in reverse order to the front of the todo list
+                todoList.insert(todoList.begin(), components.rbegin(), components.rend());
+            } else {
+                //add the main child of the item
+                auto mnChild = std::static_pointer_cast<PHOLDTreeProcessor>(components[0]);
+                mnChild->setCorenumber(curCore);
+                std::cerr << "allocating " << mnChild->getName() << " to " << curCore << "\n";
+                ++curNumChildren;
+                if(curNumChildren == numItems) {
+                    ++curCore;
+                    curNumChildren = 0;
+                }
+                //add the other children to the todoList
+                todoList.insert(todoList.end(), components.begin()+1, components.end());
             }
-            //add the other children to the todoList
-            todoList.insert(todoList.end(), components.begin()+1, components.end());
-        } else {
-            //from here on, everything must be a normal PHOLDTreeProcessor
+        } else if(!config.depthFirstAlloc){
+            //from here on, everything must be a normal PHOLDTreeProcessor in breadth first search.
             todoList.push_front(top);
             while(todoList.size()) {
                 n_model::t_modelptr itop = todoList.front();
@@ -339,6 +344,16 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
                     ++curCore;
                     curNumChildren = 0;
                 }
+            }
+        } else {
+            //depth first search encounter of a PHOLDTreeProcessor
+            auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(top);
+            procItem->setCorenumber(curCore);
+            std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
+            ++curNumChildren;
+            if(curNumChildren == numItems) {
+                ++curCore;
+                curNumChildren = 0;
             }
         }
     }

@@ -103,9 +103,10 @@ struct PHOLDTreeConfig
     bool spawnAtRoot;           //only root node can spawn
     bool doubleLinks;           //make links double
     bool circularLinks;         //make children a circular linked list
+    bool depthFirstAlloc;       //whether or not to use a depth-first allocation scheme
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false)
     {}
 };
 
