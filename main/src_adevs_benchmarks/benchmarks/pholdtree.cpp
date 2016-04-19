@@ -14,6 +14,8 @@
 #include <limits>
 #include <deque>
 #include <random>
+#include <deque>
+#include <cmath>
 #include "../../main/src/tools/frandom.h"
 
 
@@ -224,9 +226,10 @@ struct PHOLDTreeConfig
     bool spawnAtRoot;           //only root node can spawn
     bool doubleLinks;           //make links double
     bool circularLinks;         //make children a circular linked list
+    bool depthFirstAlloc;       //do a depth first allocation instead of a breadth first one.
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false)
     {}
 };
 
@@ -398,6 +401,76 @@ public:
     }
 };
 
+void allocateTree(PHOLDTree* root, const PHOLDTreeConfig& config, std::size_t numCores) {
+    //precompute number of items per core
+    if(numCores < 2) return; // no multithreading, all is automatically allocated on one core.
+    const std::size_t p = config.numChildren;
+    const std::size_t d = config.depth+2;   //+ 2 because the tree is actually 2 layers larger because we put a PHOLDTree at level 0
+    const std::size_t numItems = std::ceil(double(std::pow(p, d) - 1) / ((p - 1)*numCores));
+    std::size_t curNumChildren = 0;
+    int curCore = 0;
+    //need breadth-first search through the entire tree
+    std::deque<PHOLDTree::Component*> todoList;
+    todoList.push_back(static_cast<PHOLDTree::Component*>(root));
+    while(todoList.size()) {
+        //get the top item
+        PHOLDTree::Component* top = todoList.front();
+        todoList.pop_front();
+        //test if it is a PHOLDTree item
+        auto treeTop = dynamic_cast<PHOLDTree*>(top);
+        if(treeTop != nullptr) {
+            const auto& components  = treeTop->m_children;
+            if(config.depthFirstAlloc) {
+                //just add everything in reverse order to the front of the todo list
+                todoList.insert(todoList.begin(), components.rbegin(), components.rend());
+            } else {
+                //add the main child of the item
+                auto mnChild = static_cast<PHOLDTreeProcessor*>(components[0]);
+                mnChild->setProc(curCore);
+#ifndef BENCHMARK
+                std::cerr << "allocating " << mnChild->m_name << " to " << curCore << "\n";
+#endif
+                ++curNumChildren;
+                if(curNumChildren == numItems) {
+                    ++curCore;
+                    curNumChildren = 0;
+                }
+                //add the other children to the todoList
+                todoList.insert(todoList.end(), components.begin()+1, components.end());
+            }
+        } else if(!config.depthFirstAlloc){
+            //from here on, everything must be a normal PHOLDTreeProcessor in breadth first search.
+            todoList.push_front(static_cast<PHOLDTree::Component*>(top));
+            while(todoList.size()) {
+                PHOLDTree::Component* itop = todoList.front();
+                todoList.pop_front();
+                auto procItem = static_cast<PHOLDTreeProcessor*>(itop);
+                procItem->setProc(curCore);
+#ifndef BENCHMARK
+                std::cerr << "allocating " << procItem->m_name << " to " << curCore << "\n";
+#endif
+                ++curNumChildren;
+                if(curNumChildren == numItems) {
+                    ++curCore;
+                    curNumChildren = 0;
+                }
+            }
+        } else {
+            //depth first search encounter of a PHOLDTreeProcessor
+            auto procItem = static_cast<PHOLDTreeProcessor*>(top);
+            procItem->setProc(curCore);
+#ifndef BENCHMARK
+            std::cerr << "allocating " << procItem->m_name << " to " << curCore << "\n";
+#endif
+            ++curNumChildren;
+            if(curNumChildren == numItems) {
+                ++curCore;
+                curNumChildren = 0;
+            }
+        }
+    }
+}
+
 
 class Listener: public adevs::EventListener<t_event>
 {
@@ -461,6 +534,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [
         "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
         "  -C             Enable circular links among the children of the same root.\n"
         "  -D             Enable double links. This will allow nodes to communicate in counterclockwise order and to their parent.\n"
+        "  -F             Enable depth first allocation of the nodes across the cores in multicore simulation. The default is breadth first allocation.\n"
         "  -c COREAMT     amount of simulation cores, ignored in classic mode.\n"
         "  classic        Run single core simulation.\n"
         "  cpdevs         Run conservative parallel simulation.\n"
@@ -471,6 +545,7 @@ int main(int argc, char** argv)
     const char optETime = 't';
     const char optWidth = 'n';
     const char optDepth = 'd';
+    const char optDepthFirst = 'F';
     const char optHelp = 'h';
     const char optPriority = 'p';
     const char optCores = 'c';
@@ -485,6 +560,7 @@ int main(int argc, char** argv)
     config.depth = 3;
     config.circularLinks = false;
     config.doubleLinks = false;
+    config.depthFirstAlloc = false;
 
 	bool hasError = false;
 	bool isClassic = true;
@@ -560,6 +636,9 @@ int main(int argc, char** argv)
         case optDoubleLinks:
             config.doubleLinks = true;
             break;
+        case optDepthFirst:
+            config.depthFirstAlloc = true;
+            break;
         case optHelp:
             std::cout << "usage: \n\t" << argv[0] << helpstr;
             return 0;
@@ -585,6 +664,7 @@ int main(int argc, char** argv)
 #endif
 		sim.execUntil(eTime);
 	} else {
+	    allocateTree(static_cast<PHOLDTree*>(model), config, coreAmt);
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
 		std::size_t i = 0;
 //		std::size_t nodes_per_core = std::ceil(((PHOLD*)model)->processors.size() / (double)coreAmt);
