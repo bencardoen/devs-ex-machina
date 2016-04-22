@@ -13,6 +13,7 @@
 #include <string>
 #include <limits>
 #include <random>
+#include "common.h"
 #include "../../main/src/tools/frandom.h"
 
 #ifdef FPTIME
@@ -443,13 +444,19 @@ int main(int argc, char** argv)
 	}
 
 	DEVSTone* model = new DEVSTone(width, depth, randTa);
+#ifdef USE_STAT
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
+#else
 #ifndef BENCHMARK
-	adevs::EventListener<t_event>* listener = new Listener();
-#endif
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new Listener();
+#endif //#ifndef BENCHMARK
+#endif //#ifdef USE_STAT
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
 
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
@@ -460,12 +467,12 @@ int main(int argc, char** argv)
 		for(std::size_t i = 1; i < coreAmt; ++i)
 			lpg.addEdge(i-1, i);
 		adevs::ParSimulator<t_event> sim(model, lpg);
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
 	}
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 	delete listener;
 #endif
 	delete model;

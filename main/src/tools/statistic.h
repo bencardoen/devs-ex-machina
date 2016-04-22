@@ -105,12 +105,9 @@ public:
 	 */
 	friend constexpr std::ostream& operator<<(std::ostream& out, const Statistic& value)
 	{
-		return (out << value.m_name
-				<< Statistic::delimiter
-				<< value.m_data
-				<< Statistic::delimiter
-				<< value.m_unit
-				<< '\n');
+	    out << value.m_data << "    " << value.m_name;
+	    if(value.m_unit.length()) out << " (" << value.m_unit << ')';
+		return (out << '\n');
 	}
 private:
 	const std::string m_name;

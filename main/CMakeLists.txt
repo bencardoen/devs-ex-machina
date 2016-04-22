@@ -152,6 +152,12 @@ if(POOL_MULTI_STL)
     SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_MULTI_STL" )    
 endif(POOL_MULTI_STL)
 
+
+if(SHOWSTAT)
+    MESSAGE(STATUS "SHOW STAT enabled.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DUSE_STAT" )
+endif(SHOWSTAT)
+
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
 
 ### Threadsanitizer ###########################################################
@@ -387,41 +393,46 @@ set_target_properties(adevs PROPERTIES
 # now, adevs can be linked to like any other library
 add_executable(adevs_devstone
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
     )
 SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
                     LINK_FLAGS "-fopenmp"
                     )
 
 add_executable(adevs_phold
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
     )
 SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
                     LINK_FLAGS "-fopenmp"
                     )
 
 add_executable(adevs_pholdtree
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/pholdtree.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
     )
 SET_TARGET_PROPERTIES(adevs_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
                     LINK_FLAGS "-fopenmp"
                     )
 
 add_executable(adevs_interconnect
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
     )
 SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
                     LINK_FLAGS "-fopenmp"
                     )
 
 add_executable(adevs_network
     ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
     )
 SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG}"
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
                     LINK_FLAGS "-fopenmp"
                     )
 

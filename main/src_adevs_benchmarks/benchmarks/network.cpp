@@ -14,6 +14,7 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include "common.h"
 
 #define T_GEN_TA 100
 #define S_NORMAL_SIZE 100
@@ -596,7 +597,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-p PRIORITY] [-f] [-c COR
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
 	"  -w WIDTH     the amount of generators in the server queue model\n"
-	"  -p PRIORITY  the chance of a prioritized message being generated\n"
+	"  -p PRIORITY  the chance of a prioritized message being generated. An integer in the range [0, 100]\n"
 	"  -f           use the feedback model. This model sends the generated messages from the splitter back to the generators\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
@@ -708,13 +709,19 @@ int main(int argc, char** argv)
 						 static_cast<adevs::Digraph<QueueMsg>*>(fmodel)
 						:static_cast<adevs::Digraph<QueueMsg>*>(smodel);
 
+#ifdef USE_STAT
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
+#else
 #ifndef BENCHMARK
-	adevs::EventListener<t_event>* listener = new Listener();
-#endif
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new Listener();
+#endif //#ifndef BENCHMARK
+#endif //#ifdef USE_STAT
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
 
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
@@ -731,13 +738,13 @@ int main(int argc, char** argv)
 			allocate(coreAmt, smodel);
 			sim = new adevs::ParSimulator<t_event>(model);
 		}
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim->addEventListener(listener);
 #endif
 		sim->execUntil(eTime);
 		delete sim;
 	}
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 	delete listener;
 #endif
 	delete model;

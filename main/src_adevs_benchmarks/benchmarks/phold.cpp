@@ -14,6 +14,7 @@
 #include <limits>
 #include <deque>
 #include <random>
+#include "common.h"
 #include "../../main/src/tools/frandom.h"
 
 
@@ -413,12 +414,18 @@ int main(int argc, char** argv)
 	}
 
 	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes, priority);
+#ifdef USE_STAT
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
+#else
 #ifndef BENCHMARK
-	adevs::EventListener<t_event>* listener = new Listener();
-#endif
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new Listener();
+#endif //#ifndef BENCHMARK
+#endif //#ifdef USE_STAT
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
@@ -436,12 +443,12 @@ int main(int argc, char** argv)
 	                    ++i;
 		}
 		adevs::ParSimulator<t_event> sim(model);
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
 	}
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 	delete listener;
 #endif
 	delete model;

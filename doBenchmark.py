@@ -40,6 +40,14 @@ def boundedValue(t, minv=None, maxv=None):
         return x
     return func
 
+def frange(minv, maxv, stepv):
+    i = 0
+    r = minv
+    while r < maxv:
+        r = minv + i * stepv
+        yield r
+        i += 1
+
 # get the force compilation from the command line arguments
 # -f force compilation
 # -r repeat a number of times
@@ -75,6 +83,9 @@ parser.add_argument("-B", "--backup-no-benchmark", action="store_true",
     )
 parser.add_argument("-v", "--verbose", action="store_true",
     help="If true, produce more verbose output."
+    )
+parser.add_argument("-s", "--collectStats", type=str,
+    help="If true, try to collect statistics. In this mode, benchmarks are executed in Release mode. Statistics are gathered from a 'stats.txt' file, so make sure you write them to that file."
     )
 parser.add_argument("-e", "--regexp", nargs='*', default=[],
     help="If set, only execute benchmarks whose name matches a regular expression in the list. Can be combined with limited."
@@ -129,7 +140,7 @@ def pholdgen(simtype, executable):
         for apn in [4]:  # , 8, 16, 32]:
             for iterations in [0]:
                 for remotes in [90]:
-                    for priority in range(10, 100, 10):
+                    for priority in range(10, 100, 10):  #frange(0.0, 1.0, 0.1)
                         for endTime in [1000000]:                            
                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
                             # return
@@ -139,7 +150,7 @@ def pholdgen_remotes(simtype, executable):
     for nodes in [args.cores]:
         for apn in [4]:  # , 8, 16, 32]:
             for iterations in [0]:
-                for priority in [0]:
+                for priority in [0]:  #frange(0.0, 1.0, 0.1)
                     for remotes in range(10, 100, 10):
                         for endTime in [1000000]:                            
                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
@@ -218,26 +229,27 @@ def pholdtreegen(simtype, executable):
     if simtype == simtypes.classic :
         for fanout in [3]:
             for depth in [3]:  
-                for endTime in [500000]:
-                    yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-t', endTime]))
+                for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
+                    for endTime in [500000]:
+                        yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
     else:
         oldNumCores = simtype[-1]
         for core in range(2, args.cores+1, 1):
             simtype[-1] = core
             for fanout in [3]:
                 for depth in [3]:  # , 4, 8, 16]:
-                    for endTime in [500000]:
-                        yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-t', endTime]))
+                    for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
+                        for endTime in [500000]:
+                            yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
                       
         simtype[-1]=oldNumCores
 
-lenParallelPholdTree = len(list(chain(["devExec"], simtypes.optimistic, ['-w', 0, '-d', 0, '-t', 0])))
+lenParallelPholdTree = len(list(chain(["devExec"], simtypes.optimistic, ['-d', 0, '-n', 0, '-p', 0, '-t', 0])))
 
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelDevstone else 1, x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"% priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPhold else 1, x[-11], x[-9], x[-7], x[-5], x[-3]*100.0, x[-1])]
-# TODO Check this, placeholder copy
-pholdTreeArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"depth"{0}"children"{0}"iterations"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPholdTree else 1, x[-7], x[-5], x[-3], x[-1])]
+pholdTreeArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"depth"{0}"children"{0}"priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPholdTree else 1, x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelConnect else 1, x[-3], x[-1])]
 networktArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelNetwork else 1, x[-3], x[-1])]
 priorityArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), 2 if [1] != "classic" else 1, x[-7], x[-5], x[-3], x[-1])]
@@ -256,8 +268,25 @@ def unifiedCompiler(target, force=False):
         # if path.exists():   # the executable already exists. Remove it or make won't do anything
         #     path.unlink()
         print("Compiling target {}".format(target))
-        call(['./setup.sh', '-b', '-f' if force else '', target], stdout=None if args.showSTDOUT else DEVNULL)
+        compTargets = ['./setup.sh', '-b', '-f' if force else '', target]
+        if args.collectStats:
+            compTargets += ["-x", "-DSHOWSTAT=ON"]
+        call(compTargets, stdout=None if args.showSTDOUT else DEVNULL)
         printVerbose(args.verbose, "  -> Compilation done.")
+
+if args.collectStats:
+    #we need to parse some statistics, try to append them to the perf stat file
+    defExec = defaults.defaultDriver.execute
+    from os import system as systemExec
+    def fnNewExec(arg, path):
+        systemExec("rm -f {}".format(args.collectStats))
+        retVal = defExec(arg, path)
+        if retVal:
+            if args.verbose:
+                print("Getting statistics from '{}' and appending them to '{}'".format(args.collectStats, str(path)))
+            systemExec("cat {} >> {}".format(args.collectStats, str(path)))
+        return retVal
+    defaults.defaultDriver = defaults.BenchmarkDriver(defaults.defaultFilegen, defaults.defaultFoldergen, fnNewExec)
 
 
 if __name__ == '__main__':
@@ -274,6 +303,7 @@ if __name__ == '__main__':
     dxpriorityc = partial(unifiedCompiler, 'dxexmachina_priority', args.force)
     adevc = partial(unifiedCompiler, 'adevs_devstone', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_phold', args.force)
+    apholdtreec = partial(unifiedCompiler, 'adevs_pholdtree', args.force)
     aconnectc = partial(unifiedCompiler, 'adevs_interconnect', args.force)
     anetworkc = partial(unifiedCompiler, 'adevs_network', args.force)
     apholdc = partial(unifiedCompiler, 'adevs_pholdtree', args.force)
@@ -328,9 +358,9 @@ if __name__ == '__main__':
         defaults.Benchmark('priority/conservative', dxpriorityc, partial(prioritygen, simtypes.conservative, priorityEx), "dxexmachina priority model, conservative"),
         )
     dxpholdtree = SimType(
-        defaults.Benchmark('pholdtree/classic', dxpholdc, partial(pholdtreegen, simtypes.classic, pholdtreeEx), "dxexmachina pholdtree, classic"),
-        defaults.Benchmark('pholdtree/optimistic', dxpholdc, partial(pholdtreegen, simtypes.optimistic, pholdtreeEx), "dxexmachina pholdtree, optimistic"),
-        defaults.Benchmark('pholdtree/conservative', dxpholdc, partial(pholdtreegen, simtypes.conservative, pholdtreeEx), "dxexmachina pholdtree, conservative"),
+        defaults.Benchmark('pholdtree/classic', dxpholdtreec, partial(pholdtreegen, simtypes.classic, pholdtreeEx), "dxexmachina pholdtree, classic"),
+        defaults.Benchmark('pholdtree/optimistic', dxpholdtreec, partial(pholdtreegen, simtypes.optimistic, pholdtreeEx), "dxexmachina pholdtree, optimistic"),
+        defaults.Benchmark('pholdtree/conservative', dxpholdtreec, partial(pholdtreegen, simtypes.conservative, pholdtreeEx), "dxexmachina pholdtree, conservative"),
         )
     adevstone = SimType(
         defaults.Benchmark('adevstone/classic', adevc, partial(devstonegen, simtypes.classic, adevstoneEx), "adevs devstone, classic"),
@@ -368,14 +398,19 @@ if __name__ == '__main__':
         defaults.Benchmark('aconnect_speedup/conservative', aconnectc, partial(interconnectgen_speedup, simtypes.conservative, adevconnectEx), "adevs high interconnect, conservative"),
         )
     anetwork = SimType(
-        defaults.Benchmark('network/classic', anetworkc, partial(networkgen, simtypes.classic, adevnetworkEx), "adevs queue network, classic"),
+        defaults.Benchmark('anetwork/classic', anetworkc, partial(networkgen, simtypes.classic, adevnetworkEx), "adevs queue network, classic"),
         None,
-        defaults.Benchmark('network/conservative', anetworkc, partial(networkgen, simtypes.conservative, adevnetworkEx), "adevs queue network, conservative"),
+        defaults.Benchmark('anetwork/conservative', anetworkc, partial(networkgen, simtypes.conservative, adevnetworkEx), "adevs queue network, conservative"),
         )
     afeednetwork = SimType(
-        defaults.Benchmark('feednetwork/classic', anetworkc, partial(feedbacknetworkgen, simtypes.classic, adevnetworkEx), "adevs queue network with feedback loop, classic"),
+        defaults.Benchmark('afeednetwork/classic', anetworkc, partial(feedbacknetworkgen, simtypes.classic, adevnetworkEx), "adevs queue network with feedback loop, classic"),
         None,
-        defaults.Benchmark('feednetwork/conservative', anetworkc, partial(feedbacknetworkgen, simtypes.conservative, adevnetworkEx), "adevs queue network with feedback loop, conservative"),
+        defaults.Benchmark('afeednetwork/conservative', anetworkc, partial(feedbacknetworkgen, simtypes.conservative, adevnetworkEx), "adevs queue network with feedback loop, conservative"),
+        )
+    apholdtree = SimType(
+        defaults.Benchmark('apholdtree/classic', apholdtreec, partial(pholdtreegen, simtypes.classic, adevpholdtreeEx), "adevs pholdtree, classic"),
+        None,
+        defaults.Benchmark('apholdtree/conservative', apholdtreec, partial(pholdtreegen, simtypes.conservative, adevpholdtreeEx), "adevs pholdtree, conservative"),
         )
     allBenchmark = [dxdevstone, dxranddevstone,
                     dxphold,dxphold_remotes,
@@ -387,7 +422,8 @@ if __name__ == '__main__':
                     aphold,aphold_remotes,
                     aconnect, arandconnect,
                     aconnect_speedup,
-                    anetwork, afeednetwork]
+                    anetwork, afeednetwork,
+                    apholdtree]
     bmarkArgParses = [devsArg, devsArg,
                       pholdArg,pholdArg,
                       connectArg, connectArg,
@@ -398,7 +434,8 @@ if __name__ == '__main__':
                       pholdArg, pholdArg,
                       connectArg, connectArg,
                       connectArg,
-                      networktArg, networktArg]
+                      networktArg, networktArg,
+                      pholdTreeArg]
     if len(allBenchmark) != len(bmarkArgParses):
         raise 42
     # do all the preparation stuff

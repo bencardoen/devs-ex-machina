@@ -182,7 +182,8 @@ int main(int argc, char** argv)
 #endif
         
 #ifdef USE_STAT
-	ctrl->printStats(std::cout);
-	d->printStats(std::cout);
+    std::ofstream outstats("stats.txt");
+	ctrl->printStats(outstats);
+	//d->printStats(std::cout); //don't include these because they can result in a HUGE amount of data
 #endif
 }

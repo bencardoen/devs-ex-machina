@@ -27,10 +27,10 @@ Controller::Controller(std::string name, std::vector<t_coreptr>& cores,
 	false), m_checkTermCond(false), m_saveInterval(saveInterval), m_zombieIdleThreshold(10),m_cores(cores), m_allocator(
 	        alloc), m_tracers(tracers), m_dsPhase(false), m_sleep_gvt_thread(200), m_rungvt(false), m_turns(turns)
 #ifdef USE_STAT
-	, m_gvtStarted("_controller/gvt started", ""),
-	m_gvtSecondRound("_controller/gvt 2nd rounds", ""),
-	m_gvtFailed("_controller/gvt failed", ""),
-	m_gvtFound("_controller/gvt found", "")
+	, m_gvtStarted("_controller/gvt_started", ""),
+	m_gvtSecondRound("_controller/gvt_2nd_rounds", ""),
+	m_gvtFailed("_controller/gvt_failed", ""),
+	m_gvtFound("_controller/gvt_found", "")
 #endif
 {
         n_pools::setMain();

@@ -16,6 +16,7 @@
 #include <random>
 #include <deque>
 #include <cmath>
+#include "common.h"
 #include "../../main/src/tools/frandom.h"
 
 
@@ -654,36 +655,33 @@ int main(int argc, char** argv)
 	}
 
 	adevs::Devs<t_event>* model = new PHOLDTree(config);
+
+#ifdef USE_STAT
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
+#else
 #ifndef BENCHMARK
-	adevs::EventListener<t_event>* listener = new Listener();
-#endif
+    #define USE_LISTENER
+    adevs::EventListener<t_event>* listener = new Listener();
+#endif //#ifndef BENCHMARK
+#endif //#ifdef USE_STAT
 	if(isClassic){
 		adevs::Simulator<t_event> sim(model);
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
 	} else {
 	    allocateTree(static_cast<PHOLDTree*>(model), config, coreAmt);
 		omp_set_num_threads(coreAmt);	//must manually set amount of OpenMP threads
-		std::size_t i = 0;
-//		std::size_t nodes_per_core = std::ceil(((PHOLD*)model)->processors.size() / (double)coreAmt);
-//		for(HeavyPHOLDProcessor* ptr: ((PHOLD*)model)->processors){
-//                        size_t coreid = i / nodes_per_core;
-//                        if (coreid >= coreAmt) {     // overflow into the last core.
-//                                coreid = coreAmt - 1;
-//                        }
-////                        std::cout << "assigned " << ptr->m_name << " to core " << coreid << '\n';
-//                        ptr->setProc(coreid);
-//	                    ++i;
-//		}
+
 		adevs::ParSimulator<t_event> sim(model);
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 		sim.addEventListener(listener);
 #endif
 		sim.execUntil(eTime);
 	}
-#ifndef BENCHMARK
+#ifdef USE_LISTENER
 	delete listener;
 #endif
 	delete model;

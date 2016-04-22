@@ -83,7 +83,7 @@ case $key in
     -x|--extra)
     EXTRA_ARGS="$EXTRA_ARGS $2"
     shift
-    echo "Setting $EXTRA_ARGS as optional argument string for cmake."
+    echo "Setting '$EXTRA_ARGS' as optional argument string for cmake."
     ;;
     -h|--help)
     bold=$(tput bold)
@@ -119,6 +119,7 @@ case $key in
     echo "  -x, --extra ARGS"
     echo "           pass ARGS to CMake, if you need to override any compile time setting. Example : \"-DFASTRNG=ON -DPOOL_SINGLE_ARENA_DYNAMIC\" "
     echo "       legal:  -D{POOL_SINGLE_ARENA | POOL_SINGLE_STL | POOL_MULTI_STL | FASTRNG}=ON Note that benchmarkfrng implies FRNG"
+    echo "               -DSHOWSTAT=ON enables statistics gathering."
     echo "       obviously only 1 value applies to SINGLE, and these extra args are passed only to the benchmark target"
     echo ""
     echo "${bold}notes:${normal}"

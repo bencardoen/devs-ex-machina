@@ -52,8 +52,8 @@ struct statistics_collector{
         	return std::string("_core") + n_tools::toString(id) + "/" + name;
         }
         statistics_collector(std::size_t id):
-        	m_amsg_sent(getName(id, "anti send"), "messages"),
-        	m_amsg_rcvd(getName(id, "anti received"), "messages"),
+        	m_amsg_sent(getName(id, "anti_send"), "messages"),
+        	m_amsg_rcvd(getName(id, "anti_received"), "messages"),
         	m_turns(getName(id, "turns"), ""),
                 m_turns_stalled(getName(id, "stalled"), "turns"),
         	m_reverts(getName(id, "reverts"), ""),
