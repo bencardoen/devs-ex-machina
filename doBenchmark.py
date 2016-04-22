@@ -236,20 +236,21 @@ def pholdtreegen(simtype, executable):
         oldNumCores = simtype[-1]
         for core in range(2, args.cores+1, 1):
             simtype[-1] = core
-            for fanout in [3]:
-                for depth in [3]:  # , 4, 8, 16]:
-                    for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
-                        for endTime in [500000]:
-                            yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
+            for depthFirst in [['-F'], []]:
+                for fanout in [3]:
+                    for depth in [3]:  # , 4, 8, 16]:
+                        for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
+                            for endTime in [500000]:
+                                yield list(chain([executable], simtype, depthFirst, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
                       
         simtype[-1]=oldNumCores
 
-lenParallelPholdTree = len(list(chain(["devExec"], simtypes.optimistic, ['-d', 0, '-n', 0, '-p', 0, '-t', 0])))
+lenParallelPholdTree = len(list(chain(["devExec"], simtypes.classic, ['-d', 0, '-n', 0, '-p', 0, '-t', 0])))
 
 csvDelim = ';'
 devsArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"depth"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelDevstone else 1, x[-5], x[-3], x[-1])]
 pholdArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"atomics/node"{0}"iterations"{0}"% remotes"{0}"% priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPhold else 1, x[-11], x[-9], x[-7], x[-5], x[-3]*100.0, x[-1])]
-pholdTreeArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"depth"{0}"children"{0}"priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelPholdTree else 1, x[-7], x[-5], x[-3], x[-1])]
+pholdTreeArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"depth first allocation"{0}"depth"{0}"children"{0}"priority"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), 1 if len(x) == lenParallelPholdTree else x[3], '-F' in x, x[-7], x[-5], x[-3], x[-1])]
 connectArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelConnect else 1, x[-3], x[-1])]
 networktArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"width"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), x[3] if len(x) == lenParallelNetwork else 1, x[-3], x[-1])]
 priorityArg = [csvDelim, """ "command"{0}"executable"{0}"simtype"{0}"ncores"{0}"nodes"{0}"priority"{0}"messages"{0}"end time" """.format(csvDelim), lambda x: ("\"{}\"".format(" ".join(map(str, x))), "\"{0}\"".format(x[0].split('/')[-1]), "\"{}\"".format(x[1]), 2 if [1] != "classic" else 1, x[-7], x[-5], x[-3], x[-1])]
