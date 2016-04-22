@@ -283,8 +283,15 @@ if args.collectStats:
         retVal = defExec(arg, path)
         if retVal:
             if args.verbose:
-                print("Getting statistics from '{}' and appending them to '{}'".format(args.collectStats, str(path)))
-            systemExec("cat {} >> {}".format(args.collectStats, str(path)))
+                print("Accumulating statistics from '{}' and appending them to '{}'".format(args.collectStats, str(path)))
+            with open(args.collectStats) as infile, open(str(path), 'a') as outfile:
+                totalVal = 0
+                for l in infile:
+                    spl = l.split()
+                    if len(spl) >= 2:
+                        totalVal += int(spl[0])
+                outfile.write("\n{} output-events".format(totalVal))
+
         return retVal
     defaults.defaultDriver = defaults.BenchmarkDriver(defaults.defaultFilegen, defaults.defaultFoldergen, fnNewExec)
 

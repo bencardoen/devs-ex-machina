@@ -25,7 +25,10 @@ public:
     OutputCounter(std::string out = "stats.txt"): m_outEventCounter("output-events", ""), m_ofile(out){}
     virtual void outputEvent(adevs::Event<t_event,double>, double)
     {
-        ++m_outEventCounter;
+        #pragma omp critical (OutputCounterCriticalSection)
+        {
+            ++m_outEventCounter;
+        }
     }
     virtual void stateChange(adevs::Atomic<t_event>*, double)
     { /* noop */ }

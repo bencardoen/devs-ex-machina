@@ -177,8 +177,9 @@ int main(int argc, char** argv)
 		ctrl->simulate();
 	}
 #ifdef USE_STAT
+    //note that these can create huge amounts of data
     std::ofstream outstats("stats.txt");
-    ctrl->printStats(outstats);
-    //d->printStats(std::cout); //don't include these because they can result in a HUGE amount of data
+    //ctrl->printStats(outstats);
+    d->printStats(outstats);
 #endif
 }
