@@ -166,7 +166,8 @@ int main(int argc, char** argv)
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
-	n_benchmarks_pholdtree::allocateTree(d, config, coreAmt);
+	if(conf.m_simType != n_control::SimType::CLASSIC)
+	    n_benchmarks_pholdtree::allocateTree(d, config, coreAmt);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK

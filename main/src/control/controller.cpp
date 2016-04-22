@@ -111,13 +111,22 @@ void Controller::addModel(const t_coupledmodelptr& coupled)
 	m_root.directConnect(coupled);
 
 	const std::vector<t_atomicmodelptr>& atomics = m_root.getComponents();
-	m_allocator->allocateAll(atomics);
+	if(m_simType != SimType::CLASSIC && m_simType != SimType::DYNAMIC) {
+	    m_allocator->allocateAll(atomics);
 
-	for (const t_atomicmodelptr& atomic : atomics) {
-		//size_t coreID = m_allocator->allocate(model);
-		addModel(atomic, atomic->getCorenumber());
-//		atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
-		LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
+	    for (const t_atomicmodelptr& atomic : atomics) {
+	        //size_t coreID = m_allocator->allocate(model);
+	        addModel(atomic, atomic->getCorenumber());
+	//      atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
+	        LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
+	    }
+	} else {    //single core, don't look at what the allocator said, don't even run the allocator!
+	    for (const t_atomicmodelptr& atomic : atomics) {
+	        //size_t coreID = m_allocator->allocate(model);
+	        addModel(atomic, 0);
+	//      atomic->setKeepOldStates(m_simType == SimType::OPTIMISTIC);        // Can't use isParallell here (which returns true for cpdevs)
+	        LOG_DEBUG("Controller::addModel added model with name ", atomic->getName());
+	    }
 	}
 	if (m_simType == SimType::DYNAMIC)
 		coupled->setController(this);
