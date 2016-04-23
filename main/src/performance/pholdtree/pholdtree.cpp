@@ -193,13 +193,11 @@ n_model::t_portptr PHOLDTree::endConnection()
     return addInPort(n_tools::toString(m_iPorts.size()));
 }
 
-std::size_t numCounter = 0u;
-
-PHOLDTree::PHOLDTree(const PHOLDTreeConfig& config)
-    : PHOLDTree(config, config.depth, numCounter)
+PHOLDTree::PHOLDTree(PHOLDTreeConfig& config)
+    : PHOLDTree(config, config.depth, config.numCounter)
 { }
 
-PHOLDTree::PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum)
+PHOLDTree::PHOLDTree(PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum)
     : n_model::CoupledModel(std::string("PHOLDTree_") + n_tools::toString(itemNum++))
 {
     //create main child

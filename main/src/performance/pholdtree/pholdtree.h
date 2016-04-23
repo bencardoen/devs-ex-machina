@@ -104,9 +104,10 @@ struct PHOLDTreeConfig
     bool doubleLinks;           //make links double
     bool circularLinks;         //make children a circular linked list
     bool depthFirstAlloc;       //whether or not to use a depth-first allocation scheme
+    size_t numCounter;
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false),numCounter(0u)
     {}
 };
 
@@ -115,8 +116,8 @@ class PHOLDTree: public n_model::CoupledModel
 private:
     void finalizeSetup();
 public:
-    PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum);
-    PHOLDTree(const PHOLDTreeConfig& config);
+    PHOLDTree( PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum);
+    PHOLDTree( PHOLDTreeConfig& config);
     virtual ~PHOLDTree();
 
     // Adds an output port for a new connection & returns it
