@@ -61,7 +61,7 @@ TEST(Message, operators){
         
 	auto scheduler = n_scheduler::SchedulerFactory<MessageEntry>::makeScheduler(n_scheduler::Storage::FIBONACCI, false);
 	
-        t_msgptr am;
+        t_msgptr am = nullptr;
         /// Create N objects, test push/contains
 	for(size_t i = 0; i<100; ++i){
 		t_msgptr msg = createRawObject<Message>(n_model::uuid(1, 0), n_model::uuid(42, 0), t_timestamp(i,0), 3u, 2u);

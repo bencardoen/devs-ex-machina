@@ -159,12 +159,13 @@ int main(int argc, char** argv)
 	conf.m_name = "PHOLDTree";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
-        std::cout << coreAmt << std::endl;
 	conf.m_saveInterval = 5;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
 
 	auto ctrl = conf.createController();
+        std::cout << conf.m_simType << std::endl;
 	t_timestamp endTime(eTime, 0);
+        std::cout << endTime << std::endl;
 	ctrl->setTerminationTime(endTime);
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
 	if(conf.m_simType != n_control::SimType::CLASSIC){
