@@ -39,12 +39,12 @@ int main(int argc, char** argv)
 	const char optETime = 't';
 	const char optWidth = 'n';
 	const char optDepth = 'd';
-    const char optDepthFirst = 'F';
+        const char optDepthFirst = 'F';
 	const char optHelp = 'h';
-    const char optPriority = 'p';
+        const char optPriority = 'p';
 	const char optCores = 'c';
-    const char optDoubleLinks = 'D';
-    const char optCircularLinks = 'C';
+        const char optDoubleLinks = 'D';
+        const char optCircularLinks = 'C';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -54,11 +54,11 @@ int main(int argc, char** argv)
 #endif
 	n_benchmarks_pholdtree::PHOLDTreeConfig config;
 	config.numChildren = 4;
-    config.percentagePriority = 0.1;
-    config.depth = 3;
-    config.circularLinks = false;
-    config.doubleLinks = false;
-    config.depthFirstAlloc = false;
+        config.percentagePriority = 0.1;
+        config.depth = 3;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+        config.depthFirstAlloc = false;
 
 
 	bool hasError = false;
@@ -124,31 +124,31 @@ int main(int argc, char** argv)
 			}
 			break;
 
-        case optPriority:
-            ++i;
-            if(i < argc){
-                config.percentagePriority = toData<double>(std::string(*(++argvc)));
-            } else {
-                std::cout << "Missing argument for option -" << optPriority << '\n';
-            }
-            break;
-        case optCircularLinks:
-            config.circularLinks = true;
-            break;
-        case optDoubleLinks:
-            config.doubleLinks = true;
-            break;
-        case optDepthFirst:
-            config.depthFirstAlloc = true;
-            break;
-        case optHelp:
-            std::cout << "usage: \n\t" << argv[0] << helpstr;
-            return 0;
-        default:
-            std::cout << "Unknown argument: " << *argvc << '\n';
-            hasError = true;
-            continue;
-        }
+                case optPriority:
+                    ++i;
+                    if(i < argc){
+                        config.percentagePriority = toData<double>(std::string(*(++argvc)));
+                    } else {
+                        std::cout << "Missing argument for option -" << optPriority << '\n';
+                    }
+                    break;
+                case optCircularLinks:
+                    config.circularLinks = true;
+                    break;
+                case optDoubleLinks:
+                    config.doubleLinks = true;
+                    break;
+                case optDepthFirst:
+                    config.depthFirstAlloc = true;
+                    break;
+                case optHelp:
+                    std::cout << "usage: \n\t" << argv[0] << helpstr;
+                    return 0;
+                default:
+                    std::cout << "Unknown argument: " << *argvc << '\n';
+                    hasError = true;
+                    continue;
+                }
     }
     if(hasError){
             std::cout << "usage: \n\t" << argv[0] << helpstr;
@@ -159,6 +159,7 @@ int main(int argc, char** argv)
 	conf.m_name = "PHOLDTree";
 	conf.m_simType = simType;
 	conf.m_coreAmount = coreAmt;
+        std::cout << coreAmt << std::endl;
 	conf.m_saveInterval = 5;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
 
@@ -166,8 +167,9 @@ int main(int argc, char** argv)
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
-	if(conf.m_simType != n_control::SimType::CLASSIC)
+	if(conf.m_simType != n_control::SimType::CLASSIC){
 	    n_benchmarks_pholdtree::allocateTree(d, config, coreAmt);
+        }
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK
@@ -184,7 +186,7 @@ int main(int argc, char** argv)
 #ifdef USE_STAT
         //note that these can create huge amounts of data
         std::ofstream outstats("stats.txt");
-        //ctrl->printStats(outstats);
+        ctrl->printStats(outstats);
         d->printStats(outstats);
 #endif
 }
