@@ -164,6 +164,7 @@ int main(int argc, char** argv)
 
 	auto ctrl = conf.createController();
         std::cout << conf.m_simType << std::endl;
+        std::cout << config.percentagePriority << std::endl;
 	t_timestamp endTime(eTime, 0);
         std::cout << endTime << std::endl;
 	ctrl->setTerminationTime(endTime);

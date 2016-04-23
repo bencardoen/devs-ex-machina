@@ -499,12 +499,84 @@ TEST(Benchmark, pholdtree_single)
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
         //n_benchmarks_pholdtree::allocateTree(d, config, coreAmt);
 	ctrl->addModel(d);
-        std::ofstream filestream(SUBTESTFOLDER "pholdtree.txt");
+        std::ofstream filestream(SUBTESTFOLDER "pholdtreeSingle.txt");
 	{
 		CoutRedirect myRedirect(filestream);
 		ctrl->simulate();
 	};
 
-	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtree.txt", SUBTESTFOLDER "pholdtree.corr"), 0);
+	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtreeSingle.txt", SUBTESTFOLDER "pholdtreeSingle.corr"), 0);
+        LOG_MOVE("out.txt", true);
+}
+
+TEST(Benchmark, pholdtree_opt)
+{
+        LOG_MOVE("logs/bmarkPholdtreeOpt.log", false);
+        n_benchmarks_pholdtree::PHOLDTreeConfig config;
+	config.numChildren = 2;
+        config.percentagePriority = 0.1;
+        config.depth = 2;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+        config.depthFirstAlloc = false;
+
+	n_control::SimType simType = n_control::SimType::OPTIMISTIC;
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLDTree";
+	conf.m_simType = simType;
+	conf.m_coreAmount = 4;
+	conf.m_saveInterval = 5;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
+	auto ctrl = conf.createController();
+	t_timestamp endTime(500, 0);
+	ctrl->setTerminationTime(endTime);
+	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+        if(simType != n_control::SimType::CLASSIC){
+            n_benchmarks_pholdtree::allocateTree(d, config, 4);
+        }
+	ctrl->addModel(d);
+        std::ofstream filestream(SUBTESTFOLDER "pholdtreeOpt.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		ctrl->simulate();
+	};
+
+	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtreeOpt.txt", SUBTESTFOLDER "pholdtreeOpt.corr"), 0);
+        LOG_MOVE("out.txt", true);
+}
+
+TEST(Benchmark, pholdtree_cons)
+{
+        LOG_MOVE("logs/bmarkPholdtreeCon.log", false);
+        n_benchmarks_pholdtree::PHOLDTreeConfig config;
+	config.numChildren = 2;
+        config.percentagePriority = 0.1;
+        config.depth = 2;
+        config.circularLinks = false;
+        config.doubleLinks = false;
+        config.depthFirstAlloc = false;
+
+	n_control::SimType simType = n_control::SimType::CONSERVATIVE;
+        n_control::ControllerConfig conf;
+	conf.m_name = "PHOLDTree";
+	conf.m_simType = simType;
+	conf.m_coreAmount = 4;
+	conf.m_saveInterval = 5;
+	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
+	auto ctrl = conf.createController();
+	t_timestamp endTime(500, 0);
+	ctrl->setTerminationTime(endTime);
+	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
+        if(simType != n_control::SimType::CLASSIC){
+            n_benchmarks_pholdtree::allocateTree(d, config, 4);
+        }
+	ctrl->addModel(d);
+        std::ofstream filestream(SUBTESTFOLDER "pholdtreeCon.txt");
+	{
+		CoutRedirect myRedirect(filestream);
+		ctrl->simulate();
+	};
+
+	EXPECT_EQ(n_misc::filecmp(SUBTESTFOLDER "pholdtreeCon.txt", SUBTESTFOLDER "pholdtreeCon.corr"), 0);
         LOG_MOVE("out.txt", true);
 }
