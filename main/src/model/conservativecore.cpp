@@ -100,13 +100,13 @@ void Conservativecore::updateEOT()
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         
-        // todo if conservative is completely stable, move this into ST block.
+#ifdef SAFETY_CHECKS
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG. ::old= ", oldeot, "new= ",neweot);
                 LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
-        
+#endif        
         if(oldeot != neweot)
                 setEot(neweot);
 }

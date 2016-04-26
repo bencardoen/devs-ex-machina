@@ -498,7 +498,7 @@ public:
 
 	/**
 	 * Hook for subclasses to override. Called whenever a message for the net is found.
-	 * @attention assert(false) in single core TODO cereal
+	 * @attention assert(false) in single core
 	 */
 	virtual void sendMessage(t_msgptr)
 	{

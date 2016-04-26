@@ -29,7 +29,6 @@ Optimisticcore::~Optimisticcore()
         m_sent_messages.clear();
         // Another edge case, if we quit simulating before getting all messages from the network, we leak memory if 
         // any of these is an antimessage.
-
         if (m_network->havePendingMessages(this->getCoreID())) {
                 LOG_ERROR("OCORE::", this->getCoreID(), " destructor detected messages in network for us, purging.");
                 // Pull them in case another thread is waiting on network idle.
@@ -213,17 +212,8 @@ void Optimisticcore::countMessage(const t_msgptr& msg)
 
 void Optimisticcore::receiveMessage(t_msgptr msg)
 {
-        /**
-        const t_timestamp::t_time msgtime = msg->getTimeStamp().getTime();
-        bool msgtime_in_past = false;
-        if (msgtime < this->getTime().getTime()) {
-                msgtime_in_past = true;
-        }
-        */ 
         m_stats.logStat(MSGRCVD);
-
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " receiving message @", msg);
-
         if (msg->isAntiMessage()) {
                 m_stats.logStat(AMSGRCVD);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " got antimessage, not queueing.");
@@ -232,12 +222,6 @@ void Optimisticcore::receiveMessage(t_msgptr msg)
                 this->queuePendingMessage(msg);
                 this->registerReceivedMessage(msg);
         }
-        /**
-        if (msgtime_in_past) {
-                LOG_INFO("\tCORE :: ", this->getCoreID(), " received message time <= than now : ", this->getTime());
-                m_stats.logStat(REVERTS);
-                this->revert(msgtime);
-        }*/
 }
 
 void Optimisticcore::queuePendingMessage(t_msgptr msg)
@@ -282,7 +266,6 @@ void Optimisticcore::gcCollect()
 #ifdef SAFETY_CHECKS
                 if(!ptr->flagIsSet(Status::PROCESSED) || ptr->flagIsSet(Status::HEAPED)){
                         LOG_ERROR("GVT integrity failure :: id= ", this->getCoreID(), " for msg ", ptr, " not processed but gvt is past tstamp?");
-                        // todo exception ?
                         break;
                 }
 #endif        
@@ -416,7 +399,7 @@ void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& run
 {
         // We don't have to get the count from the message each time,
         // because the control message doesn't change, it stays in this core
-        // The V vector of this core can change because ordinary message are
+        // The V vector of this core can change because ordinary messages are
         // still being received by another thread in this core, this is why
         // we lock the V vector
         const int msgcount = msg->getCountVector()[this->getCoreID()];
@@ -446,8 +429,8 @@ void Optimisticcore::waitUntilOK(const t_controlmsg& msg, std::atomic<bool>& run
 
 void Optimisticcore::receiveControl(const t_controlmsg& msg, int round, std::atomic<bool>& rungvt)
 {
-// ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
-// Also see snapshot_gvt.pdf
+        // ALGORITHM 1.7 (more or less) (or Fujimoto page 121)
+        // Also see snapshot_gvt.pdf
         // Race check : id = const, read only.
         if (rungvt == false) {
                 LOG_INFO("MCORE :: ", this->getCoreID(), " rungvt set to false by a thread, stopping GVT.");
@@ -569,9 +552,7 @@ void Optimisticcore::setGVT(const t_timestamp& candidate)
 
         Core::setGVT(newgvt);
         m_removeGVTMessages = true;
-
         // Reset state (note V-vector is reset by Mattern code.
-
         this->setColor(MessageColor::WHITE);
         LOG_INFO("MCORE:: ", this->getCoreID(), " time: ", getTime(),
                 " painted core back to white, for next gvt calculation");
@@ -651,8 +632,8 @@ void n_model::Optimisticcore::revert(const t_timestamp& rtime)
         LOG_DEBUG("MCORE:: ", this->getCoreID(), " Done with reverting messages.");
 
         this->setTime(rtime);
-        this->rescheduleAllRevert(rtime);		// Make sure the scheduler is reloaded with fresh/stale models
-        this->revertTracerUntil(rtime); 	// Finally, revert trace output
+        this->rescheduleAllRevert(rtime);		
+        this->revertTracerUntil(rtime); 	
 }
 
 bool n_model::Optimisticcore::existTransientMessage()
@@ -706,7 +687,6 @@ void n_model::Optimisticcore::setTred(t_timestamp val)
 t_timestamp 
 n_model::Optimisticcore::getFirstMessageTime()
 {
-        // Todo could test HEAPED.
         t_timestamp mintime = t_timestamp::infinity();
         while (not this->m_received_messages->empty()) {
                 const MessageEntry& msg = m_received_messages->top();
