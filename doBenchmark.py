@@ -72,7 +72,7 @@ parser.add_argument("-c", "--cores", type=boundedValue(int, minv=1), default=mul
 parser.add_argument("-t", "--endtime", type=boundedValue(int, minv=1), default=50,
     help="[default: 50] The end time of all benchmarks, must be at least 1."
     )
-parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=190,
+parser.add_argument("-T", "--timeout-time", type=boundedValue(int, minv=1), default=600,
     help="[default: 90] Timeout time for all benchmarks. When a benchmark takes more than this amount of seconds, it is terminated."
     )
 parser.add_argument("-b", "--backup", action="store_true",
@@ -227,20 +227,20 @@ def prioritygen(simtype, executable):
 
 def pholdtreegen(simtype, executable):
     if simtype == simtypes.classic :
-        for fanout in [3]:
+        for fanout in [2]:
             for depth in [3]:  
                 for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
-                    for endTime in [500000]:
+                    for endTime in [50000000]:
                         yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
     else:
         oldNumCores = simtype[-1]
-        for core in range(2, args.cores+1, 1):
+        for core in range(2, 4, 1):
             simtype[-1] = core
             for depthFirst in [['-F'], []]:
-                for fanout in [3]:
+                for fanout in [2]:
                     for depth in [3]:  # , 4, 8, 16]:
                         for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
-                            for endTime in [500000]:
+                            for endTime in [50000000]:
                                 yield list(chain([executable], simtype, depthFirst, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
                       
         simtype[-1]=oldNumCores
