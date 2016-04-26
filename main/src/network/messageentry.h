@@ -31,8 +31,6 @@ public:
 
         t_msgptr
 	constexpr getMessage()const{return m_message;}
-        
-        explicit operator size_t()const{return m_message->getDestinationModel();} // TODO do we still need this ?
 
 	friend
 	bool operator<(const MessageEntry& left, const MessageEntry& right){        

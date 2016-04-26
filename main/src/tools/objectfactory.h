@@ -24,7 +24,6 @@ template<typename T, typename ... Args>
 std::shared_ptr<T> createObject(Args&&... args)
 {
 	return std::make_shared<T>(std::forward<Args>(args)...);
-	//return std::allocate_shared<T>(boost::pool_allocator<T>(), std::forward<Args>(args)...);
 }
 
 /**

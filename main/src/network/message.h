@@ -325,7 +325,6 @@ public:
         virtual void releaseMe()override
         {
                 n_tools::destroyPooledObject<typename std::remove_pointer<decltype(this)>::type>(this);
-                //n_tools::getPool<typename std::remove_pointer<decltype(this)>::type>().deallocate(this);
         }
 
 };
@@ -344,12 +343,15 @@ const T& getMsgPayload(const t_msgptr& msg){
 }
 
 
-// Timestamp is invariant of a message, but the object itself may be destroyed already.
+/**
+ * A Wrapper object around a potentially unsafe pointer (deleted).
+ * Depending on the timestamp, the object is/not safe to dereference.
+ */
 struct hazard_pointer{
         t_timestamp::t_time     m_msgtime;
         t_msgptr                m_ptr;
-        // todo Ben : figure out why this is not an error in clang.
-        explicit /*constexpr*/hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
+        explicit /*constexpr*/ hazard_pointer(t_msgptr msg):m_msgtime(msg->getTimeStamp().getTime()),m_ptr(msg){;}
+        // Can't use cexpr because gTS() is not cexpr, and that's not possible because has a non triv ~().
 };
 
 

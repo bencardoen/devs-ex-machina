@@ -29,7 +29,6 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
-        
         // Regardless of what happens, pull messages to avoid others stalling on network empty.
         if(this->m_network->havePendingMessages(this->getCoreID())){
                 std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());

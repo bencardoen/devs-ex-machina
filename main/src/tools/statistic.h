@@ -73,6 +73,7 @@ public:
 		m_unit("__invalid_unit__"),
 		m_data(t_datatype())
 	{
+            throw 42;
 	}
 
 	/**

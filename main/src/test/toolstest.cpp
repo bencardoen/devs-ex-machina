@@ -112,7 +112,6 @@ public:
 
 	~SchedulerTest()
 	{
-		// cleanup any pending stuff, but no exceptions allowed
 	}
 
 	SchedulerFactory<t_TypeUsed>::t_Scheduler scheduler;
@@ -295,7 +294,6 @@ public:
 
 	~UnSyncedSchedulerTest()
 	{
-		// cleanup any pending stuff, but no exceptions allowed
 	}
 
 	SchedulerFactory<t_TypeUsed>::t_Scheduler scheduler;

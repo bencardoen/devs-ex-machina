@@ -123,7 +123,6 @@ void n_model::Core::init()
                         LOG_WARNING("No Tracers set on core!", this->getCoreID());
                 }
 	}
-	//schedule all models.
 	rescheduleAll();
 }
 
@@ -149,10 +148,6 @@ void n_model::Core::initializeModels()
 
 void n_model::Core::collectOutput(std::vector<t_raw_atomic>& imminents)
 {
-	/**
-	 * For each imminent model, collect output.
-	 * Then sort that output by destination (for the transition functions)
-	 */
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Collecting output for ", imminents.size(), " imminents ");
         m_mailfrom.clear();
 	for (auto model : imminents) {
@@ -237,15 +232,10 @@ void n_model::Core::transition()
                         assert(!hasMail(modelid) && "After confluent transition, model may no longer have pending mail.");
 		}
                 imminent->clearSentMessages();
-
-                //printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-
 		if(m_heap.doSingleUpdate())
 			m_heap.update(modelid);
-                
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
-                //printSchedulerState();
 	}
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs");
         for(auto external : m_externs){
@@ -261,12 +251,10 @@ void n_model::Core::transition()
 		this->traceExt(getModel(id));
 
                 clearProcessedMessages(mail);
-                //printSchedulerState();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
 		if(m_heap.doSingleUpdate())
 			m_heap.update(id);
-                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
-                //printSchedulerState();
+                LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");                
 		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
 	}
         
@@ -601,14 +589,8 @@ void n_model::Core::receiveMessage(t_msgptr )
 
 void n_model::Core::getPendingMail()
 {
-	/**
-	 * Check if we have pending messages with time <= (time=now, caus=oo);
-	 * If so, add them to the mailbag
-	 */
-        
-        if(m_received_messages->empty()){
+        if(m_received_messages->empty())
                 return;
-        }
 	const t_timestamp nowtime = makeLatest(m_time);
 	std::vector<MessageEntry> messages;
 	m_token.getMessage()->setTimeStamp(nowtime);

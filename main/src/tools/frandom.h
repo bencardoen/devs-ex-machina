@@ -29,8 +29,7 @@
 namespace n_tools{
 
 /**
- * This header requires C++14 explicit support, so a todo here is to remove all constexprs if C++14 is not used, the relaxed 
- * constraints in 14 allow us to make the entire engine cexpr, in c++11 this is not possible. Need at least g++5.1 for working support.
+ * This header requires C++14 explicit support. The relaxed constraints in 14 allow us to make the entire engine cexpr, in c++11 this is not possible. 
  * To get around this, constexpr is removed where C++11 is too strict switching on the CMake set macro "-DCPP14"
  */
 namespace n_frandom{
@@ -136,6 +135,7 @@ xorwow(){
 
 /**
  * George Marsaglia's 64 XOR shifter, in an STL interface compatible version. 
+ * @attention The seed calls are not safe.
  */
 struct marsaglia_xor_64_s{
     typedef size_t result_type;
@@ -227,6 +227,7 @@ int benchrngs() {
  */
 #ifdef FRNG
     //typedef marsaglia_xor_64_s t_fastrng;
+    // Without marsaglia's, taus88 is very fast, if you enable O3.
     typedef boost::random::taus88 t_fastrng;
     //typedef boost::random::mt11213b t_fastrng;
 #else

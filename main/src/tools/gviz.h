@@ -24,7 +24,9 @@ class Core;
 namespace n_tools{
 
 /**
- * A thread safe visualization tool for the simulator.
+ * A thread safe visualization tool for the simulator. 
+ * This will plot, after simulation, what links there are between models, where they were allocated and what messages were sent.
+ * This will immediately show cycles, and can help you determining how to allocate models.
  */
 class GVizWriter{
 private:
