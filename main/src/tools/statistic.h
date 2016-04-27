@@ -66,14 +66,13 @@ public:
 	{
 	}
 
-	//needed for cereal. Don't use this one yourself. TODO
+	//needed for stl. Don't use this one yourself. TODO
 	//use the documented version instead!
 	constexpr Statistic():
 		m_name("__invalid_stat__"),
 		m_unit("__invalid_unit__"),
 		m_data(t_datatype())
 	{
-            throw 42;
 	}
 
 	/**
