@@ -257,6 +257,23 @@ public:
         
 };
 
+bool operator<(const Message& left, const Message& right);
+
+        
+bool operator<=(const Message& left, const Message& right);
+
+        
+bool operator>=(const Message& left, const Message& right);
+
+        
+bool operator>(const Message& left, const Message& right);
+
+	
+bool operator==(const Message& left, const Message& right);
+
+	
+bool operator!=(const Message& left, const Message& right);
+
 /**
  * Typedef for client classes
  */
