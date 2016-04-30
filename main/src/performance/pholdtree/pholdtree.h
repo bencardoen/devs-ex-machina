@@ -35,6 +35,11 @@ typedef double EventTime;
 typedef std::size_t EventTime;
 #endif
 
+
+//typedef boost::random::taus88 t_randgen;
+typedef n_tools::n_frandom::t_fastrng t_randgen;
+
+
 struct EventPair
 {
     EventPair(size_t mn, EventTime pt) : m_modelNumber(mn), m_procTime(pt) {};
@@ -46,8 +51,11 @@ struct PHOLDTreeModelState
 {
     std::deque<EventPair> m_events;
     std::size_t m_eventsProcessed;
+    mutable t_randgen m_rand;
+    std::size_t m_destination;  //the next destination
+    std::size_t m_nextMessage;  //the next message
 
-    PHOLDTreeModelState(): m_eventsProcessed(0) { }
+    PHOLDTreeModelState(): m_eventsProcessed(0), m_destination(0), m_nextMessage(0) { }
 };
 
 } /* namespace n_benchmarks_pholdtree */
@@ -62,16 +70,11 @@ struct ToString<n_benchmarks_pholdtree::PHOLDTreeModelState>
 
 namespace n_benchmarks_pholdtree {
 
-
-//typedef boost::random::taus88 t_randgen;
-typedef n_tools::n_frandom::t_fastrng t_randgen;
-
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {
 private:
     mutable std::uniform_int_distribution<std::size_t> m_distDest;
     const double m_percentagePriority;
-    mutable t_randgen m_rand;   //This object could be a global object, but then we'd need to lock it during parallel simulation.
     bool m_isRoot;
     std::size_t m_modelNumber;
 public:
@@ -91,8 +94,9 @@ public:
     n_model::t_portptr endConnection();
 
 
-    EventTime getProcTime(size_t event) const;
+    EventTime getProcTime(size_t event);
     size_t getNextDestination(size_t event) const;
+    void finalize();
 };
 
 struct PHOLDTreeConfig
