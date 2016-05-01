@@ -29,11 +29,12 @@ namespace n_benchmarks_pholdtree
 //assume we won't create a pholdtree model with 2^32+ connections
 constexpr std::size_t nullDestination = std::numeric_limits<std::size_t>::max();
 
-std::size_t getRand(std::size_t event, t_randgen& randgen)
+std::size_t getRand(std::size_t, t_randgen& randgen)
 {
-    std::uniform_int_distribution<std::size_t> dist(0, 60000);
-    randgen.seed(event);
-    return dist(randgen);
+//    std::uniform_int_distribution<std::size_t> dist(0, 60000);
+//    randgen.seed(event);
+//    return dist(randgen);
+    return randgen();
 }
 
 
@@ -41,12 +42,13 @@ std::size_t getRand(std::size_t event, t_randgen& randgen)
  * PHOLDTreeProcessor
  */
 
-PHOLDTreeProcessor::PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, bool isRoot)
+PHOLDTreeProcessor::PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, size_t startSeed, bool isRoot)
     : AtomicModel(name), m_percentagePriority(percentagePriority), m_isRoot(isRoot), m_modelNumber(modelNumber)
 {
     if(isRoot) {
         state().m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
     }
+    state().m_rand.seed(startSeed);
 }
 
 PHOLDTreeProcessor::~PHOLDTreeProcessor()
@@ -63,7 +65,7 @@ constexpr T roundTo(T val, T gran)
 #endif
 }
 
-EventTime PHOLDTreeProcessor::getProcTime(EventTime event)
+EventTime PHOLDTreeProcessor::getProcTime(EventTime)
 {
     //state().m_rand.seed(event);
     std::uniform_real_distribution<double> dist0(0.0, 1.0);
@@ -81,7 +83,7 @@ EventTime PHOLDTreeProcessor::getProcTime(EventTime event)
             return ta;
 }
 
-size_t PHOLDTreeProcessor::getNextDestination(size_t event) const
+size_t PHOLDTreeProcessor::getNextDestination(size_t) const
 {
     //std::cerr << "seed = " << event <<  "\n";
     //state().m_rand.seed(event);
@@ -114,9 +116,9 @@ void PHOLDTreeProcessor::intTransition()
 #endif
 
         if(m_isRoot && state().m_events.size() == 1){
-            size_t seed = state().m_events.front().m_procTime * (m_modelNumber + 1);
+//            size_t seed = state().m_events.front().m_procTime * (m_modelNumber + 1);
             state().m_eventsProcessed++;
-            state().m_events.push_back(EventPair((m_modelNumber+1) * state().m_eventsProcessed, getProcTime(seed)));
+            state().m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
         }
         state().m_events.pop_front();
 
@@ -134,8 +136,8 @@ void PHOLDTreeProcessor::confTransition(const std::vector<n_network::t_msgptr> &
     }
     for (auto& msg : message) {
         state().m_eventsProcessed++;
-        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
-        state().m_events.push_back(EventPair(payload* (state().m_eventsProcessed), getProcTime(payload)));
+//        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
+        state().m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
     }
     if(wasEmpty) {
         finalize();
@@ -152,8 +154,8 @@ void PHOLDTreeProcessor::extTransition(const std::vector<n_network::t_msgptr>& m
     }
     for (auto& msg : message) {
         state().m_eventsProcessed++;
-        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
-        state().m_events.push_back(EventPair(payload* (state().m_eventsProcessed), getProcTime(payload)));
+//        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
+        state().m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
     }
     if(wasEmpty) {
         finalize();
@@ -224,8 +226,10 @@ PHOLDTree::PHOLDTree(PHOLDTreeConfig& config, std::size_t depth, std::size_t& it
 {
     //create main child
     bool isRootSpawn = (depth == config.depth) && config.spawnAtRoot;
+    if(isRootSpawn)
+        config.getSeed.seed(config.initialSeed);
     auto mainChild = n_tools::createObject<PHOLDTreeProcessor>("Processor_" + n_tools::toString(itemNum),
-                                                             itemNum, config.percentagePriority, isRootSpawn);
+                                                             itemNum, config.percentagePriority, config.getSeed(), isRootSpawn);
 
     addSubModel(mainChild);
     ++itemNum;
@@ -235,7 +239,7 @@ PHOLDTree::PHOLDTree(PHOLDTreeConfig& config, std::size_t depth, std::size_t& it
         //create all simple children
         for(std::size_t i = 0; i < config.numChildren; ++i) {
             auto itemPtr = n_tools::createObject<PHOLDTreeProcessor>("Processor_" + n_tools::toString(itemNum),
-                                                                     itemNum, config.percentagePriority);
+                                                                     itemNum, config.percentagePriority, config.getSeed());
             ++itemNum;
             addSubModel(itemPtr);
             //connect main & child

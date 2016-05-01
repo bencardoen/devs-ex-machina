@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cinttypes>
+#include <type_traits>
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include <boost/random.hpp>
@@ -38,6 +39,9 @@ typedef std::size_t EventTime;
 
 //typedef boost::random::taus88 t_randgen;
 typedef n_tools::n_frandom::t_fastrng t_randgen;
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+                                                //it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
 
 
 struct EventPair
@@ -78,7 +82,7 @@ private:
     bool m_isRoot;
     std::size_t m_modelNumber;
 public:
-    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, bool isRoot = false);
+    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, size_t startSeed, bool isRoot = false);
     virtual ~PHOLDTreeProcessor();
 
     virtual n_network::t_timestamp timeAdvance() const override;
@@ -109,9 +113,12 @@ struct PHOLDTreeConfig
     bool circularLinks;         //make children a circular linked list
     bool depthFirstAlloc;       //whether or not to use a depth-first allocation scheme
     size_t numCounter;
+    size_t initialSeed;         //the initial seed from which the model rng's are initialized. The default is 42, because some rng can't handle seed 0
+    t_seedrandgen getSeed;      //the random number generator for getting the new seeds.
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false),numCounter(0u)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false),numCounter(0u),
+                        initialSeed(42)
     {}
 };
 
