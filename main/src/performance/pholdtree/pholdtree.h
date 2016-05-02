@@ -37,8 +37,11 @@ typedef std::size_t EventTime;
 #endif
 
 
-//typedef boost::random::taus88 t_randgen;
-typedef n_tools::n_frandom::t_fastrng t_randgen;
+#ifdef FRNG
+    typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+    typedef std::mt19937_64 t_randgen;
+#endif
 typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
                                                 //it MUST be diferent from the regular t_randgen
 static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");

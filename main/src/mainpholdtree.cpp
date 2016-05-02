@@ -144,7 +144,6 @@ int main(int argc, char** argv)
         case optDepthFirst:
             config.depthFirstAlloc = true;
             break;
-
         case optSeed:
             ++i;
             if(i < argc){
@@ -179,10 +178,7 @@ int main(int argc, char** argv)
 	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
 
 	auto ctrl = conf.createController();
-        std::cout << conf.m_simType << std::endl;
-        std::cout << config.percentagePriority << std::endl;
 	t_timestamp endTime(eTime, 0);
-        std::cout << endTime << std::endl;
 	ctrl->setTerminationTime(endTime);
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
 	if(conf.m_simType != n_control::SimType::CLASSIC){

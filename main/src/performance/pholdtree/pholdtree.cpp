@@ -45,10 +45,10 @@ std::size_t getRand(std::size_t, t_randgen& randgen)
 PHOLDTreeProcessor::PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, size_t startSeed, bool isRoot)
     : AtomicModel(name), m_percentagePriority(percentagePriority), m_isRoot(isRoot), m_modelNumber(modelNumber)
 {
+    state().m_rand.seed(startSeed);
     if(isRoot) {
         state().m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
     }
-    state().m_rand.seed(startSeed);
 }
 
 PHOLDTreeProcessor::~PHOLDTreeProcessor()
@@ -71,8 +71,8 @@ EventTime PHOLDTreeProcessor::getProcTime(EventTime)
     std::uniform_real_distribution<double> dist0(0.0, 1.0);
 #ifdef FPTIME
     std::uniform_real_distribution<EventTime> dist(T_100, T_125);
-    m_rand.seed(event);
-    EventTime ta = roundTo(dist(m_rand), T_STEP);
+//    m_rand.seed(event);
+    EventTime ta = roundTo(dist(state().m_rand), T_STEP);
 #else
     std::uniform_int_distribution<EventTime> dist(T_100, T_125);
     EventTime ta = dist(state().m_rand);
@@ -85,12 +85,9 @@ EventTime PHOLDTreeProcessor::getProcTime(EventTime)
 
 size_t PHOLDTreeProcessor::getNextDestination(size_t) const
 {
-    //std::cerr << "seed = " << event <<  "\n";
-    //state().m_rand.seed(event);
     if(m_oPorts.empty())
         return nullDestination;
     size_t chosen = m_distDest(state().m_rand);
-    //std::cerr << m_modelNumber << " choosing from [" << m_distDest.min() << ", " << m_distDest.max() << "] = " << chosen << "\n";
     LOG_INFO("[PHOLDTree] - Picked local: ", chosen);
     return chosen;
 }
@@ -301,6 +298,8 @@ PHOLDTree::PHOLDTree(PHOLDTreeConfig& config, std::size_t depth, std::size_t& it
             std::static_pointer_cast<PHOLDTree>(m_components[i+1])->finalizeSetup();
         }
     }
+    if(isRootSpawn)
+        mainChild->finalize();
 
 }
 void PHOLDTree::finalizeSetup()
@@ -347,9 +346,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
                 //add the main child of the item
                 auto mnChild = std::static_pointer_cast<PHOLDTreeProcessor>(components[0]);
                 mnChild->setCorenumber(curCore);
-#ifndef BENCHMARK
-                std::cerr << "allocating " << mnChild->getName() << " to " << curCore << "\n";
-#endif
                 LOG_DEBUG("allocating ", mnChild->getName(), " to ", curCore);
                 ++curNumChildren;
                 if(curNumChildren == numItems) {
@@ -367,9 +363,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
                 todoList.pop_front();
                 auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(itop);
                 procItem->setCorenumber(curCore);
-#ifndef BENCHMARK
-                std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
-#endif
                 LOG_DEBUG("allocating ", procItem->getName(), " to ", curCore);
                 ++curNumChildren;
                 if(curNumChildren == numItems) {
@@ -381,9 +374,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
             //depth first search encounter of a PHOLDTreeProcessor
             auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(top);
             procItem->setCorenumber(curCore);
-#ifndef BENCHMARK
-            std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
-#endif
             LOG_DEBUG("allocating ", procItem->getName(), " to ", curCore);
             ++curNumChildren;
             if(curNumChildren == numItems) {
