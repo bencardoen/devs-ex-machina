@@ -131,7 +131,8 @@ void PHOLDTreeProcessor::confTransition(const std::vector<n_network::t_msgptr> &
     if (!wasEmpty) {
         state().m_events.pop_front();
     }
-    for (auto& msg : message) {
+    for(size_t i = 0; i<message.size(); ++i){
+    //for (auto& msg : message) {
         state().m_eventsProcessed++;
 //        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
         state().m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
@@ -149,7 +150,8 @@ void PHOLDTreeProcessor::extTransition(const std::vector<n_network::t_msgptr>& m
     if (!wasEmpty) {
         state().m_events[0].m_procTime -= m_elapsed.getTime();
     }
-    for (auto& msg : message) {
+    for(size_t i=0; i<message.size(); ++i){
+    //for (auto& msg : message) {
         state().m_eventsProcessed++;
 //        size_t payload = n_network::getMsgPayload<size_t>(msg)  + state().m_eventsProcessed;
         state().m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
@@ -165,7 +167,7 @@ void PHOLDTreeProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
     LOG_INFO("[PHOLDTree] - ",getName()," produces OUTPUT");
 
     if (!state().m_events.empty()) {
-        const EventPair& i = state().m_events[0];
+        //const EventPair& i = state().m_events[0];
         size_t dest = state().m_destination;
         //don't do anything if the destination is the nulldestination
         if(dest == nullDestination)
