@@ -8,3 +8,4 @@ adevs/*
 /phold.txt
 /pholdtree.log
 /pholdtree.txt
+/trng/src/config.hpp
