@@ -76,14 +76,6 @@ n_network::operator!=(const n_network::Message& left, const n_network::Message& 
 bool
 n_network::operator<(const n_network::Message& left, const n_network::Message& right){
         return left.m_timestamp < right.m_timestamp;
-        // This v should no longer be necessary.
-//        if(left == right)
-//            return false;
-//        if(left.m_timestamp < right.m_timestamp)
-//            return true;
-//        else{ 
-//            return false;
-//        }
 }
 
 bool
@@ -105,12 +97,11 @@ n_network::operator>(const n_network::Message& left, const n_network::Message& r
 
  bool
 n_network::operator==(const n_network::Message& left, const n_network::Message& right){
-        // short circuit, tstamp will fail first.
-    return(
-        left.getTimeStamp() == right.getTimeStamp()
-        &&
-        left.m_dst_id==right.m_dst_id
-        &&
-        left.m_src_id==right.m_src_id
-        );
+        return  (
+                left.getTimeStamp() == right.getTimeStamp()
+                &&
+                left.m_dst_id==right.m_dst_id
+                &&
+                left.m_src_id==right.m_src_id
+                );
  }

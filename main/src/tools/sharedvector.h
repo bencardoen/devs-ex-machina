@@ -23,6 +23,7 @@ namespace n_tools {
  * Shared Vector of type T, constant sized. (no constexpr, just const).
  * Each entry is protected by a dedicated lock, concurrent access to differing
  * indices will not block.
+ * @attention :  cores now explicitly lock/unlock these instances.
  */
 template<typename T>
 class SharedVector
@@ -59,7 +60,6 @@ public:
 	 * @pre index < size().
 	 */
 	T get(std::size_t index){
-		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		return m_vector[index];
 	}
 
@@ -68,7 +68,6 @@ public:
 	 * @pre index < size().
 	 */
 	void set(std::size_t index, const T& value){
-		//std::lock_guard<std::mutex> lockentry{m_locks[index]};
 		m_vector[index]=value;
 	}
 
@@ -84,6 +83,11 @@ public:
 	~SharedVector(){;}
 };
 
+
+/**
+ * A vector of atomics, const sized, with access to memory ordering to profile if this has an effect
+ * on concurrency.
+ */
 template<typename T>
 class SharedAtomic{
 private:

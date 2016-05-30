@@ -103,7 +103,6 @@ public:
 
 	friend
 	std::ostream& operator<<(std::ostream& os, const ModelEntry& rhs){
-		//return (os<<rhs.getName() << " scheduled at " << rhs.m_scheduled_at);
                 return (os<<rhs.getID() << " scheduled at " << rhs.m_scheduled_at);
 	}
 };
@@ -116,8 +115,6 @@ struct hash<n_model::ModelEntry>
 {
 	size_t operator()(const n_model::ModelEntry& item) const
 	{
-		//std::cout << "Hash function for "<< item.getName()<<std::endl;
-		//return hash<std::string>()(item.getName());
                 return hash<std::size_t>()(item.getID());
 	}
         

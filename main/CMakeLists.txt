@@ -44,6 +44,36 @@ FIND_LIBRARY(TCMALLOC_LIBRARY
 if(TCMALLOC_LIBRARY)
     MESSAGE(STATUS "TCMALLOC LIB FOUND")
 endif(TCMALLOC_LIBRARY)
+
+## Tina FRNG
+if(EXISTS "${PROJECT_ROOT}/trng/README")
+    MESSAGE("Found TRNG directory ... Attempting Build")
+    SET( TRNG_INCLUDE_DIRS "${TRNG_ROOT}/dist/include/trng")
+    SET( TRNG_FOUND "FOUND")
+    set(TRNG_ROOT ${PROJECT_ROOT}/trng)
+    MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_ROOT}")
+    set(TRNG_LIBRARY ${TRNG_ROOT}/dist/lib/libtrng4.a)
+    MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_LIBRARY}")
+    # Building tina is less expensive than dxex, but still. Detect if we built it before, and if so don't do anything.
+    # Since the trng source is stable, this fails only if one of us breaks stuff, but then we're the ones able to fix it. (I'm going to regret this)
+    # Layout of TRNG : /dist/include/trng && dist/lib
+    add_custom_target(build_trng
+                    COMMAND [ -f ${TRNG_LIBRARY} ] && echo "TRNG EXISTS" || echo "TRNG NOT FOUND"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p dist && ./configure --prefix=${TRNG_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TRNG"
+                    WORKING_DIRECTORY ${TRNG_ROOT} # the makefile is here
+                   )
+    add_library(trng STATIC IMPORTED)
+    add_dependencies(trng build_trng)
+    set_property(TARGET trng APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+    set_target_properties(trng PROPERTIES
+    IMPORTED_LOCATION_NOCONFIG "${TRNG_LIBRARY}")
+else()
+    MESSAGE( STATUS "TRNG DIR not found")
+    SET(TRNG_FOUND "")
+endif()
+
+
+
 ###############################################################################
 
 
@@ -440,6 +470,10 @@ SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
 # These are found by the section above.
 include_directories(${Boost_INCLUDE_DIRS})             
 include_directories(${GTEST_INCLUDE_DIRS})
+if(TRNG_FOUND)
+    MESSAGE(STATUS "Adding Tina RNG include dirs : ${TRNG_INCLUDE_DIRS}")
+    include_directories(${TRNG_INCLUDE_DIRS})             
+endif()
 MESSAGE( STATUS"Using Boost Include Directories @ path :${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
 
@@ -453,7 +487,7 @@ include_directories(
 
 ### LINKER ####################################################################
 # Register libraries needed.
-set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT} )
+set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT})
 if(TCMALLOC_LIBRARY)
     MESSAGE( STATUS "Have tcmalloc, linking...")
     set(LIBS ${LIBS} -ltcmalloc) 
@@ -468,19 +502,19 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_phold ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_network ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_virus ${LIBS})
-target_link_libraries( ${PROJECT_NAME}_priority ${LIBS})
-#target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES})
-# target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS})
-target_link_libraries( adevs_devstone ${LIBS} adevs)
+target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_phold ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_network ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_virus ${LIBS} )
+target_link_libraries( ${PROJECT_NAME}_priority ${LIBS} )
+#target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES} )
+# target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS} )
+target_link_libraries( adevs_devstone ${LIBS} adevs )
 target_link_libraries( adevs_phold ${LIBS} adevs)
-target_link_libraries( adevs_interconnect ${LIBS} adevs)
-target_link_libraries( adevs_network ${LIBS} adevs)
+target_link_libraries( adevs_interconnect ${LIBS} adevs )
+target_link_libraries( adevs_network ${LIBS} adevs )
 ###############################################################################

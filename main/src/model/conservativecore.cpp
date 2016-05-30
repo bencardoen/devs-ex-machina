@@ -29,7 +29,6 @@ Conservativecore::Conservativecore(const t_networkptr& n, std::size_t coreid, st
 
 void Conservativecore::getMessages()
 {
-        
         // Regardless of what happens, pull messages to avoid others stalling on network empty.
         if(this->m_network->havePendingMessages(this->getCoreID())){
                 std::vector<t_msgptr> messages = this->m_network->getMessages(this->getCoreID());
@@ -100,13 +99,13 @@ void Conservativecore::updateEOT()
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " updating eot from ", oldeot, " to ", neweot, " min of  x_la = ", x_la);
         LOG_DEBUG("CCORE:: ", this->getCoreID(), " time: ", getTime(), " x_sent ", x_sent, " y_pending ", y_pending, " y_imminent ", y_imminent);
         
-        // todo if conservative is completely stable, move this into ST block.
+#ifdef SAFETY_CHECKS
         if(!isInfinity(oldeot)  && oldeot.getTime() > neweot.getTime()){
                 LOG_ERROR("CCORE:: ", this->getCoreID(), " time: ", getTime(), " eot moving backward in time, BUG. ::old= ", oldeot, "new= ",neweot);
                 LOG_FLUSH;
                 throw std::logic_error("EOT moving back in time.");
         }
-        
+#endif        
         if(oldeot != neweot)
                 setEot(neweot);
 }

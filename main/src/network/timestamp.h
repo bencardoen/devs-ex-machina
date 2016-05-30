@@ -41,7 +41,6 @@ template<class T, typename std::enable_if<std::is_floating_point<T>::value>::typ
 constexpr
 T type_epsilon()
 {
-        // TODO
         return std::numeric_limits<T>::epsilon()*100000;
 }
 
