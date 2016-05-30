@@ -1140,12 +1140,18 @@ TEST(Conservativecore, PHOLD){
 	conf.m_saveInterval = 0;
 	conf.m_allocator = n_tools::createObject<PHoldAlloc>();
 
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 1;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 1;
+    pholdConf.percentageRemotes = 10;
+
 	auto ctrl = conf.createController();
 	t_timestamp endTime(100, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(1, 2, 1,
-	        10);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
         
 	Core* zero = ctrl->getCore(0);

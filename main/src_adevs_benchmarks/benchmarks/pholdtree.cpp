@@ -26,13 +26,13 @@
 #define T_100 1.0
 #define T_STEP 0.01
 #define T_125 1.25
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #else
 #define T_0 1.0	//timeadvance may NEVER be 0!
 #define T_100 100.0
 #define T_STEP 1.0
 #define T_125 125.0
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #endif
 
 typedef double t_eventTime;
@@ -510,43 +510,14 @@ void allocateTree(PHOLDTree* root, const PHOLDTreeConfig& config, std::size_t nu
     }
 }
 
-
-class Listener: public adevs::EventListener<t_event>
-{
-    double m_lastTime;
-public:
-    Listener(): m_lastTime(0.0){
-        std::cout << "note: this Listener is not threadsafe!\n";
-    }
-	virtual void outputEvent(adevs::Event<t_event,double> x, double t){
-	    if(t > m_lastTime) {
-	        std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
-	        m_lastTime = t;
-	    }
-		PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(x.model);
-		if(proc != nullptr) {
-		    std::cout << "output by: (proc " << proc->m_name << ")\n";
-		}
-
-	}
-	virtual void stateChange(adevs::Atomic<t_event>* model, double t){
-        if(t > m_lastTime) {
-            std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
-            m_lastTime = t;
+struct PHOLDTreeName {
+        static std::string eval(adevs::Devs<t_event, double>* model) {
+            PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(model);
+            if(proc != nullptr) return proc->m_name;
+            return "???";
         }
-		PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(model);
-        if(proc != nullptr) {
-            std::cout << "stateChange by: (proc " << proc->m_name << ")\n";
-            std::cout << "\t\tEvents left: " << proc->eventsLeft() << "\n";
-            if(model->ta() == T_INF)
-                std::cout << "\t\tNext scheduled internal transition at time inf\n";
-            else
-                std::cout << "\t\tNext scheduled internal transition at time " << t + model->ta() << '\n';
-        }
-	}
-
-	virtual ~Listener(){}
 };
+
 
 template<typename T>
 T toData(std::string str)
@@ -711,11 +682,11 @@ int main(int argc, char** argv)
 
 #ifdef USE_STAT
     #define USE_LISTENER
-    adevs::EventListener<t_event>* listener = OutputCounter<t_event>();
+    adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
 #else
 #ifndef BENCHMARK
     #define USE_LISTENER
-    adevs::EventListener<t_event>* listener = new Listener();
+    adevs::EventListener<t_event>* listener = new Listener<t_event, PHOLDTreeName>();
 #endif //#ifndef BENCHMARK
 #endif //#ifdef USE_STAT
 	if(isClassic){

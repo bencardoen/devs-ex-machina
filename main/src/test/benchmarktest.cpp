@@ -217,17 +217,18 @@ TEST(Benchmark, phold_single)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdSingle.txt");
 	{
@@ -248,17 +249,19 @@ TEST(Benchmark, phold_opt)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdOptimistic.txt");
 	{
@@ -279,17 +282,18 @@ TEST(Benchmark, phold_cons)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdConservative.txt");
 	{
