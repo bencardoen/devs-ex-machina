@@ -44,12 +44,13 @@ TEST(Benchmark, devstone_single)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneSingle.txt");
 	{
@@ -73,12 +74,13 @@ TEST(Benchmark, devstone_opt)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneOptimistic.txt");
 	{
@@ -102,12 +104,13 @@ TEST(Benchmark, devstone_cons)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneConservative.txt");
 	{
@@ -131,12 +134,13 @@ TEST(Benchmark, devstone_single_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneSingleR.txt");
 	{
@@ -160,12 +164,13 @@ TEST(Benchmark, devstone_opt_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneOptimisticR.txt");
 	{
@@ -189,12 +194,13 @@ TEST(Benchmark, devstone_cons_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneConservativeR.txt");
 	{

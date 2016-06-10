@@ -37,8 +37,8 @@ TEST(Performance, DEVStone)
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		// Create a DEVStone simulation with width 2 and depth 3
-		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false);
+		// Create a DEVStone simulation with width 2 and depth 3 and (unused) random seed 42
+		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false, 42);
 		ctrl->addModel(d);
 
 		ctrl->simulate();

@@ -45,7 +45,6 @@ HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t t
 	for (size_t i = 0; i < totalAtomics; ++i) {
 		m_outs.push_back(addOutPort("outport_" + n_tools::toString(i)));
 	}
-    std::cerr << "%remotes:" << m_percentageRemotes << '\n';
     state().m_rand.seed(startSeed);
 	state().m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
     const EventPair& i = state().m_events[0];

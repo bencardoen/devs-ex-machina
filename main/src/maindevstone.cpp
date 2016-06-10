@@ -33,13 +33,14 @@ using namespace n_tools;
  * 	opdevs|pdevs run optimistic parallel simulation
  * The last value entered for an option will overwrite any previous values for that option.
  */
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-d DEPTH] [-r] [-S seed] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
 	"  -w WIDTH     the with of the devstone model\n"
 	"  -d DEPTH     the depth of the devstone model\n"
 	"  -r           use randomized processing time\n"
+    "  -S seed      Initial seed with which all random number generators are seeded.\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
 	const char optHelp = 'h';
 	const char optRand = 'r';
 	const char optCores = 'c';
+    const char optSeed = 'S';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -67,6 +69,7 @@ int main(int argc, char** argv)
 	std::size_t width = 2;
 	std::size_t depth = 3;
 	bool randTa = false;
+	std::size_t initialSeed = 42;
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
@@ -130,6 +133,18 @@ int main(int argc, char** argv)
 		case optRand:
 			randTa = true;
 			break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
+                    hasError = true;
+                }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
@@ -155,7 +170,7 @@ int main(int argc, char** argv)
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, initialSeed);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK
