@@ -139,19 +139,19 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIE -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ"
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIC -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIE -DLOG_LEVEL=0 "
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIC -DLOG_LEVEL=0 "
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIE -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 if(FASTRNG)
@@ -478,7 +478,7 @@ include_directories(
                 src 
                 include
                 ${ADEVS_ROOT}/include
-                ${TRNG_ROOT}/dist/include/trng
+                ${TRNG_ROOT}/dist/include/
                 )   # Project headers are in same folder as source
 ###############################################################################
 
@@ -496,7 +496,7 @@ set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ## G++ does not even link if they are NOT set.
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     MESSAGE( STATUS "Linking with GNU, adapting linker flags")
-    SET(CMAKE_EXE_LINKER_FLAGS "-pie" )
+    SET(CMAKE_EXE_LINKER_FLAGS "-fpic" )
 endif()
 
 # Execute linker
