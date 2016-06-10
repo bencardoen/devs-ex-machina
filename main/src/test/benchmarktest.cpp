@@ -324,12 +324,13 @@ TEST(Benchmark, connect_single)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+	std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectSingle.txt");
 	{
@@ -352,12 +353,13 @@ TEST(Benchmark, connect_opt)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectOptimistic.txt");
 	{
@@ -380,12 +382,13 @@ TEST(Benchmark, connect_cons)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectConservative.txt");
 	{
@@ -411,12 +414,13 @@ TEST(Benchmark, connect_single_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectSingleR.txt");
 	{
@@ -439,12 +443,13 @@ TEST(Benchmark, connect_opt_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectOptimisticR.txt");
 	{
@@ -467,12 +472,13 @@ TEST(Benchmark, connect_cons_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectConservativeR.txt");
 	{
