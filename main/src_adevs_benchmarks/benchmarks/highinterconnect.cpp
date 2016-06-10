@@ -26,6 +26,7 @@
 #define T_100 1.0
 #define T_125 1.25
 #define T_STEP 0.01
+double T_INF = std::numeric_limits<double>::max();
 #else
 #define T_0 0.0
 #define T_1 1.0
@@ -34,6 +35,7 @@
 #define T_100 100.0
 #define T_125 125.0
 #define T_STEP 1.0
+double T_INF = std::numeric_limits<double>::max();
 #endif
 
 typedef double t_eventTime;
@@ -45,6 +47,11 @@ typedef adevs::PortValue<t_payload, int> t_event;
 #else
 	typedef std::mt19937_64 t_randgen;
 #endif
+
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+//it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
+
 
 constexpr int outPort = 0;
 constexpr int inPort = 1;
@@ -81,34 +88,35 @@ private:
 	const bool m_randomta;
 	mutable t_randgen m_rand;
 	double m_count;
-	std::size_t m_seed;
 
-	void adjustCounter(std::size_t seed)
+	void adjustCounter()
 	{
 
 		if(!m_randomta){
 			m_count = T_100;
 			return;
 		}
-		std::uniform_real_distribution<double> dist(T_1, T_100);
-		std::uniform_int_distribution<std::size_t> dist2(0, std::numeric_limits<std::size_t>::max());
-		m_rand.seed(seed);
-		m_count = dist(m_rand);
-		m_count = roundTo(m_count, T_STEP);
-		m_seed = dist2(m_rand);
+#ifdef FPTIME
+        std::uniform_real_distribution<double> dist(T_1, T_100);
+        m_count = roundTo(dist(m_rand), T_STEP);
+#else
+        std::uniform_int_distribution<std::size_t> dist(T_1, T_100);
+        m_count = double(dist(m_rand));
+#endif
 	}
 public:
 	std::string m_name;
 	Generator(const std::string& name, std::size_t seed, bool randTa):
-		 m_randomta(randTa), m_count(0), m_seed(0), m_name(name)
+		 m_randomta(randTa), m_count(0), m_name(name)
 	{
-		adjustCounter(seed);
+	    m_rand.seed(seed);
+		adjustCounter();
 	}
 
 	/// Internal transition function.
 	void delta_int()
 	{
-		adjustCounter(m_seed);
+		adjustCounter();
 	}
 	/// External transition function.
 	void delta_ext(double e, const adevs::Bag<t_event>&)
@@ -118,12 +126,12 @@ public:
 	/// Confluent transition function.
 	void delta_conf(const adevs::Bag<t_event>&)
 	{
-		adjustCounter(m_seed);
+		adjustCounter();
 	}
 	/// Output function.
 	void output_func(adevs::Bag<t_event>& yb)
 	{
-		yb.insert(t_event(outPort, m_seed));
+		yb.insert(t_event(outPort, 42));
 	}
 	/// Time advance function.
 	double ta()
@@ -145,10 +153,12 @@ class HighInterconnect: public adevs::Digraph<t_payload, int>
 {
 public:
         std::vector<Generator*> ptrs;
-	HighInterconnect(std::size_t width, bool randomta)
+	HighInterconnect(std::size_t width, bool randomta, std::size_t initialSeed)
 	{
+	    t_seedrandgen getSeed;
+	    getSeed.seed(initialSeed);
 		for(std::size_t i = 0; i < width; ++i){
-			Generator* pt = new Generator(std::string("Generator") + n_tools::toString(i), 1000*i, randomta);
+			Generator* pt = new Generator(std::string("Generator") + n_tools::toString(i), getSeed(), randomta);
                         ptrs.push_back(pt);
                         add(pt);
 		}
@@ -168,29 +178,14 @@ public:
 	}
 };
 
-
-class Listener: public adevs::EventListener<t_event>
-{
-public:
-
-	virtual void outputEvent(adevs::Event<t_event,double> x, double t){
-		std::cout << "an output event at time " << t;
-		Generator* proc = dynamic_cast<Generator*>(x.model);
-		if(proc != nullptr)
-			std::cout << "  (proc " << proc->m_name << ")";
-		std::cout << '\n';
-
-	}
-	virtual void stateChange(adevs::Atomic<t_event>* model, double t){
-		std::cout << "an event at time " << t << "!";
-		Generator* proc = dynamic_cast<Generator*>(model);
-		if(proc != nullptr)
-			std::cout << "  (proc " << proc->m_name << ")";
-		std::cout << '\n';
-	}
-
-	virtual ~Listener(){}
+struct IconnectName {
+        static std::string eval(adevs::Devs<t_event, double>* model) {
+            Generator* proc = dynamic_cast<Generator*>(model);
+            if(proc != nullptr) return proc->m_name;
+            return "???";
+        }
 };
+
 
 template<typename T>
 T toData(std::string str)
@@ -208,12 +203,13 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-c COREAMT] [classic|cpdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-w WIDTH] [-r] [-S seed] [-c COREAMT] [classic|cpdevs]\n"
 	"options:\n"
 	"  -h           show help and exit\n"
 	"  -t ENDTIME   set the endtime of the simulation\n"
 	"  -w WIDTH     the width of the high interconnect model\n"
 	"  -r           use randomized processing time\n"
+    "  -S seed      Initial seed with which all random number generators are seeded.\n"
 	"  -c COREAMT   amount of simulation cores, ignored in classic mode. Must not be 0.\n"
 	"  classic      Run single core simulation.\n"
 	"  cpdevs       Run conservative parallel simulation.\n"
@@ -227,11 +223,13 @@ int main(int argc, char** argv)
 	const char optHelp = 'h';
 	const char optRand = 'r';
 	const char optCores = 'c';
+    const char optSeed = 'S';
 	char** argvc = argv+1;
 
 	double eTime = 50;
 	std::size_t width = 2;
 	bool randTa = false;
+    std::size_t initialSeed = 42;
 
 
 	bool hasError = false;
@@ -285,6 +283,18 @@ int main(int argc, char** argv)
 		case optRand:
 			randTa = true;
 			break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
+                    hasError = true;
+                }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
@@ -299,14 +309,17 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	adevs::Devs<t_event>* model = new HighInterconnect(width, randTa);
+	adevs::Devs<t_event>* model = new HighInterconnect(width, randTa, initialSeed);
+#ifdef USE_STAT
+#undef USE_STAT
+#endif
 #ifdef USE_STAT
     #define USE_LISTENER
     adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
 #else
 #ifndef BENCHMARK
     #define USE_LISTENER
-    adevs::EventListener<t_event>* listener = new Listener();
+    adevs::EventListener<t_event>* listener = new Listener<t_event, IconnectName>();
 #endif //#ifndef BENCHMARK
 #endif //#ifdef USE_STAT
 	if(isClassic){
