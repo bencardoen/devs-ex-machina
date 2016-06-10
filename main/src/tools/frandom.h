@@ -16,6 +16,7 @@
 #include <iostream>
 #include <random>
 #include <boost/random.hpp>
+#include <trng/lcg64.hpp>
 #include <boost/progress.hpp>
 #include <thread>
 #include <fstream>
@@ -192,18 +193,20 @@ int benchrngs() {
     std::mt19937_64 rngmatso;
     boost::random::taus88 rngtauss; 
     boost::random::mt11213b rngmt12;
+    boost::lagged_fibonacci3217 laggedfibo;
+    trng::lcg64 tina;
     xor128s str;
     marsaglia_xor_64_s str2;
     //std::function<size_t(void)> x128 = [&](){return str.operator()();};
     //std::function<size_t(void)> x128 = xor128;
     std::function<size_t(void)> xwow = xorwow;
     std::function<size_t(void)> x64 = xor64;
-    std::vector<std::string> dsc={{"Knuth","MT19937_64(STL)","TAUS88","MT11213b", "MarsagliaXOR128", "Marsagliaxwow", "Marsaglia64"}};
-    std::vector<std::function<size_t(void)>> rngs = {{rngknuth, rngmatso, rngtauss, rngmt12, str,  xwow, str2}};
+    std::vector<std::string> dsc={{"Knuth","MT19937_64(STL)","TAUS88","MT11213b", "MarsagliaXOR128", "Marsagliaxwow", "Marsaglia64", "LaggedFibo", "Tina"}};
+    std::vector<std::function<size_t(void)>> rngs = {{rngknuth, rngmatso, rngtauss, rngmt12, str,  xwow, str2, laggedfibo, tina}};
     for(size_t j = 1; j<rngs.size(); ++j){ // Skip Knuth, it simply explodes (exponential)
         std::cout << "# " << dsc[j] << std::endl;
         for(size_t q = 5; q!=0; --q ){
-            std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+            //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
             //boost::progress_timer ptime;
             for(size_t i = 0; i< threadcount; ++i){
                 threads.emplace_back(std::thread( testRNGF, rnglimit>>q, rngs.at(j)));
@@ -213,9 +216,9 @@ int benchrngs() {
             }
             threads.clear();    // How about not invoking death by recalling dead threads.
             // ptime RAII's , prints collected time.
-            std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
-            std::cout << (rnglimit>>q) << ",\t" <<  duration << std::endl;
+            //std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+            //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t2 - t1 ).count();
+            //std::cout << (rnglimit>>q) << ",\t" <<  duration << std::endl;
         }
     }    
     return 0;
@@ -228,7 +231,8 @@ int benchrngs() {
 #ifdef FRNG
     //typedef marsaglia_xor_64_s t_fastrng;
     // Without marsaglia's, taus88 is very fast, if you enable O3.
-    typedef boost::random::taus88 t_fastrng;
+    //typedef boost::random::taus88 t_fastrng;
+    typedef trng::lcg64 t_fastrng;
     //typedef boost::random::mt11213b t_fastrng;
 #else
     //typedef marsaglia_xor_64_s t_fastrng;
