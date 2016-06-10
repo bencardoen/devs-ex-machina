@@ -231,7 +231,8 @@ int benchrngs() {
 #ifdef FRNG
     //typedef marsaglia_xor_64_s t_fastrng;
     // Without marsaglia's, taus88 is very fast, if you enable O3.
-    typedef boost::random::taus88 t_fastrng;
+    //typedef boost::random::taus88 t_fastrng;
+    typedef trng::lcg64 t_fastrng;
     //typedef boost::random::mt11213b t_fastrng;
 #else
     //typedef marsaglia_xor_64_s t_fastrng;
