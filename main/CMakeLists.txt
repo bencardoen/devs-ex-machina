@@ -49,13 +49,22 @@ endif(TCMALLOC_LIBRARY)
 set(TRNG_ROOT ${PROJECT_ROOT}/trng)
 MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_ROOT}")
 set(TRNG_LIBRARY ${TRNG_ROOT}/dist/lib/libtrng4.a)
-MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_LIBRARY}")
+MESSAGE( STATUS "TRNG_LIBRARY:       ${TRNG_LIBRARY}")
 # Building tina is less expensive than dxex, but still. Detect if we built it before, and if so don't do anything.
 # Since the trng source is stable, this fails only if one of us breaks stuff, but then we're the ones able to fix it. (I'm going to regret this)
 # Layout of TRNG : /dist/include/trng && dist/lib
+# trng/
+#       dist/{include/trng|lib} << exported includes & lib
+#       trngbuild << tmp directory to build trng
+#       trng-x-y-z.tar.gz << persistent archive of sources, extracted into build trngbuild
 add_custom_target(build_trng
                     COMMAND [ -f ${TRNG_LIBRARY} ] && echo "TRNG EXISTS" || echo "TRNG NOT FOUND"
-                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p dist && ./configure --prefix=${TRNG_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TRNG"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p trngbuild && echo "Creating build trng folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p dist && echo "Creating dist trng folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && tar -xvzf trng-4.19.tar.gz -C trngbuild --strip 1 && echo "Extracting trng" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && trngbuild/configure --prefix=${TRNG_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TRNG"
+                    COMMAND [ -f config.log ] && rm config.status config.log Makefile libtool || echo "Clean up stage 1 omitted"
+                    COMMAND [ -d src ] && rm -r src trng examples trngbuild || echo "Clean up stage 2 omitted"
                     WORKING_DIRECTORY ${TRNG_ROOT} # the makefile is here
                    )
 add_library(trng STATIC IMPORTED)
