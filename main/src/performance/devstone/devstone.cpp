@@ -202,34 +202,41 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 	n_model::t_portptr send = addOutPort("out_event1");
 
 	//create the lower object.
-	n_model::t_coupledmodelptr recurse = nullptr;
 	if(depth > 1){
-		LOG_INFO("  depth > 1!");
-		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta, num, getSeed);
-		addSubModel(recurse);
-		connectPorts(recv, recurse->getIPorts()[0]);
+        LOG_INFO("  depth > 1!");
+        n_model::t_coupledmodelptr prev = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num, getSeed);
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
+
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_coupledmodelptr proc = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num, getSeed);
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
+
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
 	}
 
 	//create the list of processors and link them up
-	n_model::t_atomicmodelptr prev = nullptr;
-	for(std::size_t i = 0; i < width; ++i){
-		n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-					        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++, getSeed());
-		addSubModel(proc);
-		if(i == 0){
-			if(depth > 1){
-				connectPorts(recurse->getOPorts()[0], proc->getIPorts()[0]);
-			} else {
-				connectPorts(recv, proc->getIPorts()[0]);
-			}
-		} else {
-			connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
-		}
-		prev = proc;
-	}
+	else {
+        n_model::t_atomicmodelptr prev = n_tools::createObject<Processor>(
+                                        "Processor" + n_tools::toString(depth) + "_0", randomta, num++, getSeed());
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
 
-	//connect end of line with higher level.
-	connectPorts(prev->getOPorts()[0], send);
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
+                                "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++, getSeed());
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
+
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
+	}
 }
 
 CoupledRecursion::~CoupledRecursion()

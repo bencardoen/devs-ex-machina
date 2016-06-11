@@ -230,16 +230,18 @@ public:
 		adevs::Digraph<std::size_t>()
 	{
 		assert(width > 0 && "The width must me at least 1.");
-		if(depth > 1)
-		{
-			Component* c = new CoupledRecursion(width, depth-1, randomta, num, getSeed);
-			m_components.push_back(c);
-			add(c);
-		}
-		for(std::size_t i = 0; i < width; ++i){
-			Component* c = new Processor(randomta, num++, getSeed());
-			m_components.push_back(c);
-			add(c);
+		if(depth > 1) {
+	        for(std::size_t i = 0; i < width; ++i){
+                Component* c = new CoupledRecursion(1, depth-1, randomta, num, getSeed);
+                m_components.push_back(c);
+                add(c);
+	        }
+		} else {
+            for(std::size_t i = 0; i < width; ++i){
+                Component* c = new Processor(randomta, num++, getSeed());
+                m_components.push_back(c);
+                add(c);
+            }
 		}
 		couple(this, inPort, m_components.front(), inPort);
 		auto i = m_components.begin();
