@@ -515,4 +515,5 @@ target_link_libraries( adevs_devstone ${LIBS} adevs trng)
 target_link_libraries( adevs_phold ${LIBS} adevs)
 target_link_libraries( adevs_interconnect ${LIBS} adevs trng)
 target_link_libraries( adevs_network ${LIBS} adevs trng)
+target_link_libraries( adevs_pholdtree ${LIBS} adevs trng)
 ###############################################################################
