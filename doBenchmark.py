@@ -227,22 +227,21 @@ def prioritygen(simtype, executable):
 
 def pholdtreegen(simtype, executable):
     if simtype == simtypes.classic :
-        for fanout in [2]:
-            for depth in [3]:  
-                for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
+        for fanout in [2, 3, 4]:
+            for depth in [2, 3, 4]:  
+                for priority in [0.1, 0.2, 0.4, 0.8]:  # frange(0.0, 1.0, 0.1)
                     for endTime in [50000000]:
                         yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
     else:
         oldNumCores = simtype[-1]
-        for core in range(2, 4, 1):
+        for core in [2, 4, 8, 16]:
             simtype[-1] = core
             for depthFirst in [['-F'], []]:
-                for fanout in [2]:
-                    for depth in [3]:  # , 4, 8, 16]:
-                        for priority in [0.1]:  # frange(0.0, 1.0, 0.1)
+                for fanout in [2, 3, 4]:
+                    for depth in [2, 3, 4]:  
+                        for priority in [0.1, 0.2, 0.4, 0.8]:  # frange(0.0, 1.0, 0.1)
                             for endTime in [50000000]:
                                 yield list(chain([executable], simtype, depthFirst, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
-                      
         simtype[-1]=oldNumCores
 
 lenParallelPholdTree = len(list(chain(["devExec"], simtypes.classic, ['-d', 0, '-n', 0, '-p', 0, '-t', 0])))
