@@ -234,7 +234,7 @@ def pholdtreegen(simtype, executable):
                         yield list(chain([executable], simtype, ['-d', depth, '-n', fanout, '-p', priority, '-t', endTime]))
     else:
         oldNumCores = simtype[-1]
-        for core in [2, 4, ,6, 8, 10, 12, 14, 16]:
+        for core in [2, 4, 6, 8, 10, 12, 14, 16]:
             simtype[-1] = core
             for depthFirst in [['-F'], []]:
                 for fanout in [2, 3, 4]:
