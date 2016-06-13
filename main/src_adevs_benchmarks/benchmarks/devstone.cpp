@@ -232,7 +232,7 @@ public:
 		assert(width > 0 && "The width must me at least 1.");
 		if(depth > 1) {
 	        for(std::size_t i = 0; i < width; ++i){
-                Component* c = new CoupledRecursion(1, depth-1, randomta, num, getSeed);
+                Component* c = new CoupledRecursion(1, depth-1, randomta, num++, getSeed);
                 m_components.push_back(c);
                 add(c);
 	        }

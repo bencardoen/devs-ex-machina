@@ -6,23 +6,23 @@ __  Current Time: 0____________________
 		Initial State: 
 		Next scheduled internal transition at time 100
 
-	INITIAL CONDITIONS in model Processor1_0
+	INITIAL CONDITIONS in model Processor_0
 		Initial State: 0
 		Next scheduled internal transition at time inf
 
-	INITIAL CONDITIONS in model Processor1_0
+	INITIAL CONDITIONS in model Processor_1
 		Initial State: 0
 		Next scheduled internal transition at time inf
 
-	INITIAL CONDITIONS in model Processor1_0
+	INITIAL CONDITIONS in model Processor_2
 		Initial State: 0
 		Next scheduled internal transition at time inf
 
-	INITIAL CONDITIONS in model Processor1_0
+	INITIAL CONDITIONS in model Processor_3
 		Initial State: 0
 		Next scheduled internal transition at time inf
 
-	INITIAL CONDITIONS in model Processor1_0
+	INITIAL CONDITIONS in model Processor_4
 		Initial State: 0
 		Next scheduled internal transition at time inf
 
@@ -36,7 +36,7 @@ __  Current Time: 100____________________
 				100
 		Next scheduled internal transition at time 200
 
-	EXTERNAL TRANSITION in model Processor1_0
+	EXTERNAL TRANSITION in model Processor_0
 		New State: 100
 		Input Port Configuration:
 			port <in_event1>:
@@ -53,7 +53,7 @@ __  Current Time: 200____________________
 				100
 		Next scheduled internal transition at time 300
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -63,7 +63,7 @@ __  Current Time: 200____________________
 				100
 		Next scheduled internal transition at time 300
 
-	EXTERNAL TRANSITION in model Processor1_0
+	EXTERNAL TRANSITION in model Processor_1
 		New State: 100
 		Input Port Configuration:
 			port <in_event1>:
@@ -80,7 +80,7 @@ __  Current Time: 300____________________
 				100
 		Next scheduled internal transition at time 400
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -90,7 +90,7 @@ __  Current Time: 300____________________
 				100
 		Next scheduled internal transition at time 400
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -100,7 +100,7 @@ __  Current Time: 300____________________
 				100
 		Next scheduled internal transition at time 400
 
-	EXTERNAL TRANSITION in model Processor1_0
+	EXTERNAL TRANSITION in model Processor_2
 		New State: 100
 		Input Port Configuration:
 			port <in_event1>:
@@ -117,7 +117,7 @@ __  Current Time: 400____________________
 				100
 		Next scheduled internal transition at time 500
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -127,7 +127,7 @@ __  Current Time: 400____________________
 				100
 		Next scheduled internal transition at time 500
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -137,7 +137,7 @@ __  Current Time: 400____________________
 				100
 		Next scheduled internal transition at time 500
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -147,7 +147,7 @@ __  Current Time: 400____________________
 				100
 		Next scheduled internal transition at time 500
 
-	EXTERNAL TRANSITION in model Processor1_0
+	EXTERNAL TRANSITION in model Processor_3
 		New State: 100
 		Input Port Configuration:
 			port <in_event1>:
@@ -164,7 +164,7 @@ __  Current Time: 500____________________
 				100
 		Next scheduled internal transition at time 600
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -174,7 +174,7 @@ __  Current Time: 500____________________
 				100
 		Next scheduled internal transition at time 600
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -184,7 +184,7 @@ __  Current Time: 500____________________
 				100
 		Next scheduled internal transition at time 600
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -194,7 +194,7 @@ __  Current Time: 500____________________
 				100
 		Next scheduled internal transition at time 600
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_3
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -204,7 +204,7 @@ __  Current Time: 500____________________
 				100
 		Next scheduled internal transition at time 600
 
-	EXTERNAL TRANSITION in model Processor1_0
+	EXTERNAL TRANSITION in model Processor_4
 		New State: 100
 		Input Port Configuration:
 			port <in_event1>:
@@ -221,7 +221,7 @@ __  Current Time: 600____________________
 				100
 		Next scheduled internal transition at time 700
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -231,7 +231,7 @@ __  Current Time: 600____________________
 				100
 		Next scheduled internal transition at time 700
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -241,7 +241,7 @@ __  Current Time: 600____________________
 				100
 		Next scheduled internal transition at time 700
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -251,7 +251,7 @@ __  Current Time: 600____________________
 				100
 		Next scheduled internal transition at time 700
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_3
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -261,7 +261,7 @@ __  Current Time: 600____________________
 				100
 		Next scheduled internal transition at time 700
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_4
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -281,7 +281,7 @@ __  Current Time: 700____________________
 				100
 		Next scheduled internal transition at time 800
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -291,7 +291,7 @@ __  Current Time: 700____________________
 				100
 		Next scheduled internal transition at time 800
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -301,7 +301,7 @@ __  Current Time: 700____________________
 				100
 		Next scheduled internal transition at time 800
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -311,7 +311,7 @@ __  Current Time: 700____________________
 				100
 		Next scheduled internal transition at time 800
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_3
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -321,7 +321,7 @@ __  Current Time: 700____________________
 				100
 		Next scheduled internal transition at time 800
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_4
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -341,7 +341,7 @@ __  Current Time: 800____________________
 				100
 		Next scheduled internal transition at time 900
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -351,7 +351,7 @@ __  Current Time: 800____________________
 				100
 		Next scheduled internal transition at time 900
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -361,7 +361,7 @@ __  Current Time: 800____________________
 				100
 		Next scheduled internal transition at time 900
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -371,7 +371,7 @@ __  Current Time: 800____________________
 				100
 		Next scheduled internal transition at time 900
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_3
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -381,7 +381,7 @@ __  Current Time: 800____________________
 				100
 		Next scheduled internal transition at time 900
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_4
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -401,7 +401,7 @@ __  Current Time: 900____________________
 				100
 		Next scheduled internal transition at time 1000
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_0
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -411,7 +411,7 @@ __  Current Time: 900____________________
 				100
 		Next scheduled internal transition at time 1000
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_1
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -421,7 +421,7 @@ __  Current Time: 900____________________
 				100
 		Next scheduled internal transition at time 1000
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_2
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -431,7 +431,7 @@ __  Current Time: 900____________________
 				100
 		Next scheduled internal transition at time 1000
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_3
 		Input Port Configuration:
 			port <in_event1>:
 				100
@@ -441,7 +441,7 @@ __  Current Time: 900____________________
 				100
 		Next scheduled internal transition at time 1000
 
-	CONFLUENT TRANSITION in model Processor1_0
+	CONFLUENT TRANSITION in model Processor_4
 		Input Port Configuration:
 			port <in_event1>:
 				100

@@ -222,13 +222,15 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 	//create the list of processors and link them up
 	else {
         n_model::t_atomicmodelptr prev = n_tools::createObject<Processor>(
-                                        "Processor" + n_tools::toString(depth) + "_0", randomta, num++, getSeed());
+                                        "Processor_" + n_tools::toString(num), randomta, num, getSeed());
+        num++;
         addSubModel(prev);
         connectPorts(recv, prev->getIPorts()[0]);
 
         for(std::size_t i = 1; i < width; ++i){
             n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-                                "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++, getSeed());
+                                "Processor_" + n_tools::toString(num), randomta, num, getSeed());
+            num++;
             addSubModel(proc);
             connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
             prev = proc;
