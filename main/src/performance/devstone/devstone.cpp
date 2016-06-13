@@ -40,7 +40,7 @@ constexpr t_counter inf = std::numeric_limits<t_counter>::max();
  * ProcessorState
  */
 ProcessorState::ProcessorState():
-	m_event1_counter(inf), m_event1(0), m_eventsHad(0)
+	m_event1_counter(inf), m_event1(0)
 {
 }
 
@@ -48,10 +48,11 @@ ProcessorState::ProcessorState():
  * Processor
  */
 
-Processor::Processor(std::string name, bool randomta, std::size_t num)
+Processor::Processor(std::string name, bool randomta, std::size_t num, std::size_t startSeed)
 	: AtomicModel<ProcessorState>(name), m_randomta(randomta), m_out(addOutPort("out_event1")), m_num(num)
 {
 	addInPort("in_event1");
+	state().m_rand.seed(startSeed);
 	LOG_DEBUG("Created devstone processor ", name, " with number ", m_num);
 }
 
@@ -80,7 +81,6 @@ void Processor::intTransition()
 		st.m_queue.pop_back();
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
 	}
-	++(st.m_eventsHad);
 	LOG_DEBUG("internal event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
 }
 
@@ -106,6 +106,7 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 	ProcessorState& st = state();
 	LOG_DEBUG("event counter of ", getName(), " = ", st.m_event1_counter, ", time elapsed: ", m_elapsed);
 	//We can only have 1 message
+	bool replacedMessage = false;
 	if (st.m_queue.empty()) {
 		st.m_event1_counter = inf;
 		st.m_event1 = Event(0u);
@@ -113,10 +114,10 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 		st.m_event1 = st.m_queue.back();
 		st.m_queue.pop_back();
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
+		replacedMessage = true;
 	}
-	++(st.m_eventsHad);
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
-	if (st.m_event1 != Event(0)) {
+	if (st.m_event1 != Event(0) || replacedMessage) {
 		st.m_queue.push_back(ev1);
 	} else {
 		st.m_event1 = ev1;
@@ -133,9 +134,9 @@ n_network::t_timestamp Processor::lookAhead() const
 {
 	if(m_randomta)
 		return n_network::t_timestamp(T_1);
-        else{
+    else{
 		return n_network::t_timestamp(T_100);
-        }
+    }
 }
 
 template<typename T>
@@ -148,16 +149,14 @@ constexpr T roundTo(T val, T gran)
 #endif
 }
 
-t_counter Processor::getProcTime(size_t event) const
+t_counter Processor::getProcTime(size_t) const
 {
 #ifdef FPTIME
 	std::uniform_real_distribution<t_counter> dist(T_75, T_125);
-	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
 	return roundTo(dist(m_rand), T_STEP);
 #else
 	std::uniform_int_distribution<t_counter> dist(T_75, T_125);
-	m_rand.seed((event + m_num + state().m_eventsHad)*m_num);
-	return dist(m_rand);
+	return dist(state().m_rand);
 #endif
 }
 
@@ -191,7 +190,7 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
  * CoupledRecursion
  */
 
-CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num)
+CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num, t_seedrandgen& getSeed)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
 	// If possible, split layers (CoupledRecursion) over cores in even chunks
@@ -203,34 +202,41 @@ CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool ra
 	n_model::t_portptr send = addOutPort("out_event1");
 
 	//create the lower object.
-	n_model::t_coupledmodelptr recurse = nullptr;
 	if(depth > 1){
-		LOG_INFO("  depth > 1!");
-		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta, num);
-		addSubModel(recurse);
-		connectPorts(recv, recurse->getIPorts()[0]);
+        LOG_INFO("  depth > 1!");
+        n_model::t_coupledmodelptr prev = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num, getSeed);
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
+
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_coupledmodelptr proc = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num, getSeed);
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
+
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
 	}
 
 	//create the list of processors and link them up
-	n_model::t_atomicmodelptr prev = nullptr;
-	for(std::size_t i = 0; i < width; ++i){
-		n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-					        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++);
-		addSubModel(proc);
-		if(i == 0){
-			if(depth > 1){
-				connectPorts(recurse->getOPorts()[0], proc->getIPorts()[0]);
-			} else {
-				connectPorts(recv, proc->getIPorts()[0]);
-			}
-		} else {
-			connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
-		}
-		prev = proc;
-	}
+	else {
+        n_model::t_atomicmodelptr prev = n_tools::createObject<Processor>(
+                                        "Processor" + n_tools::toString(depth) + "_0", randomta, num++, getSeed());
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
 
-	//connect end of line with higher level.
-	connectPorts(prev->getOPorts()[0], send);
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
+                                "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++, getSeed());
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
+
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
+	}
 }
 
 CoupledRecursion::~CoupledRecursion()
@@ -240,12 +246,14 @@ CoupledRecursion::~CoupledRecursion()
 /*
  * DEVStone
  */
-DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta)
+DEVStone::DEVStone(std::size_t width, std::size_t depth, bool randomta, std::size_t initialSeed)
 	: CoupledModel("DEVStone")
 {
+    t_seedrandgen getSeed;
+    getSeed.seed(initialSeed);
 	auto gen = n_tools::createObject<Generator>();
 	std::size_t num = 0u;
-	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta, num);
+	auto recurse = n_tools::createObject<CoupledRecursion>(width, depth, randomta, num, getSeed);
 	addSubModel(gen);
 	addSubModel(recurse);
 

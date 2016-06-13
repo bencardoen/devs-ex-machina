@@ -29,7 +29,6 @@ namespace n_benchmarks_phold {
 std::size_t getRand(std::size_t event, t_randgen& randgen)
 {
 	std::uniform_int_distribution<std::size_t> dist(0, 60000);
-	randgen.seed(event);
 	return dist(randgen);
 }
 
@@ -39,14 +38,18 @@ std::size_t getRand(std::size_t event, t_randgen& randgen)
  */
 
 HeavyPHOLDProcessor::HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber,
-        std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority)
+        std::vector<size_t> local, std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority, std::size_t startSeed)
 	: AtomicModel(name), m_percentageRemotes(percentageRemotes), m_percentagePriority(percentagePriority), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0)
 {
 	addInPort("inport");
 	for (size_t i = 0; i < totalAtomics; ++i) {
 		m_outs.push_back(addOutPort("outport_" + n_tools::toString(i)));
 	}
+    state().m_rand.seed(startSeed);
 	state().m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
+    const EventPair& i = state().m_events[0];
+    state().m_destination = getNextDestination(i.m_modelNumber);
+    state().m_nextMessage = getRand(i.m_modelNumber, state().m_rand);
 }
 
 HeavyPHOLDProcessor::~HeavyPHOLDProcessor()
@@ -63,19 +66,17 @@ constexpr T roundTo(T val, T gran)
 #endif
 }
 
-EventTime HeavyPHOLDProcessor::getProcTime(EventTime event) const
+EventTime HeavyPHOLDProcessor::getProcTime(EventTime) const
 {
     std::uniform_real_distribution<double> dist0(0.0, 1.0);
 #ifdef FPTIME
 	std::uniform_real_distribution<EventTime> dist(T_100, T_125);
-	m_rand.seed(event);
 	EventTime ta = roundTo(dist(m_rand), T_STEP);
 #else
 	std::uniform_int_distribution<EventTime> dist(T_100, T_125);
-	m_rand.seed(event);
-	EventTime ta = dist(m_rand);
+	EventTime ta = dist(state().m_rand);
 #endif
-	if(dist0(m_rand) < m_percentagePriority)
+	if(dist0(state().m_rand) < m_percentagePriority)
 	        return T_0;
 	else
 	        return ta;
@@ -87,9 +88,8 @@ size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 	std::uniform_int_distribution<std::size_t> dist(0, 100);
 	std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
 	std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
-	m_rand.seed(event);
-	if (dist(m_rand) > m_percentageRemotes || m_remote.empty()) {
-                size_t rnr = distLocal(m_rand);
+	if (dist(state().m_rand) > m_percentageRemotes || m_remote.empty()) {
+                size_t rnr = distLocal(state().m_rand);
 #ifdef SAFETY_CHECKS
                 size_t chosen = m_local.at(rnr);
 #else   
@@ -98,7 +98,7 @@ size_t HeavyPHOLDProcessor::getNextDestination(size_t event) const
 		LOG_INFO("[PHOLD] - Picked local: ", chosen);
 		return chosen;
 	} else {
-		size_t chosen = m_remote[distRemote(m_rand)];
+		size_t chosen = m_remote[distRemote(state().m_rand)];
 		LOG_INFO("[PHOLD] - Picked remote: ", chosen);
 		return chosen;
 	}
@@ -124,12 +124,18 @@ void HeavyPHOLDProcessor::intTransition()
                 throw std::out_of_range("Int Transition pop on empty.");
 #endif
 	state().m_events.pop_front();
+    if(!state().m_events.empty()) {
+        const EventPair& i = state().m_events[0];
+        state().m_destination = getNextDestination(i.m_modelNumber);
+        state().m_nextMessage = getRand(i.m_modelNumber, state().m_rand);
+    }
 
 }
 
 void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> & message)
 {
 	LOG_INFO("[PHOLD] - ",getName()," does a CONFLUENT TRANSITION");
+    bool wasEmpty = state().m_events.empty();
 	if (!state().m_events.empty()) {
 		state().m_events.pop_front();
 	}
@@ -140,6 +146,11 @@ void HeavyPHOLDProcessor::confTransition(const std::vector<n_network::t_msgptr> 
 		volatile size_t i = 0;
 		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
 	}
+    if(!state().m_events.empty()) {
+        const EventPair& i = state().m_events[0];
+        state().m_destination = getNextDestination(i.m_modelNumber);
+        state().m_nextMessage = getRand(i.m_modelNumber, state().m_rand);
+    }
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 }
 
@@ -149,12 +160,18 @@ void HeavyPHOLDProcessor::extTransition(const std::vector<n_network::t_msgptr>& 
 	if (!state().m_events.empty()) {
 		state().m_events[0].m_procTime -= m_elapsed.getTime();
 	}
+	bool wasEmpty = state().m_events.empty();
 	for (auto& msg : message) {
 		++m_messageCount;
 		size_t payload = n_network::getMsgPayload<size_t>(msg);
 		state().m_events.push_back(EventPair(payload, getProcTime(payload)));
 		volatile size_t i = 0;
 		for (; i < m_iter;){ ++i; } 	// We just do stuff for a while
+	}
+	if(wasEmpty && !state().m_events.empty()) {
+        const EventPair& i = state().m_events[0];
+        state().m_destination = getNextDestination(i.m_modelNumber);
+        state().m_nextMessage = getRand(i.m_modelNumber, state().m_rand);
 	}
 	LOG_INFO("[PHOLD] - ",getName()," has received ",m_messageCount," messages in total.");
 }
@@ -165,8 +182,8 @@ void HeavyPHOLDProcessor::output(std::vector<n_network::t_msgptr>& msgs) const
 
 	if (!state().m_events.empty()) {
 		const EventPair& i = state().m_events[0];
-		size_t dest = getNextDestination(i.m_modelNumber);
-		size_t r = getRand(i.m_modelNumber, m_rand);
+		size_t dest = state().m_destination;
+		size_t r = state().m_nextMessage;
 		LOG_INFO("[PHOLD] - ",getName()," invokes createMessages on ", dest, " with arg ", r);
 		m_outs[dest]->createMessages(r, msgs);
 		LOG_INFO("[PHOLD] - ",getName()," Ports created ", msgs.size(), " messages.");
@@ -186,25 +203,26 @@ n_network::t_timestamp HeavyPHOLDProcessor::lookAhead() const
  * PHOLD
  */
 
-PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority)
+PHOLD::PHOLD(PHOLDConfig config)
 	: n_model::CoupledModel("PHOLD")
 {
+    config.getSeed.seed(config.initialSeed);
 	std::vector<n_model::t_atomicmodelptr> processors;
 	std::vector<std::vector<size_t>> procs;
 
-	size_t totalAtomics = nodes * atomicsPerNode;
+	size_t totalAtomics = config.nodes * config.atomicsPerNode;
 
-	for (size_t i = 0; i < nodes; ++i) {
+	for (size_t i = 0; i < config.nodes; ++i) {
 		procs.push_back(std::vector<size_t>());
-		for (size_t j = 0; j < atomicsPerNode; ++j) {
-			procs[i].push_back(atomicsPerNode * i + j);
+		for (size_t j = 0; j < config.atomicsPerNode; ++j) {
+			procs[i].push_back(config.atomicsPerNode * i + j);
 		}
 	}
 
 	size_t cntr = 0;
-	for (size_t i = 0; i < nodes; ++i) {
+	for (size_t i = 0; i < config.nodes; ++i) {
 		std::vector<size_t> allnoi;
-		for (size_t k = 0; k < nodes; ++k) {
+		for (size_t k = 0; k < config.nodes; ++k) {
 			if (i != k)
 				allnoi.insert(allnoi.end(), procs[k].begin(), procs[k].end());
 		}
@@ -212,7 +230,7 @@ PHOLD::PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t perce
 			std::vector<size_t> inoj = procs[i];
 			inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
 			auto p = n_tools::createObject<HeavyPHOLDProcessor>("Processor_" + n_tools::toString(cntr),
-			        iter, totalAtomics, cntr, inoj, allnoi, percentageRemotes, percentagePriority);
+			                                                    config.iter, totalAtomics, cntr, inoj, allnoi, config.percentageRemotes, config.percentagePriority, config.getSeed());
 			processors.push_back(p);
 			addSubModel(p);
 			++cntr;

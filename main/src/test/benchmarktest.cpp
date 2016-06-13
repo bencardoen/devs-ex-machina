@@ -44,12 +44,13 @@ TEST(Benchmark, devstone_single)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneSingle.txt");
 	{
@@ -73,12 +74,13 @@ TEST(Benchmark, devstone_opt)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneOptimistic.txt");
 	{
@@ -102,12 +104,13 @@ TEST(Benchmark, devstone_cons)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = false;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneConservative.txt");
 	{
@@ -131,12 +134,13 @@ TEST(Benchmark, devstone_single_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneSingleR.txt");
 	{
@@ -160,12 +164,13 @@ TEST(Benchmark, devstone_opt_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneOptimisticR.txt");
 	{
@@ -189,12 +194,13 @@ TEST(Benchmark, devstone_cons_r)
 	std::size_t width = 5;
 	std::size_t depth = 5;
 	bool randTa = true;
+    std::size_t getSeed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa);
+	t_coupledmodelptr d = n_tools::createObject< n_devstone::DEVStone>(width, depth, randTa, getSeed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "devstoneConservativeR.txt");
 	{
@@ -217,17 +223,18 @@ TEST(Benchmark, phold_single)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdSingle.txt");
 	{
@@ -248,17 +255,19 @@ TEST(Benchmark, phold_opt)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdOptimistic.txt");
 	{
@@ -279,17 +288,18 @@ TEST(Benchmark, phold_cons)
 	conf.m_coreAmount = 4;
 	conf.m_saveInterval = 250;
 	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
-	std::size_t nodes = 4;
-	std::size_t apn = 2;
-	std::size_t iter = 0;
-	std::size_t percentageRemotes = 10;
+
+    n_benchmarks_phold::PHOLDConfig pholdConf;
+    pholdConf.nodes = 4;
+    pholdConf.atomicsPerNode = 2;
+    pholdConf.iter = 0;
+    pholdConf.percentageRemotes = 10;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimePhold, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(pholdConf);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "pholdConservative.txt");
 	{
@@ -314,12 +324,13 @@ TEST(Benchmark, connect_single)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+	std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectSingle.txt");
 	{
@@ -342,12 +353,13 @@ TEST(Benchmark, connect_opt)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectOptimistic.txt");
 	{
@@ -370,12 +382,13 @@ TEST(Benchmark, connect_cons)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = false;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnect, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectConservative.txt");
 	{
@@ -401,12 +414,13 @@ TEST(Benchmark, connect_single_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectSingleR.txt");
 	{
@@ -429,12 +443,13 @@ TEST(Benchmark, connect_opt_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectOptimisticR.txt");
 	{
@@ -457,12 +472,13 @@ TEST(Benchmark, connect_cons_r)
 	conf.m_allocator = n_tools::createObject<n_interconnect::InterconnectAlloc>();
 	std::size_t width = 4;
 	bool randTa = true;
+    std::size_t seed = 42;
 
 	auto ctrl = conf.createController();
 	t_timestamp endTime(eTimeConnectR, 0);
 	ctrl->setTerminationTime(endTime);
 
-	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa);
+	t_coupledmodelptr d = n_tools::createObject<n_interconnect::HighInterconnect>(width, randTa, seed);
 	ctrl->addModel(d);
 	std::ofstream filestream(SUBTESTFOLDER "connectConservativeR.txt");
 	{

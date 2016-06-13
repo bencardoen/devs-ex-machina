@@ -23,6 +23,15 @@
 #include "tools/frandom.h"
 
 namespace n_devstone {
+#ifdef FRNG
+    typedef n_tools::n_frandom::marsaglia_xor_64_s t_randgen;
+#else
+    typedef std::mt19937_64 t_randgen;
+#endif
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+//it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
+
 
 // devstone uses event counters.
 // The messages are "Events", which are just numbers.
@@ -39,7 +48,7 @@ struct ProcessorState{
 	t_counter m_event1_counter;
 	Event m_event1;
 	std::vector<Event> m_queue;
-	std::size_t m_eventsHad;
+    mutable t_randgen m_rand;
 
 	ProcessorState();
 };
@@ -57,19 +66,15 @@ struct ToString<n_devstone::ProcessorState>
 namespace n_devstone {
 
 
-typedef n_tools::n_frandom::t_fastrng t_randgen;
-
-
 class Processor : public n_model::AtomicModel<ProcessorState>
 {
 private:
 	static std::size_t m_numcounter;
 	const bool m_randomta;
 	const n_model::t_portptr m_out;
-	mutable t_randgen m_rand;
 public:
 	const std::size_t m_num;
-	Processor(std::string name, bool randomta, std::size_t num);
+	Processor(std::string name, bool randomta, std::size_t num, std::size_t startSeed);
 	virtual ~Processor();
 
 	virtual n_model::t_timestamp timeAdvance() const;
@@ -99,7 +104,7 @@ public:
 class CoupledRecursion : public n_model::CoupledModel
 {
 public:
-	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num);
+	CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num, t_seedrandgen& getSeed);
 	virtual ~CoupledRecursion();
 };
 
@@ -114,7 +119,7 @@ public:
 	 * 			If true, the time advance will fluctuate between 75 and 125.
 	 * 			If false, the time advance will be fixed at 100.
 	 */
-	DEVStone(std::size_t width, std::size_t depth, bool randomta);
+	DEVStone(std::size_t width, std::size_t depth, bool randomta, std::size_t initialSeed);
 	virtual ~DEVStone();
 };
 

@@ -34,15 +34,16 @@
 
 namespace n_interconnect {
 
-GeneratorState::GeneratorState(t_counter count, std::size_t seed):
-	m_count(count), m_seed(seed)
+GeneratorState::GeneratorState(t_counter count):
+	m_count(count)
 {
 }
 
-Generator::Generator(const std::string& name, std::size_t seed, bool randta):
+Generator::Generator(const std::string& name, std::size_t initSeed, bool randta):
 	AtomicModel(name), m_randomta(randta), m_out(addOutPort("output")), m_in(addInPort("input"))
 {
-	adjustCounter(seed);
+    state().m_rand.seed(initSeed);
+	adjustCounter();
 }
 
 template<typename T>
@@ -55,7 +56,7 @@ constexpr T roundTo(T val, T gran)
 #endif
 }
 
-void Generator::adjustCounter(std::size_t seed)
+void Generator::adjustCounter()
 {
 	GeneratorState& stat = state();
 	if(!m_randomta){
@@ -68,13 +69,10 @@ void Generator::adjustCounter(std::size_t seed)
 #else
 	std::uniform_int_distribution<t_counter> dist(T_1, T_100);
 #endif
-	std::uniform_int_distribution<std::size_t> dist2(0, std::numeric_limits<std::size_t>::max());
-	m_rand.seed(seed);
-	stat.m_count = dist(m_rand);
+	stat.m_count = dist(state().m_rand);
 #ifdef FPTIME
 	stat.m_count = roundTo(stat.m_count, T_STEP);
 #endif
-	stat.m_seed = dist2(m_rand);
 }
 
 n_model::t_timestamp Generator::timeAdvance() const
@@ -84,7 +82,7 @@ n_model::t_timestamp Generator::timeAdvance() const
 
 void Generator::intTransition()
 {
-	adjustCounter(state().m_seed);
+	adjustCounter();
 }
 
 void Generator::extTransition(const std::vector<n_network::t_msgptr>&)
@@ -99,7 +97,7 @@ void Generator::confTransition(const std::vector<n_network::t_msgptr>&)
 
 void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 {
-	m_out->createMessages(state().m_seed, msgs);
+	m_out->createMessages(1, msgs);
 }
 
 n_network::t_timestamp Generator::lookAhead() const

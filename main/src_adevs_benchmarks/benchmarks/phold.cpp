@@ -5,6 +5,9 @@
  *      Author: Devs Ex Machina
  */
 
+
+
+
 #include <adevs.h>
 #include <iostream>
 #include <cstdlib>	//std::size_t
@@ -15,21 +18,21 @@
 #include <deque>
 #include <random>
 #include "common.h"
+#include <boost/random.hpp>
 #include "../../main/src/tools/frandom.h"
 
-
 #ifdef FPTIME
-#define T_0 0.01	//timeadvance may NEVER be 0!
+#define T_0 0.01    //timeadvance may NEVER be 0!
 #define T_100 1.0
 #define T_STEP 0.01
 #define T_125 1.25
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #else
-#define T_0 1.0	//timeadvance may NEVER be 0!
+#define T_0 1.0 //timeadvance may NEVER be 0!
 #define T_100 100.0
 #define T_STEP 1.0
 #define T_125 125.0
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #endif
 
 typedef double t_eventTime;
@@ -48,11 +51,15 @@ struct EventPair
 #else
 	typedef std::mt19937_64 t_randgen;
 #endif
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+                                            //it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
 
-std::size_t getRand(std::size_t event, t_randgen& randgen)
+
+std::size_t getRand(std::size_t, t_randgen& randgen)
 {
 	std::uniform_int_distribution<std::size_t> dist(0, 60000);
-	randgen.seed(event);
+//	randgen.seed(event);
 	return dist(randgen);
 }
 
@@ -93,43 +100,55 @@ private:
 	std::deque<EventPair> m_events;
 	int m_messageCount;
 	mutable t_randgen m_rand;
+    std::size_t m_destination;  //the next destination
+    std::size_t m_nextMessage;  //the next message
 
-	size_t getNextDestination(size_t event) const
+	size_t getNextDestination(size_t) const
 	{
 		std::uniform_int_distribution<std::size_t> dist(0, 100);
 		std::uniform_int_distribution<std::size_t> distRemote(0, m_remote.size()-1u);
 		std::uniform_int_distribution<std::size_t> distLocal(0, m_local.size()-1u);
-		m_rand.seed(event);
+//		m_rand.seed(event);
 		if (dist(m_rand) > m_percentageRemotes || m_remote.empty()) {
 			return m_local[distLocal(m_rand)];
 		} else {
 			return m_remote[distRemote(m_rand)];
 		}
 	}
-	t_eventTime getProcTime(t_payload event) const
+	t_eventTime getProcTime(t_payload) const
 	{
-                std::uniform_real_distribution<double> dist0(0.0, 1.0);
+        std::uniform_real_distribution<double> dist0(0.0, 1.0);
+#ifdef FPTIME
 		std::uniform_real_distribution<t_eventTime> dist(T_100, T_125);
-		m_rand.seed(event);
-		double ta = roundTo(dist(m_rand), T_STEP);
-                const double v = dist0(m_rand);
+        double ta = roundTo(dist(m_rand), T_STEP);
+#else
+		std::uniform_int_distribution<std::size_t> dist(T_100, T_125);
+        double ta = double(dist(m_rand));
+#endif
+//		m_rand.seed(event);
+        const double v = dist0(m_rand);
 		if(v < m_percentagePriority){
-	            return T_0;
-                }
-                else{
-	            return ta;
-                }
+            return T_0;
+        } else {
+            return ta;
+        }
 	}
 public:
 	const std::string m_name;
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t modelNumber, std::vector<size_t> local,
-	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority):
+	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority, std::size_t startSeed):
 		 m_percentageRemotes(percentageRemotes), m_percentagePriority(percentagePriority), m_iter(iter), m_local(local), m_remote(remote), m_messageCount(0),
+		 m_destination(0), m_nextMessage(0),
 		 m_name(name)
 	{
-                if(m_percentagePriority > 1.0 )
-                        throw std::logic_error("Invalid value for priority");
+        if(m_percentagePriority > 1.0 )
+                throw std::logic_error("Invalid value for priority");
+        m_rand.seed(startSeed);
 		m_events.push_back(EventPair(modelNumber, getProcTime(modelNumber)));
+        EventPair& i = m_events[0];
+        m_destination = getNextDestination(i.m_modelNumber);
+        m_nextMessage = getRand(i.m_modelNumber, m_rand);
+        std::cerr << "%remotes:" << m_percentageRemotes << '\n';
 	}
 
 	/// Internal transition function.
@@ -137,18 +156,30 @@ public:
 	{
 		if(m_events.size())
 			m_events.pop_front();
+
+        if(!m_events.empty()) {
+            EventPair& i = m_events[0];
+            m_destination = getNextDestination(i.m_modelNumber);
+            m_nextMessage = getRand(i.m_modelNumber, m_rand);
+        }
 	}
 	/// External transition function.
 	void delta_ext(double e, const adevs::Bag<t_event>& xb)
 	{
 		if(!m_events.empty())
 			m_events[0].m_procTime -= e;
+		bool wasEmpty = m_events.empty();
 		for (auto& msg : xb) {
 			++m_messageCount;
 			t_payload payload = msg.value;
 			m_events.push_back(EventPair(payload, getProcTime(payload)));
 			volatile size_t i = 0;	//forces the compiler to include the for loop
 			for (; i < m_iter;){ ++i; } 	// We just do pointless stuff for a while
+		}
+		if(wasEmpty && !m_events.empty()) {
+            EventPair& i = m_events[0];
+            m_destination = getNextDestination(i.m_modelNumber);
+            m_nextMessage = getRand(i.m_modelNumber, m_rand);
 		}
 	}
 	/// Confluent transition function.
@@ -163,14 +194,18 @@ public:
 			volatile size_t i = 0;	//forces the compiler to include the for loop
 			for (; i < m_iter;){ ++i; } 	// We just do pointless stuff for a while
 		}
+        if(!m_events.empty()) {
+            EventPair& i = m_events[0];
+            m_destination = getNextDestination(i.m_modelNumber);
+            m_nextMessage = getRand(i.m_modelNumber, m_rand);
+        }
 	}
 	/// Output function.
 	void output_func(adevs::Bag<t_event>& yb)
 	{
 		if (!m_events.empty()) {
-			EventPair& i = m_events[0];
-			size_t dest = getNextDestination(i.m_modelNumber);
-			size_t r = getRand(i.m_modelNumber, m_rand);
+			size_t dest = m_destination;
+			size_t r = m_nextMessage;
 			yb.insert(t_event(dest, r));
 		}
 	}
@@ -194,27 +229,46 @@ public:
 	}
 };
 
+struct PHOLDConfig
+{
+        std::size_t nodes;
+        std::size_t atomicsPerNode;
+        std::size_t iter;
+        double percentageRemotes;
+        double percentagePriority;
+
+        std::size_t initialSeed;         //the initial seed from which the model rng's are initialized. The default is 42, because some rng can't handle seed 0
+        t_seedrandgen getSeed;      //the random number generator for getting the new seeds.
+
+        PHOLDConfig(): nodes(0u), atomicsPerNode(0u), iter(0u),
+                        percentageRemotes(0.1), percentagePriority(0.1),
+                        initialSeed(42)
+        {}
+
+};
+
 class PHOLD: public adevs::Digraph<t_payload, int>
 {
 public:
         std::vector<HeavyPHOLDProcessor*> processors;
 
-	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority = 0.1)
+	PHOLD(PHOLDConfig config)
 	{
-                assert(percentagePriority <= 1.0);
+        assert(config.percentagePriority <= 1.0);
 		std::vector<std::vector<size_t>> procs;
+		config.getSeed.seed(config.initialSeed);
 
-		for (size_t i = 0; i < nodes; ++i) {
+		for (size_t i = 0; i < config.nodes; ++i) {
 			procs.push_back(std::vector<size_t>());
-			for (size_t j = 0; j < atomicsPerNode; ++j) {
-				procs[i].push_back(atomicsPerNode * i + j);
+			for (size_t j = 0; j < config.atomicsPerNode; ++j) {
+				procs[i].push_back(config.atomicsPerNode * i + j);
 			}
 		}
 
 		size_t cntr = 0;
-		for (size_t i = 0; i < nodes; ++i) {
+		for (size_t i = 0; i < config.nodes; ++i) {
 			std::vector<size_t> allnoi;
-			for (size_t k = 0; k < nodes; ++k) {
+			for (size_t k = 0; k < config.nodes; ++k) {
 				if (i != k)
 					allnoi.insert(allnoi.end(), procs[k].begin(), procs[k].end());
 			}
@@ -222,7 +276,7 @@ public:
 				std::vector<size_t> inoj = procs[i];
 				inoj.erase(std::remove(inoj.begin(), inoj.end(), num), inoj.end());
 				HeavyPHOLDProcessor* p = new HeavyPHOLDProcessor("Processor_" + n_tools::toString(cntr),
-					iter, cntr, inoj, allnoi, percentageRemotes, percentagePriority);
+				                                                 config.iter, cntr, inoj, allnoi, config.percentageRemotes, config.percentagePriority, config.getSeed());
 				processors.push_back(p);
 				add((Component*)p);
 				++cntr;
@@ -245,28 +299,12 @@ public:
 	}
 };
 
-
-class Listener: public adevs::EventListener<t_event>
-{
-public:
-
-	virtual void outputEvent(adevs::Event<t_event,double> x, double t){
-		std::cout << "an output event at time " << t;
-		HeavyPHOLDProcessor* proc = dynamic_cast<HeavyPHOLDProcessor*>(x.model);
-		if(proc != nullptr)
-			std::cout << "  (proc " << proc->m_name << ")";
-		std::cout << '\n';
-
-	}
-	virtual void stateChange(adevs::Atomic<t_event>* model, double t){
-		std::cout << "an event at time " << t << "!";
-		HeavyPHOLDProcessor* proc = dynamic_cast<HeavyPHOLDProcessor*>(model);
-		if(proc != nullptr)
-			std::cout << "  (proc " << proc->m_name << ")";
-		std::cout << '\n';
-	}
-
-	virtual ~Listener(){}
+struct PHOLDName {
+        static std::string eval(adevs::Devs<t_event, double>* model) {
+            HeavyPHOLDProcessor* proc = dynamic_cast<HeavyPHOLDProcessor*>(model);
+            if(proc != nullptr) return proc->m_name;
+            return "???";
+        }
 };
 
 template<typename T>
@@ -285,7 +323,7 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-c COREAMT] [classic|cpdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-S seed] [-c COREAMT] [classic|cpdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
@@ -294,6 +332,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES]
 	"  -r REMOTES     percentage of remote connections\n"
     "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
 	"  -i ITER        amount of useless work to simulate complex calculations\n"
+    "  -S seed        Initial seed with which all random number generators are seeded.\n"
 	"  -c COREAMT     amount of simulation cores, ignored in classic mode\n"
 	"  classic        Run single core simulation.\n"
 	"  cpdevs         Run conservative parallel simulation.\n"
@@ -306,17 +345,20 @@ int main(int argc, char** argv)
 	const char optDepth = 's';
 	const char optHelp = 'h';
 	const char optIter = 'i';
-        const char optRemote = 'r';
-        const char optPriority = 'p';
+    const char optRemote = 'r';
+    const char optPriority = 'p';
 	const char optCores = 'c';
+    const char optSeed = 'S';
 	char** argvc = argv+1;
 
 	double eTime = 50;
-	std::size_t nodes = 1;
-	std::size_t subnodes = 10;
-	std::size_t remotes = 10;
-	double priority = 0.1;
-	std::size_t iter = 0;
+    PHOLDConfig phconf;
+    phconf.nodes = 4;
+    phconf.atomicsPerNode = 10;
+    phconf.percentageRemotes = 10;
+    phconf.percentagePriority = 0.1;
+    phconf.iter = 0;
+    phconf.initialSeed = 1;
 
 	bool hasError = false;
 	bool isClassic = true;
@@ -362,7 +404,7 @@ int main(int argc, char** argv)
 		case optWidth:
 			++i;
 			if(i < argc){
-				nodes = toData<std::size_t>(std::string(*(++argvc)));
+			    phconf.nodes = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optWidth << '\n';
 			}
@@ -370,7 +412,7 @@ int main(int argc, char** argv)
 		case optDepth:
 			++i;
 			if(i < argc){
-				subnodes = toData<std::size_t>(std::string(*(++argvc)));
+			    phconf.atomicsPerNode= toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optDepth << '\n';
 			}
@@ -378,7 +420,7 @@ int main(int argc, char** argv)
         case optRemote:
             ++i;
             if(i < argc){
-                remotes = toData<std::size_t>(std::string(*(++argvc)));
+                phconf.percentageRemotes= toData<std::size_t>(std::string(*(++argvc)));
             } else {
                 std::cout << "Missing argument for option -" << optRemote << '\n';
             }
@@ -386,7 +428,7 @@ int main(int argc, char** argv)
         case optPriority:
             ++i;
             if(i < argc){
-                priority = toData<double>(std::string(*(++argvc)));
+                phconf.percentagePriority = toData<double>(std::string(*(++argvc)));
             } else {
                 std::cout << "Missing argument for option -" << optPriority << '\n';
             }
@@ -394,11 +436,23 @@ int main(int argc, char** argv)
 		case optIter:
 			++i;
 			if(i < argc){
-				iter = toData<std::size_t>(std::string(*(++argvc)));
+			    phconf.iter = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optIter << '\n';
 			}
 			break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                phconf.initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(phconf.initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
+                    hasError = true;
+                }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
@@ -413,14 +467,17 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	adevs::Devs<t_event>* model = new PHOLD(nodes, subnodes, iter, remotes, priority);
+	adevs::Devs<t_event>* model = new PHOLD(phconf);
+#ifdef USE_STAT
+#undef USE_STAT
+#endif
 #ifdef USE_STAT
     #define USE_LISTENER
     adevs::EventListener<t_event>* listener = new OutputCounter<t_event>();
 #else
 #ifndef BENCHMARK
     #define USE_LISTENER
-    adevs::EventListener<t_event>* listener = new Listener();
+    adevs::EventListener<t_event>* listener = new Listener<t_event, PHOLDName>();
 #endif //#ifndef BENCHMARK
 #endif //#ifdef USE_STAT
 	if(isClassic){
@@ -445,6 +502,7 @@ int main(int argc, char** argv)
 		adevs::ParSimulator<t_event> sim(model);
 #ifdef USE_LISTENER
 		sim.addEventListener(listener);
+		std::cout << "setting up listener\n";
 #endif
 		sim.execUntil(eTime);
 	}

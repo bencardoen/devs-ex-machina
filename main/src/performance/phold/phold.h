@@ -18,11 +18,19 @@
 #include <cmath>
 #include <cstdlib>
 #include <cinttypes>
+#include <boost/random.hpp>
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include "control/allocator.h"
+#include "tools/frandom.h"
 
 namespace n_benchmarks_phold {
+
+typedef std::mt19937_64 t_randgen;  //don't use the default one. It's not random enough.
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+//it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
+
 
 // phold uses event counters.
 // The messages are "Events", which are just numbers.
@@ -42,6 +50,9 @@ struct EventPair
 struct PHOLDModelState
 {
 	std::deque<EventPair> m_events;
+    mutable t_randgen m_rand;
+    std::size_t m_destination;  //the next destination
+    std::size_t m_nextMessage;  //the next message
 };
 
 }	/* namespace n_benchmarks_phold */
@@ -55,9 +66,6 @@ struct ToString<n_benchmarks_phold::PHOLDModelState>
 };
 
 namespace n_benchmarks_phold {
-
-typedef std::mt19937_64 t_randgen;	//don't use the default one. It's not random enough.
-
 class HeavyPHOLDProcessor: public n_model::AtomicModel<PHOLDModelState>
 {
 private:
@@ -68,10 +76,9 @@ private:
 	std::vector<size_t> m_remote;
 	int m_messageCount;
 	std::vector<n_model::t_portptr> m_outs;
-	mutable t_randgen m_rand;	//This object could be a global object, but then we'd need to lock it during parallel simulation.
 public:
 	HeavyPHOLDProcessor(std::string name, size_t iter, size_t totalAtomics, size_t modelNumber, std::vector<size_t> local,
-	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority);
+	        std::vector<size_t> remote, size_t percentageRemotes, double percentagePriority, std::size_t startSeed);
 	virtual ~HeavyPHOLDProcessor();
 
 	virtual n_network::t_timestamp timeAdvance() const override;
@@ -85,10 +92,28 @@ public:
 	size_t getNextDestination(size_t event) const;
 };
 
+struct PHOLDConfig
+{
+        std::size_t nodes;
+        std::size_t atomicsPerNode;
+        std::size_t iter;
+        double percentageRemotes;
+        double percentagePriority;
+
+        std::size_t initialSeed;         //the initial seed from which the model rng's are initialized. The default is 42, because some rng can't handle seed 0
+        t_seedrandgen getSeed;      //the random number generator for getting the new seeds.
+
+        PHOLDConfig(): nodes(0u), atomicsPerNode(0u), iter(0u),
+                        percentageRemotes(0.1), percentagePriority(0.1),
+                        initialSeed(42)
+        {}
+
+};
+
 class PHOLD: public n_model::CoupledModel
 {
 public:
-	PHOLD(size_t nodes, size_t atomicsPerNode, size_t iter, std::size_t percentageRemotes, double percentagePriority = 0.1);
+	PHOLD(PHOLDConfig config);
 	virtual ~PHOLD();
 };
 

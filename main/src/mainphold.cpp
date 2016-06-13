@@ -17,7 +17,7 @@ using namespace n_tools;
 
 LOG_INIT("phold.log")
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES] [-p PRIORITY] [-i ITER] [-S seed] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
@@ -26,7 +26,8 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-s SUBNODES] [-r REMOTES]
 	"  -r REMOTES     percentage of remote connections\n"
     "  -p PRIORITY    chance of a priority event. Must be within the range [0.0, 1.0]\n"
 	"  -i ITER        amount of useless work to simulate complex calculations\n"
-	"  -c COREAMT     amount of simulation cores, ignored in classic mode. This should be exactly equal to the n argument!!!\n"
+	"  -c COREAMT     amount of simulation cores, ignored in classic mode. This should be exactly equal to the n argument.\n"
+    "  -S seed        Initial seed with which all random number generators are seeded.\n"
 	"  classic        Run single core simulation.\n"
 	"  cpdevs         Run conservative parallel simulation.\n"
 	"  opdevs|pdevs   Run optimistic parallel simulation.\n"
@@ -43,6 +44,7 @@ int main(int argc, char** argv)
     const char optRemote = 'r';
     const char optPriority = 'p';
 	const char optCores = 'c';
+    const char optSeed = 'S';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -50,11 +52,13 @@ int main(int argc, char** argv)
 #else
 	n_network::t_timestamp::t_time eTime = 50;
 #endif
-	std::size_t nodes = 4;  // Can't pick a default of c=4 with n=1.
-	std::size_t apn = 10;
-	std::size_t percentageRemotes = 10;
-	double priority = 0.1;
-	std::size_t iter = 0;
+	n_benchmarks_phold::PHOLDConfig conf;
+	conf.nodes = 4;  // Can't pick a default of c=4 with n=1.
+	conf.atomicsPerNode = 10;
+	conf.percentageRemotes = 10;
+	conf.percentagePriority = 0.1;
+	conf.iter = 0;
+    conf.initialSeed = 1;
 
 	bool hasError = false;
 	n_control::SimType simType = n_control::SimType::CLASSIC;
@@ -102,7 +106,7 @@ int main(int argc, char** argv)
 		case optWidth:
 			++i;
 			if(i < argc){
-				nodes = toData<std::size_t>(std::string(*(++argvc)));
+				conf.nodes = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optWidth << '\n';
 			}
@@ -110,8 +114,8 @@ int main(int argc, char** argv)
 		case optDepth:
 			++i;
 			if(i < argc){
-				apn = toData<std::size_t>(std::string(*(++argvc)));
-                                if(apn < 2){
+				conf.atomicsPerNode = toData<std::size_t>(std::string(*(++argvc)));
+                                if(conf.atomicsPerNode < 2){
                                         std::cerr << "Invalid depth size in phold, min==2\n";
                                         hasError = true;
                                 }
@@ -122,7 +126,7 @@ int main(int argc, char** argv)
         case optRemote:
             ++i;
             if(i < argc){
-                percentageRemotes = toData<std::size_t>(std::string(*(++argvc)));
+                conf.percentageRemotes = toData<std::size_t>(std::string(*(++argvc)));
             } else {
                 std::cout << "Missing argument for option -" << optRemote << '\n';
             }
@@ -130,7 +134,7 @@ int main(int argc, char** argv)
         case optPriority:
             ++i;
             if(i < argc){
-                priority = toData<double>(std::string(*(++argvc)));
+                conf.percentagePriority = toData<double>(std::string(*(++argvc)));
             } else {
                 std::cout << "Missing argument for option -" << optPriority << '\n';
             }
@@ -138,11 +142,23 @@ int main(int argc, char** argv)
 		case optIter:
 			++i;
 			if(i < argc){
-				iter = toData<std::size_t>(std::string(*(++argvc)));
+				conf.iter = toData<std::size_t>(std::string(*(++argvc)));
 			} else {
 				std::cout << "Missing argument for option -" << optIter << '\n';
 			}
 			break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                conf.initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(conf.initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
+                    hasError = true;
+                }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
 		case optHelp:
 			std::cout << "usage: \n\t" << argv[0] << helpstr;
 			return 0;
@@ -156,23 +172,22 @@ int main(int argc, char** argv)
 		std::cout << "usage: \n\t" << argv[0] << helpstr;
 		return -1;
 	}
-        if(nodes != coreAmt && simType!=n_control::SimType::CLASSIC){
-                std::cerr << nodes << std::endl;
+        if(conf.nodes != coreAmt && simType!=n_control::SimType::CLASSIC){
+                std::cerr << conf.nodes << std::endl;
                 std::cerr << coreAmt << std::endl;
                 throw std::logic_error("N should match C");
         }
-	n_control::ControllerConfig conf;
-	conf.m_name = "PHOLD";
-	conf.m_simType = simType;
-	conf.m_coreAmount = coreAmt;
-	conf.m_saveInterval = 5;
-	conf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
+	n_control::ControllerConfig cconf;
+	cconf.m_name = "PHOLD";
+	cconf.m_simType = simType;
+	cconf.m_coreAmount = coreAmt;
+	cconf.m_saveInterval = 5;
+	cconf.m_allocator = n_tools::createObject<n_benchmarks_phold::PHoldAlloc>();
 
-	auto ctrl = conf.createController();
+	auto ctrl = cconf.createController();
 	t_timestamp endTime(eTime, 0);
 	ctrl->setTerminationTime(endTime);
-	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(nodes, apn, iter,
-	        percentageRemotes, priority);
+	t_coupledmodelptr d = n_tools::createObject<n_benchmarks_phold::PHOLD>(conf);
 	ctrl->addModel(d);
 	{
 #ifndef BENCHMARK

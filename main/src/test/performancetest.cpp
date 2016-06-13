@@ -37,8 +37,8 @@ TEST(Performance, DEVStone)
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		// Create a DEVStone simulation with width 2 and depth 3
-		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false);
+		// Create a DEVStone simulation with width 2 and depth 3 and (unused) random seed 42
+		t_coupledmodelptr d = createObject<DEVStone>(2, 3, false, 42);
 		ctrl->addModel(d);
 
 		ctrl->simulate();
@@ -52,6 +52,12 @@ TEST(Performance, PHOLD)
 	ControllerConfig conf;
 	conf.m_name = "PHOLDBench";
 	conf.m_saveInterval = 1;
+	PHOLDConfig pholdConf;
+	pholdConf.nodes = 1;
+	pholdConf.atomicsPerNode = 10;
+	pholdConf.iter = 128;
+	pholdConf.percentageRemotes = 0.1;
+
 
 	std::ofstream filestream(TESTFOLDER "/performance/phold.txt");
 	{
@@ -60,7 +66,7 @@ TEST(Performance, PHOLD)
 		t_timestamp endTime(360, 0);
 		ctrl->setTerminationTime(endTime);
 
-		t_coupledmodelptr d = createObject<PHOLD>(1, 10, 128, 0.1);
+		t_coupledmodelptr d = createObject<PHOLD>(pholdConf);
 		ctrl->addModel(d);
 
 		ctrl->simulate();

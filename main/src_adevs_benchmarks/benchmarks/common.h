@@ -41,6 +41,37 @@ public:
     }
 };
 
+extern double T_INF;
+
+template<typename EventType, typename ToName, typename t_eventTime = double>
+class Listener: public adevs::EventListener<EventType>
+{
+    double m_lastTime;
+public:
+    Listener(): m_lastTime(0.0){
+        std::cout << "note: this Listener is not threadsafe!\n";
+    }
+    virtual void outputEvent(adevs::Event<EventType, t_eventTime> x, double t){
+        if(t > m_lastTime) {
+            std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
+            m_lastTime = t;
+        }
+        std::cout << "output by: (" << ToName::eval(x.model) << ")\n";
+    }
+    virtual void stateChange(adevs::Atomic<EventType>* model, double t){
+        if(t > m_lastTime) {
+            std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
+            m_lastTime = t;
+        }
+        std::cout << "stateChange by: (" << ToName::eval(model) << ")\n";
+        if(model->ta() == T_INF)
+            std::cout << "\t\tNext scheduled internal transition at time inf\n";
+        else
+            std::cout << "\t\tNext scheduled internal transition at time " << t + model->ta() << '\n';
+    }
+
+    virtual ~Listener(){}
+};
 
 
 #endif /* SRC_ADEVS_BENCHMARKS_BENCHMARKS_COMMON_H_ */

@@ -4,7 +4,7 @@ __  Current Time: 0____________________
 
 	INITIAL CONDITIONS in model Processor_1
 		Initial State: 
-		Next scheduled internal transition at time 103
+		Next scheduled internal transition at time 118
 
 	INITIAL CONDITIONS in model Processor_3
 		Initial State: 
@@ -62,25 +62,7 @@ __  Current Time: 0____________________
 		Initial State: 
 		Next scheduled internal transition at time inf
 
-__  Current Time: 103____________________
-
-
-	INTERNAL TRANSITION in model Processor_1
-		New State: 
-		Output Port Configuration:
-			port <0>:
-				8032
-			port <1>:
-		Next scheduled internal transition at time 104
-
-	EXTERNAL TRANSITION in model Processor_3
-		New State: 
-		Input Port Configuration:
-			port <0>:
-				8032
-		Next scheduled internal transition at time 228
-
-__  Current Time: 104____________________
+__  Current Time: 118____________________
 
 
 	INTERNAL TRANSITION in model Processor_1
@@ -88,37 +70,74 @@ __  Current Time: 104____________________
 		Output Port Configuration:
 			port <0>:
 			port <1>:
-				54217
-		Next scheduled internal transition at time 227
+				11421363681445843150
+		Next scheduled internal transition at time 223
 
 	EXTERNAL TRANSITION in model Processor_16
 		New State: 
 		Input Port Configuration:
 			port <0>:
-				54217
+				11421363681445843150
 			port <1>:
-		Next scheduled internal transition at time 218
+		Next scheduled internal transition at time 219
 
-__  Current Time: 218____________________
+__  Current Time: 219____________________
 
 
 	INTERNAL TRANSITION in model Processor_16
 		New State: 
 		Output Port Configuration:
 			port <0>:
+				13337445591634232277
 			port <1>:
-				34014
 		Next scheduled internal transition at time inf
 
-	EXTERNAL TRANSITION in model Processor_23
+	EXTERNAL TRANSITION in model Processor_18
 		New State: 
 		Input Port Configuration:
 			port <0>:
-				34014
-			port <1>:
-		Next scheduled internal transition at time 321
+				13337445591634232277
+		Next scheduled internal transition at time 319
 
-__  Current Time: 227____________________
+__  Current Time: 223____________________
+
+
+	INTERNAL TRANSITION in model Processor_1
+		New State: 
+		Output Port Configuration:
+			port <0>:
+				11276019052349759035
+			port <1>:
+		Next scheduled internal transition at time 344
+
+	EXTERNAL TRANSITION in model Processor_3
+		New State: 
+		Input Port Configuration:
+			port <0>:
+				11276019052349759035
+		Next scheduled internal transition at time 348
+
+__  Current Time: 319____________________
+
+
+	INTERNAL TRANSITION in model Processor_18
+		New State: 
+		Output Port Configuration:
+			port <0>:
+			port <1>:
+				2924489305068522572
+			port <2>:
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor_20
+		New State: 
+		Input Port Configuration:
+			port <0>:
+			port <1>:
+				2924489305068522572
+		Next scheduled internal transition at time 436
+
+__  Current Time: 344____________________
 
 
 	INTERNAL TRANSITION in model Processor_1
@@ -126,18 +145,18 @@ __  Current Time: 227____________________
 		Output Port Configuration:
 			port <0>:
 			port <1>:
-				47133
-		Next scheduled internal transition at time 351
+				982822772190750706
+		Next scheduled internal transition at time 457
 
 	EXTERNAL TRANSITION in model Processor_16
 		New State: 
 		Input Port Configuration:
 			port <0>:
-				47133
+				982822772190750706
 			port <1>:
-		Next scheduled internal transition at time 339
+		Next scheduled internal transition at time 456
 
-__  Current Time: 228____________________
+__  Current Time: 348____________________
 
 
 	INTERNAL TRANSITION in model Processor_3
@@ -146,7 +165,7 @@ __  Current Time: 228____________________
 			port <0>:
 			port <1>:
 			port <2>:
-				59053
+				6397164247043180397
 		Next scheduled internal transition at time inf
 
 	EXTERNAL TRANSITION in model Processor_16
@@ -154,143 +173,84 @@ __  Current Time: 228____________________
 		Input Port Configuration:
 			port <0>:
 			port <1>:
-				59053
-		Next scheduled internal transition at time 339
+				6397164247043180397
+		Next scheduled internal transition at time 456
 
-__  Current Time: 321____________________
+__  Current Time: 436____________________
 
 
-	INTERNAL TRANSITION in model Processor_23
+	INTERNAL TRANSITION in model Processor_20
 		New State: 
 		Output Port Configuration:
-			port <0>:
-				8595
-			port <1>:
 		Next scheduled internal transition at time inf
 
-	EXTERNAL TRANSITION in model Processor_24
-		New State: 
-		Input Port Configuration:
-			port <0>:
-				8595
-		Next scheduled internal transition at time 437
-
-__  Current Time: 339____________________
+__  Current Time: 456____________________
 
 
 	INTERNAL TRANSITION in model Processor_16
 		New State: 
 		Output Port Configuration:
 			port <0>:
+				5084925215351035075
 			port <1>:
-				46827
-		Next scheduled internal transition at time 444
+		Next scheduled internal transition at time 457
 
-	EXTERNAL TRANSITION in model Processor_23
+	EXTERNAL TRANSITION in model Processor_18
 		New State: 
 		Input Port Configuration:
 			port <0>:
-				46827
-			port <1>:
-		Next scheduled internal transition at time 340
+				5084925215351035075
+		Next scheduled internal transition at time 566
 
-__  Current Time: 340____________________
-
-
-	INTERNAL TRANSITION in model Processor_23
-		New State: 
-		Output Port Configuration:
-			port <0>:
-			port <1>:
-				30336
-		Next scheduled internal transition at time inf
-
-	EXTERNAL TRANSITION in model Processor_25
-		New State: 
-		Input Port Configuration:
-			port <0>:
-			port <1>:
-				30336
-		Next scheduled internal transition at time 452
-
-__  Current Time: 351____________________
+__  Current Time: 457____________________
 
 
 	INTERNAL TRANSITION in model Processor_1
 		New State: 
 		Output Port Configuration:
 			port <0>:
+				15714488591692700502
 			port <1>:
-				46564
-		Next scheduled internal transition at time 458
-
-	EXTERNAL TRANSITION in model Processor_16
-		New State: 
-		Input Port Configuration:
-			port <0>:
-				46564
-			port <1>:
-		Next scheduled internal transition at time 444
-
-__  Current Time: 437____________________
-
-
-	INTERNAL TRANSITION in model Processor_24
-		New State: 
-		Output Port Configuration:
-			port <0>:
-				38838
-		Next scheduled internal transition at time inf
-
-	EXTERNAL TRANSITION in model Processor_25
-		New State: 
-		Input Port Configuration:
-			port <0>:
-				38838
-			port <1>:
-		Next scheduled internal transition at time 452
-
-__  Current Time: 444____________________
-
-
-	INTERNAL TRANSITION in model Processor_16
-		New State: 
-		Output Port Configuration:
-			port <0>:
-			port <1>:
-				49531
-		Next scheduled internal transition at time 544
-
-	EXTERNAL TRANSITION in model Processor_23
-		New State: 
-		Input Port Configuration:
-			port <0>:
-				49531
-			port <1>:
-		Next scheduled internal transition at time 549
-
-__  Current Time: 452____________________
-
-
-	INTERNAL TRANSITION in model Processor_25
-		New State: 
-		Output Port Configuration:
-		Next scheduled internal transition at time 570
-
-__  Current Time: 458____________________
-
-
-	INTERNAL TRANSITION in model Processor_1
-		New State: 
-		Output Port Configuration:
-			port <0>:
-				29048
-			port <1>:
-		Next scheduled internal transition at time 562
+		Next scheduled internal transition at time 580
 
 	EXTERNAL TRANSITION in model Processor_3
 		New State: 
 		Input Port Configuration:
 			port <0>:
-				29048
-		Next scheduled internal transition at time 560
+				15714488591692700502
+		Next scheduled internal transition at time 458
+
+	INTERNAL TRANSITION in model Processor_16
+		New State: 
+		Output Port Configuration:
+			port <0>:
+				173722761155632604
+			port <1>:
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor_18
+		New State: 
+		Input Port Configuration:
+			port <0>:
+				173722761155632604
+		Next scheduled internal transition at time 566
+
+__  Current Time: 458____________________
+
+
+	INTERNAL TRANSITION in model Processor_3
+		New State: 
+		Output Port Configuration:
+			port <0>:
+			port <1>:
+				5491810172228603783
+			port <2>:
+		Next scheduled internal transition at time inf
+
+	EXTERNAL TRANSITION in model Processor_10
+		New State: 
+		Input Port Configuration:
+			port <0>:
+				5491810172228603783
+			port <1>:
+		Next scheduled internal transition at time 569

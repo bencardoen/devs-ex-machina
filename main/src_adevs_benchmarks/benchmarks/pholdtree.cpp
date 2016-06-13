@@ -16,6 +16,7 @@
 #include <random>
 #include <deque>
 #include <cmath>
+#include <type_traits>
 #include "common.h"
 #include "../../main/src/tools/frandom.h"
 
@@ -25,13 +26,13 @@
 #define T_100 1.0
 #define T_STEP 0.01
 #define T_125 1.25
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #else
 #define T_0 1.0	//timeadvance may NEVER be 0!
 #define T_100 100.0
 #define T_STEP 1.0
 #define T_125 125.0
-#define T_INF std::numeric_limits<double>::max()
+double T_INF = std::numeric_limits<double>::max();
 #endif
 
 typedef double t_eventTime;
@@ -52,12 +53,16 @@ struct EventPair
 #else
 	typedef std::mt19937_64 t_randgen;
 #endif
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+                                                //it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
 
-std::size_t getRand(std::size_t event, t_randgen& randgen)
+std::size_t getRand(std::size_t, t_randgen& randgen)
 {
-	std::uniform_int_distribution<std::size_t> dist(0, 60000);
-	randgen.seed(event);
-	return dist(randgen);
+//	std::uniform_int_distribution<std::size_t> dist(0, 60000);
+//	randgen.seed(event);
+//	return dist(randgen);
+    return randgen();
 }
 
 namespace n_tools {
@@ -98,22 +103,20 @@ private:
     std::vector<t_portType> m_iPorts;
     std::deque<EventPair> m_events;
     std::size_t m_eventsProcessed;
+    std::size_t m_destination;  //the next destination
+    std::size_t m_nextMessage;  //the next message
 
-	size_t getNextDestination(size_t event) const
+	size_t getNextDestination(size_t) const
 	{
-	    m_rand.seed(event);
-        //std::cerr << "seed = " << event <<  "\n";
         if(m_oPorts.empty())
             return nullDestination;
         size_t chosen = m_distDest(m_rand);
-        //std::cerr << m_modelNumber << " choosing from [" << m_distDest.min() << ", " << m_distDest.max() << "] = " << chosen << "\n";
         return chosen;
 	}
-	t_eventTime getProcTime(t_payload event) const
+	t_eventTime getProcTime(t_payload) const
 	{
         std::uniform_real_distribution<double> dist0(0.0, 1.0);
 		std::uniform_int_distribution<int> dist(int(T_100), int(T_125));
-		m_rand.seed(event);
 		double ta = double(dist(m_rand)); //roundTo(dist(m_rand), T_STEP);
         const double v = dist0(m_rand);
 		if(v < m_percentagePriority){
@@ -125,10 +128,12 @@ private:
 	}
 public:
 	const std::string m_name;
-	PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, bool isRoot = false):
+	PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, std::size_t startSeed, bool isRoot = false):
 		  m_percentagePriority(percentagePriority), m_isRoot(isRoot), m_modelNumber(modelNumber), m_eventsProcessed(0),
+		  m_destination(nullDestination), m_nextMessage(0),
 		 m_name(name)
 	{
+        m_rand.seed(startSeed);
         if(m_percentagePriority > 1.0 )
                 throw std::logic_error("Invalid value for priority");
         if(isRoot)
@@ -139,46 +144,61 @@ public:
 	void delta_int()
 	{
 	    if(m_isRoot && m_events.size() == 1){
-            size_t seed = m_events.front().m_procTime * (m_modelNumber + 1);
             m_eventsProcessed++;
-            m_events.push_back(EventPair((m_modelNumber+1) * m_eventsProcessed, getProcTime(seed)));
+            m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
         }
 		if(m_events.size())
 			m_events.pop_front();
+        if(m_events.size()) {
+            finalize();
+        }
 	}
 	/// External transition function.
 	void delta_ext(double e, const adevs::Bag<t_event>& xb)
 	{
-		if(!m_events.empty())
+        bool wasEmpty = m_events.empty();
+        if (!wasEmpty) {
 			m_events[0].m_procTime -= e;
+        }
 		for (auto& msg : xb) {
 			++m_eventsProcessed;
-			t_payload payload = msg.value + m_eventsProcessed;
-			m_events.push_back(EventPair(payload* (m_eventsProcessed), getProcTime(payload)));
+			m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
 		}
+        if(wasEmpty) {
+            finalize();
+        }
 	}
 	/// Confluent transition function.
 	void delta_conf(const adevs::Bag<t_event>& xb)
 	{
-		if (!m_events.empty())
-			m_events.pop_front();
+	    bool wasEmpty = m_events.empty();
+	    if (!wasEmpty) {
+	        m_events.pop_front();
+	    }
         for (auto& msg : xb) {
             ++m_eventsProcessed;
-            t_payload payload = msg.value + m_eventsProcessed;
-            m_events.push_back(EventPair(payload* (m_eventsProcessed), getProcTime(payload)));
+//            t_payload payload = msg.value + m_eventsProcessed;
+            m_events.push_back(EventPair(m_modelNumber, getProcTime(0)));
+        }
+        if(wasEmpty) {
+            finalize();
         }
 	}
 	/// Output function.
 	void output_func(adevs::Bag<t_event>& yb)
 	{
+        static std::size_t counter(0);
 		if (!m_events.empty()) {
 			EventPair& i = m_events[0];
-			size_t dest = getNextDestination(i.m_modelNumber);
+			size_t dest = m_destination;
 	        //don't do anything if the destination is the nulldestination
-	        if(dest == nullDestination)
+	        if(dest == nullDestination) {
 	            return;
-			size_t r = getRand(i.m_modelNumber, m_rand);
+	        }
+			size_t r = m_nextMessage;
 			yb.insert(t_event(dest, r));
+		} else {
+		    std::cout << "output function called on empty event list for the " << (++counter) << " time\n";
 		}
 	}
 	/// Time advance function.
@@ -217,6 +237,15 @@ public:
     {
         return m_events.size();
     }
+
+    void finalize()
+    {
+        if(m_events.size()) {
+            //schedule the very first item, otherwise, don't schedule anything
+            m_destination = getNextDestination(m_events.front().m_modelNumber);
+            m_nextMessage = getRand(m_events.front().m_modelNumber, m_rand);
+        }
+    }
 };
 
 struct PHOLDTreeConfig
@@ -228,9 +257,11 @@ struct PHOLDTreeConfig
     bool doubleLinks;           //make links double
     bool circularLinks;         //make children a circular linked list
     bool depthFirstAlloc;       //do a depth first allocation instead of a breadth first one.
+    size_t initialSeed;         //the initial seed from which the model rng's are initialized. The default is 42, because some rng can't handle seed 0
+    t_seedrandgen getSeed;      //the random number generator for getting the new seeds.
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false), initialSeed(0)
     {}
 };
 
@@ -242,13 +273,15 @@ protected:
     std::vector<t_portType> m_oPorts;
     std::vector<t_portType> m_iPorts;
 
-    PHOLDTree(const PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum): m_name(std::string("PHOLDTree_") + n_tools::toString(itemNum++)) {
+    PHOLDTree(PHOLDTreeConfig& config, std::size_t depth, std::size_t& itemNum): m_name(std::string("PHOLDTree_") + n_tools::toString(itemNum++)) {
         m_children.reserve(config.numChildren + 1);
 
         //create main child
         bool isRootSpawn = (depth == config.depth) && config.spawnAtRoot;
+        if(isRootSpawn)
+            config.getSeed.seed(config.initialSeed);
         PHOLDTreeProcessor* mainChild = new PHOLDTreeProcessor("Processor_" + n_tools::toString(itemNum),
-                                                                 itemNum, config.percentagePriority, isRootSpawn);
+                                                                 itemNum, config.percentagePriority, config.getSeed(), isRootSpawn);
 
         add((Component*)mainChild);
         m_children.push_back(mainChild);
@@ -260,7 +293,7 @@ protected:
             //create all simple children
             for(std::size_t i = 0; i < config.numChildren; ++i) {
                 PHOLDTreeProcessor * itemPtr = new PHOLDTreeProcessor("Processor_" + n_tools::toString(itemNum),
-                                                                         itemNum, config.percentagePriority);
+                                                                         itemNum, config.percentagePriority, config.getSeed());
                 ++itemNum;
                 add((Component*)itemPtr);
                 m_children.push_back((Component*)itemPtr);
@@ -303,6 +336,7 @@ protected:
                     std::cerr << ((PHOLDTreeProcessor*)cmp2)->m_name << ":" << ptr2b << " -> " << ((PHOLDTreeProcessor*)cmp1)->m_name << ":" << ptr1b << '\n';
 #endif
                 }
+                ((PHOLDTreeProcessor*)cmp2)->finalize();
             }
         } else {
             //create all simple children
@@ -353,12 +387,15 @@ protected:
                 ((PHOLDTree*)m_children[i+1])->finalizeSetup();
             }
         }
+
+        if(isRootSpawn)
+            mainChild->finalize();
     }
 public:
     std::vector<Component*> m_children;
     std::string m_name;
 
-    PHOLDTree(const PHOLDTreeConfig& config)
+    PHOLDTree(PHOLDTreeConfig& config)
         : PHOLDTree(config, config.depth, numCounter)
     { }
 
@@ -399,6 +436,7 @@ public:
             std::cerr << m_name << ":" << port << " -> " << mainChild->m_name << ":" << ptr1 << '\n';
 #endif
         }
+        mainChild->finalize();
     }
 };
 
@@ -472,43 +510,14 @@ void allocateTree(PHOLDTree* root, const PHOLDTreeConfig& config, std::size_t nu
     }
 }
 
-
-class Listener: public adevs::EventListener<t_event>
-{
-    double m_lastTime;
-public:
-    Listener(): m_lastTime(0.0){
-        std::cout << "note: this Listener is not threadsafe!\n";
-    }
-	virtual void outputEvent(adevs::Event<t_event,double> x, double t){
-	    if(t > m_lastTime) {
-	        std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
-	        m_lastTime = t;
-	    }
-		PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(x.model);
-		if(proc != nullptr) {
-		    std::cout << "output by: (proc " << proc->m_name << ")\n";
-		}
-
-	}
-	virtual void stateChange(adevs::Atomic<t_event>* model, double t){
-        if(t > m_lastTime) {
-            std::cout << "\n__  Current Time: " << t << "____________________\n\n\n";
-            m_lastTime = t;
+struct PHOLDTreeName {
+        static std::string eval(adevs::Devs<t_event, double>* model) {
+            PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(model);
+            if(proc != nullptr) return proc->m_name;
+            return "???";
         }
-		PHOLDTreeProcessor* proc = dynamic_cast<PHOLDTreeProcessor*>(model);
-        if(proc != nullptr) {
-            std::cout << "stateChange by: (proc " << proc->m_name << ")\n";
-            std::cout << "\t\tEvents left: " << proc->eventsLeft() << "\n";
-            if(model->ta() == T_INF)
-                std::cout << "\t\tNext scheduled internal transition at time inf\n";
-            else
-                std::cout << "\t\tNext scheduled internal transition at time " << t + model->ta() << '\n';
-        }
-	}
-
-	virtual ~Listener(){}
 };
+
 
 template<typename T>
 T toData(std::string str)
@@ -526,7 +535,7 @@ char getOpt(char* argv){
 }
 
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-C] [-D] [-c COREAMT] [classic|cpdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-C] [-D] [-F] [-S seed] [-c COREAMT] [classic|cpdevs]\n"
         "options:\n"
         "  -h             show help and exit\n"
         "  -t ENDTIME     set the endtime of the simulation\n"
@@ -536,6 +545,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [
         "  -C             Enable circular links among the children of the same root.\n"
         "  -D             Enable double links. This will allow nodes to communicate in counterclockwise order and to their parent.\n"
         "  -F             Enable depth first allocation of the nodes across the cores in multicore simulation. The default is breadth first allocation.\n"
+        "  -S seed        Initial seed with which all random number generators are seeded.\n"
         "  -c COREAMT     amount of simulation cores, ignored in classic mode.\n"
         "  classic        Run single core simulation.\n"
         "  cpdevs         Run conservative parallel simulation.\n"
@@ -547,6 +557,7 @@ int main(int argc, char** argv)
     const char optWidth = 'n';
     const char optDepth = 'd';
     const char optDepthFirst = 'F';
+    const char optSeed = 'S';
     const char optHelp = 'h';
     const char optPriority = 'p';
     const char optCores = 'c';
@@ -562,6 +573,7 @@ int main(int argc, char** argv)
     config.circularLinks = false;
     config.doubleLinks = false;
     config.depthFirstAlloc = false;
+    config.initialSeed = 1;
 
 	bool hasError = false;
 	bool isClassic = true;
@@ -640,6 +652,18 @@ int main(int argc, char** argv)
         case optDepthFirst:
             config.depthFirstAlloc = true;
             break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                config.initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(config.initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
+                    hasError = true;
+                }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
         case optHelp:
             std::cout << "usage: \n\t" << argv[0] << helpstr;
             return 0;
@@ -662,7 +686,7 @@ int main(int argc, char** argv)
 #else
 #ifndef BENCHMARK
     #define USE_LISTENER
-    adevs::EventListener<t_event>* listener = new Listener();
+    adevs::EventListener<t_event>* listener = new Listener<t_event, PHOLDTreeName>();
 #endif //#ifndef BENCHMARK
 #endif //#ifdef USE_STAT
 	if(isClassic){

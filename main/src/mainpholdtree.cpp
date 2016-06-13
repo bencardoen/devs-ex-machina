@@ -17,7 +17,7 @@ using namespace n_tools;
 
 LOG_INIT("pholdtree.log")
 
-const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-C] [-D] [-F] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
+const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [-C] [-D] [-F] [-S seed] [-c COREAMT] [classic|cpdevs|opdevs|pdevs]\n"
 	"options:\n"
 	"  -h             show help and exit\n"
 	"  -t ENDTIME     set the endtime of the simulation\n"
@@ -27,6 +27,7 @@ const char helpstr[] = " [-h] [-t ENDTIME] [-n NODES] [-d depth] [-p PRIORITY] [
     "  -C             Enable circular links among the children of the same root.\n"
     "  -D             Enable double links. This will allow nodes to communicate in counterclockwise order and to their parent.\n"
     "  -F             Enable depth first allocation of the nodes across the cores in multicore simulation. The default is breadth first allocation.\n"
+    "  -S seed        Initial seed with which all random number generators are seeded.\n"
 	"  -c COREAMT     amount of simulation cores, ignored in classic mode.\n"
 	"  classic        Run single core simulation.\n"
 	"  cpdevs         Run conservative parallel simulation.\n"
@@ -39,12 +40,13 @@ int main(int argc, char** argv)
 	const char optETime = 't';
 	const char optWidth = 'n';
 	const char optDepth = 'd';
-        const char optDepthFirst = 'F';
+    const char optDepthFirst = 'F';
+    const char optSeed = 'S';
 	const char optHelp = 'h';
-        const char optPriority = 'p';
+    const char optPriority = 'p';
 	const char optCores = 'c';
-        const char optDoubleLinks = 'D';
-        const char optCircularLinks = 'C';
+    const char optDoubleLinks = 'D';
+    const char optCircularLinks = 'C';
 	char** argvc = argv+1;
 
 #ifdef FPTIME
@@ -54,11 +56,12 @@ int main(int argc, char** argv)
 #endif
 	n_benchmarks_pholdtree::PHOLDTreeConfig config;
 	config.numChildren = 4;
-        config.percentagePriority = 0.1;
-        config.depth = 3;
-        config.circularLinks = false;
-        config.doubleLinks = false;
-        config.depthFirstAlloc = false;
+    config.percentagePriority = 0.1;
+    config.depth = 3;
+    config.circularLinks = false;
+    config.doubleLinks = false;
+    config.depthFirstAlloc = false;
+    config.initialSeed = 1;
 
 
 	bool hasError = false;
@@ -124,31 +127,43 @@ int main(int argc, char** argv)
 			}
 			break;
 
-                case optPriority:
-                    ++i;
-                    if(i < argc){
-                        config.percentagePriority = toData<double>(std::string(*(++argvc)));
-                    } else {
-                        std::cout << "Missing argument for option -" << optPriority << '\n';
-                    }
-                    break;
-                case optCircularLinks:
-                    config.circularLinks = true;
-                    break;
-                case optDoubleLinks:
-                    config.doubleLinks = true;
-                    break;
-                case optDepthFirst:
-                    config.depthFirstAlloc = true;
-                    break;
-                case optHelp:
-                    std::cout << "usage: \n\t" << argv[0] << helpstr;
-                    return 0;
-                default:
-                    std::cout << "Unknown argument: " << *argvc << '\n';
+        case optPriority:
+            ++i;
+            if(i < argc){
+                config.percentagePriority = toData<double>(std::string(*(++argvc)));
+            } else {
+                std::cout << "Missing argument for option -" << optPriority << '\n';
+            }
+            break;
+        case optCircularLinks:
+            config.circularLinks = true;
+            break;
+        case optDoubleLinks:
+            config.doubleLinks = true;
+            break;
+        case optDepthFirst:
+            config.depthFirstAlloc = true;
+            break;
+        case optSeed:
+            ++i;
+            if(i < argc){
+                config.initialSeed = toData<std::size_t>(std::string(*(++argvc)));
+                if(config.initialSeed == 0){
+                    std::cout << "Invalid argument for option -" << optSeed << "\n  note: seed '0' is not allowed.\n";
                     hasError = true;
-                    continue;
                 }
+            } else {
+                std::cout << "Missing argument for option -" << optSeed << '\n';
+            }
+            break;
+        case optHelp:
+            std::cout << "usage: \n\t" << argv[0] << helpstr;
+            return 0;
+        default:
+            std::cout << "Unknown argument: " << *argvc << '\n';
+            hasError = true;
+            continue;
+        }
     }
     if(hasError){
             std::cout << "usage: \n\t" << argv[0] << helpstr;
@@ -163,10 +178,7 @@ int main(int argc, char** argv)
 	conf.m_allocator = n_tools::createObject<n_benchmarks_pholdtree::PHoldTreeAlloc>();
 
 	auto ctrl = conf.createController();
-        std::cout << conf.m_simType << std::endl;
-        std::cout << config.percentagePriority << std::endl;
 	t_timestamp endTime(eTime, 0);
-        std::cout << endTime << std::endl;
 	ctrl->setTerminationTime(endTime);
 	auto d = n_tools::createObject<n_benchmarks_pholdtree::PHOLDTree>(config);
 	if(conf.m_simType != n_control::SimType::CLASSIC){

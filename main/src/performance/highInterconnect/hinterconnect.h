@@ -16,6 +16,7 @@
 #include "tools/objectfactory.h"
 #include "control/allocator.h"
 #include <random>
+#include "tools/frandom.h"
 
 namespace n_interconnect {
 
@@ -25,14 +26,18 @@ typedef double t_counter;
 typedef std::size_t t_counter;
 #endif
 typedef std::mt19937_64 t_randgen;
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+//it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
+
 
 class GeneratorState
 {
 public:
 	t_counter m_count;
-	std::size_t m_seed;
+    mutable t_randgen m_rand;
 public:
-	GeneratorState(t_counter count = 0u, std::size_t seed = 0u);
+	GeneratorState(t_counter count = 0u);
 };
 
 }	/* namespace n_interconnect */
@@ -41,7 +46,7 @@ template<>
 struct ToString<n_interconnect::GeneratorState>
 {
 	static std::string exec(const n_interconnect::GeneratorState& s){
-		return n_tools::toString(s.m_count) + ", " + n_tools::toString(s.m_seed);
+		return n_tools::toString(s.m_count);
 	}
 };
 
@@ -51,13 +56,12 @@ class Generator: public n_model::AtomicModel<GeneratorState>
 {
 private:
 	const bool m_randomta;
-	mutable t_randgen m_rand;
 public:
 	n_model::t_portptr m_out;
 	n_model::t_portptr m_in;
 
 	Generator(const std::string& name, std::size_t seed, bool randTa);
-	void adjustCounter(std::size_t seed);	//changes current state based on the given seed
+	void adjustCounter();	//changes current state
 
 	virtual n_model::t_timestamp timeAdvance() const;
 	virtual void intTransition();
@@ -77,13 +81,16 @@ public:
 	 * @param randomta	Whether or not to use randomized time advance.
 	 * 			If true, the time advance will fluctuate between 1 and 100.
 	 * 			If false, the time advance will be fixed at 100.
+	 * @param startSeed the start seed in the case of random time advance
 	 */
-	HighInterconnect(std::size_t width, bool randomta)
+	HighInterconnect(std::size_t width, bool randomta, std::size_t startSeed)
 	: CoupledModel("High Interconnect")
 	{
+	    t_seedrandgen getSeed;
+	    getSeed.seed(startSeed);
 		std::vector<n_model::t_atomicmodelptr> ptrs;
 		for(std::size_t i = 0; i < width; ++i){
-			n_model::t_atomicmodelptr pt = n_tools::createObject<Generator>(std::string("Generator") + n_tools::toString(i), 1000*i, randomta);
+			n_model::t_atomicmodelptr pt = n_tools::createObject<Generator>(std::string("Generator") + n_tools::toString(i), getSeed(), randomta);
                         ptrs.push_back(pt);
                         addSubModel(pt);
 		}

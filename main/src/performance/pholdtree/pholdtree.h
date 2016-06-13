@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cinttypes>
+#include <type_traits>
 #include "model/atomicmodel.h"
 #include "model/coupledmodel.h"
 #include <boost/random.hpp>
@@ -35,6 +36,17 @@ typedef double EventTime;
 typedef std::size_t EventTime;
 #endif
 
+
+#ifdef FRNG
+    typedef n_tools::n_frandom::t_fastrng t_randgen;
+#else
+    typedef std::mt19937_64 t_randgen;
+#endif
+typedef boost::random::taus88 t_seedrandgen;    //this random generator will be used to generate the initial seeds
+                                                //it MUST be diferent from the regular t_randgen
+static_assert(!std::is_same<t_randgen, t_seedrandgen>::value, "The rng for the seed can't be the same random number generator as the one for he random events.");
+
+
 struct EventPair
 {
     EventPair(size_t mn, EventTime pt) : m_modelNumber(mn), m_procTime(pt) {};
@@ -46,8 +58,11 @@ struct PHOLDTreeModelState
 {
     std::deque<EventPair> m_events;
     std::size_t m_eventsProcessed;
+    mutable t_randgen m_rand;
+    std::size_t m_destination;  //the next destination
+    std::size_t m_nextMessage;  //the next message
 
-    PHOLDTreeModelState(): m_eventsProcessed(0) { }
+    PHOLDTreeModelState(): m_eventsProcessed(0), m_destination(0), m_nextMessage(0) { }
 };
 
 } /* namespace n_benchmarks_pholdtree */
@@ -62,20 +77,15 @@ struct ToString<n_benchmarks_pholdtree::PHOLDTreeModelState>
 
 namespace n_benchmarks_pholdtree {
 
-
-//typedef boost::random::taus88 t_randgen;
-typedef n_tools::n_frandom::t_fastrng t_randgen;
-
 class PHOLDTreeProcessor: public n_model::AtomicModel<PHOLDTreeModelState>
 {
 private:
     mutable std::uniform_int_distribution<std::size_t> m_distDest;
     const double m_percentagePriority;
-    mutable t_randgen m_rand;   //This object could be a global object, but then we'd need to lock it during parallel simulation.
     bool m_isRoot;
     std::size_t m_modelNumber;
 public:
-    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, bool isRoot = false);
+    PHOLDTreeProcessor(std::string name, size_t modelNumber, double percentagePriority, size_t startSeed, bool isRoot = false);
     virtual ~PHOLDTreeProcessor();
 
     virtual n_network::t_timestamp timeAdvance() const override;
@@ -91,8 +101,9 @@ public:
     n_model::t_portptr endConnection();
 
 
-    EventTime getProcTime(size_t event) const;
+    EventTime getProcTime(size_t event);
     size_t getNextDestination(size_t event) const;
+    void finalize();
 };
 
 struct PHOLDTreeConfig
@@ -105,9 +116,12 @@ struct PHOLDTreeConfig
     bool circularLinks;         //make children a circular linked list
     bool depthFirstAlloc;       //whether or not to use a depth-first allocation scheme
     size_t numCounter;
+    size_t initialSeed;         //the initial seed from which the model rng's are initialized. The default is 42, because some rng can't handle seed 0
+    t_seedrandgen getSeed;      //the random number generator for getting the new seeds.
     //other configuration?
     PHOLDTreeConfig(): numChildren(0u), depth(0), percentagePriority(0.1), spawnAtRoot(true),
-                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false),numCounter(0u)
+                        doubleLinks(false), circularLinks(false), depthFirstAlloc(false),numCounter(0u),
+                        initialSeed(42)
     {}
 };
 
