@@ -105,7 +105,8 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 {
 	ProcessorState& st = state();
 	LOG_DEBUG("event counter of ", getName(), " = ", st.m_event1_counter, ", time elapsed: ", m_elapsed);
-	//We can only have 1 message
+    //We can only have 1 message
+    bool replacedMessage = false;
 	if (st.m_queue.empty()) {
 		st.m_event1_counter = inf;
 		st.m_event1 = Event(0u);
@@ -113,10 +114,11 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 		st.m_event1 = st.m_queue.back();
 		st.m_queue.pop_back();
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
+        replacedMessage = true;
 	}
 	++(st.m_eventsHad);
 	Event ev1 = n_network::getMsgPayload<Event>(message[0]);
-	if (st.m_event1 != Event(0)) {
+	if (st.m_event1 != Event(0) || replacedMessage) {
 		st.m_queue.push_back(ev1);
 	} else {
 		st.m_event1 = ev1;
@@ -194,43 +196,48 @@ void Generator::output(std::vector<n_network::t_msgptr>& msgs) const
 CoupledRecursion::CoupledRecursion(std::size_t width, std::size_t depth, bool randomta, std::size_t& num)
 	: CoupledModel("Coupled" + n_tools::toString(depth))
 {
-	// If possible, split layers (CoupledRecursion) over cores in even chunks
-	// eg. depth 7, coreAmt 2 -> core#0: layer 1,2,3,4 core#1: layer 5,6,7
-//	int location = (depth>1 && coreAmt!=-1) ? (depth-1) / std::max(int(totalDepth/coreAmt + totalDepth%2), 1) : -1;
+	//set two outer ports
+    n_model::t_portptr recv = addInPort("in_event1");
+    n_model::t_portptr send = addOutPort("out_event1");
 
-	//set own ports
-	n_model::t_portptr recv = addInPort("in_event1");
-	n_model::t_portptr send = addOutPort("out_event1");
+    //create the lower object.
+    if(depth > 1){
+        LOG_INFO("  depth > 1!");
+        n_model::t_coupledmodelptr prev = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num);
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
 
-	//create the lower object.
-	n_model::t_coupledmodelptr recurse = nullptr;
-	if(depth > 1){
-		LOG_INFO("  depth > 1!");
-		recurse = n_tools::createObject<CoupledRecursion>(width, depth - 1, randomta, num);
-		addSubModel(recurse);
-		connectPorts(recv, recurse->getIPorts()[0]);
-	}
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_coupledmodelptr proc = n_tools::createObject<CoupledRecursion>(1, depth - 1, randomta, num);
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
 
-	//create the list of processors and link them up
-	n_model::t_atomicmodelptr prev = nullptr;
-	for(std::size_t i = 0; i < width; ++i){
-		n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
-					        "Processor" + n_tools::toString(depth) + "_" + n_tools::toString(i), randomta, num++);
-		addSubModel(proc);
-		if(i == 0){
-			if(depth > 1){
-				connectPorts(recurse->getOPorts()[0], proc->getIPorts()[0]);
-			} else {
-				connectPorts(recv, proc->getIPorts()[0]);
-			}
-		} else {
-			connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
-		}
-		prev = proc;
-	}
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
+    }
 
-	//connect end of line with higher level.
-	connectPorts(prev->getOPorts()[0], send);
+    //create the list of processors and link them up
+    else {
+        n_model::t_atomicmodelptr prev = n_tools::createObject<Processor>(
+                                        "Processor_" + n_tools::toString(num), randomta, num);
+        num++;
+        addSubModel(prev);
+        connectPorts(recv, prev->getIPorts()[0]);
+
+        for(std::size_t i = 1; i < width; ++i){
+            n_model::t_atomicmodelptr proc = n_tools::createObject<Processor>(
+                                "Processor_" + n_tools::toString(num), randomta, num);
+            num++;
+            addSubModel(proc);
+            connectPorts(prev->getOPorts()[0], proc->getIPorts()[0]);
+            prev = proc;
+        }
+
+        //connect end of line with higher level.
+        connectPorts(prev->getOPorts()[0], send);
+    }
 }
 
 CoupledRecursion::~CoupledRecursion()

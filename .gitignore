@@ -9,3 +9,4 @@ adevs/*
 /pholdtree.log
 /pholdtree.txt
 /trng/src/config.hpp
+/trng/dist
