@@ -116,7 +116,7 @@ simtypes = SimType(["classic"], ["opdevs", '-c', args.cores], ["cpdevs", '-c', a
 def devstonegen(simtype, executable, doRandom=False):
     # time 500 000
     if simtype == simtypes.classic :
-        for width in [400, 600, 800]:  # , 4, 8, 16]:
+        for width in [50, 100, 150]:  # , 4, 8, 16]:
             for depth in [2, 4, 6, 8, 10]:  # , 4, 8, 16]:
                 for endTime in [5000000]:
                     yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
@@ -125,10 +125,10 @@ def devstonegen(simtype, executable, doRandom=False):
         oldNumCores = simtype[-1]
         for core in range(2, min(48, args.cores+1), 1):
             simtype[-1] = core
-            for width in [400, 600, 800]:  # , 4, 8, 16]:
+            for mPerCore in [50, 100, 150]:  # , 4, 8, 16]:
                 for depth in [2, 4, 6, 8, 10]:  # , 4, 8, 16]:
                     for endTime in [5000000]:
-                        yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', width, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
+                        yield list(chain([executable], simtype, ['-r' if doRandom else '', '-w', mPerCore*core, '-d', depth, '-t', endTime]))  # , ['-r'] if randTa else []
                         # return
         simtype[-1]=oldNumCores
 
