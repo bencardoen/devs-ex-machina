@@ -149,14 +149,24 @@ def pholdgen(simtype, executable):
 lenParallelPhold = len(list(chain(["pholdExec"], simtypes.optimistic, ['-n', 0, '-s', 0, '-i', 0, '-r', 0, '-p', 0, '-t', 0])))
 
 def pholdgen_remotes(simtype, executable):
-    for nodes in [args.cores]:
+    for nodes in [2, 4, 6, 8, 10, 12, 14, 16]:
         for apn in [4]:  # , 8, 16, 32]:
             for iterations in [0]:
                 for priority in [0]:  #frange(0.0, 1.0, 0.1)
-                    for remotes in range(10, 100, 10):
+                    for remotes in range(10):
                         for endTime in [1000000]:                            
                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
                             # return
+
+# def pholdgen_remotes(simtype, executable):
+#     for nodes in [args.cores]:
+#         for apn in [4]:  # , 8, 16, 32]:
+#             for iterations in [0]:
+#                 for priority in [0]:  #frange(0.0, 1.0, 0.1)
+#                     for remotes in range(10, 100, 10):
+#                         for endTime in [1000000]:                            
+#                             yield list(chain([executable], simtype, ['-n', nodes, '-s', apn, '-i', iterations, '-r', remotes, '-p', float(priority)/100, '-t', endTime]))
+#                             # return
 
 
 def interconnectgen(simtype, executable, doRandom=False):
