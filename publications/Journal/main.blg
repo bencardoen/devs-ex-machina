@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2016/dev)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: SageV.bst
+Database file #1: papers.bib
+Warning--empty pages in PHOLD
+Warning--empty pages in PythonPDEVS_ACTIMS
+You've used 26 entries,
+            2484 wiz_defined-function locations,
+            728 strings with 9248 characters,
+and the built_in function-call counts, 22364 in all, are:
+= -- 2532
+> -- 200
+< -- 10
++ -- 100
+- -- 50
+* -- 1306
+:= -- 2042
+add.period$ -- 101
+call.type$ -- 26
+change.case$ -- 49
+chr.to.int$ -- 0
+cite$ -- 28
+duplicate$ -- 2732
+empty$ -- 2007
+format.name$ -- 67
+if$ -- 4961
+int.to.chr$ -- 0
+int.to.str$ -- 26
+missing$ -- 214
+newline$ -- 150
+num.names$ -- 26
+pop$ -- 1337
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 293
+stack$ -- 0
+substring$ -- 3085
+swap$ -- 546
+text.length$ -- 10
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 2
+while$ -- 129
+width$ -- 28
+write$ -- 306
+(There were 2 warnings)
