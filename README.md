@@ -31,6 +31,7 @@ If you want to cite this project, kindly use the following bibtex
                                Tuijn, Tim and
                                Van Tendeloo, Yentl and
                                Vanmechelen, Kurt and
+                               Vangheluwe, Hans and
                                Broeckhove, Jan},
     title                   = {Performance Analysis of a {PDEVS} Simulator Supporting Multiple Synchronization Protocols},
     booktitle               = {Proceedings of the 2016 Symposium on Theory of Modeling and Simulation - DEVS},
