@@ -107,18 +107,18 @@ The PholdTree benchmark can be configured to use 2 allocation schemes: breadth f
 The breadth first allocation scheme will result in kernels that will form a dependency chain with multiple branches, much like in the Queue model. 
 Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model, but this is not always true as we will demonstrate in this section. 
 A single kernel that has an unbalanced number of atomic models or models with unequal computation load in transition functions will slow down the remainder of the chain. This effect is also apparent if the OS unfairly schedules the thread a kernel runs on. In conservative this will lead to excessive polling of the other kernels' eot values, whereas in optimistic this will lead to a cascade of reverts since dependent kernels will simulate ahead of the slower kernel. In Figures \ref{fig:pholdtree_visualize_parBFS} and \ref{fig:pholdtree_visualize_parDFS} the simulation trace is visualized for both allocation schemes highlighting the remarks made in this paragraph.
-
-\begin{figure}
-	\center
-	
-	\includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeBFS.eps}
-	\caption{PholdTree model breadth first allocation with 3 kernels.}
-	\label{fig:PholdTree_model_bfs}
-	
-	\includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeDFS.eps}
-	\caption{PholdTree model depth first allocation with 3 kernels.}
-	\label{fig:PholdTree_model_dfs}
-\end{figure}
+%
+%\begin{figure}
+%	\center
+%	
+%	\includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeBFS.eps}
+%	\caption{PholdTree model breadth first allocation with 3 kernels.}
+%	\label{fig:PholdTree_model_bfs}
+%	
+%	\includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeDFS.eps}
+%	\caption{PholdTree model depth first allocation with 3 kernels.}
+%	\label{fig:PholdTree_model_dfs}
+%\end{figure}
 
 \paragraph*{Strong Scaling}\label{pholdtreestrongscale}
 In Figure \ref{fig:PholdTree_plot_alloc_high} we see that the difference in performance for all 4 kernel configurations compared to that shown in Figure \ref{fig:PholdTree_plot_alloc_low} is a constant factor. The probability of the priority message has no extra impact on performance other than that shown in sequential performance. 
@@ -142,19 +142,16 @@ Conservative synchronization suffers a further penalty in this benchmark when th
 
 \paragraph*{Weak Scaling}
 %Intro
-In this paragraph we investigate dxex's parallel performance when the the number of atomic models distributed over a fixed number of kernels varies. From \ref{eq:pholdtreemodelcount} we know that increasing d will lead to a very rapid increase in models, we want to observe what happens in a closer to linear increase in model count per kernel, so we vary n. \\
+In this paragraph we investigate dxex's parallel performance when the the number of atomic models distributed over a fixed number of kernels varies. From \ref{eq:pholdtreemodelcount} we know that increasing d will lead to a very rapid increase in models, we want to observe what happens in a closer to linear increase in model count per kernel, so we vary n. 
 
 % Explain why adevs is not plotted (its x100 slower)
-
-Adevs' conservative implementation cannot handle the uncertainty (lack of non $\epsilon$ lookahead) here and is omitted from the comparison. Its parallel performance is two orders of magnitude slower than the sequential implementation. Upon investigation we conclude that this slowdown is caused by not implementing the \{begin/end\}lookahead() functions, which when not overridden in a model trigger an exception on each invocation. \\
-This exception handling completely stalls the kernel. We do not implement this function in our PholdTree variant for adevs since this would force us to implement state saving in the model code and not use the provided state saving functionality in the kernel, as is done in dxex or PythonPDEVS's optimistic.\\
+Adevs' conservative implementation cannot handle the uncertainty (lack of non $\epsilon$ lookahead) here and is omitted from the comparison. Its parallel performance is two orders of magnitude slower than the sequential implementation. Upon investigation we conclude that this slowdown is caused by not implementing the \{begin/end\}lookahead() functions, which when not overridden in a model trigger an exception on each invocation. 
+This exception handling completely stalls the kernel. We do not implement this function in our PholdTree variant for adevs since this would force us to implement state saving in the model code and not use the provided state saving functionality in the kernel, as is done in dxex or PythonPDEVS's optimistic.
 In dxex state saving is never required for a conservative simulation, this is handled transparently for the user who need not implement this behaviour. 
 By using the state saving technique inside the model code we feel we would no longer compare identical models across different synchronization algorithms, although we do not doubt adevs' increased performance when these functions are overridden.
-\\
 
 % Optimistic
 In Figure \ref{fig:PholdTree_plot_weaknopt} we observe that dxex's optimistic kernels are slightly sensitive to the number of atomic models allocated to them. In the worst case with 2 kernels there is no real speedup observable, as soon as the number of kernels increases we see a converging speedup trend, that except for 32 kernels is almost constant despite the increase in n. Note that only depth first allocated kernels are measured here, breadth first as we can see in \ref{fig:PholdTree_plot_alloc_high} has no speedup advantage. The probability parameter is kept at 0.1 for the same reason, it only induces a linear increase in load.
-\\
 
 % Conservative
 Conservative has a more nuanced speedup behaviour in this benchmark. We have detailed how a conservative kernel in dxex scales linear in the number of atomic models (if lookahead is $\epsilon$), this effect is more clearly visible here. \\

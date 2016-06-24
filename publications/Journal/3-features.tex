@@ -89,32 +89,32 @@ We will enumerate some of the extra features dxex offers to modellers.
 Like PythonPDEVS dxex has full tracing capabilities supporting a wide number of output formats : Json, XML, Cell, console, ... . The user can implement his own outputpolicy and use it in our modular tracing design. The tracing functionality itself is implemented asynchronous and thread-safe. By overriding the output functions in the Message or State classes the user can generate model specific output for use with an existing tracing outputpolicy. Tracing can be completely disabled to maximize simulation performance should this be desired (e.g. benchmarks). 
 % Talk about adevs?
 \subsubsection{Memory Allocation}
-As we will demonstrate in Section~\ref{sec:4-subsec:overhead-pgraph:memory} memory allocation is a performance bottleneck in simulation with high event frequency, especially in parallel. Dxex has a modular allocation interface that separates the object creation in kernels and models from the actual implementation. This allows us by using a single compilation parameter to change the allocation strategy per kernel type. This interface allows instrumentation of memory usage. Not only useful to detect memory leaks should this be a concern, it can also be of use to a model author to trace event creation in large models. A model author can rely on the default implementation as the fastest common configuration verified by the benchmarks.
+As we will demonstrate in ~\nameref{sec:4-subsec:overhead-pgraph:memory} memory allocation is a performance bottleneck in simulation with high event frequency, especially in parallel. Dxex has a modular allocation interface that separates the object creation in kernels and models from the actual implementation. This allows us by using a single compilation parameter to change the allocation strategy per kernel type. This interface allows instrumentation of memory usage. Not only useful to detect memory leaks should this be a concern, it can also be of use to a model author to trace event creation in large models. A model author can rely on the default implementation as the fastest common configuration verified by the benchmarks.
 \subsubsection{Model Allocation}
-A model author can specify which kernel a model should be allocated to, should such manual intervention be required. This is handled by the default model allocator. If no preference is given a simple striping scheme is followed. It should be obvious that this is not sufficient in most simulations. In \ref{sec:4-performance} we analyze allocation schemes and their performance impact. By overriding the default allocator a model author can tune the allocation scheme to maximize parallel speedup. This interface can be in future work also be used to employ graph algorithms for an automatic allocation scheme, for example one that avoids cycles in the resulting kernel dependency graph.
+A model author can specify which kernel a model should be allocated to, should such manual intervention be required. This is handled by the default model allocator. If no preference is given a simple striping scheme is followed. It should be obvious that this is not sufficient in most simulations. In Section \nameref{sec:4-performance} we analyze allocation schemes and their performance impact. By overriding the default allocator a model author can tune the allocation scheme to maximize parallel speedup. This interface can be in future work also be used to employ graph algorithms for an automatic allocation scheme, for example one that avoids cycles in the resulting kernel dependency graph.
 \subsubsection{Logging}
 A high performance asynchronous buffered threaded logging module is used in dxex which offers a complete overview of the entire simulation. The logging functionality can be used in any model, it only requires linking to the dxex library. Logging statements are written to file with a granular level system. In case of a severe crash the logging system will ensure persistence of the log file itself up until the last statement. Logging can be completely disabled to remove the performance impact.
 \subsubsection{Visualization and Statistics}
 Tracing offers a black box view of a DEVS model in a simulation, with transitions, events and states recorded at each state change. Dxex supplements this optionally with more in depth insights into the actual simulation. The allocation of models across kernels is visualized at the end of a simulation, with graphical representation of message frequency. This allows a user to fine tune future allocation schemes and the interface used by the visualization tool can also be used for more advanced purposes such as dynamic tracing of the simulation.\\
 Invaluable during the development of dxex were runtime statistics collected by a simulation kernel. These record any measurable event in the simulation such as : events created/destroyed, inter kernel event frequency, reverts, GVT calculations, lookahead and eot values and insights into the fairness between the kernels themselves. Using this information it is possible to detect an imbalance between the simulation rounds that a single kernel executes compared to dependent or influencing kernels, or observe how balanced inter kernel message traffic actually is during a simulation. The same information can, as in the visualization tool, be used programmatically to extend dxex with visualization software that shows the simulation from a white box perspective or allow activity tracking.
 Figures \ref{fig:pholdtree_visualize_seq},\ref{fig:pholdtree_visualize_parDFS},\ref{fig:pholdtree_visualize_parBFS} give an example of the modular visualization output generated by dxex after simulation the PholdTree model. These figures demonstrate the effect of allocation visually, the high inter kernels event count will degrade performance, as we will demonstrate in 
-\ref{PholdTreeallocation}. Dotted lines represent connections between models that did not see events exchanged, directed edges represents events with frequency as weight and color to distinguis inter versus intra kernel events.
+\nameref{PholdTreeallocation} . Dotted lines represent connections between models that did not see events exchanged, directed edges represents events with frequency as weight and color to distinguish inter versus intra kernel events.
 % Add figure
 \begin{figure}
 	\center
-	\includegraphics[width=\plotfraction\columnwidth, height=8cm, keepaspectratio]{fig/pholdtreed1n3t5000.eps}
+	\includegraphics[width=\plotfraction\columnwidth, height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000.eps}
 	\caption{Visualization of PholdTree (d=1,n=3,t=5000) sequential simulation.}
 	\label{fig:pholdtree_visualize_seq}
 \end{figure}
 \begin{figure}
 	\center
-	\includegraphics[width=\plotfraction\columnwidth,  height=8cm, keepaspectratio]{fig/pholdtreed1n3t5000c4BFS.eps}
+	\includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4BFS.eps}
 	\caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with breadth first allocation and 4 kernels.}
 	\label{fig:pholdtree_visualize_parBFS}
 \end{figure}
 \begin{figure}
 	\center
-	\includegraphics[width=\plotfraction\columnwidth,  height=8cm, keepaspectratio]{fig/pholdtreed1n3t5000c4DFS.eps}
+	\includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4DFS.eps}
 	\caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with depth first allocation and 4 kernels.}
 	\label{fig:pholdtree_visualize_parDFS}
 \end{figure}
