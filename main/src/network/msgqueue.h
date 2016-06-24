@@ -27,7 +27,7 @@ class Msgqueue
 {
 private:
 	mutable std::mutex	m_lock;
-        std::atomic<size_t>     m_size;
+        std::atomic<size_t>     m_size; // TODO either replace with call to queue.size() + lock, or remove atomic (wrapped in lock)
 	std::vector<Q> 	m_queue;
 public:
 
@@ -77,19 +77,24 @@ public:
 	 */
 	inline std::size_t
 	size()const{
-		//std::lock_guard<std::mutex> lock(m_lock);	// lock because size could change
+		std::lock_guard<std::mutex> lock(m_lock);	// lock because size could change
 		return m_size;
 	}
 
 //-------------statistics gathering--------------
-//#ifdef USE_STAT
+#ifdef USE_STAT
 private:
 	n_tools::t_uintstat m_msgcountstat;
 	static std::size_t m_counter;
+#endif //USE_STAT
 public:
+#ifdef USE_STAT
 	Msgqueue():m_size(0), m_msgcountstat(std::string("_network/messagequeue") + n_tools::toString(m_counter++), "messages")
 {
 }
+#else
+        Msgqueue():m_size(0){}
+#endif
         
         ~Msgqueue(){
 #ifdef SAFETY_CHECKS
@@ -104,6 +109,7 @@ public:
                 }
 #endif
         }
+#ifdef USE_STAT
 	/**
 	 * @brief Prints some basic stats.
 	 * @param out The output will be printed to this stream.
@@ -112,13 +118,13 @@ public:
 	{
 		out << m_msgcountstat;
 	}
-//#endif
+#endif
 };
 
-//#ifdef USE_STAT
+#ifdef USE_STAT
 template<typename Q>
 std::size_t Msgqueue<Q>::m_counter = 0;
-//#endif
+#endif
 
 
 } /* namespace n_network */
