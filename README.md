@@ -2,18 +2,18 @@
 
 ### About ###
 
-This is the main repository for the Devs Ex Machina ('dxex') simulator, a [PythonPDEVS](http://msdl.cs.mcgill.ca/projects/DEVS/PythonPDEVS ) inspired C++ PDEVS simulation engine supporting conservative and optimistic synchronization. Models written for dxex can be written without agnostic of the runtime synchronization protocol.
+This is the main repository for the Devs Ex Machina ('dxex') simulator, a [PythonPDEVS](http://msdl.cs.mcgill.ca/projects/DEVS/PythonPDEVS ) inspired C++ PDEVS simulation engine supporting conservative and optimistic synchronization. Models written for dxex can be written agnostic of the runtime synchronization protocol.
 A quick overview of features:
 
 * High performance (P)DEVS simulation engine (see publications folder for results)
 
 * Extensible Tracing module, output to Json, XML, ... . Custom tracers supported. (compile time optional)
 
-* High performant logging framework (compile time optional)
+* High performance logging framework (compile time optional)
 
 * Visualization and internal tracing of a simulation (compile time optional)
 
-* Implement in standard C++ (C++11, C++14 optional) for maximum portablity.
+* Implemented in standard C++ (C++11, C++14 optional) for maximum portablity.
 
 
 
