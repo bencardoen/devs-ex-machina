@@ -1,0 +1,16 @@
+In this paper, we introduced DEVS-Ex-Machina (``dxex''), a new C++14-based \textsf{Parallel DEVS} simulation tool.
+Our main contribution is the implementation of multiple synchronization protocols for parallel multicore simulation.
+We have shown that there are indeed models which can be simulated significantly faster using either synchronization protocol.
+Dxex allows the user to choose between either conservative or optimistic synchronization as simple as any other configuration option.
+Notwithstanding this modularity, dxex achieves performance competitive to adevs, another very efficient \textsf{DEVS} simulation tool.
+Performance is measured both in elapsed time, and memory usage.
+Our empirical analysis shows that allocation of models over kernels is critical to enable a parallel speedup. Furthermore we have shown when and why optimistic synchronization can outperform conservative and vice versa.
+
+Future work is possible in several directions.
+Firstly, our implementation of optimistic synchronization should be more tolerant to low-memory situations.
+In its current state, simulation will simply halt with an out-of-memory error.
+Having simulation control, which can throttle the speed of nodes that use up too much memory, has been shown to work in these situations~\cite{FujimotoBook}.
+Faster GVT implementations, such as those presented by~\cite{Fujimoto:1997:CGV:268403.268404} and~\cite{Bauer:2005:SND:1069810.1070159}, might further help to minimize this problem.
+Secondly, the idea of activity can be implemented for our simulation kernels, making it possible to dynamically switch between conservative and optimistic synchronization when behavioural changes are detected.
+Thirdly, activity algorithms, as already implemented by PythonPDEVS, can also be implemented in dxex, to determine how they influence simulation performance.
+Finally automatic allocation is possible by analysis of the connections between models. This information is already used in dxex to determine the blocking order for conservative synchronization and in the directconnect algorithm. A graph algorithm that distributes models while avoiding cycles in the resulting kernels topology could be used to maximize parallel speedup in either optimistic or conservative synchronization.

@@ -1,0 +1,174 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{DOI:\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{DOI:\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem{ClassicDEVS}
+Zeigler BP, Praehofer H and Kim TG.
+\newblock \emph{Theory of Modeling and Simulation}.
+\newblock second ed. Academic Press, 2000.
+
+\bibitem{DEVSbase}
+Vangheluwe H.
+\newblock {DEVS as a common denominator for multi-formalism hybrid systems
+  modelling}.
+\newblock \emph{CACSD Conference Proceedings IEEE International Symposium on
+  Computer-Aided Control System Design} 2000; : 129--134.
+
+\bibitem{ParallelDEVS}
+Chow ACH and Zeigler BP.
+\newblock {Parallel DEVS}: a parallel, hierarchical, modular, modeling
+  formalism.
+\newblock In \emph{Proceedings of the 26th Winter Simulation Conference}. SCS.
+\newblock ISBN 0-7803-2109-X, pp. 716--722.
+\newblock \urlprefix\url{http://dl.acm.org/citation.cfm?id=193201.194336}.
+
+\bibitem{FujimotoBook}
+Fujimoto RM.
+\newblock \emph{Parallel and Distributed Simulation Systems}.
+\newblock 1st ed. New York, NY, USA: John Wiley \& Sons, Inc., 1999.
+
+\bibitem{PythonPDEVS}
+Van~Tendeloo Y and Vangheluwe H.
+\newblock {The Modular Architecture of the {Python(P)DEVS} Simulation Kernel}.
+\newblock In \emph{Spring Simulation Multi-Conference}. SCS, pp. 387 -- 392.
+
+\bibitem{DEVSSurvey}
+Franceschini R, Bisgambiglia PA, Touraille L et~al.
+\newblock A survey of modelling and simulation software frameworks using
+  {Discrete Event System Specification}.
+\newblock In \emph{2014 Imperial College Computing Student Workshop}. Schloss
+  Dagstuhl--Leibniz-Zentrum fuer Informatik, pp. 40--49.
+
+\bibitem{TimeWarp}
+Jefferson DR.
+\newblock Virtual time.
+\newblock \emph{ACM Transactions on Programming Languages and Systems} 1985;
+  7(3): 404--425.
+\newblock \doi{10.1145/3916.3988}.
+\newblock \urlprefix\url{http://doi.acm.org/10.1145/3916.3988}.
+
+\bibitem{MasterThesis}
+Van~Tendeloo Y.
+\newblock \emph{{Activity-aware DEVS simulation}}.
+\newblock Master's Thesis, University of Antwerp, Antwerp, Belgium, 2014.
+
+\bibitem{SymbolicFlattening}
+Chen B and Vangheluwe H.
+\newblock Symbolic flattening of {DEVS} models.
+\newblock In \emph{Summer Simulation Multiconference}. pp. 209--218.
+
+\bibitem{DSDEVS}
+Barros FJ.
+\newblock Modeling formalisms for dynamic structure systems.
+\newblock \emph{ACM Transactions on Modeling and Computer Simulation} 1997; 7:
+  501--515.
+
+\bibitem{mattern}
+Mattern F.
+\newblock Efficient algorithms for distributed snapshots and global virtual
+  time approximation.
+\newblock \emph{Journal of Parallel and Distributed Computing} 1993; 18(4):
+  423--434.
+
+\bibitem{DEVStone}
+Glinsky E and Wainer G.
+\newblock {DEVStone}: a benchmarking technique for studying performance of
+  {DEVS} modeling and simulation environments.
+\newblock In \emph{Proceedings of the 2005 9th {IEEE/ACM} International
+  Symposium on Distributed Simulation and Real-Time Applications}. pp.
+  265--272.
+
+\bibitem{PHOLD}
+Fujimoto RM.
+\newblock Performance of {Time Warp} under synthetic workkloads.
+\newblock In \emph{Proceedings of the SCS Multiconference on Distributed
+  Simulation}.
+
+\bibitem{boostpool}
+Cleary S and Bristow~A P.
+\newblock {Boost Pool : Fast memory pool allocation}.
+\newblock \url{http://www.boost.org/doc/libs/1_61_0/libs/pool/doc/html/},
+  2001-2005, 2011.
+
+\bibitem{tcmalloc}
+Ghemawat S and Menage P.
+\newblock {TCMalloc : Thread-Caching Malloc}.
+\newblock \url{http://goog-perftools.sourceforge.net/doc/tcmalloc.html}, 2005.
+
+\bibitem{PhysRevE.75.066701}
+Bauke H and Mertens S.
+\newblock Random numbers for large-scale distributed monte carlo simulations.
+\newblock \emph{Phys Rev E} 2007; 75: 066701.
+\newblock \doi{10.1103/PhysRevE.75.066701}.
+\newblock \urlprefix\url{http://link.aps.org/doi/10.1103/PhysRevE.75.066701}.
+
+\bibitem{PythonPDEVS2}
+Van~Tendeloo Y and Vangheluwe H.
+\newblock {PythonPDEVS: a distributed Parallel DEVS simulator}.
+\newblock In \emph{Proceedings of the 2015 Spring Simulation Multiconference}.
+  SpringSim '15, Society for Computer Simulation International, pp. 844--851.
+
+\bibitem{PythonPDEVS_ACTIMS}
+Van~Tendeloo Y and Vangheluwe H.
+\newblock Activity in {PythonPDEVS}.
+\newblock In \emph{Activity-Based Modeling and Simulation}.
+
+\bibitem{adevs}
+Nutaro JJ.
+\newblock {ADEVS}.
+\newblock \url{http://www.ornl.gov/~1qn/adevs/}, 2015.
+
+\bibitem{vle}
+Quesnel G, Duboz R, Ramat E et~al.
+\newblock {VLE}: a multimodeling and simulation environment.
+\newblock In \emph{Proceedings of the 2007 Summer Simulation Multiconference}.
+  pp. 367--374.
+
+\bibitem{PowerDEVS}
+Bergero F and Kofman E.
+\newblock {PowerDEVS: a tool for hybrid system modeling and real-time
+  simulation}.
+\newblock \emph{Simulation} 2011; 87: 113--132.
+
+\bibitem{CD++}
+Wainer G.
+\newblock {CD++}: a toolkit to develop {DEVS} models.
+\newblock \emph{Software: Practice and Experience} 2002; 32(13): 1261--1306.
+
+\bibitem{CCD++}
+Jafer S and Wainer G.
+\newblock Flattened conservative parallel simulator for {DEVS} and {Cell-DEVS}.
+\newblock In \emph{Proceedings of International Conferences on Computational
+  Science and Engineering}. pp. 443--448.
+
+\bibitem{PCD++}
+Troccoli A and Wainer G.
+\newblock Implementing {Parallel Cell-DEVS}.
+\newblock In \emph{Proceedings of the 2003 Spring Simulation Symposium}. pp.
+  273--280.
+
+\bibitem{Fujimoto:1997:CGV:268403.268404}
+Fujimoto RM and Hybinette M.
+\newblock Computing {Global Virtual Time} in shared-memory multiprocessors.
+\newblock \emph{ACM Transactions on Modeling and Computer Simulation} 1997;
+  7(4): 425--446.
+\newblock \doi{10.1145/268403.268404}.
+\newblock \urlprefix\url{http://doi.acm.org/10.1145/268403.268404}.
+
+\bibitem{Bauer:2005:SND:1069810.1070159}
+Bauer D, Yaun G, Carothers CD et~al.
+\newblock Seven-o'clock: A new distributed {GVT} algorithm using network atomic
+  operations.
+\newblock In \emph{Proceedings of the 19th Workshop on Principles of Advanced
+  and Distributed Simulation}. PADS '05, Washington, DC, USA: IEEE Computer
+  Society.
+\newblock ISBN 0-7695-2383-8, pp. 39--48.
+\newblock \doi{10.1109/PADS.2005.27}.
+\newblock \urlprefix\url{http://dx.doi.org/10.1109/PADS.2005.27}.
+
+\end{thebibliography}

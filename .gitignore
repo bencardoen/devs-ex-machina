@@ -10,3 +10,9 @@ adevs/*
 /pholdtree.txt
 /trng/src/config.hpp
 /trng/dist
+/publications/Journal/fig/*eps-converted-to.pdf
+/publications/Journal/*.aux
+/publications/Journal/*.log
+/publications/Journal/*.synctex.gz
+/publications/Journal/*.bbl
+/publications/Journal/*.blg
