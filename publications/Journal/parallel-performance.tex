@@ -27,7 +27,7 @@ The speedup of adevs is always in comparison with the runtime of the correspondi
 \begin{figure}
 	\center
 	
-	\includegraphics[width=\modelfraction\columnwidth, height=8cm, keepaspectratio]{fig/queue_allocation.eps}
+	\includegraphics[width=\modelfraction\columnwidth, height=8cm, keepaspectratio, angle=-90 ]{fig/queue_allocation.eps}
 	\caption{Queue model (d=2, w=7, t=5000, random timeadvance) allocation and simulation trace across 4 kernels.}
 	\label{fig:Queue_allocation}
 	
@@ -103,7 +103,10 @@ Results show that there is no single perfect synchronization algorithm for this 
 %move to pholdtree
 We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization. We will demonstrate that allocation is critical to achieve a parallel speedup and that the parameters of the model will give either conservative or optimistic an advantage.
 \paragraph*{Allocation}\label{PholdTreeallocation}
-The PholdTree benchmark can be configured to use 2 allocation schemes : breadth first and depth first. The breadth first allocation scheme will result in kernels that will form a dependency chain between them with multiple branches, much like in the Queue model. Such a linear dependency chain can result in a parallel speedup as we demonstrate with the Queue model, but this need not be true for all models as we will demonstrate in this section. A single kernel that has an unbalanced number of atomic models, models with unequal computation load in transition functions or activity will slow down the remainder of the chain. This effect is also apparent if the OS unfairly schedules the thread a kernel runs on. In conservative this will lead to excessive polling of the other kernels' eot values, whereas in optimistic this will lead to a cascade of reverts since dependent kernels will simulate ahead of the slower kernel. In Figures \ref{fig:pholdtree_visualize_parBFS} and \ref{fig:pholdtree_visualize_parDFS} the simulation trace is visualized for both allocation schemes highlighting the remarks made in this paragraph.
+The PholdTree benchmark can be configured to use 2 allocation schemes: breadth first and depth first. 
+The breadth first allocation scheme will result in kernels that will form a dependency chain with multiple branches, much like in the Queue model. 
+Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model, but this is not always true as we will demonstrate in this section. 
+A single kernel that has an unbalanced number of atomic models or models with unequal computation load in transition functions will slow down the remainder of the chain. This effect is also apparent if the OS unfairly schedules the thread a kernel runs on. In conservative this will lead to excessive polling of the other kernels' eot values, whereas in optimistic this will lead to a cascade of reverts since dependent kernels will simulate ahead of the slower kernel. In Figures \ref{fig:pholdtree_visualize_parBFS} and \ref{fig:pholdtree_visualize_parDFS} the simulation trace is visualized for both allocation schemes highlighting the remarks made in this paragraph.
 
 \begin{figure}
 	\center
@@ -145,7 +148,7 @@ In this paragraph we investigate dxex's parallel performance when the the number
 
 Adevs' conservative implementation cannot handle the uncertainty (lack of non $\epsilon$ lookahead) here and is omitted from the comparison. Its parallel performance is two orders of magnitude slower than the sequential implementation. Upon investigation we conclude that this slowdown is caused by not implementing the \{begin/end\}lookahead() functions, which when not overridden in a model trigger an exception on each invocation. \\
 This exception handling completely stalls the kernel. We do not implement this function in our PholdTree variant for adevs since this would force us to implement state saving in the model code and not use the provided state saving functionality in the kernel, as is done in dxex or PythonPDEVS's optimistic.\\
-In dxex state saving is never required for a conservative simulation, this is handled transparently for the user who need not implement this behavior. 
+In dxex state saving is never required for a conservative simulation, this is handled transparently for the user who need not implement this behaviour. 
 By using the state saving technique inside the model code we feel we would no longer compare identical models across different synchronization algorithms, although we do not doubt adevs' increased performance when these functions are overridden.
 \\
 
@@ -154,7 +157,7 @@ In Figure \ref{fig:PholdTree_plot_weaknopt} we observe that dxex's optimistic ke
 \\
 
 % Conservative
-Conservative has a more nuanced speedup behavior in this benchmark. We have detailed how a conservative kernel in dxex scales linear in the number of atomic models (if lookahead is $\epsilon$), this effect is more clearly visible here. \\
+Conservative has a more nuanced speedup behaviour in this benchmark. We have detailed how a conservative kernel in dxex scales linear in the number of atomic models (if lookahead is $\epsilon$), this effect is more clearly visible here. \\
 It is clear that as the fanout (n) of the model increases the kernel performance degrades rapidly. The intersection of the performance graph of each configuration is shifted to the right, the actual 1-speedup point increases as the kernelcount increases. For a d=4, n=5 configuration with 4 kernels each kernel has a load of ~1300 atomic models when it crosses the 1-speedup line. \\
 An 8 kernel configuration with d=4 n=6 can sustain a load of ~2700 atomic models before it reaches that point. From the results we see that the 32-kernel configuration is not yet slowing down with the current parameters. \\
 The modelcount is only a part of the explanation of this effect, as the kernelcount increases the amount of inter kernel messages will be split into more distinct sets which can be handled with more concurrency in dxex's architecture. 
@@ -183,8 +186,8 @@ If we combine both to determine which synchronization protocol is more optimal w
 
 
 \subsection{Measuring Synchronization Overhead}
-The simulation kernels have a non trivial overhead compared to a sequential kernel. In this section we will try to isolate this overhead and highlight the consequences this has for applying a synchronization protocol in real life models.
-Profiling indicates that there are in the most trivial of models only 2 causes for computational load outside of the actual simulation : memory management and random number generation. 
+The simulation kernels have a non trivial overhead compared to a sequential kernel. In this section we will try to isolate this overhead. 
+Profiling indicates that there are in the most trivial of models only 2 causes for computational load outside of the actual simulation : memory management and random number generation. By reducing the cost of both we will isolate the synchronization overhead. We use the Queue benchmark since it is highly parallel and its computational load in transitioning is only determined by random number generation and event/state allocation.
 \paragraph*{Memory management}\label{sec:4-subsec:overhead-pgraph:memory}
 \begin{figure}
 	\center
@@ -204,7 +207,7 @@ Profiling indicates that there are in the most trivial of models only 2 causes f
 In dxex a model author is given access to automatic memory management for events and states. A model written for a sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the model author) the (de)allocation semantics of events or states. \\
 In sequential and conservative simulation the kernel gives the guarantee that no state will be copied. Dxex's simulation control hides the implementation details of this management, a model author can focus on the actual semantics of the model. 
 The kernels use memory allocators backed by a thread-aware pooling library to reduce the performance impact of memory management as much as possible. 
-A sequential simulation kernel can leverage the invariant that no allocated event will persist beyond a single time advance and use a arena-style allocator. Conservative and optimistic simulation need to use generic pool allocators. \\
+A sequential simulation kernel no allocated event will persist beyond a single time advance,  this enables the use of an arena-style allocator. Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime. \\
 An important observation to make is that intra-kernel events can be pooled more aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization. A simulation with high inter kernel events will suffer a performance hit, whereas the impact of high intra kernel events can be optimized using arena allocators.\\
 The allocation interfaces are instrumented in dxex to trace memory usage in a simulation and can serve as a basic memory leak detector. Shielding the user from (de)allocation complexity comes at a cost in performance, as the comparison with adevs in simulations with a high event frequency \ref{fig:Interconnect_benchmark} of events shows.\\
 Figure \ref{fig:memincrease} shows an experiment where we measure peak memory usage (maximum resident set size (kB)) for each synchronization protocol and determine how the memory usage differs with respect to sequential simulation. Both conservative kernels require only a small constant increase in memory usage. 
@@ -240,4 +243,3 @@ The actual synchronization overhead in all parallel kernels still dominates the 
 	
 	
 \end{figure}
-% Analyse

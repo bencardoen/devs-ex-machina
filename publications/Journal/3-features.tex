@@ -1,7 +1,7 @@
 \newcommand{\plotfraction}{0.85}
 Historically, dxex is based on PythonPDEVS~\cite{PythonPDEVS}.
 Python is a good language for prototypes, but performance has proven insufficient to compete with other simulation kernels~\cite{MasterThesis}.
-Dxex is a C++14-based implementation of PythonPDEVS, but implements only a subset of PythonPDEVS, while making some of its own additions.
+Dxex is a C++11-based implementation of PythonPDEVS, but implements only a subset of PythonPDEVS, while making some of its own additions.
 So while the feature set is not too comparable, the architectural design, core simulation algorithm, and optimizations, are highly similar.
 
 We will not make a detailed comparison with PythonPDEVS here, but only mention some supported features.
@@ -9,10 +9,10 @@ Dxex supports, similarly to PythonPDEVS, the following features: direct connecti
 But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols (though only in parallel).
 This is in line with the design principle of PythonPDEVS: allow users to pass performance hints to the simulation kernel.
 In our case, a user can pass the simulation kernel the synchronization protocol to use for this model.
-Our implementation in C++14 also allows for optimizations which were plainly impossible in an interpreted language.
+Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language. Dxex will use new optimizations from the C++14 standard when possible.
 
 Since there is no universal \textsf{DEVS} model standard, dxex models are incompatible with PythonPDEVS and vice versa.
-This is due to dxex models being grafted on C++14, whereas PythonPDEVS models are grafted on Python.
+This is due to dxex models being grafted on C++11, whereas PythonPDEVS models are grafted on Python.
 
 In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool, which are offered transparently to the model.
 
@@ -52,9 +52,9 @@ Within the returned time interval, the model promises not to raise an event.
 A node aggregates this information to computes its earliest output time (EOT).
 This value is written out in shared memory, where it can be read out by all other nodes.
 
-Reading and writing to shared memory is done through the use of the new C++14 synchronization primitives.
+Reading and writing to shared memory is done through the use of the new C++11 synchronization primitives.
 Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
-C++14 further allows us to make the implementation portable, as well as more efficient: the compiler might know of optimizations specific to atomic variables.
+C++11 further allows us to make the implementation portable, as well as more efficient: the compiler might know of optimizations specific to atomic variables or constant expressions which are heavily used in dxex.
 
 \subsubsection{Optimistic}
 For optimistic synchronization, each node must be able to roll back to a previous point in time.
@@ -67,11 +67,11 @@ Once the GVT is found, all nodes are informed of the new value, after which foss
 The main problem we encountered in our implementation is the aggressive use of memory.
 Frequent memory allocation and deallocation caused significant overheads, certainly when multiple threads do so concurrently.
 This made us switch to the use of thread-local (using \texttt{tcmalloc}) memory pools.
-Again, we made use of specific new features of C++14, that were not available in Python, or even previous versions of the C++ language standard.
+Again, we made use of specific new features of C++11, that were not available in Python, or even previous versions of the C++ language standard.
 
 \subsection{Transparency}
 We define simulation kernel transparency as having a single model, which always can be executed on each supported synchronization kernel, without any modifications.
-User should thus only provide one model, implemented in C++14, which can be either using sequential execution, using conservative synchronization, or using optimistic synchronization.
+User should thus only provide one model, implemented in C++11, which can be either using sequential execution, using conservative synchronization, or using optimistic synchronization.
 Switching between simulation kernels is as simple as altering the simulation termination time.
 The exception is conservative synchronization, where a lookahead function is required, which is not used in other synchronization kernels.
 Two options are possible: either a lookahead function must always be provided, even when it is not required and possibly not used, or we use a default lookahead function if none is defined.
@@ -84,12 +84,12 @@ Depending on the model, simulation performance might still be faster than sequen
 Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
 
 \subsection{Features}
-In this section we highlight some of the extra features dxex offers to modellers.
+We will enumerate some of the extra features dxex offers to modellers.
 \subsubsection{Tracing}
-Like PythonPDEVS dxex has full tracing capabilities supporting a wide number of output formats : json, XML, cell, console, ... . The user can implement his own outputpolicy and use it in our modular tracing design. The tracing functionality itself is implemented asynchronous and thread-safe. By overriding the output functions in the Message or State classes the user can generate model specific output for use with an existing tracing output policy. Tracing can be completely disabled to maximize simulation performance should this be desired (e.g. benchmarks). 
+Like PythonPDEVS dxex has full tracing capabilities supporting a wide number of output formats : Json, XML, Cell, console, ... . The user can implement his own outputpolicy and use it in our modular tracing design. The tracing functionality itself is implemented asynchronous and thread-safe. By overriding the output functions in the Message or State classes the user can generate model specific output for use with an existing tracing outputpolicy. Tracing can be completely disabled to maximize simulation performance should this be desired (e.g. benchmarks). 
 % Talk about adevs?
 \subsubsection{Memory Allocation}
-As we will demonstrate in \ref{sec:4-subsec:overhead-pgraph:memory} memory allocation is a performance bottleneck in simulation with high event frequency, especially in parallel. Dxex has a modular allocation interface that separates the object creation in kernels and models from the actual implementation. This allows us by using a single compilation parameter to change the allocation strategy per kernel type. This interface allows instrumentation of memory usage. Not only useful to detect memory leaks should this be a concern, it can also be of use to a model author to trace event creation in large models. A model author can rely on the default implementation as the fastest common configuration verified by the benchmarks.
+As we will demonstrate in Section~\ref{sec:4-subsec:overhead-pgraph:memory} memory allocation is a performance bottleneck in simulation with high event frequency, especially in parallel. Dxex has a modular allocation interface that separates the object creation in kernels and models from the actual implementation. This allows us by using a single compilation parameter to change the allocation strategy per kernel type. This interface allows instrumentation of memory usage. Not only useful to detect memory leaks should this be a concern, it can also be of use to a model author to trace event creation in large models. A model author can rely on the default implementation as the fastest common configuration verified by the benchmarks.
 \subsubsection{Model Allocation}
 A model author can specify which kernel a model should be allocated to, should such manual intervention be required. This is handled by the default model allocator. If no preference is given a simple striping scheme is followed. It should be obvious that this is not sufficient in most simulations. In \ref{sec:4-performance} we analyze allocation schemes and their performance impact. By overriding the default allocator a model author can tune the allocation scheme to maximize parallel speedup. This interface can be in future work also be used to employ graph algorithms for an automatic allocation scheme, for example one that avoids cycles in the resulting kernel dependency graph.
 \subsubsection{Logging}
