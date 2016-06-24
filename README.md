@@ -13,7 +13,7 @@ A quick overview of features:
 
 * Visualization and internal tracing of a simulation (compile time optional)
 
-* Implemented in standard C++ (C++11, C++14 optional) for maximum portablity.
+* Implemented in standard C++ (C++11, C++14 optional) for maximum portability.
 
 
 
