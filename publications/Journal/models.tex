@@ -23,7 +23,7 @@ The exact parameters for each benchmark can be found in the repository, as well 
 We use four different benchmarks, which cover different aspects of the simulation kernel:
 \begin{enumerate}
 	\item The \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
-	A single generator pushes events into the queue, which are processed by the processors after a fixed or random delay.
+	A single generator pushes events into the queue, which are consumed by the processors after a fixed or random delay.
 	It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
 	This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
 	An example for width and depth 2 is shown in Figure~\ref{fig:queue_model}.
@@ -43,9 +43,10 @@ We use four different benchmarks, which cover different aspects of the simulatio
 	This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
 	An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 	
-	\item The \textit{PHoldTree} model, a hierarchical model based on the semantics of PHOLD~\cite{PHOLD}. The model consists of recursively defined trees connected to each other, similar to the structure of an AST. All links can be configured to be bidirectional. 
-	Unlike the \textit{Queue} model the hierarchical nature is still present in the topology of the atomic models after the directconnect stage. This model allows us to investigate parallel speedup in several key dimensions in combination or isolation : model allocation, message density, uncertainty and hierarchy. The model has a depth parameter, fanout (childcount), probability of priority message and linkage direction. We demonstrate the importance of atomic to kernel allocation, in this model this can be configured as a bread-first versus a depth-first scheme.
-	\textit{PHOLDTree}, while a synthetic benchmark, can be used to model gossiping in social networks, hierarchical resource sharing or load balancing. Unlike \textit{Queue} this model does not lends itself easily to parallelism and thus highlights the difficulties model authors face in the real world when employing PDEVS solutions.
+	\item The \textit{PHoldTree} model, a hierarchical model based on the semantics of PHOLD~\cite{PHOLD}. The model consists of recursively defined trees connected to each other, similar to the structure of an AST. Connections can be unidirectional or bidirectional.
+	Unlike the \textit{Queue} model the width of the hierarchy is still present in the topology of the atomic models after the directconnect stage. This model allows us to investigate parallel speedup in several key dimensions in combination or isolation : model allocation, message density, uncertainty and hierarchy. The model has the following parameters : depth, fanout (width), probability of priority message and linkage direction. We demonstrate the importance of atomic to kernel allocation, in this model this can be configured as a bread-first versus a depth-first scheme.
+	\textit{PHOLDTree} can be used to model gossiping in social networks, hierarchical resource sharing or load balancing. Unlike \textit{Queue} this model does not lend itself easily to parallelism and thus highlights the difficulties model authors face in when a parallel speedup is desired for real world models.
+	The lookahead of an atomic node is $\epsilon$, simulating uncertainty as will be often the case in real world models.
 	The number of atomic models in this benchmark is given by 
 	\begin{equation} \label{eq:pholdtreemodelcount}
 	\frac{n^{d+2}-1}{n-1}
