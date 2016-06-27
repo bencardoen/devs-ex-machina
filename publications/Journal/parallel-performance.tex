@@ -100,7 +100,6 @@ Results show that there is no single perfect synchronization algorithm for this 
 
 % The real life
 \subsubsection{PholdTree}
-%move to pholdtree
 We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization. We will demonstrate that allocation is critical to achieve a parallel speedup and that the parameters of the model will give either conservative or optimistic an advantage.
 \paragraph*{Allocation}\label{PholdTreeallocation}
 The PholdTree benchmark can be configured to use 2 allocation schemes: breadth first and depth first. 
@@ -119,6 +118,8 @@ A single kernel that has an unbalanced number of atomic models or models with un
 %	\caption{PholdTree model depth first allocation with 3 kernels.}
 %	\label{fig:PholdTree_model_dfs}
 %\end{figure}
+
+%Counterintuitively the probability of a high priority event in this model does not affect the performance difference between conservative and optimistic. The key parameter quickly becomes the load of a kernel in models. Our conservative implementation in an uncertain (trivial lookahead) simulation is very sensitive to a high load in models, whereas optimistic has no such limitation.
 
 \paragraph*{Strong Scaling}\label{pholdtreestrongscale}
 In Figure \ref{fig:PholdTree_plot_alloc_high} we see that the difference in performance for all 4 kernel configurations compared to that shown in Figure \ref{fig:PholdTree_plot_alloc_low} is a constant factor. The probability of the priority message has no extra impact on performance other than that shown in sequential performance. 
