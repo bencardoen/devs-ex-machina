@@ -9,27 +9,28 @@
 \BOOKMARK [3][-]{section*.11}{Optimistic}{section*.7}% 9
 \BOOKMARK [2][-]{section*.12}{Transparency}{section*.6}% 10
 \BOOKMARK [2][-]{section*.13}{Features}{section*.6}% 11
-\BOOKMARK [3][-]{section*.14}{Tracing}{section*.13}% 12
-\BOOKMARK [3][-]{section*.15}{Memory Allocation}{section*.13}% 13
-\BOOKMARK [3][-]{section*.16}{Model Allocation}{section*.13}% 14
-\BOOKMARK [3][-]{section*.17}{Logging}{section*.13}% 15
-\BOOKMARK [3][-]{section*.18}{Visualization and Statistics}{section*.13}% 16
-\BOOKMARK [1][-]{section*.22}{Performance}{}% 17
-\BOOKMARK [2][-]{section*.23}{Benchmarks}{section*.22}% 18
-\BOOKMARK [2][-]{section*.25}{Sequential Simulation}{section*.22}% 19
-\BOOKMARK [3][-]{section*.26}{Queue}{section*.25}% 20
-\BOOKMARK [3][-]{section*.28}{Interconnect}{section*.25}% 21
-\BOOKMARK [3][-]{section*.30}{PHold}{section*.25}% 22
-\BOOKMARK [3][-]{section*.32}{PHoldTree}{section*.25}% 23
-\BOOKMARK [2][-]{section*.37}{Parallel Simulation}{section*.22}% 24
-\BOOKMARK [3][-]{section*.38}{Queue}{section*.37}% 25
-\BOOKMARK [3][-]{section*.43}{Interconnect}{section*.37}% 26
-\BOOKMARK [3][-]{section*.46}{Phold}{section*.37}% 27
-\BOOKMARK [3][-]{section*.50}{PholdTree}{section*.37}% 28
-\BOOKMARK [2][-]{section*.56}{Measuring Synchronization Overhead}{section*.22}% 29
-\BOOKMARK [2][-]{section*.61}{Conclusion}{section*.22}% 30
-\BOOKMARK [3][-]{section*.62}{Allocation}{section*.61}% 31
-\BOOKMARK [3][-]{section*.63}{Uncertainty}{section*.61}% 32
-\BOOKMARK [3][-]{section*.64}{Limits}{section*.61}% 33
-\BOOKMARK [1][-]{section*.65}{Related Work}{}% 34
-\BOOKMARK [1][-]{section*.66}{Conclusions and future work}{}% 35
+\BOOKMARK [3][-]{section*.14}{Runtime synchronization switching}{section*.13}% 12
+\BOOKMARK [3][-]{section*.15}{Tracing}{section*.13}% 13
+\BOOKMARK [3][-]{section*.16}{Memory Allocation}{section*.13}% 14
+\BOOKMARK [3][-]{section*.17}{Model Allocation}{section*.13}% 15
+\BOOKMARK [3][-]{section*.18}{Logging}{section*.13}% 16
+\BOOKMARK [3][-]{section*.19}{Visualization and Statistics}{section*.13}% 17
+\BOOKMARK [1][-]{section*.23}{Performance}{}% 18
+\BOOKMARK [2][-]{section*.24}{Benchmarks}{section*.23}% 19
+\BOOKMARK [2][-]{section*.26}{Sequential Simulation}{section*.23}% 20
+\BOOKMARK [3][-]{section*.27}{Queue}{section*.26}% 21
+\BOOKMARK [3][-]{section*.29}{Interconnect}{section*.26}% 22
+\BOOKMARK [3][-]{section*.31}{PHold}{section*.26}% 23
+\BOOKMARK [3][-]{section*.33}{PHoldTree}{section*.26}% 24
+\BOOKMARK [2][-]{section*.38}{Parallel Simulation}{section*.23}% 25
+\BOOKMARK [3][-]{section*.39}{Queue}{section*.38}% 26
+\BOOKMARK [3][-]{section*.44}{Interconnect}{section*.38}% 27
+\BOOKMARK [3][-]{section*.47}{Phold}{section*.38}% 28
+\BOOKMARK [3][-]{section*.51}{PholdTree}{section*.38}% 29
+\BOOKMARK [2][-]{section*.57}{Measuring Synchronization Overhead}{section*.23}% 30
+\BOOKMARK [2][-]{section*.62}{Conclusion}{section*.23}% 31
+\BOOKMARK [3][-]{section*.63}{Allocation}{section*.62}% 32
+\BOOKMARK [3][-]{section*.64}{Uncertainty}{section*.62}% 33
+\BOOKMARK [3][-]{section*.65}{Limits}{section*.62}% 34
+\BOOKMARK [1][-]{section*.66}{Related Work}{}% 35
+\BOOKMARK [1][-]{section*.67}{Conclusions and future work}{}% 36
