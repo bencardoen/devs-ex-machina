@@ -16,3 +16,4 @@ adevs/*
 /publications/Journal/*.synctex.gz
 /publications/Journal/*.bbl
 /publications/Journal/*.blg
+/publications/Journal/*.out

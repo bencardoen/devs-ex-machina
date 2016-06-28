@@ -1,10 +1,4 @@
 \documentclass{sagej}
-%TODO change copyrightnotice
-%\copyrightnotice{
-%	SpringSim-TMS/DEVS 2016 April 3-6, Pasadena, CA, USA
-%	
-%	\copyright 2016 Society for Modeling \& Simulation International (SCS) 
-%}
 
 % Load basic packages
 \usepackage{balance}		% to better equalize the last page
@@ -20,128 +14,38 @@
 \makeatother
 \urlstyle{leo}
 
-% To make various LaTeX processors do the right thing with page size.
-\def\pprw{8.5in}
-\def\pprh{11in}
-\special{papersize=\pprw,\pprh}
-\setlength{\paperwidth}{\pprw}
-\setlength{\paperheight}{\pprh}
-\setlength{\pdfpagewidth}{\pprw}
-\setlength{\pdfpageheight}{\pprh}
-
 \usepackage{tikz}
 % Make sure hyperref comes last of your loaded packages,
 % to give it a fighting chance of not being over-written,
 % since its job is to redefine many LaTeX commands.
 \usepackage[pdftex]{hyperref}
 
-
-
-% create a shortcut to typeset table headings
-\newcommand\tabhead[1]{\small\textbf{#1}}
-
-% Control float placement
-\renewcommand{\topfraction}{0.9}    % max fraction of floats at top
-\renewcommand{\bottomfraction}{0.8} % max fraction of floats at bottom
-%   Parameters for TEXT pages (not float pages):
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}     % 2 may work better
-\setcounter{dbltopnumber}{2}    % for 2-column pages
-\renewcommand{\dbltopfraction}{0.9} % fit big float above 2-col. text
-\renewcommand{\textfraction}{0.05}  % allow minimal text w. figs
-\renewcommand{\floatpagefraction}{0.9}  % require fuller float pages
-% N.B.: floatpagefraction MUST be less than topfraction !!
-\renewcommand{\dblfloatpagefraction}{0.7}   % require fuller float pages
+\newcommand{\modelfraction}{0.65}
+\newcommand{\betweenmodels}{0.8cm}
+\newcommand{\plotfraction}{0.85}
 
 % End of preamble. Here comes the document.
 \begin{document}
 
-\title{Performance analysis of a PDEVS simulator\\supporting multiple synchronization protocols}
+\title{Performance analysis of a PDEVS simulator supporting multiple synchronization protocols}
 
-% This is not how it should be, but we have 7 authors with difficult affiliations and mail addresses...
-\author{
-\begin{tabular}{ccc}
-    Ben Cardoen\dag     & Stijn Manhaeve\dag    \\
-    \multicolumn{3}{c}{\email{\{firstname.lastname\}@student.uantwerpen.be}} \\
-    \\
-\end{tabular}\\
-\begin{tabular}{cccc}
-    Yentl Van Tendeloo\dag   & Jan Broeckhove\dag \\
-    \multicolumn{4}{c}{\email{\{firstname.lastname\}@uantwerpen.be}} \\
-    \\
-\end{tabular} \\
-%TODO originally, the following had the \affaddr command wrapped around them, which is a font defined by the previous style
-{\dag \space University of Antwerp, Belgium} \\
-}
+\author{Ben Cardoen\affilnum{1}, Stijn Manhaeve\affilnum{1}, Yentl Van Tendeloo\affilnum{1}, and Jan Broeckhove\affilnum{1}}
 
-%\author{
-%\begin{tabular}{cccc}
-%Ben Cardoen     & Stijn Manhaeve    & Tim Tuijn & Yentl Van Tendeloo    \\
-%\end{tabular}\\
-%\email{\{firstname.lastname\}@student.uantwerpen.be} \\
-%\affaddr{University of Antwerp, Belgium} \\
-%}
+\affiliation{\affilnum{1}University of Antwerp, Belgium}
 
-%\numberofauthors{6}
-%\author{
-%    \alignauthor Ben Cardoen\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{}\\
-%        \email{Ben.Cardoen@student.uantwerpen.be}\\
-%        \affaddr{}
-%    \alignauthor Stijn Manhaeve\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{}\\
-%        \email{Stijn.Manhaeve@student.uantwerpen.be}\\
-%        \affaddr{}
-%    \alignauthor Tim Tuijn\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{}\\
-%        \email{Tim.Tuijn@student.uantwerpen.be}\\
-%        \affaddr{}
-%    \alignauthor Yentl Van Tendeloo\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{}\\
-%        \email{Yentl.VanTendeloo@uantwerpen.be}\\
-%        \affaddr{}
-%    \alignauthor Kurt Vanmechelen\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{}\\
-%        \email{Kurt.Vanmechelen@uantwerpen.be}\\
-%        \affaddr{}
-%    \alignauthor Hans Vangheluwe\\
-%        \affaddr{University of Antwerp, Belgium}\\
-%        \affaddr{McGill University, Canada}\\
-%        \email{Hans.Vangheluwe@uantwerpen.be}\\
-%        \affaddr{}
-%}
+\corrauth{Yentl Van Tendeloo
+University of Antwerp
+Middelheimlaan 1
+2020 Antwerp
+Belgium}
 
-% Cheat a bit
-%\setlength{\bibsep}{0.0pt}
-
-\maketitle
-
-%\section*{ADDITIONAL AUTHORS}
-%\begin{enumerate}
-    %\item Jan Broeckhove, University of Antwerp, Belgium, \email{Jan.Broeckhove@uantwerpen.be}
-%\end{enumerate}
-
+\email{Yentl.VanTendeloo@uantwerpen.be}
 
 \begin{abstract}
 \input{abstract.tex}
 \end{abstract}
-\keywords{
-Simulation; Optimistic Synchronization; Conservative Synchronization; Performance; Parallel DEVS
-}
 
-%TODO fix categories?
-%XXX Do not edit this to MODELLING for consistency.
-%    These words are ACM keywords used for classification in the ACM Digital Library
-%    See http://www.acm.org/about/class/ccs98-html
-%\category{I.6.7}{SIMULATION AND MODELING}{Simulation support systems}
-%\category{I.6.8}{SIMULATION AND MODELING}{Types of simulation}
-
+\maketitle
 
 \section{Introduction}
 \label{sec:1-introduction}
@@ -151,19 +55,26 @@ Simulation; Optimistic Synchronization; Conservative Synchronization; Performanc
 \label{sec:2-background}
 \input{2-background.tex}
 
-\section{Multiple Synchronization Protocols}
+\section{DEVS-Ex-Machine}
 \label{sec:3-features}
 \input{3-features.tex}
 
-\section{Performance}
+\section{Performance Evaluation}
 \label{sec:4-performance}
 \input{4-performance.tex}
+
+\section{Hotswapping the Synchronization Protocol}
+\label{sec:4b-hotswap}
+\input{4b-hotswap.tex}
+
+\section{Model Allocation}
+\label{sec:4a-allocation}
+\input{4a-allocation.tex}
 
 \section{Related Work}
 \label{sec:5-related-work}
 \input{5-related-work.tex}
 
-% Future work and Conclusions
 \section{Conclusions and future work}
 \label{sec:6-conclusion}
 \input{6-conclusions.tex}

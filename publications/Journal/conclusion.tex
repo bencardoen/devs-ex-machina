@@ -1,16 +1,13 @@
-\subsection{Conclusion}
+\subsection{Conclusions on Performance Evaluation}
 We have shown that our contribution is invaluable for high performance simulation: depending on the expected behaviour, modellers can choose the most appropriate synchronization protocol.
-We will summarize the key factors in achieving good parallel performance here. % reword aspects syn
-\subsubsection{Allocation}
-Allocation of atomic models over kernels is critical to obtain a speedup. 
-In the case of the Interconnect model it is not possible to allocate models without introducing a cyclic dependency between kernels with severe performance degradation as a result. 
-Even when no cycles exist in the topology between kernels a good allocation scheme will minimize the number of connections between kernels, for example the star topology in PHoldTree with depth first allocation or the chain topology in the Queue model. 
-Dxex can optionally offer the user a visualization of the behaviour of the kernels under a user supplied allocation scheme to allow for more insight. 
-The same instrumentation could in future be used to optimize an existing allocation scheme.
-\subsubsection{Uncertainty}
-A simulation where future behaviour cannot be predicted is typically not suited for conservative simulation, but we have demonstrated that dxex's conservative kernel can still offer a non trivial speedup in this context. 
-Optimistic is not limited by this uncertainty and can offer a good speedup regardless of lookahead. 
-Phold and PholdTree demonstrate that a single model can benefit from different synchronization protocols depending on a single parameter.
-\subsubsection{Limits}
-Dxex's conservative kernel is constrained by the amount of models it controls, as shown in the PHoldTree benchmark. This is especially the case when the minimal lookahead is $\epsilon$ requiring near constant polling of models for lookahead values. 
-Optimistic is not constrained by the number of models it manages, but can quickly consume all available memory in a simulation. While this effect can be reduced with a thread aware allocation scheme, the underlying problem remains.
+But even with the right synchronization protocol, we have seen that two problems remain.
+
+First, although one of both synchronization protocols might be ideally suited for specific model behaviour, nothing guarantees that the model will exhibit the same behaviour throughout the simulation.
+Similarly to the polymorphic scheduler~\cite{MasterThesis}, we wish to make it possible for the ideal option to be switched during simulation.
+When changes to the model behaviour are noticed, the used synchronization protocol is modified as well.
+
+Second, the allocation of models is tricky and has a significant impact on performance.
+While our parallel speedup for the Queue model, for example, was rather high, this is mostly due to characteristics of the model: the dependency graph does not contain any cycles.
+When cycles were introduced, as in the Interconnect model, performance became disastrous.
+
+In the next two sections, we elaborate on these two problems.
