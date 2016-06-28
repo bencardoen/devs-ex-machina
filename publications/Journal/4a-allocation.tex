@@ -1,19 +1,32 @@
-%TODO explain model allocation
-%TODO why model allocation
-Modeller can specify which kernel a model should be allocated to, should such manual intervention be required. This is handled by the default model allocator. If no preference is given a simple striping scheme is followed but this is not sufficient in most simulations to achieve a speedup in parallel. In Section \nameref{sec:4-performance} we analyse the performance impact of allocation schemes. By overriding the default allocator a model author can tune the allocation scheme for a specific model to maximize parallel speedup. This interface can be in future work also be used to employ graph algorithms for an automatic allocation scheme, for example one that avoids cycles in the resulting kernel dependency graph.
+Although the synchronization protocol is one of the defining factors in simulation performance, model allocation has a significant impact on which protocol is ideal, and even whether or not parallelization would make sense.
+Indeed, if the model is distributed in such a way that frequent communication is necessary between cores, parallelism is naturally reduced.
+This thus brings us to the topic of model allocation.
+Model allocation was one of the features also implemented by PythonPDEVS~\cite{PythonPDEVS2}.
+
+The modeller can specify which kernel a model should be allocated to, should such manual intervention be required.
+This is handled by the default model allocator.
+If no preference is given a simple striping scheme is followed but this is not sufficient in most simulations to achieve a speedup in parallel.
+By overriding the default allocator a modeller tunes the allocation scheme for a specific model, maximizing parallel speedup.
+This interface can be used to employ graph algorithms for an automatic allocation scheme, for example avoiding cycles in the dependency graph.
 
 \subsection{Performance Evaluation}
 %TODO do basic performance evaluation of allocation
 %TODO show model in statistics view
+In order to evaluate the influence of model allocation, we define a new model, based on PHOLD~\cite{PHOLD}.
+The model structure resembles a tree: an atomic model can have a set of children, with children being connected to each other as well.
+Connections can be uni- or bidirectional.
 
-The \textit{PHoldTree} model, a hierarchical model based on the semantics of PHOLD~\cite{PHOLD}. The model consists of recursively defined trees connected to each other, similar to the structure of an AST. Connections can be unidirectional or bidirectional.
-Unlike the \textit{Queue} model the width of the hierarchy is still present in the topology of the atomic models after the directconnect stage. This model allows us to investigate parallel speedup in several key dimensions in combination or isolation : model allocation, message density, uncertainty and hierarchy. The model has the following parameters : depth, fanout (width), probability of priority message and linkage direction. We demonstrate the importance of atomic to kernel allocation, in this model this can be configured as a bread-first versus a depth-first scheme.
-\textit{PHOLDTree} can be used to model gossiping in social networks, hierarchical resource sharing or load balancing. Unlike \textit{Queue} this model does not lend itself easily to parallelism and thus highlights the difficulties model authors face in when a parallel speedup is desired for real world models.
+Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after the direct connection stage.
+The PHOLDTree model allows us to investigate parallel speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
+
+PHOLDTree can be used to model gossiping in social networks, hierarchical resource sharing or load balancing.
 The lookahead of an atomic node is $\epsilon$, simulating uncertainty as will be often the case in real world models.
+We demonstrate the importance of allocation, by comparing a breadth-first versus a depth-first scheme.
 
 \begin{figure}
 \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree.pdf}
-\caption{PHOLDTree model for depth 1, width 2.}
+%TODO depth 1 but 3 levels deep?
+\caption{PHOLDTree model for depth 1 and width 2.}
 \label{fig:PHOLDTree_model}
 \end{figure}
 
