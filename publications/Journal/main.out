@@ -7,32 +7,27 @@
 \BOOKMARK [3][-]{section*.8}{Sequential}{section*.7}% 7
 \BOOKMARK [3][-]{section*.10}{Conservative}{section*.7}% 8
 \BOOKMARK [3][-]{section*.11}{Optimistic}{section*.7}% 9
-\BOOKMARK [2][-]{section*.12}{Transparency}{section*.6}% 10
-\BOOKMARK [2][-]{section*.13}{Features}{section*.6}% 11
-\BOOKMARK [3][-]{section*.14}{Runtime synchronization switching}{section*.13}% 12
-\BOOKMARK [3][-]{section*.15}{Tracing}{section*.13}% 13
-\BOOKMARK [3][-]{section*.16}{Memory Allocation}{section*.13}% 14
-\BOOKMARK [3][-]{section*.17}{Model Allocation}{section*.13}% 15
-\BOOKMARK [3][-]{section*.18}{Logging}{section*.13}% 16
-\BOOKMARK [3][-]{section*.19}{Visualization and Statistics}{section*.13}% 17
-\BOOKMARK [1][-]{section*.23}{Performance Evaluation}{}% 18
-\BOOKMARK [2][-]{section*.24}{Benchmarks}{section*.23}% 19
-\BOOKMARK [2][-]{section*.26}{Sequential Simulation}{section*.23}% 20
-\BOOKMARK [3][-]{section*.27}{Queue}{section*.26}% 21
-\BOOKMARK [3][-]{section*.29}{Interconnect}{section*.26}% 22
-\BOOKMARK [3][-]{section*.31}{PHold}{section*.26}% 23
-\BOOKMARK [3][-]{section*.33}{PHoldTree}{section*.26}% 24
-\BOOKMARK [2][-]{section*.38}{Parallel Simulation}{section*.23}% 25
-\BOOKMARK [3][-]{section*.39}{Queue}{section*.38}% 26
-\BOOKMARK [3][-]{section*.44}{Interconnect}{section*.38}% 27
-\BOOKMARK [3][-]{section*.47}{Phold}{section*.38}% 28
-\BOOKMARK [3][-]{section*.51}{PholdTree}{section*.38}% 29
-\BOOKMARK [2][-]{section*.57}{Measuring Synchronization Overhead}{section*.23}% 30
-\BOOKMARK [2][-]{section*.62}{Conclusion}{section*.23}% 31
-\BOOKMARK [3][-]{section*.63}{Allocation}{section*.62}% 32
-\BOOKMARK [3][-]{section*.64}{Uncertainty}{section*.62}% 33
-\BOOKMARK [3][-]{section*.65}{Limits}{section*.62}% 34
-\BOOKMARK [1][-]{section*.66}{Model Allocation}{}% 35
-\BOOKMARK [1][-]{section*.67}{Hotswapping the Synchronization Protocol}{}% 36
-\BOOKMARK [1][-]{section*.68}{Related Work}{}% 37
-\BOOKMARK [1][-]{section*.69}{Conclusions and future work}{}% 38
+\BOOKMARK [2][-]{section*.12}{Synchronization Protocol Transparency}{section*.6}% 10
+\BOOKMARK [2][-]{section*.13}{Increasing Parallelism}{section*.6}% 11
+\BOOKMARK [3][-]{figure.caption.15}{Memory Management}{section*.13}% 12
+\BOOKMARK [3][-]{section*.16}{Random Number Generators}{section*.13}% 13
+\BOOKMARK [1][-]{section*.18}{Performance Evaluation}{}% 14
+\BOOKMARK [2][-]{section*.19}{Benchmarks}{section*.18}% 15
+\BOOKMARK [2][-]{section*.21}{Sequential Simulation}{section*.18}% 16
+\BOOKMARK [3][-]{section*.22}{Queue}{section*.21}% 17
+\BOOKMARK [3][-]{section*.24}{Interconnect}{section*.21}% 18
+\BOOKMARK [3][-]{section*.26}{PHold}{section*.21}% 19
+\BOOKMARK [3][-]{section*.28}{PHoldTree}{section*.21}% 20
+\BOOKMARK [2][-]{section*.33}{Parallel Simulation}{section*.18}% 21
+\BOOKMARK [3][-]{section*.34}{Queue}{section*.33}% 22
+\BOOKMARK [3][-]{section*.39}{Interconnect}{section*.33}% 23
+\BOOKMARK [3][-]{section*.42}{Phold}{section*.33}% 24
+\BOOKMARK [3][-]{section*.46}{PholdTree}{section*.33}% 25
+\BOOKMARK [2][-]{section*.52}{Conclusion}{section*.18}% 26
+\BOOKMARK [3][-]{section*.53}{Allocation}{section*.52}% 27
+\BOOKMARK [3][-]{section*.54}{Uncertainty}{section*.52}% 28
+\BOOKMARK [3][-]{section*.55}{Limits}{section*.52}% 29
+\BOOKMARK [1][-]{section*.56}{Model Allocation}{}% 30
+\BOOKMARK [1][-]{section*.57}{Hotswapping the Synchronization Protocol}{}% 31
+\BOOKMARK [1][-]{section*.61}{Related Work}{}% 32
+\BOOKMARK [1][-]{section*.62}{Conclusions and future work}{}% 33

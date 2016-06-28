@@ -14,7 +14,7 @@ Our implementation in C++11 also allows for optimizations which were plainly imp
 Since there is no universal \textsf{DEVS} model standard, dxex models are incompatible with PythonPDEVS and vice versa.
 This is due to dxex models being grafted on C++11, whereas PythonPDEVS models are grafted on Python.
 
-In the remainder of this section, we will elaborate on our prominent new feature: support for multiple synchronization protocols within the same simulation tool, which are offered transparently to the model.
+In the remainder of this section, we will elaborate on our prominent new feature: the efficient implementation of multiple synchronization protocols within the same simulation tool, which are offered transparently to the model.
 
 \subsection{Synchronization protocols}
 We previously explained the existence of different synchronization protocols, each optimized for a specific kind of model.
@@ -82,3 +82,54 @@ The more attractive option is for the simulation tool to provide a default looka
 Depending on the model, simulation performance might still be faster than sequential simulation. 
 
 Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
+
+\subsection{Increasing Parallelism}
+The simulation kernels have a non trivial overhead compared to a sequential kernel. In this section we will try to isolate this overhead.
+
+Profiling indicates that there are in the most trivial of models only 2 causes for computational load outside of the actual simulation : memory management and random number generation. By reducing the cost of both we will isolate the synchronization overhead. We use the Queue benchmark since it is highly parallel and its computational load in transitioning is only determined by random number generation and event/state allocation.
+
+\subsubsection{Memory Management}
+\label{sec:4-subsec:overhead-pgraph:memory}
+\begin{figure}
+    \center
+
+    \includegraphics[width=\modelfraction\columnwidth]{fig/memory_allocators.eps}
+    \caption{Effect of memory allocators on sequential runtime.}
+    \label{fig:memallocators}
+
+    \includegraphics[width=\modelfraction\columnwidth]{fig/memory_allocators_parallel.eps}
+    \caption{Effect of memory allocators on parallel runtime.}
+    \label{fig:memallocators_parallel}
+\end{figure}
+In dxex a model author is given access to automatic memory management for events and states. A model written for a sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the model author) the (de)allocation semantics of events or states. \\
+In sequential and conservative simulation the kernel gives the guarantee that no state will be copied. Dxex's simulation control hides the implementation details of this management, a model author can focus on the actual semantics of the model.
+The kernels use memory allocators backed by a thread-aware pooling library to reduce the performance impact of memory management as much as possible.
+In a sequential simulation kernel no allocated event will persist beyond a single time advance, allowing the use of an arena-style allocator. Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime. \\
+An important observation to make is that intra-kernel events can be pooled more aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization. A simulation with high inter kernel events will suffer a performance hit, whereas the impact of high intra kernel events can be optimized using arena allocators.\\
+The allocation interfaces are instrumented in dxex to trace memory usage in a simulation and can serve as a basic memory leak detector. Shielding the user from (de)allocation complexity comes at a cost in performance, as the comparison with adevs in simulations with a high event frequency \ref{fig:Interconnect_benchmark} of events shows.\\
+\\
+Dxex uses Boost Pool\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
+The latter can be faster, but at the cost of extra configuration. The allocators are supplemented by the library tcmalloc \cite{tcmalloc}. In Figure \ref{fig:memallocators} the Interconnect model is benchmarked under the different combinations of allocation strategies. \\
+Interconnect is a perfect test case since it generates each round a set of events quadratic in size to the number of atomic models in the simulation. With each event dynamically allocated, this makes it the perfect stress test for any allocation strategy. Both tcmalloc and Boost pools result in an advantage, but not necessarily combined. \\
+We next investigate the effect of both strategies in an optimistic simulation. We have already demonstrated that conservative simulation differs little in memory usage from sequential, so we only benchmark the optimistic kernel. From the results it is clear that optimistic simulation benefits greatly from the use of tcmalloc, regardless of the allocator. Nonetheless the pool allocator still reduces the allocation overhead. \\
+Both the pools and tcmalloc will try to keep memory allocated to them by the OS, this gives a somewhat misleading view in statistics collected from the OS. The dxex kernels themselves and the pool interfaces allow the user to instrument event allocation and deallocation exactly which can be useful in measuring how efficient GVT-triggered deallocation is in practice.\\
+In conclusion both techniques are required to reduce the overhead of memory allocations in dxex, and on by default.
+
+\subsubsection{Random Number Generators}
+A non trivial amount of time in a simulation spent waiting for a random number generator (rng) can mask synchronization overhead. Several of our benchmarks use random number generators to test the effect of uncertainty in a simulation, either by random time advances or random destinations for events. \\
+In a parallel simulation we also need to guarantee isolation between the random calls to avoid excessive synchronization on the rng object itself.
+Dxex uses the Tina random number generator collection (trng) \cite{PhysRevE.75.066701} as an alternative random number generator as it is designed with performance and multithreading usage in mind.
+We also wrote a new version of our models that stores the rng object in the state instead of calling a shared thread local object to isolate the synchronization overhead.\\
+From Figure \ref{fig:Queuerngspeedup} we see that storing the rng in the state is a very expensive operation for the default STL random number generator. The size of the rng object in the state triggers memory overhead but it is interesting to see that adevs' conservative is also sensitive to this effect even though in theory in conservative synchronization no state copying/saving is required.
+Dxex's conservative kernel is insensitive to storing the rng object in the atomic model state, since no copying/state saving occurs in dxex conservative simulation. \\
+Replacing the STL rng with the threading optimized trng we are more accurately able to isolate synchronization overhead. Figure \ref{fig:Queuerngspeedup} shows that both dxex and adevs in sequential simulation gain a factor ~3 speedup by using the faster random number generator. The parallel kernels have a smaller speedup with adevs' conservative and dxex optimistic achieving an almost identical factor. Dxex conservative is almost insensitive to the changing of the rng.
+Dxex optimistic and adevs conservative in the default configuration spend relatively more time waiting for random numbers than dxex conservative, demonstrated by the speedup gained when random number generation is accelerated.
+The actual synchronization overhead in all parallel kernels still dominates the cost of random number generation which is seen from the speedup difference between parallel and sequential.\\
+\begin{figure}
+    \center
+
+    \includegraphics[width=\modelfraction\columnwidth]{fig/rngspeedupeffectdevstone.eps}
+    \caption{Speedup with different rng usage patterns in Queue model}
+    \label{fig:Queuerngspeedup}
+
+\end{figure}

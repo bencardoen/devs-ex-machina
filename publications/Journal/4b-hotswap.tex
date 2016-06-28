@@ -1,3 +1,22 @@
+%TODO fill in
+\section{Hotswap Between Synchronization Protocols}
+%TODO explain hotswapping
+%TODO why hotswapping
+
+\subsection{Extensibility}
+%TODO now purely manual
+%TODO framework provided to do this using a decider
+%TODO possibly using machine learning techniques
+
+\subsection{Statistics Gathering}
+%TODO traditionally only access to normal simulation state
+%TODO for machine learning might give access to simulator details
+%TODO such as ...
+
+\subsubsection{Visualization of Communication}
+%TODO explain simple visualizer
+%TODO can be used by hotswapper
+
 A user can request a runtime switch between synchronization protocols. A typical use case is when a significant slowdown is observed or memory usage reaches a certain treshold. The simulation engine will swap out the current kernels with new instances while preserving the state of the models and the simulation itself, and resume using the new synchronization protocol. There is no real limit on the number of switches, but the replacing and synchronizing of the kernels comes at a runtime cost that is dependent on the number of present kernels and the actual hardware the simulation runs on. In a test case with 2 kernels the overhead of a double runtime switch is less than a second.
 This is an experimental but promising feature that can be used in an automated framework driven by machine learning techniques.
 
