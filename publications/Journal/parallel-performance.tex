@@ -6,8 +6,12 @@
 The Queue model is one single chain of models. Each kernel gets one connected part of this chain. The result is that the kernels themselves also form a chain where events only travel in one direction.
 
 \paragraph*{Strong and Weak Scaling}
-Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to dxex sequential for a fixed problem size. As the amount of kernels increases, the optimistic kernel quickly becomes the worst choice. The difference between dxex conservative and adevs becoming smaller. The same effect can be seen for weak scaling in Figure~\ref{fig:Queue_plot_weak}.\\
-In Figure \ref{fig:Queue_allocation} the allocation of the Queue model is visualized. This trace allows us to demonstrate the benchmark results and explain why optimistic is not ideal for such a chain topology as present in Queue. Kernel 2 is dependent on events from kernels 0 and 1 but by definition of the optimistic synchronization protocol it will simulate ahead without waiting for events it depends on. Any simulation it performs will have to be reverted as soon as events from kernels 0 and 1 arrive. When kernel 2 reverts, kernel 3 will inevitably have to revert as well since most of the events it received from kernel 2 are invalidated and marked as such by antimessages. This leads to severe performance degradation, with an increasing probability of cascading reverts as the number of kernels and models per kernels increases.
+Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to dxex sequential for a fixed problem size.
+As the amount of kernels increases, the optimistic kernel quickly becomes the worst choice.
+The difference between dxex conservative and adevs becoming smaller.
+The same effect can be seen for weak scaling in Figure~\ref{fig:Queue_plot_weak}.
+
+%In Figure \ref{fig:Queue_allocation} the allocation of the Queue model is visualized. This trace allows us to demonstrate the benchmark results and explain why optimistic is not ideal for such a chain topology as present in Queue. Kernel 2 is dependent on events from kernels 0 and 1 but by definition of the optimistic synchronization protocol it will simulate ahead without waiting for events it depends on. Any simulation it performs will have to be reverted as soon as events from kernels 0 and 1 arrive. When kernel 2 reverts, kernel 3 will inevitably have to revert as well since most of the events it received from kernel 2 are invalidated and marked as such by antimessages. This leads to severe performance degradation, with an increasing probability of cascading reverts as the number of kernels and models per kernels increases.
 The speedup of adevs is always in comparison with the runtime of the corresponding dxex sequential benchmark.
 \begin{figure}
 	\center
@@ -20,15 +24,6 @@ The speedup of adevs is always in comparison with the runtime of the correspondi
 	\caption{Queue model strong scaling speedup compared to dxex sequential.}
 	\label{fig:Queue_plot_strong}
 		
-\end{figure}
-
-\begin{figure}
-	\center
-	
-	\includegraphics[width=\modelfraction\columnwidth, height=8cm, keepaspectratio, angle=-90 ]{fig/queue_allocation.eps}
-	\caption{Queue model (d=2, w=7, t=5000, random timeadvance) allocation and simulation trace across 4 kernels.}
-	\label{fig:Queue_allocation}
-	
 \end{figure}
 
 % The really bad
@@ -75,12 +70,6 @@ To keep the models equivalent, the adevs version does not provide the \{begin,en
 	\includegraphics[width=\plotfraction\columnwidth]{fig/phold_priority.eps}
 	\caption{Phold benchmark results for parallel simulation using four kernels, with varying amount of high-priority events.}
 	\label{fig:phold_priority}
-\end{figure}
-\begin{figure}
-	\center
-	\includegraphics[width=\plotfraction\columnwidth]{fig/phold_parallel_allocation.eps}
-	\caption{Phold benchmark trace for parallel simulation using three kernels.}
-	\label{fig:phold_allocation}
 \end{figure}
 
 We slightly modified the Phold benchmark, to include high-priority events.
