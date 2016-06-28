@@ -23,7 +23,7 @@
 % End of preamble. Here comes the document.
 \begin{document}
 
-\title{Performance analysis of a PDEVS simulator\\supporting multiple synchronization protocols}
+\title{Performance analysis of a PDEVS simulator supporting multiple synchronization protocols}
 
 \author{Ben Cardoen\affilnum{1}, Stijn Manhaeve\affilnum{1}, Yentl Van Tendeloo\affilnum{1}, and Jan Broeckhove\affilnum{1}}
 
@@ -43,14 +43,6 @@ Belgium}
 
 \maketitle
 
-%TODO fix categories?
-%XXX Do not edit this to MODELLING for consistency.
-%    These words are ACM keywords used for classification in the ACM Digital Library
-%    See http://www.acm.org/about/class/ccs98-html
-%\category{I.6.7}{SIMULATION AND MODELING}{Simulation support systems}
-%\category{I.6.8}{SIMULATION AND MODELING}{Types of simulation}
-
-
 \section{Introduction}
 \label{sec:1-introduction}
 \input{1-introduction.tex}
@@ -59,19 +51,26 @@ Belgium}
 \label{sec:2-background}
 \input{2-background.tex}
 
-\section{Multiple Synchronization Protocols}
+\section{DEVS-Ex-Machine}
 \label{sec:3-features}
 \input{3-features.tex}
 
-\section{Performance}
+\section{Performance Evaluation}
 \label{sec:4-performance}
 \input{4-performance.tex}
+
+\section{Model Allocation}
+\label{sec:4a-allocation}
+\input{4a-allocation.tex}
+
+\section{Hotswapping the Synchronization Protocol}
+\label{sec:4b-hotswap}
+\input{4b-hotswap.tex}
 
 \section{Related Work}
 \label{sec:5-related-work}
 \input{5-related-work.tex}
 
-% Future work and Conclusions
 \section{Conclusions and future work}
 \label{sec:6-conclusion}
 \input{6-conclusions.tex}

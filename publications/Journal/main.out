@@ -2,7 +2,7 @@
 \BOOKMARK [1][-]{section*.3}{Background}{}% 2
 \BOOKMARK [2][-]{section*.4}{Conservative Synchronization}{section*.3}% 3
 \BOOKMARK [2][-]{section*.5}{Optimistic Synchronization}{section*.3}% 4
-\BOOKMARK [1][-]{section*.6}{Multiple Synchronization Protocols}{}% 5
+\BOOKMARK [1][-]{section*.6}{DEVS-Ex-Machine}{}% 5
 \BOOKMARK [2][-]{section*.7}{Synchronization protocols}{section*.6}% 6
 \BOOKMARK [3][-]{section*.8}{Sequential}{section*.7}% 7
 \BOOKMARK [3][-]{section*.10}{Conservative}{section*.7}% 8
@@ -15,7 +15,7 @@
 \BOOKMARK [3][-]{section*.17}{Model Allocation}{section*.13}% 15
 \BOOKMARK [3][-]{section*.18}{Logging}{section*.13}% 16
 \BOOKMARK [3][-]{section*.19}{Visualization and Statistics}{section*.13}% 17
-\BOOKMARK [1][-]{section*.23}{Performance}{}% 18
+\BOOKMARK [1][-]{section*.23}{Performance Evaluation}{}% 18
 \BOOKMARK [2][-]{section*.24}{Benchmarks}{section*.23}% 19
 \BOOKMARK [2][-]{section*.26}{Sequential Simulation}{section*.23}% 20
 \BOOKMARK [3][-]{section*.27}{Queue}{section*.26}% 21
@@ -32,5 +32,7 @@
 \BOOKMARK [3][-]{section*.63}{Allocation}{section*.62}% 32
 \BOOKMARK [3][-]{section*.64}{Uncertainty}{section*.62}% 33
 \BOOKMARK [3][-]{section*.65}{Limits}{section*.62}% 34
-\BOOKMARK [1][-]{section*.66}{Related Work}{}% 35
-\BOOKMARK [1][-]{section*.67}{Conclusions and future work}{}% 36
+\BOOKMARK [1][-]{section*.66}{Model Allocation}{}% 35
+\BOOKMARK [1][-]{section*.67}{Hotswapping the Synchronization Protocol}{}% 36
+\BOOKMARK [1][-]{section*.68}{Related Work}{}% 37
+\BOOKMARK [1][-]{section*.69}{Conclusions and future work}{}% 38
