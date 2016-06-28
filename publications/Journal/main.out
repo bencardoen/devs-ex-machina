@@ -27,7 +27,14 @@
 \BOOKMARK [3][-]{section*.53}{Allocation}{section*.52}% 27
 \BOOKMARK [3][-]{section*.54}{Uncertainty}{section*.52}% 28
 \BOOKMARK [3][-]{section*.55}{Limits}{section*.52}% 29
-\BOOKMARK [1][-]{section*.56}{Model Allocation}{}% 30
-\BOOKMARK [1][-]{section*.57}{Hotswapping the Synchronization Protocol}{}% 31
-\BOOKMARK [1][-]{section*.61}{Related Work}{}% 32
-\BOOKMARK [1][-]{section*.62}{Conclusions and future work}{}% 33
+\BOOKMARK [1][-]{section*.56}{Hotswapping the Synchronization Protocol}{}% 30
+\BOOKMARK [1][-]{section*.57}{Hotswap Between Synchronization Protocols}{}% 31
+\BOOKMARK [2][-]{section*.58}{Extensibility}{section*.57}% 32
+\BOOKMARK [2][-]{section*.59}{Statistics Gathering}{section*.57}% 33
+\BOOKMARK [3][-]{section*.60}{Visualization of Communication}{section*.59}% 34
+\BOOKMARK [1][-]{section*.64}{Model Allocation}{}% 35
+\BOOKMARK [1][-]{section*.65}{Model Allocation}{}% 36
+\BOOKMARK [2][-]{section*.66}{Performance Evaluation}{section*.65}% 37
+\BOOKMARK [2][-]{section*.67}{Linking Back}{section*.65}% 38
+\BOOKMARK [1][-]{section*.68}{Related Work}{}% 39
+\BOOKMARK [1][-]{section*.69}{Conclusions and future work}{}% 40
