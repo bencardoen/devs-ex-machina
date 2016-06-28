@@ -21,18 +21,15 @@
 \BOOKMARK [3][-]{section*.29}{Queue}{section*.28}% 21
 \BOOKMARK [3][-]{section*.34}{Interconnect}{section*.28}% 22
 \BOOKMARK [3][-]{section*.37}{Phold}{section*.28}% 23
-\BOOKMARK [2][-]{section*.41}{Conclusion}{section*.18}% 24
-\BOOKMARK [3][-]{section*.42}{Allocation}{section*.41}% 25
-\BOOKMARK [3][-]{section*.43}{Uncertainty}{section*.41}% 26
-\BOOKMARK [3][-]{section*.44}{Limits}{section*.41}% 27
-\BOOKMARK [1][-]{section*.45}{Hotswapping the Synchronization Protocol}{}% 28
-\BOOKMARK [1][-]{section*.46}{Hotswap Between Synchronization Protocols}{}% 29
-\BOOKMARK [2][-]{section*.47}{Extensibility}{section*.46}% 30
-\BOOKMARK [2][-]{section*.48}{Statistics Gathering}{section*.46}% 31
-\BOOKMARK [3][-]{section*.49}{Visualization of Communication}{section*.48}% 32
-\BOOKMARK [1][-]{section*.53}{Model Allocation}{}% 33
-\BOOKMARK [1][-]{section*.54}{Model Allocation}{}% 34
-\BOOKMARK [2][-]{section*.55}{Performance Evaluation}{section*.54}% 35
-\BOOKMARK [2][-]{section*.66}{Linking Back}{section*.54}% 36
-\BOOKMARK [1][-]{section*.67}{Related Work}{}% 37
-\BOOKMARK [1][-]{section*.68}{Conclusions and future work}{}% 38
+\BOOKMARK [2][-]{section*.41}{Conclusions on Performance Evaluation}{section*.18}% 24
+\BOOKMARK [1][-]{section*.42}{Hotswapping the Synchronization Protocol}{}% 25
+\BOOKMARK [1][-]{section*.43}{Hotswap Between Synchronization Protocols}{}% 26
+\BOOKMARK [2][-]{section*.44}{Extensibility}{section*.43}% 27
+\BOOKMARK [2][-]{section*.45}{Statistics Gathering}{section*.43}% 28
+\BOOKMARK [3][-]{section*.46}{Visualization of Communication}{section*.45}% 29
+\BOOKMARK [1][-]{section*.50}{Model Allocation}{}% 30
+\BOOKMARK [1][-]{section*.51}{Model Allocation}{}% 31
+\BOOKMARK [2][-]{section*.52}{Performance Evaluation}{section*.51}% 32
+\BOOKMARK [2][-]{section*.63}{Linking Back}{section*.51}% 33
+\BOOKMARK [1][-]{section*.64}{Related Work}{}% 34
+\BOOKMARK [1][-]{section*.65}{Conclusions and future work}{}% 35

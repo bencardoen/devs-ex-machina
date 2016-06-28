@@ -138,7 +138,7 @@ Since the RNG is an implicit part of the state in the DEVS formalism, though oft
 
 We see in Figure~\ref{fig:Queuerngspeedup} that storing the RNG in the state is very expensive for the default STL random number generator.
 %TODO fill in values
-This is primarily caused by the significant difference in size: X bytes for the STL random number generator, and Y bytes for the Tina random number generator.
+This is primarily caused by the significant difference in size: 2504 bytes for the STL random number generator, and 24 bytes for the Tina random number generator.
 Dxex's sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in dxex conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
 
