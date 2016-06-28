@@ -86,10 +86,11 @@ Defining a lookahead function is therefore recommended in combination with conse
 The goal of our contribution is to increase simulation performance as much as possible, leveraging parallel computation in the process.
 Parallelizing the simulation kernel goes further, however, than merely implementing the different synchronization protocols.
 
-After implementing all synchronization protocols, performance was still not within acceptable levels.
-Profiling showed that the problem was caused by two issues: memory management and random number generation.
-For both, it is already known that they can have significantly impact on parallelizability of code: they introduce sequential blocks.
-In the remainder of this section, we explain our modifications to each and the difference in performance this gave us.
+We observed that after implementing all synchronization protocols, performance was still not within acceptable levels.
+Profiling revealed that most of the overhead was caused by two issues: memory management and random number generation.
+For both, it is already known that they can have significantly impact on parallelizability of code, since they introduce sequential blocks.
+Both were tackled using approaches that are in common use in the parallel programming world.
+We briefly mention how the application of these techniques influences our performance.
 
 \subsubsection{Memory Management}
 \label{sec:4-subsec:overhead-pgraph:memory}
@@ -99,61 +100,54 @@ In the remainder of this section, we explain our modifications to each and the d
     \caption{Effect of memory allocators on parallel execution time.}
     \label{fig:memallocators_parallel}
 \end{figure}
-
-%TODO briefly explain this by refering to "what every computer programmer should know"
-
-In dxex a model author is given access to automatic memory management for events and states.
+Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{WhatEveryComputerProgrammerShouldKnowAboutMemory}: memory bandwidth doesn't increase as fast as the number of cores using it.
+While this is always a problem, it is aggravated in dxex by providing automatic memory management for events and states.
 A model written for a sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the model author) the (de)allocation semantics of events or states.
 
-In sequential and conservative simulation the kernel gives the guarantee that no state will be copied.
-Dxex's simulation control hides the implementation details of this management, a model author can focus on the actual semantics of the model.
-The kernels use memory allocators backed by a thread-aware pooling library to reduce the performance impact of memory management as much as possible.
-In a sequential simulation kernel no allocated event will persist beyond a single time advance, allowing the use of an arena-style allocator.
+Furthermore, allocating and deallocating memory by making calls to the operating system, as typically done by calls such as \texttt{malloc}, happens sequentially.
+To counter this, our memory allocators are backed by a thread-aware pooling library.
+In a sequential simulation kernel no allocated event will persist beyond a single time advance, even allowing the use of an arena-style allocator.
 Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime.
 
-An important observation to make is that intra-kernel events can be pooled more aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
-A simulation with high inter kernel events will suffer a performance hit, whereas the impact of high intra kernel events can be optimized using arena allocators.
-
-The allocation interfaces are instrumented in dxex to trace memory usage in a simulation.
-Shielding the user from (de)allocation complexity comes at a cost in performance, as is later shown in the performance evaluation.
+%TODO what does it mean to "pool aggressively?"
+Intra-kernel events are pooled aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
+A simulation with many inter kernel events suffers a performance hit, whereas the impact of many intra kernel events can be minimized using arena allocators.
 
 Dxex uses Boost Pool~\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
 The latter can be faster, but at the cost of extra configuration.
-The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}.
+The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}, which reduces lock contention in \texttt{malloc} calls.
 
 We primarily investigate this for optimistic simulation, as this is the most memory consuming mode of simulation~\cite{Fujimoto}.
-Simulation execution times with all four combinations are shown in Figure~\ref{fig:memallocators_parallel}.
+Simulation execution times for all four combinations are shown in Figure~\ref{fig:memallocators_parallel}.
 Optimistic simulation greatly benefits from the use of \textit{tcmalloc}, regardless of the allocator.
 Nonetheless the pool allocator also reduces the allocation overhead, though only by a relatively small fraction.
+Both techniques are required to reduce the overhead of memory allocations in dxex, and on by default.
 
-Both pools and \textit{tcmalloc} try to keep memory allocated to them by the OS, this gives a somewhat misleading view in statistics collected from the OS.
-The dxex kernels themselves and the pool interfaces allow the user to instrument event allocation and deallocation exactly which can be useful in measuring how efficient GVT-triggered deallocation is in practice.
-
-In conclusion both techniques are required to reduce the overhead of memory allocations in dxex, and on by default.
+Both pools and \textit{tcmalloc} try to keep memory allocated instead of returning it to the Operating System (OS).
+As a result, the OS will usually report memory consumption that is higher than the actual amount of stored data.
 
 \subsubsection{Random Number Generators}
-%TODO explain about sequentialized random numbers
-A non-trivial amount of time in a simulation is spent waiting for a Random Number Generator (RNG) can mask synchronization overhead.
-Several of our benchmarks use random number generators to test the effect of uncertainty in a simulation, either by random time advances or random destinations for events.
+Random Number Generators (RNG) are another aspect of the program that results in sequentialization.
+All accesses to the RNG will result in the modification of a global (\textit{i.e.}, shared between threads) variable.
+This easily becomes a bottleneck in simulation, since random numbers are a common occurence in simulation~\cite{?}.
+As such, a non-trivial amount of time in a simulation is often spent waiting for an RNG.
 
-In a parallel simulation we also need to guarantee isolation between the random calls to avoid excessive synchronization on the RNG object itself.
-Dxex uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alternative random number generator as it is designed with performance and multithreading usage in mind.
-We also wrote a new version of our models that stores the RNG object in the state instead of calling a shared thread local object to isolate the synchronization overhead.
+We of course still need to guarantee determinism and isolation between the calls to the RNG, as well as avoiding excessive synchronization.
+Dxex uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alternative random number generator with performance and multithreading in mind.
+Since the RNG is an implicit part of the state in the DEVS formalism, though often not implemented as such, we evaluated performance for both approaches: one global RNG per thread, and one RNG per atomic DEVS model.
 
-From Figure~\ref{fig:Queuerngspeedup} we see that storing the RNG in the state is very expensive for the default STL random number generator.
+We see in Figure~\ref{fig:Queuerngspeedup} that storing the RNG in the state is very expensive for the default STL random number generator.
 %TODO fill in values
 This is primarily caused by the significant difference in size: X bytes for the STL random number generator, and Y bytes for the Tina random number generator.
 Dxex's sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in dxex conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
 
-Replacing the STL RNG with the threading optimized TRNG we are more accurately able to isolate synchronization overhead.
-Figure~\ref{fig:Queuerngspeedup} shows that dxex in sequential simulation gets three times faster by using TRNG.
-The parallel kernels have a smaller speedup.
-Dxex conservative is almost insensitive to the changing of the RNG, though a slight increase in performance can be noted.
-Dxex optimistic in the default configuration spends relatively more time waiting for random numbers than dxex conservative.
-%TODO why does it spend more time there?
-This is confirmed by the speedup gained when random number generation is accelerated.
-Synchronization overhead is still the limiting factor in performance, as seen by the big speedup gap between sequential and parallel simulation.
+Figure~\ref{fig:Queuerngspeedup} shows that dxex in sequential simulation gets three times faster by using TRNG, than when using the STL RNG.
+For parallel simulation, the synchronization overhead seems to be the main bottleneck, as seen by the big speedup gap between sequential and parallel simulation.
+Conservative synchronization is almost insensitive to the changing of the RNG, though a slight increase in performance can be noted.
+Optimistic synchronization gets much slower when the RNG becomes part of the model state, since the state needs to be copied as well.
+This becomes a significant overhead when using the STL RNG, since performance plummets to a fraction of the original.
+Using TRNG avoids this problem completely, as the size of the RNG state is negligible.
 
 \begin{figure}
     \center
