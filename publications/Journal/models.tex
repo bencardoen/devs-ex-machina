@@ -42,20 +42,6 @@ We use four different benchmarks, which cover different aspects of the simulatio
 	The model takes one parameter: the number of models.
 	This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
 	An example for four models is shown in Figure~\ref{fig:interconnect_model}.
-	
-	\item The \textit{PHoldTree} model, a hierarchical model based on the semantics of PHOLD~\cite{PHOLD}. The model consists of recursively defined trees connected to each other, similar to the structure of an AST. Connections can be unidirectional or bidirectional.
-	Unlike the \textit{Queue} model the width of the hierarchy is still present in the topology of the atomic models after the directconnect stage. This model allows us to investigate parallel speedup in several key dimensions in combination or isolation : model allocation, message density, uncertainty and hierarchy. The model has the following parameters : depth, fanout (width), probability of priority message and linkage direction. We demonstrate the importance of atomic to kernel allocation, in this model this can be configured as a bread-first versus a depth-first scheme.
-	\textit{PHOLDTree} can be used to model gossiping in social networks, hierarchical resource sharing or load balancing. Unlike \textit{Queue} this model does not lend itself easily to parallelism and thus highlights the difficulties model authors face in when a parallel speedup is desired for real world models.
-	The lookahead of an atomic node is $\epsilon$, simulating uncertainty as will be often the case in real world models.
-	The number of atomic models in this benchmark is given by 
-	\begin{equation} \label{eq:pholdtreemodelcount}
-	\frac{n^{d+2}-1}{n-1}
-	\end{equation}
-	Whereas the number of links between the models is given by
-	\begin{equation} \label{eq:pholdtreelinkcount}
-	(2n-1)\sum_{i=0}^{d}{n^i}
-	\end{equation}
-	%Expand on how this allows us to profile all parameters of d-stone/phold/iconnect.
 \end{enumerate}
 
 \begin{figure}
@@ -75,8 +61,4 @@ We use four different benchmarks, which cover different aspects of the simulatio
 	\includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
 	\caption{PHOLD model for three models.}
 	\label{fig:PHOLD_model}
-	
-	\includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree.pdf}
-	\caption{PHOLDTree model for depth 1, width 2.}
-	\label{fig:PHOLDTree_model}
 \end{figure}

@@ -75,20 +75,6 @@ Mattern F.
 \newblock \emph{Journal of Parallel and Distributed Computing} 1993; 18(4):
   423--434.
 
-\bibitem{DEVStone}
-Glinsky E and Wainer G.
-\newblock {DEVStone}: a benchmarking technique for studying performance of
-  {DEVS} modeling and simulation environments.
-\newblock In \emph{Proceedings of the 2005 9th {IEEE/ACM} International
-  Symposium on Distributed Simulation and Real-Time Applications}. pp.
-  265--272.
-
-\bibitem{PHOLD}
-Fujimoto RM.
-\newblock Performance of {Time Warp} under synthetic workkloads.
-\newblock In \emph{Proceedings of the SCS Multiconference on Distributed
-  Simulation}.
-
 \bibitem{boostpool}
 Cleary S and Bristow~A P.
 \newblock {Boost Pool : Fast memory pool allocation}.
@@ -106,6 +92,20 @@ Bauke H and Mertens S.
 \newblock \emph{Phys Rev E} 2007; 75: 066701.
 \newblock \doi{10.1103/PhysRevE.75.066701}.
 \newblock \urlprefix\url{http://link.aps.org/doi/10.1103/PhysRevE.75.066701}.
+
+\bibitem{DEVStone}
+Glinsky E and Wainer G.
+\newblock {DEVStone}: a benchmarking technique for studying performance of
+  {DEVS} modeling and simulation environments.
+\newblock In \emph{Proceedings of the 2005 9th {IEEE/ACM} International
+  Symposium on Distributed Simulation and Real-Time Applications}. pp.
+  265--272.
+
+\bibitem{PHOLD}
+Fujimoto RM.
+\newblock Performance of {Time Warp} under synthetic workkloads.
+\newblock In \emph{Proceedings of the SCS Multiconference on Distributed
+  Simulation}.
 
 \bibitem{PythonPDEVS2}
 Van~Tendeloo Y and Vangheluwe H.
