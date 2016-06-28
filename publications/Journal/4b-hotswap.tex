@@ -1,6 +1,11 @@
-\section{Hotswap Between Synchronization Protocols}
 %TODO explain hotswapping
 %TODO why hotswapping
+Simply because a synchronization protocol is ideal at the start of the simulation, does not mean that it will still be ideal during the simulation.
+It has been frequently shown, and repeated in the previous section, that model behaviour significantly influences the ideal synchronization protocol.
+Contrary to many modelling formalisms, the DEVS formalisms makes it possible to model basically any kind of discrete event model.
+As such, it is possible for the model to significantly change its behaviour throughout the simulation.
+
+Defining the ideal synchronization protocol at the start of the simulation, when information about future model behaviour might be scarce, might therefore not offer the best possible performance.
 
 \subsection{Extensibility}
 %TODO now purely manual
