@@ -3,7 +3,7 @@ In fact, it can serve as a simulation ``assembly language'' to which models in o
 A number of tools have been constructed by academia and industry that allow the modelling and simulation of \textsf{DEVS} models.
 
 But with the ever increasing complexity of simulation models, parallel simulation becomes necessary to perform the simulation within reasonable time bounds.
-Whereas \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, its inherent parallelism is often insufficient.
+Whereas \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, its inherent parallelism is often insufficient~\cite{Himmelspach}.
 Several synchronization protocols from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation~\cite{globaltimewarp}.
 Through synchronization protocols, different simulation cores can be at different points in simulated time, increasing parallelism significantly, at the cost of synchronization overhead.
 While several parallel \textsf{DEVS} simulation kernels exist, they are often limited to a single synchronization protocol.
