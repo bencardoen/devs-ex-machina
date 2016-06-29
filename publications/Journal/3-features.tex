@@ -100,7 +100,7 @@ We briefly mention how the application of these techniques influences our perfor
     \caption{Effect of memory allocators on parallel execution time.}
     \label{fig:memallocators_parallel}
 \end{figure}
-Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{WhatEveryComputerProgrammerShouldKnowAboutMemory}: memory bandwidth doesn't increase as fast as the number of cores using it.
+Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{Memory}: memory bandwidth doesn't increase as fast as the number of cores using it.
 While this is always a problem, it is aggravated in dxex by providing automatic memory management for events and states.
 A model written for a sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the model author) the (de)allocation semantics of events or states.
 
