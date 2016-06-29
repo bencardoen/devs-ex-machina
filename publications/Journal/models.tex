@@ -20,29 +20,28 @@ Benchmarks were performed using Linux, but our simulation tool works equally wel
 The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
 
 \subsection{Benchmarks}
-We use four different benchmarks, which cover different aspects of the simulation kernel:
-\begin{enumerate}
-	\item The \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
-	A single generator pushes events into the queue, which are consumed by the processors after a fixed or random delay.
-	It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
-	This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
-	An example for width and depth 2 is shown in Figure~\ref{fig:queue_model}.
+We use three different benchmarks, which cover different aspects of the simulation kernel.
+
+First, the \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
+A single generator pushes events into the queue, which are consumed by the processors after a fixed or random delay.
+It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
+This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
+An example for width and depth 2 is shown in Figure~\ref{fig:queue_model}.
 	
-	\item The \textit{PHOLD} model, presented by~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
-	Each atomic model is directly connected to every other atomic model.
-	After a random delay, an atomic model sends out an event to a randomly selected output port.
-	Output port selection happens in two phases: first it is decided whether the event should be sent to an atomic model at the same node.
-	Afterwards, a uniform selection is made between the remaining ports.
-	The model takes two parameter: the percentage of remote events, which determines the fraction of messages routed to other nodes, and the percentage of priority events. Priority events are events generated in a very short time after the previous event.
-	This benchmark shows how the simulation kernel behaves in the presence of many local or remote events and when the average time advance is larger than the lookahead in conservative simulation.
-	An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
+Second, the \textit{PHOLD} model, presented by~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
+Each atomic model is directly connected to every other atomic model.
+After a random delay, an atomic model sends out an event to a randomly selected output port.
+Output port selection happens in two phases: first it is decided whether the event should be sent to an atomic model at the same node.
+Afterwards, a uniform selection is made between the remaining ports.
+The model takes two parameter: the percentage of remote events, which determines the fraction of messages routed to other nodes, and the percentage of priority events. Priority events are events generated in a very short time after the previous event.
+This benchmark shows how the simulation kernel behaves in the presence of many local or remote events and when the average time advance is larger than the lookahead in conservative simulation.
+An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
 	
-	\item The \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
-	Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event.
-	The model takes one parameter: the number of models.
-	This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
-	An example for four models is shown in Figure~\ref{fig:interconnect_model}.
-\end{enumerate}
+Third, the \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
+Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event.
+The model takes one parameter: the number of models.
+This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
+An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 
 \begin{figure}
 	\center
