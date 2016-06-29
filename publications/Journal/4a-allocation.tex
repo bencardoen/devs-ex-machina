@@ -1,25 +1,25 @@
-Although the synchronization protocol is one of the defining factors in simulation performance, model allocation has a significant impact on which protocol is ideal, and even whether or not parallelization would make sense.
-Indeed, if the model is distributed in such a way that frequent communication is necessary between cores, parallelism is naturally reduced.
-This thus brings us to the topic of model allocation.
-Model allocation was one of the features also implemented by PythonPDEVS~\cite{PythonPDEVS2}.
+Although the synchronization protocol is one of the defining factors in simulation performance, model allocation has a significant impact on which protocol is ideal.
+Depending on the model structure, and how it is mapped to the different cores, it might not even make sense to parallelize at all.
+Indeed, if the model is distributed such that frequent communication is necessary between cores, parallelism is naturally reduced.
+This brings us to the topic of model allocation, as also implemented in PythonPDEVS~\cite{PythonPDEVS2}.
 
 The modeller can specify which kernel a model should be allocated to, should such manual intervention be required.
 This is handled by the default model allocator.
-If no preference is given a simple striping scheme is followed but this is not sufficient in most simulations to achieve a speedup in parallel.
-By overriding the default allocator a modeller tunes the allocation scheme for a specific model, maximizing parallel speedup.
-This interface can be used to employ graph algorithms for an automatic allocation scheme, for example avoiding cycles in the dependency graph.
+If no preference is given, a simple striping scheme is used but this is often insufficient.
+By overriding the default allocator, a modeller tunes the allocation scheme for a specific model, maximizing parallel speedup.
+This interface can be linked to graph algorithms for automatic allocation scheme generation, for example to avoid cycles in the dependency graph.
 
 \subsection{Performance Evaluation}
-In order to evaluate the influence of model allocation, we define a new model, based on PHOLD~\cite{PHOLD}.
-The model structure resembles a tree: an atomic model can have a set of children, with children being connected to each other as well.
-Connections can be uni- or bidirectional.
+To evaluate the influence of model allocation, we define a new model, based on PHOLD~\cite{PHOLD}.
+The model structure resembles a tree: an atomic model can have a set of children, with children being connected to each other recursively.
 
-Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after the direct connection stage.
+Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after direct connection.
 The PHOLDTree model allows us to investigate parallel speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
 
 The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{Gossip} and multi-granularity locking~\cite{MultiGranularityLocking}.
 The lookahead of an atomic node is the minimally allowed $\epsilon$, indicating uncertainty, as is often the case in realistic models.
-We demonstrate the importance of allocation, by comparing a breadth-first versus a depth-first scheme.
+We demonstrate the importance of allocation by comparing performance of a breadth-first versus a depth-first scheme.
+Both options are automated ways of allocation that are independent of the model.
 
 \begin{figure}
     \center
@@ -29,19 +29,18 @@ We demonstrate the importance of allocation, by comparing a breadth-first versus
     \label{fig:PHOLDTree_model}
 \end{figure}
 
-PHoldtree, like Queue, is a highly hierarchical model but one where the flattened structure cannot be partitioned into a chain as in Queue.
+PHoldtree, like Queue, is a highly hierarchical model but one where the flattened structure cannot be partitioned into a chain, as was the case in the Queue model.
 This topology is interesting since it highlights the effects of allocation.
-This model allows us to investigate in depth the effects of non-cyclic allocation strategies and measure parallel speedup.
 First, we evaluate the model in sequential simulation to provide a baseline for parallel simulation.
 
 \subsubsection{Sequential Simulation}
 Since adevs does not use direct connection, we expect a noticable performance difference between dxex and adevs.
-This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout determines the performance penalty adevs suffers compared to dxex.
-Profiling indeed indicated that an increase in width per subtree ($n$) leads to higher overheads in adevs due to the lack of direct connection.
-Dxex uses direct connection, making it independent on fanout, but only of the number of models.
+This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout ($n$) determines the performance penalty adevs suffers compared to dxex.
+Profiling indeed indicates that an increase in width per subtree ($n$) leads to higher overheads in adevs due to the lack of direct connection.
+Dxex uses direct connection, making it independent on fanout.
+Performance of dxex is, in this model, only dependent on the number of models.
 Slight deviations can still be seen, though, caused by the initialization overhead of direct connection.
 Both adevs and dxex scale linearly in the number of atomic models.
-We expect to see a similar distinction in parallel simulation.
 
 \begin{figure}
     \center
@@ -63,25 +62,27 @@ With depth-first allocation, we traverse the tree in a depth-first way, allocati
 This means, intuitively, that subtreees are frequently allocated to the same node.
 This allocation strategy is shown in Figure~\ref{fig:PholdTree_model_dfs}.
 
-The breadth first allocation scheme will result in kernels that will form a dependency chain with multiple branches, much like in the Queue model.
-Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model, but this is not always true as we will demonstrate in this section.
-A single kernel that has an unbalanced number of atomic models or unequal computation load in transition functions will slow down the remainder of the chain.
-This effect is also apparent if the thread a kernel runs on is not fairly scheduled.
-In conservative this will lead to excessive polling of the other kernels' EOT values, in optimistic this will lead to a cascade of reverts since dependent kernels will simulate ahead of the slower kernel.
-In Figure~\ref{fig:pholdtree_visualize_parBFS} and Figure~\ref{fig:pholdtree_visualize_parDFS} the simulation trace is visualized for breadth-first and depth-first, respectively, highlighting the remarks made in this paragraph.
-
 \begin{figure}
    \center
-   
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_BF.pdf}
    \caption{PHOLDTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
+\end{figure}
+\begin{figure}
+   \center
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_DF.pdf}
    \caption{PHOLDTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
 
-After simulation, the traces can be visualized for both breadth-first and depth-first allocation.
+The breadth first allocation scheme results in a dependency chain with multiple branches, much like in the Queue model.
+Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model.
+This is not always true though: a single kernel with an unbalanced number of atomic models or unequal computational load in transition functions slows down the remainder of the chain.
+This effect is also apparent if the thread a kernel runs on is not fairly scheduled.
+With conservative synchronization this leads to excessive polling of the EOT of the other kernels.
+With optimistic synchronization this leads to a cascade of rollbacks, since dependent kernels will simulate ahead of the slower kernel.
+
+After simulation the traces can be visualized for both breadth-first and depth-first allocation.
 Using a breadth-first allocation scheme, as shown in Figure~\ref{fig:pholdtree_visualize_parBFS}, we notice that many events get exchanged between cores.
 This is caused by the high number of inter-core connections and the high number of events exchanged over these connections.
 The number of connections between nodes at the same simulation core is also rather low.
@@ -102,7 +103,8 @@ Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:phol
 
 Simulation results are shown in Figure~\ref{fig:PholdTree_plot_alloc_high} for both allocation schemes in combination with both synchronization protocols.
 We see that for both synchronization protocols, the depth-first allocation is significantly better than breadth-first allocation.
-This is what we expected: depth-first allocation maintains locality better than breadth-first allocation.
+This is what we expected for this model: depth-first allocation maintains locality better than breadth-first allocation.
+Whereas this is the case in this example, this is not true in general, as the ideal allocation depends on the model being simulated.
 
 The most prominent aspect of these results is the low performance for conservative depth-first allocation for two cores.
 This is mostly caused by the difference between a sequential simulation and a parallel simulation: suddenly we need to take into account synchronization and passing around of lookahead values.
