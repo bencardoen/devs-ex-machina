@@ -69,13 +69,13 @@ We feel this would lead to an unfair comparison as we would like to keep the mod
 	\label{fig:phold_priority}
 \end{figure}
 
-We slightly modified the PHOLD benchmark, to include high-priority events.
+We slightly modified the PHOLD benchmark to include high-priority events.
 Contrary to normal events, high-priority events happen almost instantaneously, restricting lookahead to a very small value.
 Even when normal events occur most often, conservative synchronization always blocks until it can make guarantees.
 Optimistic synchronization, however, simply goes forward in simulation time and rolls back when these high-priority events happen.
-This situation closely mimics the case made in the comparison between both synchronization algorithms by~\cite{FujimotoBook}.
+This situation closely mimics the model typically used for comparing conservative and optimistic synchronization~\cite{FujimotoBook}.
 
 Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of these high-priority events.
 If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
-When many high-priority events occur, optimistic synchronization is penalized due to its mindless progression of simulation, which frequently needs to be rolled back.
+When many high-priority events occur, optimistic synchronization is penalized due to its unconditional progression of simulation, which frequently needs to be rolled back.
 Results show that there is no single perfect synchronization algorithm for this model: depending on configuration, either synchronization protocol might be better.
