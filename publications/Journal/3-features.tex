@@ -38,11 +38,11 @@ It shows that there is a simulation \texttt{Core}, which simulates the \texttt{A
 The superclass \texttt{Core} is merely the sequential simulation core, but can be used as-is.
 Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
-\begin{figure}
-    \includegraphics[width=\columnwidth]{fig/cores_class_diagram.eps}
+\begin{figure*}
+    \includegraphics[width=\textwidth]{fig/cores_class_diagram.eps}
 	\caption{Dxex design.}
 	\label{fig:class_diagram}
-\end{figure}
+\end{figure*}
 
 \subsubsection{Conservative}
 For conservative synchronization, each node must determine the nodes it is influenced by.
@@ -96,7 +96,7 @@ We briefly mention how the application of these techniques influences our perfor
 \label{sec:4-subsec:overhead-pgraph:memory}
 \begin{figure}
     \center
-    \includegraphics[width=\modelfraction\columnwidth]{fig/memory_allocators_parallel.eps}
+    \includegraphics[width=\columnwidth]{fig/memory_allocators_parallel.eps}
     \caption{Effect of memory allocators on parallel execution time.}
     \label{fig:memallocators_parallel}
 \end{figure}
@@ -151,8 +151,7 @@ Using TRNG avoids this problem completely, as the size of the RNG state is negli
 
 \begin{figure}
     \center
-    %TODO remove adevs results as not applicable here
-    \includegraphics[width=\modelfraction\columnwidth]{fig/rngspeedupeffectdevstone.eps}
-    \caption{Speedup with different RNG usage patterns compared to Stl rng.}
+    \includegraphics[width=\columnwidth]{fig/rngspeedupeffectdevstone.eps}
+    \caption{Speedup with different RNG usage patterns compared to STL random number generator.}
     \label{fig:Queuerngspeedup}
 \end{figure}

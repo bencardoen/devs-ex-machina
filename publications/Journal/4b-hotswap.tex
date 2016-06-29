@@ -42,22 +42,22 @@ This trace visualizes the allocation of the model and all defined connections.
 For each connection, the number of events transferred is annotated.
 Examples are shown for the three benchmark models used before: Figures~\ref{fig:Queue_allocation},~\ref{fig:interconnect_allocation_parallel}, and~\ref{fig:phold_allocation} shows traces for the Queue, Interconnect, and PHOLD models respectively.
 
-\begin{figure}
+\begin{figure*}
     \center
     \includegraphics[height=\textwidth, angle=-90 ]{fig/queue_allocation.eps}
-    \caption{Queue model (d=2, w=7, t=5000, random timeadvance) allocation and simulation trace across 4 kernels.}
+    \caption{Queue model simulation trace across 4 kernels.}
     \label{fig:Queue_allocation}
-\end{figure}
+\end{figure*}
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/interconnect_parallel_allocation.eps}
-    \caption{Interconnect parallel simulation trace for 6 models on 3 kernels.}
+    \caption{Interconnect simulation trace for 6 models on 3 kernels.}
     \label{fig:interconnect_allocation_parallel}
 \end{figure}
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/phold_parallel_allocation.eps}
-    \caption{Phold benchmark trace for parallel simulation using three kernels.}
+    \caption{Phold simulation trace for parallel simulation using three kernels.}
     \label{fig:phold_allocation}
 \end{figure}
 

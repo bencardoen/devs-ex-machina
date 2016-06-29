@@ -25,7 +25,7 @@ We demonstrate the importance of allocation, by comparing a breadth-first versus
 
 \begin{figure}
     \center
-    \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree.pdf}
+    \includegraphics[width=\columnwidth]{fig/pholdtree.pdf}
     %TODO depth 1 but 3 levels deep?
     \caption{PHOLDTree model for depth 1 and width 2.}
     \label{fig:PHOLDTree_model}
@@ -47,7 +47,7 @@ We expect to see a similar distinction in parallel simulation.
 
 \begin{figure}
     \center
-    \includegraphics[width=\plotfraction\columnwidth]{fig/pholdtree_sequential_dn.eps}
+    \includegraphics[width=\columnwidth]{fig/pholdtree_sequential_dn.eps}
     \caption{Effect of hierarchy in sequential simulation.}
     \label{fig:PHoldtree_seq_dn_benchmark}
 \end{figure}
@@ -71,10 +71,10 @@ A single kernel that has an unbalanced number of atomic models or unequal comput
 \begin{figure}
    \center
    
-   \includegraphics[width=\textwidth]{fig/pholdtree_alloc_BF.pdf}
+   \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_BF.pdf}
    \caption{PholdTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
-   \includegraphics[width=\textwidth]{fig/pholdtree_alloc_DF.pdf}
+   \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_DF.pdf}
    \caption{PholdTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
@@ -87,18 +87,15 @@ Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:phol
 
 \begin{figure}
     \center
-    \begin{minipage}{0.45\textwidth}
-            \center
-            \includegraphics[width=\textwidth]{fig/pholdtreed1n3t5000c4BFS.eps}
-            \caption{Visualization of a PholdTree simulation with breadth first allocation and 4 kernels.}
-            \label{fig:pholdtree_visualize_parBFS}
-    \end{minipage}
-    \begin{minipage}{0.45\textwidth}
-            \center
-            \includegraphics[width=\textwidth]{fig/pholdtreed1n3t5000c4DFS.eps}
-            \caption{Visualization of a PholdTree simulation with depth first allocation and 4 kernels.}
-            \label{fig:pholdtree_visualize_parDFS}
-    \end{minipage}
+    \includegraphics[width=\columnwidth]{fig/pholdtreed1n3t5000c4BFS.eps}
+    \caption{Visualization of a PholdTree simulation with breadth first allocation and 4 kernels.}
+    \label{fig:pholdtree_visualize_parBFS}
+\end{figure}
+\begin{figure}
+    \center
+    \includegraphics[width=\columnwidth]{fig/pholdtreed1n3t5000c4DFS.eps}
+    \caption{Visualization of a PholdTree simulation with depth first allocation and 4 kernels.}
+    \label{fig:pholdtree_visualize_parDFS}
 \end{figure}
 
 Simulation results are shown in Figure~\ref{fig:PholdTree_plot_alloc_high} for both allocation schemes in combination with both synchronization protocols.
@@ -120,7 +117,7 @@ Conservative synchronization will then be able to make better estimates, whereas
 
 \begin{figure}
     \center
-    \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeallochighp.eps}
+    \includegraphics[width=\columnwidth]{fig/pholdtreeallochighp.eps}
     \caption{PholdTree model performance using different allocation schemes.}
     \label{fig:PholdTree_plot_alloc_high}
 \end{figure}
