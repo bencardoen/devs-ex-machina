@@ -86,7 +86,7 @@ After simulation the traces can be visualized for both breadth-first and depth-f
 Using a breadth-first allocation scheme, as shown in Figure~\ref{fig:pholdtree_visualize_parBFS}, we notice that many events get exchanged between cores.
 This is caused by the high number of inter-core connections and the high number of events exchanged over these connections.
 The number of connections between nodes at the same simulation core is also rather low.
-Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:pholdtree_visualize_parDFS},
+Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:pholdtree_visualize_parDFS}, minimizes inter-core connections while maximizing intra-core connections.
 
 \begin{figure}
     \center
@@ -109,15 +109,17 @@ Whereas this is the case in this example, this is not true in general, as the id
 The most prominent aspect of these results is the low performance for conservative depth-first allocation for two cores.
 This is mostly caused by the difference between a sequential simulation and a parallel simulation: suddenly we need to take into account synchronization and passing around of lookahead values.
 And since the number of cores is low, the overhead dominates any further speedup.
+Optimistic is less sensitive to the number of models per core as it does not need to poll each model for a lookahead, this explains the lower runtime penalty observed for optimistic.
 %TODO add some more explanation here maybe?
 %TODO why is this not the case for optimistic?
 
-%TODO this paragraph is strange: is this really the case?
+%TODO this paragraph is strange: is this really the case? 
+%The effect is due to the topology of the kernels, in BFS the risk on reverts is higher. Optimistic is less influenced but will get a lower speedup in the good case.
 Interestingly, we see that optimistic synchronization is less influenced by the allocation than conservative synchronization.
 This is likely caused due to the lower number of connections to take into account in conservative synchronization.
 Whereas conservative synchronization needs to take into account even scarcely used connections, optimistic synchronization does not.
 The same is true in the opposite direction, though, where optimistic synchronization is slower when a good allocation is chosen.
-Conservative synchronization will then be able to make better estimates, whereas optimistic synchronization does not make estimations.
+Conservative synchronization will then be able to make better estimates, whereas optimistic synchronization does not make estimations. 
 
 \begin{figure}
     \center

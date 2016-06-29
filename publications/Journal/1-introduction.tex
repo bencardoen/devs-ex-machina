@@ -14,8 +14,8 @@ This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardo
 The selected synchronization protocol is transparent to the simulated model: users only determine which protocol to use.
 Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the same model with different synchronization protocols.
 Since the ideal synchronization protocol might change throughout the simulation, we also support runtime switching between these protocols.
-This runtime switching is based on performance metrics, which are logged during simulation.
-Information is made available to a seperate component, where a choice is made about which synchronization protocol to use next.
+This runtime switching can be based on performance metrics, which are logged during simulation.
+Information is made available to a separate component, where a choice can be made about which synchronization protocol to use next. % It's manual now, can be extended to full automatic.
 Additionally, we investigate in this paper how model allocation influences the performance of our synchronization protocols.
 To this end, we have included an allocation component to our simulation kernel.
 
@@ -23,7 +23,7 @@ Our tool is based on PythonPDEVS, but implemented in C++11 for increased perform
 Unlike PythonPDEVS, dxex only supports multicore parallelism, thus no distributed simulation.
 
 We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
-Using several models, we demonstrate the factors influencing the performance under a given synhronization protocol.
+Using several models, we demonstrate the factors influencing the performance under a given synchronization protocol.
 Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
 With dxex users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own.
 To verify that this modularity does not hinder performance, we compare to another Parallel DEVS simulation kernel, called adevs~\cite{adevs}.
