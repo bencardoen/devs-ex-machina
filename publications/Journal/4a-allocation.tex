@@ -19,8 +19,8 @@ Connections can be uni- or bidirectional.
 Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after the direct connection stage.
 The PHOLDTree model allows us to investigate parallel speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
 
-PHOLDTree can be used to model gossiping in social networks, hierarchical resource sharing or load balancing.
-The lookahead of an atomic node is $\epsilon$, simulating uncertainty as will be often the case in real world models.
+The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{?}, hierarchical resource sharing~\cite{?} or load balancing~\cite{?}.
+The lookahead of an atomic node is the minimally allowed $\epsilon$, indicating uncertainty, as is often the case in realistic models.
 We demonstrate the importance of allocation, by comparing a breadth-first versus a depth-first scheme.
 
 \begin{figure}
@@ -31,38 +31,20 @@ We demonstrate the importance of allocation, by comparing a breadth-first versus
 \end{figure}
 
 PHoldtree, like Queue, is a highly hierarchical model but one where the flattened structure cannot be partitioned into a chain as in Queue.
-This topology is interesting since it highlights the effects of allocation which we have shown already in PHold and Interconnect to be of vital importance.
+This topology is interesting since it highlights the effects of allocation.
 This model allows us to investigate in depth the effects of non-cyclic allocation strategies and measure parallel speedup.
 
-Since adevs does not use the directconnect algorithm, we expect some performance penalty between dxex and adevs.
-The event frequency in PHoldTree can be configured to highlight dxex's performance disadvantage here as shown in the Interconnect benchmark.
+Since adevs does not use direct connection, we expect a noticable performance difference between dxex and adevs.
+This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout determines the performance penalty adevs suffers compared to dxex.
+Profiling indeed indicated that an increase in width per subtree ($n$) leads to higher overheads in adevs due to the lack of direct connection.
+Dxex uses direct connection, making it independent on fanout, but only of the number of models.
+Slight deviations can still be seen, though, caused by the initialization overhead of direct connection.
+Both adevs and dxex scale linearly in the number of atomic models.
 
-\paragraph*{Event frequency}
-Similarly when the probability on a priority event (p) increases the amount of event generated will increase and thus the runtime.
-In Figure~\ref{fig:PHoldtree_seq_p_benchmark} we observe that p has a near linear impact on performance, with the shape of the curve due to rounding errors.
-The advantage adevs has in simulations where event frequency is high has been demonstrated by the interconnect benchmark.
-
-\paragraph*{Hierarchy}
-To establish a baseline for the parallel simulation benchmarks we measure how the PHoldTree benchmark performs sequentially when we vary each of the model's parameters.
-When we increase the depth and fanout of the model, we expect to see an increase in runtime.
-In Figure~\ref{fig:PHoldtree_seq_dn_benchmark} the n parameter (fanout) determines the performance penalty adevs suffers compared to dxex.
-
-If we compare the instances d=2, n=2 with d=2, n=4, which show a clear difference in performance between adevs and dxex, we conclude from the profiling callgraphs that the increase in width per subtree (n) leads to higher overhead for adevs.
-Dxex in contrast uses the directconnect algorithm and has no such overhead.
-An increase in n will rapidly increase the number of connections \ref{eq:pholdtreelinkcount} (and thus the routing problem adevs faces), whereas d will increase modelcount \ref{eq:pholdtreemodelcount} faster but have a lesser impact on connections.
-Both kernels scale linear in increasing number of atomic models.
-
-\begin{figure}
-    \center
-    \includegraphics[width=\plotfraction\columnwidth]{fig/pholdtree_sequential_p.eps}
-    \caption{PHoldTree for increasing probability of priority message.}
-    \label{fig:PHoldtree_seq_p_benchmark}
-\end{figure}
-% Img for p increasing
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/pholdtree_sequential_dn.eps}
-    \caption{PHoldTree : Effect of hierarchy.}
+    \caption{Effect of hierarchy in sequential simulation.}
     \label{fig:PHoldtree_seq_dn_benchmark}
 \end{figure}
 
