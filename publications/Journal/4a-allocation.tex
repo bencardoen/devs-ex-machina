@@ -73,11 +73,40 @@ A single kernel that has an unbalanced number of atomic models or unequal comput
    \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_BF.pdf}
    \caption{PholdTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
-   
    \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_DF.pdf}
    \caption{PholdTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
+
+After simulation, the traces can be visualized for both breadth-first and depth-first allocation.
+Using a breadth-first allocation scheme, as shown in Figure~\ref{fig:pholdtree_visualize_parBFS}, we notice that many events get exchanged between cores.
+This is caused by the high number of inter-core connections and the high number of events exchanged over these connections.
+The number of connections between nodes at the same simulation core is also rather low.
+Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:pholdtree_visualize_parDFS},
+
+\begin{figure}
+    \center
+    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4BFS.eps}
+    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with breadth first allocation and 4 kernels.}
+    \label{fig:pholdtree_visualize_parBFS}
+\end{figure}
+\begin{figure}
+    \center
+    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4DFS.eps}
+    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with depth first allocation and 4 kernels.}
+    \label{fig:pholdtree_visualize_parDFS}
+\end{figure}
+
+Simulation results are shown in Figure~\ref{fig:?} for both allocation schemes in combination with both synchronization protocols.
+We see that for both synchronization protocols, the depth-first allocation is significantly better than breadth-first allocation.
+This is what we expected: depth-first allocation maintains locality better than breadth-first allocation.
+
+%TODO this paragraph is strange: is this really the case?
+Interestingly, we see that optimistic synchronization is less influenced by the allocation than conservative synchronization.
+This is likely caused due to the lower number of connections to take into account in conservative synchronization.
+Whereas conservative synchronization needs to take into account even scarcely used connections, optimistic synchronization does not.
+The same is true in the opposite direction, though, where optimistic synchronization is slower when a good allocation is chosen.
+Conservative synchronization will then be able to make better estimates, whereas optimistic synchronization does not make estimations.
 
 \paragraph*{Strong Scaling}\label{pholdtreestrongscale}
 In Figure \ref{fig:PholdTree_plot_alloc_high} we see that the difference in performance for all 4 kernel configurations compared to that shown in Figure \ref{fig:PholdTree_plot_alloc_low} is a constant factor. The probability of the priority message has no extra impact on performance other than that shown in sequential performance.
@@ -143,15 +172,3 @@ If we combine both to determine which synchronization protocol is more optimal w
 \subsection{Linking Back}
 %TODO link back to initial performance evaluation
 
-\begin{figure}
-    \center
-    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4BFS.eps}
-    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with breadth first allocation and 4 kernels.}
-    \label{fig:pholdtree_visualize_parBFS}
-\end{figure}
-\begin{figure}
-    \center
-    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4DFS.eps}
-    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with depth first allocation and 4 kernels.}
-    \label{fig:pholdtree_visualize_parDFS}
-\end{figure}
