@@ -117,7 +117,7 @@ Dxex uses Boost Pool~\cite{boostpool} allocators in parallel simulation kernels 
 The latter can be faster, but at the cost of extra configuration.
 The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}, which reduces lock contention in \texttt{malloc} calls.
 
-We primarily investigate this for optimistic simulation, as this is the most memory consuming mode of simulation~\cite{Fujimoto}.
+We primarily investigate this for optimistic simulation, as this is the most memory consuming mode of simulation~\cite{FujimotoBook}.
 Simulation execution times for all four combinations are shown in Figure~\ref{fig:memallocators_parallel}.
 Optimistic simulation greatly benefits from the use of \textit{tcmalloc}, regardless of the allocator.
 Nonetheless the pool allocator also reduces the allocation overhead, though only by a relatively small fraction.
@@ -129,7 +129,7 @@ As a result, the OS will usually report memory consumption that is higher than t
 \subsubsection{Random Number Generators}
 Random Number Generators (RNG) are another aspect of the program that results in sequentialization.
 All accesses to the RNG will result in the modification of a global (\textit{i.e.}, shared between threads) variable.
-This easily becomes a bottleneck in simulation, since random numbers are a common occurence in simulation~\cite{?}.
+This easily becomes a bottleneck in simulation, since random numbers are a common occurence in simulation~\cite{Random}.
 As such, a non-trivial amount of time in a simulation is often spent waiting for an RNG.
 
 We of course still need to guarantee determinism and isolation between the calls to the RNG, as well as avoiding excessive synchronization.
@@ -137,7 +137,6 @@ Dxex uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alterna
 Since the RNG is an implicit part of the state in the DEVS formalism, though often not implemented as such, we evaluated performance for both approaches: one global RNG per thread, and one RNG per atomic DEVS model.
 
 We see in Figure~\ref{fig:Queuerngspeedup} that storing the RNG in the state is very expensive for the default STL random number generator.
-%TODO fill in values
 This is primarily caused by the significant difference in size: 2504 bytes for the STL random number generator, and 24 bytes for the Tina random number generator.
 Dxex's sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in dxex conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
