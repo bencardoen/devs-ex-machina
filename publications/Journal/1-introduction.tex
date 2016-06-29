@@ -10,7 +10,7 @@ While several parallel \textsf{DEVS} simulation kernels exist, they are often li
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models.
 The applicability of parallel simulation capabilities of current tools is therefore constrained to specific domains.
 
-This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
+This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
 The selected synchronization protocol is transparent to the simulated model: users only determine which protocol to use.
 Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the same model with different synchronization protocols.
 Since the ideal synchronization protocol might change throughout the simulation, we also support runtime switching between these protocols.
