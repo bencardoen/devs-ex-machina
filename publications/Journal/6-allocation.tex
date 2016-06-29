@@ -16,7 +16,7 @@ The model structure resembles a tree: an atomic model can have a set of children
 Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after direct connection.
 The PHOLDTree model allows us to investigate parallel speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
 
-The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{Gossip} and multi-granularity locking~\cite{MultiGranularityLocking}.
+The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{Gossip}.
 The lookahead of an atomic node is the minimally allowed $\epsilon$, indicating uncertainty, as is often the case in realistic models.
 We demonstrate the importance of allocation by comparing performance of a breadth-first versus a depth-first scheme.
 Both options are automated ways of allocation that are independent of the model.
