@@ -7,7 +7,7 @@ Whereas \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase pa
 Several synchronization protocols from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation~\cite{globaltimewarp}.
 Through synchronization protocols, different simulation cores can be at different points in simulated time, increasing parallelism significantly, at the cost of synchronization overhead.
 While several parallel \textsf{DEVS} simulation kernels exist, they are often limited to a single synchronization protocol.
-The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models.
+The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models~\cite{Jafer}.
 The applicability of parallel simulation capabilities of current tools is therefore constrained to specific domains.
 
 This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
