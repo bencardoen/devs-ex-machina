@@ -33,13 +33,16 @@ We demonstrate the importance of allocation, by comparing a breadth-first versus
 PHoldtree, like Queue, is a highly hierarchical model but one where the flattened structure cannot be partitioned into a chain as in Queue.
 This topology is interesting since it highlights the effects of allocation.
 This model allows us to investigate in depth the effects of non-cyclic allocation strategies and measure parallel speedup.
+First, we evaluate the model in sequential simulation to provide a baseline for parallel simulation.
 
+\subsubsection{Sequential Simulation}
 Since adevs does not use direct connection, we expect a noticable performance difference between dxex and adevs.
 This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout determines the performance penalty adevs suffers compared to dxex.
 Profiling indeed indicated that an increase in width per subtree ($n$) leads to higher overheads in adevs due to the lack of direct connection.
 Dxex uses direct connection, making it independent on fanout, but only of the number of models.
 Slight deviations can still be seen, though, caused by the initialization overhead of direct connection.
 Both adevs and dxex scale linearly in the number of atomic models.
+We expect to see a similar distinction in parallel simulation.
 
 \begin{figure}
     \center
@@ -48,24 +51,33 @@ Both adevs and dxex scale linearly in the number of atomic models.
     \label{fig:PHoldtree_seq_dn_benchmark}
 \end{figure}
 
-We further verify that our contribution fulfills our projected use case: a single model that can be tweaked to favor either conservative or optimistic synchronization. We will demonstrate that allocation is critical to achieve a parallel speedup and that the configuration of the model will give either conservative or optimistic an advantage.
-\paragraph*{Allocation}\label{PholdTreeallocation}
-The PholdTree benchmark can be configured to use 2 allocation schemes: breadth first and depth first.
+\subsubsection{Parallel Simulation}
+Next, we run the model using two different model allocation schemes: breadth-first and depth-first.
+But first, we explain what we mean by both allocation schemes.
+
+With breadth-first allocation, we traverse the tree in a breadth-first way, allocating subsequently visited atomic models to the same node.
+This means, intuitively, that atomic models at the same level in the tree, but not necessarily siblings, are frequently allocated to the same node.
+Since there is only infrequently some communication between 
+This allocation strategy is shown in Figure~\ref{fig:BF}.
+
+With depth-first allocation, we traverse the tree in a depth-first way, allocating subsequently visited atomic models to the same node.
+This means, intuitively, that subtreees are frequently allocated to the same node.
+This allocation strategy is shown in Figure~\ref{fig:DF}.
+
 The breadth first allocation scheme will result in kernels that will form a dependency chain with multiple branches, much like in the Queue model.
 Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model, but this is not always true as we will demonstrate in this section.
 A single kernel that has an unbalanced number of atomic models or unequal computation load in transition functions will slow down the remainder of the chain. This effect is also apparent if the thread a kernel runs on is not fairly scheduled. In conservative this will lead to excessive polling of the other kernels' eot values, in optimistic this will lead to a cascade of reverts since dependent kernels will simulate ahead of the slower kernel. In Figures \ref{fig:pholdtree_visualize_parBFS} and \ref{fig:pholdtree_visualize_parDFS} the simulation trace is visualized for both allocation schemes highlighting the remarks made in this paragraph.
-%
-%\begin{figure}
-%   \center
-%   
-%   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeBFS.eps}
-%   \caption{PholdTree model breadth first allocation with 3 kernels.}
-%   \label{fig:PholdTree_model_bfs}
-%   
-%   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtreeDFS.eps}
-%   \caption{PholdTree model depth first allocation with 3 kernels.}
-%   \label{fig:PholdTree_model_dfs}
-%\end{figure}
+\begin{figure}
+   \center
+   
+   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_BF.pdf}
+   \caption{PholdTree model breadth first allocation with 4 kernels.}
+   \label{fig:PholdTree_model_bfs}
+   
+   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_DF.pdf}
+   \caption{PholdTree model depth first allocation with 4 kernels.}
+   \label{fig:PholdTree_model_dfs}
+\end{figure}
 
 \paragraph*{Strong Scaling}\label{pholdtreestrongscale}
 In Figure \ref{fig:PholdTree_plot_alloc_high} we see that the difference in performance for all 4 kernel configurations compared to that shown in Figure \ref{fig:PholdTree_plot_alloc_low} is a constant factor. The probability of the priority message has no extra impact on performance other than that shown in sequential performance.
