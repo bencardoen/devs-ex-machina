@@ -71,10 +71,10 @@ A single kernel that has an unbalanced number of atomic models or unequal comput
 \begin{figure}
    \center
    
-   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_BF.pdf}
+   \includegraphics[width=\textwidth]{fig/pholdtree_alloc_BF.pdf}
    \caption{PholdTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
-   \includegraphics[width=\modelfraction\columnwidth]{fig/pholdtree_alloc_DF.pdf}
+   \includegraphics[width=\textwidth]{fig/pholdtree_alloc_DF.pdf}
    \caption{PholdTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
@@ -87,15 +87,18 @@ Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:phol
 
 \begin{figure}
     \center
-    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4BFS.eps}
-    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with breadth first allocation and 4 kernels.}
-    \label{fig:pholdtree_visualize_parBFS}
-\end{figure}
-\begin{figure}
-    \center
-    \includegraphics[width=\plotfraction\columnwidth,  height=6cm, keepaspectratio]{fig/pholdtreed1n3t5000c4DFS.eps}
-    \caption{Visualization of PholdTree (d=1,n=3,t=5000) parallel simulation with depth first allocation and 4 kernels.}
-    \label{fig:pholdtree_visualize_parDFS}
+    \begin{minipage}{0.45\textwidth}
+            \center
+            \includegraphics[width=\textwidth]{fig/pholdtreed1n3t5000c4BFS.eps}
+            \caption{Visualization of a PholdTree simulation with breadth first allocation and 4 kernels.}
+            \label{fig:pholdtree_visualize_parBFS}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+            \center
+            \includegraphics[width=\textwidth]{fig/pholdtreed1n3t5000c4DFS.eps}
+            \caption{Visualization of a PholdTree simulation with depth first allocation and 4 kernels.}
+            \label{fig:pholdtree_visualize_parDFS}
+    \end{minipage}
 \end{figure}
 
 Simulation results are shown in Figure~\ref{fig:PholdTree_plot_alloc_high} for both allocation schemes in combination with both synchronization protocols.
