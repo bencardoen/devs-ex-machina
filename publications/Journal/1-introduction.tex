@@ -3,26 +3,27 @@ In fact, it can serve as a simulation ``assembly language'' to which models in o
 A number of tools have been constructed by academia and industry that allow the modelling and simulation of \textsf{DEVS} models.
 
 But with the ever increasing complexity of simulation models, parallel simulation becomes necessary to perform the simulation within reasonable time bounds.
-And while \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, this is often insufficient.
-Several synchronization protocols from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation.
+Whereas \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, its inherent parallelism is often insufficient~\cite{Himmelspach}.
+Several synchronization protocols from the discrete event simulation community~\cite{FujimotoBook} have been applied to \textsf{DEVS} simulation~\cite{globaltimewarp}.
+Through synchronization protocols, different simulation cores can be at different points in simulated time, increasing parallelism significantly, at the cost of synchronization overhead.
 While several parallel \textsf{DEVS} simulation kernels exist, they are often limited to a single synchronization protocol.
-The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models.
-The applicability of parallel simulation capabilities of current tools is therefore limited.
+The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models~\cite{Jafer}.
+The applicability of parallel simulation capabilities of current tools is therefore constrained to specific domains.
 
-This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
-The selected synchronization protocol is transparent to the simulated model: users only determine which protocol they wish to use.
-Users who simulate a wide variety of models, with different ideal synchronization protocols, can simply run the same model with different synchronization protocols.
+This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
+The selected synchronization protocol is transparent to the simulated model: users only determine which protocol to use.
+Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the same model with different synchronization protocols.
 Since the ideal synchronization protocol might change throughout the simulation, we also support runtime switching between these protocols.
-This runtime switching is based on performance metrics, which are logged during simulation.
-Information is made available to a seperate component, where a choice is made about which synchronization protocol to use next.
+This runtime switching can be based on performance metrics, which are logged during simulation.
+Information is made available to a separate component, where a choice can be made about which synchronization protocol to use next. % It's manual now, can be extended to full automatic.
 Additionally, we investigate in this paper how model allocation influences the performance of our synchronization protocols.
 To this end, we have included an allocation component to our simulation kernel.
 
 Our tool is based on PythonPDEVS, but implemented in C++11 for increased performance, using features from the new C++14 standard when supported by the compiler.
-Unlike PythonPDEVS, dxex only supports multicore parallelism.
+Unlike PythonPDEVS, dxex only supports multicore parallelism, thus no distributed simulation.
 
 We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
-Using several models, we demonstrate the factors influencing the performance under a given synhronization protocol.
+Using several models, we demonstrate the factors influencing the performance under a given synchronization protocol.
 Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
 With dxex users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own.
 To verify that this modularity does not hinder performance, we compare to another Parallel DEVS simulation kernel, called adevs~\cite{adevs}.

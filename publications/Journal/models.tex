@@ -19,28 +19,28 @@ Before benchmarking, simulation traces were used to verify that adevs and dxex r
 Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
 The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
 
-\subsection{Benchmarks}
-We use three different benchmarks, which cover different aspects of the simulation kernel.
+\subsection{Benchmark Models}
+We use three different benchmark models, covering different aspects of the simulation kernel.
 
 First, the \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
-A single generator pushes events into the queue, which are consumed by the processors after a fixed or random delay.
-It takes two parameters: width and depth, which determine the width and depth of the hierarchy.
+A single generator pushes events into the queue, which get consumed by the processors after a fixed or random delay.
+It takes two parameters: the width and depth of the hierarchy.
 This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
-An example for width and depth 2 is shown in Figure~\ref{fig:queue_model}.
+An example for width and depth equal to 2 is shown in Figure~\ref{fig:queue_model}.
 	
-Second, the \textit{PHOLD} model, presented by~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
+Second, the \textit{PHOLD} model~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
 Each atomic model is directly connected to every other atomic model.
 After a random delay, an atomic model sends out an event to a randomly selected output port.
-Output port selection happens in two phases: first it is decided whether the event should be sent to an atomic model at the same node.
-Afterwards, a uniform selection is made between the remaining ports.
+Output port selection happens in two phases: first it is decided whether the event should be sent within the same node, or outside of the node.
+Afterwards, a uniform selection is made between the remaining models.
 The model takes two parameter: the percentage of remote events, which determines the fraction of messages routed to other nodes, and the percentage of priority events. Priority events are events generated in a very short time after the previous event.
-This benchmark shows how the simulation kernel behaves in the presence of many local or remote events and when the average time advance is larger than the lookahead in conservative simulation.
+This benchmark shows how the simulation kernel behaves in the presence of many local or remote events, in combination with a varying percentage of high-priority event.s
 An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
 	
 Third, the \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
 Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event.
 The model takes one parameter: the number of models.
-This benchmark investigates the complexity of event routing, and how the simulation kernel handles many simultaneous events.
+This benchmark shows the complexity of event creation, event routing, and simultaneous event handling.
 An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 
 \begin{figure}
@@ -48,15 +48,17 @@ An example for four models is shown in Figure~\ref{fig:interconnect_model}.
 	\includegraphics[width=\columnwidth]{fig/queue_model_fixed.pdf}
 	\caption{Queue model for depth and width 2.}
 	\label{fig:queue_model}
+\end{figure}
 	
-	\vspace{\betweenmodels}
-	
+\begin{figure}
+    \center
 	\includegraphics[width=\modelfraction\columnwidth]{fig/interconnect_model.pdf}
 	\caption{Interconnect model for three models.}
 	\label{fig:interconnect_model}
-	
-	\vspace{\betweenmodels}
-	
+\end{figure}
+
+\begin{figure}
+    \center
 	\includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
 	\caption{PHOLD model for three models.}
 	\label{fig:PHOLD_model}

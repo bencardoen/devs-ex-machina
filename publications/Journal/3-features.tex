@@ -1,10 +1,11 @@
 Historically, dxex is based on PythonPDEVS~\cite{PythonPDEVS}.
 Python is a good language for prototypes, but performance has proven insufficient to compete with other simulation kernels~\cite{MasterThesis}.
-Dxex is a C++11-based implementation of PythonPDEVS, but implements only a subset of PythonPDEVS, while making some of its own additions.
-So while the feature set is not too comparable, the architectural design, core simulation algorithm, and optimizations, are highly similar.
+Dxex is a C++11-based \textsf{Parallel DEVS} simulator, based on the design of PythonPDEVS.
+Whereas the feature set is not too comparable, the architectural design, simulation algorithms, and optimizations, are highly similar.
 
 We will not make a detailed comparison with PythonPDEVS here, but only mention some supported features.
-Dxex supports, similarly to PythonPDEVS, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
+Dxex supports, similarly to PythonPDEVS, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions~\cite{JDF}, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
+We do not elaborate on these features in this paper.
 But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols (though only in parallel).
 This is in line with the design principle of PythonPDEVS: allow users to pass performance hints to the simulation kernel.
 In our case, a user can pass the simulation kernel the synchronization protocol to use for this model, or even switch the synchronization protocol during runtime.
@@ -19,7 +20,6 @@ In the remainder of this section, we will elaborate on our prominent new feature
 We previously explained the existence of different synchronization protocols, each optimized for a specific kind of model.
 As no single synchronization protocol is ideal for all models, a general purpose simulation tool should support multiple protocols.
 Currently, most parallel simulation tools choose only a single synchronization protocol due to the inherent differences between protocols.
-An uninformed choice on which one to implement is insufficient, as performance will likely be bad.
 We argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization, as is the case for dxex.
 
 These different protocols relate to three different model characteristics.
@@ -35,7 +35,7 @@ In theory, more synchronization protocols (\textit{e.g.}, other algorithms for c
 
 An overview of dxex's design is given in Figure~\ref{fig:class_diagram}.
 It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
-The superclass \texttt{Core} is merely the sequential simulation core, but can be used as-is.
+The superclass \texttt{Core} represents the sequential simulation core.
 Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure*}
@@ -48,12 +48,12 @@ Subclasses define specific variants, such as \texttt{ConservativeCore} (conserva
 For conservative synchronization, each node must determine the nodes it is influenced by.
 Each model needs to provide a lookahead function, which determines the lookahead depending on the current simulation state.
 Within the returned time interval, the model promises not to raise an event.
-A node aggregates this information to compute its earliest output time (EOT).
-This value is written out in shared memory, where it can be read out by all other nodes.
+A node aggregates this information to compute its Earliest Output Time (EOT).
+This value is communicated to other nodes through shared memory.
 
 Reading and writing to shared memory is done through the use of the new C++11 synchronization primitives.
 Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
-C++11 further allows us to make the implementation portable, as well as more efficient: the compiler might know of optimizations specific to atomic variables or constant expressions which are heavily used in dxex.
+C++11 further allows us to make the implementation portable, as well as more efficient: the compiler makes further optimizations to heavily used components.
 
 \subsubsection{Optimistic}
 For optimistic synchronization, each node must be able to roll back to a previous point in time.
@@ -66,21 +66,21 @@ Once the GVT is found, all nodes are informed of the new value, after which foss
 The main problem we encountered in our implementation is the aggressive use of memory.
 Frequent memory allocation and deallocation caused significant overheads, certainly when multiple threads do so concurrently.
 This made us switch to the use of thread-local (using \textit{tcmalloc}) memory pools.
-Again, we made use of specific new features of C++11, that were not available in Python, or even previous versions of the C++ language standard.
+Again, we made use of specific new features of C++11, that are not available in Python, or even previous versions of the C++ language standard.
 
 \subsection{Synchronization Protocol Transparency}
 We define synchronization protocol transparency as having a single model, which always can be executed on each supported synchronization kernel, without any modifications.
-User should thus only provide one model, implemented in C++11, which can be either using sequential execution, using conservative synchronization, or using optimistic synchronization.
-Switching between simulation kernels is as simple as altering the simulation termination time.
+User should thus only provide one model, implemented in C++11, which can be simulated using sequential execution, conservative synchronization, or optimistic synchronization.
+The synchronization protocol to use is a simple configuration option.
 The exception is conservative synchronization, where a lookahead function is required, which is not used in other synchronization kernels.
 Two options are possible: either a lookahead function must always be provided, even when it is not required and possibly not used, or we use a default lookahead function if none is defined.
 
-Always defining a lookahead function might seem redundant, especially if users will never use conservative synchronization.
-Especially since defining the lookahead is often non-trivial and dependent on intricate model details.
+Always defining a lookahead function might seem redundant, especially should the user never want to use conservative synchronization.
+Definig the lookahead is difficult and can often be unpredictable.
 The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but likely not at peak performance.
 Depending on the model, simulation performance might still be faster than sequential simulation. 
 
-Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
+Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
 
 \subsection{Increasing Parallelism}
 The goal of our contribution is to increase simulation performance as much as possible, leveraging parallel computation in the process.
@@ -102,16 +102,16 @@ We briefly mention how the application of these techniques influences our perfor
 \end{figure}
 Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{Memory}: memory bandwidth doesn't increase as fast as the number of cores using it.
 While this is always a problem, it is aggravated in dxex by providing automatic memory management for events and states.
-A model written for a sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the model author) the (de)allocation semantics of events or states.
+A model written for sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the modeller) the (de)allocation semantics of events or states.
 
 Furthermore, allocating and deallocating memory by making calls to the operating system, as typically done by calls such as \texttt{malloc}, happens sequentially.
 To counter this, our memory allocators are backed by a thread-aware pooling library.
-In a sequential simulation kernel no allocated event will persist beyond a single time advance, even allowing the use of an arena-style allocator.
+In a sequential simulation kernel no allocated event persists beyond a single time advance, even allowing the use of an arena-style allocator.
 Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime.
 
 %TODO what does it mean to "pool aggressively?"
 Intra-kernel events are pooled aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
-A simulation with many inter kernel events suffers a performance hit, whereas the impact of many intra kernel events can be minimized using arena allocators.
+A simulation with many inter kernel events suffers a performance hit, whereas the impact of many intra-kernel events can be minimized using arena allocators.
 
 Dxex uses Boost Pool~\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
 The latter can be faster, but at the cost of extra configuration.

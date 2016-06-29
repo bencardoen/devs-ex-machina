@@ -10,8 +10,7 @@ This problem can be mitigated by distribution over multiple machines, which neit
 Both dxex and adevs use \texttt{tcmalloc} as memory allocator, allowing for thread-local allocation.
 Additionally, dxex uses memory pools to further reduce the frequency of expensive system calls (\textit{e.g.}, malloc and free).
 \texttt{tcmalloc} only gradually releases memory back to the OS, whereas our pools will not do so at all.
-Due to our motivation for memory usage analysis, we will only measure peak allocation.
-Profiling is done using Valgrind's massif tool~\cite{Nethercote:2007:VFH:1273442.1250746}.
+Due to our motivation for memory usage analysis, we will only measure peak allocation in maximum resident set size as reported by the OS.
 
 \subsubsection{Results}
 Figure~\ref{fig:memory} shows the memory used by the different benchmarks.
