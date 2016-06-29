@@ -9,26 +9,29 @@ While several parallel \textsf{DEVS} simulation kernels exist, they are often li
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models.
 The applicability of parallel simulation capabilities of current tools is therefore limited.
 
-This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''), our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
-The selected synchronization protocol is transparent to the simulated model: users should merely determine, which protocol they wish to use.
+This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
+The selected synchronization protocol is transparent to the simulated model: users only determine which protocol they wish to use.
 Users who simulate a wide variety of models, with different ideal synchronization protocols, can simply run the same model with different synchronization protocols.
-We investigate in this paper how model allocation and uncertainty determine the choice between synchronization protocols. 
-The synchronization overhead is demonstrated by reducing the computational load of a model to near zero. 
+Since the ideal synchronization protocol might change throughout the simulation, we also support runtime switching between these protocols.
+This runtime switching is based on performance metrics, which are logged during simulation.
+Information is made available to a seperate component, where a choice is made about which synchronization protocol to use next.
+Additionally, we investigate in this paper how model allocation influences the performance of our synchronization protocols.
+To this end, we have included an allocation component to our simulation kernel.
 
-Our tool is based on PythonPDEVS, but implemented in C++11 for increased performance, using features from the new C++14 standard when possible.
-Unlike PythonPDEVS dxex only supports multicore parallelism.
+Our tool is based on PythonPDEVS, but implemented in C++11 for increased performance, using features from the new C++14 standard when supported by the compiler.
+Unlike PythonPDEVS, dxex only supports multicore parallelism.
 
-We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol. We demonstrate using several models the factors influencing the performance under a given synhronization protocol.
-Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol. With dxex users can always opt to use the fastest protocol available.
-To verify that our flexibility does not counter performance, we compare to adevs, currently one of the fastest \textsf{DEVS} simulation tools available~\cite{PythonPDEVS,DEVSSurvey}.
-
-% Switching and statistics
-Dxex offers visualization of the simulation and in depth statistics. A modeller can then make a more informed decision on which synchronization protocol to use or even intervene during simulation and request a switch between protocols. 
+We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
+Using several models, we demonstrate the factors influencing the performance under a given synhronization protocol.
+Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
+With dxex users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own.
+To verify that this modularity does not hinder performance, we compare to another Parallel DEVS simulation kernel, called adevs~\cite{adevs}.
 
 %Usage of Hyperref with hardcoded label is hardly ideal, but ~\ref doesn't work if the layout disables numbered sections, so a hack is needed. The alternative is \nameref but that isn't all that readable.
 The remainder of this paper is organized as follows:
-Section~\hyperref[sec:2-background]{2} introduces the necessary background on synchronization protocols.
-Section~\hyperref[sec:3-features]{3} elaborates on our design that enables this flexibility.
-In Section~\hyperref[sec:4-performance]{4}, we evaluate performance of our tool by comparing its different synchronization protocols, and by comparing to adevs.
-Related work is discussed in Section~\hyperref[sec:5-related-work]{5}.
-Section~\hyperref[sec:6-conclusion]{6} concludes the paper and gives future work.
+Section~\textsc{\nameref{sec:2-background}} introduces the necessary background on synchronization protocols.
+Section~\textsc{\nameref{sec:3-features}} elaborates on our design that enables this flexibility.
+In Section~\textsc{\nameref{sec:4-performance}}, we evaluate performance of our tool by comparing its different synchronization protocols, and compare to adevs.
+We continue by introducing runtime switching of synchronization protocols and different options for model allocation in Section~\textsc{\nameref{sec:4b-hotswap}} and Section~\textsc{\nameref{sec:4a-allocation}}, respectively.
+Related work is discussed in Section~\textsc{\nameref{sec:5-related-work}}.
+Section~\textsc{\nameref{sec:6-conclusion}} concludes the paper and gives future work.
