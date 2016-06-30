@@ -1,0 +1,24 @@
+\documentclass{article}
+\begin{document}
+\title{One page description}
+\date{}
+\maketitle
+
+\textsf{Parallel DEVS}~\cite{ParallelDEVS} is a popular formalism for modelling complex dynamic systems using a discrete-event abstraction.
+But whereas a number of tools have been constructed by academia and industry, parallel simulation is still not supported in most of them.
+Even where it is supported, performance studies are often done ad-hoc, without any comparison to other tools.
+
+In this paper, we introduce our tool called DEVS-Ex-Machina~\cite{dxex}: a \textsf{Parallel DEVS} simulation kernel supporting parallel simulation.
+In contrast to the few \textsf{Parallel DEVS} simulation kernels that do support parallel simulation, we support multiple synchronization protocol.
+It is through the synchronization algorithm that parallelism in the model becomes exploitable, and the ideal synchronization protocol is therefore dependent on the model~\cite{FujimotoBook}.
+
+Not only do we support multiple synchronization protocols, but we offer these through a modular framework, making additional protocols possible.
+Since model behaviour can change during simulation, runtime switching between synchronization protocols is also supported.
+We compare simulation performance with adevs~\cite{adevs}, deemed one of the most efficient \textsf{Parallel DEVS} simulation kernels at this time.
+Comparisons are done for sequential simulation performance, parallel simulation performance, and memory consumption.
+For our tool, we also present results for the different synchronization protocols.
+Results are compared in-depth, showing the effect of some fundamentally different choices in the design of our tool and adevs.
+
+\bibliographystyle{SageV}
+\bibliography{papers}
+\end{document}
