@@ -5,17 +5,17 @@
 % Allocation
 % Figures of each each (design, allocation)
 
-In this section, we evaluate the performance of different synchronization protocols in dxex.
-We also compare to adevs~\cite{adevs}, currently one of the most efficient simulation kernels~\cite{DEVSSurvey,DEVStoneJournal}, to show that our modularity does not impede performance.
+In this section, we evaluate the performance of different synchronization protocols in \textit{dxex}.
+We also compare to \textit{adevs}~\cite{adevs}, currently one of the most efficient simulation kernels~\cite{DEVSSurvey,DEVStoneJournal}, to show that our modularity does not impede performance.
 CPU time and memory usage is compared for both sequential and parallel simulation.
 
-We start off with a comparison of sequential simulation, to show how adevs and dxex relate in this simple case.
+We start off with a comparison of sequential simulation, to show how \textit{adevs} and \textit{dxex} relate in this simple case.
 For the parallel simulation benchmarks, results are presented for both conservative and optimistic synchronization.
 
 For all benchmarks, results are well within a 5\% deviation of the average, such that only the average is used in the remainder of this section.
-The same compilation flags were used for both adevs and dxex benchmarks (``\texttt{-O3 -flto}'').
+The same compilation flags were used for both \textit{adevs} and \textit{dxex} benchmarks (``\texttt{-O3 -flto}'').
 To guarantee comparable results, no I/O was performed during benchmarks.
-Before benchmarking, simulation traces were used to verify that adevs and dxex return exactly the same simulation results.
+Before benchmarking, simulation traces were used to verify that \textit{adevs} and \textit{dxex} return exactly the same simulation results.
 Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
 The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
 

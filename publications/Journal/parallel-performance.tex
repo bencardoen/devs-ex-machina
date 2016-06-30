@@ -1,6 +1,6 @@
 \subsection{Parallel Simulation}
-We now continue by describing our parallel simulation performance for different synchronization protocols, and compared to adevs.
-The speedup of adevs is computed with the corresponding dxex sequential benchmark.
+We now continue by describing our parallel simulation performance for different synchronization protocols, and compared to \textit{adevs}.
+The speedup of \textit{adevs} is computed with the corresponding \textit{dxex} sequential benchmark.
 This was done to take into account the performance difference observed in sequential simulation.
 
 \subsubsection{Queue}
@@ -11,20 +11,20 @@ Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to sequential simu
 %TODO this is actually quite a strange choice...
 As the number of kernels increases, the optimistic kernel quickly becomes the worst choice.
 This is mainly caused by the pipeline structure of the model: the last models in the queue only respond to incoming messages and therefore have to be rolled back frequently.
-The difference between dxex conservative and adevs becoms smaller when more and more cores are used.
+The difference between \textit{dxex} conservative and \textit{adevs} becoms smaller when more and more cores are used.
 The same effect can be seen for weak scaling in Figure~\ref{fig:Queue_plot_weak}.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_weak_speedup.eps}
-	\caption{Queue model weak scaling speedup compared to dxex sequential.}
+	\caption{Queue model weak scaling speedup compared to \textit{dxex} sequential.}
 	\label{fig:Queue_plot_weak}
 \end{figure}
 	
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_strong_speedup.eps}
-	\caption{Queue model strong scaling speedup compared to dxex sequential.}
+	\caption{Queue model strong scaling speedup compared to \textit{dxex} sequential.}
 	\label{fig:Queue_plot_strong}
 \end{figure}
 
@@ -50,11 +50,11 @@ With more common remote events, however, optimistic synchronization quickly slow
 Conservative synchronization, on the other hand, is mostly unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block and wait.
 Even though a single synchronization protocol is always ideal in this case, it already shows that different synchronization protocols respond differently to a changing model.
 
-Adevs is significantly slower during conservative synchronization.
-Analysis of profiling callgraphs shows that exception handling in adevs is the main cause. 
-To keep the models equivalent, the adevs version does not provide the \{begin,end\}Lookahead methods, which accounts for the exception handling.
+\textit{Adevs} is significantly slower during conservative synchronization.
+Analysis of profiling callgraphs shows that exception handling in \textit{adevs} is the main cause. 
+To keep the models equivalent, the \textit{adevs} version does not provide the \{begin,end\}Lookahead methods, which accounts for the exception handling.
 These functions require the user to implement a state saving method.
-But in contrast to PythonPDEVS and dxex, which handle this inside the kernel, users need to manually define this.
+But in contrast to \textit{PythonPDEVS} and \textit{dxex}, which handle this inside the kernel, users need to manually define this.
 We feel this would lead to an unfair comparison as we would like to keep the models agnostic of the underlying protocols across all benchmarks.
 
 \begin{figure}

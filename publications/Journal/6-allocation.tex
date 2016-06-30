@@ -1,7 +1,7 @@
 Although the synchronization protocol is one of the defining factors in simulation performance, model allocation has a significant impact on which protocol is ideal.
 Depending on the model structure, and how it is mapped to the different cores, it might not even make sense to parallelize at all.
 Indeed, if the model is distributed such that frequent communication is necessary between cores, parallelism is naturally reduced.
-This brings us to the topic of model allocation, as also implemented in PythonPDEVS~\cite{PythonPDEVS2}.
+This brings us to the topic of model allocation, as also implemented in \textit{PythonPDEVS}~\cite{PythonPDEVS2}.
 
 The modeller can specify which kernel a model should be allocated to, should such manual intervention be required.
 This is handled by the default model allocator.
@@ -34,13 +34,13 @@ This topology is interesting since it highlights the effects of allocation.
 First, we evaluate the model in sequential simulation to provide a baseline for parallel simulation.
 
 \subsubsection{Sequential Simulation}
-Since adevs does not use direct connection, we expect a noticable performance difference between dxex and adevs.
-This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout ($n$) determines the performance penalty adevs suffers compared to dxex.
-Profiling indeed indicates that an increase in width per subtree ($n$) leads to higher overheads in adevs due to the lack of direct connection.
-Dxex uses direct connection, making it independent on fanout.
-Performance of dxex is, in this model, only dependent on the number of models.
+Since \textit{adevs} does not use direct connection, we expect a noticable performance difference between \textit{dxex} and \textit{adevs}.
+This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout ($n$) determines the performance penalty \textit{adevs} suffers compared to \textit{dxex}.
+Profiling indeed indicates that an increase in width per subtree ($n$) leads to higher overheads in \textit{adevs} due to the lack of direct connection.
+\textit{Dxex} uses direct connection, making it independent on fanout.
+Performance of \textit{dxex} is, in this model, only dependent on the number of models.
 Slight deviations can still be seen, though, caused by the initialization overhead of direct connection.
-Both adevs and dxex scale linearly in the number of atomic models.
+Both \textit{adevs} and \textit{dxex} scale linearly in the number of atomic models.
 
 \begin{figure}
     \center

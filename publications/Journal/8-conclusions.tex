@@ -1,10 +1,10 @@
-In this paper, we introduced DEVS-Ex-Machina (``dxex''), a new C++11-based \textsf{Parallel DEVS} simulation tool.
+In this paper, we introduced \textit{DEVS-Ex-Machina} (``\textit{dxex}''), a new C++11-based \textsf{Parallel DEVS} simulation tool.
 Our main contribution is the implementation of multiple synchronization protocols for parallel multicore simulation.
 We have shown that there are indeed models which can be simulated significantly faster using either synchronization protocol.
-Dxex allows the user to choose between either conservative or optimistic synchronization at the start of simulation.
+\textit{Dxex} allows the user to choose between either conservative or optimistic synchronization at the start of simulation.
 Depending on observed model behaviour and simulation performance, runtime switching between synchronization protocols can be used.
 
-Notwithstanding our modularity, dxex achieves performance competitive to adevs, another very efficient \textsf{DEVS} simulation tool.
+Notwithstanding our modularity, \textit{dxex} achieves performance competitive to \textit{adevs}, another very efficient \textsf{DEVS} simulation tool.
 Performance is measured both in elapsed time, and memory usage.
 Our empirical analysis shows that allocation of models over kernels is critical to enable a parallel speedup. Furthermore we have shown when and why optimistic synchronization can outperform conservative and vice versa.
 
@@ -16,6 +16,6 @@ Faster GVT implementations~\cite{Fujimoto:1997:CGV:268403.268404,Bauer:2005:SND:
 Second, the runtime switching between synchronization protocols can be driven using machine learning techniques.
 The simulation engine is already capable of collecting data to inform such a process, and is designed to listen for commands from an external component.
 Third, automatic allocation might be possible by analysis of the connections between models.
-This information is already used in dxex to construct the dependency graph in conservative synchronization.
+This information is already used in \textit{dxex} to construct the dependency graph in conservative synchronization.
 A graph algorithm that distributes models, while avoiding cycles, could be used to offer a parallel speedup in either optimistic or conservative synchronization.
 Similarly, it could serve as a default parallel allocation scheme that can be improved by the user.

@@ -10,7 +10,7 @@ While several parallel \textsf{DEVS} simulation kernels exist, they are often li
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other in specific models~\cite{Jafer}.
 The applicability of parallel simulation capabilities of current tools is therefore constrained to specific domains.
 
-This paper introduces DEVS-Ex-Machina\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``dxex''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
+This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization.
 The selected synchronization protocol is transparent to the simulated model: users only determine which protocol to use.
 Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the same model with different synchronization protocols.
 Since the ideal synchronization protocol might change throughout the simulation, we also support runtime switching between these protocols.
@@ -19,20 +19,20 @@ Information is made available to a separate component, where a choice can be mad
 Additionally, we investigate in this paper how model allocation influences the performance of our synchronization protocols.
 To this end, we have included an allocation component to our simulation kernel.
 
-Our tool is based on PythonPDEVS, but implemented in C++11 for increased performance, using features from the new C++14 standard when supported by the compiler.
-Unlike PythonPDEVS, dxex only supports multicore parallelism, thus no distributed simulation.
+Our tool is based on \textit{PythonPDEVS}, but implemented in C++11 for increased performance, using features from the new C++14 standard when supported by the compiler.
+Unlike \textit{PythonPDEVS}, \textit{dxex} only supports multicore parallelism, thus no distributed simulation.
 
 We implemented a model that, depending on a single parameter, changes its ideal synchronization protocol.
 Using several models, we demonstrate the factors influencing the performance under a given synchronization protocol.
-Dxex, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
-With dxex users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own.
-To verify that this modularity does not hinder performance, we compare to another Parallel DEVS simulation kernel, called adevs~\cite{adevs}.
+\textit{Dxex}, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
+With \textit{dxex} users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own.
+To verify that this modularity does not hinder performance, we compare to another \textsf{Parallel DEVS} simulation kernel, called \textit{adevs}~\cite{adevs}.
 
 %Usage of Hyperref with hardcoded label is hardly ideal, but ~\ref doesn't work if the layout disables numbered sections, so a hack is needed. The alternative is \nameref but that isn't all that readable.
 The remainder of this paper is organized as follows:
 Section~\textsc{\nameref{sec:2-background}} introduces the necessary background on synchronization protocols.
 Section~\textsc{\nameref{sec:3-features}} elaborates on our design that enables this flexibility.
-In Section~\textsc{\nameref{sec:4-performance}}, we evaluate performance of our tool by comparing its different synchronization protocols, and compare to adevs.
+In Section~\textsc{\nameref{sec:4-performance}}, we evaluate performance of our tool by comparing its different synchronization protocols, and compare to \textit{adevs}.
 We continue by introducing runtime switching of synchronization protocols and different options for model allocation in Section~\textsc{\nameref{sec:4b-hotswap}} and Section~\textsc{\nameref{sec:4a-allocation}}, respectively.
 Related work is discussed in Section~\textsc{\nameref{sec:5-related-work}}.
 Section~\textsc{\nameref{sec:6-conclusion}} concludes the paper and gives future work.

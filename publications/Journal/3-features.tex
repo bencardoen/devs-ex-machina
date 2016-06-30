@@ -1,18 +1,18 @@
-Historically, dxex is based on PythonPDEVS~\cite{PythonPDEVS}.
+Historically, \textit{dxex} is based on \textit{PythonPDEVS}~\cite{PythonPDEVS}.
 Python is a good language for prototypes, but performance has proven insufficient to compete with other simulation kernels~\cite{MasterThesis}.
-Dxex is a C++11-based \textsf{Parallel DEVS} simulator, based on the design of PythonPDEVS.
+\textit{Dxex} is a C++11-based \textsf{Parallel DEVS} simulator, based on the design of \textit{PythonPDEVS}.
 Whereas the feature set is not too comparable, the architectural design, simulation algorithms, and optimizations, are highly similar.
 
-We will not make a detailed comparison with PythonPDEVS here, but only mention some supported features.
-Dxex supports, similarly to PythonPDEVS, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions~\cite{JDF}, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
+We will not make a detailed comparison with \textit{PythonPDEVS} here, but only mention some supported features.
+\textit{Dxex} supports, similarly to \textit{PythonPDEVS}, the following features: direct connection~\cite{SymbolicFlattening}, \textsf{Dynamic Structure DEVS}~\cite{DSDEVS}, termination conditions~\cite{JDF}, and a modular tracing and scheduling framework~\cite{PythonPDEVS}.
 We do not elaborate on these features in this paper.
-But whereas PythonPDEVS only supports optimistic synchronization, dxex support multiple synchronization protocols (though only in parallel).
-This is in line with the design principle of PythonPDEVS: allow users to pass performance hints to the simulation kernel.
+But whereas \textit{PythonPDEVS} only supports optimistic synchronization, \textit{dxex} support multiple synchronization protocols (though only in parallel).
+This is in line with the design principle of \textit{PythonPDEVS}: allow users to pass performance hints to the simulation kernel.
 In our case, a user can pass the simulation kernel the synchronization protocol to use for this model, or even switch the synchronization protocol during runtime.
-Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language. Dxex will use new optimizations from the C++14 standard when possible.
+Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language. \textit{Dxex} will use new optimizations from the C++14 standard when possible.
 
-Since there is no universal \textsf{DEVS} model standard, dxex models are incompatible with PythonPDEVS and vice versa.
-This is due to dxex models being grafted on C++11, whereas PythonPDEVS models are grafted on Python.
+Since there is no universal \textsf{DEVS} model standard, \textit{dxex} models are incompatible with \textit{PythonPDEVS} and vice versa.
+This is due to \textit{dxex} models being grafted on C++11, whereas \textit{PythonPDEVS} models are grafted on Python.
 
 In the remainder of this section, we will elaborate on our prominent new feature: the efficient implementation of multiple synchronization protocols within the same simulation tool, which are offered transparently to the model.
 
@@ -20,7 +20,7 @@ In the remainder of this section, we will elaborate on our prominent new feature
 We previously explained the existence of different synchronization protocols, each optimized for a specific kind of model.
 As no single synchronization protocol is ideal for all models, a general purpose simulation tool should support multiple protocols.
 Currently, most parallel simulation tools choose only a single synchronization protocol due to the inherent differences between protocols.
-We argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization, as is the case for dxex.
+We argue that a real general purpose simulation tool should support sequential, conservative, and optimistic synchronization, as is the case for \textit{dxex}.
 
 These different protocols relate to three different model characteristics.
 Conservative synchronization for when high lookahead exists between different nodes, and barely any blocking is necessary.
@@ -28,19 +28,19 @@ Optimistic synchronization for when lookahead is unpredictable, or there are rar
 Finally, sequential simulation is still required for models where parallelism is bad, where all protocols actually slow down simulation.
 
 \subsubsection{Sequential}
-Our sequential simulation algorithm is very similar to the one found in PythonPDEVS, including many optimizations.
+Our sequential simulation algorithm is very similar to the one found in \textit{PythonPDEVS}, including many optimizations.
 Minor modifications were made, though, such that it can be overloaded by different synchronization protocol implementations.
 This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overridden as needed.
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
-An overview of dxex's design is given in Figure~\ref{fig:class_diagram}.
+An overview of \textit{dxex}'s design is given in Figure~\ref{fig:class_diagram}.
 It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
 The superclass \texttt{Core} represents the sequential simulation core.
 Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure*}
     \includegraphics[width=\textwidth]{fig/cores_class_diagram.eps}
-	\caption{Dxex design.}
+	\caption{\textit{Dxex} design.}
 	\label{fig:class_diagram}
 \end{figure*}
 
@@ -101,7 +101,7 @@ We briefly mention how the application of these techniques influences our perfor
     \label{fig:memallocators_parallel}
 \end{figure}
 Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{Memory}: memory bandwidth doesn't increase as fast as the number of cores using it.
-While this is always a problem, it is aggravated in dxex by providing automatic memory management for events and states.
+While this is always a problem, it is aggravated in \textit{dxex} by providing automatic memory management for events and states.
 A model written for sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the modeller) the (de)allocation semantics of events or states.
 
 Furthermore, allocating and deallocating memory by making calls to the operating system, as typically done by calls such as \texttt{malloc}, happens sequentially.
@@ -113,7 +113,7 @@ Conservative and optimistic simulation need to use generic pool allocators since
 Intra-kernel events are pooled aggressively, whereas inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
 A simulation with many inter kernel events suffers a performance hit, whereas the impact of many intra-kernel events can be minimized using arena allocators.
 
-Dxex uses Boost Pool~\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
+\textit{Dxex} uses \textit{Boost Pool}~\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
 The latter can be faster, but at the cost of extra configuration.
 The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}, which reduces lock contention in \texttt{malloc} calls.
 
@@ -121,7 +121,7 @@ We primarily investigate this for optimistic simulation, as this is the most mem
 Simulation execution times for all four combinations are shown in Figure~\ref{fig:memallocators_parallel}.
 Optimistic simulation greatly benefits from the use of \textit{tcmalloc}, regardless of the allocator.
 Nonetheless the pool allocator also reduces the allocation overhead, though only by a relatively small fraction.
-Both techniques are required to reduce the overhead of memory allocations in dxex, and on by default.
+Both techniques are required to reduce the overhead of memory allocations in \textit{dxex}, and are turned on by default.
 
 Both pools and \textit{tcmalloc} try to keep memory allocated instead of returning it to the Operating System (OS).
 As a result, the OS will usually report memory consumption that is higher than the actual amount of stored data.
@@ -133,15 +133,15 @@ This easily becomes a bottleneck in simulation, since random numbers are a commo
 As such, a non-trivial amount of time in a simulation is often spent waiting for an RNG.
 
 We of course still need to guarantee determinism and isolation between the calls to the RNG, as well as avoiding excessive synchronization.
-Dxex uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alternative random number generator with performance and multithreading in mind.
-Since the RNG is an implicit part of the state in the DEVS formalism, though often not implemented as such, we evaluated performance for both approaches: one global RNG per thread, and one RNG per atomic DEVS model.
+\textit{Dxex} uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alternative random number generator with performance and multithreading in mind.
+Since the RNG is an implicit part of the state in the \textsf{Parallel DEVS} formalism, though often not implemented as such, we evaluated performance for both approaches: one global RNG per thread, and one RNG per atomic \textsf{DEVS} model.
 
 We see in Figure~\ref{fig:Queuerngspeedup} that storing the RNG in the state is very expensive for the default STL random number generator.
 This is primarily caused by the significant difference in size: 2504 bytes for the STL random number generator, and 24 bytes for the Tina random number generator.
-Dxex's sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in dxex conservative simulation.
+\textit{Dxex}'s sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in \textit{dxex} conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
 
-Figure~\ref{fig:Queuerngspeedup} shows that dxex in sequential simulation gets three times faster by using TRNG, than when using the STL RNG.
+Figure~\ref{fig:Queuerngspeedup} shows that \textit{dxex} in sequential simulation gets three times faster by using TRNG, than when using the STL RNG.
 For parallel simulation, the synchronization overhead seems to be the main bottleneck, as seen by the big speedup gap between sequential and parallel simulation.
 Conservative synchronization is almost insensitive to the changing of the RNG, though a slight increase in performance can be noted.
 Optimistic synchronization gets much slower when the RNG becomes part of the model state, since the state needs to be copied as well.

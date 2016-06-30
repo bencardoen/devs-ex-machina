@@ -1,10 +1,10 @@
 Simply because a synchronization protocol is ideal at the start of the simulation, does not mean that it will still be ideal during the simulation.
 It is well known, and repeated in the previous section, that model behaviour significantly influences the ideal synchronization protocol.
-Contrary to many modelling formalisms, the DEVS formalisms makes it possible to model basically any kind of discrete event model.
+Contrary to many modelling formalisms, the \textsf{DEVS} formalisms makes it possible to model basically any kind of discrete event model.
 As such, it is possible for the model to significantly change its behaviour throughout the simulation.
 
 Defining the ideal synchronization protocol at the start of the simulation, when information about future model behaviour is scarce, might therefore not offer the best possible performance.
-In dxex, we not only make it possible to define the synchronization protocol to use, but also to change this decision throughout simulation.
+In \textit{dxex}, we not only make it possible to define the synchronization protocol to use, but also to change this decision throughout simulation.
 To do this, all kernels are notified of the switch and they are forced to stop simulation.
 When stopped, each kernel instantiates a new core, with the new synchronization protocol, that is provided with the simulation state of the previous core.
 Simulation is then resumed with the new cores after the previous ones are destroyed.
