@@ -15,6 +15,7 @@ Due to our motivation for memory usage analysis, we will only measure peak alloc
 \subsubsection{Results}
 Figure~\ref{fig:memory} shows the memory used by the different benchmarks.
 Results are in megabytes, and show the total memory footprint of the running application (\textit{i.e.}, text, stack, and heap).
+Note the logarithmic scale due to the high memory consumption of optimistic synchronization.
 
 Unsurprisingly, optimistic synchronization results show very high memory usage due to the saved states.
 Note the logarithmic scale that was used for this reason.
@@ -23,9 +24,6 @@ Comparing similar approaches, we notice that dxex and adevs have very similar me
 
 Conservative simulation always uses more memory than sequential simulation, as is to be expected.
 Additional memory is required for the multiple threads, but also to store all events that are processed simultaneously.
-
-For the Phold benchmark, adevs using conservative synchronization took too long using our profiling tool, and was therefore aborted.
-Therefore, no results are shown for adevs.
 
 \begin{figure}
     \includegraphics[width=\columnwidth]{fig/memory_voorlopig.eps}
