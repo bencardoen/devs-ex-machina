@@ -11,7 +11,7 @@ A quick overview of features:
 
 * High performance logging framework (compile time optional)
 
-* Visualization and internal tracing of a simulation (compile time optional)
+* Visualisation and internal tracing of a simulation (compile time optional)
 
 * Implemented in standard C++ (C++11, C++14 optional) for maximum portability.
 
@@ -50,13 +50,13 @@ If you want to cite this project, kindly use the following bibtex
 
 This project is licensed under the EUPL, see COPYING.txt
 Copyright 2014-2016 University of Antwerp
+This project uses GTest, GPerftools, TRNG and includes their sources, see their respective licenses for details.
 
 ### Requirements ###
 
 * CMake >= 2.8.8
 * [Boost](http://www.boost.org/) >= 1.57
 * g++ >= 4.8 , clang++ >= 3.4 (versions of GCC up to 6.1 are supported)
-* [GTest](https://github.com/google/googletest/releases ) >= 1.7 (1.6 may work)
 * *Nix environment (Linux, Cygwin, MacOS). The project is developed on Fedora Rawhide, Ubuntu 14 LTS and Linux Mint 17, these are guaranteed to work.
 
 Optional:
@@ -66,7 +66,6 @@ Optional:
 * Perf (+kernel support) for the profiling/benchmark analysis.
 * libubsan (clang or g++ should provide this) for leak/race/undefined detection
 * Valgrind for memory profiling
-* tcmalloc for a significant speedup (CMake will try to find it, if not found not an error).
 * adevs for comparison
 
 ### Building & running ###
@@ -87,7 +86,7 @@ A list of targets:
 * dxexmachina_devstone
 * dxexmachina_interconnect
 * dxexmachina_phold
-* dxexmachina_priority
+* dxexmachina_pholdtree
 
 Note that at this point, only Clang and g++ are supported (with stringname : g++ , clang++)
 
@@ -112,10 +111,10 @@ NetBeans (version >= 7.0 with C++ support)
 * NetBeans will build the project and parse the source code, depending on which build you selected (default = dxexmachina kernel) you will have full IDE support for the project (Code completion, refactoring etc... .) 
 
 ### Benchmarking ###
-All benchmark data used in the paper can be found in 
+All benchmark data used in the conference paper can be found in 
 
 * Rscript/data
-* paper/fig/final_libreoffice_plots.ods
+* publications/Springsim2016/final_libreoffice_plots.ods
 
 First, to be able to build our adevs models the source of adevs is required.
 Create a file in {project_root}/main named "localpreferences.txt" where you can inform CMake of adevs' path :   
