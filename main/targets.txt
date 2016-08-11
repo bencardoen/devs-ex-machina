@@ -68,7 +68,6 @@ add_executable(${PROJECT_NAME}
     src/test/toolstest.cpp
     src/test/coretest.cpp
     src/test/benchmarktest.cpp
-    src/test/hotswaptest.cpp
     src/test/tracerstest.cpp
     src/test/networktest.cpp
     src/test/modeltest.cpp
