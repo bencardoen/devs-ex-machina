@@ -132,16 +132,6 @@ The memory benchmarks (only if you have at least 8GB RAM) requires a POSIX shell
 
 **$ ./membench.sh**
 
-
-### ThreadSanitizer ###
-LLVM's sanitizer framework requires position indepent code.
-* If you have clang and wish to run threadsanitizer (default if build type is Debug and compiler = clang++), you'll need to (re)compile Gtest:
-
-Some Linux distributions (Red Hat based) already ship libraries compiled with fpie, if not the case:
-
-* In the {gtest_root_folder}/cmake/internal_utils.cmake, line 75(v1.7) || line 65(v1.6):
-`_set(cxx_base_flags "-Wall -Wshadow **-fpie**")_`
-
 ### Windows ###
 Building on Windows is possible using [Cygwin 64-bit](https://cygwin.com/install.html ).
 
