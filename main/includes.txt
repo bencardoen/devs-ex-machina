@@ -1,0 +1,28 @@
+###############################################################################
+#   @author Ben Cardoen, Stijn Manhaeve                                       # 
+#									      #
+#  This file is part of the DEVS Ex Machina project.                          #
+#  Copyright 2014 - 2016 University of Antwerp                                #
+#  https://www.uantwerpen.be/en/                                              #
+#  Licensed under the EUPL V.1.1                                              #
+#  A full copy of the license is in COPYING.txt, or can be found at           #
+#  https://joinup.ec.europa.eu/community/eupl/og_page/eupl                    #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+### INCLUDE PATHS #############################################################
+# These are found by the section above.
+include_directories(${Boost_INCLUDE_DIRS})             
+include_directories(${GTEST_INCLUDE_DIRS})
+MESSAGE( STATUS"Using Boost Include Directories @ path :${Boost_INCLUDE_DIRS}")
+MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
+
+include_directories(    
+                src 
+                include
+                ${ADEVS_ROOT}/include
+                ${TRNG_ROOT}/dist/include/
+                ) 
+###############################################################################
+

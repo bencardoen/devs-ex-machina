@@ -1,0 +1,194 @@
+###############################################################################
+#   @author Ben Cardoen, Stijn Manhaeve                                       # 
+#									      #
+#  This file is part of the DEVS Ex Machina project.                          #
+#  Copyright 2014 - 2016 University of Antwerp                                #
+#  https://www.uantwerpen.be/en/                                              #
+#  Licensed under the EUPL V.1.1                                              #
+#  A full copy of the license is in COPYING.txt, or can be found at           #
+#  https://joinup.ec.europa.eu/community/eupl/og_page/eupl                    #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+## Targets
+
+add_library( 
+    DEVSEXMACHINACORE
+    OBJECT
+    src/tools/logger.cpp
+    src/tools/globallog.cpp
+    src/tools/coutredirect.cpp
+    src/tools/asynchwriter.cpp
+    src/model/atomicmodel.cpp
+    src/model/cellmodel.cpp
+    src/model/coupledmodel.cpp
+    src/model/rootmodel.cpp
+    src/model/model.cpp
+    src/model/port.cpp
+    src/model/core.cpp
+    src/model/dynamiccore.cpp
+    src/model/optimisticcore.cpp
+    src/model/conservativecore.cpp
+    src/model/zfunc.cpp
+    src/control/allocator.cpp
+    src/control/controller.cpp
+    src/control/controllerconfig.cpp
+    src/network/message.cpp
+    src/network/controlmessage.cpp
+    src/network/network.cpp
+    src/tracers/policies.cpp
+    src/tracers/tracemessage.cpp
+    src/tools/gviz.cpp
+    )
+
+# 2 packages of the devs simulator that compile on log level 15 and 0
+SET_TARGET_PROPERTIES(
+    DEVSEXMACHINACORE PROPERTIES EXCLUDE_FROM_ALL 1
+        )
+
+
+add_executable(${PROJECT_NAME}
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/examples/abstract_conservative/modela.cpp
+    src/examples/abstract_conservative/modelb.cpp
+    src/examples/abstract_conservative/modelc.cpp
+    src/examples/deadlock/ping.cpp
+    src/examples/deadlock/pingset.cpp
+    src/examples/trafficlight_classic/trafficlight.cpp
+    src/examples/trafficlight_coupled/trafficlightc.cpp
+    src/examples/trafficlight_coupled/policemanc.cpp
+    src/examples/trafficlight_coupled/trafficsystemc.cpp
+    src/examples/trafficlight_ds/policemands.cpp
+    src/examples/trafficlight_ds/trafficsystemds.cpp
+    src/performance/devstone/devstone.cpp
+    src/performance/phold/phold.cpp
+    src/performance/pholdtree/pholdtree.cpp
+    src/performance/highInterconnect/hinterconnect.cpp
+    src/test/toolstest.cpp
+    src/test/coretest.cpp
+    src/test/benchmarktest.cpp
+    src/test/hotswaptest.cpp
+    src/test/tracerstest.cpp
+    src/test/networktest.cpp
+    src/test/modeltest.cpp
+    src/test/compare.cpp
+    src/test/comparetest.cpp
+    src/test/loggertest.cpp
+    src/test/controllertest.cpp
+    src/test/messagetest.cpp
+    src/test/performancetest.cpp
+    src/test/testmodels.cpp
+    src/main.cpp
+    )
+
+add_executable(${PROJECT_NAME}_devstone
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/devstone/devstone.cpp
+    src/maindevstone.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+
+add_executable(${PROJECT_NAME}_interconnect
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/highInterconnect/hinterconnect.cpp
+    src/maininterconnect.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+
+add_executable(${PROJECT_NAME}_phold
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/phold/phold.cpp
+    src/mainphold.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+
+add_executable(${PROJECT_NAME}_pholdtree
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/pholdtree/pholdtree.cpp
+    src/mainpholdtree.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+
+add_executable(${PROJECT_NAME}_network
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/queuenetwork/queuenetwork.cpp
+    src/mainqueueserver.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+add_executable(${PROJECT_NAME}_priority
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/performance/prioritymessage/prioritymessage.cpp
+    src/mainprioritymessage.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_priority PROPERTIES EXCLUDE_FROM_ALL 1
+                    )
+
+add_executable(${PROJECT_NAME}_virus
+    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
+    src/examples/virus/virus.cpp
+    src/examples/virus/virustracer.cpp
+    src/mainvirus.cpp
+    )
+SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
+                    )
+
+##############################################################################
+### adevs targets ############################################################
+
+# now, adevs can be linked to like any other library
+add_executable(adevs_devstone
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
+add_executable(adevs_phold
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
+add_executable(adevs_pholdtree
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/pholdtree.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
+add_executable(adevs_interconnect
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
+                    LINK_FLAGS "-fopenmp"
+                    )
+
+add_executable(adevs_network
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
+    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
+    )
+SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
+                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
+                    LINK_FLAGS "-fopenmp"
+                    )

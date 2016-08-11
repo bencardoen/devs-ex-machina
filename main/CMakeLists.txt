@@ -20,7 +20,7 @@ cmake_minimum_required(VERSION 2.8)
 ###############################################################################
 
 
-### PROJECT NAME ##############################################################
+### PROJECT CONFIGURATION #####################################################
 SET(PROJECT_NAME "dxexmachina")
 SET(PROJECT_ROOT "${CMAKE_BINARY_DIR}/${TOTOP}")
 get_filename_component(PROJECT_ROOT "${PROJECT_ROOT}" ABSOLUTE)
@@ -37,267 +37,25 @@ project(${PROJECT_NAME})
 # In localpreferences.txt write any root path for any dependency listed.
 # DO NOT use comments in localpreferences.txt
 include ( localpreferences.txt OPTIONAL )
-# Used to check if a compile flag is accepted by the compiler
-# include (TestCXXAcceptsFlag)  # deprecated according to the docs
-include(CheckCXXCompilerFlag)   # use this instead
+include(CheckCXXCompilerFlag)
 find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)
 find_package(Doxygen)
-
-# Actual work of building/configuring deps.
 include ( dependencies.txt REQUIRED)
 
 ###############################################################################
 
-
 ### DOCUMENTATION #############################################################
-# add a target to generate API documentation with Doxygen
-if(DOXYGEN_FOUND)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-add_custom_target(doc
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
-)
-endif(DOXYGEN_FOUND)
-###############################################################################
-
+include( doc.txt REQUIRED)
 
 ### COMPILER ##################################################################
 include(compileflags.txt REQUIRED)
 
-### Print everything CMake does to cout to verify the options are sane.
-# set(CMAKE_VERBOSE_MAKEFILE ON)
-###############################################################################
+### INCLUDE PATHS #############################################################
+include(includes.txt REQUIRED)
 
-
-add_library( 
-    DEVSEXMACHINACORE
-    OBJECT
-    src/tools/logger.cpp
-    src/tools/globallog.cpp
-    src/tools/coutredirect.cpp
-    src/tools/asynchwriter.cpp
-    src/model/atomicmodel.cpp
-    src/model/cellmodel.cpp
-    src/model/coupledmodel.cpp
-    src/model/rootmodel.cpp
-    src/model/model.cpp
-    src/model/port.cpp
-    src/model/core.cpp
-    src/model/dynamiccore.cpp
-    src/model/optimisticcore.cpp
-    src/model/conservativecore.cpp
-    src/model/zfunc.cpp
-    src/control/allocator.cpp
-    src/control/controller.cpp
-    src/control/controllerconfig.cpp
-    src/network/message.cpp
-    src/network/controlmessage.cpp
-    src/network/network.cpp
-    src/tracers/policies.cpp
-    src/tracers/tracemessage.cpp
-    src/tools/gviz.cpp
-    )
-
-# 2 packages of the devs simulator that compile on log level 15 and 0
-SET_TARGET_PROPERTIES(
-    DEVSEXMACHINACORE PROPERTIES EXCLUDE_FROM_ALL 1
-        )
-
-
-add_executable(${PROJECT_NAME}
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/examples/abstract_conservative/modela.cpp
-    src/examples/abstract_conservative/modelb.cpp
-    src/examples/abstract_conservative/modelc.cpp
-    src/examples/deadlock/ping.cpp
-    src/examples/deadlock/pingset.cpp
-    src/examples/trafficlight_classic/trafficlight.cpp
-    src/examples/trafficlight_coupled/trafficlightc.cpp
-    src/examples/trafficlight_coupled/policemanc.cpp
-    src/examples/trafficlight_coupled/trafficsystemc.cpp
-    src/examples/trafficlight_ds/policemands.cpp
-    src/examples/trafficlight_ds/trafficsystemds.cpp
-    #src/examples/forestfire/constants.cpp
-    #src/examples/forestfire/firecell.cpp
-    #src/examples/forestfire/firecellstate.cpp
-    #src/examples/forestfire/firegenerator.cpp
-    #src/examples/forestfire/firespread.cpp
-    src/performance/devstone/devstone.cpp
-    src/performance/phold/phold.cpp
-    src/performance/pholdtree/pholdtree.cpp
-    src/performance/highInterconnect/hinterconnect.cpp
-    src/test/toolstest.cpp
-    src/test/coretest.cpp
-    src/test/benchmarktest.cpp
-    src/test/tracerstest.cpp
-    src/test/networktest.cpp
-    src/test/modeltest.cpp
-    src/test/compare.cpp
-    src/test/comparetest.cpp
-    src/test/loggertest.cpp
-    src/test/controllertest.cpp
-    src/test/messagetest.cpp
-    src/test/performancetest.cpp
-    src/test/testmodels.cpp
-    src/main.cpp
-    )
-
-add_executable(${PROJECT_NAME}_devstone
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/devstone/devstone.cpp
-    src/maindevstone.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-
-add_executable(${PROJECT_NAME}_interconnect
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/highInterconnect/hinterconnect.cpp
-    src/maininterconnect.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-
-add_executable(${PROJECT_NAME}_phold
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/phold/phold.cpp
-    src/mainphold.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_phold PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-
-add_executable(${PROJECT_NAME}_pholdtree
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/pholdtree/pholdtree.cpp
-    src/mainpholdtree.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-
-add_executable(${PROJECT_NAME}_network
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/queuenetwork/queuenetwork.cpp
-    src/mainqueueserver.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_network PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-add_executable(${PROJECT_NAME}_priority
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/performance/prioritymessage/prioritymessage.cpp
-    src/mainprioritymessage.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_priority PROPERTIES EXCLUDE_FROM_ALL 1
-                    )
-
-add_executable(${PROJECT_NAME}_virus
-    $<TARGET_OBJECTS:DEVSEXMACHINACORE>
-    src/examples/virus/virus.cpp
-    src/examples/virus/virustracer.cpp
-    src/mainvirus.cpp
-    )
-SET_TARGET_PROPERTIES(${PROJECT_NAME}_virus PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-DVIRUSTRACER=1 -w"
-                    )
-
-##############################################################################
-### adevs targets ############################################################
-
-# now, adevs can be linked to like any other library
-add_executable(adevs_devstone
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/devstone.cpp
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
-    )
-SET_TARGET_PROPERTIES(adevs_devstone PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
-                    LINK_FLAGS "-fopenmp"
-                    )
-
-add_executable(adevs_phold
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/phold.cpp
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
-    )
-SET_TARGET_PROPERTIES(adevs_phold PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
-                    LINK_FLAGS "-fopenmp"
-                    )
-
-add_executable(adevs_pholdtree
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/pholdtree.cpp
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
-    )
-SET_TARGET_PROPERTIES(adevs_pholdtree PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
-                    LINK_FLAGS "-fopenmp"
-                    )
-
-add_executable(adevs_interconnect
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/highinterconnect.cpp
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
-    )
-SET_TARGET_PROPERTIES(adevs_interconnect PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
-                    LINK_FLAGS "-fopenmp"
-                    )
-
-add_executable(adevs_network
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/network.cpp
-    ${ADEVS_BENCHMARKS_ROOT}/benchmarks/common.cpp
-    )
-SET_TARGET_PROPERTIES(adevs_network PROPERTIES EXCLUDE_FROM_ALL 1
-                    COMPILE_FLAGS "-o3 -fopenmp ${ENABLE_FRNG} ${ENABLE_STAT}"
-                    LINK_FLAGS "-fopenmp"
-                    )
-
-### INCLUDE PATHS ############################################################
-# These are found by the section above.
-include_directories(${Boost_INCLUDE_DIRS})             
-include_directories(${GTEST_INCLUDE_DIRS})
-MESSAGE( STATUS"Using Boost Include Directories @ path :${Boost_INCLUDE_DIRS}")
-MESSAGE( STATUS"Using GTest Include Directories @ path :${GTEST_INCLUDE_DIRS}")
-
-include_directories(    
-                src 
-                include
-                ${ADEVS_ROOT}/include
-                ${TRNG_ROOT}/dist/include/
-                )   # Project headers are in same folder as source
-###############################################################################
-
+### TARGET ####################################################################
+include(targets.txt REQUIRED)
 
 ### LINKER ####################################################################
-# Register libraries needed.
-set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT})
-#set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-
-## Clang dies with a segfault of all things if the following linker flags are set
-## G++ does not even link if they are NOT set.
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    MESSAGE( STATUS "Linking with GNU, adapting linker flags")
-    SET(CMAKE_EXE_LINKER_FLAGS "-fpic" )
-endif()
-
-# Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} trng tcmalloclib )
-# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_phold ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_network ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_virus ${LIBS} trng tcmalloclib)
-target_link_libraries( ${PROJECT_NAME}_priority ${LIBS} trng tcmalloclib)
-#target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES} trng)
-# target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS} trng)
-target_link_libraries( adevs_devstone ${LIBS} adevs trng tcmalloclib)
-target_link_libraries( adevs_phold ${LIBS} adevs trng tcmalloclib)
-target_link_libraries( adevs_interconnect ${LIBS} adevs trng tcmalloclib)
-target_link_libraries( adevs_network ${LIBS} adevs trng tcmalloclib)
-target_link_libraries( adevs_pholdtree ${LIBS} adevs trng tcmalloclib)
-###############################################################################
+include(linking.txt REQUIRED)

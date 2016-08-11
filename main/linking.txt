@@ -1,0 +1,43 @@
+###############################################################################
+#   @author Ben Cardoen, Stijn Manhaeve                                       # 
+#									      #
+#  This file is part of the DEVS Ex Machina project.                          #
+#  Copyright 2014 - 2016 University of Antwerp                                #
+#  https://www.uantwerpen.be/en/                                              #
+#  Licensed under the EUPL V.1.1                                              #
+#  A full copy of the license is in COPYING.txt, or can be found at           #
+#  https://joinup.ec.europa.eu/community/eupl/og_page/eupl                    #
+#                                                                             #
+#                                                                             #
+###############################################################################
+
+## Linker
+
+# Register libraries needed.
+set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT})
+
+## Clang dies with a segfault of all things if the following linker flags are set
+## G++ does not even link if they are NOT set.
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    MESSAGE( STATUS "Linking with GNU, adapting linker flags")
+    SET(CMAKE_EXE_LINKER_FLAGS "-fpic" )
+endif()
+
+# Execute linker
+target_link_libraries( ${PROJECT_NAME} ${LIBS} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} trng tcmalloclib )
+# target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS} trng)
+target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_phold ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_network ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_virus ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_priority ${LIBS} trng tcmalloclib)
+#target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES} trng)
+# target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS} trng)
+target_link_libraries( adevs_devstone ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_phold ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_interconnect ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_network ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_pholdtree ${LIBS} adevs trng tcmalloclib)
+###############################################################################
