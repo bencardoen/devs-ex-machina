@@ -32,7 +32,6 @@ include ( localpreferences.txt OPTIONAL )
 include(CheckCXXCompilerFlag)   # use this instead
 find_package(Boost COMPONENTS  system)
 find_package(Threads REQUIRED)
-find_package(GTest REQUIRED)
 find_package(Doxygen)
 
 
@@ -73,6 +72,11 @@ set_property(TARGET trng APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(trng PROPERTIES
   IMPORTED_LOCATION_NOCONFIG "${TRNG_LIBRARY}")
 
+## GTest
+set(GTEST_DIR ../gtest)
+ADD_SUBDIRECTORY(${GTEST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/gtest)
+set(GTEST_INCLUDE_DIRS "${GTEST_DIR}/include")
+#enable_testing()
 
 
 ###############################################################################
@@ -497,7 +501,7 @@ if(TCMALLOC_LIBRARY)
     MESSAGE( STATUS "Have tcmalloc, linking...")
     set(LIBS ${LIBS} -ltcmalloc) 
 endif()
-set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+#set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ## Clang dies with a segfault of all things if the following linker flags are set
 ## G++ does not even link if they are NOT set.
@@ -507,7 +511,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} trng)
+target_link_libraries( ${PROJECT_NAME} ${LIBS} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} trng)
 # target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS} trng)
 target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} trng)
 target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} trng)
