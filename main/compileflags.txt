@@ -1,0 +1,140 @@
+
+###############################################################################
+#   @author Ben Cardoen, Tim Tuijn, Stijn Manhaeve                            #
+#									      #
+#  This file is part of the DEVS Ex Machina project.                          #
+#  Copyright 2014 - 2016 University of Antwerp                                #
+#  https://www.uantwerpen.be/en/                                              #
+#  Licensed under the EUPL V.1.1                                              #
+#  A full copy of the license is in COPYING.txt, or can be found at           #
+#  https://joinup.ec.europa.eu/community/eupl/og_page/eupl                    # 
+#      Author: Ben Cardoen, Stijn Manhaeve                                    #
+#                                                                             #
+#                                                                             #
+###############################################################################
+# Configure C++ compiler
+
+### COMPILER ##################################################################
+# NOTE:  Specify which compiler (explicit) to use in ./generate_build.sh
+
+# Check for Mac OS X, if so we must link with libc++ library instead of default library
+SET(flagstdc11 "")
+if (${APPLE})
+    MESSAGE(STATUS "Mac OS X detected: setting -stdlib flag.")
+    SET(flagstdc11 "${flagstdc11} -stdlib=libc++")
+endif()
+
+SET(OPTIMIZATION_FLAG "-O3")
+if (${APPLE})
+    MESSAGE(STATUS "Mac OS X detected: Changing maximum optimization flag to -O1.")
+    SET(OPTIMIZATION_FLAG "-O1")
+endif()
+
+# C++ Standards check. We really need C++14 for relaxed constexpr, but we can survive with decent C++11.
+CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX14)
+    MESSAGE(STATUS "c++14 support detected, compiling with -std=c++14")
+    if(CYGWIN)
+        MESSAGE(STATUS "Found cygwin, changing to gnu++14.")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+    else ()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    endif()
+    # Inform rng's that we can use the cexpr version.
+    # If this is not the case, all the constexpr keywords are removed (at a performance hit)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPP14")
+elseif(COMPILER_SUPPORTS_CXX11)
+    MESSAGE(STATUS "c++11 support detected, compiling with -std=c++11")
+	if(CYGWIN)
+		MESSAGE(STATUS "Found cygwin, changing to gnu++11.")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+	else ()
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	endif()
+elseif(COMPILER_SUPPORTS_CXX0X)
+    MESSAGE(STATUS "c++11 support detected, compiling with -std=c++0x")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
+message("Setting options for build types.")
+SET(CMAKE_CXX_FLAGS_DEBUG
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIC -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
+    CACHE STRING "Flags used by the C++ compiler during debug builds."
+    FORCE )
+SET(CMAKE_CXX_FLAGS_RELEASE
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIC -DLOG_LEVEL=0 "
+    CACHE STRING "Flags used by the C++ compiler during release builds."
+    FORCE )
+SET(CMAKE_CXX_FLAGS_BENCHMARK
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
+    CACHE STRING "Flags used by the C++ compiler during benchmark builds."
+    FORCE )
+SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
+    CACHE STRING "Flags used by the C++ compiler during benchmark builds."
+    FORCE )
+if(FASTRNG)
+    MESSAGE(STATUS "FASTRNG passed as argument to CMake, this will alter ADEVS' compilation and dxex Release builds.")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DFRNG" )
+    # See adevs config lower down.
+endif()
+
+if(POOL_SINGLE_ARENA)
+    MESSAGE(STATUS "Pools --- type set to single arena.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_SINGLE_ARENA" )
+    # See adevs config lower down.
+endif(POOL_SINGLE_ARENA)
+
+if(POOL_SINGLE_ARENA_DYNAMIC)
+    MESSAGE(STATUS "Pools --- type set to single arena.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_SINGLE_ARENA_DYNAMIC" )
+endif(POOL_SINGLE_ARENA_DYNAMIC)
+ 
+
+if(POOL_SINGLE_STL)
+    MESSAGE(STATUS "Pools --- type set to single stl.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_SINGLE_STL" )
+    
+endif(POOL_SINGLE_STL)
+
+if(POOL_MULTI_STL)
+    MESSAGE(STATUS "Pools --- Pool type set to multi STL.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DPOOL_MULTI_STL" )    
+endif(POOL_MULTI_STL)
+
+
+if(SHOWSTAT)
+    MESSAGE(STATUS "SHOW STAT enabled.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DUSE_STAT" )
+    SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG "${CMAKE_CXX_FLAGS_BENCHMARKFRNG} -DUSE_STAT" )
+endif(SHOWSTAT)
+
+if(SHOWVIZ)
+    MESSAGE(STATUS "SHOW VIZ enabled.")
+    SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -DUSE_VIZ" )
+    SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG "${CMAKE_CXX_FLAGS_BENCHMARKFRNG} -DUSE_VIZ" )
+endif(SHOWVIZ)
+
+SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;Benchmark;BenchmarkFrng")
+
+### Threadsanitizer ###########################################################
+# If we use clang compiler and thread-sanitizer is supported we can add -fsanitize=thread
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    CHECK_CXX_COMPILER_FLAG(-fsanitize=thread FSANITIZE_SUPPORTED)
+    if (FSANITIZE_SUPPORTED)
+        MESSAGE( STATUS"Working with Clang: enabling threadsanitizer")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=thread" )
+    else()
+        MESSAGE( STATUS"Working with Clang: threadsanitizer not supported, enabling UBSAN")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address" )       
+    endif()
+else()
+        MESSAGE( STATUS"Using G++ : using flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_BENCHMARK} -flto")
+        SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG "${CMAKE_CXX_FLAGS_BENCHMARKFRNG} -flto")
+endif()
+###############################################################################

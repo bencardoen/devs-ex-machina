@@ -1,0 +1,110 @@
+###############################################################################
+#   @author Ben Cardoen, Tim Tuijn, Stijn Manhaeve                            #
+#									      #
+#  This file is part of the DEVS Ex Machina project.                          #
+#  Copyright 2014 - 2016 University of Antwerp                                #
+#  https://www.uantwerpen.be/en/                                              #
+#  Licensed under the EUPL V.1.1                                              #
+#  A full copy of the license is in COPYING.txt, or can be found at           #
+#  https://joinup.ec.europa.eu/community/eupl/og_page/eupl                    # 
+#      Author: Ben Cardoen, Stijn Manhaeve                                    #
+#                                                                             #
+#                                                                             #
+###############################################################################
+# Configure and build dependencies
+
+###################################################################### TRNG ###
+set(TRNG_ROOT ${PROJECT_ROOT}/trng)
+MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_ROOT}")
+set(TRNG_LIBRARY ${TRNG_ROOT}/dist/lib/libtrng4.a)
+MESSAGE( STATUS "TRNG_LIBRARY:       ${TRNG_LIBRARY}")
+# Building tina is less expensive than dxex, but still. Detect if we built it before, and if so don't do anything.
+# Since the trng source is stable, this fails only if one of us breaks stuff, but then we're the ones able to fix it. (I'm going to regret this)
+# Layout of TRNG : /dist/include/trng && dist/lib
+# trng/
+#       dist/{include/trng|lib} << exported includes & lib
+#       trngbuild << tmp directory to build trng
+#       trng-x-y-z.tar.gz << persistent archive of sources, extracted into build trngbuild
+add_custom_target(build_trng
+                    COMMAND [ -f ${TRNG_LIBRARY} ] && echo "TRNG EXISTS" || echo "TRNG NOT FOUND"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p trngbuild && echo "Creating build trng folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && mkdir -p dist && echo "Creating dist trng folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && tar -xvzf trng-4.19.tar.gz -C trngbuild --strip 1 && echo "Extracting trng" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TRNG_LIBRARY} ] && trngbuild/configure --prefix=${TRNG_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TRNG"
+                    COMMAND [ -f config.log ] && rm config.status config.log Makefile libtool || echo "Clean up stage 1 omitted"
+                    COMMAND [ -d src ] && rm -r src trng examples trngbuild || echo "Clean up stage 2 omitted"
+                    WORKING_DIRECTORY ${TRNG_ROOT} # the makefile is here
+                   )
+add_library(trng STATIC IMPORTED)
+add_dependencies(trng build_trng)
+set_property(TARGET trng APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(trng PROPERTIES
+  IMPORTED_LOCATION_NOCONFIG "${TRNG_LIBRARY}")
+
+##################################################################### GTEST ###
+set(GTEST_DIR ../gtest)
+ADD_SUBDIRECTORY(${GTEST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/gtest)
+set(GTEST_INCLUDE_DIRS "${GTEST_DIR}/include")
+
+
+################################################################## TCMALLOC ###
+set(TCMALLOC_ROOT ${PROJECT_ROOT}/tcmalloc)
+MESSAGE( STATUS "TCMALLOC_ROOT:       ${TCMALLOC_ROOT}")
+set(TCMALLOC_LIBRARY ${TCMALLOC_ROOT}/dist/lib/libtcmalloc_minimal.a)
+MESSAGE( STATUS "TCMALLOC_LIBRARY:       ${TCMALLOC_LIBRARY}")
+# root/tcmalloc/tar file
+# root/tcmalloc/dist << holds includes, libs
+# root/tcmalloc/tcmallodbuild << build directory
+add_custom_target(build_tcmalloc
+                    COMMAND [ -f ${TCMALLOC_LIBRARY} ] && echo "TCMALLOC EXISTS" || echo "TCMALLOC NOT FOUND"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && mkdir -p tcmallocbuild && echo "Creating build tcmalloc folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && mkdir -p dist && echo "Creating dist tcmalloc folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && tar -xvzf tcmalloc.tar.gz -C tcmallocbuild --strip 1 && echo "Extracting tcmalloc" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && tcmallocbuild/configure --prefix=${TCMALLOC_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TCMALLOC"
+                    COMMAND [ -f config.log ] && rm config.status config.log Makefile libtool || echo "Clean up stage 1 omitted"
+                    COMMAND [ -d src ] && rm -r src tcmallocbuild benchmark || echo "Clean up stage 2 omitted"
+                    WORKING_DIRECTORY ${TCMALLOC_ROOT} # the makefile is here
+                   )
+add_library(tcmalloclib STATIC IMPORTED)
+add_dependencies(tcmalloclib build_tcmalloc)
+set_property(TARGET tcmalloclib APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(tcmalloclib PROPERTIES
+  IMPORTED_LOCATION_NOCONFIG "${TCMALLOC_LIBRARY}")
+
+##################################################################### ADEVS ###
+# adevs has its own makefile. Therefore, use that make system instead of writing our own.
+# as a plus: try not to put the adevs library in the same folder as the adevs sources.
+
+# If CMake has the cli param FASTRNG set, switch on fast rngs in adevs, to match our usages of the exact same functions.
+if(FASTRNG)
+    MESSAGE(STATUS "FAST RNG enabled for adevs ? : ${FASTRNG}")
+    SET(ENABLE_FRNG "-DFRNG")
+else()
+    SET(ENABLE_FRNG "")
+endif()
+
+if(ADEVS_ROOT)
+    MESSAGE( STATUS "User provided adevs root :" )
+    MESSAGE( STATUS ADEVS_ROOT)
+else()
+    MESSAGE( WARNING " No adevs directory provided ! : assuming default adevs directory : ./adevs")
+set(ADEVS_ROOT ${PROJECT_ROOT}/adevs)
+endif()
+set(ADEVS_BENCHMARKS_ROOT ${PROJECT_ROOT}/main/src_adevs_benchmarks)
+set(ADEVS_INCLUDE_PATH ${ADEVS_ROOT}/include)
+set(ADEVS_LIBRARY ${ADEVS_ROOT}/lib/libadevs.a)
+MESSAGE( STATUS "ADEVS_ROOT:             " ${ADEVS_ROOT} )
+MESSAGE( STATUS "ADEVS_LIBRARY:             " ${ADEVS_LIBRARY} )
+add_custom_target(build_adevs
+                   COMMAND make                         # build the library
+                   COMMAND mkdir -p ../lib              # ceate the folder for the librar
+                   COMMAND mv ./libadevs.a -t ../lib/   # move the library to that folder
+                   COMMAND make clean                   # clean the build files
+                   WORKING_DIRECTORY ${ADEVS_ROOT}/src/ # the makefile is here
+                   )
+add_library(adevs STATIC IMPORTED)
+add_dependencies(adevs build_adevs)
+set_property(TARGET adevs APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(adevs PROPERTIES
+  IMPORTED_LOCATION_NOCONFIG "${ADEVS_LIBRARY}")
+
