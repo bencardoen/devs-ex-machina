@@ -10,6 +10,7 @@ adevs/*
 /pholdtree.txt
 /trng/src/config.hpp
 /trng/dist
+/tcmalloc/dist
 /publications/Journal/fig/*eps-converted-to.pdf
 /publications/Journal/*.aux
 /publications/Journal/*.log
