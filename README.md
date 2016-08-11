@@ -46,6 +46,16 @@ If you want to cite this project, kindly use the following bibtex
 ```
 
 
+All benchmark data used in the conference paper can be found in 
+
+* Rscript/data
+* publications/Springsim2016/final_libreoffice_plots.ods
+
+For the journal paper (under review), the relevant data can be found in
+* publications/Journal/fig/plots.ods
+
+
+
 ### License ###
 
 This project is licensed under the EUPL, see COPYING.txt
@@ -141,7 +151,7 @@ Note that the compiler will issue warnings about -fPic having no effect, this is
 
 ### Troubleshooting ###
 * CMake fails to find dependencies : 
-if Boost or GTest are not located where cmake looks for them, make a local file in the root project directory named _localpreferences.txt_ where you put
+if Boost is not located where cmake looks for them, make a local file in the root project directory named _localpreferences.txt_ where you put
 `set({BOOST||GTEST}_ROOT{my_path})`
 
 * After any change to the CMakeLists.txt, remove your build directory to prevent stale CMake configuration files corrupting the build. The setup.sh script is capable of doing this for you.
