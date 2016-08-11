@@ -52,6 +52,7 @@ All benchmark data used in the conference paper can be found in
 * publications/Springsim2016/final_libreoffice_plots.ods
 
 For the journal paper (under review), the relevant data can be found in
+
 * publications/Journal/fig/plots.ods
 
 
@@ -67,7 +68,7 @@ This project uses GTest, GPerftools, TRNG and includes their sources, see their 
 * CMake >= 2.8.8
 * [Boost](http://www.boost.org/) >= 1.57
 * g++ >= 4.8 , clang++ >= 3.4 (versions of GCC up to 6.1 are supported)
-* *Nix environment (Linux, Cygwin, MacOS). The project is developed on Fedora Rawhide, Ubuntu 14 LTS and Linux Mint 17, these are guaranteed to work.
+* *Nix environment (Linux, Cygwin, MacOS). The project is developed on Fedora 24, Linux Mint 17, these are guaranteed to work.
 
 Optional:
 
