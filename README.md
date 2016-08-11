@@ -142,16 +142,22 @@ The memory benchmarks (only if you have at least 8GB RAM) requires a POSIX shell
 
 **$ ./membench.sh**
 
+
+For the 2nd paper, this memory profiling script avoids valgrind. 
+**$ ./membenchvs.sh**
+
 ### Windows ###
 Building on Windows is possible using [Cygwin 64-bit](https://cygwin.com/install.html ).
 
-The Cygwin installer will give you the opportunity to install, with the exception of gtest, all dependencies. From inside the Cygwin shell you can follow the build instructions above.
+The Cygwin installer will give you the opportunity to install all dependencies. From inside the Cygwin shell you can follow the build instructions above. 
 
 Note that the compiler will issue warnings about -fPic having no effect, this is a harmless side-effect.
+
+Note that this project is developed on Linux, we cannot guarantee that the latest development version will build on Cygwin without issues.
 
 ### Troubleshooting ###
 * CMake fails to find dependencies : 
 if Boost is not located where cmake looks for them, make a local file in the root project directory named _localpreferences.txt_ where you put
-`set({BOOST||GTEST}_ROOT{my_path})`
+`set(BOOST_ROOT{my_path})`
 
 * After any change to the CMakeLists.txt, remove your build directory to prevent stale CMake configuration files corrupting the build. The setup.sh script is capable of doing this for you.
