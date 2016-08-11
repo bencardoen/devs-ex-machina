@@ -35,15 +35,6 @@ find_package(Threads REQUIRED)
 find_package(Doxygen)
 
 
-SET(TCMALLOC_NAMES ${TCMALLOC_NAMES} tcmalloc)
-FIND_LIBRARY(TCMALLOC_LIBRARY
-      NAMES ${TCMALLOC_NAMES}
-      PATHS /usr/lib /usr/local/lib
-)
-if(TCMALLOC_LIBRARY)
-    MESSAGE(STATUS "TCMALLOC LIB FOUND")
-endif(TCMALLOC_LIBRARY)
-
 ## Tina FRNG
 set(TRNG_ROOT ${PROJECT_ROOT}/trng)
 MESSAGE( STATUS "TRNG_ROOT:       ${TRNG_ROOT}")
@@ -76,7 +67,31 @@ set_target_properties(trng PROPERTIES
 set(GTEST_DIR ../gtest)
 ADD_SUBDIRECTORY(${GTEST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/gtest)
 set(GTEST_INCLUDE_DIRS "${GTEST_DIR}/include")
-#enable_testing()
+
+## TCMALLOC
+set(TCMALLOC_ROOT ${PROJECT_ROOT}/tcmalloc)
+MESSAGE( STATUS "TCMALLOC_ROOT:       ${TCMALLOC_ROOT}")
+set(TCMALLOC_LIBRARY ${TCMALLOC_ROOT}/dist/lib/libtcmalloc_minimal.a)
+MESSAGE( STATUS "TCMALLOC_LIBRARY:       ${TCMALLOC_LIBRARY}")
+# root/tcmalloc/tar file
+# root/tcmalloc/dist << holds includes, libs
+# root/tcmalloc/tcmallodbuild << build directory
+add_custom_target(build_tcmalloc
+                    COMMAND [ -f ${TCMALLOC_LIBRARY} ] && echo "TCMALLOC EXISTS" || echo "TCMALLOC NOT FOUND"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && mkdir -p tcmallocbuild && echo "Creating build tcmalloc folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && mkdir -p dist && echo "Creating dist tcmalloc folder" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && tar -xvzf tcmalloc.tar.gz -C tcmallocbuild --strip 1 && echo "Extracting tcmalloc" || echo "Skipping build stage"
+                    COMMAND [ ! -f ${TCMALLOC_LIBRARY} ] && tcmallocbuild/configure --prefix=${TCMALLOC_ROOT}/dist && make && make install && make clean || echo "Skipping Compilation of TCMALLOC"
+                    COMMAND [ -f config.log ] && rm config.status config.log Makefile libtool || echo "Clean up stage 1 omitted"
+                    COMMAND [ -d src ] && rm -r src tcmallocbuild benchmark || echo "Clean up stage 2 omitted"
+                    WORKING_DIRECTORY ${TCMALLOC_ROOT} # the makefile is here
+                   )
+add_library(tcmalloclib STATIC IMPORTED)
+add_dependencies(tcmalloclib build_tcmalloc)
+set_property(TARGET tcmalloclib APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+set_target_properties(tcmalloclib PROPERTIES
+  IMPORTED_LOCATION_NOCONFIG "${TCMALLOC_LIBRARY}")
+
 
 
 ###############################################################################
@@ -497,10 +512,6 @@ include_directories(
 ### LINKER ####################################################################
 # Register libraries needed.
 set(LIBS ${LIBS} ${Boost_LIBRARIES}  ${CMAKE_THREAD_LIBS_INIT})
-if(TCMALLOC_LIBRARY)
-    MESSAGE( STATUS "Have tcmalloc, linking...")
-    set(LIBS ${LIBS} -ltcmalloc) 
-endif()
 #set(GTEST_LIBS ${LIBS} ${GTEST_BOTH_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 ## Clang dies with a segfault of all things if the following linker flags are set
@@ -511,20 +522,20 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 # Execute linker
-target_link_libraries( ${PROJECT_NAME} ${LIBS} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} trng)
+target_link_libraries( ${PROJECT_NAME} ${LIBS} gtest gtest_main ${CMAKE_THREAD_LIBS_INIT} trng tcmalloclib )
 # target_link_libraries( ${PROJECT_NAME}_benchfire ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_phold ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_network ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_virus ${LIBS} trng)
-target_link_libraries( ${PROJECT_NAME}_priority ${LIBS} trng)
+target_link_libraries( ${PROJECT_NAME}_devstone ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_interconnect ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_phold ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_network ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_pholdtree ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_virus ${LIBS} trng tcmalloclib)
+target_link_libraries( ${PROJECT_NAME}_priority ${LIBS} trng tcmalloclib)
 #target_link_libraries( ${PROJECT_NAME}_benchpools ${Boost_LIBRARIES} trng)
 # target_link_libraries( ${PROJECT_NAME}_traffic ${LIBS} trng)
-target_link_libraries( adevs_devstone ${LIBS} adevs trng)
-target_link_libraries( adevs_phold ${LIBS} adevs trng)
-target_link_libraries( adevs_interconnect ${LIBS} adevs trng)
-target_link_libraries( adevs_network ${LIBS} adevs trng)
-target_link_libraries( adevs_pholdtree ${LIBS} adevs trng)
+target_link_libraries( adevs_devstone ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_phold ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_interconnect ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_network ${LIBS} adevs trng tcmalloclib)
+target_link_libraries( adevs_pholdtree ${LIBS} adevs trng tcmalloclib)
 ###############################################################################
