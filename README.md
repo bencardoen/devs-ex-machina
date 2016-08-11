@@ -145,6 +145,7 @@ The memory benchmarks (only if you have at least 8GB RAM) requires a POSIX shell
 
 
 For the 2nd paper, this memory profiling script avoids valgrind. 
+
 **$ ./membenchvs.sh**
 
 ### Windows ###
