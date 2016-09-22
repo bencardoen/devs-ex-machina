@@ -10,6 +10,7 @@
 
 #include "performance/devstone/devstone.h"
 #include "tools/stringtools.h"
+#include <chrono>
 #include <limits>
 #include <random>
 
@@ -81,6 +82,7 @@ void Processor::intTransition()
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1) : T_100;
 	}
 	++(st.m_eventsHad);
+        
 	LOG_DEBUG("internal event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
 }
 
@@ -124,6 +126,7 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 		st.m_event1 = ev1;
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1)  : T_100;
 	}
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 }
 
 void Processor::output(std::vector<n_network::t_msgptr>& msgs) const

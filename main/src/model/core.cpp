@@ -208,7 +208,10 @@ void n_model::Core::transition()
 	m_heap.signalUpdateSize(k);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), "calculating whether we should reschedule one by one: k=", k, " N=", m_indexed_models.size(), " oneByOne=", m_heap.doSingleUpdate());
 
-	for (t_raw_atomic imminent : m_imminents) {
+#pragma omp parallel for num_threads(4)
+        for (std::vector<t_raw_atomic>::iterator it = m_imminents.begin(); it < m_imminents.end(); ++it){
+                auto imminent = *it;
+	//for (t_raw_atomic imminent : m_imminents) {
                 const size_t modelid = imminent->getLocalID();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " imminent nextType() = ", int(imminent->nextType()));
 		if (!hasMail(modelid)) {
@@ -233,10 +236,15 @@ void n_model::Core::transition()
 		}
                 imminent->clearSentMessages();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-		if(m_heap.doSingleUpdate())
-			m_heap.update(modelid);
+//		if(m_heap.doSingleUpdate())
+//			m_heap.update(modelid);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
 	}
+        if(m_heap.doSingleUpdate()){
+            for(auto imminent : m_imminents){
+                    m_heap.update(imminent->getLocalID());
+            }
+        }
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs");
         for(auto external : m_externs){
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing external transition for model ", external->getName());

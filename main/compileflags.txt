@@ -61,19 +61,19 @@ endif()
 
 message("Setting options for build types.")
 SET(CMAKE_CXX_FLAGS_DEBUG
-    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIC -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ "
+    "${CMAKE_CXX_FLAGS_DEBUG} -march=native -O0 ${flagstdc11} -g -Wall -Wextra -pedantic -fPIC -DSAFETY_CHECKS -DLOG_LEVEL=15 -DUSE_VIZ -fopenmp"
     CACHE STRING "Flags used by the C++ compiler during debug builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_RELEASE
-    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIC -DLOG_LEVEL=0 "
+    "${CMAKE_CXX_FLAGS_RELEASE} -march=native -O2 ${flagstdc11} -g -Wall  -fPIC -DLOG_LEVEL=0 -fopenmp"
     CACHE STRING "Flags used by the C++ compiler during release builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARK
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG "
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -fopenmp"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 SET(CMAKE_CXX_FLAGS_BENCHMARKFRNG
-    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG"
+    "${OPTIMIZATION_FLAG} ${flagstdc11} -march=native -Wall -fPIC -DLOG_LEVEL=0 -DBENCHMARK -DNDEBUG -DFRNG -fopenmp"
     CACHE STRING "Flags used by the C++ compiler during benchmark builds."
     FORCE )
 if(FASTRNG)
