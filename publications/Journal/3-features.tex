@@ -76,11 +76,11 @@ The exception is conservative synchronization, where a lookahead function is req
 Two options are possible: either a lookahead function must always be provided, even when it is not required and possibly not used, or we use a default lookahead function if none is defined.
 
 Always defining a lookahead function might seem redundant, especially should the user never want to use conservative synchronization.
-Definig the lookahead is difficult and can often be unpredictable.
+Defining the lookahead is difficult and can often be unpredictable.
 The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but likely not at peak performance.
 Depending on the model, simulation performance might still be faster than sequential simulation. 
 
-Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
+Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise. Providing this default implementation has no impact in sequential or optimistic simulation, since the function is never called the compiler will optimize it out. By providing this default implementation in the model base class we ensure that a model can run in sequential, optimistic and conservative simulation by default.
 
 \subsection{Increasing Parallelism}
 The goal of our contribution is to increase simulation performance as much as possible, leveraging parallel computation in the process.
