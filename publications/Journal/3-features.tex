@@ -141,10 +141,10 @@ This is primarily caused by the significant difference in size: 2504 bytes for t
 \textit{Dxex}'s sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in \textit{dxex} conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
 
-Figure~\ref{fig:Queuerngspeedup} shows that \textit{dxex} in sequential simulation gets three times faster by using TRNG, than when using the STL RNG.
+Figure~\ref{fig:Queuerngspeedup} shows that \textit{dxex} in sequential simulation is three times faster using TRNG compared to using the STL RNG.
 For parallel simulation, the synchronization overhead seems to be the main bottleneck, as seen by the big speedup gap between sequential and parallel simulation.
 Conservative synchronization is almost insensitive to the changing of the RNG, though a slight increase in performance can be noted.
-Optimistic synchronization gets much slower when the RNG becomes part of the model state, since the state needs to be copied as well.
+Optimistic synchronization slows down significantly when the RNG becomes part of the model state, since the state needs to be copied as well.
 This becomes a significant overhead when using the STL RNG, since performance plummets to a fraction of the original.
 Using TRNG avoids this problem completely, as the size of the RNG state is negligible.
 
