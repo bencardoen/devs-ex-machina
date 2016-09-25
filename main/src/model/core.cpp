@@ -20,7 +20,6 @@ using n_network::MessageEntry;
 using n_network::t_timestamp;
 using namespace n_network;
 
-
 inline void validateTA(const n_network::t_timestamp& val){
 #ifdef SAFETY_CHECKS
 	if(isZero(val)) throw std::logic_error("Time Advance value shouldn't be zero.");
@@ -205,13 +204,18 @@ void n_model::Core::transition()
 	t_timestamp noncausaltime(this->getTime().getTime(), 0);
 
 	const std::size_t k = m_imminents.size() + m_externs.size();
-	m_heap.signalUpdateSize(k);
+#ifndef PDEVS 	
+        m_heap.signalUpdateSize(k);
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), "calculating whether we should reschedule one by one: k=", k, " N=", m_indexed_models.size(), " oneByOne=", m_heap.doSingleUpdate());
-
+#endif
+     
+#ifdef PDEVS        
 #pragma omp parallel for num_threads(4)
         for (std::vector<t_raw_atomic>::iterator it = m_imminents.begin(); it < m_imminents.end(); ++it){
                 auto imminent = *it;
-	//for (t_raw_atomic imminent : m_imminents) {
+#else
+	for (t_raw_atomic imminent : m_imminents) {
+#endif
                 const size_t modelid = imminent->getLocalID();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " imminent nextType() = ", int(imminent->nextType()));
 		if (!hasMail(modelid)) {
@@ -236,17 +240,21 @@ void n_model::Core::transition()
 		}
                 imminent->clearSentMessages();
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
-//		if(m_heap.doSingleUpdate())
-//			m_heap.update(modelid);
+#ifndef PDEVS                
+		if(m_heap.doSingleUpdate())
+			m_heap.update(modelid);
+#endif
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");
 	}
-        if(m_heap.doSingleUpdate()){
-            for(auto imminent : m_imminents){
-                    m_heap.update(imminent->getLocalID());
-            }
-        }
+                
         LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Transitioning with ", m_externs.size(), " externs");
+#ifdef PDEVS
+#pragma omp parallel for num_threads(4)
+        for (std::vector<t_raw_atomic>::iterator it = m_externs.begin(); it < m_externs.end(); ++it){
+                auto external = *it;
+#else
         for(auto external : m_externs){
+#endif
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " performing external transition for model ", external->getName());
                 const size_t id = external->getLocalID();
                 auto& mail = getMail(id);
@@ -260,8 +268,10 @@ void n_model::Core::transition()
 
                 clearProcessedMessages(mail);
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " fixing scheduler heap.");
+#ifndef PDEVS
 		if(m_heap.doSingleUpdate())
 			m_heap.update(id);
+#endif
                 LOG_DEBUG("\tCORE :: ", this->getCoreID(), " result.");                
 		assert(!hasMail(id) && "After external transition, model may no longer have pending mail.");
 	}
@@ -306,9 +316,9 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 void n_model::Core::rescheduleImminent()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
-	if(!m_heap.doSingleUpdate()){
+	//if(!m_heap.doSingleUpdate()){
 		m_heap.updateAll();
-	}
+	//}
 	printSchedulerState();
 }
 
