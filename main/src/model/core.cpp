@@ -316,9 +316,13 @@ n_model::Core::getImminent(std::vector<t_raw_atomic>& imms)
 void n_model::Core::rescheduleImminent()
 {
 	LOG_DEBUG("\tCORE :: ", this->getCoreID(), " Rescheduling ", m_imminents.size() + m_externs.size(), " models for next run.");
-	//if(!m_heap.doSingleUpdate()){
+#ifndef PDEVS
+	if(!m_heap.doSingleUpdate()){
+#endif
 		m_heap.updateAll();
-	//}
+#ifndef PDEVS
+	}
+#endif
 	printSchedulerState();
 }
 
