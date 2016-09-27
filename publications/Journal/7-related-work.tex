@@ -25,8 +25,9 @@ Despite the implementation of both protocols, they are different projects entire
 Some features might therefore be implemented in \textit{CCD++} and not in \textit{PCD++}, or vice versa.
 And while this might not yet be that significant a problem to this day, this problem will only get worse when each project follows its own course.
 \textit{Dxex}, on the other hand, is a single project, where the choice of synchronization protocol is a simple configuration.
-\textit{CD++}, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourselves to parallel simulation.
-By limiting our approach to parallel simulation, we are able to achieve higher speedups through the use of shared memory communication.
+\textit{CD++}, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourselves to parallel simulation. 
+A new architecture for sequential PDEVS simulation has been introduced in \cite{SeqPDEVSArch} with promising performance results. This algorithm achieves a speedup by using the inherent parallelism in PDEVS without the need for synchronization.
+By limiting our approach to a pure parallel simulation, we are able to achieve higher speedups through the use of shared memory communication. 
 
 In the \textsf{PDES} community, the problem of choosing between synchronization protocols is well known and documented~\cite{Jha:1994:UFC:195291.182480}.
 The challenges of implementing such runtime switching have previously been explored already~\cite{Das:1996:APP:256562.256602}, and an implementation was given by, for example~\cite{perumalla2005musik}.
@@ -35,7 +36,7 @@ Our contribution entails bringing this same feature to the \textsf{Parallel DEVS
 Model allocation and its impact on parallel performance has previously also been studied in the \textsf{PDES} community~\cite{PDESpartitioning}.
 Referenced as partitioning of the simulation model, most studies distinguish between communication overhead and computational distribution (load balancing) as the two dimensions to partition over.
 Partitioning a simulation model is identified as an issue to achieve scalability~\cite{Scalability}. 
-Some research in the context of \textsf{Parallel DEVS} has been done, where they turn their attention to load balancing and communication overhead~\cite{PDEVSpartitioning}.
+Some research in the context of \textsf{Parallel DEVS} has been done, where they turn their attention to load balancing and communication overhead~\cite{PDEVSpartitioning, NonFragmenting}.
 Our contribution studies the effect of partitioning with emphasis on the effect of communication between processes and in the presence of a flattened hierarchy. 
 We focus on static partitioning since this is a limiting factor for our conservative synchronization implementation which does not support model relocation.
 Model relocation, as implemented by \textit{PythonPDEVS}~\cite{PythonPDEVS2}, might be an interesting addition to only model allocation at the start of simulation.
