@@ -11,6 +11,10 @@
 #ifndef SRC_FORWARDDECLARE_TIMESTAMP_H_
 #define SRC_FORWARDDECLARE_TIMESTAMP_H_
 
+/** 
+ * Define artificial load (sleep time in ms) for pdevs.
+ */
+#define PDEVS_LOAD 5
 
 namespace n_network {
 /**

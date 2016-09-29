@@ -84,6 +84,9 @@ void Processor::intTransition()
 	++(st.m_eventsHad);
         
 	LOG_DEBUG("internal event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
+#ifdef PDEVS
+        std::this_thread::sleep_for(std::chrono::milliseconds(PDEVS_LOAD));
+#endif
 }
 
 void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
@@ -101,6 +104,9 @@ void Processor::extTransition(const std::vector<n_network::t_msgptr>& message)
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1)  : T_100;
 	}
 	LOG_DEBUG("confluent event counter of ", getName(), " = ", st.m_event1_counter, " =inf ", st.m_event1_counter == inf);
+#ifdef PDEVS
+        std::this_thread::sleep_for(std::chrono::milliseconds(PDEVS_LOAD));
+#endif
 }
 
 void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
@@ -126,7 +132,9 @@ void Processor::confTransition(const std::vector<n_network::t_msgptr>& message)
 		st.m_event1 = ev1;
 		st.m_event1_counter = (m_randomta) ? getProcTime(st.m_event1)  : T_100;
 	}
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+#ifdef PDEVS
+        std::this_thread::sleep_for(std::chrono::milliseconds(PDEVS_LOAD));
+#endif
 }
 
 void Processor::output(std::vector<n_network::t_msgptr>& msgs) const
