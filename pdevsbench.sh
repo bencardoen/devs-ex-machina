@@ -75,7 +75,7 @@ if [ ! -f "$EXEC_16THREADSLEEP" ]; then
 fi
 
 ARGS_NOSLEEP=" -d 4 -w 400 -t 5000000 "
-ARGS_SLEEP=" -d 4 -w 400 -t 5000 "
+ARGS_SLEEP=" -d 4 -w 50 -t 10000 "
 REPEAT=5
 mkdir -p $OUT_DIR
 echo "Executing benchmarks"
