@@ -25,30 +25,36 @@ Communication between the kernels and threads, defined as communication overhead
 
 \paragraph{Concurrent events}
 First we create the ideal scenario for PDEVS, all events are concurrent with a significant computational load in the transition functions. All models are imminent at the same time in this configuration allowing for maximum parallelism.
-In figure \ref{fig:pdevs_plot_fixed_sleep} we observe that PDEVS obtains a speedup approaching 8. 
+In figure \ref{fig:pdevs_plot_fixed_sleep} we observe that PDEVS obtains a speedup approaching 10.  
 Conservative and optimistic are run first with 16 kernels, then with 4 kernels having 4  PDEVS threads each. 
-The resulting speedup is half of that obtained of the sequential kernel with 16 PDEVS threads.
+Both protocols achieve a similar speedup compared to PDEVS. Combining the protocols with PDEVS gives a near identical speedup.
+In this scenario there is no real advantage between the different parallel configurations.
+
 
 \paragraph{Random events}
 Random events allow us to demonstrate the overhead of PDEVS. The probability that events are concurrent is strongly reduced.
 The transition function has the same computational load as in the previous configuration. 
-
-
+The results in figure \ref{fig:pdevs_plot_random_sleep} show that PDEVS adds little overhead in sequential simulation. 
+In combination with either synchronization protocol DPEVS can achieve a reasonable speedup, but both synchronization protocols achieve a far higher speedup without PDEVS.
 
 \paragraph{Computational load}
 When we remove the computational load we isolate the overhead of the parallelism. 
 In this paper we are mainly interested in this overhead which is otherwise masked by adding a computational cost to the transition functions. 
-
+Figure \ref{fig:pdevs_plot_no_sleep} shows that in sequential simulation the PDEVS overhead is crippling. Conservative combined with PDEVS reduces performance to that of sequential without PDEVS with worse results for optimistic in combination in PDEVS.
+Both synchronization protocols achieve a reasonable speedup without PDEVS.  
  
 \paragraph{Discussion}
-In \textit{dxex} PDEVS and the two synchronization protocols are complementary. The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
-While PDEVS can offer a significant speedup we see that to offer this speedup the concurrency of events must be significant in combination with a high computational load in the transition functions. 
+In \textit{dxex} PDEVS and the two synchronization protocols can be complementary. 
+The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
+While PDEVS can offer a significant speedup, we see that to offer this speedup the concurrency of events must be significant in combination with a high computational load in the transition functions. 
 We measure the overhead introduced by PDEVS to give practitioners insight into which model can benefit from which paradigm.
 The overhead of the synchronization protocols in specific scenarios  is shown in the previous section.
 For a given model it is difficult to predict the concurrency of events, although the computational load of a transition function can be approximated.
-In these benchmarks we show which configurations can lead to a speedup for PDEVS or the synchronization protocols in isolation or combination.
-In \citep{amdahlpdevs} a theoretical bound is defined for the maximum speedup obtained by PDEVS. 
-Our tool flattens the hierarchy of the coupled models
+In these benchmarks we show which configurations can lead to a speedup for PDEVS or the synchronization protocols in either isolation or combination.
+In a model with high concurrency in simultaneous events and a high computational load PDEVS can offer a significant speedup.
+This speedup is not exclusive to PDEVS. Conservative and optimistic synchronization protocols can achieve the same speedup given a non cyclic model. 
+From the theoretical model we know that in a cyclic model PDEVS can achieve a higher speedup.
+% Discuss theoretical bound
 
 
 \begin{figure}
