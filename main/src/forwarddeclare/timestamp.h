@@ -19,7 +19,7 @@ constexpr unsigned int pdevs_load=0;
 #else
 constexpr unsigned int pdevs_load=PDEVS_LOAD;
 #endif
-#define PDEVS_THREADS 4
+
 
 namespace n_network {
 /**

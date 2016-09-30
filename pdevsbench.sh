@@ -24,40 +24,51 @@ BMARKDIR="./build/Benchmark"
 
 mkdir -p "./binary"
 
-if [ -d "$BMARKDIR" ]; then
-	rm -r "$BMARKDIR"
+if [ ! -f "$EXEC_NORM" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_NORM
 fi
-./setup.sh -b dxexmachina_devstone
-cp build/Benchmark/dxexmachina_devstone EXEC_NORM
 
-if [ -d "$BMARKDIR" ]; then
-	rm -r "$BMARKDIR"
+if [ ! -f "$EXEC_4THREAD" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=4 -DPDEVS_LOAD=0" -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_4THREAD
 fi
-./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=4 -DPDEVS_LOAD=0" -b dxexmachina_devstone
-cp build/Benchmark/dxexmachina_devstone $EXEC_4THREAD
 
-if [ -d "$BMARKDIR" ]; then
-	rm -r "$BMARKDIR"
+if [ ! -f "$EXEC_16THREAD" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=16 -DPDEVS_LOAD=0" -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_16THREAD
 fi
-./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=16 -DPDEVS_LOAD=0" -b dxexmachina_devstone
-cp build/Benchmark/dxexmachina_devstone $EXEC_16THREAD
 
-if [ -d "$BMARKDIR" ]; then
-	rm -r "$BMARKDIR"
+if [ ! -f "$EXEC_4THREADSLEEP" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=4 -DPDEVS_LOAD=5" -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_4THREADSLEEP
 fi
-./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=4 -DPDEVS_LOAD=5" -b dxexmachina_devstone
-cp build/Benchmark/dxexmachina_devstone $EXEC_4THREADSLEEP
 
-if [ -d "$BMARKDIR" ]; then
-	rm -r "$BMARKDIR"
+if [ ! -f "$EXEC_16THREADSLEEP" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=16 -DPDEVS_LOAD=5" -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_16THREADSLEEP
 fi
-./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=16 -DPDEVS_LOAD=5" -b dxexmachina_devstone
-cp build/Benchmark/dxexmachina_devstone $EXEC_16THREADSLEEP
 
 EXTRA_ARGS=$1
 echo "Setting extra arguments to '$1'"
 REPEAT=5
 mkdir -p $OUT_DIR
+echo "Executing benchmarks"
 perf stat -r $REPEAT -o "$OUT_DIR/normal_seq.txt" $EXEC_NORM $EXTRA_ARGS
 perf stat -r $REPEAT -o "$OUT_DIR/normal_con.txt" $EXEC_NORM $EXTRA_ARGS cpdevs -c 16
 perf stat -r $REPEAT -o "$OUT_DIR/normal_opt.txt" $EXEC_NORM $EXTRA_ARGS opdevs -c 16
