@@ -28,13 +28,14 @@ Rolling back simulation time requires the node to store past model states, such 
 All incoming and outgoing events need to be stored as well.
 Incoming events are injected again after a rollback, when their time has been reached again.
 Outgoing events are cancelled after a rollback, through the use of anti-messages, as potentially different output events have to be generated.
-Cancelling events, however, can cause further rollbacks, as the receiving node might also have to roll back its state.
-In practice, a single causality error can have significant repercussions on performance.
+Cancelling events can cause further rollbacks as the receiving node might also have to roll back its state.
+In practice a single causality error can have significant repercussions on performance.
 
 Further changes are required for unrecoverable operations, such as I/O and memory management.
 These are only executed after the lower bound of all simulation times, called \textit{Global Virtual Time} (GVT)~\cite{FujimotoBook}, has progressed beyond their execution time.
 
-The main advantage is that performance is not limited by a small lookahead, caused by a very infrequent event.
+The main advantage is that a small lookahead, caused by a very infrequent event, will not limit performance.
+%The main advantage is that performance is not limited by a small lookahead caused by a very infrequent event.
 If an (almost) instantaneous event rarely occurs, performance is only impacted when it occurs, and not at every simulation step.
 The disadvantage is unpredictable performance due to the arbitrary cost of rollbacks and their propagation.
 If rollbacks occur frequently, state saving and rollback overhead can cause simulation to grind to a halt.
