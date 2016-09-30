@@ -28,6 +28,7 @@ And while this might not yet be that significant a problem to this day, this pro
 \textit{CD++}, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourselves to parallel simulation. 
 A new architecture for sequential PDEVS simulation has been introduced in \cite{SeqPDEVSArch} with promising performance results. This algorithm achieves a speedup by using the inherent parallelism in PDEVS without the need for synchronization.
 By limiting our approach to a pure parallel simulation, we are able to achieve higher speedups through the use of shared memory communication. 
+Recent work on activity and parallel speedup in DEVS investigates theoretical limits of PDEVS ~\cite{activitypdevs, amdahlpdevs}
 %TODO Explain complementary nature pdevs/sync + remove or link seq pdevs architecture
 
 In the \textsf{PDES} community, the problem of choosing between synchronization protocols is well known and documented~\cite{Jha:1994:UFC:195291.182480}.
