@@ -99,6 +99,12 @@ A list of targets:
 * dxexmachina_phold
 * dxexmachina_pholdtree
 
+PDEVS can be activated using 
+
+``` ./setup.sh -x "-DPDEVS=ON"```
+
+Extra configuration is possible using the macro "-DPDEVS_THREADS=x"
+
 Note that at this point, only Clang and g++ are supported (with stringname : g++ , clang++)
 
 The script makes a new directory build, next to directory main. This build directory will contain directories Debug, Release and Benchmark. Each with different compiler options and macros.
@@ -141,12 +147,16 @@ To find all the options of the doBenchmark script:
 
 The memory benchmarks (only if you have at least 8GB RAM) requires a POSIX shell, and valgrind. Each benchmark that is profiled for memory can take up to a factor 100 longer to execute under valgrind, please take this into account. The actual memory usage changes little over time (except with optimistic), so you can manually adjust the runtime in the script should this be required.
 
-**$ ./membench.sh**
+```$ ./membench.sh```
 
 
 For the 2nd paper, this memory profiling script avoids valgrind. 
 
-**$ ./membenchvs.sh**
+```$ ./membenchvs.sh```
+
+The PDEVS comparison benchmarks were run using
+
+```$ ./pdevsbench.sh```
 
 ### Windows ###
 Building on Windows is possible using [Cygwin 64-bit](https://cygwin.com/install.html ).
