@@ -16,7 +16,7 @@
 
 OUT_DIR="./bmarkdata/pdevs"
 EXEC_NORM="./binary/nonpdevs"
-EXEC_1THREADSLEEP="./binary/pdevs1"
+EXEC_1THREADSLEEP="./binary/pdevs1sleep"
 EXEC_4THREAD="./binary/pdevs4"
 EXEC_16THREAD="./binary/pdevs16"
 EXEC_4THREADSLEEP="./binary/pdevs4sleep"
