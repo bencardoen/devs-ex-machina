@@ -14,7 +14,11 @@
 /** 
  * Define artificial load (sleep time in ms) for pdevs.
  */
-#define PDEVS_LOAD 5
+#ifndef PDEVS_LOAD
+constexpr unsigned int pdevs_load=0;
+#else
+constexpr unsigned int pdevs_load=PDEVS_LOAD;
+#endif
 #define PDEVS_THREADS 4
 
 namespace n_network {
