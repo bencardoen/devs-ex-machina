@@ -10,6 +10,9 @@ But whereas \textit{PythonPDEVS} only supports optimistic synchronization, \text
 This is in line with the design principle of \textit{PythonPDEVS}: allow users to pass performance hints to the simulation kernel.
 In our case, a user can pass the simulation kernel the synchronization protocol to use for this model, or even switch the synchronization protocol during runtime.
 Our implementation in C++11 also allows for optimizations which were plainly impossible in an interpreted language. \textit{Dxex} will use new optimizations from the C++14 standard when possible.
+% to design?
+In our PDEVS implementation we use OpenMP \cite{openmp4}, a highly efficient threading library integrated with most modern compilers and runtimes. 
+The synchronized kernels use the C++11 standard threading primitives.
 
 Since there is no universal \textsf{DEVS} model standard, \textit{dxex} models are incompatible with \textit{PythonPDEVS} and vice versa.
 This is due to \textit{dxex} models being grafted on C++11, whereas \textit{PythonPDEVS} models are grafted on Python.
