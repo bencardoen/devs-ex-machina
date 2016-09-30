@@ -206,7 +206,7 @@ mkdir -p $DEBUG_DIR
 cd $DEBUG_DIR
 if [ ! -f "Makefile" ]
   then
-  cmake "$CMAKE_ARG_STRING" -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../../" ../../main
+  cmake $EXTRA_ARGS -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_BUILD_TYPE=Debug -DTOTOP="../../" ../../main
 fi
 if [ ${#BUILD_DEBUG[@]} -ne 0 ]
   then

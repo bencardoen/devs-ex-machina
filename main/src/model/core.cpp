@@ -210,7 +210,7 @@ void n_model::Core::transition()
 #endif
      
 #ifdef PDEVS        
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads( PDEVS_THREADS )
         for (std::vector<t_raw_atomic>::iterator it = m_imminents.begin(); it < m_imminents.end(); ++it){
                 auto imminent = *it;
 #else

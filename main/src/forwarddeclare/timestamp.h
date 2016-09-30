@@ -15,6 +15,7 @@
  * Define artificial load (sleep time in ms) for pdevs.
  */
 #define PDEVS_LOAD 5
+#define PDEVS_THREADS 4
 
 namespace n_network {
 /**
