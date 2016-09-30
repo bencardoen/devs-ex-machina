@@ -12,14 +12,19 @@ The benchmarks use a maximum of 16 threads to be divided between PDEVS , conserv
 
 \paragraph{Model}
 As shown in the previous section, when most models are dependent on each other across kernels there is no speedup obtainable by either optimistic or conservative. 
-We therefore opted to use the \textit{Queue} model in this benchmark, with depth 4 and width 300.
+We therefore opted to use the \textit{Queue} model in this benchmark.
 The effect of combining 4 synchronized kernels with each 4 threads for PDEVS is contrasted with 16 threads for PDEVS and 16 kernels for conservative and optimistic.  
 This allows us to observe which is more efficient in obtaining a speedup.
-We simulate a computational load by a call to sleep in the transition functions set at 5ms. 
+We simulate a computational load by an optional call to sleep in the transition functions set at 5ms. 
+The model is configured with depth 4 and width 300 if the transition function has no load, and width 50 if the computational load is active.
+In our configuration an imminent model will generate output and lead to another model becoming imminent. With respect to the 
+theoretical analysis in \cite{amdahlpdevs} this gives a parameter value q = 1. 
+The models are equally distributed over the kernels and between threads in PDEVS. 
+The coefficient of variation of our results is less than 1\%. 
+Communication between the kernels and threads, defined as communication overhead in the theoretical work is hard to to estimate here but given our coefficient of variation results we can assume this to be constant.
 
 \paragraph{Concurrent events}
-First we create the ideal scenario for PDEVS, all events are concurrent with a significant computational load in the transition functions. 
-
+First we create the ideal scenario for PDEVS, all events are concurrent with a significant computational load in the transition functions. All models are imminent at the same time in this configuration allowing for maximum parallelism.
 In figure \ref{fig:pdevs_plot_fixed_sleep} we observe that PDEVS obtains a speedup approaching 8. 
 Conservative and optimistic are run first with 16 kernels, then with 4 kernels having 4  PDEVS threads each. 
 The resulting speedup is half of that obtained of the sequential kernel with 16 PDEVS threads.
@@ -27,17 +32,13 @@ The resulting speedup is half of that obtained of the sequential kernel with 16 
 \paragraph{Random events}
 Random events allow us to demonstrate the overhead of PDEVS. The probability that events are concurrent is strongly reduced.
 The transition function has the same computational load as in the previous configuration. 
-The results in figure \ref{fig:pdevs_plot_random_sleep} demonstrate that the overhead in the sequential DPEVS kernel is negligible. In contrast both conservative and optimistic suffer a significant slowdown when combined with PDEVS.
-We clearly see that conservative and optimistic outperform the sequential kernels in this scenario, complementing the synchronized kernels with PDEVS is not warranted here.
+
+
 
 \paragraph{Computational load}
 When we remove the computational load we isolate the overhead of the parallelism. 
 In this paper we are mainly interested in this overhead which is otherwise masked by adding a computational cost to the transition functions. 
-All the benchmarks in this work are run with a near negligible computational load in the transition functions for this purpose.
-If a parallel speedup can be obtained in a simulation model without any load in the transition function this will translate in a higher speedup with an increased load, as this load can then be spread over kernels or threads.
-Although this configuration has only concurrent events the overhead of the synchronization is severe. 
-The runtime cost of this overhead is extreme in the sequential kernel. 
-The synchronized kernels are impacted less by the overhead of the PDEVS algorithm.
+
  
 \paragraph{Discussion}
 In \textit{dxex} PDEVS and the two synchronization protocols are complementary. The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
