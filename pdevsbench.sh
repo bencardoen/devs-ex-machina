@@ -16,6 +16,7 @@
 
 OUT_DIR="./bmarkdata/pdevs"
 EXEC_NORM="./binary/nonpdevs"
+EXEC_1THREADSLEEP="./binary/pdevs1"
 EXEC_4THREAD="./binary/pdevs4"
 EXEC_16THREAD="./binary/pdevs16"
 EXEC_4THREADSLEEP="./binary/pdevs4sleep"
@@ -48,6 +49,15 @@ if [ ! -f "$EXEC_16THREAD" ]; then
 	cp build/Benchmark/dxexmachina_devstone $EXEC_16THREAD
 fi
 
+if [ ! -f "$EXEC_1THREADSLEEP" ]; then
+	if [ -d "$BMARKDIR" ]; then
+		rm -r "$BMARKDIR"
+	fi
+	./setup.sh -x "-DPDEVS=ON -DPDEVS_THREADS=1 -DPDEVS_LOAD=5" -b dxexmachina_devstone
+	cp build/Benchmark/dxexmachina_devstone $EXEC_1THREADSLEEP
+fi
+
+
 if [ ! -f "$EXEC_4THREADSLEEP" ]; then
 	if [ -d "$BMARKDIR" ]; then
 		rm -r "$BMARKDIR"
@@ -75,6 +85,9 @@ perf stat -r $REPEAT -o "$OUT_DIR/normal_opt.txt" $EXEC_NORM $EXTRA_ARGS opdevs 
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_seq.txt" $EXEC_16THREAD $EXTRA_ARGS
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_con.txt" $EXEC_4THREAD $EXTRA_ARGS cpdevs -c 4
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_opt.txt" $EXEC_4THREAD $EXTRA_ARGS opdevs -c 4
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_seq.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_con.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS cpdevs -c 16
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_opt.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS opdevs -c 16
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_sleep_seq.txt" $EXEC_16THREADSLEEP $EXTRA_ARGS
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_sleep_con.txt" $EXEC_4THREADSLEEP $EXTRA_ARGS cpdevs -c 4
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_sleep_opt.txt" $EXEC_4THREADSLEEP $EXTRA_ARGS opdevs -c 4
@@ -82,6 +95,9 @@ perf stat -r $REPEAT -o "$OUT_DIR/pdevs_sleep_opt.txt" $EXEC_4THREADSLEEP $EXTRA
 perf stat -r $REPEAT -o "$OUT_DIR/normal_seq_r.txt" $EXEC_NORM $EXTRA_ARGS -r
 perf stat -r $REPEAT -o "$OUT_DIR/normal_con_r.txt" $EXEC_NORM $EXTRA_ARGS cpdevs -c 16 -r
 perf stat -r $REPEAT -o "$OUT_DIR/normal_opt_r.txt" $EXEC_NORM $EXTRA_ARGS opdevs -c 16 -r
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_seq_r.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS -r
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_con_r.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS cpdevs -c 16 -r
+perf stat -r $REPEAT -o "$OUT_DIR/npdevs_sleep_opt_r.txt" $EXEC_1THREADSLEEP $EXTRA_ARGS opdevs -c 16 -r
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_seq_r.txt" $EXEC_16THREAD $EXTRA_ARGS -r
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_con_r.txt" $EXEC_4THREAD $EXTRA_ARGS cpdevs -c 4 -r
 perf stat -r $REPEAT -o "$OUT_DIR/pdevs_opt_r.txt" $EXEC_4THREAD $EXTRA_ARGS opdevs -c 4 -r
