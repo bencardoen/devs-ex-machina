@@ -25,7 +25,7 @@ Simulation models only care about being simulated, and not about how this is bei
 This is different for a new simulation kernel component that has to monitor the behaviour of not only the model, but the simulator as well.
 
 We add performance metrics in the simulation kernel, which logs relevant performance metrics and processes them for use in other components.
-These metrics include the number of events created and destroyed, the number of inter- and intra-kernel events, the number of rollbacks, the measured lookahead, details of the Global Virtual Time (GVT) and Earliest Output Time (EOT) calculations, and information on the fairness between simulation kernels.
+These metrics include the number of events created and destroyed, the number of inter- and intra-kernel events, the number of rollbacks, the measured lookahead, details of the GVT and EOT calculations, and information on the fairness between simulation kernels.
 With all these metrics, a component can get a fair view on both model and simulation kernel behaviour.
 
 For example, if the actually seen lookahead is significantly higher than the defined lookahead, it might be interesting to switch to optimistic synchronization.

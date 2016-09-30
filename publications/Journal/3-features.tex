@@ -35,7 +35,7 @@ In theory, more synchronization protocols (\textit{e.g.}, other algorithms for c
 
 An overview of \textit{dxex}'s design is given in Figure~\ref{fig:class_diagram}.
 It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
-The superclass \texttt{Core} represents the sequential simulation core.
+The superclass \texttt{Core} represents the sequential simulation kernel.
 Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure*}
@@ -132,7 +132,7 @@ As a result, the OS will usually report memory consumption that is higher than t
 Random Number Generators (RNG) are another aspect of the program that can limit parallelization.
 All accesses to the RNG will result in the modification of a global (\textit{i.e.}, shared between threads) variable.
 This easily becomes a bottleneck in simulation, since random numbers are a common occurence in simulation~\cite{Random}.
-As such, a non-trivial amount of time in a simulation is often spent waiting for an RNG.
+As such, a nontrivial amount of time in a simulation is often spent waiting for an RNG.
 
 We of course still need to guarantee determinism and isolation between the calls to the RNG, as well as avoiding excessive synchronization.
 \textit{Dxex} uses the Tina RNG collection (TRNG)~\cite{PhysRevE.75.066701} as an alternative random number generator with performance and multithreading in mind.

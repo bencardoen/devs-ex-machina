@@ -4,9 +4,9 @@ But even with the right synchronization protocol, we have seen that two problems
 
 First, although one of both synchronization protocols might be ideally suited for specific model behaviour, nothing guarantees that the model will exhibit the same behaviour throughout the simulation.
 Similarly to the polymorphic scheduler~\cite{MasterThesis}, we wish to make it possible for the ideal option to be switched during simulation.
-When changes to the model behaviour are noticed, the used synchronization protocol is modified as well.
+When changes to the model behaviour are noticed, the used synchronization protocol can be switched as well. 
 
-Second, the allocation of models is tricky and has a significant impact on performance.
+Second, the allocation of models is nontrivial and has a significant impact on performance.
 While our parallel speedup for the Queue model, for example, was rather high, this is mostly due to characteristics of the model: the dependency graph does not contain any cycles.
 When cycles were introduced, as in the Interconnect model, performance became disastrous.
 
