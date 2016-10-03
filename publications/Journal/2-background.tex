@@ -1,4 +1,5 @@
-This section briefly introduces the synchronization protocols used by \textit{dxex}: conservative and optimistic synchronization.
+This section briefly introduces the two most prominent synchronization protocols: conservative and optimistic synchronization.
+Both algorithms are supported by Dxex.
 
 \subsection{Conservative Synchronization}
 The first synchronization protocol we introduce is \textit{conservative synchronization}~\cite{FujimotoBook}.
@@ -6,23 +7,23 @@ In conservative synchronization, a node progresses independent of all other node
 When simulation reaches this point, the node blocks until it can guarantee a new time until which no causality errors occur.
 In practice, this means that all nodes are aware of the current simulation time of all other nodes, and the time it takes an event to propagate (called \textit{lookahead}).
 Deadlocks can occur due to a dependency cycle of models.
-Multiple algorithms are defined in the literature to handle both the core protocol, as well as resolution schemes to handle or avoid the deadlocks~\cite{FujimotoBook}.
+Multiple algorithms are defined in the literature to handle both the base protocol, as well as resolution schemes to handle or avoid the deadlocks~\cite{FujimotoBook}.
 
-The main advantage of conservative synchronization is its low overhead if the lookahead is high.
-Each node then simulates in parallel, and sporadically notifies other nodes about its local simulation time.
+The main advantage of conservative synchronization is its low overhead if lookahead is high.
+Each node then simulates in parallel, notifying other nodes about its local simulation time.
 The disadvantage, however, is that the amount of parallelism is explicitly limited by the lookahead.
-If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced.
+If a node can influence another (almost) instantaneously, no matter how rarely it occurs, the amount of parallelism is severely reduced throughout the complete simulation run.
 The user is required to define the lookahead, using knowledge about the model's behaviour.
-Defining lookahead is far from a trivial task if there is no detailed knowledge of the model.
+Defining an accurate and high lookahead is far from a trivial task if there is no detailed knowledge of the model.
 Even slight changes in the model or its allocation can change the lookahead, and can therefore have a significant influence on simulation performance.
 
 \subsection{Optimistic Synchronization}
 A completely different synchronization protocol is \textit{optimistic synchronization}~\cite{TimeWarp}.
-Whereas conservative synchronization prevents causality errors at all costs, optimistic synchronization allows them to happen, but corrects them.
-Each node simulates as fast as possible, without taking note of any other node.
+Whereas conservative synchronization prevents causality errors at all costs, optimistic synchronization allows them to happen, but corrects them as soon as they are detected.
+Each node simulates as fast as possible, independent of other nodes.
 It assumes that no events occur from other nodes, unless it has explicitly received one at that time.
-When this assumption is violated, the node rolls back its simulation time and state to right before the moment when the event has to be processed.
-As simulation is rolled back to a time prior to the event must be processed, the event can then be processed as if no causality error ever occurred.
+When this assumption is violated (\textit{i.e.}, an event arrives that should have been processed in the past), the node rolls back its simulation time and state to right before the moment when the event has to be processed.
+As simulation is rolled back to a point in time before the event has to be processed, the event can be processed as if no causality error ever occurred.
 
 Rolling back simulation time requires the node to store past model states, such that they can be restored later.
 All incoming and outgoing events need to be stored as well.
@@ -34,11 +35,12 @@ In practice a single causality error can have significant repercussions on perfo
 Further changes are required for unrecoverable operations, such as I/O and memory management.
 These are only executed after the lower bound of all simulation times, called \textit{Global Virtual Time} (GVT)~\cite{FujimotoBook}, has progressed beyond their execution time.
 
-The main advantage is that a small lookahead, caused by a very infrequent event, will not limit performance.
-%The main advantage is that performance is not limited by a small lookahead caused by a very infrequent event.
+The main advantage is that a small lookahead, caused by infrequent events, does not limit performance.
 If an (almost) instantaneous event rarely occurs, performance is only impacted when it occurs, and not at every simulation step.
 The disadvantage is unpredictable performance due to the arbitrary cost of rollbacks and their propagation.
+Even the occurence of rollbacks is non-deterministic, as it is caused by the interleaving of different simulation nodes and their communication.
 If rollbacks occur frequently, state saving and rollback overhead can cause simulation to grind to a halt.
-Apart from overhead in CPU time, a significant memory overhead is present: intermediate states are stored up to a point where it can be considered \textit{irreversible}.
+Nonetheless, it can be proven that simulation always progresses, and eventually always terminates.
+Apart from overhead in CPU time, a significant memory overhead is present: intermediate states are stored up to a point where they can be considered \textit{irreversible}.
 Note that, while optimistic synchronization does not explicitly depends on lookahead, performance still implicitly depends on lookahead.
 Instead of depending on the theoretically defined safe lookahead, performance is related to the actually perceived lookahead.
