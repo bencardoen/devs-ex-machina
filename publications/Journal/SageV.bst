@@ -1113,6 +1113,8 @@ FUNCTION {inproceedings}
     { format.incoll.inproc.crossref output.nonnull
     }
   if$
+  format.date "year" output.check
+  date.block
   format.pages "pages" output.check
   format.doi output
   new.block
