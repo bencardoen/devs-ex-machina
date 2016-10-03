@@ -1,6 +1,6 @@
 Although the synchronization protocol is one of the defining factors in simulation performance, model allocation has a significant impact on which protocol is ideal.
 Depending on the model structure, and how it is mapped to the different kernels, it might not even make sense to parallelize at all.
-Indeed, if the model is distributed such that frequent communication is necessary between kernels, parallelism is naturally reduced.
+Indeed, if the model is allocated such that frequent communication is necessary between kernels, parallelism is naturally reduced.
 This brings us to the topic of model allocation, as also implemented in \textit{PythonPDEVS}~\cite{PythonPDEVS2}.
 
 The modeller can specify which kernel a model should be allocated to, should such manual intervention be required.
@@ -17,15 +17,14 @@ Unlike the Queue model, the width of the hierarchy is still present in the topol
 The PHOLDTree model allows us to investigate parallel speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
 
 The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{Gossip}.
-The lookahead of an atomic node is the minimally allowed $\epsilon$, indicating uncertainty, as is often the case in realistic models.
+The lookahead of an atomic node is the minimally allowed $\epsilon$, as is often the case in realistic models (\textit{e.g.}, if it is unknown what the lookahead might be).
 We demonstrate the importance of allocation by comparing performance of a breadth-first versus a depth-first scheme.
 Both options are automated ways of allocation that are independent of the model.
 
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/pholdtree.pdf}
-    %TODO depth 1 but 3 levels deep?
-    \caption{PHOLDTree model for depth 1 and width 2.}
+    \caption{PHOLDTree model for depth 3 and width 2.}
     \label{fig:PHOLDTree_model}
 \end{figure}
 
@@ -34,10 +33,10 @@ This topology is interesting since it highlights the effects of allocation.
 First, we evaluate the model in sequential simulation to provide a baseline for parallel simulation.
 
 \subsubsection{Sequential Simulation}
-Since \textit{adevs} does not use direct connection, we expect a noticable performance difference between \textit{dxex} and \textit{adevs}.
+Since \textit{adevs} does not use direct connection, we expect a noticeable performance difference between \textit{dxex} and \textit{adevs}.
 This is shown in Figure~\ref{fig:PHOLDtree_seq_dn_benchmark}, where the fanout ($n$) determines the performance penalty \textit{adevs} suffers compared to \textit{dxex}.
 Profiling indeed indicates that an increase in width per subtree ($n$) leads to higher overheads in \textit{adevs} due to the lack of direct connection.
-\textit{Dxex} uses direct connection, making it independent on fanout.
+\textit{Dxex} uses direct connection, making it independent of fanout.
 Performance of \textit{dxex} is, in this model, only dependent on the number of models.
 Slight deviations can still be seen, though, caused by the initialization overhead of direct connection.
 Both \textit{adevs} and \textit{dxex} scale linearly in the number of atomic models.
@@ -58,24 +57,27 @@ This means, intuitively, that atomic models at the same level in the tree, but n
 Since there is only infrequently some communication between siblings, and even never between different subtrees, this does not sound an intuitive allocation.
 This allocation strategy is shown in Figure~\ref{fig:PholdTree_model_bfs}.
 
-With depth-first allocation, we traverse the tree in a depth-first way, allocating subsequently visited atomic models to the same node.
-This means, intuitively, that subtreees are frequently allocated to the same node.
-This allocation strategy is shown in Figure~\ref{fig:PholdTree_model_dfs}.
-
-Both allocators will try to divide models evenly over kernels. The effects of varying the number of models per kernel are already evaluated in the previous section on scaling. Here we want to highlight the overhead of communication and inter-kernel dependence. 
-
 \begin{figure}
    \center
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_BF.pdf}
    \caption{PHOLDTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
 \end{figure}
+
+With depth-first allocation, we traverse the tree in a depth-first way, allocating subsequently visited atomic models to the same node.
+This means, intuitively, that subtreees are frequently allocated to the same node.
+This allocation strategy is shown in Figure~\ref{fig:PholdTree_model_dfs}.
+
 \begin{figure}
    \center
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_DF.pdf}
    \caption{PHOLDTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
+
+Both allocators will try to divide models evenly over kernels.
+The effects of varying the number of models per kernel are already evaluated in the previous section on scaling.
+Here we want to highlight the overhead of communication and inter-kernel dependence. 
 
 The breadth first allocation scheme results in a dependency chain with multiple branches, much like in the Queue model.
 Such a linear dependency chain can result in a parallel speedup as we demonstrated with the Queue model.
@@ -93,13 +95,14 @@ Using a depth-first allocation scheme, however, as shown in Figure~\ref{fig:phol
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/pholdtreed1n3t5000c4BFS.eps}
-    \caption{Visualization of a PHOLDTree simulation with breadth first allocation and 4 kernels.}
+    \caption{Visualization of a simulation of the model in Figure~\ref{fig:PholdTree_model_bfs}.}
     \label{fig:pholdtree_visualize_parBFS}
 \end{figure}
+
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/pholdtreed1n3t5000c4DFS.eps}
-    \caption{Visualization of a PHOLDTree simulation with depth first allocation and 4 kernels.}
+    \caption{Visualization of a simulation of the model in Figure~\ref{fig:PholdTree_model_dfs}.}
     \label{fig:pholdtree_visualize_parDFS}
 \end{figure}
 
@@ -115,7 +118,7 @@ Optimistic is less sensitive to the number of models per kernel as it does not n
 
 %The effect is due to the topology of the kernels, in BFS the risk on reverts is higher. Optimistic is less influenced but will get a lower speedup in the good case.
 Interestingly, we see that optimistic synchronization is less influenced by the allocation than conservative synchronization.
-This is likely caused due to the lower number of connections to take into account in conservative synchronization.
+This is likely caused by the lower number of connections to take into account in conservative synchronization.
 Whereas conservative synchronization needs to take into account even scarcely used connections, optimistic synchronization does not.
 The same is true in the opposite direction, though, where optimistic synchronization is slower when a good allocation is chosen.
 Conservative synchronization will then be able to make better estimates, whereas optimistic synchronization does not make estimations. 
