@@ -10,7 +10,9 @@ The same compilation flags were used for both \textit{adevs} and \textit{dxex} b
 To guarantee comparable results, no I/O was performed during benchmarks.
 Before benchmarking, simulation traces were used to verify that \textit{adevs} and \textit{dxex} return exactly the same simulation results.
 Benchmarks were performed using Linux, but our simulation tool works equally well on Windows and Mac.
-The exact parameters for each benchmark can be found in the repository, as well as the data used in this paper. 
+The exact parameters for each benchmark can be found in our repository. 
+
+The benchmarks are ran on a machine with 8 x AMD Opteron(TM) Processor 6274 with 8 cores per CPU (for a total of 64 cores) and 192 GB RAM.
 
 \subsection{Benchmark Models}
 We use three different benchmark models, covering different aspects of the simulation kernel.
@@ -19,10 +21,10 @@ First, the \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cit
 A single generator pushes events into the queue, which get consumed by the processors after a fixed or random delay.
 It takes two parameters: the width and depth of the hierarchy.
 This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
-An example for width and depth equal to 2 is shown in Figure~\ref{fig:queue_model}.
+An example for a width and depth of 2 is shown in Figure~\ref{fig:queue_model}.
 	
 Second, the \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
-Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event.
+Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event (\textit{i.e.}, the event is broadcasted).
 The model takes one parameter: the number of models.
 This benchmark shows the complexity of event creation, event routing, and simultaneous event handling.
 An example for three models is shown in Figure~\ref{fig:interconnect_model}.
@@ -32,8 +34,9 @@ Each atomic model is directly connected to every other atomic model.
 After a random delay, an atomic model sends out an event to a randomly selected output port.
 Output port selection happens in two phases: first it is decided whether the event should be sent within the same node, or outside of the node.
 Afterwards, a uniform selection is made between the remaining models.
-The model takes two parameter: the percentage of remote events, which determines the fraction of messages routed to other nodes, and the percentage of priority events. Priority events are events generated in a very short time after the previous event.
-This benchmark shows how the simulation kernel behaves in the presence of many local or remote events, in combination with a varying percentage of high-priority event.s
+The model takes two parameters: the percentage of remote events (determining the percentage of messages routed to other nodes), and the percentage of high-priority events.
+High-priority events are events generated in a very short time after the previous event.
+This benchmark shows how the simulation kernel behaves in the presence of many local or remote events, in combination with a varying percentage of high-priority events.
 An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
 
 \begin{figure}
@@ -62,12 +65,11 @@ We start by evaluating sequential simulation performance, in order to obtain a b
 
 \subsubsection{Queue}
 \label{4-seq-Queue}
-% explain what we did: fixed number of models (400, 600 & 800), increasing depth
 For the first benchmark, we tested the effect of hierarchical complexity of the model in the performance of the simulator.
 A set of three tests was performed, where each test has the same number of models but an increasing depth.
 The results can be seen in Figure~\ref{fig:Queue_benchmark_seq}.
-Since \textit{dxex} performs direct connection on the model, there is no performance hit when the depth is increased.
-Direct connection only needs to be done at initialization, so it is a one time cost that is negligible when simulation termination end time is sufficiently large.
+Since \textit{dxex} performs direct connection~\cite{SymbolicFlattening} on the model, there is no performance hit when the depth is increased.
+Direct connection only needs to be done at initialization, so it is a one time cost that is negligible for long running simulations.
 \textit{Adevs}, on the other hand, suffers from the increased depth, even though some similar (but not identical) optimization to event passing was made~\cite{adevs_opt}.
 With every new hierarchical layer, routing an event from one atomic model to the next becomes more expensive, resulting in an increase in runtime.
 
@@ -85,7 +87,7 @@ As shown in Figure~\ref{fig:Interconnect_benchmark}, \textit{adevs} now outperfo
 Analysis showed that this is caused by the high amount of events: event creation is much slower in \textit{dxex} than it is in \textit{adevs}, despite \textit{dxex}'s use of memory pools.
 To shield the user from threading and deallocation concerns \textit{dxex} provides an event superclass from which the user can derive to create a specialized event type.
 Copying, deallocation, and tracing are done at runtime, adding significant overhead when events happen frequently.
-Profiling the benchmarks clearly shows the increasing cost of output generation and deallocation as the determining factor in the gap in performance.
+Profiling the benchmarks revealed the increased cost of output generation and deallocation as the determining factor.
 
 \begin{figure}
 	\center
@@ -112,17 +114,24 @@ Figure~\ref{fig:Phold_benchmark} shows that the performance of \textit{dxex} and
 We now continue by describing our parallel simulation performance for different synchronization protocols, and compared to \textit{adevs}.
 The speedup of \textit{adevs} is computed with the corresponding \textit{dxex} sequential benchmark.
 This was done to take into account the performance difference observed in sequential simulation.
+As such, the highest speedup indicates the fastest results among all tools, independent of sequential simulation results.
 
 \subsubsection{Queue}
 The Queue model is one single chain of models, resembling a pipeline.
 This structure can be exploited to prevent cyclic dependencies in the parallel simulation.
 
-Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to sequential simulation for a fixed problem size.
-%TODO this is actually quite a strange choice...
+Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to sequential simulation for a fixed problem size (\textit{i.e.}, strong scaling).
 As the number of kernels increases, the optimistic kernel quickly becomes the worst choice.
 This is mainly caused by the pipeline structure of the model: the last models in the queue only respond to incoming messages and therefore have to be rolled back frequently.
 The difference between \textit{dxex} conservative and \textit{adevs} becoms smaller when more and more cores are used.
-The same effect can be seen for weak scaling in Figure~\ref{fig:Queue_plot_weak}.
+The same effect can be seen when the problem size is increased in tandem with the number of used cores (\textit{i.e.}, weak scaling) in Figure~\ref{fig:Queue_plot_weak}.
+
+\begin{figure}
+	\center
+	\includegraphics[width=\columnwidth]{fig/queue_fixed_strong_speedup.eps}
+	\caption{Queue model strong scaling speedup compared to \textit{dxex} sequential.}
+	\label{fig:Queue_plot_strong}
+\end{figure}
 
 \begin{figure}
 	\center
@@ -131,14 +140,8 @@ The same effect can be seen for weak scaling in Figure~\ref{fig:Queue_plot_weak}
 	\label{fig:Queue_plot_weak}
 \end{figure}
 	
-\begin{figure}
-	\center
-	\includegraphics[width=\columnwidth]{fig/queue_fixed_strong_speedup.eps}
-	\caption{Queue model strong scaling speedup compared to \textit{dxex} sequential.}
-	\label{fig:Queue_plot_strong}
-\end{figure}
-
-\subsubsection{Interconnect}\label{subsec:parallelinterconnect}
+\subsubsection{Interconnect}
+\label{subsec:parallelinterconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
 The number of models is now kept constant at eight.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
@@ -148,6 +151,7 @@ All models depend on each other and have no computational load whatsoever, negat
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
+    %TODO cyclic allocation in title?
 	\caption{Interconnect benchmark results for parallel simulation.}
 	\label{fig:interconnect_benchmark_parallel}
 \end{figure}
@@ -156,7 +160,7 @@ All models depend on each other and have no computational load whatsoever, negat
 In the PHOLD model, we first investigate the influence of the percentage of remote events on the speedup.
 A remote event in this context is an event that is sent from a model on one kernel to a model on another simulation kernel.
 When remote events are rare, optimistic synchronization rarely has to roll back, thus increasing performance.
-With more common remote events, however, optimistic synchronization quickly slows down due to frequent rollbacks.
+With more frequent remote events, however, optimistic synchronization quickly slows down due to frequent rollbacks.
 Conservative synchronization, on the other hand, is mostly unconcerned with the number of remote events: the mere fact that a remote event can happen, causes it to block and wait.
 Even though a single synchronization protocol is always ideal in this case, it already shows that different synchronization protocols respond differently to a changing model.
 
@@ -170,7 +174,7 @@ We feel this would lead to an unfair comparison as we would like to keep the mod
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/phold_remotes.eps}
-    \caption{PHOLD benchmark results for parallel simulation using four kernels, four atomics per node, with varying percentage of remote events.}
+    \caption{PHOLD benchmark results for parallel simulation using four kernels, with varying percentage of remote events.}
 \end{figure}
 
 \begin{figure}
@@ -180,7 +184,6 @@ We feel this would lead to an unfair comparison as we would like to keep the mod
 	\label{fig:phold_priority}
 \end{figure}
 
-We slightly modified the PHOLD benchmark to include high-priority events.
 Contrary to normal events, high-priority events happen almost instantaneously, restricting lookahead to a very small value.
 Even when normal events occur most often, conservative synchronization always blocks until it can make guarantees.
 Optimistic synchronization, however, simply goes forward in simulation time and rolls back when these high-priority events happen.
@@ -189,88 +192,96 @@ This situation closely mimics the model typically used for comparing conservativ
 Figure~\ref{fig:phold_priority} shows how simulation performance is influenced by the fraction of these high-priority events.
 If barely any high-priority events occur, conservative synchronization is penalized due to its excessive blocking, which often turned out to be unnecessary.
 When many high-priority events occur, optimistic synchronization is penalized due to its unconditional progression of simulation, which frequently needs to be rolled back.
-Results show that there is no single perfect synchronization algorithm for this model: depending on configuration, either synchronization protocol might be better.
-\subsection{Comparison with PDEVS}
-In this section we contrast the speedup between the original PDEVS algorithm and the synchronization protocols. 
-Note that the PDEVS algorithm and the synchronization protocols are complementary in \textit{dxex}, not exclusive. 
-Following the theoretical analysis published in ~\cite{amdahlpdevs} a comparison between PDEVS and the synchronization protocols was warranted. 
-We compare the ideal scenario for PDEVS where all events are concurrent with a scenario where events are random.
-In this work we do not consider the distribution of events, introducing a random number generator as we will show in this work can mask performance results. 
-By limiting ourselves to the best and worst case scenario we demonstrate the capabilities and limitations of both approaches.
-The influence of the computational load of the transition functions is a second factor we investigate in this section.
-We are interested in scenarios where PDEVS and the synchronization protocols can complement each other in addition to observing their speedup in isolation.
-The benchmarks are run on the same hardware as our previous results, a 8 x AMD Opteron(TM) Processor 6274 machine with 8 cores per cpu (64 cores) and 192 GB RAM. 
-The benchmarks use a maximum of 16 threads to be divided between PDEVS , conservative or optimistic. 
+Results show that there is no single perfect synchronization algorithm for this kind of models: depending on configuration, either synchronization protocol might be better.
+
+\subsection{Comparison to the abstract simulator}
+The abstract simulator of \textsf{Parallel DEVS} included its own notion of parallelism: transition functions that happen at the same point in simulated time can be trivially parallelized.
+This parallelization is trivial, in the sense that there is no need for synchronization protocols.
+The parallelization of the transition functions (from now on called the ``inherent parallelism'') is, at least in \textit{dxex}, independent of the use of a synchronization protocol.
+That is, both can be used simultaneously.
+Following the theoretical analysis published in~\cite{amdahlpdevs}, a comparison between this inherent parallelism and the use of synchronization protocols is warranted.
 
 \paragraph{Model}
-As shown in the previous section, when most models are dependent on each other across kernels there is no speedup obtainable by either optimistic or conservative. 
-We therefore opted to use the \textit{Queue} model in this benchmark.
-The effect of combining 4 synchronized kernels with each 4 threads for PDEVS is contrasted with 16 threads for PDEVS and 16 kernels for conservative and optimistic.  
+We have opted to use the \textit{Queue} model for this comparison, as it allows for many interesting configurations.
+%TODO what is meant with this allocation of threads and synchronized kernels?
+The effect of combining 4 synchronized kernels, with each 4 threads for PDEVS, is contrasted with 16 threads for PDEVS and 16 kernels for conservative and optimistic.
 This allows us to observe which is more efficient in obtaining a speedup.
-We simulate a computational load by an optional call to sleep in the transition functions set at 5ms. 
+We simulate a computational load by an optional call to sleep in the transition functions set at 5 milliseconds.
 The model is configured with depth 4 and width 300 if the transition function has no load, and width 50 if the computational load is active.
-In our configuration an imminent model will generate output and lead to another model becoming imminent. With respect to the 
-theoretical analysis in~\cite{amdahlpdevs} this gives a parameter value q = 1. 
-The models are equally distributed over the kernels and between threads in PDEVS. 
-The coefficient of variation of our results is less than 1\%. 
-Communication between the kernels and threads, defined as communication overhead in the theoretical work is hard to to estimate here but given our coefficient of variation results we can assume this to be constant.
+In our configuration, an imminent model generates output, resulting in another model becoming imminent.
+With respect to the theoretical analysis in~\cite{amdahlpdevs} this gives a parameter value $q = 1$.
+Models are equally distributed over the kernels and between threads in PDEVS.
+The coefficient of variation of our results is less than 1\%.
+The communication overhead is hard to estimate, but given our coefficient of variation, we can expect this overhead to be constant.
+
+We consider two cases: one where all transition functions happen simultaneously, and one where transition functions never happen simultaneously.
+We defer the discussion on which of these two is the most realistic, as this depends on the problem domain.
+For example, in a simulation with a fixed timestep (\textit{e.g.}, cell-based models, discretization of continuous model), transition functions will often occur simultaneously.
+Conversely, simulations with an arbitrary timestep (\textit{e.g.}, many independent systems communicating together) have very few simultaneous events.
 
 \paragraph{Concurrent events}
-First we create the ideal scenario for PDEVS, all events are concurrent with a significant computational load in the transition functions. All models are imminent at the same time in this configuration allowing for maximum parallelism.
-In figure \ref{fig:pdevs_plot_fixed_sleep} we observe that PDEVS obtains a speedup approaching 10.  
-Conservative and optimistic are run first with 16 kernels, then with 4 kernels having 4  PDEVS threads each. 
-Both protocols achieve a similar speedup compared to PDEVS. Combining the protocols with PDEVS gives a near identical speedup.
+First we create a model where all transitions happen simultaneously, with a significant computational load in the transition functions.
+In Figure~\ref{fig:pdevs_plot_fixed_sleep}, we observe that exploiting only the inherent parallelism, results in a speedup of about 10.  
+%TODO again: what is this?
+Simulation with conservative and optimistic synchronization is run first with 16 kernels, then with 4 kernels having 4 PDEVS threads each. 
+Both synchronization protocols achieve a speedup similar to only exploiting the inherent parallelism.
+Combining the protocols with the inherent parallelism gives near identical results.
 In this scenario there is no real advantage between the different parallel configurations.
-
-\paragraph{Random events}
-Random events allow us to demonstrate the overhead of PDEVS. The probability that events are concurrent is strongly reduced.
-The transition function has the same computational load as in the previous configuration. 
-The results in figure \ref{fig:pdevs_plot_random_sleep} show that PDEVS adds little overhead in sequential simulation. 
-In combination with either synchronization protocol DPEVS can achieve a reasonable speedup, but both synchronization protocols achieve a far higher speedup without PDEVS.
-
-\paragraph{Computational load}
-When we remove the computational load we isolate the overhead of the parallelism. 
-In this paper we are mainly interested in this overhead which is otherwise masked by adding a computational cost to the transition functions. 
-Figure \ref{fig:pdevs_plot_no_sleep} shows that in sequential simulation the PDEVS overhead is crippling. Conservative combined with PDEVS reduces performance to that of sequential without PDEVS with worse results for optimistic in combination in PDEVS.
-Both synchronization protocols achieve a reasonable speedup without PDEVS.  
- 
-\paragraph{Discussion}
-In \textit{dxex} PDEVS and the two synchronization protocols can be complementary. 
-The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
-While PDEVS can offer a significant speedup, we see that to offer this speedup the concurrency of events must be significant in combination with a high computational load in the transition functions. 
-We measure the overhead introduced by PDEVS to give practitioners insight into which model can benefit from which paradigm.
-The overhead of the synchronization protocols in specific scenarios  is shown in the previous section.
-For a given model it is difficult to predict the concurrency of events, although the computational load of a transition function can be approximated.
-In these benchmarks we show which configurations can lead to a speedup for PDEVS or the synchronization protocols in either isolation or combination.
-In a model with high concurrency in simultaneous events and a high computational load PDEVS can offer a significant speedup.
-This speedup is not exclusive to PDEVS. Conservative and optimistic synchronization protocols can achieve the same speedup given a non cyclic model. 
-From the theoretical model we know that in a cyclic model PDEVS can achieve a higher speedup.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_fixed_sleep.eps}
+    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with maximal concurrent events and significant computational load}
 	\label{fig:pdevs_plot_fixed_sleep}
 \end{figure}
 
+\paragraph{Random events}
+Now we randomize the time advance in the models, resulting in very few transition functions that happen simultaneously.
+Even when two transitions are only minimally apart in simulated time, they cannot be executed in parallel, as there might otherwise be a causality error.
+The transition function has the same computational load as in the previous configuration. 
+The results in Figure~\ref{fig:pdevs_plot_random_sleep} show that parallelizing transition functions only, adds little overhead. 
+Nonetheless, performance is not increased at all: the chances of executing a few transition functions in parallel does not make up for the overhead of checking.
+In combination with either synchronization protocol, a minor improvement can still be seen, but this is primarily caused by the synchronization protocol, and not by parallelizing the transition functions.
+
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_random_sleep.eps}
+    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with randomized events and significant computational load}
 	\label{fig:pdevs_plot_random_sleep}
 \end{figure}
 
+\paragraph{Computational load}
+Finally, we remove the computation load from the transition function, in combination with many concurrent events.
+Figure~\ref{fig:pdevs_plot_no_sleep} shows that in sequential simulation, the overhead of thread management and shared memory communication is crippling for performance.
+Even though many events occur concurrently, the actual computation being done in the transition function does not outweight the overhead, resulting in much slower simulation than sequential execution of transition functions.
+When combined with synchronization protocols, performance is still reasonable, though the use of the inherent parallelism is not beneficial either way.
+Both synchronization protocols achieve a reasonable speedup without PDEVS, as the overhead of thread management (creation and destruction) is avoided.
+These results are similar to~\cite{Himmelspach}.
+ 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_no_sleep.eps}
+    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with maximal concurrent events and trivial computational load}
 	\label{fig:pdevs_plot_no_sleep}
 \end{figure}
 
+\paragraph{Discussion}
+In \textit{dxex}, use of the inherent parallelism found in \textsf{Parallel DEVS} can be combined with any of the supported synchronization protocols.
+The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
+While exploitation of the inherent parallelism can offer a significant speedup, a high number of transitions must be triggered simultaneously throughout the whole simulation.
+Additionally, the computational load of the transition functions should be high enough to warrant the thread management overhead.
+We conclude that both approaches have their distinct advantages and disadvantages.
+The inherent parallelism of \textsf{Parallel DEVS} avoids synchronization overhead and is trivial to implement.
+It is not influenced by the coupling of models, and only by the number of simultaneous transition functions and the computational load in the transition function.
+In contrast, either of the two synchronization protocols is heavily influenced by the coupling of the models, but not by the computational load or number of simultaneous transitions.
+
 \subsection{Memory Usage}
 Apart from simulation execution time, memory usage during simulation is also of great importance.
 While execution time only becomes a problem if it takes way too long, coming short only a bit of memory can make simulation infeasible.
-We therefore also investigate memory usage of different synchronization protocols, and again compare to \textit{adevs}.
+We therefore also investigate the memory usage of different synchronization protocols, and again compare to \textit{adevs}.
 
 We do not tackle the problem of states that become too large for a single machine to hold.
 This problem can be mitigated by distribution over multiple machines, which neither \textit{dxex} or \textit{adevs} support.
@@ -302,7 +313,8 @@ Additional memory is required for the multiple threads, but also to store all ev
 
 \subsection{Conclusions on Performance Evaluation}
 We have shown that our contribution is invaluable for high performance simulation: depending on the expected behaviour, modellers can choose the most appropriate synchronization protocol.
-PDEVS is compared with the synchronization protocols either in isolation or complementing each other. We have shown that both approaches are useful in specific model configurations.
+The use of synchronization protocols does also not prevent the exploitation of the inherent parallelism found in \textsf{ParallelPDEVS}.
+Both approaches are useful in specific model configurations.
 But even with the right synchronization protocol, we have seen that two problems remain.
 
 First, although one of both synchronization protocols might be ideally suited for specific model behaviour, nothing guarantees that the model will exhibit the same behaviour throughout the simulation.
