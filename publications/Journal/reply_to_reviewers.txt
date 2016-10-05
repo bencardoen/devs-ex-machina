@@ -1,0 +1,223 @@
+Referees' comments:
+
+Referee: 1
+
+Recommendation: Accept If Certain Minor Revisions Are Made
+
+Comments:
+The authors propose a new architecture for a PDEVS simulator. This simulator allows to dynamically change the simulation synchronization protocols for single machine parallelism.
+
+An implementation in C++11 is described implementing sequential, conservative and optimistic protocols. The tool implemented is evaluated using synthetic models based in DEVStone and PHOLD. Based on the results obtained, the authors discuss the challenges of memory allocation and core association. These challenges are different for different protocols, and motivate the switching approach.
+
+
+Notes:
+- Expand first use of Acronyms.
+We have reviewed the text to expand acronyms where this was not the case.
+
+-Page 7 (5 in the paper), lines 46-54. Authors mention, the inconvenience for modelers to be required to define lookahead in every model. An alternative is using the inheritance mechanisms of C++.
+Model could be defined with no look-ahead awareness as in classic simulators. Then, a "model-with-lookahead" can be defined as specialization of model. Then, a model can be specialized with look-ahead information when simulated in conservative protocol. That way, both can be passed to the "SequentialCore", but classic model will not be accepted by the "ConservativeCore" if passed.
+The current default implementation of the lookahead function in the base model class has no performance impact in sequential or optimistic simulation, the compiler can deduce that this function is never invoked.
+By providing it depending on the simulation type (by way of specialization) we would break one of our design aims, namely reusing the same model across the different synchronization protocols. This would further complicate the switching between optimistic and conservative at runtime, as it would involve a casting operation which may or may not fail at runtime.
+Furthermore, a model designed for sequential simulation can be run in conservative simulation in the current design without providing a lookahead. Using our statistics module the author can then use the gathered information to set the actual lookahead.
+We have modified the relevant paragraph to clarify this point.
+
+
+ - Page 8 (6 in the paper) lines 12 to 17, second column. Have you considered the use of transactional memory?
+We have considered this, but unfortunately transactional memory is still not in the C++ standard. In our design we opted for maximum portability and using a non standard implementation would hinder this. There is ongoing work to include transactional memory in the C++17 standard but the current prototype implementation in GCC is too experimental to use, especially since the implementation uses a single lock which would constrain performance. We have modified our future work section to add this information.
+
+
+
+ - Figure 6 is explained before Figure 5
+Corrected
+
+- Figure 7, line dxex w 800 is invisible in B&W, line adevs w800 is hard to see in B&W
+- Figures 8, 9, 10, 11, 12, 13, 14, 20, and 25 are plotted in different style than previous ones, also most lines cannot be distinguished, or are hard to read in B&W.
+- Figure 21 and 22 are hard to identify the light colours differences in B&W.
+Corrected.
+The graphs have been modified to use better distinguishable colors and line styles. The use of color has also been made more consistent.
+
+
+- Page 10 (8 in paper), line 41.  "An example for 4 models is shown in Figure 5", the Figure showed has 3 models and the interconnection is not HI.
+Corrected.
+Note that the model is indeed not HI, as the text mentions it is a merge between PHOLD and HI.
+
+
+
+
+- Page 17 (15 in paper), have you tried to assign different quentities of models per core? All examples seem to use equal quantity per core (with exception of the last core, taking less in some cases).
+The scaling effects on performance have been investigated in the performance section. In this scenario (bfs vs dfs allocation) we specifically wanted to balance the model load over kernels. This will not always result in an equal load as is indeed shown in the allocation plot, but the main effect we want to demonstrate here is the effect of inter kernel communication and resulting dependencies between kernels this introduces. We have added a paragraph to section 6 to explain our reasoning.
+
+
+- Page 18 (16 in paper), lines 16 a 33, second column. CD++ has an effort of merging multiple approaches in a single simulator. However, the proposed approach is static, once the simulation starts, there is no dynamic protocol change. The new architecture for this approach is showed in [1], and a initial implementation in C++11 is evaluated.
+We’ve updated the related work section :
+“A new architecture for sequential PDEVS simulation has been introduced in \cite{SeqPDEVSArch} with promising performance results. This algorithm achieves a speedup by using the inherent parallelism in PDEVS without the need for synchronization.”
+
+
+
+- In conclusions, it is mentioned that the main contribution is the implementation of the simulator. I believe the discussion over protocol switching, memory and core assignation is the core is more important.
+We have included memory allocation result in the conclusion. The other topics are already mentioned in the conclusion.
+
+
+
+Additional Questions:
+1. Are the application of modeling and simulation methods clearly motivated?: Yes
+
+If no, please identify the points where the motivation lacks clarity.:
+
+2. How would you rate the impact of the results achieved for the application area?: Noticeable
+
+Could you please shortly explain your opinion?:
+
+3. Is the paper logically and technically correct?: Appears to be, but didn't check completely.
+
+If no, could you please describe the incorrect parts of the paper and make suggestions how these parts can be corrected.:
+
+4. How would you describe the technical depth of the paper?: Suitable only for an expert
+
+5. Is the coverage of the topic sufficiently comprehensive and balanced?: Yes
+
+If no, please identify which parts of the topic are missing or superficially treated:
+
+If certain parts are greatly overstressed, please identify which ones:
+
+1. Are the title and abstract appropriate?: Yes
+
+If no, could you please describe why the title and / or abstract appear to be misleading?:
+
+2. Does the introduction clearly state the background and / or motivation in terms understandable to the non-specialist?: Yes
+
+If no, could you please identify where the introduction should be clarified?:
+
+3. Are the references or bibliography appropriate and complete?: No
+
+If no, please provide references or research areas with which the present work should be included and compared with.: There are recent work on similar algorithms by the group of Lin Uhrmacher at the University of Rostock, and papers by D. Vicino published in the Symposium on Theory of Modeling & Simulation that the authors should revise, discuss and cite in their related work section.
+We did not find relevant work from D Vicino on partitioning, but updated the related work section with a review of a paper from Lin Uhrmacher regarding partitioning.
+
+4. How would you rate the overall organization of the paper?: Satisfactory
+
+If it can be improved, how?:
+
+5. Is the English satisfactory?: No, but can be easily polished.
+We have made several style changes to the text.
+
+
+Referee: 2
+
+Recommendation: Accept If Certain Minor Revisions Are Made
+
+Comments:
+(There are no comments.)
+
+Additional Questions:
+1. Are the application of modeling and simulation methods clearly motivated?: Yes
+
+If no, please identify the points where the motivation lacks clarity.:
+
+2. How would you rate the impact of the results achieved for the application area?: Very High
+
+Could you please shortly explain your opinion?: The paper presents important results concerning the performance of parallel simulation synchronization protocols.
+
+3. Is the paper logically and technically correct?: Yes
+
+If no, could you please describe the incorrect parts of the paper and make suggestions how these parts can be corrected.:
+
+4. How would you describe the technical depth of the paper?: Appropriate for a worker in the general field of the paper
+
+5. Is the coverage of the topic sufficiently comprehensive and balanced?: Yes
+
+If no, please identify which parts of the topic are missing or superficially treated:
+
+If certain parts are greatly overstressed, please identify which ones:
+
+1. Are the title and abstract appropriate?: Yes
+
+If no, could you please describe why the title and / or abstract appear to be misleading?:
+
+2. Does the introduction clearly state the background and / or motivation in terms understandable to the non-specialist?: Yes
+
+If no, could you please identify where the introduction should be clarified?:
+
+3. Are the references or bibliography appropriate and complete?: No
+
+If no, please provide references or research areas with which the present work should be included and compared with.: I think that two recent  references concerning PDEVS are missing :
+Zeigler, B.P., Nutaro J.J., Seo, C., What’s the Best Possible Speedup Achievable in Distributed Simulation: Amdahl’s Law Reconstructed, DEVS TMS, SpringSim (2015), 930-937.
+
+PDEVS Protocol Performance Prediction using Activity Patterns with Finite Probabilistic DEVS (Bernard P. Zeigler, Laurent Capocchi and Jean Francois Santucci) in SpringSim 2016.
+A new subsection was added with extended results and discussion regarding these two papers, the related work section was updated with these references.
+
+Furthermore I think that it is worthwhile to remove the reference number 22 (the article has been published in a very bad workshop without any review and paper is not pertinent).
+Thank you for notifying us about the quality of this reference. We have consequently removed it from our list of references.
+
+In addition please verify the references (at least  in 15  references the year of publication is missing).
+The missing years are due to the Latex style file. Some @inproceedings don’t include the year in their title. We have added the year field to every reference, so it isn’t our fault. We changed the items to @articles to work around this issue.
+
+4. How would you rate the overall organization of the paper?: Satisfactory
+
+If it can be improved, how?:
+
+5. Is the English satisfactory?: Yes
+
+
+Referee: 3
+
+Recommendation: Author(s) Should Prepare A Major Revision For A Second Review
+
+Comments:
+(There are no comments.)
+
+Additional Questions:
+1. Are the application of modeling and simulation methods clearly motivated?: Yes
+
+If no, please identify the points where the motivation lacks clarity.:
+
+2. How would you rate the impact of the results achieved for the application area?: Significant
+
+Could you please shortly explain your opinion?:
+
+3. Is the paper logically and technically correct?: No
+
+If no, could you please describe the incorrect parts of the paper and make suggestions how these parts can be corrected.: The paper doesn't consider including the standard DEVS simulation protocol as one of the alternatives supported by the software
+The authors completely ignore recent results on the standard parallel DEVS simulation protocol that shows that on the average this protocal is not far from the
+time of the best possible method conservative or optimistic  method. Moreover, the DEVS protocol converges to the  best possible speedup for models with moderate to high  coupling.  See the reference given later.
+
+Three aspects need to be addressed:
+The test models need to be extended with those that incorporate intrinsic parallelism.
+	We have benchmarked 3 configurations that demonstrate the different aspects highlighted in the
+	theoretical work and analyzed their results.
+The standard parallel DEVS simulation protocol should be implemented as an alternative and compare with the others.
+	We have implemented this. PDEVS can operate with or without the synchronization protocols allowing for a in depth comparison.
+The results of the standard, conservative and optimistic methods need to be compared with the theoretical predictions
+	In a new subsection we analyze the performance differences between PDEVS, standard, optimistic and conservative.
+	
+
+4. How would you describe the technical depth of the paper?: Appropriate for a worker in the general field of the paper
+
+5. Is the coverage of the topic sufficiently comprehensive and balanced?: No
+
+If no, please identify which parts of the topic are missing or superficially treated: Missing is discussion on the Parallel DEVS Simulation Protocal as mentioned in other sections of this review.
+	See item 3.
+
+If certain parts are greatly overstressed, please identify which ones:
+
+1. Are the title and abstract appropriate?: No
+
+If no, could you please describe why the title and / or abstract appear to be misleading?: The title is not appropriate for the limited perspective adopted as the paper stands.  If it were to be extended to consider the standard parallel DEVS simulation protocol the title would be warranted.
+We have implemented the requested changes.
+
+2. Does the introduction clearly state the background and / or motivation in terms understandable to the non-specialist?: Yes
+
+If no, could you please identify where the introduction should be clarified?:
+
+3. Are the references or bibliography appropriate and complete?: No
+
+If no, please provide references or research areas with which the present work should be included and compared with.: Bernard P. Zeigler James J. Nutaro, and C. Seo. What’s the Best Possible Speedup Achievable in Distributed Simulation: Amdahl’s Law Reconstructed, DEVS TMS, SpringSim 2015.
+This reference was included and discussed with the empirical results.
+
+4. How would you rate the overall organization of the paper?: Could be improved
+
+If it can be improved, how?: Often terms are used before they are defined or linked to references later. Looks like sections of the paper were re-arranged without checking for dependencies.
+We have revised the paper and made changes where this issue was apparent.
+
+
+5. Is the English satisfactory?: Yes
+
