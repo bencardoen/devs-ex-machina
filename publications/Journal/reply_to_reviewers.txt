@@ -16,14 +16,27 @@ We have reviewed the text to expand acronyms where this was not the case.
 > -Page 7 (5 in the paper), lines 46-54. Authors mention, the inconvenience for modelers to be required to define lookahead in every model. An alternative is using the inheritance mechanisms of C++.
 > Model could be defined with no look-ahead awareness as in classic simulators. Then, a "model-with-lookahead" can be defined as specialization of model. Then, a model can be specialized with look-ahead information when simulated in conservative protocol. That way, both can be passed to the "SequentialCore", but classic model will not be accepted by the "ConservativeCore" if passed.
 
-The current default implementation of the lookahead function in the base model class has no performance impact in sequential or optimistic simulation, the compiler can deduce that this function is never invoked.
-By providing it depending on the simulation type (by way of specialization) we would break one of our design aims, namely reusing the same model across the different synchronization protocols. This would further complicate the switching between optimistic and conservative at runtime, as it would involve a casting operation which may or may not fail at runtime.
-Furthermore, a model designed for sequential simulation can be run in conservative simulation in the current design without providing a lookahead. Using our statistics module the author can then use the gathered information to set the actual lookahead.
-We have modified the relevant paragraph to clarify this point.
+The proposed solution would indeed lift out the lookahead for sequential and
+optimistic models. This is, however, in conflict with our intended design:
+have a single model that can be simulated using all possible synchronization
+protocols. While it is indeed true that sequential and optimistic models will
+also have to define a lookahead, this is not too much of a burden to the user:
+a default lookahead (of epsilon) is provided automatically. If the compiler
+sees that this value is unused, it can even be optimized away. Additionally,
+this would complicate runtime switching to conservative, as some models might
+not be simulatable this way. 
+
+We have modified the relevant paragraph to include this motivation as to why
+we don't use inheritance.
 
 >  - Page 8 (6 in the paper) lines 12 to 17, second column. Have you considered the use of transactional memory?
 
-We have considered this, but unfortunately transactional memory is still not in the C++ standard. In our design we opted for maximum portability and using a non standard implementation would hinder this. There is ongoing work to include transactional memory in the C++17 standard but the current prototype implementation in GCC is too experimental to use, especially since the implementation uses a single lock which would constrain performance. We have modified our future work section to add this information.
+We agree that transactional memory could be beneficial to our simulator.
+Unfortunately, transactional memory is still not in the C++ standard. As we
+try to strive for maximum portability, using non-standard implementations goes
+against our design philosophy. When included in the new C++ standard, it would
+certainly be of great interest to look at the influence of transactional
+memory. We have updated our future work accordingly.
 
 >  - Figure 6 is explained before Figure 5
 
@@ -33,23 +46,37 @@ Corrected
 > - Figures 8, 9, 10, 11, 12, 13, 14, 20, and 25 are plotted in different style than previous ones, also most lines cannot be distinguished, or are hard to read in B&W.
 > - Figure 21 and 22 are hard to identify the light colours differences in B&W.
 
-The graphs have been modified to use better distinguishable colors and line styles. The use of color has also been made more consistent.
+The graphs have been modified to use better distinguishable colors and line
+styles. The use of color has also been made more consistent.
  
 > - Page 10 (8 in paper), line 41.  "An example for 4 models is shown in Figure 5", the Figure showed has 3 models and the interconnection is not HI.
 
-Note that the model is indeed not HI, as the text mentions it is a merge between PHOLD and HI.
+This model is indeed not HI, but rather a combination of PHOLD and HI, as
+explained in the text. The number of models has been corrected.
 
 > - Page 17 (15 in paper), have you tried to assign different quentities of models per core? All examples seem to use equal quantity per core (with exception of the last core, taking less in some cases).
 
-The scaling effects on performance have been investigated in the performance section. In this scenario (bfs vs dfs allocation) we specifically wanted to balance the model load over kernels. This will not always result in an equal load as is indeed shown in the allocation plot, but the main effect we want to demonstrate here is the effect of inter kernel communication and resulting dependencies between kernels this introduces. We have added a paragraph to section 6 to explain our reasoning.
+The scaling effects on performance have been investigated in the performance
+section. In this scenario (bfs vs dfs allocation) we specifically wanted to
+balance the model load over kernels. This will not always result in an equal
+load as is indeed shown in the allocation plot. The main effect we want to
+demonstrate here is the effect of inter-kernel communication and the
+dependencies between kernels this introduces. We have added a paragraph to
+section 6 to explain our reasoning.
 
 > - Page 18 (16 in paper), lines 16 a 33, second column. CD++ has an effort of merging multiple approaches in a single simulator. However, the proposed approach is static, once the simulation starts, there is no dynamic protocol change. The new architecture for this approach is showed in [1], and a initial implementation in C++11 is evaluated.
 
-We have updated the related work section.
+We could not find where [1] references to, but we believe it to be:
+Vicino D., Niyonkuru D., Wainer G. et al. Sequential PDEVS Architecture. In
+proceedings of the 2015 Symposium on Theory of Modeling and Simulation - DEVS.
+2015. pp. 165-172.
+
+We have updated the related work section with a reference to this work.
 
 > - In conclusions, it is mentioned that the main contribution is the implementation of the simulator. I believe the discussion over protocol switching, memory and core assignation is the core is more important.
 
-We have included memory allocation result in the conclusion. The other topics are already mentioned in the conclusion.
+We have included memory allocation result in the conclusion. The other topics
+are already mentioned in the conclusion.
 
 > Additional Questions:
 > 1. Are the application of modeling and simulation methods clearly motivated?: Yes
@@ -84,7 +111,8 @@ We have included memory allocation result in the conclusion. The other topics ar
 > 
 > If no, please provide references or research areas with which the present work should be included and compared with.: There are recent work on similar algorithms by the group of Lin Uhrmacher at the University of Rostock, and papers by D. Vicino published in the Symposium on Theory of Modeling & Simulation that the authors should revise, discuss and cite in their related work section.
 
-We did not find relevant work from D Vicino on partitioning, but updated the related work section with a review of a paper from Lin Uhrmacher regarding partitioning.
+We have added the work by Vicino on CD++ and the work by Uhrmacher on
+partitioning.
 
 > 4. How would you rate the overall organization of the paper?: Satisfactory
 > 
@@ -136,16 +164,22 @@ We have made several style changes to the text.
 > Zeigler, B.P., Nutaro J.J., Seo, C., What's the Best Possible Speedup Achievable in Distributed Simulation: Amdahl's Law Reconstructed, DEVS TMS, SpringSim (2015), 930-937.
 > PDEVS Protocol Performance Prediction using Activity Patterns with Finite Probabilistic DEVS (Bernard P. Zeigler, Laurent Capocchi and Jean Francois Santucci) in SpringSim 2016.
 
-A new subsection was added with extended results and discussion regarding these two papers, the related work section was updated with these references.
- 
+A new subsection was added with extended results and discussion regarding
+these two papers, the related work section was updated with these references.
+
 > Furthermore I think that it is worthwhile to remove the reference number 22 (the article has been published in a very bad workshop without any review and paper is not pertinent).
 
-Thank you for notifying us about the quality of this reference. We have consequently removed it from our list of references.
- 
+Thank you for notifying us about the quality of this reference. We have
+consequently removed it from our list of references.
+
 > In addition please verify the references (at least  in 15  references the year of publication is missing).
 
-The missing years are due to the Latex style file. Some @inproceedings don't include the year in their title. We have added the year field to every reference, so it isn’t our fault. We changed the items to @articles to work around this issue.
- 
+The missing year of publication seems to be due to the bibliography style
+included in the Simulation LaTeX style files: @inproceedings did not display
+the year, even though it was defined in our bibtex files. We have manually
+modified this bibtex style for now, to include the years. The final style,
+however, will be up to the publisher.
+
 > 4. How would you rate the overall organization of the paper?: Satisfactory
 > 
 > If it can be improved, how?:
@@ -177,15 +211,30 @@ The missing years are due to the Latex style file. Some @inproceedings don't inc
 > Three aspects need to be addressed:
 > The test models need to be extended with those that incorporate intrinsic parallelism.
 
-We have benchmarked 3 configurations that demonstrate the different aspects highlighted in the theoretical work and analyzed their results.
+Both our Queue and Interconnect model could be configured to have high
+intrinsic parallelism. We have included results for this configuration in a
+new subsection (as discussed below).
 
 > The standard parallel DEVS simulation protocol should be implemented as an alternative and compare with the others.
 
-We have implemented this. PDEVS can operate with or without the synchronization protocols allowing for a in depth comparison.
+Our simulation kernel has been extended with the option to parallelize the
+transition functions, exploiting the inherent parallelism found in Parallel
+DEVS. This can be done in combination with other synchronization protocols,
+allowing for an in-depth comparison.
 
 > The results of the standard, conservative and optimistic methods need to be compared with the theoretical predictions
 
-In a new subsection we analyze the performance differences between PDEVS, standard, optimistic and conservative.
+A new subsection was added to elaborate on the inherent parallelism that can
+be found in Parallel DEVS, and our implementation exploiting this. A
+comparison was made between all options. These results clearly show that using
+the inherent parallelism is indeed a valid option when there are many
+simultaneous transition functions and high coupling. For situations with low
+(or none) simultaneous transition functions and low coupling, synchronization
+protocols still seem to be the better option. This makes us believe that both
+approaches are complementary. Ideally, the allocation could be optimized to
+place highly-coupled models with simultaneous transition functions together at
+a node, and have these low-coupled nodes with barely any simultaneous
+transition functions be synchronized using a synchronization protocol.
 
 > 4. How would you describe the technical depth of the paper?: Appropriate for a worker in the general field of the paper
 > 
@@ -193,7 +242,7 @@ In a new subsection we analyze the performance differences between PDEVS, standa
 > 
 > If no, please identify which parts of the topic are missing or superficially treated: Missing is discussion on the Parallel DEVS Simulation Protocal as mentioned in other sections of this review.
 
-See item 3.
+This discussion was added (see our previous comment).
  
 > If certain parts are greatly overstressed, please identify which ones:
 > 
@@ -201,7 +250,8 @@ See item 3.
 > 
 > If no, could you please describe why the title and / or abstract appear to be misleading?: The title is not appropriate for the limited perspective adopted as the paper stands.  If it were to be extended to consider the standard parallel DEVS simulation protocol the title would be warranted.
 
-We have implemented the requested changes.
+As per our previous comment, we have implemented this protocol and added a
+discussion about it.
  
 > 2. Does the introduction clearly state the background and / or motivation in terms understandable to the non-specialist?: Yes
 > 
