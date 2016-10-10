@@ -82,8 +82,8 @@ Defining the lookahead is difficult and can often be unpredictable.
 The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but likely not at peak performance.
 Depending on the model, simulation performance might still be faster than sequential simulation. 
 
-Defining a lookahead function is therefore recommended in combination with conservative synchronization, but is not a necessity, as a default value $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
-Providing this default implementation has no impact in sequential or optimistic simulation, since the function is never called the compiler will optimize it out.
+Defining a lookahead function is therefore recommended in combination with conservative synchronization, but it is not a necessity, as a default value $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
+Providing this default implementation has no impact in sequential or optimistic simulation; as the function is never called, the compiler will optimize it out.
 By providing this default implementation in the model base class we ensure that a model can run in sequential, optimistic and conservative simulation by default.
 
 \subsection{Increasing Parallelism}

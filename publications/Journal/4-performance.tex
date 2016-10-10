@@ -85,7 +85,7 @@ With every new hierarchical layer, routing an event from one atomic model to the
 In the Interconnect model, we increase the number of atomic models, quadratically increasing the number of couplings and the number of external transitions.
 As shown in Figure~\ref{fig:Interconnect_benchmark}, \textit{adevs} now outperforms \textit{dxex} by a fair margin.
 Analysis showed that this is caused by the high amount of events: event creation is much slower in \textit{dxex} than it is in \textit{adevs}, despite \textit{dxex}'s use of memory pools.
-To shield the user from threading and deallocation concerns \textit{dxex} provides an event superclass from which the user can derive to create a specialized event type.
+To shield the user from threading and deallocation concerns, \textit{dxex} provides an event superclass from which the user can derive to create a specialized event type.
 Copying, deallocation, and tracing are done at runtime, adding significant overhead when events happen frequently.
 Profiling the benchmarks revealed the increased cost of output generation and deallocation as the determining factor.
 
@@ -101,7 +101,7 @@ Profiling the benchmarks revealed the increased cost of output generation and de
 The PHold model is very similar to the Interconnect model.
 The biggest difference is that the amount of messages sent is much lower.
 The number of events scales linear with the number of models, not quadratic.
-Figure~\ref{fig:Phold_benchmark} shows that the performance of \textit{dxex} and \textit{adevs} are very close to each-other, with \textit{adevs} slightly outperforming \textit{dxex}.
+Figure~\ref{fig:Phold_benchmark} shows that in terms of performance \textit{dxex} and \textit{adevs} are very close to each other, with \textit{adevs} slightly outperforming \textit{dxex}.
 
 \begin{figure}
 	\center
@@ -121,9 +121,9 @@ The Queue model is one single chain of models, resembling a pipeline.
 This structure can be exploited to prevent cyclic dependencies in the parallel simulation.
 
 Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to sequential simulation for a fixed problem size (\textit{i.e.}, strong scaling).
-As the number of kernels increases, the optimistic kernel quickly becomes the worst choice.
+As the number of kernels increases, the optimistic protocol quickly becomes the worst choice.
 This is mainly caused by the pipeline structure of the model: the last models in the queue only respond to incoming messages and therefore have to be rolled back frequently.
-The difference between \textit{dxex} conservative and \textit{adevs} becoms smaller when more and more cores are used.
+The difference between \textit{dxex} conservative protocol and \textit{adevs} becomes smaller when more and more cores are used.
 The same effect can be seen when the problem size is increased in tandem with the number of used cores (\textit{i.e.}, weak scaling) in Figure~\ref{fig:Queue_plot_weak}.
 
 \begin{figure}
@@ -255,7 +255,7 @@ In combination with either synchronization protocol, a minor improvement can sti
 \paragraph{Computational load}
 Finally, we remove the computation load from the transition function, in combination with many concurrent events.
 Figure~\ref{fig:pdevs_plot_no_sleep} shows that in sequential simulation, the overhead of thread management and shared memory communication is crippling for performance.
-Even though many events occur concurrently, the actual computation being done in the transition function does not outweight the overhead, resulting in much slower simulation than sequential execution of transition functions.
+Even though many events occur concurrently, the actual computation being done in the transition function does not outweigh the overhead, resulting in much slower simulation than sequential execution of transition functions.
 When combined with synchronization protocols, performance is still reasonable, though the use of the inherent parallelism is not beneficial either way.
 Both synchronization protocols achieve a reasonable speedup without PDEVS, as the overhead of thread management (creation and destruction) is avoided.
 These results are similar to~\cite{Himmelspach}.
@@ -270,21 +270,20 @@ These results are similar to~\cite{Himmelspach}.
 
 \paragraph{Discussion}
 In \textit{dxex}, use of the inherent parallelism found in \textsf{Parallel DEVS} can be combined with any of the supported synchronization protocols.
-The user is not forced to choose between either but can divide the capabilities of his machine over both approaches.
+The user is not forced to choose between either: the capabilities of the computer can be divided over both approaches.
 While exploitation of the inherent parallelism can offer a significant speedup, a high number of transitions must be triggered simultaneously throughout the whole simulation.
 Additionally, the computational load of the transition functions should be high enough to warrant the thread management overhead.
 We conclude that both approaches have their distinct advantages and disadvantages.
 The inherent parallelism of \textsf{Parallel DEVS} avoids synchronization overhead and is trivial to implement.
-It is not influenced by the coupling of models, and only by the number of simultaneous transition functions and the computational load in the transition function.
+It is not influenced by the coupling of models, only by the number of simultaneous transition functions and the computational load in the transition function.
 In contrast, either of the two synchronization protocols is heavily influenced by the coupling of the models, but not by the computational load or number of simultaneous transitions.
 
 \subsection{Memory Usage}
-Apart from simulation execution time, memory usage during simulation is also of great importance.
-While execution time only becomes a problem if it takes way too long, coming short only a bit of memory can make simulation infeasible.
+Apart from simulation execution time, memory usage during simulation is also of great importance. Having insufficient memory may cause sudden deterioration in performance, even to the point of making the simulation infeasible.
 We therefore also investigate the memory usage of different synchronization protocols, and again compare to \textit{adevs}.
 
 We do not tackle the problem of states that become too large for a single machine to hold.
-This problem can be mitigated by distribution over multiple machines, which neither \textit{dxex} or \textit{adevs} support.
+This problem can be mitigated by distribution over multiple machines, which neither \textit{dxex} nor \textit{adevs} support.
 
 \subsubsection{Remarks}
 Both \textit{dxex} and \textit{adevs} use \textit{tcmalloc} as memory allocator, allowing for thread-local allocation.
