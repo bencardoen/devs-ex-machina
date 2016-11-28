@@ -70,6 +70,10 @@ This made us switch to the use of thread-local %(using \textit{tcmalloc})% see p
  memory pools.
 Again, we made use of specific new features of C++11, that are not available in Python, or even previous versions of the C++ language standard.
 
+% protocol or inherent parallelism?
+\subsubsection{PDEVS}
+In our tool each synchronization kernel is capable of executing its transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
+
 \subsection{Synchronization Protocol Transparency}
 We define synchronization protocol transparency as having a single model, which can be executed on each supported synchronization kernel, without any modifications.
 User should thus only provide one model, implemented in C++11, which can be simulated using sequential execution, conservative synchronization, or optimistic synchronization.

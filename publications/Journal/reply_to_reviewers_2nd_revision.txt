@@ -1,0 +1,38 @@
+Reply to comments 2nd revision
+
+
+
+
+> A section has been added addressing the PDEVS protocol as an alternative to conservative and optimistic protocols. Unfortunately, the addition is not well integrated into the rest of the paper and has some points in which the authors understanding seems lacking.  
+
+> For the first point, the title,abstract and introduction need to be updated to include PDEVS protocol as one of the protocols supported and the theory-related comparisons mentioned. 
+
+The introduction and abstract have been modified to address this.
+
+
+> For the second point, it is not clear how the PDEVS protocol  is being implemented - it seems to be  taken to be equivalent to "Sequential Simulation" as shown in charts - a situation hardly conducive to clarity. 
+
+A subsection has been added, explaining the implementation and how it complements the synchronization protocols
+The charts combine PDEVS with sequential, optimistic and conservative. The speedup charts take sequential as a baseline. The tight correspondence with sequential is unavoidable.
+
+
+> Also, the connection the q parameter of the theory seems wrong since it is the p parameter that relates to the simultaneous internal events that that authors identify as "inherent parallelism". Leading to another point - the authors overlook the second source of parallelism exploited by the PDEVS protocol - the simultaneous execution of external transition functions occasioned by an output received by multiple components from the same sender.
+
+The usage of the parameter q is correct, cfr the original work:
+“Here q is the probability that an imminent component causes any given component to become immediately imminent (by sending it an input,)...”
+
+In contrast the parameter p is defined as:
+“To start exploring such patterns, we define a one-parameter stochastic model for which each cell is independently sampled with a probability p of being imminent”
+
+Each model in our benchmark becomes imminent due to receiving an event, the only variable is when the internal transition is scheduled. This corresponds with q, not p.
+without a random timeadvance, a model receiving an event becomes immediately imminent in the next timestep, therefore q = 1
+With a random timeadvance the receiving model will become imminent in a randomly chosen point in time between [1, timestep]. The probability of an imminent transition over the same time range is again 1. If one sample only within this interval, q = n / timestep. 
+The benchmark runs long enough to guarantee that all models are imminent with a transition scheduled in the interval [1, timestep]. 
+We have updated the relevant section to reflect this.
+
+The frequency of internal and external transitions in our benchmark is equal, increasing the frequency of external transitions in a broadcast scenario as suggested would not lead to new results in speedup. The Interconnect model has been shown to synchronize very poorly, and our results already take into account the speedup obtained by concurrent external transitions.
+
+Summary of changes proposed (see pull request)
+- update abstract, introduction to mention PDEVS explicitly as a protocol complementing others.
+- detail in a subsection implementation of PDEVS 
+- detail our usage of parameter q

@@ -204,12 +204,15 @@ Following the theoretical analysis published in~\cite{amdahlpdevs}, a comparison
 \paragraph{Model}
 We have opted to use the \textit{Queue} model for this comparison, as it allows for many interesting configurations.
 %TODO what is meant with this allocation of threads and synchronized kernels?
+% 4 Kernels running on a dedicated thread, with per kernel 4 threads allocated to use for PDEVS.
 The effect of combining 4 synchronized kernels, with each 4 threads for PDEVS, is contrasted with 16 threads for PDEVS and 16 kernels for conservative and optimistic.
+The first scenario runs each kernel on a dedicated thread synchronized with the other 3 kernels. Each kernel can use up to 4 threads for PDEVS. In the second scenario PDEVS can use up to 16 threads while running in a sequential kernel. Finally 16 synchronized kernels are used with one thread per kernel.
 This allows us to observe which is more efficient in obtaining a speedup.
 We simulate a computational load by an optional call to sleep in the transition functions set at 5 milliseconds.
 The model is configured with depth 4 and width 300 if the transition function has no load, and width 50 if the computational load is active.
 In our configuration, an imminent model generates output, resulting in another model becoming imminent.
-With respect to the theoretical analysis in~\cite{amdahlpdevs} this gives a parameter value $q = 1$.
+With respect to the theoretical analysis in~\cite{amdahlpdevs} this gives a parameter value $q = 1$. Q is the probability that a receiving model becomes immediately imminent (i.e. scheduled in the next timestep). 
+Without random scheduling the receiving model becomes immediately imminent. With random scheduling the receiving model becomes imminent with a scheduled time in [1, timestep]. This would result in a probability $q = \frac{n}{timestep}$ with n the receiving models at that point in time. The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal between random and non-random benchmarks. This results in n equal to all models in the benchmark. Only the concurrency of events differs. 
 Models are equally distributed over the kernels and between threads in PDEVS.
 The coefficient of variation of our results is less than 1\%.
 The communication overhead is hard to estimate, but given our coefficient of variation, we can expect this overhead to be constant.
