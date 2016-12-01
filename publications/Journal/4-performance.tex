@@ -195,7 +195,8 @@ When many high-priority events occur, optimistic synchronization is penalized du
 Results show that there is no single perfect synchronization algorithm for this kind of models: depending on configuration, either synchronization protocol might be better.
 
 \subsection{Comparison to the abstract simulator}
-The abstract simulator of \textsf{Parallel DEVS} included its own notion of parallelism: transition functions that happen at the same point in simulated time can be trivially parallelized.
+%reference pSim
+The abstract simulator of \textsf{Parallel DEVS} included its own notion of parallelism: transition functions that happen at the same point in simulated time can be trivially parallelized. In this work we refer to this approach as pSim.
 This parallelization is trivial, in the sense that there is no need for synchronization protocols.
 The parallelization of the transition functions (from now on called the ``inherent parallelism'') is, at least in \textit{dxex}, independent of the use of a synchronization protocol.
 That is, both can be used simultaneously.
@@ -211,10 +212,12 @@ This allows us to observe which is more efficient in obtaining a speedup.
 We simulate a computational load by an optional call to sleep in the transition functions set at 5 milliseconds.
 The model is configured with depth 4 and width 300 if the transition function has no load, and width 50 if the computational load is active.
 In our configuration, an imminent model generates output, resulting in the receiving model becoming imminent.
-With respect to the theoretical analysis ~\cite{amdahlpdevs} this gives a parameter value $q = 1$ for a fixed timeadvance and $q=0.5$ for a random timeadvance. Q is the probability that a receiving model becomes immediately imminent. 
-Without a fixed timeadvance the receiving model becomes immediately imminent. 
-With random scheduling the receiving model becomes imminent with a scheduled time in the current timeslot or the next, chosen with a uniform distribution, therefore $q = \frac{1}{2}$.
- The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal between random and non-random benchmarks. The key difference is that although the event frequency is the same, their concurrency is not.
+The probability that an internal transition in a model generates output and is connected to a receiving model here is 1. With respect to the theoretical analysis ~\cite{amdahlpdevs} this gives a parameter value $q = 1$. 
+The probability that a model becomes imminent (i.e. is scheduled to execute an internal transition at a given point in time) in this model is equal to 1 when a fixed timeadvance is used,  %todo p calculation
+$\frac{1}{timestep}$ when a random time advance is used, this corresponds with $p = 1$ and $p = \frac{1}{100}$ respectively.
+
+The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal between random and non-random benchmarks. In our model each model will be executing internal and external transitions, creating an ideal use case to evaluate the speedup inherent parallelism can obtain.
+The key difference is that although the event frequency is the same, their concurrency is not. 
 Models are equally distributed over the kernels and between threads in PDEVS.
 The coefficient of variation of our results is less than 1\%.
 The communication overhead is hard to estimate, but given our coefficient of variation, we can expect this overhead to be constant.

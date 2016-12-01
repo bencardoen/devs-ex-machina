@@ -34,15 +34,15 @@ Data exchange between different simulation cores happens through shared memory, 
 Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
 C++11 further allows us to make the implementation portable, as well as more efficient: the compiler makes further optimizations to heavily used components.
 
-\subsubsection{Sequential}
-Our sequential simulation algorithm is very similar to the one found in \textit{PythonPDEVS}, including many optimizations.
+\subsubsection{Single Core}
+Our single core simulation algorithm is very similar to the one found in \textit{PythonPDEVS}, including many optimizations.
 Minor modifications were made, though, such that it can be overloaded by different synchronization protocol implementations.
 This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts can be overridden as needed.
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
 An overview of \textit{dxex}'s design is given in Figure~\ref{fig:class_diagram}.
 It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
-The superclass \texttt{Core} represents the sequential simulation kernel.
+The superclass \texttt{Core} represents the single core simulation kernel.
 Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure*}
@@ -71,8 +71,8 @@ This made us switch to the use of thread-local %(using \textit{tcmalloc})% see p
 Again, we made use of specific new features of C++11, that are not available in Python, or even previous versions of the C++ language standard.
 
 % protocol or inherent parallelism?
-\subsubsection{PDEVS}
-In our tool each synchronization kernel is capable of executing its transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
+\subsubsection{pSim}
+In our tool each simulation core, regardless of inter core synchronization, is capable of executing concurrent transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
 
 \subsection{Synchronization Protocol Transparency}
 We define synchronization protocol transparency as having a single model, which can be executed on each supported synchronization kernel, without any modifications.

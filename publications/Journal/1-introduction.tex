@@ -10,7 +10,16 @@ While several parallel \textsf{DEVS} simulation kernels exist, they are often li
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other for specific models~\cite{Jafer}.
 The parallel simulation capabilities of current tools are therefore limited to specific domains.
 
-This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (sequential execution), conservative synchronization, or optimistic synchronization. Each protocol can be complemented with the parallel execution of the abstract simulator.
+This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (single core execution), conservative synchronization, or optimistic synchronization. Each inter core synchronization protocol can be complemented with the parallel execution of concurrent events within a simulation core. We refer to this intra core protocol as pSim for the remainder of this paper. \\
+This results in the following list of available parallelization approaches:\\
+\begin{itemize}
+\item No inter core synchronization (single core), no intra core synchronization : S
+\item Conservative inter core synchronization, no intra core synchronization : C
+\item Optimistic inter core synchronization, no intra core synchronization : O
+\item No inter core synchronization (single core), pSim intra core synchronization : SP
+\item Conservative inter core synchronization, pSim intra core synchronization : CP
+\item Optimistic inter core synchronization, pSim intra core synchronization : OP
+\end{itemize}
 The selected synchronization protocol is transparent to the simulated model: users only determine the protocol to use.
 Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the exact same model using the exact same tool, but with different synchronization protocols.
 As model behaviour, and thus the ideal synchronization protocol, might change during simulation, runtime switching of synchronization protocols is also supported.
