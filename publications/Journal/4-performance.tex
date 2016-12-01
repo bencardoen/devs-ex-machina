@@ -210,9 +210,11 @@ The first scenario runs each kernel on a dedicated thread synchronized with the 
 This allows us to observe which is more efficient in obtaining a speedup.
 We simulate a computational load by an optional call to sleep in the transition functions set at 5 milliseconds.
 The model is configured with depth 4 and width 300 if the transition function has no load, and width 50 if the computational load is active.
-In our configuration, an imminent model generates output, resulting in another model becoming imminent.
-With respect to the theoretical analysis in~\cite{amdahlpdevs} this gives a parameter value $q = 1$. Q is the probability that a receiving model becomes immediately imminent (i.e. scheduled in the next timestep). 
-Without random scheduling the receiving model becomes immediately imminent. With random scheduling the receiving model becomes imminent with a scheduled time in [1, timestep]. This would result in a probability $q = \frac{n}{timestep}$ with n the receiving models at that point in time. The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal between random and non-random benchmarks. This results in n equal to all models in the benchmark. Only the concurrency of events differs. 
+In our configuration, an imminent model generates output, resulting in the receiving model becoming imminent.
+With respect to the theoretical analysis ~\cite{amdahlpdevs} this gives a parameter value $q = 1$ for a fixed timeadvance and $q=0.5$ for a random timeadvance. Q is the probability that a receiving model becomes immediately imminent. 
+Without a fixed timeadvance the receiving model becomes immediately imminent. 
+With random scheduling the receiving model becomes imminent with a scheduled time in the current timeslot or the next, chosen with a uniform distribution, therefore $q = \frac{1}{2}$.
+ The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal between random and non-random benchmarks. The key difference is that although the event frequency is the same, their concurrency is not.
 Models are equally distributed over the kernels and between threads in PDEVS.
 The coefficient of variation of our results is less than 1\%.
 The communication overhead is hard to estimate, but given our coefficient of variation, we can expect this overhead to be constant.
@@ -225,7 +227,6 @@ Conversely, simulations with an arbitrary timestep (\textit{e.g.}, many independ
 \paragraph{Concurrent events}
 First we create a model where all transitions happen simultaneously, with a significant computational load in the transition functions.
 In Figure~\ref{fig:pdevs_plot_fixed_sleep}, we observe that exploiting only the inherent parallelism, results in a speedup of about 10.  
-%TODO again: what is this?
 Simulation with conservative and optimistic synchronization is run first with 16 kernels, then with 4 kernels having 4 PDEVS threads each. 
 Both synchronization protocols achieve a speedup similar to only exploiting the inherent parallelism.
 Combining the protocols with the inherent parallelism gives near identical results.
