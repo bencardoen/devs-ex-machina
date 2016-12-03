@@ -10,7 +10,7 @@ While several parallel \textsf{DEVS} simulation kernels exist, they are often li
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other for specific models~\cite{Jafer}.
 The parallel simulation capabilities of current tools are therefore limited to specific domains.
 
-This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (single core execution), conservative synchronization, or optimistic synchronization. Each inter core synchronization protocol can be complemented with the parallel execution of concurrent events within a simulation core. We refer to this intra core protocol as pSim for the remainder of this paper. \\
+This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (single core execution), conservative synchronization, or optimistic synchronization. Each inter core synchronization protocol can be complemented with the parallel execution of concurrent events within a simulation core. We refer to this intra core protocol as \pSim for the remainder of this paper. \\
 This results in the following list of available parallelization approaches:\\
 \begin{itemize}
 \item No inter core synchronization (single core), no intra core synchronization : S

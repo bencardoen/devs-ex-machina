@@ -27,8 +27,8 @@ We argue that a general purpose simulation tool should support sequential, conse
 These different protocols relate to three different model characteristics.
 Conservative synchronization for when high lookahead exists between different nodes, and barely any blocking is necessary.
 Optimistic synchronization for when lookahead is unpredictable, or there are rare (almost) instantaneous events.
-Finally, sequential simulation is still required for models where parallelism is bad. 
-It is possible for the synchronization overhead to become larger than the achieved parallelism, resulting in slower simulation than sequential.
+Finally, single core simulation is still required for models where parallelism is bad. 
+It is possible for the synchronization overhead to become larger than the achieved parallelism, resulting in slower simulation than single core.
 
 Data exchange between different simulation cores happens through shared memory, using the new C++11 synchronization primitives.
 Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
@@ -71,12 +71,12 @@ This made us switch to the use of thread-local %(using \textit{tcmalloc})% see p
 Again, we made use of specific new features of C++11, that are not available in Python, or even previous versions of the C++ language standard.
 
 % protocol or inherent parallelism?
-\subsubsection{pSim}
+\subsubsection{\pSim}
 In our tool each simulation core, regardless of inter core synchronization, is capable of executing concurrent transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
 
 \subsection{Synchronization Protocol Transparency}
 We define synchronization protocol transparency as having a single model, which can be executed on each supported synchronization kernel, without any modifications.
-User should thus only provide one model, implemented in C++11, which can be simulated using sequential execution, conservative synchronization, or optimistic synchronization.
+User should thus only provide one model, implemented in C++11, which can be simulated using single core execution, conservative synchronization, or optimistic synchronization.
 The synchronization protocol to use is a simple configuration option.
 The exception is conservative synchronization, where a lookahead function is required, which is not used in other synchronization kernels.
 Two options are possible: either a lookahead function must always be provided, even when it is not required and possibly not used, or we use a default lookahead function if none is defined.
@@ -104,11 +104,11 @@ We briefly mention how the application of these techniques influences our perfor
 \label{sec:4-subsec:overhead-pgraph:memory}
 Memory management is traditionally seen as one of the major bottlenecks in parallel computation~\cite{Memory}, since memory bandwidth doesn't increase as fast as the number of cores using it.
 While this is always a problem, it is aggravated in \textit{dxex} by providing automatic memory management for events and states.
-A model written for sequential simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the modeller) the (de)allocation semantics of events or states.
+A model written for single core simulation will run correctly in a conservative or optimistic simulation without altering (from the point of view of the modeller) the (de)allocation semantics of events or states.
 
 Furthermore, allocating and deallocating memory by making calls to the operating system, as is typically done by calls such as \texttt{malloc}, happens sequentially.
 To counter this, our memory allocators are backed by a thread-aware pooling library.
-In a sequential simulation kernel no allocated event persists beyond a single time advance, even allowing the use of an arena-style allocator.
+In a single core simulation kernel no allocated event persists beyond a single time advance, even allowing the use of an arena-style allocator.
 Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime.
 
 Intra-kernel events can be (de)allocated without requiring synchronization with the other kernels. 
@@ -116,7 +116,7 @@ They can be returned immediately to the memory allocator as the lifetime of thes
 In contrast, inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
 As a result, simulations with many inter-kernel events suffer a performance hit, whereas the impact of many intra-kernel events can be minimized using arena allocators~\cite{Arena}.
 
-\textit{Dxex} uses \textit{Boost Pool}~\cite{boostpool} allocators in parallel simulation kernels and arena-style allocators for sequential simulation.
+\textit{Dxex} uses \textit{Boost Pool}~\cite{boostpool} allocators in multi core simulation kernels and arena-style allocators for single core simulation.
 The latter can be faster, but at the cost of additional configuration.
 The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}, reducing lock contention in \texttt{malloc} calls.
 
@@ -124,7 +124,7 @@ The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}
     \center
     \includegraphics[width=\columnwidth]{fig/memory_allocators_parallel.eps}
     %TODO: Add value on top of bars
-    \caption{Effect of memory allocators on parallel execution time, using optimistic synchronization.}
+    \caption{Effect of memory allocators on multi core execution time, using optimistic synchronization.}
     \label{fig:memallocators_parallel}
 \end{figure}
 
@@ -140,7 +140,7 @@ As a result, the OS will usually report memory consumption that is higher than t
 \subsubsection{Random Number Generators}
 Random Number Generators (RNG) are another aspect of the program that can limit parallelization.
 All accesses to the RNG will result in the modification of a global (\textit{i.e.}, shared between threads) variable.
-This easily becomes a bottleneck in simulation, since random numbers are a common occurence in simulation~\cite{Random}.
+This easily becomes a bottleneck in simulation, since random numbers are a common occurrence in simulation~\cite{Random}.
 As such, a nontrivial amount of time in a simulation is often spent waiting for an RNG.
 
 We of course still need to guarantee determinism and isolation between the calls to the RNG, as well as avoiding excessive synchronization.
@@ -149,11 +149,11 @@ Since the RNG is an implicit part of the state in the \textsf{Parallel DEVS} for
 
 We see in Figure~\ref{fig:Queuerngspeedup} that storing the RNG in the state is very expensive for the default Standard Template Library (STL) random number generator with optimistic synchronization.
 This is primarily caused by the significant difference in size: 2504 bytes for the STL random number generator, and 24 bytes for the Tina random number generator.
-\textit{Dxex}'s sequential and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in \textit{dxex} conservative simulation.
+\textit{Dxex}'s single core and conservative kernels are insensitive to storing the RNG object in the atomic model state, since no copying/state saving occurs in \textit{dxex} conservative simulation.
 The optimistic kernel is clearly affected, as it needs to copy more bytes in every transition due to state saving.
 
-Figure~\ref{fig:Queuerngspeedup} shows that \textit{dxex} in sequential simulation is three times faster using any of the three alternatives, only the STL RNG is slow.
-For parallel simulation, the synchronization overhead seems to be the main bottleneck, as seen by the big speedup gap between sequential and parallel simulation.
+Figure~\ref{fig:Queuerngspeedup} shows that \textit{dxex} in single core simulation is three times faster using any of the three alternatives, only the STL RNG is slow.
+For multi core simulation, the synchronization overhead seems to be the main bottleneck, as seen by the big speedup gap between single core and multi core simulation.
 Conservative synchronization is almost unaffected by changing the RNG.
 
 \begin{figure}
