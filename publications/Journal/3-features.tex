@@ -22,7 +22,7 @@ In the remainder of this section, we elaborate on our prominent new feature: the
 \subsection{Synchronization protocols}
 We previously explained the existence of different synchronization protocols, each optimized for a specific kind of model.
 As no single synchronization protocol is ideal for all domains, a general purpose simulation tool should support multiple protocols.
-We argue that a general purpose simulation tool should support sequential, conservative, and optimistic synchronization, as is the case for \textit{dxex}.
+We argue that a general purpose simulation tool should support single core, conservative, and optimistic synchronization, as is the case for \textit{dxex}. Futhermore it should be possible to combine each inter core synchronization protocol with the parallel execution of events defined by \pSim.
 
 These different protocols relate to three different model characteristics.
 Conservative synchronization for when high lookahead exists between different nodes, and barely any blocking is necessary.
@@ -84,7 +84,7 @@ Two options are possible: either a lookahead function must always be provided, e
 Always defining a lookahead function might seem redundant, especially should the user never want to use conservative synchronization.
 Defining the lookahead is difficult and can often be unpredictable.
 The more attractive option is for the simulation tool to provide a default lookahead function, such that simulation can run anyway, but likely not at peak performance.
-Depending on the model, simulation performance might still be faster than sequential simulation. 
+Depending on the model, simulation performance might still be faster than single core simulation. 
 
 Defining a lookahead function is therefore recommended in combination with conservative synchronization, but it is not a necessity, as a default value $\epsilon$ (\textit{i.e.}, the smallest representable timestep) is used otherwise.
 Providing this default implementation has no impact in sequential or optimistic simulation; as the function is never called, the compiler will optimize it out.
@@ -112,7 +112,8 @@ In a single core simulation kernel no allocated event persists beyond a single t
 Conservative and optimistic simulation need to use generic pool allocators since events are shared across kernels and thus have a different lifetime.
 
 Intra-kernel events can be (de)allocated without requiring synchronization with the other kernels. 
-They can be returned immediately to the memory allocator as the lifetime of these objects is known at creation.
+They can be returned immediately to the memory allocator as the lifetime of these objects is known at creation. 
+\pSim therefore has an advantage in lower overhead in comparison with inter kernel synchronization protocols.
 In contrast, inter-kernel events need a GVT algorithm to determine when safe deallocation can occur, even in conservative synchronization.
 As a result, simulations with many inter-kernel events suffer a performance hit, whereas the impact of many intra-kernel events can be minimized using arena allocators~\cite{Arena}.
 
@@ -123,7 +124,6 @@ The allocators are supplemented by the library \textit{tcmalloc}~\cite{tcmalloc}
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/memory_allocators_parallel.eps}
-    %TODO: Add value on top of bars
     \caption{Effect of memory allocators on multi core execution time, using optimistic synchronization.}
     \label{fig:memallocators_parallel}
 \end{figure}
@@ -160,7 +160,10 @@ Conservative synchronization is almost unaffected by changing the RNG.
     \center
     \includegraphics[width=\columnwidth]{fig/rngspeedupeffectdevstone.eps}
     %TODO: why is STL RNG in state just as fast in sequential? Does storing it in the state really do that much?
-    %TODO: consistency: TRNG, STL RNG in state, and TRNG in state
+    % The pattern is identical, the only difference is in optimistic where the copying of a larger structure
+    % (stl rng in state) becomes expensive enough. Another possible reason for a speedup w.r.t not storing
+    % is the dependency between calls to the random number generator, the compiler can determine that
+    % these calculations are local to the object.
     \caption{Speedup with different RNG usage patterns compared to STL random number generator.}
     \label{fig:Queuerngspeedup}
 \end{figure}
