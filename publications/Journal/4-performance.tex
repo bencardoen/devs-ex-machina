@@ -4,6 +4,7 @@ CPU time and memory usage is compared for both single core and multi core simula
 
 We start off with a comparison of single core simulation, to show how \textit{adevs} and \textit{dxex} relate in this simple case.
 For the multi core simulation benchmarks, results are presented for both conservative and optimistic synchronization.
+We conclude with a comparison between inter and intra kernel parallelization and give use cases where these protocols can complement each other in the context of recent theoretical work ~\cite{amdahlpdevs}. 
 
 For all benchmarks, results are well within a 5\% deviation of the average, such that only the average is used in the remainder of this section.
 The same compilation flags were used for both \textit{adevs} and \textit{dxex} benchmarks (``\texttt{-O3 -flto}'').
@@ -195,7 +196,6 @@ When many high-priority events occur, optimistic synchronization is penalized du
 Results show that there is no single perfect synchronization algorithm for this kind of models: depending on configuration, either synchronization protocol might be better.
 
 \subsection{Comparison to the abstract simulator}
-%reference pSim
 The abstract simulator of \textsf{Parallel DEVS} included its own notion of parallelism: transition functions that happen at the same point in simulated time can be trivially parallelized. In this work we refer to this approach as \pSim so as not to confuse with the PDEVS formalism.
 This parallelization is trivial, in the sense that there is no need for synchronization protocols.
 The parallelization of the transition functions (from now on called the ``inherent parallelism'') is, at least in \textit{dxex}, independent of the use of a synchronization protocol.
@@ -228,7 +228,7 @@ Conversely, simulations with an arbitrary timestep (\textit{e.g.}, many independ
 
 \paragraph{Concurrent events}
 First we create a model where all transitions happen simultaneously, with a significant computational load in the transition functions.
-In Figure~\ref{fig:pdevs_plot_fixed_sleep}, we observe that exploiting only the inherent parallelism, results in a speedup of about 10.  
+In Figure~\ref{fig:psim_plot_fixed_sleep}, we observe that exploiting only the inherent parallelism, results in a speedup of about 10.  
 Simulation with conservative and optimistic synchronization is run first with 16 kernels, then with 4 kernels having 4 \pSim threads each. 
 Both synchronization protocols achieve a speedup similar to only exploiting the inherent parallelism.
 Combining the protocols with the inherent parallelism gives near identical results.
@@ -237,30 +237,28 @@ In this scenario there is no real advantage between the different parallel confi
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_fixed_sleep.eps}
-    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with maximal concurrent events and significant computational load}
-	\label{fig:pdevs_plot_fixed_sleep}
+	\label{fig:psim_plot_fixed_sleep}
 \end{figure}
 
 \paragraph{Random events}
 Now we randomize the time advance in the models, resulting in very few transition functions that happen simultaneously.
 Even when two transitions are only minimally apart in simulated time, they cannot be executed in parallel, as there might otherwise be a causality error.
 The transition function has the same computational load as in the previous configuration. 
-The results in Figure~\ref{fig:pdevs_plot_random_sleep} show that parallelizing transition functions only, adds little overhead. 
+The results in Figure~\ref{fig:psim_plot_random_sleep} show that parallelizing transition functions only, adds little overhead. 
 Nonetheless, performance is not increased at all: the chances of executing a few transition functions in parallel does not make up for the overhead of checking.
 In combination with either synchronization protocol, a minor improvement can still be seen, but this is primarily caused by the synchronization protocol, and not by parallelizing the transition functions.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_random_sleep.eps}
-    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with randomized events and significant computational load}
-	\label{fig:pdevs_plot_random_sleep}
+	\label{fig:psim_plot_random_sleep}
 \end{figure}
 
 \paragraph{Computational load}
 Finally, we remove the computation load from the transition function, in combination with many concurrent events.
-Figure~\ref{fig:pdevs_plot_no_sleep} shows that in single core simulation, the overhead of thread management and shared memory communication is crippling for performance.
+Figure~\ref{fig:psim_plot_no_sleep} shows that in single core simulation, the overhead of thread management and shared memory communication is crippling for performance.
 Even though many events occur concurrently, the actual computation being done in the transition function does not outweigh the overhead, resulting in much slower simulation than single core execution of transition functions.
 When combined with synchronization protocols, performance is still reasonable, though the use of the inherent parallelism is not beneficial either way.
 Both synchronization protocols achieve a reasonable speedup without \pSim, as the overhead of thread management (creation and destruction) is avoided.
@@ -269,9 +267,8 @@ These results are similar to~\cite{Himmelspach}.
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_no_sleep.eps}
-    %TODO fix key in figure: pdevs --> inherent parallelism
 	\caption{Queue speedup benchmark for PDEVS and synchronization with maximal concurrent events and trivial computational load}
-	\label{fig:pdevs_plot_no_sleep}
+	\label{fig:psim_plot_no_sleep}
 \end{figure}
 
 \paragraph{Discussion}
