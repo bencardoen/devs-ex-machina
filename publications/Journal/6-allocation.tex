@@ -2,6 +2,7 @@ Although the synchronization protocol is one of the defining factors in simulati
 Depending on the model structure, and how it is mapped to the different kernels, it might not even make sense to parallelize at all.
 Indeed, if the model is allocated such that frequent communication is necessary between kernels, parallelism is naturally reduced.
 This brings us to the topic of model allocation, as also implemented in \textit{PythonPDEVS}~\cite{PythonPDEVS2}.
+In this section we focus on the inter kernel synchronization protocols, the intra kernel parallelization is unaffected by the inter kernel topology.
 
 The modeller can specify which kernel a model should be allocated to, should such manual intervention be required.
 This is handled by the default model allocator.
