@@ -6,12 +6,13 @@ As such, it is possible for the model to significantly change its behaviour thro
 Defining the ideal synchronization protocol at the start of the simulation, when information about future model behaviour is scarce, might therefore not offer the best possible performance.
 In \textit{dxex}, we not only make it possible to define the synchronization protocol to use, but also to change this decision throughout simulation.
 To do this, all kernels are notified of the switch and they are forced to stop simulation.
-When stopped, each kernel instantiates a new core, with the new synchronization protocol, that is provided with the simulation state of the previous core.
-Simulation is then resumed with the new cores after the previous ones are destroyed.
+When stopped, each kernel instantiates a new core, with the new synchronization protocol, that is provided with the simulation state of the previous core. 
+Simulation is then resumed with the new cores after the previous ones are destroyed. 
 
 As usual, switching imposes an overhead and should thus only be done if the benefits outweigh the induced overhead.
 This overhead depends on the size of the model and the number of simulation cores.
-For a simple model and a few cores, the overhead is less than a second.
+For a simple model and a few cores, the overhead is less than a second. 
+Creating new cores and moving the simulation models has a constant overhead linear in the amount of cores and models. The time required to synchronize and halt the existing cores is variable, especially if the old synchronization protocol is optimistic since there is no real limit on the virtual time difference between cores. Given that the existing cores are equally loaded, this time difference will in practice scale linearly with the number of cores.
 
 Although we currently only support manual switches between different synchronization protocols, this is not necessarily the case.
 Ideally, a new component is added to the simulation kernel, which monitors model behaviour and simulation performance, and toggles between them automatically.
