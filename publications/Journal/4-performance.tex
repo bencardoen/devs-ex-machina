@@ -215,8 +215,9 @@ In our configuration, an imminent model always generates output, resulting in th
 The probability that an internal transition in a model generates output and is connected to a receiving model here is $1$. The probability that a model becomes immediately imminent depends on whether fixed or random timeadvance is used. In the case of fixed timeadvance, a model will always become immediately imminent. When random timeadvance is used, this probability is $\frac{1}{n}$, with $n$ denoting the total amount of atomic models. These probabilities correspond with the $q$ parameter in the theoretical analysis ~\cite{amdahlpdevs}. 
 The probability that a model is imminent (i.e. is scheduled to execute an internal transition) at any given point in time in this model is equal to $1$ when a fixed timeadvance is used and $\frac{1}{n}$ when a random time advance is used. These probabilities correspond with the $p$ parameter in the theoretical analysis.
 
-The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal within a benchmark, regardless of the randomness of the timeadvance. In our model each model will be executing internal and external transitions, creating an ideal use case to evaluate the speedup inherent parallelism can obtain.
+The benchmarks are run sufficiently long enough to guarantee that the frequency of internal and external transitions is equal within a benchmark, regardless of the randomness of the timeadvance. In our model each model will be executing internal and external transitions, creating an ideal use case to evaluate the speedup inherent parallelism can obtain. 
 The key difference is that although the event frequency is the same, their concurrency is not. 
+This benchmark combines both possible sources of parallelization : concurrent internal and external transitions. 
 Models are equally distributed over the kernels and between threads in \pSim.
 The coefficient of variation of our results is less than $1\%$.
 The communication overhead is hard to estimate, but given our coefficient of variation, we can expect this overhead to be constant.

@@ -1,40 +1,43 @@
 Reply to comments 2nd revision
+@date 6/12/2016
 
+Format:
 > Original comment
 Reply
 
 
-> A section has been added addressing the PDEVS protocol as an alternative to conservative and optimistic protocols. Unfortunately, the addition is not well integrated into the rest of the paper and has some points in which the authors understanding seems lacking.  
+> A section has been added addressing the PDEVS protocol as an alternative to conservative 
+> and optimistic protocols. 
+> Unfortunately, the addition is not well integrated into the rest of the paper and has 
+> some points in which the authors understanding seems lacking.  
 
-> For the first point, the title,abstract and introduction need to be updated to include PDEVS protocol as one of the protocols supported and the theory-related comparisons mentioned. 
+> For the first point, the title,abstract and introduction need to be updated to include 
+> PDEVS protocol as one of the protocols supported and the theory-related comparisons mentioned. 
 
-The introduction and abstract have been modified to address this.
+The introduction and abstract have been modified to address this. We clearly outline the 
+complementary nature of the inter vs intra kernel synchronization protocols.
 
+> For the second point, it is not clear how the PDEVS protocol  is being implemented 
+> - it seems to be  taken to be equivalent to "Sequential Simulation" as shown in charts 
+> - a situation hardly conducive to clarity. 
 
-> For the second point, it is not clear how the PDEVS protocol  is being implemented - it seems to be  taken to be equivalent to "Sequential Simulation" as shown in charts - a situation hardly conducive to clarity. 
+A subsection has been added, explaining the implementation and how it complements the synchronization protocols. 
+In the introduction we clearly differentiate between the 6 potential approaches to parallelization.
+The charts have been updated to avoid confusion in this regard.
 
-A subsection has been added, explaining the implementation and how it complements the synchronization protocols
-The charts combine PDEVS with sequential, optimistic and conservative. The speedup charts take sequential as a baseline. The tight correspondence with sequential is unavoidable.
+> Also, the connection the q parameter of the theory seems wrong since it is the p parameter 
+> that relates to the simultaneous internal events that that authors identify as "inherent parallelism". 
 
+We have updated this section to include the parameter p and correct the value of q in probabilistic simulations. 
 
-> Also, the connection the q parameter of the theory seems wrong since it is the p parameter that relates to the simultaneous internal events that that authors identify as "inherent parallelism". 
+> Leading to another point - the authors overlook the second source of parallelism exploited 
+> by the PDEVS protocol - the simultaneous execution of external transition functions occasioned 
+> by an output received by multiple components from the same sender.
 
-The usage of the parameter q is correct, cfr the original work:
-“Here q is the probability that an imminent component causes any given component to become immediately imminent (by sending it an input,)...”
+In our model the amount of external transitions parallelizable is maximized to cover this use case. 
+After an initialization period the entire set of models is sending and receiving events. 
+All models are executing transitions (internal and external) at a maximum frequency, thereby maximizing 
+the possible speedup in this highly concurrent scenario. Adding an extra model with broadcast behavior 
+would not lead to an increase in the number of concurrent external transitions.
+We have updated the text to clarify this.
 
-In contrast the parameter p is defined as:
-“To start exploring such patterns, we define a one-parameter stochastic model for which each cell is independently sampled with a probability p of being imminent”
-
-In our benchmark with fixed timeadvance, the probability of a model becoming immediately imminent upon receiving an event is 1, e.g. q = 1.
-With random timeadvance, the timeadvance value is chosen with a probability 1/2 of becoming imminent in the current timeslot or the next. q=0.5.
-The text has been updated to reflect this, the case of random timeadvance was indeed incorrect, we thank the reviewer for bringing this to our attention.
-
-
-> Leading to another point - the authors overlook the second source of parallelism exploited by the PDEVS protocol - the simultaneous execution of external transition functions occasioned by an output received by multiple components from the same sender.
-
-In our model the number of external transitions parallelizable is maximized to cover this use case. After an initialization period the entire set of models is sending and receiving events. All models are executing transitions (internal and external) at a maximum frequency, maximizing the possible speedup in this highly concurrent scenario. Adding an extra model with broadcast behavior would not lead to an increase in the number of concurrent external transitions.
-
-Summary of changes proposed (see pull request)
-- update abstract, introduction to mention PDEVS explicitly as a protocol complementing others.
-- detail in a subsection implementation of PDEVS 
-- detail our usage of parameter q
