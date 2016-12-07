@@ -5,23 +5,34 @@ A number of tools have been constructed by academia and industry that allow the 
 But with the ever increasing complexity of simulation models, parallel simulation becomes necessary to perform the simulation within reasonable time bounds.
 Whereas \textsf{Parallel DEVS}~\cite{ParallelDEVS} was introduced to increase parallelism, its inherent parallelism is often insufficient~\cite{Himmelspach}.
 Several synchronization protocols from the discrete event simulation community~\cite{FujimotoBook} have been applied to (\textsf{Parallel}) \textsf{DEVS} simulation~\cite{globaltimewarp}.
-With synchronization protocols, different simulation cores can be at different points in simulated time, significantly increasing parallelism, at the cost of synchronization overhead.
-While several parallel \textsf{DEVS} simulation kernels exist, they are often limited to a single synchronization protocol.
+With synchronization protocols, different simulation kernels can be at different points in simulated time, significantly increasing parallelism at the cost of synchronization overhead.
+While several parallel \textsf{DEVS} simulation tools exist, they are often limited to a single synchronization protocol.
 The reason for different synchronization protocols, however, is that their distinct nature makes them applicable in different situations, each outperforming the other for specific models~\cite{Jafer}.
 The parallel simulation capabilities of current tools are therefore limited to specific domains.
 
-This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers multiple synchronization protocols: no synchronization (single core execution), conservative synchronization, or optimistic synchronization. Each inter core synchronization protocol can be complemented with the parallel execution of concurrent events within a simulation core. We refer to this intra core protocol as \pSim for the remainder of this paper. \\
-This results in the following list of available parallelization approaches:\\
+This paper introduces \textit{DEVS-Ex-Machina}\footnote{\url{https://bitbucket.org/bcardoen/devs-ex-machina}} (``\textit{dxex}''): our simulation tool~\cite{dxex} which offers 6 synchronization protocols.
+The simulation tool can spawn multiple kernels, each of which has its own simulation time and simulation control, though they may exchange timestamped events with each other.
+Each kernel can spawn multiple threads, each of which will be mapped to a physical CPU core by the operating system.
+We note the presence of two kinds of synchronization: inter-kernel and intra-kernel.
+Inter-kernel synchronization uses either no synchronization, conservative synchronization, or optimistic synchronization.
+Intra-kernel synchronization uses either no synchronization or exploits the inherent parallelism of Parallel DEVS to allocate concurrent transitions to separate threads.
+The inherent parallelism in the intra-kernel synchronization protocol is used \pSim in the remainder of this paper.
+
+This results in the following set of synchronization protocol combinations:
 \begin{itemize}
-\item No inter core synchronization (single core), no intra core synchronization : S
-\item Conservative inter core synchronization, no intra core synchronization : C
-\item Optimistic inter core synchronization, no intra core synchronization : O
-\item No inter core synchronization (single core), pSim intra core synchronization : SP
-\item Conservative inter core synchronization, pSim intra core synchronization : CP
-\item Optimistic inter core synchronization, pSim intra core synchronization : OP
+\item No inter-kernel synchronization, no intra-kernel synchronization (\textit{NN})
+\item Conservative inter-kernel synchronization, no intra-kernel synchronization (\textit{CN})
+\item Optimistic inter-kernel synchronization, no intra-kernel synchronization (\textit{ON})
+\item No inter-kernel synchronization, \pSim intra-kernel synchronization (\textit{NP})
+\item Conservative inter-kernel synchronization, \pSim intra-kernel synchronization (\textit{CP})
+\item Optimistic inter-kernel synchronization, \pSim intra-kernels synchronization (\textit{OP})
 \end{itemize}
+
+When refering to a set of them, we use the notation \textit{x} to denote any possible algorithm.
+For example, \textit{xP} refers to NP, CP, and OP.
+
 The selected synchronization protocol is transparent to the simulated model: users only determine the protocol to use.
-Users who simulate a wide variety of models, with different ideal synchronization protocols, can run the exact same model using the exact same tool, but with different synchronization protocols.
+Users who simulate a wide variety of models, with different ideal synchronization protocols, can keep using the exact same tool, but with different synchronization protocols.
 As model behaviour, and thus the ideal synchronization protocol, might change during simulation, runtime switching of synchronization protocols is also supported.
 This runtime switching can be based on performance metrics, which are logged during simulation.
 Information is made available to a separate component, where a choice can be made about which synchronization protocol to use. % It's manual now, can be extended to full automatic.
@@ -32,7 +43,7 @@ Our tool is based on \textit{PythonPDEVS}~\cite{PythonPDEVS}, but implemented in
 Unlike \textit{PythonPDEVS}, \textit{dxex} only supports multicore parallelism, thus no distributed simulation.
 
 Using several benchmark models, we demonstrate the factors influencing the performance under a given synchronization protocol.
-Additionally, we investigate a model which changes its behaviour (and ideal synchronization protocol) during simulation.
+Additionally, we investigate a model which changes its behaviour (and corresponding ideal synchronization protocol) during simulation.
 \textit{Dxex}, then, is used to compare simulation using exactly the same tool, but with a varying synchronization protocol.
 With \textit{dxex} users can always opt to use the fastest protocol available, and through its modularity, users could even implement their own, or variants of existing ones.
 To verify that this modularity does not hamper performance, we compare to \textit{adevs}~\cite{adevs}, another \textsf{Parallel DEVS} simulation tool.

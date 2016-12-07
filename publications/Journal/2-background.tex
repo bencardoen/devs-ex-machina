@@ -1,6 +1,7 @@
 This section briefly introduces the two most prominent synchronization protocols: conservative and optimistic synchronization.
 Both algorithms are supported by dxex. 
-These protocols synchronize between simulation cores, but do not specify the parallelization of events within a single core.
+These protocols synchronize between kernels, but do not specify the parallelization of events within a single kernel.
+For example, \pSim is orthogonal to this as it decides upon the parallelization of events within a single kernel.
 
 \subsection{Conservative Synchronization}
 The first synchronization protocol we introduce is \textit{conservative synchronization}~\cite{FujimotoBook}.

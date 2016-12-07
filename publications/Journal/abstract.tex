@@ -4,9 +4,9 @@ Several synchronization protocols have been proposed, each with their distinct a
 Due to the significantly different implementation of these protocols, most Parallel DEVS simulation tools are limited to only one such protocol.
 In this paper, we present a Parallel DEVS simulator, grafted on C++11 and based on PythonPDEVS, supporting both conservative and optimistic synchronization protocols.
 The simulator not only supports both protocols but also has the capability to switch between them at runtime.
-The simulator complements each of the synchronization protocols with the PDEVS protocol.
+The simulator can combine each synchronization protocols with either a threaded or sequential implementation of the PDEVS protocol.
 We evaluate the performance gain obtained by choosing the most appropriate synchronization protocol.
 A comparison is made to adevs in terms of CPU time and memory usage, to show that our modularity does not hinder performance.
 We compare the speedup obtained by synchronization with that of the inherent parallelism of PDEVS in isolation and combination, and contrast the results with the theoretical limits.
 We further allow for an external component to gather simulation statistics, on which runtime switching between the different synchronization protocols can be based.
-Model allocation is also studied to see how our conservative and optimistic synchronization protocols are affected by good and bad allocations.
+The effects of allocation on our synchronization protocols is also studied.

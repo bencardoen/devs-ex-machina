@@ -1,10 +1,10 @@
 In this section, we evaluate the performance of different synchronization protocols in \textit{dxex}.
-We also compare to \textit{adevs}~\cite{adevs}, currently one of the most efficient simulation kernels~\cite{DEVStoneJournal,DEVSSurvey}, to show that our modularity does not impede performance.
-CPU time and memory usage is compared for both single core and multi core simulation.
+We also compare to \textit{adevs}~\cite{adevs}, currently one of the most efficient simulation tools~\cite{DEVStoneJournal,DEVSSurvey}, to show that our modularity does not impede performance.
+CPU time and memory usage is compared for different synchronization protocols.
 
-We start off with a comparison of single core simulation, to show how \textit{adevs} and \textit{dxex} relate in this simple case.
-For the multi core simulation benchmarks, results are presented for both conservative and optimistic synchronization.
-We conclude with a comparison between inter and intra kernel parallelization and give use cases where these protocols can complement each other in the context of recent theoretical work ~\cite{amdahlpdevs}. 
+We start with a comparison of \textit{NN} synchronization, to show how \textit{adevs} and \textit{dxex} relate in this simple case.
+Afterwards, we compare inter-kernel synchronization protocols, including a comparison with \textit{adevs} again.
+Inter-kernel synchronization protocols are then compared in combination with intra-kernel synchronization protocols, in the context of recent theoretical work~\cite{amdahlpdevs}.
 
 For all benchmarks, results are well within a 5\% deviation of the average, such that only the average is used in the remainder of this section.
 The same compilation flags were used for both \textit{adevs} and \textit{dxex} benchmarks (``\texttt{-O3 -flto}'').
@@ -16,29 +16,29 @@ The exact parameters for each benchmark can be found in our repository.
 The benchmarks are ran on a machine with 8 x AMD Opteron(TM) Processor 6274 with 8 cores per CPU (for a total of 64 cores) and 192 GB RAM.
 
 \subsection{Benchmark Models}
-We use three different benchmark models, covering different aspects of the simulation kernel.
+We use three different benchmark models, covering different aspects of the simulation tool.
 
 First, the \textit{Queue} model, based on the \textit{HI} model of DEVStone~\cite{DEVStone}, creates a chain of hierarchically nested atomic \textsf{DEVS} models.
 A single generator pushes events into the queue, which get consumed by the processors after a fixed or random delay.
 It takes two parameters: the width and depth of the hierarchy.
-This benchmark shows how the complexity of the simulation kernel behaves for an increasing amount of atomic models, and an increasingly deep hierarchy.
+This benchmark reveals the complexity of the simulation kernel for an increasing amount of atomic models and an increasingly deep hierarchy.
 An example for a width and depth of 2 is shown in Figure~\ref{fig:queue_model}.
 	
 Second, the \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
-Similar to PHOLD, all models are connected to one another, but all through the same port: every model receives each generated event (\textit{i.e.}, the event is broadcasted).
-The model takes one parameter: the number of models.
+Similar to PHOLD, all models are connected to one another, but all through the same port: every atomic model receives each generated event (\textit{i.e.}, the event is broadcasted).
+The model takes one parameter: the number of atomic models.
 This benchmark shows the complexity of event creation, event routing, and simultaneous event handling.
-An example for three models is shown in Figure~\ref{fig:interconnect_model}.
+An example for three atomic models is shown in Figure~\ref{fig:interconnect_model}.
 
-Third, the \textit{PHOLD} model~\cite{PHOLD}, creates $n$ atomic models, where each model has exactly $n-1$ output ports.
+Third, the \textit{PHOLD} model~\cite{PHOLD}, creates $n$ atomic models, where each atomic model has exactly $n-1$ output ports.
 Each atomic model is directly connected to every other atomic model.
 After a random delay, an atomic model sends out an event to a randomly selected output port.
-Output port selection happens in two phases: first it is decided whether the event should be sent within the same node, or outside of the node.
-Afterwards, a uniform selection is made between the remaining models.
-The model takes two parameters: the percentage of remote events (determining the percentage of messages routed to other nodes), and the percentage of high-priority events.
+Output port selection happens in two phases: first it is decided whether the event should be sent within the same kernel, or outside of the kernel.
+Afterwards, a uniform selection is made between the possible atomic models.
+The model takes two parameters: the percentage of remote events (determining the percentage of events routed to other kernels), and the percentage of high-priority events.
 High-priority events are events generated in a very short time after the previous event.
 This benchmark shows how the simulation kernel behaves in the presence of many local or remote events, in combination with a varying percentage of high-priority events.
-An example for four models, split over two nodes, is shown in Figure~\ref{fig:PHOLD_model}.
+An example for four atomic models, split over two kernels, is shown in Figure~\ref{fig:PHOLD_model}.
 
 \begin{figure}
 	\center
@@ -61,23 +61,23 @@ An example for four models, split over two nodes, is shown in Figure~\ref{fig:PH
 	\label{fig:PHOLD_model}
 \end{figure}
 
-\subsection{Signle Core Simulation}
-We start by evaluating single core simulation performance, in order to obtain a baseline for our comparison of multi core simulation performance.
+\subsection{Single kernel (\textit{NN} Synchronization)}
+We start by evaluating \textit{NN} synchronization performance, in order to obtain a baseline for our comparison of other synchronization protocols.
 
 \subsubsection{Queue}
 \label{4-seq-Queue}
 For the first benchmark, we tested the effect of hierarchical complexity of the model in the performance of the simulator.
-A set of three tests was performed, where each test has the same number of models but an increasing depth.
+A set of three tests was performed, where each test has the same number of atomic models but an increasing depth.
 The results can be seen in Figure~\ref{fig:Queue_benchmark_seq}.
 Since \textit{dxex} performs direct connection~\cite{SymbolicFlattening} on the model, there is no performance hit when the depth is increased.
-Direct connection only needs to be done at initialization, so it is a one time cost that is negligible for long running simulations.
+Direct connection only needs to be done at initialization, making it a neglible one time cost for long running simulations.
 \textit{Adevs}, on the other hand, suffers from the increased depth, even though some similar (but not identical) optimization to event passing was made~\cite{adevs_opt}.
 With every new hierarchical layer, routing an event from one atomic model to the next becomes more expensive, resulting in an increase in runtime.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_sequential.eps}
-	\caption{Queue benchmark results for single core simulation.}
+	\caption{Queue benchmark results with \textit{NN} synchronization.}
 	\label{fig:Queue_benchmark_seq}
 \end{figure}
 
@@ -93,7 +93,7 @@ Profiling the benchmarks revealed the increased cost of output generation and de
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/interconnect_sequential.eps}
-	\caption{Interconnect benchmark results for single core simulation.}
+	\caption{Interconnect benchmark results with \textit{NN} synchronization.}
 	\label{fig:Interconnect_benchmark}
 \end{figure}
 
@@ -101,50 +101,50 @@ Profiling the benchmarks revealed the increased cost of output generation and de
 \label{4-seq-PHold}
 The PHold model is very similar to the Interconnect model.
 The biggest difference is that the amount of messages sent is much lower.
-The number of events scales linear with the number of models, not quadratic.
+The number of events scales linear with the number of atomic models, not quadratic.
 Figure~\ref{fig:Phold_benchmark} shows that in terms of performance \textit{dxex} and \textit{adevs} are very close to each other, with \textit{adevs} slightly outperforming \textit{dxex}.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/phold_sequential.eps}
-	\caption{PHold benchmark results for single core simulation.}
+	\caption{PHold benchmark results with \textit{NN} synchronization.}
 	\label{fig:Phold_benchmark}
 \end{figure}
 
-\subsection{Parallel Simulation}
-We now continue by describing our multi core simulation performance for different synchronization protocols, and compared to \textit{adevs}.
-The speedup of \textit{adevs} is computed with the corresponding \textit{dxex} single core benchmark.
-This was done to take into account the performance difference observed in single core simulation.
-As such, the highest speedup indicates the fastest results among all tools, independent of single core simulation results.
+\subsection{Inter-Kernel Parallelism (\textit{CN} and \textit{ON} synchronization)}
+We now continue by describing our inter-kernel parallelims performance for different synchronization protocols, and compared to \textit{adevs}.
+The speedup of \textit{adevs} is computed with the corresponding \textit{dxex} \textit{NN} synchronization benchmark.
+This was done to take into account the performance difference observed in \textit{NN} synchronization.
+As such, the highest speedup indicates the fastest results among all tools, independent of \textit{NN} synchronization results for \textit{adevs}.
 
 \subsubsection{Queue}
-The Queue model is one single chain of models, resembling a pipeline.
-This structure can be exploited to prevent cyclic dependencies in the multi core simulation.
+The Queue model is one single chain of atomic models, resembling a pipeline.
+This structure can be exploited to prevent cyclic dependencies in \textit{CN} and \textit{ON} synchronization.
 
-Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to single core simulation for a fixed problem size (\textit{i.e.}, strong scaling).
-As the number of kernels increases, the optimistic protocol quickly becomes the worst choice.
-This is mainly caused by the pipeline structure of the model: the last models in the queue only respond to incoming messages and therefore have to be rolled back frequently.
-The difference between \textit{dxex} conservative protocol and \textit{adevs} becomes smaller when more and more cores are used.
-The same effect can be seen when the problem size is increased in tandem with the number of used cores (\textit{i.e.}, weak scaling) in Figure~\ref{fig:Queue_plot_weak}.
+Figure~\ref{fig:Queue_plot_strong} shows the speedup compared to \textit{NN} synchronization for a fixed problem size, with an increasing number of used CPU cores (\textit{i.e.}, strong scaling).
+As the number of cores increases, \textit{ON} quickly becomes the worst choice.
+This is mainly caused by the pipeline structure of the model: the last atomic models in the queue only respond to incoming messages and therefore have to be rolled back frequently.
+The difference between \textit{dxex} \textit{CN} and \textit{adevs} \textit{CN} becomes smaller when more and more cores are used.
+The same effect can be seen when the problem size is increased in tandem with the number of used CPU cores (\textit{i.e.}, weak scaling) in Figure~\ref{fig:Queue_plot_weak}.
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_strong_speedup.eps}
-	\caption{Queue model strong scaling speedup compared to \textit{dxex} single core.}
+	\caption{Queue model strong scaling speedup compared to \textit{dxex} \textit{NN} synchronization.}
 	\label{fig:Queue_plot_strong}
 \end{figure}
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_weak_speedup.eps}
-	\caption{Queue model weak scaling speedup compared to \textit{dxex} single core.}
+	\caption{Queue model weak scaling speedup compared to \textit{dxex} \textit{NN} synchronization.}
 	\label{fig:Queue_plot_weak}
 \end{figure}
 	
 \subsubsection{Interconnect}
 \label{subsec:parallelinterconnect}
 In the Interconnect model, we determine how broadcast communication is supported across multiple nodes.
-The number of models is now kept constant at eight.
+The number of atomic models is now kept constant at eight.
 Results are shown in Figure~\ref{fig:interconnect_benchmark_parallel}.
 When the number of nodes increases, performance decreases due to increasing contention in conservative simulation and the increasing number of rollbacks in optimistic simulation.
 All models depend on each other and have no computational load whatsoever, negating any possible performance gain by executing the simulation in a multi core setting.
