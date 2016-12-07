@@ -11,8 +11,8 @@ This is in line with the design principle of \textit{PythonPDEVS}: allow users t
 In our case, a user can configure the simulation kernel with the synchronization protocol to use, or even switch the synchronization protocol during runtime.
 Our implementation in C++11 also allows for (compiled) optimizations which were plainly impossible in an interpreted language.
 \textit{Dxex} uses new optimizations from the C++14 standard when possible.
-The C++11 standard threading primitives are used to run the different simulation cores.
-Within a single simulation core, OpenMP~\cite{openmp4} is used to parallelize the transition functions, as is usual in \textsf{Parallel DEVS}.
+The C++11 standard threading primitives are used to run the different simulation kernels.
+Within a single simulation kernel, OpenMP~\cite{openmp4} is used to parallelize the transition functions, as is usual in \textsf{Parallel DEVS}.
 
 Since there is no universal \textsf{DEVS} model standard, \textit{dxex} models are incompatible with \textit{PythonPDEVS} and vice versa.
 This is due to \textit{dxex} models being grafted on C++11, whereas \textit{PythonPDEVS} models are grafted on Python.
@@ -22,7 +22,7 @@ In the remainder of this section, we elaborate on our prominent new feature: the
 \subsection{Synchronization protocols}
 We previously explained the existence of different synchronization protocols, each optimized for a specific kind of model.
 As no single synchronization protocol is ideal for all domains, a general purpose simulation tool should support multiple protocols.
-We argue that a general purpose simulation tool should support single core, conservative, and optimistic synchronization, as is the case for \textit{dxex}. Futhermore it should be possible to combine each inter core synchronization protocol with the parallel execution of events defined by \pSim.
+We argue that a general purpose simulation tool should support single core, conservative, and optimistic synchronization, as is the case for \textit{dxex}. Futhermore it should be possible to combine each inter kernel synchronization protocol with the parallel execution of events defined by \pSim.
 
 These different protocols relate to three different model characteristics.
 Conservative synchronization for when high lookahead exists between different nodes, and barely any blocking is necessary.
@@ -30,7 +30,7 @@ Optimistic synchronization for when lookahead is unpredictable, or there are rar
 Finally, single core simulation is still required for models where parallelism is bad. 
 It is possible for the synchronization overhead to become larger than the achieved parallelism, resulting in slower simulation than single core.
 
-Data exchange between different simulation cores happens through shared memory, using the new C++11 synchronization primitives.
+Data exchange between different simulation kernels happens through shared memory, using the new C++11 synchronization primitives.
 Whereas this was also possible in previous versions of the C++ standard, by falling back to non-portable C functions, it was not a part of the C++ language standard.
 C++11 further allows us to make the implementation portable, as well as more efficient: the compiler makes further optimizations to heavily used components.
 
@@ -41,9 +41,9 @@ This way, the \textsf{DEVS} simulation algorithm is implemented once, but parts 
 In theory, more synchronization protocols (\textit{e.g.}, other algorithms for conservative synchronization) can be added without altering our design.
 
 An overview of \textit{dxex}'s design is given in Figure~\ref{fig:class_diagram}.
-It shows that there is a simulation \texttt{Core}, which simulates the \texttt{AtomicModel}s connected to it.
-The superclass \texttt{Core} represents the single core simulation kernel.
-Subclasses define specific variants, such as \texttt{ConservativeCore} (conservative synchronization), \texttt{OptimisticCore} (optimistic synchronization), and \texttt{DynamicCore} (\textsf{Dynamic Structure DEVS}).
+It shows that there is a simulation \texttt{Kernel}, which simulates the \texttt{AtomicModel}s connected to it.
+The superclass \texttt{Kernel} represents the single core simulation kernel.
+Subclasses define specific variants, such as \texttt{ConservativeKernel} (conservative synchronization), \texttt{OptimisticKernel} (optimistic synchronization), and \texttt{DynamicKernel} (\textsf{Dynamic Structure DEVS}).
 
 \begin{figure*}
     \includegraphics[width=\textwidth]{fig/cores_class_diagram.eps}
@@ -72,7 +72,7 @@ Again, we made use of specific new features of C++11, that are not available in 
 
 % protocol or inherent parallelism?
 \subsubsection{\pSim}
-In our tool each simulation core, regardless of inter core synchronization, is capable of executing concurrent transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
+In our tool each simulation kernel, regardless of inter kernel synchronization, is capable of executing concurrent transitions in parallel. A configurable number of threads is allocated to optimally divide the processing load of concurrent transitions. The parallel execution of transitions introduces some overhead in thread pooling and locking, and disallows some optimizations in optimally rescheduling models. The concurrency of events and the combined computational load of the transitions has to outweigh this overhead to obtain a significant speedup, as we will demonstrate in Section~\textsc{\nameref{sec:4-performance}}.
 
 \subsection{Synchronization Protocol Transparency}
 We define synchronization protocol transparency as having a single model, which can be executed on each supported synchronization kernel, without any modifications.
