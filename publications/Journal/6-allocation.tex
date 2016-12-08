@@ -11,13 +11,13 @@ By overriding the default allocator, a modeller tunes the allocation scheme for 
 This interface can be linked to graph algorithms for automatic allocation scheme generation, for example to avoid cycles in the dependency graph.
 
 \subsection{Performance Evaluation}
-To evaluate the influence of model allocation, we define a new model, based on PHOLD~\cite{PHOLD}.
+To evaluate the influence of model allocation, we define a new model, based on PHold~\cite{PHOLD}.
 The model structure resembles a tree: an atomic model can have a set of children, with children being connected to each other recursively.
 
 Unlike the Queue model, the width of the hierarchy is still present in the topology of the atomic models after direct connection.
-The PHOLDTree model allows us to investigate speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
+The PHoldTree model allows us to investigate speedup in terms of model allocation, by modifying the depth and width (fanout) model parameters.
 
-The PHOLDTree model is similar in structure to models of gossiping in social networks~\cite{Gossip}.
+The PHoldTree model is similar in structure to models of gossiping in social networks~\cite{Gossip}.
 The lookahead of an atomic node is the minimally allowed $\epsilon$, as is often the case in realistic models (\textit{e.g.}, if it is unknown what the lookahead might be).
 We demonstrate the importance of allocation by comparing performance of a breadth-first versus a depth-first scheme.
 Both options are automated ways of allocation that are independent of the model.
@@ -25,7 +25,7 @@ Both options are automated ways of allocation that are independent of the model.
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/pholdtree.pdf}
-    \caption{PHOLDTree model for depth 3 and width 2.}
+    \caption{PHoldTree model for depth 3 and width 2.}
     \label{fig:PHOLDTree_model}
 \end{figure}
 
@@ -50,7 +50,7 @@ Both \textit{adevs} and \textit{dxex} scale linearly in the number of atomic mod
 \end{figure}
 
 \subsubsection{Inter-Kernel Synchronization (\textit{CN} and \textit{ON})}
-Next, we run the model using two different allocation schemes: breadth-first and depth-first.
+Next, we run the model using two different allocation schemes, based on Breadth-First Search (BFS) and Depth-First Search (DFS).
 First, we explain both allocation schemes.
 
 Breadth-first allocation traverses the tree in a breadth-first way, allocating subsequently visited atomic models to the same node.
@@ -61,7 +61,7 @@ This allocation strategy is shown in Figure~\ref{fig:PholdTree_model_bfs}.
 \begin{figure}
    \center
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_BF.pdf}
-   \caption{PHOLDTree model breadth first allocation with 4 kernels.}
+   \caption{PHoldTree model breadth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_bfs}
 \end{figure}
 
@@ -71,7 +71,7 @@ Intuitively, subtrees are frequently allocated to the same node, as shown in Fig
 \begin{figure}
    \center
    \includegraphics[width=\columnwidth]{fig/pholdtree_alloc_DF.pdf}
-   \caption{PHOLDTree model depth first allocation with 4 kernels.}
+   \caption{PHoldTree model depth first allocation with 4 kernels.}
    \label{fig:PholdTree_model_dfs}
 \end{figure}
 
@@ -125,6 +125,6 @@ Conservative synchronization will then be able to make better estimates, whereas
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/pholdtreeallochighp.eps}
-    \caption{PHOLDTree model performance using different allocation schemes.}
+    \caption{PHoldTree model performance using different allocation schemes.}
     \label{fig:PholdTree_plot_alloc_high}
 \end{figure}

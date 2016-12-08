@@ -24,13 +24,13 @@ It takes two parameters: the width and depth of the hierarchy.
 This benchmark reveals the complexity of the simulation kernel for an increasing amount of atomic models and an increasingly deep hierarchy.
 An example for a width and depth of 2 is shown in Figure~\ref{fig:queue_model}.
 	
-Second, the \textit{Interconnect} model, a merge of PHOLD~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
-Similar to PHOLD, all models are connected to one another, but all through the same port: every atomic model receives each generated event (\textit{i.e.}, the event is broadcasted).
+Second, the \textit{Interconnect} model, a merge of PHold~\cite{PHold} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
+Similar to PHold, all models are connected to one another, but all through the same port: every atomic model receives each generated event (\textit{i.e.}, the event is broadcasted).
 The model takes one parameter: the number of atomic models.
 This benchmark shows the complexity of event creation, event routing, and simultaneous event handling.
 An example for three atomic models is shown in Figure~\ref{fig:interconnect_model}.
 
-Third, the \textit{PHOLD} model~\cite{PHOLD}, creates $n$ atomic models, where each atomic model has exactly $n-1$ output ports.
+Third, the \textit{PHold} model~\cite{PHold}, creates $n$ atomic models, where each atomic model has exactly $n-1$ output ports.
 Each atomic model is directly connected to every other atomic model.
 After a random delay, an atomic model sends out an event to a randomly selected output port.
 Output port selection happens in two phases: first it is decided whether the event should be sent within the same kernel, or outside of the kernel.
@@ -38,7 +38,7 @@ Afterwards, a uniform selection is made between the possible atomic models.
 The model takes two parameters: the percentage of remote events (determining the percentage of events routed to other kernels), and the percentage of high-priority events.
 High-priority events are events generated in a very short time after the previous event.
 This benchmark shows how the simulation kernel behaves in the presence of many local or remote events, in combination with a varying percentage of high-priority events.
-An example for four atomic models, split over two kernels, is shown in Figure~\ref{fig:PHOLD_model}.
+An example for four atomic models, split over two kernels, is shown in Figure~\ref{fig:PHold_model}.
 
 \begin{figure}
 	\center
@@ -57,8 +57,8 @@ An example for four atomic models, split over two kernels, is shown in Figure~\r
 \begin{figure}
     \center
 	\includegraphics[width=\modelfraction\columnwidth]{fig/phold_model.pdf}
-	\caption{PHOLD model for four models. Color denotes the two nodes.}
-	\label{fig:PHOLD_model}
+	\caption{PHold model for four models. Color denotes the two nodes.}
+	\label{fig:PHold_model}
 \end{figure}
 
 \subsection{Single kernel (\textit{NN} Synchronization)}
@@ -133,14 +133,16 @@ The same effect can be seen when the problem size is increased in tandem with th
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_strong_speedup.eps}
-	\caption{Queue model strong scaling speedup compared to \textit{dxex} \textit{NN} synchronization.}
+	\caption{Queue model strong scaling speedup compared to \textit{dxex} \textit{NN} synchronization.
+             Each kernel uses one thread, and has one physical CPU core allocated to it.}
 	\label{fig:Queue_plot_strong}
 \end{figure}
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/queue_fixed_weak_speedup.eps}
-	\caption{Queue model weak scaling speedup compared to \textit{dxex} \textit{NN} synchronization.}
+	\caption{Queue model weak scaling speedup compared to \textit{dxex} \textit{NN} synchronization.
+             Each kernel uses one thread, and has one physical CPU core allocated to it.}
 	\label{fig:Queue_plot_weak}
 \end{figure}
 	
@@ -155,12 +157,13 @@ All atomic models depend on each other and have no computational load whatsoever
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/interconnect_parallel.eps}
-	\caption{Interconnect benchmark results for \textit{ON} and \textit{CN} synchronization.}
+	\caption{Interconnect benchmark results for \textit{ON} and \textit{CN} synchronization, compared to \textit{dxex} \textit{NN} synchronization.
+             Each kernel uses one thread, and has one physical CPU core allocated to it.}
 	\label{fig:interconnect_benchmark_parallel}
 \end{figure}
 
-\subsubsection{PHOLD}
-In the PHOLD model, we first investigate the influence of the percentage of remote events on the speedup.
+\subsubsection{PHold}
+In the PHold model, we first investigate the influence of the percentage of remote events on the speedup.
 A remote event in this context is an event that is sent from an atomic model on one kernel to an atomic model on another kernel.
 When remote events are rare, optimistic synchronization rarely has to roll back, thus increasing performance.
 With more frequent remote events, however, optimistic synchronization quickly slows down due to frequent rollbacks.
@@ -177,13 +180,13 @@ We feel this would lead to an unfair comparison as we would like to keep the mod
 \begin{figure}
     \center
     \includegraphics[width=\columnwidth]{fig/phold_remotes.eps}
-    \caption{PHOLD benchmark results for multi core simulation using four kernels, with varying percentage of remote events.}
+    \caption{PHold benchmark results using four kernels, with varying percentage of remote events.}
 \end{figure}
 
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/phold_priority.eps}
-	\caption{PHOLD benchmark results for multi core simulation using four kernels, with varying amount of high-priority events.}
+	\caption{PHold benchmark results using four kernels, with varying amount of high-priority events.}
 	\label{fig:phold_priority}
 \end{figure}
 
@@ -275,7 +278,7 @@ This is because the overhead of thread management is avoided, similar to the res
 \begin{figure}
 	\center
 	\includegraphics[width=\columnwidth]{fig/pdevs_no_sleep.eps}
-	\caption{Queue speedup benchmark for PDEVS and synchronization with maximal concurrent events and trivial computational load}
+	\caption{Queue speedup benchmark with $p = 1$, $q = 1$, and trivial computational load}
 	\label{fig:psim_plot_no_sleep}
 \end{figure}
 

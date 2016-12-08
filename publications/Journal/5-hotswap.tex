@@ -41,9 +41,9 @@ When the number of rollbacks is excessively high, switching to conservative sync
 To provide more insight in our benchmark models, we created a simple visualization of their simulation trace.
 This trace visualizes the allocation of the model and all defined connections.
 For each connection, the number of events transferred is annotated.
-Examples are shown for the three benchmark models used before: Figure~\ref{fig:Queue_allocation}, Figure~\ref{fig:interconnect_allocation_parallel}, and Figure~\ref{fig:phold_allocation} show traces for the Queue, Interconnect, and PHOLD models, respectively.
+Examples are shown for the three benchmark models used before: Figure~\ref{fig:Queue_allocation}, Figure~\ref{fig:interconnect_allocation_parallel}, and Figure~\ref{fig:phold_allocation} show traces for the Queue, Interconnect, and PHold models, respectively.
 Using this information, we notice that the Interconnect benchmark indeed has a lot of inter-kernel events.
-Despite the similar structure, the PHOLD model does not have as many inter-kernel events.
+Despite the similar structure, the PHold model does not have as many inter-kernel events.
 These results are relevant information that can be used by the hotswapping component.
 
 \begin{figure*}
@@ -56,13 +56,13 @@ These results are relevant information that can be used by the hotswapping compo
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/interconnect_parallel_allocation.eps}
-    \caption{Interconnect simulation trace for 6 models on 3 kernels.}
+    \caption{Interconnect simulation trace for 6 atomic models on 3 kernels.}
     \label{fig:interconnect_allocation_parallel}
 \end{figure}
 
 \begin{figure}
     \center
     \includegraphics[width=\plotfraction\columnwidth]{fig/phold_parallel_allocation.eps}
-    \caption{Phold simulation trace for multi core simulation using three kernels.}
+    \caption{PHold simulation trace for 6 atomic models on 3 kernels.}
     \label{fig:phold_allocation}
 \end{figure}
