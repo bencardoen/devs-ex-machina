@@ -24,13 +24,13 @@ It takes two parameters: the width and depth of the hierarchy.
 This benchmark reveals the complexity of the simulation kernel for an increasing amount of atomic models and an increasingly deep hierarchy.
 An example for a width and depth of 2 is shown in Figure~\ref{fig:queue_model}.
 	
-Second, the \textit{Interconnect} model, a merge of PHold~\cite{PHold} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
+Second, the \textit{Interconnect} model, a merge of PHold~\cite{PHOLD} and the \textit{HI} model of DEVStone~\cite{DEVStone}, creates $n$ atomic models, where each model has exactly one output port.
 Similar to PHold, all models are connected to one another, but all through the same port: every atomic model receives each generated event (\textit{i.e.}, the event is broadcasted).
 The model takes one parameter: the number of atomic models.
 This benchmark shows the complexity of event creation, event routing, and simultaneous event handling.
 An example for three atomic models is shown in Figure~\ref{fig:interconnect_model}.
 
-Third, the \textit{PHold} model~\cite{PHold}, creates $n$ atomic models, where each atomic model has exactly $n-1$ output ports.
+Third, the \textit{PHold} model~\cite{PHOLD}, creates $n$ atomic models, where each atomic model has exactly $n-1$ output ports.
 Each atomic model is directly connected to every other atomic model.
 After a random delay, an atomic model sends out an event to a randomly selected output port.
 Output port selection happens in two phases: first it is decided whether the event should be sent within the same kernel, or outside of the kernel.
