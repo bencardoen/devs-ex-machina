@@ -14,30 +14,36 @@ Reply
 > For the first point, the title,abstract and introduction need to be updated to include 
 > PDEVS protocol as one of the protocols supported and the theory-related comparisons mentioned. 
 
-The introduction and abstract have been modified to address this. We clearly outline the 
-complementary nature of the inter vs intra kernel synchronization protocols.
+The introduction and abstract have been modified to address this. We clearly
+outline the complementary nature of the inter vs intra kernel synchronization
+protocols.  This makes it such that we support a total of 6 synchronization
+protocols, which we clearly outline in the paper. To address consistency
+issues, we have added a new notation for each of these synchronization
+protocols that is used throughout the whole paper.
 
 > For the second point, it is not clear how the PDEVS protocol  is being implemented 
 > - it seems to be  taken to be equivalent to "Sequential Simulation" as shown in charts 
 > - a situation hardly conducive to clarity. 
 
-A subsection has been added, explaining the implementation and how it complements the synchronization protocols. 
-In the introduction we clearly differentiate between the 6 potential approaches to parallelization.
-The charts have been updated to avoid confusion in this regard.
+A subsection has been added, explaining the implementation and how it
+complements the synchronization protocols.  In the introduction we clearly
+differentiate between the 6 potential approaches to synchronization.  The
+charts have been updated to avoid confusion in this regard.
 
 > Also, the connection the q parameter of the theory seems wrong since it is the p parameter 
 > that relates to the simultaneous internal events that that authors identify as "inherent parallelism". 
 
-We have updated this section to include the parameter p and correct the value of q in probabilistic simulations. 
+We have updated this section to include the parameter p and correct the value
+of q in probabilistic simulations. The notation has also been updated.
 
 > Leading to another point - the authors overlook the second source of parallelism exploited 
 > by the PDEVS protocol - the simultaneous execution of external transition functions occasioned 
 > by an output received by multiple components from the same sender.
 
-In our model the amount of external transitions parallelizable is maximized to cover this use case. 
-After an initialization period the entire set of models is sending and receiving events. 
-All models are executing transitions (internal and external) at a maximum frequency, thereby maximizing 
-the possible speedup in this highly concurrent scenario. Adding an extra model with broadcast behavior 
-would not lead to an increase in the number of concurrent external transitions.
-We have updated the text to clarify this.
-
+In our model the amount of external transitions parallelizable is maximized to
+cover this use case.  After an initialization period the entire set of models
+is sending and receiving events.  All models are executing transitions
+(internal and external) at a maximum frequency, thereby maximizing the
+possible speedup in this highly concurrent scenario. Adding an extra model
+with broadcast behavior would not lead to an increase in the number of
+concurrent external transitions.  We have updated the text to clarify this.
