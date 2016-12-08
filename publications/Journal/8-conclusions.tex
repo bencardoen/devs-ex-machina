@@ -1,12 +1,16 @@
 In this paper, we introduced \textit{DEVS-Ex-Machina} (``\textit{dxex}''), a new C++11-based \textsf{Parallel DEVS} simulation tool.
-Our main contribution is the implementation of multiple synchronization protocols for parallel multicore simulation.
+Our main contribution is the implementation of multiple synchronization protocols for parallel simulation.
 We have shown that there are indeed models which can be simulated significantly faster using either synchronization protocol.
-\textit{Dxex} allows the user to choose between either conservative or optimistic synchronization at the start of simulation.
+\textit{Dxex} allows the user to choose between any of the six supported synchronization protocols.
+We distinguish between inter-kernel (none, conservative, and optimistic synchronization) and intra-kernel (sequential or parallel concurrent transitions) synchronization protocols, which are orthogonal to one another.
 Depending on observed model behaviour and simulation performance, runtime switching between synchronization protocols can be used.
 
 Notwithstanding our modularity, \textit{dxex} achieves performance competitive to \textit{adevs}, another very efficient \textsf{DEVS} simulation tool.
 Performance is measured both in elapsed time, and memory usage.
-Our empirical analysis shows that allocation of models over kernels is critical to enable a parallel speedup. Furthermore we have shown when and why optimistic synchronization can outperform conservative and vice versa. Finally we investigated the effect of memory (de)allocation on parallel simulation. 
+Our empirical analysis shows that allocation of models over kernels is critical to enable a parallel speedup.
+Furthermore we have shown when and why optimistic synchronization can outperform conservative and vice versa.
+We have also shown the influence of using the parallelism inherent in the Parallel DEVS formalism, and its interaction with inter-kernel synchronization algorithms.
+Finally we investigated the effect of memory (de)allocation on parallel simulation. 
 
 Future work is possible in several directions.
 First, our implementation of optimistic synchronization should be more tolerant to low-memory situations.

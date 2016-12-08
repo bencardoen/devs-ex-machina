@@ -2,7 +2,7 @@ Several similar \textsf{DEVS} simulation tools have already been implemented, th
 We discuss several dimensions of related work, as we try to compromise between different tools.
 
 In terms of code design and philosophy, \textit{dxex} is most related to \textit{PythonPDEVS}~\cite{PythonPDEVS}.
-Performance of \textit{PythonPDEVS} was still decent through the use of ``hints'' from the modeler.
+Performance of \textit{PythonPDEVS} was decent through the use of ``hints'' from the modeler.
 In this spirit, we offer users the possibility to choose between different synchronization protocols.
 This allows users to choose the most appropriate synchronization protocol, depending on the model.
 Contrary to \textit{PythonPDEVS}, however, \textit{dxex} doesn't support distributed simulation~\cite{JDF}, model migrations~\cite{PythonPDEVS2}, or activity hints~\cite{PythonPDEVS_ACTIMS}.
@@ -19,7 +19,7 @@ In terms of performance, \textit{dxex} is shown to be competitive with \textit{a
 Despite its high performance, \textit{adevs} does not support optimistic synchronization, which we have shown to be highly relevant for certain kinds of models.
 
 Previous \textsf{DEVS} simulation tools have already implemented multiple synchronization protocols, though none have done so in a strictly modular way that allows straightforward protocol switching for a single given model.
-For example, \textit{adevs} only supports conservative synchronization, and \textit{vle} only supports experiment-level parallelism (\textit{i.e.}, run multiple experiments in parallel).
+For example, \textit{adevs} only supports conservative synchronization, and \textit{vle} only supports experiment-level parallelism (\textit{i.e.}, run independent experiments in parallel).
 Closest to our support for multiple synchronization protocols is \textit{CD++}~\cite{CD++}.
 For \textit{CD++}, both a conservative (\textit{CCD++}~\cite{CCD++}) and optimistic (\textit{PCD++}~\cite{PCD++}) variant exist.
 Despite the implementation of both protocols, they are entirely different projects.
@@ -27,8 +27,9 @@ Some features might therefore be implemented in \textit{CCD++} and not in \texti
 And while this might not be a problem at this time, the problem will only get worse when each project follows its own course.
 \textit{Dxex}, on the other hand, is a single project, where the choice of synchronization protocol is a simple configuration option.
 \textit{CD++}, however, implements both conservative and optimistic synchronization for distributed simulation, whereas we limit ourselves to parallel simulation. 
-A new architecture for sequential PDEVS simulation has been introduced in \cite{SeqPDEVSArch} with promising performance results. This algorithm achieves a speedup by using the inherent parallelism in PDEVS without the need for synchronization.
-By limiting our approach to a pure parallel simulation, we are able to achieve higher speedups through the use of shared memory communication. 
+A new architecture for sequential PDEVS simulation has been introduced in \cite{SeqPDEVSArch} with promising performance results.
+This algorithm achieves a speedup by using \textit{xP} synchronization.
+By limiting our approach to pure parallel simulation (\textit{i.e.}, no distributed simulation), we are able to achieve higher speedups through the use of shared memory communication. 
 Recent work on parallel speedup in DEVS investigates theoretical limits of PDEVS~\cite{activitypdevs, amdahlpdevs}
 
 In the \textsf{PDES} community, the problem of choosing between synchronization protocols is well known and documented~\cite{Jha:1994:UFC:195291.182480}.
@@ -37,9 +38,9 @@ Our contribution entails bringing this same feature to the \textsf{Parallel DEVS
 
 Model allocation and its impact on parallel performance has previously also been studied in the \textsf{PDES} community~\cite{PDESpartitioning}.
 Referenced as partitioning of the simulation model, most studies distinguish between communication and computation as the two dimensions to partition over.
-Partitioning a simulation model is identified as an issue to achieve scalability~\cite{Scalability}. 
+Partitioning a model is identified as an issue to achieve scalability~\cite{Scalability}. 
 Some research in this context has been done for \textsf{Parallel DEVS}~\cite{PDEVSpartitioning, NonFragmenting}.
-Our contribution studies the effect of partitioning with emphasis on the effect of communication between processes and in the presence of a flattened hierarchy. 
+Our contribution studies the effect of partitioning with emphasis on the effect of communication between kernels and in the presence of a flattened hierarchy. 
 We focus on static partitioning since this is a limiting factor for our conservative synchronization implementation which does not support model migration.
 Model migration, as implemented by \textit{PythonPDEVS}, might be an interesting addition to model allocation.
 
