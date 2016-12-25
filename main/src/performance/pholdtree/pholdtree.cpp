@@ -319,9 +319,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
                 //add the main child of the item
                 auto mnChild = std::static_pointer_cast<PHOLDTreeProcessor>(components[0]);
                 mnChild->setCorenumber(curCore);
-#ifndef BENCHMARK
-                std::cerr << "allocating " << mnChild->getName() << " to " << curCore << "\n";
-#endif
                 LOG_DEBUG("allocating ", mnChild->getName(), " to ", curCore);
                 ++curNumChildren;
                 if(curNumChildren == numItems) {
@@ -339,9 +336,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
                 todoList.pop_front();
                 auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(itop);
                 procItem->setCorenumber(curCore);
-#ifndef BENCHMARK
-                std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
-#endif
                 LOG_DEBUG("allocating ", procItem->getName(), " to ", curCore);
                 ++curNumChildren;
                 if(curNumChildren == numItems) {
@@ -353,9 +347,6 @@ void allocateTree(std::shared_ptr<PHOLDTree>& root, const PHOLDTreeConfig& confi
             //depth first search encounter of a PHOLDTreeProcessor
             auto procItem = std::static_pointer_cast<PHOLDTreeProcessor>(top);
             procItem->setCorenumber(curCore);
-#ifndef BENCHMARK
-            std::cerr << "allocating " << procItem->getName() << " to " << curCore << "\n";
-#endif
             LOG_DEBUG("allocating ", procItem->getName(), " to ", curCore);
             ++curNumChildren;
             if(curNumChildren == numItems) {

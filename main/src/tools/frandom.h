@@ -204,7 +204,6 @@ int benchrngs() {
     std::vector<std::string> dsc={{"Knuth","MT19937_64(STL)","TAUS88","MT11213b", "MarsagliaXOR128", "Marsagliaxwow", "Marsaglia64", "LaggedFibo", "Tina"}};
     std::vector<std::function<size_t(void)>> rngs = {{rngknuth, rngmatso, rngtauss, rngmt12, str,  xwow, str2, laggedfibo, tina}};
     for(size_t j = 1; j<rngs.size(); ++j){ // Skip Knuth, it simply explodes (exponential)
-        std::cout << "# " << dsc[j] << std::endl;
         for(size_t q = 5; q!=0; --q ){
             //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
             //boost::progress_timer ptime;
