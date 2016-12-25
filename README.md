@@ -109,6 +109,11 @@ Note that at this point, only Clang and g++ are supported (with stringname : g++
 
 The script makes a new directory build, next to directory main. This build directory will contain directories Debug, Release and Benchmark. Each with different compiler options and macros.
 
+#### Hotswap ####
+
+Dxex supports runtime switching of synchronization protocols. This is available in branch hotswap, see file 
+main/src/test/hotswaptest.cpp for an example on how to use this feature
+
 #### IDE Support ####
 
 Eclipse 
